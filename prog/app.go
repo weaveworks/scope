@@ -273,7 +273,6 @@ func appMain(flags appFlags) {
 	if flags.logHTTP {
 		handler = middleware.Log{
 			LogRequestHeaders: flags.logHTTPHeaders,
-			LogSuccess:        false,
 		}.Wrap(handler)
 	}
 

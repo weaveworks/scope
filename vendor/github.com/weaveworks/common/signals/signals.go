@@ -18,24 +18,58 @@ type Logger interface {
 	Infof(format string, args ...interface{})
 }
 
-// SignalHandlerLoop blocks until it receives a SIGINT, SIGTERM or SIGQUIT.
-// For SIGINT and SIGTERM, it exits; for SIGQUIT is print a goroutine stack
-// dump.
-func SignalHandlerLoop(log Logger, ss ...SignalReceiver) {
+// Handler handles signals, can be interrupted.
+// On SIGINT or SIGTERM it will exit, on SIGQUIT it
+// will dump goroutine stacks to the Logger.
+type Handler struct {
+	log       Logger
+	receivers []SignalReceiver
+	quit      chan struct{}
+}
+
+// NewHandler makes a new Handler.
+func NewHandler(log Logger, receivers ...SignalReceiver) *Handler {
+	return &Handler{
+		log:       log,
+		receivers: receivers,
+		quit:      make(chan struct{}),
+	}
+}
+
+// Stop the handler
+func (h *Handler) Stop() {
+	close(h.quit)
+}
+
+// Loop handles signals.
+func (h *Handler) Loop() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
 	buf := make([]byte, 1<<20)
 	for {
-		switch <-sigs {
-		case syscall.SIGINT, syscall.SIGTERM:
-			log.Infof("=== received SIGINT/SIGTERM ===\n*** exiting")
-			for _, subsystem := range ss {
-				subsystem.Stop()
-			}
+		select {
+		case <-h.quit:
+			h.log.Infof("=== Handler.Stop()'d ===")
 			return
-		case syscall.SIGQUIT:
-			stacklen := runtime.Stack(buf, true)
-			log.Infof("=== received SIGQUIT ===\n*** goroutine dump...\n%s\n*** end", buf[:stacklen])
+		case sig := <-sigs:
+			switch sig {
+			case syscall.SIGINT, syscall.SIGTERM:
+				h.log.Infof("=== received SIGINT/SIGTERM ===\n*** exiting")
+				for _, subsystem := range h.receivers {
+					subsystem.Stop()
+				}
+				return
+			case syscall.SIGQUIT:
+				stacklen := runtime.Stack(buf, true)
+				h.log.Infof("=== received SIGQUIT ===\n*** goroutine dump...\n%s\n*** end", buf[:stacklen])
+			}
 		}
 	}
+}
+
+// SignalHandlerLoop blocks until it receives a SIGINT, SIGTERM or SIGQUIT.
+// For SIGINT and SIGTERM, it exits; for SIGQUIT is print a goroutine stack
+// dump.
+func SignalHandlerLoop(log Logger, ss ...SignalReceiver) {
+	NewHandler(log, ss...).Loop()
 }

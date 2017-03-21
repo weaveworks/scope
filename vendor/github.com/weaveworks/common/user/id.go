@@ -1,32 +1,41 @@
 package user
 
 import (
-	"fmt"
-
 	"golang.org/x/net/context"
+
+	"github.com/weaveworks/common/errors"
 )
 
-// UserIDContextKey is the key used in contexts to find the userid
 type contextKey int
 
-const userIDContextKey contextKey = 0
+const (
+	// UserIDContextKey is the key used in contexts to find the userid
+	userIDContextKey contextKey = 0
 
-// OrgIDHeaderName is a legacy from scope as a service.
-const OrgIDHeaderName = "X-Scope-OrgID"
+	// orgIDHeaderName is a legacy from scope as a service.
+	orgIDHeaderName = "X-Scope-OrgID"
 
-// LowerOrgIDHeaderName as gRPC / HTTP2.0 headers are lowercased.
-const LowerOrgIDHeaderName = "x-scope-orgid"
+	// LowerOrgIDHeaderName as gRPC / HTTP2.0 headers are lowercased.
+	lowerOrgIDHeaderName = "x-scope-orgid"
+)
 
-// GetID returns the user
-func GetID(ctx context.Context) (string, error) {
-	userid, ok := ctx.Value(userIDContextKey).(string)
+// Errors that we return
+const (
+	ErrNoUserID           = errors.Error("no user id")
+	ErrDifferentIDPresent = errors.Error("different user ID already present")
+	ErrTooManyUserIDs     = errors.Error("multiple user IDs present")
+)
+
+// Extract gets the user ID from the context
+func Extract(ctx context.Context) (string, error) {
+	userID, ok := ctx.Value(userIDContextKey).(string)
 	if !ok {
-		return "", fmt.Errorf("no user id")
+		return "", ErrNoUserID
 	}
-	return userid, nil
+	return userID, nil
 }
 
-// WithID returns a derived context containing the user ID.
-func WithID(ctx context.Context, userID string) context.Context {
+// Inject returns a derived context containing the user ID.
+func Inject(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, interface{}(userIDContextKey), userID)
 }

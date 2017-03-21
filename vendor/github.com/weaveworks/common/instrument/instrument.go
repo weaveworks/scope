@@ -22,7 +22,7 @@ func ErrorCode(err error) string {
 // "500".  It will also emit an OpenTracing span if you have a global tracer configured.
 //
 // If you want more complicated logic for translating errors into statuses,
-// use 'TimeRequestStatus'.
+// use 'TimeRequestHistogramStatus'.
 func TimeRequestHistogram(ctx context.Context, method string, metric *prometheus.HistogramVec, f func(context.Context) error) error {
 	return TimeRequestHistogramStatus(ctx, method, metric, ErrorCode, f)
 }

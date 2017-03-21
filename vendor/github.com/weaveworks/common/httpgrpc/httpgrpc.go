@@ -65,17 +65,26 @@ type Client struct {
 	conn      *grpc.ClientConn
 }
 
-// NewClient makes a new Client, given a kubernetes service address.  Expects
-// an address of the form <service>.<namespace>:<port>
-func NewClient(address string) (*Client, error) {
+// ParseKubernetesAddress splits up an address of the form <service>(.<namespace>):<port>
+// into its consistuent parts.  Namespace will be "default" if missing.
+func ParseKubernetesAddress(address string) (service, namespace, port string, err error) {
 	host, port, err := net.SplitHostPort(address)
 	if err != nil {
-		return nil, err
+		return "", "", "", err
 	}
 	parts := strings.SplitN(host, ".", 2)
-	service, namespace := parts[0], "default"
+	service, namespace = parts[0], "default"
 	if len(parts) == 2 {
 		namespace = parts[1]
+	}
+	return service, namespace, port, nil
+}
+
+// NewClient makes a new Client, given a kubernetes service address.
+func NewClient(address string) (*Client, error) {
+	service, namespace, port, err := ParseKubernetesAddress(address)
+	if err != nil {
+		return nil, err
 	}
 	return &Client{
 		service:   service,

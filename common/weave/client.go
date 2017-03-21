@@ -4,10 +4,12 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
+	realexec "os/exec"
 	"regexp"
 	"strconv"
 
@@ -164,7 +166,11 @@ func (c *client) AddDNSEntry(fqdn, containerID string, ip net.IP) error {
 
 func (c *client) PS() (map[string]PSEntry, error) {
 	cmd := weaveCommand("--local", "ps")
-	out, err := cmd.StdoutPipe()
+	stdOut, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+	stdErr, err := cmd.StderrPipe()
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +179,7 @@ func (c *client) PS() (map[string]PSEntry, error) {
 	}
 
 	psEntriesByPrefix := map[string]PSEntry{}
-	scanner := bufio.NewScanner(out)
+	scanner := bufio.NewScanner(stdOut)
 	for scanner.Scan() {
 		line := scanner.Text()
 		groups := weavePsMatch.FindStringSubmatch(line)
@@ -191,9 +197,10 @@ func (c *client) PS() (map[string]PSEntry, error) {
 		}
 	}
 	scannerErr := scanner.Err()
+	slurp, _ := ioutil.ReadAll(stdErr)
 	cmdErr := cmd.Wait()
 	if cmdErr != nil {
-		return nil, cmdErr
+		return nil, fmt.Errorf("%s: %q", cmdErr, slurp)
 	}
 	if scannerErr != nil {
 		return nil, scannerErr
@@ -202,17 +209,27 @@ func (c *client) PS() (map[string]PSEntry, error) {
 }
 
 func (c *client) Expose() error {
-	output, err := weaveCommand("--local", "ps", "weave:expose").Output()
+	cmd := weaveCommand("--local", "ps", "weave:expose")
+	output, err := cmd.Output()
 	if err != nil {
-		return err
+		stdErr := []byte{}
+		if exitErr, ok := err.(*realexec.ExitError); ok {
+			stdErr = exitErr.Stderr
+		}
+		return fmt.Errorf("Error running weave ps: %s: %q", err, stdErr)
 	}
 	ips := ipMatch.FindAllSubmatch(output, -1)
 	if ips != nil {
 		// Alread exposed!
 		return nil
 	}
-	if err := weaveCommand("--local", "expose").Run(); err != nil {
-		return fmt.Errorf("Error running weave expose: %v", err)
+	cmd = weaveCommand("--local", "expose")
+	if _, err := cmd.Output(); err != nil {
+		stdErr := []byte{}
+		if exitErr, ok := err.(*realexec.ExitError); ok {
+			stdErr = exitErr.Stderr
+		}
+		return fmt.Errorf("Error running weave expose: %s: %q", err, stdErr)
 	}
 	return nil
 }
