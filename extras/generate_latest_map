@@ -19,9 +19,11 @@ function generate_header() {
     package report
 
     import (
+        "fmt"
         "time"
 
         "github.com/ugorji/go/codec"
+        "github.com/weaveworks/ps"
     )
 EOF
 }
@@ -31,9 +33,7 @@ function generate_latest_map() {
     local data_type="$2"
     local uppercase_data_type="${data_type^}"
     local lowercase_data_type="${data_type,}"
-    local wire_entry_type="wire${uppercase_data_type}LatestEntry"
-    local decoder_type="${lowercase_data_type}LatestEntryDecoder"
-    local iface_decoder_variable="${uppercase_data_type}LatestEntryDecoder"
+    local entry_type="${lowercase_data_type}LatestEntry"
     local latest_map_type="${uppercase_data_type}LatestMap"
     local empty_latest_map_variable="Empty${latest_map_type}"
     local make_function="Make${latest_map_type}"
@@ -44,29 +44,26 @@ function generate_latest_map() {
     local json_value='`json:"value"`'
 
     cat <<EOF >>"${out_file}"
-    type ${wire_entry_type} struct {
+    type ${entry_type} struct {
         Timestamp time.Time    ${json_timestamp}
         Value     ${data_type} ${json_value}
     }
 
-    type ${decoder_type} struct {}
-
-    func (d *${decoder_type}) Decode(decoder *codec.Decoder, entry *LatestEntry) {
-        wire := ${wire_entry_type}{}
-        decoder.Decode(&wire)
-        entry.Timestamp = wire.Timestamp
-        entry.Value = wire.Value
+    // String returns the StringLatestEntry's string representation.
+    func (e *${entry_type}) String() string {
+        return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.String())
     }
 
-    // ${iface_decoder_variable} is an implementation of LatestEntryDecoder
-    // that decodes the LatestEntry instances having a ${data_type} value.
-    var ${iface_decoder_variable} LatestEntryDecoder = &${decoder_type}{}
+    // Equal returns true if the supplied StringLatestEntry is equal to this one.
+    func (e *${entry_type}) Equal(e2 *${entry_type}) bool {
+        return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
+    }
 
     // ${latest_map_type} holds latest ${data_type} instances.
-    type ${latest_map_type} LatestMap
+    type ${latest_map_type} struct { ps.Map }
 
     // ${empty_latest_map_variable} is an empty ${latest_map_type}. Start with this.
-    var ${empty_latest_map_variable} = (${latest_map_type})(MakeLatestMapWithDecoder(${iface_decoder_variable}))
+    var ${empty_latest_map_variable} = ${latest_map_type}{ps.NewMap()}
 
     // ${make_function} makes an empty ${latest_map_type}.
     func ${make_function}() ${latest_map_type} {
@@ -75,77 +72,117 @@ function generate_latest_map() {
 
     // Copy is a noop, as ${latest_map_type}s are immutable.
     func (m ${latest_map_type}) Copy() ${latest_map_type} {
-        return (${latest_map_type})((LatestMap)(m).Copy())
+        return m
     }
 
     // Size returns the number of elements.
     func (m ${latest_map_type}) Size() int {
-        return (LatestMap)(m).Size()
+        if m.Map == nil {
+	        return 0
+        }
+        return m.Map.Size()
     }
 
     // Merge produces a fresh ${latest_map_type} containing the keys from both inputs.
     // When both inputs contain the same key, the newer value is used.
     func (m ${latest_map_type}) Merge(other ${latest_map_type}) ${latest_map_type} {
-        return (${latest_map_type})((LatestMap)(m).Merge((LatestMap)(other)))
+        output := mergeMaps(m.Map, other.Map, func(a, b interface{}) bool {
+	        return a.(*${entry_type}).Timestamp.Before(b.(*${entry_type}).Timestamp)
+        })
+        return ${latest_map_type}{output}
     }
 
     // Lookup the value for the given key.
     func (m ${latest_map_type}) Lookup(key string) (${data_type}, bool) {
-        v, ok := (LatestMap)(m).Lookup(key)
+        v, _, ok := m.LookupEntry(key)
         if !ok {
             var zero ${data_type}
             return zero, false
         }
-        return v.(${data_type}), true
+        return v, true
     }
 
     // LookupEntry returns the raw entry for the given key.
     func (m ${latest_map_type}) LookupEntry(key string) (${data_type}, time.Time, bool) {
-        v, timestamp, ok := (LatestMap)(m).LookupEntry(key)
-        if !ok {
-            var zero ${data_type}
-            return zero, timestamp, false
+        if m.Map == nil {
+	        var zero ${data_type}
+	        return zero, time.Time{}, false
         }
-        return v.(${data_type}), timestamp, true
+        value, ok := m.Map.Lookup(key)
+        if !ok {
+	        var zero ${data_type}
+	        return zero, time.Time{}, false
+        }
+        e := value.(*${entry_type})
+        return e.Value, e.Timestamp, true
     }
 
     // Set the value for the given key.
     func (m ${latest_map_type}) Set(key string, timestamp time.Time, value ${data_type}) ${latest_map_type} {
-        return (${latest_map_type})((LatestMap)(m).Set(key, timestamp, value))
+        if m.Map == nil {
+	        m.Map = ps.NewMap()
+        }
+        return ${latest_map_type}{m.Map.Set(key, &${entry_type}{timestamp, value})}
     }
 
     // Delete the value for the given key.
     func (m ${latest_map_type}) Delete(key string) ${latest_map_type} {
-        return (${latest_map_type})((LatestMap)(m).Delete(key))
+        if m.Map == nil {
+	        return m
+        }
+        return ${latest_map_type}{m.Map.Delete(key)}
     }
 
     // ForEach executes fn on each key value pair in the map.
     func (m ${latest_map_type}) ForEach(fn func(k string, timestamp time.Time, v ${data_type})) {
-        (LatestMap)(m).ForEach(func(key string, ts time.Time, value interface{}) {
-                fn(key, ts, value.(${data_type}))
-        })
+        if m.Map != nil {
+	        m.Map.ForEach(func(key string, value interface{}) {
+		        fn(key, value.(*${entry_type}).Timestamp, value.(*${entry_type}).Value)
+	        })
+        }
     }
 
     // String returns the ${latest_map_type}'s string representation.
     func (m ${latest_map_type}) String() string {
-        return (LatestMap)(m).String()
+        return mapToString(m.Map)
     }
 
     // DeepEqual tests equality with other ${latest_map_type}.
     func (m ${latest_map_type}) DeepEqual(n ${latest_map_type}) bool {
-        return (LatestMap)(m).DeepEqual((LatestMap)(n))
+        return mapEqual(m.Map, n.Map, func(val, otherValue interface{}) bool {
+	        return val.(*${entry_type}).Equal(otherValue.(*${entry_type}))
+        })
+    }
+
+    func (m ${latest_map_type}) toIntermediate() map[string]${entry_type} {
+        intermediate := make(map[string]${entry_type}, m.Size())
+        if m.Map != nil {
+	        m.Map.ForEach(func(key string, val interface{}) {
+		        intermediate[key] = *val.(*${entry_type})
+	        })
+        }
+        return intermediate
     }
 
     // CodecEncodeSelf implements codec.Selfer.
     func (m *${latest_map_type}) CodecEncodeSelf(encoder *codec.Encoder) {
-        (*LatestMap)(m).CodecEncodeSelf(encoder)
+        if m.Map != nil {
+	        encoder.Encode(m.toIntermediate())
+        } else {
+	        encoder.Encode(nil)
+        }
     }
 
     // CodecDecodeSelf implements codec.Selfer.
     func (m *${latest_map_type}) CodecDecodeSelf(decoder *codec.Decoder) {
-        bm := (*LatestMap)(m)
-        bm.decoder = ${iface_decoder_variable}
-        bm.CodecDecodeSelf(decoder)
+        out := mapRead(decoder, func(isNil bool) interface{} {
+	        value := &${entry_type}{}
+	        if !isNil {
+		        decoder.Decode(value)
+	        }
+	        return value
+        })
+        *m = ${latest_map_type}{out}
     }
 
     // MarshalJSON shouldn't be used, use CodecEncodeSelf instead.
