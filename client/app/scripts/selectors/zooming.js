@@ -1,9 +1,18 @@
 import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
-import { graphDefaultZoomSelector } from './graph-view/default-zoom';
-import { resourcesDefaultZoomSelector } from './resource-view/default-zoom';
-import { activeTopologyZoomCacheKeyPathSelector, isGraphViewModeSelector } from './topology';
+import {
+  graphZoomLimitsSelector,
+  graphDefaultZoomSelector,
+} from './graph-view/default-zoom';
+import {
+  resourcesZoomLimitsSelector,
+  resourcesDefaultZoomSelector,
+} from './resource-view/default-zoom';
+import {
+  activeTopologyZoomCacheKeyPathSelector,
+  isGraphViewModeSelector,
+} from './topology';
 
 
 const activeLayoutCachedZoomSelector = createSelector(
@@ -14,14 +23,25 @@ const activeLayoutCachedZoomSelector = createSelector(
   (zoomCache, keyPath) => zoomCache.getIn(keyPath.slice(1), makeMap())
 );
 
-export const activeLayoutZoomSelector = createSelector(
+export const activeLayoutZoomLimitsSelector = createSelector(
   [
-    activeLayoutCachedZoomSelector,
+    isGraphViewModeSelector,
+    graphZoomLimitsSelector,
+    resourcesZoomLimitsSelector,
+  ],
+  (isGraphView, graphZoomLimits, resourcesZoomLimits) => (
+    isGraphView ? graphZoomLimits : resourcesZoomLimits
+  )
+);
+
+export const activeLayoutZoomStateSelector = createSelector(
+  [
     isGraphViewModeSelector,
     graphDefaultZoomSelector,
     resourcesDefaultZoomSelector,
+    activeLayoutCachedZoomSelector,
   ],
-  (cachedZoomState, isGraphView, graphDefaultZoom, resourcesDefaultZoom) => {
+  (isGraphView, graphDefaultZoom, resourcesDefaultZoom, cachedZoomState) => {
     const defaultZoom = isGraphView ? graphDefaultZoom : resourcesDefaultZoom;
     return defaultZoom.merge(cachedZoomState);
   }

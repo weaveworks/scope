@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import Logo from './logo';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layers';
-import CachableZoomWrapper from './cachable-zoom-wrapper';
+import ZoomWrapper from './zoom-wrapper';
 import NodesResourcesLayer from './nodes-resources/node-resources-layer';
 
 
@@ -24,9 +24,9 @@ class NodesResources extends React.Component {
       <div className="nodes-resources">
         <svg id="canvas" width="100%" height="100%">
           <Logo transform="translate(24,24) scale(0.25)" />
-          <CachableZoomWrapper svg="canvas" bounded forwardTransform fixVertical>
+          <ZoomWrapper svg="canvas" bounded forwardTransform fixVertical>
             {transform => this.renderLayers(transform)}
-          </CachableZoomWrapper>
+          </ZoomWrapper>
         </svg>
       </div>
     );

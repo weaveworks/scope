@@ -5,7 +5,7 @@ import { fromJS, Set as makeSet, List as makeList } from 'immutable';
 
 import { NODE_BASE_SIZE } from '../../constants/styles';
 import { graphNodesSelector, graphEdgesSelector } from './graph';
-import { activeLayoutZoomSelector } from '../zooming';
+import { activeLayoutZoomStateSelector } from '../zooming';
 import {
   canvasCircularExpanseSelector,
   canvasDetailsHorizontalCenterSelector,
@@ -25,7 +25,7 @@ const translationToViewportCenterSelector = createSelector(
   [
     canvasDetailsHorizontalCenterSelector,
     canvasDetailsVerticalCenterSelector,
-    activeLayoutZoomSelector,
+    activeLayoutZoomStateSelector,
   ],
   (centerX, centerY, zoomState) => {
     const { scaleX, scaleY, translateX, translateY } = zoomState.toJS();
@@ -76,7 +76,7 @@ const focusedNodesIdsSelector = createSelector(
 const circularLayoutScalarsSelector = createSelector(
   [
     // TODO: Fix this.
-    state => activeLayoutZoomSelector(state).get('scaleX'),
+    state => activeLayoutZoomStateSelector(state).get('scaleX'),
     state => focusedNodesIdsSelector(state).length - 1,
     canvasCircularExpanseSelector,
   ],

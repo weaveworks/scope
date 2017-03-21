@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
-import CachableZoomWrapper from '../components/cachable-zoom-wrapper';
+import ZoomWrapper from '../components/zoom-wrapper';
 import { clickBackground } from '../actions/app-actions';
 
 
@@ -47,9 +47,9 @@ class NodesChart extends React.Component {
         <svg id="canvas" width="100%" height="100%" onClick={this.handleMouseClick}>
           <Logo transform="translate(24,24) scale(0.25)" />
           <EdgeMarkerDefinition selectedNodeId={selectedNodeId} />
-          <CachableZoomWrapper svg="canvas" disabled={selectedNodeId}>
+          <ZoomWrapper svg="canvas" disabled={selectedNodeId}>
             <NodesChartElements />
-          </CachableZoomWrapper>
+          </ZoomWrapper>
         </svg>
       </div>
     );
