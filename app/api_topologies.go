@@ -75,19 +75,22 @@ func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopolog
 			}
 		}
 	}
-	var ns []string
+	if len(namespaces) == 0 {
+		// We only want to apply k8s filters when we have k8s-related nodes,
+		// so if we don't then return early
+		return topologies
+	}
+	ns := []string{}
 	for namespace := range namespaces {
 		ns = append(ns, namespace)
 	}
 	sort.Strings(ns)
-	if len(ns) > 0 { // We only want to apply k8s filters when we have k8s-related nodes
-		topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
-		for i, t := range topologies {
-			if t.id == containersID || t.id == containersByImageID || t.id == containersByHostnameID || t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
-				topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
-					kubernetesFilters(ns...),
-				})
-			}
+	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
+	for i, t := range topologies {
+		if t.id == containersID || t.id == containersByImageID || t.id == containersByHostnameID || t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
+			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
+				kubernetesFilters(ns...),
+			})
 		}
 	}
 	return topologies
