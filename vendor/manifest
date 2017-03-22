@@ -1411,6 +1411,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/weaveworks/billing-client",
+			"repository": "https://github.com/weaveworks/billing-client",
+			"vcs": "git",
+			"revision": "bf803baae0177625efc34699d79696644210a022",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/weaveworks/common",
 			"repository": "https://github.com/weaveworks/common",
 			"vcs": "git",

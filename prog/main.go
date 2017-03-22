@@ -14,7 +14,9 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	billing "github.com/weaveworks/billing-client"
 	"github.com/weaveworks/scope/app"
+	"github.com/weaveworks/scope/app/multitenant"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/probe/host"
@@ -151,6 +153,9 @@ type appFlags struct {
 
 	awsCreateTables bool
 	consulInf       string
+
+	multitenant.BillingEmitterConfig
+	BillingClientConfig billing.Config
 }
 
 type containerLabelFiltersFlag struct {
@@ -352,6 +357,8 @@ func main() {
 	flag.BoolVar(&flags.app.awsCreateTables, "app.aws.create.tables", false, "Create the tables in DynamoDB")
 	flag.StringVar(&flags.app.consulInf, "app.consul.inf", "", "The interface who's address I should advertise myself under in consul")
 
+	flags.app.BillingEmitterConfig.RegisterFlags(flag.CommandLine)
+	flags.app.BillingClientConfig.RegisterFlags(flag.CommandLine)
 	flag.Parse()
 
 	app.AddContainerFilters(append(containerLabelFilterFlags.apiTopologyOptions, containerLabelFilterFlagsExclude.apiTopologyOptions...)...)
