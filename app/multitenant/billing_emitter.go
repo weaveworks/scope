@@ -58,7 +58,7 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 	hasher := sha256.New()
 	hasher.Write(buf)
 	hash := "sha256:" + base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	amounts := billing.Amounts{billing.ContainerSeconds: int64(interval) * containerCount}
+	amounts := billing.Amounts{billing.ContainerSeconds: int64(interval/time.Second) * containerCount}
 	metadata := map[string]string{
 		"row_key": rowKey,
 		"col_key": colKey,
