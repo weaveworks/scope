@@ -321,6 +321,12 @@ func IsNotPseudo(n report.Node) bool {
 	return n.Topology != Pseudo || strings.HasSuffix(n.ID, TheInternetID) || strings.HasPrefix(n.ID, ServiceNodeIDPrefix)
 }
 
+// IsPseudoTopology returns true if the node is in a pseudo topology,
+// mimicing the check performed by MakeFilter() instead of the more complex check in IsNotPseudo()
+func IsPseudoTopology(n report.Node) bool {
+	return n.Topology == Pseudo
+}
+
 // IsNamespace checks if the node is a pod/service in the specified namespace
 func IsNamespace(namespace string) FilterFunc {
 	return func(n report.Node) bool {
