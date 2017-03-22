@@ -1650,7 +1650,7 @@
           // Notes: Firefox gets a bit messy if you try and bubble
           // heights + overflow up (min-height issue + still doesn't work v.well),
           // so this is a bit of a hack.
-          max-height: "calc(100vh - 160px - 160px - 160px)";
+          max-height: calc(100vh - 160px - 160px - 160px);
         }
       }
     }
