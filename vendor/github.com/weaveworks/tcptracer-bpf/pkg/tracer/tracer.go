@@ -13,6 +13,7 @@ type Tracer struct {
 	m           *bpflib.Module
 	perfMapIPV4 *bpflib.PerfMap
 	perfMapIPV6 *bpflib.PerfMap
+	stopChan    chan struct{}
 }
 
 func TracerAsset() ([]byte, error) {
@@ -61,17 +62,27 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6)) (*Tracer, err
 	perfMapIPV4.SetTimestampFunc(tcpV4Timestamp)
 	perfMapIPV6.SetTimestampFunc(tcpV6Timestamp)
 
+	stopChan := make(chan struct{})
+
 	go func() {
 		for {
-			data := <-channelV4
-			tcpEventCbV4(tcpV4ToGo(&data))
+			select {
+			case <-stopChan:
+				return
+			case data := <-channelV4:
+				tcpEventCbV4(tcpV4ToGo(&data))
+			}
 		}
 	}()
 
 	go func() {
 		for {
-			data := <-channelV6
-			tcpEventCbV6(tcpV6ToGo(&data))
+			select {
+			case <-stopChan:
+				return
+			case data := <-channelV6:
+				tcpEventCbV6(tcpV6ToGo(&data))
+			}
 		}
 	}()
 
@@ -82,10 +93,12 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6)) (*Tracer, err
 		m:           m,
 		perfMapIPV4: perfMapIPV4,
 		perfMapIPV6: perfMapIPV6,
+		stopChan:    stopChan,
 	}, nil
 }
 
 func (t *Tracer) Stop() {
+	close(t.stopChan)
 	t.perfMapIPV4.PollStop()
 	t.perfMapIPV6.PollStop()
 }
