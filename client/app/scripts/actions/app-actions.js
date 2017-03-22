@@ -368,7 +368,6 @@ export function clickResumeUpdate() {
 function updateTopology(dispatch, getState) {
   const state = getState();
   // If we're in the resource view, get the snapshot of all the relevant node topologies.
-  // TODO: Consider updating the state to always have a pinned metric.
   if (isResourceViewModeSelector(state)) {
     getResourceViewNodesSnapshot(getState, dispatch);
   }

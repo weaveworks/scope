@@ -191,11 +191,11 @@ export function getAllNodes(getState, dispatch) {
  */
 export function getResourceViewNodesSnapshot(getState, dispatch) {
   const topologyIds = layersTopologyIdsSelector(getState());
-  // TODO: Replace this with polling once we figure how to make resource view dynamic
-  // (from the UI point of view, the challenge is to make it stable).
+  // TODO: Remove the timeout and replace it with normal polling once we figure how to make
+  // resource view dynamic (from the UI point of view, the challenge is to make it stable).
   setTimeout(() => {
     getNodesForTopologies(getState, dispatch, topologyIds);
-  }, 100);
+  }, 1200);
 }
 
 export function getTopologies(options, dispatch, initialPoll) {

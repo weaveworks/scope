@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { selectMetric } from '../actions/app-actions';
-import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/node-metric';
+import { availableMetricsSelector } from '../selectors/node-metric';
 import MetricSelectorItem from './metric-selector-item';
 
 class MetricSelector extends React.Component {
@@ -17,8 +17,7 @@ class MetricSelector extends React.Component {
   }
 
   render() {
-    const { pinnedMetric, alwaysPinned, availableMetrics } = this.props;
-    const shouldPinMetric = alwaysPinned && !pinnedMetric && !availableMetrics.isEmpty();
+    const { alwaysPinned, availableMetrics } = this.props;
 
     return (
       <div className="metric-selector">
@@ -31,9 +30,6 @@ class MetricSelector extends React.Component {
             />
           ))}
         </div>
-        {shouldPinMetric && <span className="metric-selector-message">
-          &laquo; Select a metric
-        </span>}
       </div>
     );
   }
@@ -42,7 +38,6 @@ class MetricSelector extends React.Component {
 function mapStateToProps(state) {
   return {
     availableMetrics: availableMetricsSelector(state),
-    pinnedMetric: pinnedMetricSelector(state),
   };
 }
 

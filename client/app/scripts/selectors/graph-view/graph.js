@@ -7,7 +7,7 @@ import { canvasWidthSelector, canvasHeightSelector } from '../canvas';
 import { activeTopologyOptionsSelector } from '../topology';
 import { shownNodesSelector } from '../node-filters';
 import { doLayout } from '../../charts/nodes-layout';
-import timer from '../utils/timer-utils';
+import timer from '../../utils/timer-utils';
 
 const log = debug('scope:nodes-chart');
 

@@ -17,11 +17,9 @@ import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric
 import Details from './details';
 import Nodes from './nodes';
 import ViewModeSelector from './view-mode-selector';
-import MetricSelector from './metric-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
 import { getRouter, getUrlState } from '../utils/router-utils';
-import { availableMetricsSelector } from '../selectors/node-metric';
 import { availableNetworksSelector } from '../selectors/node-networks';
 import {
   activeTopologyOptionsSelector,
@@ -110,7 +108,7 @@ class App extends React.Component {
 
   render() {
     const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails, showingHelp,
-      showingMetricsSelector, showingNetworkSelector, showingTroubleshootingMenu } = this.props;
+      showingNetworkSelector, showingTroubleshootingMenu } = this.props;
     const isIframe = window !== window.top;
 
     return (
@@ -137,7 +135,6 @@ class App extends React.Component {
         <Nodes />
 
         <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
-          {showingMetricsSelector && isGraphViewMode && <MetricSelector />}
           {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
           {!isResourceViewMode && <Status />}
           {!isResourceViewMode && <TopologyOptions />}
@@ -162,7 +159,6 @@ function mapStateToProps(state) {
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
     showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
-    showingMetricsSelector: availableMetricsSelector(state).count() > 0,
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
     urlState: getUrlState(state)

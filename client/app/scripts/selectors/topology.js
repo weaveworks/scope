@@ -1,5 +1,4 @@
 import { createSelector } from 'reselect';
-import { Map as makeMap } from 'immutable';
 
 import {
   RESOURCE_VIEW_MODE,
@@ -29,17 +28,6 @@ export const isResourceViewModeSelector = createSelector(
     state => state.get('topologyViewMode'),
   ],
   viewMode => viewMode === RESOURCE_VIEW_MODE
-);
-
-// This is used by the resource view where we're always taking the nodes from the cache,
-// so that polling doesn't affect the layout. Once we implement a more robust polling
-// mechanism that could poll multiple topologies at once, we'll be able to get rid of this.
-export const cachedCurrentTopologyNodesSelector = createSelector(
-  [
-    state => state.get('nodesByTopology'),
-    state => state.get('currentTopologyId'),
-  ],
-  (nodesByTopology, currentTopologyId) => nodesByTopology.get(currentTopologyId, makeMap())
 );
 
 // Checks if graph complexity is high. Used to trigger
@@ -78,6 +66,8 @@ export const activeTopologyZoomCacheKeyPathSelector = createSelector(
       ['zoomCache', viewMode, topologyId, topologyOptions] :
       // Otherwise we're in the resource view where the options are hidden (for now),
       // but pinning different metrics can result in very different layouts.
-      ['zoomCache', viewMode, topologyId, pinnedMetricType]
+      // TODO: Take `topologyId` into account once the resource
+      // view layouts start differing between the topologies.
+      ['zoomCache', viewMode, pinnedMetricType]
   )
 );

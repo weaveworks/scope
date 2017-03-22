@@ -1,24 +1,19 @@
 import React from 'react';
 
-import { formatMetricSvg } from '../../utils/string-utils';
-
 
 export default class NodeResourcesMetricBoxInfo extends React.Component {
   humanizedMetricInfo() {
-    const metricSummary = this.props.metricSummary.toJS();
-    const showExtendedInfo = metricSummary.showCapacity && metricSummary.format !== 'percent';
-    const totalCapacity = formatMetricSvg(metricSummary.totalCapacity, metricSummary);
-    const absoluteConsumption = formatMetricSvg(metricSummary.absoluteConsumption, metricSummary);
-    const relativeConsumption = formatMetricSvg(100.0 * metricSummary.relativeConsumption,
-      { format: 'percent' });
+    const { humanizedTotalCapacity, humanizedAbsoluteConsumption,
+      humanizedRelativeConsumption, showCapacity, format } = this.props.metricSummary.toJS();
+    const showExtendedInfo = showCapacity && format !== 'percent';
 
     return (
       <span>
         <strong>
-          {showExtendedInfo ? relativeConsumption : absoluteConsumption}
-        </strong> consumed
+          {showExtendedInfo ? humanizedRelativeConsumption : humanizedAbsoluteConsumption}
+        </strong> used
         {showExtendedInfo && <i>{' - '}
-          ({absoluteConsumption} / <strong>{totalCapacity}</strong>)
+          ({humanizedAbsoluteConsumption} / <strong>{humanizedTotalCapacity}</strong>)
         </i>}
       </span>
     );

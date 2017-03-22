@@ -1,6 +1,7 @@
 import { Map as makeMap } from 'immutable';
 
 import { getNodeColor } from '../utils/color-utils';
+import { formatMetricSvg } from '../utils/string-utils';
 import { RESOURCES_LAYER_HEIGHT } from '../constants/styles';
 
 
@@ -34,10 +35,20 @@ export function nodeMetricSummaryDecoratorByType(metricType, showCapacity) {
     const absoluteConsumption = metric.get('value');
     const totalCapacity = showCapacity ? metric.get('max') : absoluteConsumption;
     const relativeConsumption = absoluteConsumption / totalCapacity;
+    const defaultMetric = { format: metric.get('format') };
+    const percentMetric = { format: 'percent' };
     const format = metric.get('format');
 
     return node.set('metricSummary', makeMap({
-      showCapacity, totalCapacity, absoluteConsumption, relativeConsumption, format
+      showCapacity,
+      type: metricType,
+      humanizedTotalCapacity: formatMetricSvg(totalCapacity, defaultMetric),
+      humanizedAbsoluteConsumption: formatMetricSvg(absoluteConsumption, defaultMetric),
+      humanizedRelativeConsumption: formatMetricSvg(100 * relativeConsumption, percentMetric),
+      totalCapacity,
+      absoluteConsumption,
+      relativeConsumption,
+      format,
     }));
   };
 }

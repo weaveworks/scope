@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import MetricSelector from './metric-selector';
 import { setGraphView, setTableView, setResourceView } from '../actions/app-actions';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
+import { availableMetricsSelector } from '../selectors/node-metric';
 import {
   isGraphViewModeSelector,
   isTableViewModeSelector,
@@ -45,7 +46,7 @@ class ViewModeSelector extends React.Component {
           {Item('fa fa-bar-chart', 'Resources', isResourceViewMode, this.props.setResourceView,
             hasResourceView)}
         </div>
-        {isResourceViewMode && <MetricSelector alwaysPinned />}
+        <MetricSelector alwaysPinned={isResourceViewMode} />
       </div>
     );
   }
@@ -57,6 +58,7 @@ function mapStateToProps(state) {
     isTableViewMode: isTableViewModeSelector(state),
     isResourceViewMode: isResourceViewModeSelector(state),
     hasResourceView: !layersTopologyIdsSelector(state).isEmpty(),
+    showingMetricsSelector: availableMetricsSelector(state).count() > 0,
   };
 }
 

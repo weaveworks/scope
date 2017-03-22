@@ -71,7 +71,7 @@ class NodeResourcesMetricBox extends React.Component {
   render() {
     const { x, y, width } = this.state;
     const { label, color, metricSummary } = this.props;
-    const { showCapacity, relativeConsumption } = metricSummary.toJS();
+    const { showCapacity, relativeConsumption, type } = metricSummary.toJS();
 
     const showInfo = width >= RESOURCES_LABEL_MIN_SIZE;
     const showNode = width >= 1; // hide the thin nodes
@@ -80,8 +80,13 @@ class NodeResourcesMetricBox extends React.Component {
     // TODO: Show `+ 31 nodes` kind of tag in their stead.
     if (!showNode) return null;
 
+    const resourceUsageTooltipInfo = showCapacity ?
+      metricSummary.get('humanizedRelativeConsumption') :
+      metricSummary.get('humanizedAbsoluteConsumption');
+
     return (
       <g className="node-resources-metric-box">
+        <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
         {showCapacity && <rect className="frame" {...this.defaultRectProps()} />}
         <rect className="bar" fill={color} {...this.defaultRectProps(relativeConsumption)} />
         {showInfo && <NodeResourcesMetricBoxInfo
