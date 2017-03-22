@@ -17,7 +17,7 @@ import {
   getNodeDetails,
   getTopologies,
   deletePipe,
-  stopTopologyPolling,
+  stopPolling,
   teardownWebsockets,
 } from '../utils/web-api-utils';
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
@@ -720,20 +720,17 @@ export function toggleTroubleshootingMenu(ev) {
 
 export function changeInstance() {
   return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.CHANGE_INSTANCE });
+    dispatch({
+      type: ActionTypes.CHANGE_INSTANCE
+    });
     updateRoute(getState);
-    const state = getState();
-    getTopologies(activeTopologyOptionsSelector(state), dispatch);
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      dispatch,
-      true // forces websocket teardown and reconnect to new instance
-    );
   };
 }
 
 export function shutdown() {
-  stopTopologyPolling();
+  stopPolling();
   teardownWebsockets();
+  return {
+    type: ActionTypes.SHUTDOWN
+  };
 }

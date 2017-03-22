@@ -62,6 +62,7 @@ const ACTION_TYPES = [
   'SET_GRID_MODE',
   'CHANGE_INSTANCE',
   'TOGGLE_CONTRAST_MODE',
+  'SHUTDOWN'
 ];
 
 export default zipObject(ACTION_TYPES, ACTION_TYPES);

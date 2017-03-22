@@ -40,6 +40,7 @@ let apiDetailsTimer = 0;
 let controlErrorTimer = 0;
 let createWebsocketAt = 0;
 let firstMessageOnWebsocketAt = 0;
+let continuePolling = true;
 
 export function buildOptionsQuery(options) {
   if (options) {
@@ -111,9 +112,11 @@ function createWebsocket(topologyUrl, optionsQuery, dispatch) {
     socket = null;
     dispatch(closeWebsocket());
 
-    reconnectTimer = setTimeout(() => {
-      createWebsocket(topologyUrl, optionsQuery, dispatch);
-    }, reconnectTimerInterval);
+    if (continuePolling) {
+      reconnectTimer = setTimeout(() => {
+        createWebsocket(topologyUrl, optionsQuery, dispatch);
+      }, reconnectTimerInterval);
+    }
   };
 
   socket.onerror = () => {
@@ -172,35 +175,44 @@ export function getAllNodes(getState, dispatch) {
     Promise.resolve());
 }
 
-export function getTopologies(options, dispatch) {
+export function getTopologies(options, dispatch, initialPoll) {
+  // Used to resume polling when navigating between pages in Weave Cloud.
+  continuePolling = initialPoll === true ? true : continuePolling;
   clearTimeout(topologyTimer);
   const optionsQuery = buildOptionsQuery(options);
   const url = `${getApiPath()}/api/topology?${optionsQuery}`;
   doRequest({
     url,
     success: (res) => {
-      dispatch(receiveTopologies(res));
-      topologyTimer = setTimeout(() => {
-        getTopologies(options, dispatch);
-      }, TOPOLOGY_INTERVAL);
+      if (continuePolling) {
+        dispatch(receiveTopologies(res));
+        topologyTimer = setTimeout(() => {
+          getTopologies(options, dispatch);
+        }, TOPOLOGY_INTERVAL);
+      }
     },
-    error: (err) => {
-      log(`Error in topology request: ${err.responseText}`);
+    error: (req) => {
+      log(`Error in topology request: ${req.responseText}`);
       dispatch(receiveError(url));
-      topologyTimer = setTimeout(() => {
-        getTopologies(options, dispatch);
-      }, TOPOLOGY_INTERVAL);
+      // Only retry in stand-alone mode
+      if (continuePolling) {
+        topologyTimer = setTimeout(() => {
+          getTopologies(options, dispatch);
+        }, TOPOLOGY_INTERVAL);
+      }
     }
   });
 }
 
-export function getNodesDelta(topologyUrl, options, dispatch, forceReload) {
+export function getNodesDelta(topologyUrl, options, dispatch) {
   const optionsQuery = buildOptionsQuery(options);
   // Only recreate websocket if url changed or if forced (weave cloud instance reload);
   // Check for truthy options and that options have changed.
   const isNewOptions = currentOptions && currentOptions !== optionsQuery;
-  const isNewUrl = topologyUrl && (topologyUrl !== currentUrl || isNewOptions);
-  if (forceReload || isNewUrl) {
+  const isNewUrl = topologyUrl !== currentUrl || isNewOptions;
+  // `topologyUrl` can be undefined initially, so only create a socket if it is truthy
+  // and no socket exists, or if we get a new url.
+  if ((topologyUrl && !socket) || (topologyUrl && isNewUrl)) {
     createWebsocket(topologyUrl, optionsQuery, dispatch);
     currentUrl = topologyUrl;
     currentOptions = optionsQuery;
@@ -250,16 +262,20 @@ export function getApiDetails(dispatch) {
     url,
     success: (res) => {
       dispatch(receiveApiDetails(res));
-      apiDetailsTimer = setTimeout(() => {
-        getApiDetails(dispatch);
-      }, API_INTERVAL);
+      if (continuePolling) {
+        apiDetailsTimer = setTimeout(() => {
+          getApiDetails(dispatch);
+        }, API_INTERVAL);
+      }
     },
-    error: (err) => {
-      log(`Error in api details request: ${err.responseText}`);
+    error: (req) => {
+      log(`Error in api details request: ${req.responseText}`);
       receiveError(url);
-      apiDetailsTimer = setTimeout(() => {
-        getApiDetails(dispatch);
-      }, API_INTERVAL / 2);
+      if (continuePolling) {
+        apiDetailsTimer = setTimeout(() => {
+          getApiDetails(dispatch);
+        }, API_INTERVAL / 2);
+      }
     }
   });
 }
@@ -353,9 +369,10 @@ export function getPipeStatus(pipeId, dispatch) {
   });
 }
 
-export function stopTopologyPolling() {
+export function stopPolling() {
+  clearTimeout(apiDetailsTimer);
   clearTimeout(topologyTimer);
-  topologyTimer = 0;
+  continuePolling = false;
 }
 
 export function teardownWebsockets() {
