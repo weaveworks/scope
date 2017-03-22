@@ -1,13 +1,13 @@
 import debug from 'debug';
 import { createSelector, createStructuredSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
-import timely from 'timely';
 
 import { initEdgesFromNodes } from '../utils/layouter-utils';
 import { viewportWidthSelector, viewportHeightSelector } from './canvas-viewport';
 import { activeTopologyOptionsSelector } from './topology';
 import { shownNodesSelector } from './node-filters';
 import { doLayout } from '../charts/nodes-layout';
+import timer from '../utils/timer-utils';
 
 const log = debug('scope:nodes-chart');
 
@@ -49,7 +49,7 @@ const graphLayoutSelector = createSelector(
     }
 
     const edges = initEdgesFromNodes(nodes);
-    const timedLayouter = timely(doLayout);
+    const timedLayouter = timer(doLayout);
     const graph = timedLayouter(nodes, edges, options);
 
     // NOTE: We probably shouldn't log anything in a
