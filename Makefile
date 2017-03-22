@@ -203,6 +203,10 @@ ui-pkg-upload: tmp/weave-scope.tgz
 	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
 	aws s3 cp tmp/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/weave-scope.tgz
 
+trigger-service-ui-build:
+	curl -H "Content-Type: application/json" -X POST \
+	https://circleci.com/api/v1.1/project/github/weaveworks/service-ui/tree/master?circle-token=$$CIRCLE_API_TOKEN
+
 clean:
 	$(GO) clean ./...
 # Don't actually rmi the build images - rm'ing the .uptodate files is enough to ensure
