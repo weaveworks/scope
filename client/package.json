@@ -87,12 +87,12 @@
     "webpack": "2.3.1"
   },
   "optionalDependencies": {
-    "browser-perf": "1.4.5",
-    "express": "4.14.0",
-    "http-proxy": "1.16.1",
-    "perfjankie": "2.1.0",
-    "webpack-dev-middleware": "1.8.4",
-    "webpack-hot-middleware": "2.13.2"
+    "browser-perf": "1.4.11",
+    "express": "4.15.2",
+    "http-proxy": "1.16.2",
+    "perfjankie": "2.1.2",
+    "webpack-dev-middleware": "1.10.1",
+    "webpack-hot-middleware": "2.17.1"
   },
   "scripts": {
     "build": "webpack --config webpack.production.config.js",
