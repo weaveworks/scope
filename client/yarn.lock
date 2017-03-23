@@ -928,25 +928,9 @@ brorand@^1.0.1:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/brorand/-/brorand-1.1.0.tgz#12c25efe40a45e3c323eb8675a0a0ce57b22371f"
 
-browser-perf@1.4.11:
+browser-perf@1.4.11, browser-perf@~1.4.0:
   version "1.4.11"
   resolved "https://registry.yarnpkg.com/browser-perf/-/browser-perf-1.4.11.tgz#3d73394331438aa0dbf3455a98ab2306a035b2aa"
-  dependencies:
-    JSONStream "^1.0.6"
-    byline "^4.2.1"
-    cli-table "~0.3.1"
-    commander "^2.9.0"
-    debug "^2.2.0"
-    event-stream "^3.3.2"
-    glob "^6.0.2"
-    jsmin "~1.0.1"
-    q "^1.4.1"
-    request "^2.65.0"
-    wd "^0.4.0"
-
-browser-perf@~1.4.0:
-  version "1.4.5"
-  resolved "https://registry.yarnpkg.com/browser-perf/-/browser-perf-1.4.5.tgz#1b8a9b3956438fff9c408f013f0e8f6ef8300532"
   dependencies:
     JSONStream "^1.0.6"
     byline "^4.2.1"
@@ -2404,9 +2388,9 @@ fileset@^2.0.2:
     glob "^7.0.3"
     minimatch "^3.0.3"
 
-filesize@3.3.0:
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/filesize/-/filesize-3.3.0.tgz#53149ea3460e3b2e024962a51648aa572cf98122"
+filesize@3.5.6:
+  version "3.5.6"
+  resolved "https://registry.yarnpkg.com/filesize/-/filesize-3.5.6.tgz#5fd98f3eac94ec9516ef8ed5782fad84a01a0a1a"
 
 fill-range@^2.1.0:
   version "2.2.3"
@@ -3833,9 +3817,9 @@ map-stream@~0.1.0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/map-stream/-/map-stream-0.1.0.tgz#e56aa94c4c8055a16404a0674b78f215f7c8e194"
 
-materialize-css@0.97.8:
-  version "0.97.8"
-  resolved "https://registry.yarnpkg.com/materialize-css/-/materialize-css-0.97.8.tgz#e39ce2056785b0c4e9cd4847c2cdf153e19c47cf"
+materialize-css@0.98.1:
+  version "0.98.1"
+  resolved "https://registry.yarnpkg.com/materialize-css/-/materialize-css-0.98.1.tgz#7276895b2c998b53e26deaa0c23a0484c0851d99"
   dependencies:
     hammerjs "^2.0.4"
     jquery "^2.1.4"
@@ -6063,7 +6047,11 @@ whatwg-encoding@^1.0.1:
   dependencies:
     iconv-lite "0.4.13"
 
-whatwg-fetch@2.0.1, whatwg-fetch@>=0.10.0:
+whatwg-fetch@2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/whatwg-fetch/-/whatwg-fetch-2.0.3.tgz#9c84ec2dcf68187ff00bc64e1274b442176e1c84"
+
+whatwg-fetch@>=0.10.0:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/whatwg-fetch/-/whatwg-fetch-2.0.1.tgz#078b9461bbe91cea73cbce8bb122a05f9e92b772"
 
@@ -6146,9 +6134,9 @@ xml-name-validator@^2.0.1:
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/xtend/-/xtend-4.0.1.tgz#a5c6d532be656e23db820efb943a1f04998d63af"
 
-xterm@2.2.3:
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/xterm/-/xterm-2.2.3.tgz#4121bd5412952bcb191819de4566a4b4f793ed8a"
+xterm@2.4.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/xterm/-/xterm-2.4.0.tgz#d70227993b74323e36495ab9c7bdee0bc8d0dbba"
 
 y18n@^3.2.1:
   version "3.2.1"
