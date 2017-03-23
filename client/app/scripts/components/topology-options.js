@@ -4,8 +4,18 @@ import { connect } from 'react-redux';
 import { getCurrentTopologyOptions } from '../utils/topology-utils';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
 import TopologyOptionAction from './topology-option-action';
+import { changeTopologyOption } from '../actions/app-actions';
 
 class TopologyOptions extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+
+    this.handleOptionClick = this.handleOptionClick.bind(this);
+  }
+
+  handleOptionClick(optionId, value, topologyId) {
+    this.props.changeTopologyOption(optionId, value, topologyId);
+  }
 
   renderOption(option) {
     const { activeOptions, topologyId } = this.props;
@@ -19,6 +29,7 @@ class TopologyOptions extends React.Component {
         <div className="topology-option-wrapper">
           {option.get('options').map(item => (
             <TopologyOptionAction
+              onClick={this.handleOptionClick}
               optionId={optionId}
               topologyId={topologyId}
               key={item.get('value')}
@@ -32,9 +43,10 @@ class TopologyOptions extends React.Component {
   }
 
   render() {
+    const { options } = this.props;
     return (
       <div className="topology-options">
-        {this.props.options && this.props.options.toIndexedSeq().map(
+        {options && options.toIndexedSeq().map(
           option => this.renderOption(option))}
       </div>
     );
@@ -50,5 +62,6 @@ function mapStateToProps(state) {
 }
 
 export default connect(
-  mapStateToProps
+  mapStateToProps,
+  { changeTopologyOption }
 )(TopologyOptions);
