@@ -18,13 +18,9 @@ class TopologyOptions extends React.Component {
     const selectedOption = options.find(o => o.get('id') === optionId);
 
     if (selectedOption.get('selectType') === 'union') {
-      if (activeOptions.get(selectedOption.get('id')).includes(value)) {
-        // Option already exists; user is de-selecting
-        console.log('TODO! removeOption action');
-      } else {
-        // Option does not exist; user is enabling.
-        console.log('TODO! addOption action');
-      }
+      const isSelectedAlready = activeOptions.get(selectedOption.get('id')).includes(value);
+      const addOrRemove = isSelectedAlready ? 'remove' : 'add';
+      this.props.changeTopologyOption(optionId, value, topologyId, addOrRemove);
     } else {
       this.props.changeTopologyOption(optionId, value, topologyId);
     }

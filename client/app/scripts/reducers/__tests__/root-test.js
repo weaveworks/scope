@@ -368,22 +368,32 @@ describe('RootReducer', () => {
 
   it('adds/removes a topology option', () => {
     const addAction = {
-      type: ActionTypes.ADD_TOPOLOGY_OPTION,
+      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
       topologyId: 'services',
       option: 'namespace',
-      value: 'scope'
+      value: 'scope',
+      addOrRemove: 'add'
     };
     const removeAction = {
-      type: ActionTypes.REMOVE_TOPOLOGY_OPTION,
+      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
       topologyId: 'services',
       option: 'namespace',
-      value: 'scope'
+      value: 'scope',
+      addOrRemove: 'remove'
     };
     let nextState = initialState;
     nextState = reducer(nextState, { type: ActionTypes.RECEIVE_TOPOLOGIES, topologies});
     nextState = reducer(nextState, { type: ActionTypes.CLICK_TOPOLOGY, topologyId: 'services' });
-
     nextState = reducer(nextState, addAction);
+    expect(activeTopologyOptionsSelector(nextState).toJS()).toEqual({
+      namespace: ['default', 'scope'],
+      pseudo: ['hide']
+    });
+    nextState = reducer(nextState, removeAction);
+    expect(activeTopologyOptionsSelector(nextState).toJS()).toEqual({
+      namespace: ['default'],
+      pseudo: ['hide']
+    });
   });
 
   it('sets topology options from route', () => {

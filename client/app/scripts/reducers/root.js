@@ -1,6 +1,6 @@
 /* eslint-disable import/no-webpack-loader-syntax, import/no-unresolved */
 import debug from 'debug';
-import { size, each, includes } from 'lodash';
+import { size, each, includes, isEqual } from 'lodash';
 import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
   OrderedMap as makeOrderedMap, Set as makeSet } from 'immutable';
 
@@ -194,15 +194,21 @@ export function rootReducer(state = initialState, action) {
       // set option on parent topology
       const topology = findTopologyById(state.get('topologies'), action.topologyId);
       if (topology) {
+        let values = [action.value];
         const topologyId = topology.get('parentId') || topology.get('id');
+        const optionKey = ['topologyOptions', topologyId, action.option];
         const currentOption = state.getIn(['topologyOptions', topologyId, action.option]);
-        if (currentOption !== action.value) {
+
+        if (!isEqual(currentOption, action.value)) {
           state = clearNodes(state);
         }
-        state = state.setIn(
-          ['topologyOptions', topologyId, action.option],
-          [action.value]
-        );
+
+        if (action.addOrRemove === 'add') {
+          values = state.getIn(optionKey).concat(values);
+        } else if (action.addOrRemove === 'remove') {
+          values = state.getIn(optionKey).filter(o => !values.includes(o));
+        }
+        state = state.setIn(optionKey, values);
       }
       return state;
     }
