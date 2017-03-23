@@ -33,7 +33,8 @@ function getNextValue(keyValues, maxValue) {
   const key = keyValues.join('-');
   let series = nodeData[key];
   if (!series || !series.length) {
-    series = nodeData[key] = bumpLayer(100, maxValue);
+    nodeData[key] = bumpLayer(100, maxValue);
+    series = nodeData[key];
   }
   const v = series.shift();
   return v;
