@@ -177,11 +177,14 @@ func (s *Sets) CodecEncodeSelf(encoder *codec.Encoder) {
 
 // CodecDecodeSelf implements codec.Selfer
 func (s *Sets) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := map[string]StringSet{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
-	*s = Sets{}.fromIntermediate(in)
+	out := mapRead(decoder, func(isNil bool) interface{} {
+		var value StringSet
+		if !isNil {
+			decoder.Decode(&value)
+		}
+		return value
+	})
+	*s = Sets{out}
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead

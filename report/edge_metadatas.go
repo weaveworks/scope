@@ -177,11 +177,14 @@ func (c *EdgeMetadatas) CodecEncodeSelf(encoder *codec.Encoder) {
 
 // CodecDecodeSelf implements codec.Selfer
 func (c *EdgeMetadatas) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := map[string]EdgeMetadata{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
-	*c = EdgeMetadatas{}.fromIntermediate(in)
+	out := mapRead(decoder, func(isNil bool) interface{} {
+		var value EdgeMetadata
+		if !isNil {
+			value.CodecDecodeSelf(decoder)
+		}
+		return value
+	})
+	*c = EdgeMetadatas{out}
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
@@ -218,6 +221,7 @@ type EdgeMetadata struct {
 	IngressPacketCount *uint64 `json:"ingress_packet_count,omitempty"`
 	EgressByteCount    *uint64 `json:"egress_byte_count,omitempty"`  // Transport layer
 	IngressByteCount   *uint64 `json:"ingress_byte_count,omitempty"` // Transport layer
+	dummySelfer
 }
 
 // String returns a string representation of this EdgeMetadata

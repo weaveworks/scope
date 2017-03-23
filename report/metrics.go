@@ -225,6 +225,7 @@ type WireMetrics struct {
 	Max     float64  `json:"max"`
 	First   string   `json:"first,omitempty"`
 	Last    string   `json:"last,omitempty"`
+	dummySelfer
 }
 
 func renderTime(t time.Time) string {
@@ -272,9 +273,7 @@ func (m *Metric) CodecEncodeSelf(encoder *codec.Encoder) {
 // CodecDecodeSelf implements codec.Selfer
 func (m *Metric) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := WireMetrics{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
+	in.CodecDecodeSelf(decoder)
 	*m = in.FromIntermediate()
 }
 

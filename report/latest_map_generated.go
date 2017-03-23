@@ -14,6 +14,7 @@ import (
 type stringLatestEntry struct {
 	Timestamp time.Time `json:"timestamp"`
 	Value     string    `json:"value"`
+	dummySelfer
 }
 
 // String returns the StringLatestEntry's string representation.
@@ -89,7 +90,7 @@ func (m StringLatestMap) Set(key string, timestamp time.Time, value string) Stri
 	if m.Map == nil {
 		m.Map = ps.NewMap()
 	}
-	return StringLatestMap{m.Map.Set(key, &stringLatestEntry{timestamp, value})}
+	return StringLatestMap{m.Map.Set(key, &stringLatestEntry{Timestamp: timestamp, Value: value})}
 }
 
 // Delete the value for the given key.
@@ -145,7 +146,7 @@ func (m *StringLatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 	out := mapRead(decoder, func(isNil bool) interface{} {
 		value := &stringLatestEntry{}
 		if !isNil {
-			decoder.Decode(value)
+			value.CodecDecodeSelf(decoder)
 		}
 		return value
 	})
@@ -165,6 +166,7 @@ func (*StringLatestMap) UnmarshalJSON(b []byte) error {
 type nodeControlDataLatestEntry struct {
 	Timestamp time.Time       `json:"timestamp"`
 	Value     NodeControlData `json:"value"`
+	dummySelfer
 }
 
 // String returns the StringLatestEntry's string representation.
@@ -240,7 +242,7 @@ func (m NodeControlDataLatestMap) Set(key string, timestamp time.Time, value Nod
 	if m.Map == nil {
 		m.Map = ps.NewMap()
 	}
-	return NodeControlDataLatestMap{m.Map.Set(key, &nodeControlDataLatestEntry{timestamp, value})}
+	return NodeControlDataLatestMap{m.Map.Set(key, &nodeControlDataLatestEntry{Timestamp: timestamp, Value: value})}
 }
 
 // Delete the value for the given key.
@@ -296,7 +298,7 @@ func (m *NodeControlDataLatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 	out := mapRead(decoder, func(isNil bool) interface{} {
 		value := &nodeControlDataLatestEntry{}
 		if !isNil {
-			decoder.Decode(value)
+			value.CodecDecodeSelf(decoder)
 		}
 		return value
 	})

@@ -18,6 +18,7 @@ DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VE
 RUNSVINIT=vendor/runsvinit/runsvinit
 CODECGEN_DIR=vendor/github.com/ugorji/go/codec/codecgen
 CODECGEN_EXE=$(CODECGEN_DIR)/bin/codecgen_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)
+CODECGEN_UID=0
 GET_CODECGEN_DEPS=$(shell find $(1) -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name '*.codecgen.go' -not -name '*.generated.go')
 CODECGEN_TARGETS=report/report.codecgen.go render/detailed/detailed.codecgen.go
 RM=--rm
@@ -93,7 +94,7 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/staticui/staticui.go prog/extern
 		--net=host \
 		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL \
 		-e CIRCLE_NODE_INDEX -e COVERDIR -e SLOW -e TESTDIRS \
-		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) $@
+		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) GO_BUILD_INSTALL_DEPS=$(GO_BUILD_INSTALL_DEPS) CODECGEN_UID=$(CODECGEN_UID) $@
 
 else
 
@@ -110,7 +111,7 @@ $(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 
 %.codecgen.go: $(CODECGEN_EXE)
 	rm -f $@; $(GO_HOST) build $(GO_BUILD_FLAGS) ./$(@D) # workaround for https://github.com/ugorji/go/issues/145
-	cd $(@D) && $(WITH_GO_HOST_ENV) $(shell pwd)/$(CODECGEN_EXE) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
+	cd $(@D) && $(WITH_GO_HOST_ENV) $(shell pwd)/$(CODECGEN_EXE) -d $(CODECGEN_UID) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
 
 $(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
 	mkdir -p $(@D)
@@ -122,7 +123,7 @@ $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	/bin/bash
 
-tests: $(SCOPE_BACKEND_BUILD_UPTODATE)
+tests: $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS)
 	./tools/test -no-go-get
 
 lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
