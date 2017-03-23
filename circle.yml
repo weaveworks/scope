@@ -42,7 +42,7 @@ test:
   override:
     - cd $SRCDIR; make RM= lint:
         parallel: true
-    - cd $SRCDIR; COVERDIR=./coverage make RM= tests:
+    - cd $SRCDIR; COVERDIR=./coverage make RM= CODECGEN_UID=23 tests:
         parallel: true
     - cd $SRCDIR; make RM= client-test static:
         parallel: true
