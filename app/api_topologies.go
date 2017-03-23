@@ -50,7 +50,7 @@ var (
 // kubernetesFilters generates the current kubernetes filters based on the
 // available k8s topologies.
 func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
-	options := APITopologyOptionGroup{ID: "namespace", Default: "all"}
+	options := APITopologyOptionGroup{ID: "namespace", Default: "all", SelectType: "union"}
 	for _, namespace := range namespaces {
 		if namespace == "default" {
 			options.Default = namespace
