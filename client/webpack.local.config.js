@@ -53,9 +53,7 @@ module.exports = {
   // Necessary plugins for hot load
   plugins: [
     new webpack.optimize.CommonsChunkPlugin({ name: 'vendors', filename: 'vendors.js' }),
-    // new webpack.optimize.OccurrenceOrderPlugin(), there by default
     new webpack.HotModuleReplacementPlugin(),
-    // new webpack.NoErrorsPlugin(),
     new webpack.NoEmitOnErrorsPlugin(),
     // new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
     new ExtractTextPlugin('style-[name]-[chunkhash].css'),
@@ -93,10 +91,6 @@ module.exports = {
         loader: 'eslint-loader',
         enforce: 'pre'
       },
-      // {
-      //   test: /\.json$/,
-      //   loader: 'json-loader'
-      // },
       {
         test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
         loader: 'url-loader',
