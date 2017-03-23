@@ -50,7 +50,7 @@ var (
 // kubernetesFilters generates the current kubernetes filters based on the
 // available k8s topologies.
 func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
-	options := APITopologyOptionGroup{ID: "namespace", Default: "all", SelectType: "union"}
+	options := APITopologyOptionGroup{ID: "namespace", Default: "", SelectType: "union", NoneLabel: "All Namespaces"}
 	for _, namespace := range namespaces {
 		if namespace == "default" {
 			options.Default = namespace
@@ -59,7 +59,6 @@ func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
 			Value: namespace, Label: namespace, filter: render.IsNamespace(namespace), filterPseudo: false,
 		})
 	}
-	options.Options = append(options.Options, APITopologyOption{Value: "all", Label: "All Namespaces", filter: nil, filterPseudo: false})
 	return options
 }
 
@@ -294,22 +293,22 @@ func (a byName) Less(i, j int) bool { return a[i].Name < a[j].Name }
 
 // APITopologyOptionGroup describes a group of APITopologyOptions
 type APITopologyOptionGroup struct {
-	ID      string              `json:"id"`
+	ID string `json:"id"`
+	// Default value for the UI to adopt. NOT used as the default if the value is omitted, allowing "" as a distinct value.
 	Default string              `json:"defaultValue,omitempty"`
 	Options []APITopologyOption `json:"options,omitempty"`
 	// SelectType describes how options can be picked. Currently defined values:
 	//   "one": Default if empty. Exactly one option may be picked from the list.
 	//   "union": Any number of options may be picked. Nodes matching any option filter selected are displayed.
-	//           Value and Default should be a ","-seperated list.
+	//           Value and Default should be a ","-separated list.
 	SelectType string `json:"selectType,omitempty"`
+	// For "union" type, this is the label the UI should use to represent the case where nothing is selected
+	NoneLabel string `json:"noneLabel,omitempty"`
 }
 
 // Get the render filters to use for this option group as a Decorator, if any.
 // If second arg is false, no decorator was needed.
 func (g APITopologyOptionGroup) getFilterDecorator(value string) (render.Decorator, bool) {
-	if value == "" {
-		value = g.Default
-	}
 	selectType := g.SelectType
 	if selectType == "" {
 		selectType = "one"
