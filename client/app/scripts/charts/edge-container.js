@@ -27,7 +27,7 @@ const transformedEdge = (props, path) => (
 // that is used by Motion to an array of waypoints in the format
 // [{x: 11, y: 22}, {x: 33, y: 44}] that can be used by D3.
 const waypointsMapToArray = (waypointsMap) => {
-  const waypointsArray = times(WAYPOINTS_COUNT, () => ({}));
+  const waypointsArray = times(WAYPOINTS_COUNT, () => ({ x: 0, y: 0}));
   each(waypointsMap, (value, key) => {
     const [axis, index] = [key[0], key.slice(1)];
     waypointsArray[index][axis] = value;
