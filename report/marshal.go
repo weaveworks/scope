@@ -70,10 +70,13 @@ func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handl
 			return err
 		}
 	}
-	if log.GetLevel() == log.DebugLevel {
-		r = byteCounter{next: r, count: &uncompressedSize}
+	// Read everything into memory before decoding: it's faster
+	buf, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
 	}
-	if err := codec.NewDecoder(r, codecHandle).Decode(&rep); err != nil {
+	uncompressedSize = uint64(len(buf))
+	if err := rep.ReadBytes(buf, codecHandle); err != nil {
 		return err
 	}
 	log.Debugf(
