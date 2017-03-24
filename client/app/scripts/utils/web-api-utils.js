@@ -188,14 +188,11 @@ export function getAllNodes(getState, dispatch) {
 
 /**
  * One-time update of all the nodes of topologies that appear in the current resource view.
+ * TODO: Replace the one-time snapshot with periodic polling.
  */
 export function getResourceViewNodesSnapshot(getState, dispatch) {
   const topologyIds = layersTopologyIdsSelector(getState());
-  // TODO: Remove the timeout and replace it with normal polling once we figure how to make
-  // resource view dynamic (from the UI point of view, the challenge is to make it stable).
-  setTimeout(() => {
-    getNodesForTopologies(getState, dispatch, topologyIds);
-  }, 1200);
+  getNodesForTopologies(getState, dispatch, topologyIds);
 }
 
 export function getTopologies(options, dispatch, initialPoll) {

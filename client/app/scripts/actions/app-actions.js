@@ -618,9 +618,13 @@ export function receiveTopologies(topologies) {
       state.get('nodeDetails'),
       dispatch
     );
-    // populate search matches on first load
+    // Populate search matches on first load
     if (firstLoad && state.get('searchQuery')) {
       dispatch(focusSearch());
+    }
+    // Fetch all the relevant nodes once on first load
+    if (firstLoad && isResourceViewModeSelector(state)) {
+      getResourceViewNodesSnapshot(getState, dispatch);
     }
   };
 }
