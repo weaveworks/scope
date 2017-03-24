@@ -1,6 +1,5 @@
 import debug from 'debug';
 import reqwest from 'reqwest';
-import trimStart from 'lodash/trimStart';
 import defaults from 'lodash/defaults';
 import { Map as makeMap } from 'immutable';
 
@@ -167,11 +166,8 @@ function getNodesForTopologies(getState, dispatch, topologyIds, topologyOptions 
     .filter((_, topologyId) => topologyIds.contains(topologyId))
     .reduce((sequence, topologyUrl, topologyId) => sequence.then(() => {
       const optionsQuery = buildOptionsQuery(topologyOptions.get(topologyId));
-      // Trim the leading slash from the url before requesting.
-      // This ensures that scope will request from the correct route if embedded in an iframe.
-      return fetch(`${trimStart(topologyUrl, '/')}?${optionsQuery}`);
+      return doRequest({ url: `${getApiPath()}${topologyUrl}?${optionsQuery}` });
     })
-    .then(response => response.json())
     .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
     Promise.resolve());
 }
