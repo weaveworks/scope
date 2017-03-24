@@ -5,13 +5,18 @@ import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
   OrderedMap as makeOrderedMap, Set as makeSet } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
-import { EDGE_ID_SEPARATOR } from '../constants/naming';
+import {
+  EDGE_ID_SEPARATOR,
+  GRAPH_VIEW_MODE,
+  TABLE_VIEW_MODE,
+} from '../constants/naming';
 import {
   graphExceedsComplexityThreshSelector,
-  activeTopologyZoomCacheKeyPathSelector,
+  isResourceViewModeSelector,
 } from '../selectors/topology';
+import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
+import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/node-metric';
 import { applyPinnedSearches } from '../utils/search-utils';
-import { getNetworkNodes } from '../utils/network-view-utils';
 import {
   findTopologyById,
   getAdjacentNodes,
@@ -32,8 +37,6 @@ const topologySorter = topology => topology.get('rank');
 // Initial values
 
 export const initialState = makeMap({
-  availableCanvasMetrics: makeList(),
-  availableNetworks: makeList(),
   contrastMode: false,
   controlPipes: makeOrderedMap(), // pipeId -> controlPipe
   controlStatus: makeMap(),
@@ -42,7 +45,6 @@ export const initialState = makeMap({
   errorUrl: null,
   exportingGraph: false,
   forceRelayout: false,
-  gridMode: false,
   gridSortedBy: null,
   gridSortedDesc: null,
   // TODO: Calculate these sets from selectors instead.
@@ -52,13 +54,11 @@ export const initialState = makeMap({
   initialNodesLoaded: false,
   mouseOverEdgeId: null,
   mouseOverNodeId: null,
-  networkNodes: makeMap(),
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
   nodesLoaded: false,
-  // nodes cache, infrequently updated, used for search
+  // nodes cache, infrequently updated, used for search & resource view
   nodesByTopology: makeMap(), // topologyId -> nodes
-  pinnedMetric: null,
   // class of metric, e.g. 'cpu', rather than 'host_cpu' or 'process_cpu'.
   // allows us to keep the same metric "type" selected when the topology changes.
   pinnedMetricType: null,
@@ -78,6 +78,7 @@ export const initialState = makeMap({
   topologiesLoaded: false,
   topologyOptions: makeOrderedMap(), // topologyId -> options
   topologyUrlsById: makeOrderedMap(), // topologyId -> topologyUrl
+  topologyViewMode: GRAPH_VIEW_MODE,
   updatePausedAt: null, // Date
   version: '...',
   versionUpdate: null,
@@ -207,8 +208,8 @@ export function rootReducer(state = initialState, action) {
       });
     }
 
-    case ActionTypes.SET_GRID_MODE: {
-      return state.setIn(['gridMode'], action.enabled);
+    case ActionTypes.SET_VIEW_MODE: {
+      return state.set('topologyViewMode', action.viewMode);
     }
 
     case ActionTypes.CACHE_ZOOM_STATE: {
@@ -309,7 +310,6 @@ export function rootReducer(state = initialState, action) {
         state = setTopology(state, action.topologyId);
         state = clearNodes(state);
       }
-      state = state.set('availableCanvasMetrics', makeList());
 
       return state;
     }
@@ -323,7 +323,6 @@ export function rootReducer(state = initialState, action) {
         state = clearNodes(state);
       }
 
-      state = state.set('availableCanvasMetrics', makeList());
       return state;
     }
 
@@ -372,20 +371,18 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.PIN_METRIC: {
-      const metricTypes = makeMap(
-        state.get('availableCanvasMetrics').map(m => [m.get('id'), m.get('label')]));
+      const canvasMetrics = availableMetricsSelector(state);
+      const metricTypes = makeMap(canvasMetrics.map(m => [m.get('id'), m.get('label')]));
+      // Pin the first metric if no metric ID was explicitly given.
+      const metricId = action.metricId || (canvasMetrics.first() || makeMap()).get('id');
       return state.merge({
-        pinnedMetric: action.metricId,
-        pinnedMetricType: metricTypes.get(action.metricId),
-        selectedMetric: action.metricId
+        pinnedMetricType: metricTypes.get(metricId),
+        selectedMetric: metricId,
       });
     }
 
     case ActionTypes.UNPIN_METRIC: {
-      return state.merge({
-        pinnedMetric: null,
-        pinnedMetricType: null
-      });
+      return state.set('pinnedMetricType', null);
     }
 
     case ActionTypes.SHOW_HELP: {
@@ -550,9 +547,10 @@ export function rootReducer(state = initialState, action) {
       // Turn on the table view if the graph is too complex, but skip
       // this block if the user has already loaded topologies once.
       if (!state.get('initialNodesLoaded') && !state.get('nodesLoaded')) {
-        state = graphExceedsComplexityThreshSelector(state)
-          ? state.set('gridMode', true)
-          : state;
+        if (state.get('topologyViewMode') === GRAPH_VIEW_MODE) {
+          state = graphExceedsComplexityThreshSelector(state)
+            ? state.set('topologyViewMode', TABLE_VIEW_MODE) : state;
+        }
         state = state.set('initialNodesLoaded', true);
       }
       return state.set('nodesLoaded', true);
@@ -600,30 +598,23 @@ export function rootReducer(state = initialState, action) {
 
       // apply pinned searches, filters nodes that dont match
       state = applyPinnedSearches(state);
-      state = state.set('networkNodes', getNetworkNodes(state));
 
-      state = state.set('availableCanvasMetrics', state.get('nodes')
-        .valueSeq()
-        .flatMap(n => (n.get('metrics') || makeList()).map(m => (
-          makeMap({id: m.get('id'), label: m.get('label')})
-        )))
-        .toSet()
-        .toList()
-        .sortBy(m => m.get('label')));
-
-      const similarTypeMetric = state.get('availableCanvasMetrics')
-        .find(m => m.get('label') === state.get('pinnedMetricType'));
-      state = state.set('pinnedMetric', similarTypeMetric && similarTypeMetric.get('id'));
       // if something in the current topo is not already selected, select it.
-      if (!state.get('availableCanvasMetrics')
+      if (!availableMetricsSelector(state)
         .map(m => m.get('id'))
         .toSet()
         .has(state.get('selectedMetric'))) {
-        state = state.set('selectedMetric', state.get('pinnedMetric'));
+        state = state.set('selectedMetric', pinnedMetricSelector(state));
       }
 
-      // update nodes cache
-      return state.setIn(['nodesByTopology', state.get('currentTopologyId')], state.get('nodes'));
+      // Update the nodes cache only if we're not in the resource view mode, as we
+      // intentionally want to keep it static before we figure how to keep it up-to-date.
+      if (!isResourceViewModeSelector(state)) {
+        const nodesForCurrentTopologyKey = ['nodesByTopology', state.get('currentTopologyId')];
+        state = state.setIn(nodesForCurrentTopologyKey, state.get('nodes'));
+      }
+
+      return state;
     }
 
     case ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY: {
@@ -684,7 +675,7 @@ export function rootReducer(state = initialState, action) {
         selectedNodeId: action.state.selectedNodeId,
         pinnedMetricType: action.state.pinnedMetricType
       });
-      state = state.set('gridMode', action.state.topologyViewMode === 'grid');
+      state = state.set('topologyViewMode', action.state.topologyViewMode);
       if (action.state.gridSortedBy) {
         state = state.set('gridSortedBy', action.state.gridSortedBy);
       }

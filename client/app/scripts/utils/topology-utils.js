@@ -1,6 +1,8 @@
 import { endsWith } from 'lodash';
 import { Set as makeSet, List as makeList } from 'immutable';
 
+import { isResourceViewModeSelector } from '../selectors/topology';
+import { pinnedMetricSelector } from '../selectors/node-metric';
 
 //
 // top priority first
@@ -132,8 +134,12 @@ export function getCurrentTopologyOptions(state) {
 }
 
 export function isTopologyEmpty(state) {
-  return state.getIn(['currentTopology', 'stats', 'node_count'], 0) === 0
-    && state.get('nodes').size === 0;
+  // Consider a topology in the resource view empty if it has no pinned metric.
+  const resourceViewEmpty = isResourceViewModeSelector(state) && !pinnedMetricSelector(state);
+  // Otherwise (in graph and table view), we only look at the node count.
+  const nodeCount = state.getIn(['currentTopology', 'stats', 'node_count'], 0);
+  const nodesEmpty = nodeCount === 0 && state.get('nodes').size === 0;
+  return resourceViewEmpty || nodesEmpty;
 }
 
 

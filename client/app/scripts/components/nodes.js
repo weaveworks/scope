@@ -4,16 +4,20 @@ import { debounce } from 'lodash';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesGrid from '../charts/nodes-grid';
+import NodesResources from '../components/nodes-resources';
 import NodesError from '../charts/nodes-error';
 import DelayedShow from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
 import { setViewportDimensions } from '../actions/app-actions';
+import {
+  isGraphViewModeSelector,
+  isTableViewModeSelector,
+  isResourceViewModeSelector,
+} from '../selectors/topology';
+
 import { VIEWPORT_RESIZE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
-
-const navbarHeight = 194;
-const marginTop = 0;
 
 const EmptyTopologyError = show => (
   <NodesError faIconClass="fa-circle-thin" hidden={!show}>
@@ -47,9 +51,10 @@ class Nodes extends React.Component {
   }
 
   render() {
-    const { topologyEmpty, gridMode, topologiesLoaded, nodesLoaded, topologies,
-      currentTopology } = this.props;
+    const { topologyEmpty, topologiesLoaded, nodesLoaded, topologies, currentTopology,
+      isGraphViewMode, isTableViewMode, isResourceViewMode } = this.props;
 
+    // TODO: Rename view mode components.
     return (
       <div className="nodes-wrapper">
         <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>
@@ -60,23 +65,25 @@ class Nodes extends React.Component {
         </DelayedShow>
         {EmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
 
-        {gridMode ? <NodesGrid /> : <NodesChart />}
+        {isGraphViewMode && <NodesChart />}
+        {isTableViewMode && <NodesGrid />}
+        {isResourceViewMode && <NodesResources />}
       </div>
     );
   }
 
   setDimensions() {
-    const width = window.innerWidth;
-    const height = window.innerHeight - navbarHeight - marginTop;
-    this.props.setViewportDimensions(width, height);
+    this.props.setViewportDimensions(window.innerWidth, window.innerHeight);
   }
 }
 
 
 function mapStateToProps(state) {
   return {
+    isGraphViewMode: isGraphViewModeSelector(state),
+    isTableViewMode: isTableViewModeSelector(state),
+    isResourceViewMode: isResourceViewModeSelector(state),
     currentTopology: state.get('currentTopology'),
-    gridMode: state.get('gridMode'),
     nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),

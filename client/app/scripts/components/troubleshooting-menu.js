@@ -38,7 +38,7 @@ class DebugMenu extends React.Component {
                 </span>
               </a>
             </div>
-            {!this.props.gridMode && <div className="troubleshooting-menu-item">
+            <div className="troubleshooting-menu-item">
               <a
                 href=""
                 className="footer-icon"
@@ -50,7 +50,7 @@ class DebugMenu extends React.Component {
                   Save canvas as SVG (does not include search highlighting)
                 </span>
               </a>
-            </div>}
+            </div>
             <div className="troubleshooting-menu-item">
               <a
                 href=""
@@ -86,13 +86,7 @@ class DebugMenu extends React.Component {
   }
 }
 
-function mapStateToProps(state) {
-  return {
-    gridMode: state.get('gridMode'),
-  };
-}
-
-export default connect(mapStateToProps, {
+export default connect(null, {
   toggleTroubleshootingMenu,
   resetLocalViewState,
   clickDownloadGraph

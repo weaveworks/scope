@@ -2,6 +2,7 @@ import debug from 'debug';
 import reqwest from 'reqwest';
 import trimStart from 'lodash/trimStart';
 import defaults from 'lodash/defaults';
+import { Map as makeMap } from 'immutable';
 
 import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
@@ -9,6 +10,7 @@ import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveEr
   receiveControlSuccess, receiveTopologies, receiveNotFound,
   receiveNodesForTopology } from '../actions/app-actions';
 
+import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import { API_INTERVAL, TOPOLOGY_INTERVAL } from '../constants/timer';
 
 const log = debug('scope:web-api-utils');
@@ -157,13 +159,12 @@ function doRequest(opts) {
 }
 
 /**
- * Gets nodes for all topologies (for search)
+ * Does a one-time fetch of all the nodes for a custom list of topologies.
  */
-export function getAllNodes(getState, dispatch) {
-  const state = getState();
-  const topologyOptions = state.get('topologyOptions');
+function getNodesForTopologies(getState, dispatch, topologyIds, topologyOptions = makeMap()) {
   // fetch sequentially
-  state.get('topologyUrlsById')
+  getState().get('topologyUrlsById')
+    .filter((_, topologyId) => topologyIds.contains(topologyId))
     .reduce((sequence, topologyUrl, topologyId) => sequence.then(() => {
       const optionsQuery = buildOptionsQuery(topologyOptions.get(topologyId));
       // Trim the leading slash from the url before requesting.
@@ -173,6 +174,28 @@ export function getAllNodes(getState, dispatch) {
     .then(response => response.json())
     .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
     Promise.resolve());
+}
+
+/**
+ * Gets nodes for all topologies (for search).
+ */
+export function getAllNodes(getState, dispatch) {
+  const state = getState();
+  const topologyOptions = state.get('topologyOptions');
+  const topologyIds = state.get('topologyUrlsById').keySeq();
+  getNodesForTopologies(getState, dispatch, topologyIds, topologyOptions);
+}
+
+/**
+ * One-time update of all the nodes of topologies that appear in the current resource view.
+ */
+export function getResourceViewNodesSnapshot(getState, dispatch) {
+  const topologyIds = layersTopologyIdsSelector(getState());
+  // TODO: Remove the timeout and replace it with normal polling once we figure how to make
+  // resource view dynamic (from the UI point of view, the challenge is to make it stable).
+  setTimeout(() => {
+    getNodesForTopologies(getState, dispatch, topologyIds);
+  }, 1200);
 }
 
 export function getTopologies(options, dispatch, initialPoll) {
@@ -204,6 +227,8 @@ export function getTopologies(options, dispatch, initialPoll) {
   });
 }
 
+// TODO: topologyUrl and options are always used for the current topology so they as arguments
+// can be replaced by the `state` and then retrieved here internally from selectors.
 export function getNodesDelta(topologyUrl, options, dispatch) {
   const optionsQuery = buildOptionsQuery(options);
   // Only recreate websocket if url changed or if forced (weave cloud instance reload);

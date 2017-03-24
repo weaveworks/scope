@@ -13,6 +13,7 @@ import {
 import {
   doControlRequest,
   getAllNodes,
+  getResourceViewNodesSnapshot,
   getNodesDelta,
   getNodeDetails,
   getTopologies,
@@ -23,7 +24,16 @@ import {
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
-import { activeTopologyOptionsSelector } from '../selectors/topology';
+import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/node-metric';
+import {
+  activeTopologyOptionsSelector,
+  isResourceViewModeSelector,
+} from '../selectors/topology';
+import {
+  GRAPH_VIEW_MODE,
+  TABLE_VIEW_MODE,
+  RESOURCE_VIEW_MODE,
+ } from '../constants/naming';
 
 const log = debug('scope:app-actions');
 
@@ -141,7 +151,7 @@ export function unpinMetric() {
 export function pinNextMetric(delta) {
   return (dispatch, getState) => {
     const state = getState();
-    const metrics = state.get('availableCanvasMetrics').map(m => m.get('id'));
+    const metrics = availableMetricsSelector(state).map(m => m.get('id'));
     const currentIndex = metrics.indexOf(state.get('selectedMetric'));
     const nextIndex = modulo(currentIndex + delta, metrics.count());
     const nextMetric = metrics.get(nextIndex);
@@ -248,21 +258,53 @@ export function clickForceRelayout() {
   };
 }
 
+export function doSearch(searchQuery) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.DO_SEARCH,
+      searchQuery
+    });
+    updateRoute(getState);
+  };
+}
+
 export function setViewportDimensions(width, height) {
   return (dispatch) => {
     dispatch({ type: ActionTypes.SET_VIEWPORT_DIMENSIONS, width, height });
   };
 }
 
-export function toggleGridMode(enabledArgument) {
+export function setGraphView() {
   return (dispatch, getState) => {
-    const enabled = (enabledArgument === undefined) ?
-      !getState().get('gridMode') :
-      enabledArgument;
     dispatch({
-      type: ActionTypes.SET_GRID_MODE,
-      enabled
+      type: ActionTypes.SET_VIEW_MODE,
+      viewMode: GRAPH_VIEW_MODE,
     });
+    updateRoute(getState);
+  };
+}
+
+export function setTableView() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.SET_VIEW_MODE,
+      viewMode: TABLE_VIEW_MODE,
+    });
+    updateRoute(getState);
+  };
+}
+
+export function setResourceView() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.SET_VIEW_MODE,
+      viewMode: RESOURCE_VIEW_MODE,
+    });
+    // Pin the first metric if none of the visible ones is pinned.
+    if (!pinnedMetricSelector(getState())) {
+      dispatch({ type: ActionTypes.PIN_METRIC });
+    }
+    getResourceViewNodesSnapshot(getState, dispatch);
     updateRoute(getState);
   };
 }
@@ -323,6 +365,25 @@ export function clickResumeUpdate() {
   };
 }
 
+function updateTopology(dispatch, getState) {
+  const state = getState();
+  // If we're in the resource view, get the snapshot of all the relevant node topologies.
+  if (isResourceViewModeSelector(state)) {
+    getResourceViewNodesSnapshot(getState, dispatch);
+  }
+  updateRoute(getState);
+  // update all request workers with new options
+  resetUpdateBuffer();
+  // NOTE: This is currently not needed for our static resource
+  // view, but we'll need it here later and it's simpler to just
+  // keep it than to redo the nodes delta updating logic.
+  getNodesDelta(
+    getCurrentTopologyUrl(state),
+    activeTopologyOptionsSelector(state),
+    dispatch
+  );
+}
+
 export function clickShowTopologyForNode(topologyId, nodeId) {
   return (dispatch, getState) => {
     dispatch({
@@ -330,15 +391,7 @@ export function clickShowTopologyForNode(topologyId, nodeId) {
       topologyId,
       nodeId
     });
-    updateRoute(getState);
-    // update all request workers with new options
-    resetUpdateBuffer();
-    const state = getState();
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      dispatch
-    );
+    updateTopology(dispatch, getState);
   };
 }
 
@@ -348,15 +401,7 @@ export function clickTopology(topologyId) {
       type: ActionTypes.CLICK_TOPOLOGY,
       topologyId
     });
-    updateRoute(getState);
-    // update all request workers with new options
-    resetUpdateBuffer();
-    const state = getState();
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      dispatch
-    );
+    updateTopology(dispatch, getState);
   };
 }
 
@@ -394,16 +439,6 @@ export function doControl(nodeId, control) {
       control
     });
     doControlRequest(nodeId, control, dispatch);
-  };
-}
-
-export function doSearch(searchQuery) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.DO_SEARCH,
-      searchQuery
-    });
-    updateRoute(getState);
   };
 }
 
@@ -700,6 +735,12 @@ export function route(urlState) {
       state.get('nodeDetails'),
       dispatch
     );
+    // If we are landing on the resource view page, we need to fetch not only all the
+    // nodes for the current topology, but also the nodes of all the topologies that make
+    // the layers in the resource view.
+    if (isResourceViewModeSelector(state)) {
+      getResourceViewNodesSnapshot(getState, dispatch);
+    }
   };
 }
 

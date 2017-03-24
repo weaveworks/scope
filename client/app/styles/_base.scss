@@ -52,7 +52,11 @@
   &-selected {
     opacity: $btn-opacity-selected;
   }
-  &:hover {
+  &[disabled] {
+    cursor: default;
+    opacity: $btn-opacity-disabled;
+  }
+  &:not([disabled]):hover {
     opacity: $btn-opacity-hover;
   }
 }
@@ -245,7 +249,7 @@
 
 }
 
-.nodes-chart {
+.nodes-chart, .nodes-resources {
 
   &-error, &-loading {
     @extend .hideable;
@@ -302,11 +306,6 @@
   .nodes-chart-nodes .node {
     transition: opacity .2s $base-ease;
     text-align: center;
-
-    .node-network {
-      // stroke: $background-lighter-color;
-      // stroke-width: 4px;
-    }
 
     .node-label {
       color: $text-color;
@@ -937,6 +936,37 @@
   }
 }
 
+.node-resources {
+  &-metric-box {
+    fill: rgba(150, 150, 150, 0.4);
+
+    &-info {
+      background-color: rgba(white, 0.6);
+      border-radius: 2px;
+      cursor: default;
+      padding: 5px;
+
+      .wrapper {
+        display: block;
+
+        &.label { font-size: 15px; }
+        &.consumption { font-size: 12px; }
+      }
+    }
+  }
+
+  &-layer-topology {
+    background-color: rgba(#eee, 0.95);
+    border: 1px solid #ccc;
+    color: $text-tertiary-color;
+    font-size: 16px;
+    font-weight: bold;
+    padding-right: 20px;
+    text-align: right;
+    text-transform: uppercase;
+  }
+}
+
 // This part sets the styles only for the 'real' node details table, not applying
 // them to the nodes grid, because there we control hovering from the JS.
 // NOTE: Maybe it would be nice to separate the class names between the two places
@@ -1151,7 +1181,7 @@
   }
 
   .error {
-    animation: blinking 2.0s 60 $base-ease; // blink for 2 minute;
+    animation: blinking 2.0s 60 $base-ease; // blink for 2 minutes
     color: $text-secondary-color;
   }
 
@@ -1181,7 +1211,7 @@
   }
 }
 
-.topology-option, .metric-selector, .network-selector, .grid-mode-selector {
+.topology-option, .metric-selector, .network-selector, .view-mode-selector {
   color: $text-secondary-color;
   margin: 6px 0;
 
@@ -1208,7 +1238,7 @@
     display: inline-block;
     background-color: $background-color;
 
-    &-selected, &:hover {
+    &-selected, &:not([disabled]):hover {
       color: $text-darker-color;
       background-color: $background-darker-color;
     }
@@ -1226,10 +1256,9 @@
   }
 }
 
-.grid-mode-selector {
-
+.view-mode-selector {
   margin-top: 8px;
-  margin-left: 8px;
+  margin-left: 20px;
   min-width: 161px;
 
   &-wrapper {
@@ -1240,7 +1269,7 @@
 
   &:first-child,
   &:last-child {
-    .grid-mode-selector-action {
+    .view-mode-selector-action {
       border-radius: 0;
     }
   }
@@ -1249,8 +1278,12 @@
     background-color: transparent;
     text-transform: uppercase;
 
-    &-selected, &:hover {
+    &-selected, &:not([disabled]):hover {
       background-color: $background-darker-secondary-color;
+    }
+
+    &:not(:last-child) {
+      border-right: 1px solid $background-darker-secondary-color;
     }
   }
 }
@@ -1263,7 +1296,7 @@
   }
 }
 
-.grid-mode-selector .fa {
+.view-mode-selector-wrapper .fa {
   margin-right: 4px;
   margin-left: 0;
   color: $text-secondary-color;
@@ -1612,13 +1645,13 @@
 
       &-term {
         flex: 1;
-        color: #5b5b88;
+        color: $text-secondary-color;
       }
 
       &-term-label {
         flex: 1;
         b {
-          color: #5b5b88;
+          color: $text-secondary-color;
         }
       }
     }
@@ -1650,7 +1683,7 @@
           // Notes: Firefox gets a bit messy if you try and bubble
           // heights + overflow up (min-height issue + still doesn't work v.well),
           // so this is a bit of a hack.
-          max-height: calc(100vh - 160px - 160px - 160px);
+          max-height: "calc(100vh - 160px - 160px - 160px)";
         }
       }
     }

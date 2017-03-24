@@ -16,13 +16,18 @@ import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric
   selectMetric, toggleHelp, toggleGridMode, shutdown } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
-import GridModeSelector from './grid-mode-selector';
-import MetricSelector from './metric-selector';
+import ViewModeSelector from './view-mode-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
 import { getRouter, getUrlState } from '../utils/router-utils';
-import { activeTopologyOptionsSelector } from '../selectors/topology';
 import { availableNetworksSelector } from '../selectors/node-networks';
+import {
+  activeTopologyOptionsSelector,
+  isResourceViewModeSelector,
+  isTableViewModeSelector,
+  isGraphViewModeSelector,
+} from '../selectors/topology';
+
 
 const BACKSPACE_KEY_CODE = 8;
 const ENTER_KEY_CODE = 13;
@@ -102,7 +107,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { gridMode, showingDetails, showingHelp, showingMetricsSelector,
+    const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails, showingHelp,
       showingNetworkSelector, showingTroubleshootingMenu } = this.props;
     const isIframe = window !== window.top;
 
@@ -124,16 +129,15 @@ class App extends React.Component {
           </div>
           <Search />
           <Topologies />
-          <GridModeSelector />
+          <ViewModeSelector />
         </div>
 
         <Nodes />
 
-        <Sidebar classNames={gridMode ? 'sidebar-gridmode' : ''}>
-          {showingMetricsSelector && !gridMode && <MetricSelector />}
-          {showingNetworkSelector && !gridMode && <NetworkSelector />}
-          <Status />
-          <TopologyOptions />
+        <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
+          {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
+          {!isResourceViewMode && <Status />}
+          {!isResourceViewMode && <TopologyOptions />}
         </Sidebar>
 
         <Footer />
@@ -146,14 +150,15 @@ class App extends React.Component {
 function mapStateToProps(state) {
   return {
     activeTopologyOptions: activeTopologyOptionsSelector(state),
-    gridMode: state.get('gridMode'),
+    isResourceViewMode: isResourceViewModeSelector(state),
+    isTableViewMode: isTableViewModeSelector(state),
+    isGraphViewMode: isGraphViewModeSelector(state),
     routeSet: state.get('routeSet'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
     showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
-    showingMetricsSelector: state.get('availableCanvasMetrics').count() > 0,
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
     urlState: getUrlState(state)

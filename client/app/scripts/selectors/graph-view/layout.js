@@ -3,14 +3,14 @@ import { createSelector } from 'reselect';
 import { scaleThreshold } from 'd3-scale';
 import { fromJS, Set as makeSet, List as makeList } from 'immutable';
 
-import { NODE_BASE_SIZE } from '../constants/styles';
-import { graphNodesSelector, graphEdgesSelector } from './nodes-chart-graph';
-import { activeLayoutZoomSelector } from './nodes-chart-zoom';
+import { NODE_BASE_SIZE } from '../../constants/styles';
+import { graphNodesSelector, graphEdgesSelector } from './graph';
+import { graphZoomStateSelector } from './zoom';
 import {
-  viewportCircularExpanseSelector,
-  viewportFocusHorizontalCenterSelector,
-  viewportFocusVerticalCenterSelector,
-} from './canvas-viewport';
+  canvasCircularExpanseSelector,
+  canvasDetailsHorizontalCenterSelector,
+  canvasDetailsVerticalCenterSelector,
+} from '../canvas';
 
 
 const circularOffsetAngle = Math.PI / 4;
@@ -23,15 +23,15 @@ const radiusDensity = scaleThreshold()
 
 const translationToViewportCenterSelector = createSelector(
   [
-    viewportFocusHorizontalCenterSelector,
-    viewportFocusVerticalCenterSelector,
-    activeLayoutZoomSelector,
+    canvasDetailsHorizontalCenterSelector,
+    canvasDetailsVerticalCenterSelector,
+    graphZoomStateSelector,
   ],
   (centerX, centerY, zoomState) => {
-    const { zoomScale, panTranslateX, panTranslateY } = zoomState.toJS();
+    const { scaleX, scaleY, translateX, translateY } = zoomState.toJS();
     return {
-      x: (-panTranslateX + centerX) / zoomScale,
-      y: (-panTranslateY + centerY) / zoomScale,
+      x: (-translateX + centerX) / scaleX,
+      y: (-translateY + centerY) / scaleY,
     };
   }
 );
@@ -75,9 +75,9 @@ const focusedNodesIdsSelector = createSelector(
 
 const circularLayoutScalarsSelector = createSelector(
   [
-    state => activeLayoutZoomSelector(state).get('zoomScale'),
+    state => graphZoomStateSelector(state).get('scaleX'),
     state => focusedNodesIdsSelector(state).length - 1,
-    viewportCircularExpanseSelector,
+    canvasCircularExpanseSelector,
   ],
   (scale, circularNodesCount, viewportExpanse) => {
     // Here we calculate the zoom factor of the nodes that get selected into focus.

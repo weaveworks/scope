@@ -2,12 +2,13 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { selectMetric } from '../actions/app-actions';
+import { availableMetricsSelector } from '../selectors/node-metric';
 import MetricSelectorItem from './metric-selector-item';
 
 class MetricSelector extends React.Component {
-
   constructor(props, context) {
     super(props, context);
+
     this.onMouseOut = this.onMouseOut.bind(this);
   }
 
@@ -16,16 +17,18 @@ class MetricSelector extends React.Component {
   }
 
   render() {
-    const {availableCanvasMetrics} = this.props;
-
-    const items = availableCanvasMetrics.map(metric => (
-      <MetricSelectorItem key={metric.get('id')} metric={metric} />
-    ));
+    const { alwaysPinned, availableMetrics } = this.props;
 
     return (
       <div className="metric-selector">
         <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
-          {items}
+          {availableMetrics.map(metric => (
+            <MetricSelectorItem
+              key={metric.get('id')}
+              alwaysPinned={alwaysPinned}
+              metric={metric}
+            />
+          ))}
         </div>
       </div>
     );
@@ -34,8 +37,7 @@ class MetricSelector extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    availableCanvasMetrics: state.get('availableCanvasMetrics'),
-    pinnedMetric: state.get('pinnedMetric')
+    availableMetrics: availableMetricsSelector(state),
   };
 }
 

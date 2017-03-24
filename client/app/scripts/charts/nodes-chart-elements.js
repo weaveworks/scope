@@ -8,15 +8,15 @@ import {
   selectedScaleSelector,
   layoutNodesSelector,
   layoutEdgesSelector
-} from '../selectors/nodes-chart-layout';
+} from '../selectors/graph-view/layout';
 
 
 class NodesChartElements extends React.Component {
   render() {
-    const { layoutNodes, layoutEdges, selectedScale, transform, isAnimated } = this.props;
+    const { layoutNodes, layoutEdges, selectedScale, isAnimated } = this.props;
 
     return (
-      <g className="nodes-chart-elements" transform={transform}>
+      <g className="nodes-chart-elements">
         <NodesChartEdges
           layoutEdges={layoutEdges}
           selectedScale={selectedScale}

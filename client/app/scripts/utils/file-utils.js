@@ -93,8 +93,12 @@ function download(source, name) {
   }, 10);
 }
 
+function getSVGElement() {
+  return document.getElementById('canvas');
+}
+
 function getSVG(doc, emptySvgDeclarationComputed) {
-  const svg = document.getElementById('nodes-chart-canvas');
+  const svg = getSVGElement();
   const target = svg.cloneNode(true);
 
   target.setAttribute('version', '1.1');
@@ -127,7 +131,7 @@ function cleanup() {
   });
 
   // hide embedded logo
-  const svg = document.getElementById('nodes-chart-canvas');
+  const svg = getSVGElement();
   svg.setAttribute('class', '');
 }
 

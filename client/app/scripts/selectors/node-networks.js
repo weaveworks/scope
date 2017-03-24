@@ -1,28 +1,22 @@
 import { createSelector } from 'reselect';
 import { createMapSelector } from 'reselect-map';
-import { fromJS, Map as makeMap, List as makeList } from 'immutable';
+import { fromJS, List as makeList, Map as makeMap } from 'immutable';
 
 
-const extractNodeNetworksValue = (node) => {
-  if (node.has('metadata')) {
-    const networks = node.get('metadata')
-      .find(field => field.get('id') === 'docker_container_networks');
-    return networks && networks.get('value');
-  }
-  return null;
-};
+const NETWORKS_ID = 'docker_container_networks';
 
 // TODO: Move this setting of networks as toplevel node field to backend,
 // to not rely on field IDs here. should be determined by topology implementer.
 export const nodeNetworksSelector = createMapSelector(
   [
-    state => state.get('nodes').map(extractNodeNetworksValue),
+    state => state.get('nodes'),
   ],
-  (networksValue) => {
-    if (!networksValue) {
-      return makeList();
-    }
-    return fromJS(networksValue.split(', ').map(network => ({
+  (node) => {
+    const metadata = node.get('metadata', makeList());
+    const networks = metadata.find(f => f.get('id') === NETWORKS_ID) || makeMap();
+    const networkValues = networks.has('value') ? networks.get('value').split(', ') : [];
+
+    return fromJS(networkValues.map(network => ({
       id: network, label: network, colorKey: network
     })));
   }
@@ -36,12 +30,19 @@ export const availableNetworksSelector = createSelector(
     .sortBy(m => m.get('label'))
 );
 
-// NOTE: Don't use this selector directly in mapStateToProps
-// as it would get called too many times.
 export const selectedNetworkNodesIdsSelector = createSelector(
   [
-    state => state.get('networkNodes'),
+    nodeNetworksSelector,
     state => state.get('selectedNetwork'),
   ],
-  (networkNodes, selectedNetwork) => networkNodes.get(selectedNetwork, makeMap())
+  (nodeNetworks, selectedNetworkId) => {
+    const nodeIds = [];
+    nodeNetworks.forEach((networks, nodeId) => {
+      const networksIds = networks.map(n => n.get('id'));
+      if (networksIds.contains(selectedNetworkId)) {
+        nodeIds.push(nodeId);
+      }
+    });
+    return fromJS(nodeIds);
+  }
 );

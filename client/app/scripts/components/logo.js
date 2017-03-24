@@ -2,9 +2,9 @@
 /* eslint max-len: "off" */
 import React from 'react';
 
-export default function Logo() {
+export default function Logo({ transform = '' }) {
   return (
-    <g className="logo">
+    <g className="logo" transform={transform}>
       <path fill="#32324B" d="M114.937,118.165l75.419-67.366c-5.989-4.707-12.71-8.52-19.981-11.211l-55.438,49.52V118.165z" />
       <path fill="#32324B" d="M93.265,108.465l-20.431,18.25c1.86,7.57,4.88,14.683,8.87,21.135l11.561-10.326V108.465z" />
       <path fill="#00D2FF" d="M155.276,53.074V35.768C151.815,35.27,148.282,35,144.685,35c-3.766,0-7.465,0.286-11.079,0.828v36.604

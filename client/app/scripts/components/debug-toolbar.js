@@ -10,6 +10,7 @@ import debug from 'debug';
 import ActionTypes from '../constants/action-types';
 import { receiveNodesDelta } from '../actions/app-actions';
 import { getNodeColor, getNodeColorDark, text2degree } from '../utils/color-utils';
+import { availableMetricsSelector } from '../selectors/node-metric';
 
 
 const SHAPES = ['square', 'hexagon', 'heptagon', 'circle'];
@@ -291,7 +292,7 @@ class DebugToolbar extends React.Component {
   }
 
   render() {
-    const { availableCanvasMetrics } = this.props;
+    const { availableMetrics } = this.props;
 
     return (
       <div className="debug-panel">
@@ -302,7 +303,7 @@ class DebugToolbar extends React.Component {
           <input type="number" onChange={this.onChange} value={this.state.nodesToAdd} />
           <button onClick={() => this.addNodes(this.state.nodesToAdd)}>+</button>
           <button onClick={() => this.asyncDispatch(addAllVariants)}>Variants</button>
-          <button onClick={() => this.asyncDispatch(addAllMetricVariants(availableCanvasMetrics))}>
+          <button onClick={() => this.asyncDispatch(addAllMetricVariants(availableMetrics))}>
             Metric Variants
           </button>
           <button onClick={() => this.addNodes(1, LOREM)}>Long name</button>
@@ -379,7 +380,7 @@ class DebugToolbar extends React.Component {
 function mapStateToProps(state) {
   return {
     nodes: state.get('nodes'),
-    availableCanvasMetrics: state.get('availableCanvasMetrics')
+    availableMetrics: availableMetricsSelector(state),
   };
 }
 

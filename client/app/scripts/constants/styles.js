@@ -1,20 +1,20 @@
+import { GRAPH_VIEW_MODE, TABLE_VIEW_MODE, RESOURCE_VIEW_MODE } from './naming';
+
 
 export const DETAILS_PANEL_WIDTH = 420;
-
+export const DETAILS_PANEL_OFFSET = 8;
 export const DETAILS_PANEL_MARGINS = {
   top: 24,
   bottom: 48,
   right: 36
 };
 
-export const DETAILS_PANEL_OFFSET = 8;
-
-export const CANVAS_MARGINS = {
-  top: 160,
-  left: 40,
-  right: 40,
-  bottom: 0,
-};
+// Resource view
+export const RESOURCES_LAYER_TITLE_WIDTH = 200;
+export const RESOURCES_LAYER_HEIGHT = 150;
+export const RESOURCES_LAYER_PADDING = 10;
+export const RESOURCES_LABEL_MIN_SIZE = 50;
+export const RESOURCES_LABEL_PADDING = 10;
 
 // Node shapes
 export const NODE_SHAPE_HIGHLIGHT_RADIUS = 70;
@@ -29,6 +29,13 @@ export const NODE_SHAPE_DOT_RADIUS = 10;
 //   2. Fonts don't behave nicely (especially on Firefox) if they
 //      are given on a small unit scale as foreign objects in SVG.
 export const NODE_BASE_SIZE = 100;
+
+
+export const CANVAS_MARGINS = {
+  [GRAPH_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 150 },
+  [TABLE_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 30 },
+  [RESOURCE_VIEW_MODE]: { top: 160, left: 210, right: 40, bottom: 50 },
+};
 
 // Node details table constants
 export const NODE_DETAILS_TABLE_CW = {

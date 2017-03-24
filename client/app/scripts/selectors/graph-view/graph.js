@@ -2,12 +2,12 @@ import debug from 'debug';
 import { createSelector, createStructuredSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
-import { initEdgesFromNodes } from '../utils/layouter-utils';
-import { viewportWidthSelector, viewportHeightSelector } from './canvas-viewport';
-import { activeTopologyOptionsSelector } from './topology';
-import { shownNodesSelector } from './node-filters';
-import { doLayout } from '../charts/nodes-layout';
-import timer from '../utils/timer-utils';
+import { initEdgesFromNodes } from '../../utils/layouter-utils';
+import { canvasWidthSelector, canvasHeightSelector } from '../canvas';
+import { activeTopologyOptionsSelector } from '../topology';
+import { shownNodesSelector } from '../node-filters';
+import { doLayout } from '../../charts/nodes-layout';
+import timer from '../../utils/timer-utils';
 
 const log = debug('scope:nodes-chart');
 
@@ -16,8 +16,8 @@ const layoutOptionsSelector = createStructuredSelector({
   forceRelayout: state => state.get('forceRelayout'),
   topologyId: state => state.get('currentTopologyId'),
   topologyOptions: activeTopologyOptionsSelector,
-  height: viewportHeightSelector,
-  width: viewportWidthSelector,
+  height: canvasHeightSelector,
+  width: canvasWidthSelector,
 });
 
 const graphLayoutSelector = createSelector(
