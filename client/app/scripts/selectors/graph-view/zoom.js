@@ -3,6 +3,7 @@ import { Map as makeMap } from 'immutable';
 
 import { NODE_BASE_SIZE } from '../../constants/styles';
 import { canvasMarginsSelector, canvasWidthSelector, canvasHeightSelector } from '../canvas';
+import { activeLayoutCachedZoomSelector } from '../zooming';
 import { graphNodesSelector } from './graph';
 
 
@@ -77,4 +78,13 @@ export const graphZoomLimitsSelector = createSelector(
 
     return makeMap({ minScale, maxScale });
   }
+);
+
+export const graphZoomStateSelector = createSelector(
+  [
+    graphDefaultZoomSelector,
+    activeLayoutCachedZoomSelector,
+  ],
+  // All the cached fields override the calculated default ones.
+  (graphDefaultZoom, cachedZoomState) => graphDefaultZoom.merge(cachedZoomState)
 );

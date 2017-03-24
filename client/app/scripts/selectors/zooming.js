@@ -1,49 +1,33 @@
 import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
 
-import {
-  graphZoomLimitsSelector,
-  graphDefaultZoomSelector,
-} from './graph-view/default-zoom';
-import {
-  resourcesZoomLimitsSelector,
-  resourcesDefaultZoomSelector,
-} from './resource-view/default-zoom';
-import {
-  activeTopologyZoomCacheKeyPathSelector,
-  isGraphViewModeSelector,
-} from './topology';
+import { isGraphViewModeSelector, activeTopologyOptionsSelector } from './topology';
 
 
-const activeLayoutCachedZoomSelector = createSelector(
+export const activeTopologyZoomCacheKeyPathSelector = createSelector(
+  [
+    isGraphViewModeSelector,
+    state => state.get('topologyViewMode'),
+    state => state.get('currentTopologyId'),
+    state => state.get('pinnedMetricType'),
+    state => JSON.stringify(activeTopologyOptionsSelector(state)),
+  ],
+  (isGraphViewMode, viewMode, topologyId, pinnedMetricType, topologyOptions) => (
+    isGraphViewMode ?
+      // In graph view, selecting different options/filters produces a different layout.
+      ['zoomCache', viewMode, topologyId, topologyOptions] :
+      // Otherwise we're in the resource view where the options are hidden (for now),
+      // but pinning different metrics can result in very different layouts.
+      // TODO: Take `topologyId` into account once the resource
+      // view layouts start differing between the topologies.
+      ['zoomCache', viewMode, pinnedMetricType]
+  )
+);
+
+export const activeLayoutCachedZoomSelector = createSelector(
   [
     state => state.get('zoomCache'),
     activeTopologyZoomCacheKeyPathSelector,
   ],
   (zoomCache, keyPath) => zoomCache.getIn(keyPath.slice(1), makeMap())
-);
-
-export const activeLayoutZoomLimitsSelector = createSelector(
-  [
-    isGraphViewModeSelector,
-    graphZoomLimitsSelector,
-    resourcesZoomLimitsSelector,
-  ],
-  (isGraphView, graphZoomLimits, resourcesZoomLimits) => (
-    isGraphView ? graphZoomLimits : resourcesZoomLimits
-  )
-);
-
-export const activeLayoutZoomStateSelector = createSelector(
-  [
-    isGraphViewModeSelector,
-    graphDefaultZoomSelector,
-    resourcesDefaultZoomSelector,
-    activeLayoutCachedZoomSelector,
-  ],
-  (isGraphView, graphDefaultZoom, resourcesDefaultZoom, cachedZoomState) => {
-    const defaultZoom = isGraphView ? graphDefaultZoom : resourcesDefaultZoom;
-    // All the cached fields override the calculated default ones.
-    return defaultZoom.merge(cachedZoomState);
-  }
 );

@@ -3,6 +3,7 @@ import { Map as makeMap } from 'immutable';
 
 import { RESOURCES_LAYER_HEIGHT } from '../../constants/styles';
 import { canvasMarginsSelector, canvasWidthSelector, canvasHeightSelector } from '../canvas';
+import { activeLayoutCachedZoomSelector } from '../zooming';
 import {
   layerVerticalPositionByTopologyIdSelector,
   layoutNodesByTopologyIdSelector,
@@ -88,4 +89,13 @@ export const resourcesZoomLimitsSelector = createSelector(
       maxTranslateY: yMax,
     });
   }
+);
+
+export const resourcesZoomStateSelector = createSelector(
+  [
+    resourcesDefaultZoomSelector,
+    activeLayoutCachedZoomSelector,
+  ],
+  // All the cached fields override the calculated default ones.
+  (resourcesDefaultZoom, cachedZoomState) => resourcesDefaultZoom.merge(cachedZoomState)
 );

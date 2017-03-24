@@ -5,7 +5,10 @@ import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
 import ZoomWrapper from '../components/zoom-wrapper';
 import { clickBackground } from '../actions/app-actions';
-
+import {
+  graphZoomLimitsSelector,
+  graphZoomStateSelector,
+} from '../selectors/graph-view/zoom';
 
 const EdgeMarkerDefinition = ({ selectedNodeId }) => {
   const markerOffset = selectedNodeId ? '35' : '40';
@@ -47,7 +50,10 @@ class NodesChart extends React.Component {
         <svg id="canvas" width="100%" height="100%" onClick={this.handleMouseClick}>
           <Logo transform="translate(24,24) scale(0.25)" />
           <EdgeMarkerDefinition selectedNodeId={selectedNodeId} />
-          <ZoomWrapper svg="canvas" disabled={selectedNodeId}>
+          <ZoomWrapper
+            svg="canvas" disabled={selectedNodeId}
+            zoomLimitsSelector={graphZoomLimitsSelector}
+            zoomStateSelector={graphZoomStateSelector}>
             <NodesChartElements />
           </ZoomWrapper>
         </svg>

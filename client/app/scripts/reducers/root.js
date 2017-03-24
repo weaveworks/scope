@@ -12,9 +12,9 @@ import {
 } from '../constants/naming';
 import {
   graphExceedsComplexityThreshSelector,
-  activeTopologyZoomCacheKeyPathSelector,
   isResourceViewModeSelector,
 } from '../selectors/topology';
+import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
 import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/node-metric';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {

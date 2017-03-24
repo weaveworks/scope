@@ -8,11 +8,7 @@ import { zoom, zoomIdentity } from 'd3-zoom';
 
 import { cacheZoomState } from '../actions/app-actions';
 import { transformToString } from '../utils/transform-utils';
-import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/topology';
-import {
-  activeLayoutZoomStateSelector,
-  activeLayoutZoomLimitsSelector,
-} from '../selectors/zooming';
+import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
 import {
   canvasMarginsSelector,
   canvasWidthSelector,
@@ -175,13 +171,13 @@ class ZoomWrapper extends React.Component {
 }
 
 
-function mapStateToProps(state) {
+function mapStateToProps(state, props) {
   return {
     width: canvasWidthSelector(state),
     height: canvasHeightSelector(state),
     canvasMargins: canvasMarginsSelector(state),
-    layoutZoomState: activeLayoutZoomStateSelector(state),
-    layoutZoomLimits: activeLayoutZoomLimitsSelector(state),
+    layoutZoomState: props.zoomStateSelector(state),
+    layoutZoomLimits: props.zoomLimitsSelector(state),
     layoutId: JSON.stringify(activeTopologyZoomCacheKeyPathSelector(state)),
     forceRelayout: state.get('forceRelayout'),
   };
