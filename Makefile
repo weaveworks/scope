@@ -202,11 +202,7 @@ ui-upload: client/build-external/index.html
 ui-pkg-upload: tmp/weave-scope.tgz
 	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
 	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
-	aws s3 cp tmp/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/weave-scope.tgz
-
-trigger-service-ui-build:
-	curl -H "Content-Type: application/json" -X POST \
-	https://circleci.com/api/v1.1/project/github/weaveworks/service-ui/tree/master?circle-token=$$CIRCLE_API_TOKEN
+	aws s3 cp tmp/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/$(shell echo $(SCOPE_VERSION))/weave-scope.tgz
 
 clean:
 	$(GO) clean ./...
