@@ -194,7 +194,6 @@ export function rootReducer(state = initialState, action) {
       // set option on parent topology
       const topology = findTopologyById(state.get('topologies'), action.topologyId);
       if (topology) {
-        let values = [action.value];
         const topologyId = topology.get('parentId') || topology.get('id');
         const optionKey = ['topologyOptions', topologyId, action.option];
         const currentOption = state.getIn(['topologyOptions', topologyId, action.option]);
@@ -203,12 +202,7 @@ export function rootReducer(state = initialState, action) {
           state = clearNodes(state);
         }
 
-        if (action.addOrRemove === 'add') {
-          values = state.getIn(optionKey).concat(values);
-        } else if (action.addOrRemove === 'remove') {
-          values = state.getIn(optionKey).filter(o => !values.includes(o));
-        }
-        state = state.setIn(optionKey, values);
+        state = state.setIn(optionKey, action.value);
       }
       return state;
     }

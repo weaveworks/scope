@@ -1,5 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { Map as makeMap } from 'immutable';
+import includes from 'lodash/includes';
 
 import { getCurrentTopologyOptions } from '../utils/topology-utils';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
@@ -11,19 +13,37 @@ class TopologyOptions extends React.Component {
     super(props, context);
 
     this.handleOptionClick = this.handleOptionClick.bind(this);
+    this.handleNoneClick = this.handleNoneClick.bind(this);
   }
 
   handleOptionClick(optionId, value, topologyId) {
+    let nextOptions = [value];
     const { activeOptions, options } = this.props;
     const selectedOption = options.find(o => o.get('id') === optionId);
 
     if (selectedOption.get('selectType') === 'union') {
-      const isSelectedAlready = activeOptions.get(selectedOption.get('id')).includes(value);
-      const addOrRemove = isSelectedAlready ? 'remove' : 'add';
-      this.props.changeTopologyOption(optionId, value, topologyId, addOrRemove);
-    } else {
-      this.props.changeTopologyOption(optionId, value, topologyId);
+      // Multi-select topology options (such as k8s namespaces) are handled here.
+      // Users can select one, many, or none of these options.
+      // The component builds an array of the next selected values that are sent to the action.
+      const opts = activeOptions.toJS();
+      const selected = selectedOption.get('id');
+      const isSelectedAlready = includes(opts[selected], value);
+
+      if (isSelectedAlready) {
+        // Remove the option if it is already selected
+        nextOptions = opts[selected].filter(o => o !== value);
+      } else {
+        // Add it to the array if it's not selected
+        nextOptions = opts[selected].concat(value);
+      }
+      // Since the user is clicking an option, remove the highlighting from the 'none' option.
+      nextOptions = nextOptions.filter(o => o !== 'none');
     }
+    this.props.changeTopologyOption(optionId, nextOptions, topologyId);
+  }
+
+  handleNoneClick(optionId, value, topologyId) {
+    this.props.changeTopologyOption(optionId, ['none'], topologyId);
   }
 
   renderOption(option) {
@@ -32,7 +52,10 @@ class TopologyOptions extends React.Component {
     const activeValue = activeOptions && activeOptions.has(optionId)
       ? activeOptions.get(optionId)
       : option.get('defaultValue');
-
+    const noneItem = makeMap({
+      value: 'none',
+      label: option.get('noneLabel')
+    });
     return (
       <div className="topology-option" key={optionId}>
         <div className="topology-option-wrapper">
@@ -46,6 +69,15 @@ class TopologyOptions extends React.Component {
               item={item}
             />
           ))}
+          {option.get('selectType') === 'union' &&
+            <TopologyOptionAction
+              onClick={this.handleNoneClick}
+              optionId={optionId}
+              item={noneItem}
+              topologyId={topologyId}
+              activeValue={activeValue}
+            />
+          }
         </div>
       </div>
     );

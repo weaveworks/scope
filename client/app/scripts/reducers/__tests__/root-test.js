@@ -167,14 +167,14 @@ describe('RootReducer', () => {
     type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
     topologyId: 'topo1',
     option: 'option1',
-    value: 'on'
+    value: ['on']
   };
 
   const ChangeTopologyOptionAction2 = {
     type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
     topologyId: 'topo1',
     option: 'option1',
-    value: 'off'
+    value: ['off']
   };
 
   const ClickNodeAction = {
@@ -371,15 +371,13 @@ describe('RootReducer', () => {
       type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
       topologyId: 'services',
       option: 'namespace',
-      value: 'scope',
-      addOrRemove: 'add'
+      value: ['default', 'scope'],
     };
     const removeAction = {
       type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
       topologyId: 'services',
       option: 'namespace',
-      value: 'scope',
-      addOrRemove: 'remove'
+      value: ['default']
     };
     let nextState = initialState;
     nextState = reducer(nextState, { type: ActionTypes.RECEIVE_TOPOLOGIES, topologies});
