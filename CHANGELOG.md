@@ -10,7 +10,7 @@ New features and enhancements:
 - Resource usage view
 	[#2296](https://github.com/weaveworks/scope/pull/2296)
 	[#2390](https://github.com/weaveworks/scope/pull/2390)
-- Add edge arrows
+- Edge arrows
 	[#2317](https://github.com/weaveworks/scope/pull/2317)
 	[#2342](https://github.com/weaveworks/scope/pull/2342)
 - Add eBPF connection tracking
@@ -18,6 +18,8 @@ New features and enhancements:
 	[#2327](https://github.com/weaveworks/scope/pull/2327)
 	[#2336](https://github.com/weaveworks/scope/pull/2336)
 	[#2366](https://github.com/weaveworks/scope/pull/2366)
+-	View multiple Kubernetes namespaces at once
+ 	[#2404](https://github.com/weaveworks/scope/pull/2404)
 - Exclude pause containers when rendering k8s topologies
 	[#2338](https://github.com/weaveworks/scope/pull/2338)
 - When k8s present, allow filtering of containers by namespace
