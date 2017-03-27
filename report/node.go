@@ -18,7 +18,7 @@ type Node struct {
 	Controls       NodeControls             `json:"controls,omitempty"`
 	LatestControls NodeControlDataLatestMap `json:"latestControls,omitempty"`
 	Latest         StringLatestMap          `json:"latest,omitempty"`
-	Metrics        Metrics                  `json:"metrics,omitempty"`
+	Metrics        Metrics                  `json:"metrics,omitempty" deepequal:"nil==empty"`
 	Parents        Sets                     `json:"parents,omitempty"`
 	Children       NodeSet                  `json:"children,omitempty"`
 }
