@@ -53,6 +53,8 @@ Performance improvements:
 	[#2265](https://github.com/weaveworks/scope/pull/2265)
 
 Bug fixes:
+- Pinned metric temporarily not displayed on mouse leave
+	[#2397](https://github.com/weaveworks/scope/issues/2397)
 - Search doesn't consider nodes of unloaded topologies
 	[#2395](https://github.com/weaveworks/scope/issues/2393)
 - Help panel height overflow in Containers view
