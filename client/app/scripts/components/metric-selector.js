@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { selectMetric } from '../actions/app-actions';
-import { availableMetricsSelector } from '../selectors/node-metric';
+import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/node-metric';
 import MetricSelectorItem from './metric-selector-item';
 
 class MetricSelector extends React.Component {
@@ -38,6 +38,7 @@ class MetricSelector extends React.Component {
 function mapStateToProps(state) {
   return {
     availableMetrics: availableMetricsSelector(state),
+    pinnedMetric: pinnedMetricSelector(state),
   };
 }
 

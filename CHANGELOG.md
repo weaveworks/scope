@@ -1,3 +1,140 @@
+## Release 1.3.0
+
+Highlights:
+- New resource usage view
+- New Arrows in graph view to indicate connection directions
+- [Weave Cloud Agent Docker-certified image](https://store.docker.com/images/f18f278a-54c1-4f25-b252-6e11112776c5)
+- eBPF connection tracking (enabled with --probe.ebpf.connections=true)
+
+New features and enhancements:
+- Resource usage view
+	[#2296](https://github.com/weaveworks/scope/pull/2296)
+	[#2390](https://github.com/weaveworks/scope/pull/2390)
+- Edge arrows
+	[#2317](https://github.com/weaveworks/scope/pull/2317)
+	[#2342](https://github.com/weaveworks/scope/pull/2342)
+- Add eBPF connection tracking
+	[#2135](https://github.com/weaveworks/scope/pull/2135)
+	[#2327](https://github.com/weaveworks/scope/pull/2327)
+	[#2336](https://github.com/weaveworks/scope/pull/2336)
+	[#2366](https://github.com/weaveworks/scope/pull/2366)
+-	View multiple Kubernetes namespaces at once
+ 	[#2404](https://github.com/weaveworks/scope/pull/2404)
+- Exclude pause containers when rendering k8s topologies
+	[#2338](https://github.com/weaveworks/scope/pull/2338)
+- When k8s present, allow filtering of containers by namespace
+	[#2285](https://github.com/weaveworks/scope/pull/2285)
+	[#2348](https://github.com/weaveworks/scope/pull/2348)
+	[#2362](https://github.com/weaveworks/scope/pull/2362)
+- Add ECS Service scale up/down controls
+	[#2197](https://github.com/weaveworks/scope/pull/2197)
+- Improve error reporting when invoking weave script
+	[#2335](https://github.com/weaveworks/scope/pull/2335)
+- Add options to hide args and env vars
+	[#2306](https://github.com/weaveworks/scope/pull/2306)
+	[#2311](https://github.com/weaveworks/scope/pull/2311)
+	[#2310](https://github.com/weaveworks/scope/pull/2310)
+- Add loading indicator on topology option change
+	[#2272](https://github.com/weaveworks/scope/pull/2272)
+- report playback
+	[#2301](https://github.com/weaveworks/scope/pull/2301)
+- Show loading indicator on topology changes
+	[#2232](https://github.com/weaveworks/scope/pull/2232)
+
+Performance improvements:
+- Map decode optimisations
+	[#2364](https://github.com/weaveworks/scope/pull/2364)
+- Remove LatestMap, to reduce memory allocation
+	[#2351](https://github.com/weaveworks/scope/pull/2351)
+- Decode via byte slice for memcache and file read
+	[#2331](https://github.com/weaveworks/scope/pull/2331)
+- quantise reports
+	[#2305](https://github.com/weaveworks/scope/pull/2305)
+- Layout rendering dynamic optimizations
+	[#2221](https://github.com/weaveworks/scope/pull/2221)
+	[#2265](https://github.com/weaveworks/scope/pull/2265)
+
+Bug fixes:
+- Pinned metric temporarily not displayed on mouse leave
+	[#2397](https://github.com/weaveworks/scope/issues/2397)
+- Search doesn't consider nodes of unloaded topologies
+	[#2395](https://github.com/weaveworks/scope/issues/2393)
+- Help panel height overflow in Containers view
+	[#2352](https://github.com/weaveworks/scope/issues/2352)
+- "Save canvas as SVG" button shown in table mode
+	[#2354](https://github.com/weaveworks/scope/pull/2354)
+- process with no cmd are shown with no name
+	[#2315](https://github.com/weaveworks/scope/issues/2315)
+- Throb animation is called on graph nodes even when the search query doesn't change
+	[#2255](https://github.com/weaveworks/scope/issues/2255)
+- pod names missing
+	[#2258](https://github.com/weaveworks/scope/issues/2258)
+- parse --probe-only as intended
+	[#2300](https://github.com/weaveworks/scope/pull/2300)
+- Graph view zoom states get reset when switching to table view
+	[#2254](https://github.com/weaveworks/scope/issues/2254)
+- graph not rendered top-down, despite lack of cycles
+	[#2267](https://github.com/weaveworks/scope/issues/2267)
+- Hide Uncontained filter in DNS view not hiding uncontained
+	[#2170](https://github.com/weaveworks/scope/issues/2170)
+
+Documentation:
+- Documentation improvements
+	[#2252](https://github.com/weaveworks/scope/pull/2252)
+- Removed missed merge text and made terminology consistent
+	[#2289](https://github.com/weaveworks/scope/pull/2289)
+
+Internal improvements and cleanup:
+- integration test: disable flaky test 311
+	[#2380](https://github.com/weaveworks/scope/pull/2380)
+- Add job to trigger service-ui build
+	[#2376](https://github.com/weaveworks/scope/pull/2376)
+- Use yarn package manager
+	[#2368](https://github.com/weaveworks/scope/pull/2368)
+- integration tests: list containers for debugging
+	[#2346](https://github.com/weaveworks/scope/pull/2346)
+- scope: use same Docker args for early dry run
+	[#2326](https://github.com/weaveworks/scope/pull/2326)
+	[#2358](https://github.com/weaveworks/scope/pull/2358)
+- Bump react version
+	[#2339](https://github.com/weaveworks/scope/pull/2339)
+- integration: disable tests with internet edge
+	[#2314](https://github.com/weaveworks/scope/pull/2314)
+- Secure integration tests
+	[#2312](https://github.com/weaveworks/scope/pull/2312)
+- integration: restart docker daemon after each test
+	[#2298](https://github.com/weaveworks/scope/pull/2298)
+- Changed ui-build-pkg job to use a docker container
+	[#2281](https://github.com/weaveworks/scope/pull/2281)
+- integration tests: fix scripts
+	[#2225](https://github.com/weaveworks/scope/pull/2225)
+- circle.yml: Fix ui upload step so it doesn't build twice
+	[#2266](https://github.com/weaveworks/scope/pull/2266)
+
+Weave Cloud related changes:
+- Create cloud agent image
+	[#2284](https://github.com/weaveworks/scope/pull/2284)
+	[#2277](https://github.com/weaveworks/scope/pull/2277)
+	[#2278](https://github.com/weaveworks/scope/pull/2278)
+- Container Seconds should not be Container Nanoseconds
+	[#2372](https://github.com/weaveworks/scope/pull/2372)
+- Clear client polling and nodes state on dismount
+	[#2361](https://github.com/weaveworks/scope/pull/2361)
+- Fluent Billing Emitter
+	[#2359](https://github.com/weaveworks/scope/pull/2359)
+- Correct dynamoDB metric label
+	[#2344](https://github.com/weaveworks/scope/pull/2344)
+- Add logic to turn off network requests when Scope dismounts
+	[#2290](https://github.com/weaveworks/scope/pull/2290)
+	[#2340](https://github.com/weaveworks/scope/pull/2340)
+- Load contrast stylesheet
+	[#2256](https://github.com/weaveworks/scope/pull/2256)
+- Consolidate API requests into single helper; added CSRF header
+	[#2260](https://github.com/weaveworks/scope/pull/2260)
+- Add logic to remove non-transferrable state when switching Cloud instances
+	[#2237](https://github.com/weaveworks/scope/pull/2237)
+
+
 ## Release 1.2.1
 This is a minor patch release.
 

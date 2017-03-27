@@ -20,6 +20,9 @@ class DebugMenu extends React.Component {
   }
 
   render() {
+    const reportDownloadUrl = process.env.WEAVE_CLOUD
+      ? `${window.location.origin}/api${window.location.pathname}/api/report`
+      : 'api/report';
     return (
       <div className="troubleshooting-menu-wrapper">
         <div className="troubleshooting-menu">
@@ -28,7 +31,7 @@ class DebugMenu extends React.Component {
             <div className="troubleshooting-menu-item">
               <a
                 className="footer-icon"
-                href="api/report"
+                href={reportDownloadUrl}
                 download
                 title="Save raw data as JSON"
               >
