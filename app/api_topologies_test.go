@@ -106,6 +106,8 @@ func TestRendererForTopologyWithFiltering(t *testing.T) {
 
 	urlvalues := url.Values{}
 	urlvalues.Set(systemGroupID, customAPITopologyOptionFilterID)
+	urlvalues.Set("stopped", "running")
+	urlvalues.Set("pseudo", "hide")
 	renderer, decorator, err := topologyRegistry.RendererForTopology("containers", urlvalues, fixture.Report)
 	if err != nil {
 		t.Fatalf("Topology Registry Report error: %s", err)
@@ -135,6 +137,8 @@ func TestRendererForTopologyNoFiltering(t *testing.T) {
 
 	urlvalues := url.Values{}
 	urlvalues.Set(systemGroupID, customAPITopologyOptionFilterID)
+	urlvalues.Set("stopped", "running")
+	urlvalues.Set("pseudo", "hide")
 	renderer, decorator, err := topologyRegistry.RendererForTopology("containers", urlvalues, fixture.Report)
 	if err != nil {
 		t.Fatalf("Topology Registry Report error: %s", err)
@@ -171,6 +175,8 @@ func getTestContainerLabelFilterTopologySummary(t *testing.T, exclude bool) (det
 
 	urlvalues := url.Values{}
 	urlvalues.Set(systemGroupID, customAPITopologyOptionFilterID)
+	urlvalues.Set("stopped", "running")
+	urlvalues.Set("pseudo", "hide")
 	renderer, decorator, err := topologyRegistry.RendererForTopology("containers", urlvalues, fixture.Report)
 	if err != nil {
 		return nil, err

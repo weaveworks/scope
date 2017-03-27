@@ -1,4 +1,6 @@
 import { is, fromJS } from 'immutable';
+import expect from 'expect';
+
 import { TABLE_VIEW_MODE } from '../../constants/naming';
 // Root reducer test suite using Jasmine matchers
 import { constructEdgeId } from '../../utils/layouter-utils';
@@ -46,33 +48,118 @@ describe('RootReducer', () => {
     }
   };
 
-  const topologies = [{
-    hide_if_empty: true,
-    name: 'Processes',
-    rank: 1,
-    sub_topologies: [],
-    url: '/api/topology/processes',
-    fullName: 'Processes',
-    id: 'processes',
-    options: [
-      {
-        defaultValue: 'hide',
-        id: 'unconnected',
-        options: [
-          {
-            label: 'Unconnected nodes hidden',
-            value: 'hide'
-          }
-        ]
+  const topologies = [
+    {
+      hide_if_empty: true,
+      name: 'Processes',
+      rank: 1,
+      sub_topologies: [],
+      url: '/api/topology/processes',
+      fullName: 'Processes',
+      id: 'processes',
+      options: [
+        {
+          defaultValue: 'hide',
+          id: 'unconnected',
+          selectType: 'one',
+          options: [
+            {
+              label: 'Unconnected nodes hidden',
+              value: 'hide'
+            }
+          ]
+        }
+      ],
+      stats: {
+        edge_count: 379,
+        filtered_nodes: 214,
+        node_count: 320,
+        nonpseudo_node_count: 320
       }
-    ],
-    stats: {
-      edge_count: 379,
-      filtered_nodes: 214,
-      node_count: 320,
-      nonpseudo_node_count: 320
+    },
+    {
+      hide_if_empty: true,
+      name: 'Pods',
+      options: [
+        {
+          defaultValue: 'default',
+          id: 'namespace',
+          selectType: 'many',
+          options: [
+            {
+              label: 'monitoring',
+              value: 'monitoring'
+            },
+            {
+              label: 'scope',
+              value: 'scope'
+            },
+            {
+              label: 'All Namespaces',
+              value: 'all'
+            }
+          ]
+        },
+        {
+          defaultValue: 'hide',
+          id: 'pseudo',
+          options: [
+            {
+              label: 'Show Unmanaged',
+              value: 'show'
+            },
+            {
+              label: 'Hide Unmanaged',
+              value: 'hide'
+            }
+          ]
+        }
+      ],
+      rank: 3,
+      stats: {
+        edge_count: 15,
+        filtered_nodes: 16,
+        node_count: 32,
+        nonpseudo_node_count: 27
+      },
+      sub_topologies: [
+        {
+          hide_if_empty: true,
+          name: 'services',
+          options: [
+            {
+              defaultValue: 'default',
+              id: 'namespace',
+              selectType: 'many',
+              options: [
+                {
+                  label: 'monitoring',
+                  value: 'monitoring'
+                },
+                {
+                  label: 'scope',
+                  value: 'scope'
+                },
+                {
+                  label: 'All Namespaces',
+                  value: 'all'
+                }
+              ]
+            }
+          ],
+          rank: 0,
+          stats: {
+            edge_count: 14,
+            filtered_nodes: 16,
+            node_count: 159,
+            nonpseudo_node_count: 154
+          },
+          url: '/api/topology/services'
+        }
+      ],
+      url: '/api/topology/pods'
     }
-  }];
+  ];
 
   // actions
 
@@ -80,14 +167,14 @@ describe('RootReducer', () => {
     type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
     topologyId: 'topo1',
     option: 'option1',
-    value: 'on'
+    value: ['on']
   };
 
   const ChangeTopologyOptionAction2 = {
     type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
     topologyId: 'topo1',
     option: 'option1',
-    value: 'off'
+    value: ['off']
   };
 
   const ClickNodeAction = {
@@ -222,7 +309,16 @@ describe('RootReducer', () => {
     expect(nextState.get('topologies').size).toBe(2);
     expect(nextState.get('currentTopology').get('name')).toBe('Topo1');
     expect(nextState.get('currentTopology').get('url')).toBe('/topo1');
-    expect(nextState.get('currentTopology').get('options').first().get('id')).toBe('option1');
+    expect(nextState.get('currentTopology').get('options').first().get('id')).toEqual(['option1']);
+    expect(nextState.getIn(['currentTopology', 'options']).toJS()).toEqual([{
+      id: 'option1',
+      defaultValue: 'off',
+      selectType: 'one',
+      options: [
+        { value: 'on'},
+        { value: 'off'}
+      ]
+    }]);
   });
 
   it('get sub-topology', () => {
@@ -233,7 +329,7 @@ describe('RootReducer', () => {
     expect(nextState.get('topologies').size).toBe(2);
     expect(nextState.get('currentTopology').get('name')).toBe('topo 1 grouped');
     expect(nextState.get('currentTopology').get('url')).toBe('/topo1-grouped');
-    expect(nextState.get('currentTopology').get('options')).toBeUndefined();
+    expect(nextState.get('currentTopology').get('options')).toNotExist();
   });
 
   // topology options
@@ -245,28 +341,57 @@ describe('RootReducer', () => {
 
     // default options
     expect(activeTopologyOptionsSelector(nextState).has('option1')).toBeTruthy();
-    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('off');
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBeA('array');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
 
     // turn on
     nextState = reducer(nextState, ChangeTopologyOptionAction);
-    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('on');
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('on');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['on']);
+    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['on']);
 
     // turn off
     nextState = reducer(nextState, ChangeTopologyOptionAction2);
-    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('off');
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
 
     // sub-topology should retain main topo options
     nextState = reducer(nextState, ClickSubTopologyAction);
-    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('off');
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
 
     // other topology w/o options dont return options, but keep in app state
     nextState = reducer(nextState, ClickTopology2Action);
-    expect(activeTopologyOptionsSelector(nextState)).toBeUndefined();
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
+    expect(activeTopologyOptionsSelector(nextState)).toNotExist();
+    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+  });
+
+  it('adds/removes a topology option', () => {
+    const addAction = {
+      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+      topologyId: 'services',
+      option: 'namespace',
+      value: ['default', 'scope'],
+    };
+    const removeAction = {
+      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+      topologyId: 'services',
+      option: 'namespace',
+      value: ['default']
+    };
+    let nextState = initialState;
+    nextState = reducer(nextState, { type: ActionTypes.RECEIVE_TOPOLOGIES, topologies});
+    nextState = reducer(nextState, { type: ActionTypes.CLICK_TOPOLOGY, topologyId: 'services' });
+    nextState = reducer(nextState, addAction);
+    expect(activeTopologyOptionsSelector(nextState).toJS()).toEqual({
+      namespace: ['default', 'scope'],
+      pseudo: ['hide']
+    });
+    nextState = reducer(nextState, removeAction);
+    expect(activeTopologyOptionsSelector(nextState).toJS()).toEqual({
+      namespace: ['default'],
+      pseudo: ['hide']
+    });
   });
 
   it('sets topology options from route', () => {
@@ -296,8 +421,8 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, RouteAction);
     nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopologyAction);
-    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBe('off');
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toBe('off');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
   });
 
   // nodes delta
@@ -315,7 +440,7 @@ describe('RootReducer', () => {
   it('shows nodes that were received', () => {
     let nextState = initialState;
     nextState = reducer(nextState, ReceiveNodesDeltaAction);
-    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
   });
 
   it('knows a route was set', () => {
@@ -331,11 +456,11 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ClickNodeAction);
 
     expect(nextState.get('selectedNodeId')).toBe('n1');
-    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
 
     nextState = reducer(nextState, deSelectNode);
     expect(nextState.get('selectedNodeId')).toBe(null);
-    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
   });
 
   it('keeps showing nodes on navigating back after node click', () => {
@@ -352,7 +477,7 @@ describe('RootReducer', () => {
     RouteAction.state = {topologyId: 'topo1', selectedNodeId: null};
     nextState = reducer(nextState, RouteAction);
     expect(nextState.get('selectedNodeId')).toBe(null);
-    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
   });
 
   it('closes details when changing topologies', () => {
@@ -378,12 +503,12 @@ describe('RootReducer', () => {
   it('resets topology on websocket reconnect', () => {
     let nextState = initialState;
     nextState = reducer(nextState, ReceiveNodesDeltaAction);
-    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
 
     nextState = reducer(nextState, CloseWebsocketAction);
     expect(nextState.get('websocketClosed')).toBeTruthy();
     // keep showing old nodes
-    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
 
     nextState = reducer(nextState, OpenWebsocketAction);
     expect(nextState.get('websocketClosed')).toBeFalsy();

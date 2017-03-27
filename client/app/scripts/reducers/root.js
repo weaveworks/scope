@@ -1,6 +1,6 @@
 /* eslint-disable import/no-webpack-loader-syntax, import/no-unresolved */
 import debug from 'debug';
-import { size, each, includes } from 'lodash';
+import { size, each, includes, isEqual } from 'lodash';
 import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
   OrderedMap as makeOrderedMap, Set as makeSet } from 'immutable';
 
@@ -87,15 +87,32 @@ export const initialState = makeMap({
   zoomCache: makeMap(),
 });
 
+function calcSelectType(topology) {
+  const result = {
+    ...topology,
+    options: topology.options && topology.options.map((option) => {
+      // Server doesn't return the `selectType` key unless the option is something other than `one`.
+      // Default to `one` if undefined, so the component doesn't have to handle this.
+      option.selectType = option.selectType || 'one';
+      return option;
+    })
+  };
+
+  if (topology.sub_topologies) {
+    result.sub_topologies = topology.sub_topologies.map(calcSelectType);
+  }
+  return result;
+}
+
 // adds ID field to topology (based on last part of URL path) and save urls in
 // map for easy lookup
 function processTopologies(state, nextTopologies) {
   // filter out hidden topos
   const visibleTopologies = filterHiddenTopologies(nextTopologies);
-
+  // set `selectType` field for topology and sub_topologies options (recursive).
+  const topologiesWithSelectType = visibleTopologies.map(calcSelectType);
   // add IDs to topology objects in-place
-  const topologiesWithId = updateTopologyIds(visibleTopologies);
-
+  const topologiesWithId = updateTopologyIds(topologiesWithSelectType);
   // cache URLs by ID
   state = state.set('topologyUrlsById',
     setTopologyUrlsById(state.get('topologyUrlsById'), topologiesWithId));
@@ -106,8 +123,7 @@ function processTopologies(state, nextTopologies) {
 }
 
 function setTopology(state, topologyId) {
-  state = state.set('currentTopology', findTopologyById(
-    state.get('topologies'), topologyId));
+  state = state.set('currentTopology', findTopologyById(state.get('topologies'), topologyId));
   return state.set('currentTopologyId', topologyId);
 }
 
@@ -118,7 +134,7 @@ function setDefaultTopologyOptions(state, topologyList) {
       topology.get('options').forEach((option) => {
         const optionId = option.get('id');
         const defaultValue = option.get('defaultValue');
-        defaultOptions = defaultOptions.set(optionId, defaultValue);
+        defaultOptions = defaultOptions.set(optionId, [defaultValue]);
       });
     }
 
@@ -179,13 +195,14 @@ export function rootReducer(state = initialState, action) {
       const topology = findTopologyById(state.get('topologies'), action.topologyId);
       if (topology) {
         const topologyId = topology.get('parentId') || topology.get('id');
-        if (state.getIn(['topologyOptions', topologyId, action.option]) !== action.value) {
+        const optionKey = ['topologyOptions', topologyId, action.option];
+        const currentOption = state.getIn(['topologyOptions', topologyId, action.option]);
+
+        if (!isEqual(currentOption, action.value)) {
           state = clearNodes(state);
         }
-        state = state.setIn(
-          ['topologyOptions', topologyId, action.option],
-          action.value
-        );
+
+        state = state.setIn(optionKey, action.value);
       }
       return state;
     }

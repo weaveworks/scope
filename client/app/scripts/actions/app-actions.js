@@ -174,13 +174,14 @@ export function blurSearch() {
   return { type: ActionTypes.BLUR_SEARCH };
 }
 
-export function changeTopologyOption(option, value, topologyId) {
+export function changeTopologyOption(option, value, topologyId, addOrRemove) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
       topologyId,
       option,
-      value
+      value,
+      addOrRemove
     });
     updateRoute(getState);
     // update all request workers with new options

@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strings"
 	"sync"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 
@@ -48,7 +50,7 @@ var (
 // kubernetesFilters generates the current kubernetes filters based on the
 // available k8s topologies.
 func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
-	options := APITopologyOptionGroup{ID: "namespace", Default: "all"}
+	options := APITopologyOptionGroup{ID: "namespace", Default: "", SelectType: "union", NoneLabel: "All Namespaces"}
 	for _, namespace := range namespaces {
 		if namespace == "default" {
 			options.Default = namespace
@@ -57,7 +59,6 @@ func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
 			Value: namespace, Label: namespace, filter: render.IsNamespace(namespace), filterPseudo: false,
 		})
 	}
-	options.Options = append(options.Options, APITopologyOption{Value: "all", Label: "All Namespaces", filter: nil, filterPseudo: false})
 	return options
 }
 
@@ -292,9 +293,62 @@ func (a byName) Less(i, j int) bool { return a[i].Name < a[j].Name }
 
 // APITopologyOptionGroup describes a group of APITopologyOptions
 type APITopologyOptionGroup struct {
-	ID      string              `json:"id"`
+	ID string `json:"id"`
+	// Default value for the UI to adopt. NOT used as the default if the value is omitted, allowing "" as a distinct value.
 	Default string              `json:"defaultValue,omitempty"`
 	Options []APITopologyOption `json:"options,omitempty"`
+	// SelectType describes how options can be picked. Currently defined values:
+	//   "one": Default if empty. Exactly one option may be picked from the list.
+	//   "union": Any number of options may be picked. Nodes matching any option filter selected are displayed.
+	//           Value and Default should be a ","-separated list.
+	SelectType string `json:"selectType,omitempty"`
+	// For "union" type, this is the label the UI should use to represent the case where nothing is selected
+	NoneLabel string `json:"noneLabel,omitempty"`
+}
+
+// Get the render filters to use for this option group as a Decorator, if any.
+// If second arg is false, no decorator was needed.
+func (g APITopologyOptionGroup) getFilterDecorator(value string) (render.Decorator, bool) {
+	selectType := g.SelectType
+	if selectType == "" {
+		selectType = "one"
+	}
+	var values []string
+	switch selectType {
+	case "one":
+		values = []string{value}
+	case "union":
+		values = strings.Split(value, ",")
+	default:
+		log.Errorf("Invalid select type %s for option group %s, ignoring option", selectType, g.ID)
+		return nil, false
+	}
+	filters := []render.FilterFunc{}
+	for _, opt := range g.Options {
+		for _, v := range values {
+			if v != opt.Value {
+				continue
+			}
+			var filter render.FilterFunc
+			if opt.filter == nil {
+				// No filter means match everything (pseudo doesn't matter)
+				filter = func(n report.Node) bool { return true }
+			} else if opt.filterPseudo {
+				// Apply filter to pseudo topologies also
+				filter = opt.filter
+			} else {
+				// Allow all pseudo topology nodes, only apply filter to non-pseudo
+				filter = render.AnyFilterFunc(render.IsPseudoTopology, opt.filter)
+			}
+			filters = append(filters, filter)
+		}
+	}
+	if len(filters) == 0 {
+		return nil, false
+	}
+	// Since we've encoded whether to ignore pseudo topologies into each subfilter,
+	// we want no special behaviour for pseudo topologies here, which corresponds to MakePseudo
+	return render.MakeFilterPseudoDecorator(render.AnyFilterFunc(filters...)), true
 }
 
 // APITopologyOption describes a &param=value to a given topology.
@@ -437,17 +491,8 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 	var decorators []render.Decorator
 	for _, group := range topology.Options {
 		value := values.Get(group.ID)
-		for _, opt := range group.Options {
-			if opt.filter == nil {
-				continue
-			}
-			if (value == "" && group.Default == opt.Value) || (opt.Value != "" && opt.Value == value) {
-				if opt.filterPseudo {
-					decorators = append(decorators, render.MakeFilterPseudoDecorator(opt.filter))
-				} else {
-					decorators = append(decorators, render.MakeFilterDecorator(opt.filter))
-				}
-			}
+		if decorator, ok := group.getFilterDecorator(value); ok {
+			decorators = append(decorators, decorator)
 		}
 	}
 	if len(decorators) > 0 {

@@ -1,7 +1,7 @@
 import debug from 'debug';
 import reqwest from 'reqwest';
 import defaults from 'lodash/defaults';
-import { Map as makeMap } from 'immutable';
+import { Map as makeMap, List } from 'immutable';
 
 import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
@@ -45,7 +45,12 @@ let continuePolling = true;
 
 export function buildOptionsQuery(options) {
   if (options) {
-    return options.map((value, param) => `${param}=${value}`).join('&');
+    return options.map((value, param) => {
+      if (List.isList(value)) {
+        value = value.join(',');
+      }
+      return `${param}=${value}`;
+    }).join('&');
   }
   return '';
 }
