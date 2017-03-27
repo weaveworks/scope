@@ -36,8 +36,13 @@ class TopologyOptions extends React.Component {
         // Add it to the array if it's not selected
         nextOptions = opts[selected].concat(value);
       }
-      // Since the user is clicking an option, remove the highlighting from the 'none' option.
-      nextOptions = nextOptions.filter(o => o !== 'none');
+      // Since the user is clicking an option, remove the highlighting from the 'none' option,
+      // unless they are removing the last option. In that case, default to the 'none' label.
+      if (nextOptions.length === 0) {
+        nextOptions = ['none'];
+      } else {
+        nextOptions = nextOptions.filter(o => o !== 'none');
+      }
     }
     this.props.changeTopologyOption(optionId, nextOptions, topologyId);
   }
