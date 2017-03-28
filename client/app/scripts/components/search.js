@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { debounce } from 'lodash';
 
-import { blurSearch, doSearch, focusSearch, showHelp } from '../actions/app-actions';
+import { blurSearch, doSearch, focusSearch, toggleHelp } from '../actions/app-actions';
 import { searchMatchCountByTopologySelector } from '../selectors/search';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { slugify } from '../utils/string-utils';
@@ -103,8 +103,8 @@ class Search extends React.Component {
   }
 
   render() {
-    const { nodes, pinnedSearches, searchFocused, searchMatchCountByTopology, isResourceViewMode,
-      searchQuery, topologiesLoaded, onClickHelp, inputId = 'search' } = this.props;
+    const { nodes, pinnedSearches, searchFocused, searchMatchCountByTopology,
+      isResourceViewMode, searchQuery, topologiesLoaded, inputId = 'search' } = this.props;
     const hidden = !topologiesLoaded || isResourceViewMode;
     const disabled = this.props.isTopologyEmpty && !hidden;
     const matchCount = searchMatchCountByTopology
@@ -143,7 +143,7 @@ class Search extends React.Component {
           {!showPinnedSearches && <div className="search-hint">
             {getHint(nodes)} <span
               className="search-help-link fa fa-question-circle"
-              onMouseDown={onClickHelp} />
+              onMouseDown={this.props.toggleHelp} />
           </div>}
         </div>
       </div>
@@ -163,5 +163,5 @@ export default connect(
     searchQuery: state.get('searchQuery'),
     searchMatchCountByTopology: searchMatchCountByTopologySelector(state),
   }),
-  { blurSearch, doSearch, focusSearch, onClickHelp: showHelp }
+  { blurSearch, doSearch, focusSearch, toggleHelp }
 )(Search);

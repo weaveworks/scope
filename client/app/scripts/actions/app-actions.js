@@ -35,15 +35,16 @@ import {
   RESOURCE_VIEW_MODE,
  } from '../constants/naming';
 
+
 const log = debug('scope:app-actions');
 
 export function showHelp() {
-  return {type: ActionTypes.SHOW_HELP};
+  return { type: ActionTypes.SHOW_HELP };
 }
 
 
 export function hideHelp() {
-  return {type: ActionTypes.HIDE_HELP};
+  return { type: ActionTypes.HIDE_HELP };
 }
 
 
