@@ -257,10 +257,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_FORCE_RELAYOUT: {
-      if (action.forceRelayout) {
-        // Reset the zoom cache when forcing relayout.
-        state = state.deleteIn(activeTopologyZoomCacheKeyPathSelector(state));
-      }
       return state.set('forceRelayout', action.forceRelayout);
     }
 
