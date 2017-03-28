@@ -55,20 +55,20 @@ function getColumns(nodes) {
 }
 
 
-function renderIdCell(props) {
+function renderIdCell({ rank, label, labelMinor, pseudo }) {
+  const showSubLabel = Boolean(pseudo) && labelMinor;
+  const title = showSubLabel ? `${label} (${labelMinor})` : label;
   const iconStyle = {
     width: 16,
     flex: 'none',
-    color: getNodeColor(props.rank, props.label_major)
+    color: getNodeColor(rank, label)
   };
-  const showSubLabel = Boolean(props.pseudo);
 
   return (
-    <div title={props.label} className="nodes-grid-id-column">
+    <div title={title} className="nodes-grid-id-column">
       <div style={iconStyle}><i className="fa fa-square" /></div>
       <div className="truncate">
-        {props.label} {showSubLabel &&
-          <span className="nodes-grid-label-minor">{props.labelMinor}</span>}
+        {label} {showSubLabel && <span className="nodes-grid-label-minor">{labelMinor}</span>}
       </div>
     </div>
   );
