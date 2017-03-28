@@ -1,4 +1,5 @@
 import page from 'page';
+import { each } from 'lodash';
 
 import { route } from '../actions/app-actions';
 import { storageGet, storageSet } from './storage-utils';
@@ -88,6 +89,20 @@ export function updateRoute(getState) {
   }
 }
 
+// Temporarily detect old topology options to avoid breaking things between releases
+// Related to https://github.com/weaveworks/scope/pull/2404
+function detectOldOptions(topologyOptions) {
+  let bad = false;
+  each(topologyOptions, (topology) => {
+    each(topology, (option) => {
+      if (typeof option === 'string') {
+        bad = true;
+      }
+    });
+  });
+  return bad;
+}
+
 
 export function getRouter(dispatch, initialState) {
   // strip any trailing '/'s.
@@ -97,11 +112,16 @@ export function getRouter(dispatch, initialState) {
     // recover from storage state on empty URL
     const storageState = storageGet(STORAGE_STATE_KEY);
     if (storageState) {
-      // push storage state to URL
-      window.location.hash = `!/state/${storageState}`;
       const parsedState = JSON.parse(decodeURL(storageState));
-      const mergedState = Object.assign(initialState, parsedState);
-      dispatch(route(mergedState));
+      const dirtyOptions = detectOldOptions(parsedState.topologyOptions);
+      if (dirtyOptions) {
+        dispatch(route(initialState));
+      } else {
+        const mergedState = Object.assign(initialState, parsedState);
+        // push storage state to URL
+        window.location.hash = `!/state/${mergedState}`;
+        dispatch(route(mergedState));
+      }
     } else {
       dispatch(route(initialState));
     }
@@ -109,7 +129,12 @@ export function getRouter(dispatch, initialState) {
 
   page('/state/:state', (ctx) => {
     const state = JSON.parse(decodeURL(ctx.params.state));
-    dispatch(route(state));
+    const dirtyOptions = detectOldOptions(state.topologyOptions);
+    if (dirtyOptions) {
+      dispatch(route(initialState));
+    } else {
+      dispatch(route(state));
+    }
   });
 
   return page;
