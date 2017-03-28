@@ -119,7 +119,7 @@ export function getRouter(dispatch, initialState) {
       } else {
         const mergedState = Object.assign(initialState, parsedState);
         // push storage state to URL
-        window.location.hash = `!/state/${mergedState}`;
+        window.location.hash = `!/state/${JSON.stringify(mergedState)}`;
         dispatch(route(mergedState));
       }
     } else {
