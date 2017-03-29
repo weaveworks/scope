@@ -20,15 +20,17 @@ not remove it and respect the format! -->
 
 | Region         | AMI          |
 |----------------|--------------|
-| us-east-1      | ami-c63709d1 |
-| us-east-2      | ami-4788d222 |
-| us-west-1      | ami-28e7b348 |
-| us-west-2      | ami-c62f81a6 |
-| eu-west-1      | ami-25adf356 |
-| eu-central-1   | ami-7fd31410 |
-| ap-northeast-1 | ami-cb1eafaa |
-| ap-southeast-1 | ami-35822f56 |
-| ap-southeast-2 | ami-06300965 |
+| us-east-1      | ami-f560d8e3 |
+| us-east-2      | ami-13e2c676 |
+| us-west-1      | ami-95cc97f5 |
+| us-west-2      | ami-4fe87c2f |
+| eu-west-1      | ami-13c8f475 |
+| eu-west-2      | ami-8a6276ee |
+| eu-central-1   | ami-216dbc4e |
+| ap-northeast-1 | ami-b2efb5d5 |
+| ap-southeast-1 | ami-e152ee82 |
+| ap-southeast-2 | ami-ac1b14cf |
+| ca-central-1   | ami-8104b9e5 |
 
 For more information about Weave AMIs and running them see: 
 
