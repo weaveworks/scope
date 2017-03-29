@@ -75,28 +75,28 @@ This example assumes a local cluster that is not networked with Weave Net, and a
 
 Suppose you have the following nodes in a cluster:
 
- 192.168.100.16
- 192.168.100.17
- 192.168.100.18
- 192.168.100.19
- 192.168.100.20
+    192.168.100.16
+    192.168.100.17
+    192.168.100.18
+    192.168.100.19
+    192.168.100.20
 
- Using the above IP addresses, you will manually peer each node with all of the other nodes during Scope launch:
+Using the above IP addresses, you will manually peer each node with all of the other nodes during Scope launch:
 
 **1. To begin run the following on each node:**
 
-     sudo curl -L git.io/scope -o /usr/local/bin/scope
-     sudo chmod a+x /usr/local/bin/scope
+    sudo curl -L git.io/scope -o /usr/local/bin/scope
+    sudo chmod a+x /usr/local/bin/scope
 
  **2. Then on the first node launch scope with:**
 
-     scope launch 192.168.100.18 192.168.100.19 192.168.100.20
+    scope launch 192.168.100.18 192.168.100.19 192.168.100.20
 
  **3. And do the same for all of the other nodes in your cluster:**
 
-     scope launch 192.168.100.17 192.168.100.20 192.168.100.21
-     scope launch 192.168.100.17 192.168.100.18 192.168.100.21
-     scope launch 192.168.100.17 192.198.100.19 192.168.100.20
+    scope launch 192.168.100.17 192.168.100.20 192.168.100.21
+    scope launch 192.168.100.17 192.168.100.18 192.168.100.21
+    scope launch 192.168.100.17 192.198.100.19 192.168.100.20
 
 
 ###<a name="net-scope"></a> Weave Net and Scope
@@ -107,7 +107,7 @@ Each probe sends its reports to every app registered at this address. If you hav
 
 If you don’t want to use weaveDNS, then Scope can be instructed to cluster with other Scope instances on the command line. Hostnames and IP addresses are acceptable, both with and without ports, for example:
 
-    # scope launch scope1:4030 192.168.0.12 192.168.0.11:4030
+    scope launch scope1:4030 192.168.0.12 192.168.0.11:4030
 
 Hostnames will be regularly resolved as A records, and each answer used as a target.
 
@@ -215,7 +215,7 @@ Weave Cloud hosts the Scope UI for you, provides secure access control for your 
 
 Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a token. Replace `<token>` with your token by running this on the master node or on whatever machine that has `kubectl` configured to authenticate to your Kubernetes cluster:
 
-    $ kubectl apply -f 'https://cloud.weave.works/launch/k8s/weavescope.yaml?service-token=<token>'
+    kubectl apply --namespace kube-system -f 'https://cloud.weave.works/k8s/scope.yaml?service-token=<token>'
 
 **SECURITY NOTE: This allows control of your Kubernetes cluster from Weave Cloud, which is a hosted service.**
 
@@ -223,7 +223,7 @@ Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a tok
 
 The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is by running the following:
 
-    $ kubectl apply -f 'https://cloud.weave.works/launch/k8s/weavescope.yaml'
+    kubectl apply --namespace kube-system -f 'https://cloud.weave.works/k8s/scope.yaml'
 
 This runs a recent Scope image from Dockerhub and launches a probe onto every node as well as a single Scope app. Once launched, Scope doesn’t require any other configuration.
 
@@ -235,13 +235,40 @@ Allowable parameters for the launcher URL:
 
 To download and read the Scope manifest run:
 
-    curl --silent -L --remote-name https://cloud.weave.works/launch/k8s/weavescope.yaml
+    curl --silent --location --remote-name https://cloud.weave.works/k8s/scope.yaml
 
 **Open Scope in Your Browser**
 
-    kubectl port-forward $(kubectl get pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}') 4040
+    kubectl port-forward -n kube-system "$(kubectl get -n kube-system pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}')" 4040
 
 The URL is: http://localhost:4040.
+
+<!-- uncomment once https://github.com/weaveworks/scope/issues/2258 is fixed
+##<a name="ose"></a>Installing Scope on OpenShift
+
+To install Weave Scope on OpenShift, you first need to login as `system:admin` user with the following command:
+
+    oc login -u system:admin
+
+Next, create a dedicated project for Weave Scope then apply policy permissions that allow Weave Scope to access Kubernetes API:
+
+    oc new-project weave-scope
+    oc adm policy add-scc-to-user privileged system:serviceaccount:weave-scope:default
+    oc adm policy add-cluster-role-to-user cluster-admin system:serviceaccount:weave-scope:default
+
+The installation method for Scope on OpenShift is very similar to the one described above for Kubernetes, but instead of `kubectl apply -n kube-system ...` you need to use
+`oc apply ...` and install it into the namespace of the `weave-scope` project you have just created, and not the `kube-system` namesapce, i.e.:
+
+If you are to use Weave Cloud run this command:
+
+    oc apply -f 'https://cloud.weave.works/k8s/scope.yaml?service-token=<token>'
+
+And if you are to deploy Scope in standalone mode run:
+
+    oc apply -f 'https://cloud.weave.works/k8s/scope.yaml'
+
+To access standalone Scope app from the browser, please refer to Kubernetes instructions above.
+-->
 
 ##<a name="ecs"></a>Installing Scope on Amazon ECS
 
