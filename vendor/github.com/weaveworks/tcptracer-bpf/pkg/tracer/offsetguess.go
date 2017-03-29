@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -227,7 +228,7 @@ func tryCurrentOffset(module *elf.Module, mp *elf.Map, status *tcpTracerStatus, 
 // checkAndUpdateCurrentOffset checks the value for the current offset stored
 // in the eBPF map against the expected value, incrementing the offset if it
 // doesn't match, or going to the next field to guess if it does
-func checkAndUpdateCurrentOffset(module *elf.Module, mp *elf.Map, status *tcpTracerStatus, expected *fieldValues) error {
+func checkAndUpdateCurrentOffset(module *elf.Module, mp *elf.Map, status *tcpTracerStatus, expected *fieldValues, maxRetries *int) error {
 	// get the updated map value so we can check if the current offset is
 	// the right one
 	if err := module.LookupElement(mp, unsafe.Pointer(&zero), unsafe.Pointer(status)); err != nil {
@@ -235,7 +236,14 @@ func checkAndUpdateCurrentOffset(module *elf.Module, mp *elf.Map, status *tcpTra
 	}
 
 	if status.state != stateChecked {
-		return fmt.Errorf("invalid guessing state while guessing %v, got %v expected %v", whatString[status.what], stateString[status.state], stateString[stateChecked])
+		if *maxRetries == 0 {
+			return fmt.Errorf("invalid guessing state while guessing %v, got %v expected %v",
+				whatString[status.what], stateString[status.state], stateString[stateChecked])
+		} else {
+			*maxRetries--
+			time.Sleep(10 * time.Millisecond)
+			return nil
+		}
 	}
 
 	switch status.what {
@@ -334,6 +342,11 @@ func guess(b *elf.Module) error {
 
 	mp := b.Map("tcptracer_status")
 
+	// pid & tid must not change during the guessing work: the communication
+	// between ebpf and userspace relies on it
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
 	pidTgid := uint64(os.Getpid())<<32 | uint64(syscall.Gettid())
 
 	status := &tcpTracerStatus{
@@ -370,12 +383,18 @@ func guess(b *elf.Module) error {
 		family: syscall.AF_INET,
 	}
 
+	// if the kretprobe for tcp_v4_connect() is configured with a too-low
+	// maxactive, some kretprobe might be missing. In this case, we detect
+	// it and try again.
+	// See https://github.com/weaveworks/tcptracer-bpf/issues/24
+	var maxRetries int = 100
+
 	for status.state != stateReady {
 		if err := tryCurrentOffset(b, mp, status, expected, stop); err != nil {
 			return err
 		}
 
-		if err := checkAndUpdateCurrentOffset(b, mp, status, expected); err != nil {
+		if err := checkAndUpdateCurrentOffset(b, mp, status, expected, &maxRetries); err != nil {
 			return err
 		}
 

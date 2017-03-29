@@ -131,7 +131,11 @@ static int are_offsets_ready_v4(struct tcptracer_status_t *status, struct sock *
 			return 0;
 	}
 
-	if (status->pid_tgid >> 32 != pid >> 32)
+	// Only accept the exact pid & tid. Extraneous connections from other
+	// threads must be ignored here. Userland must take care to generate
+	// connections from the correct thread. In Golang, this can be achieved
+	// with runtime.LockOSThread.
+	if (status->pid_tgid != pid)
 		return 0;
 
 	struct tcptracer_status_t new_status = { };
@@ -235,7 +239,11 @@ static int are_offsets_ready_v6(struct tcptracer_status_t *status, struct sock *
 			return 0;
 	}
 
-	if (status->pid_tgid >> 32 != pid >> 32)
+	// Only accept the exact pid & tid. Extraneous connections from other
+	// threads must be ignored here. Userland must take care to generate
+	// connections from the correct thread. In Golang, this can be achieved
+	// with runtime.LockOSThread.
+	if (status->pid_tgid != pid)
 		return 0;
 
 	struct tcptracer_status_t new_status = { };
