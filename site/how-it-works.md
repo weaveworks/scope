@@ -68,9 +68,9 @@ Scope can also be used to feed reports to Weave Cloud. With Weave Cloud, you can
     |  +-----------------+  |      |  +-----------------+  |
     +-----------------------+      +-----------------------+
 
-To register with the service, go to [https://cloud.weave.works](https://cloud.weave.works), enter your email address and wait for the confirmation email that contains your service token.
+To register with Weave Cloud, go to [https://cloud.weave.works](https://cloud.weave.works), enter your email address and wait for the confirmation email.
 
-The cloud token is accessible from the Weave Cloud main page after you've logged in:
+The cloud token is accessible from the settings page after you've clicked 'Explore':
 
 ![Weave Cloud Token](images/weave-cloud-token.png)
 
