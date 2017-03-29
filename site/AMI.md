@@ -51,8 +51,8 @@ The latest Weave ECS AMIs are based on Amazon's
 [ECS-Optimized Amazon Linux AMI](https://aws.amazon.com/marketplace/pp/B00U6QTYI2),
 version `2016.09.b` and also includes:
 
-* [Weave Net 1.8.1](https://github.com/weaveworks/weave/blob/master/CHANGELOG.md#release-181)
-* [Weave Scope 1.1.0](https://github.com/weaveworks/scope/blob/master/CHANGELOG.md#release-110)
+* [Weave Net 1.9.4](https://github.com/weaveworks/weave/blob/master/CHANGELOG.md#release-194)
+* [Weave Scope 1.3.0](https://github.com/weaveworks/scope/blob/master/CHANGELOG.md#release-130)
 
 
 ## <a name="deployment-requirements"></a>Deployment Requirements
