@@ -3,7 +3,6 @@ title: Weaveworks ECS AMIs
 menu_order: 25
 ---
 
-# Weaveworks' ECS AMIs
 
 To make [Weave Net](http://weave.works/net) and
 [Weave Scope](http://weave.works/scope) easier to use with
