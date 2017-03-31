@@ -44,6 +44,7 @@ For more information about Weave AMIs and running them see:
   * [Standalone mode](#running-weave-scope-in-standalone-mode)
   * [In Weave Cloud](#running-weave-scope-in-weave-cloud)
  * [Upgrading Weave Scope and Weave Net](#upgrading-weave-scope-and-weave-net)
+  *[Creating Your Own Customized Weave ECS AMI](#creating-your-own-customized-weave-ecs-ami)
 
 
 ## <a name="whats-in-ecs-ami"></a>What's in the Weave ECS AMIs?
@@ -217,7 +218,7 @@ sudo start weave
 <!--- Do not change the title, otherwise links to
 https://github.com/weaveworks/integrations/tree/master/aws/ecs#creating-your-own-customized-weave-ecs-ami
 will break (e.g. from the ECS guide) -->
-## Creating Your Own Customized Weave ECS AMI
+## <a name="creating-your-own-customized-weave-ecs-ami"></a>Creating Your Own Customized Weave ECS AMI
 
 Clone the integrations repository and then change to the `packer` directory.
 
