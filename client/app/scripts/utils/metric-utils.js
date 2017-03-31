@@ -2,7 +2,7 @@ import { includes } from 'lodash';
 import { scaleLog } from 'd3-scale';
 import React from 'react';
 
-import { NODE_BASE_SIZE, NODE_SHAPE_DOT_RADIUS } from '../constants/styles';
+import { NODE_BASE_SIZE } from '../constants/styles';
 import { formatMetricSvg } from './string-utils';
 import { colors } from './color-utils';
 
@@ -14,10 +14,6 @@ export function getClipPathDefinition(clipId, height) {
       </clipPath>
     </defs>
   );
-}
-
-export function renderMetricValue(value, condition) {
-  return condition ? <text>{value}</text> : <circle className="node" r={NODE_SHAPE_DOT_RADIUS} />;
 }
 
 //

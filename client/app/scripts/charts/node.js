@@ -9,13 +9,15 @@ import MatchedText from '../components/matched-text';
 import MatchedResults from '../components/matched-results';
 import { NODE_BASE_SIZE } from '../constants/styles';
 
-import NodeShapeCircle from './node-shape-circle';
 import NodeShapeStack from './node-shape-stack';
-import NodeShapeRoundedSquare from './node-shape-rounded-square';
-import NodeShapeHexagon from './node-shape-hexagon';
-import NodeShapeHeptagon from './node-shape-heptagon';
-import NodeShapeCloud from './node-shape-cloud';
 import NodeNetworksOverlay from './node-networks-overlay';
+import {
+  NodeShapeCloud,
+  NodeShapeCircle,
+  NodeShapeSquare,
+  NodeShapeHexagon,
+  NodeShapeHeptagon,
+} from './node-shapes';
 
 
 const labelWidth = 1.2 * NODE_BASE_SIZE;
@@ -23,8 +25,8 @@ const nodeShapes = {
   circle: NodeShapeCircle,
   hexagon: NodeShapeHexagon,
   heptagon: NodeShapeHeptagon,
-  square: NodeShapeRoundedSquare,
-  cloud: NodeShapeCloud
+  square: NodeShapeSquare,
+  cloud: NodeShapeCloud,
 };
 
 function stackedShape(Shape) {
