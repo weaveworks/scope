@@ -10,7 +10,7 @@ import {
 } from '../../selectors/resource-view/layout';
 
 
-class NodesResourcesLayer extends React.Component {
+class NodeResourcesLayer extends React.Component {
   render() {
     const { layerVerticalPosition, topologyId, transform, layoutNodes } = this.props;
 
@@ -50,4 +50,4 @@ function mapStateToProps(state, props) {
 
 export default connect(
   mapStateToProps
-)(NodesResourcesLayer);
+)(NodeResourcesLayer);

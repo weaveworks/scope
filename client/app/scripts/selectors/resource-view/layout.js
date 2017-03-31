@@ -100,8 +100,12 @@ const decoratedNodesByTopologySelector = createSelector(
         // positions in the layout could not be determined. The exception is the base layer.
         // TODO: Also make an exception for uncontained nodes (e.g. processes).
         .filter(node => parentTopologyNodes.has(node.get('parentNodeId')) || isBaseLayer)
-        // Filter out the nodes with no metric summary data, which is needed to render the node.
-        .filter(node => node.get('metricSummary'));
+        // Filter out nodes with no metric summary data, which is needed for rendering the node.
+        .filter(node => node.get('metricSummary'))
+        // Filter out nodes with zero-width, as they will never be shown, no matter how much we
+        // zoom in. The example is every node consuming less than 0.005% CPU, as the 2-digit
+        // precision will round it down to zero.
+        .filter(node => node.get('width') > 0);
 
       nodesByTopology = nodesByTopology.set(layerTopologyId, filteredTopologyNodes);
       parentLayerTopologyId = layerTopologyId;
