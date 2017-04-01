@@ -54,7 +54,7 @@ type kv interface {
 }
 
 type consulClient struct {
-	kv
+	kv kv
 }
 
 // Get and deserialise a JSON value from consul.
