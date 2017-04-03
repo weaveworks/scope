@@ -227,6 +227,7 @@
     opacity: 0.9;
     margin-bottom: 3px;
     border: 1px solid transparent;
+    white-space: nowrap;
 
     &-active, &:hover {
       color: $text-color;
@@ -1229,6 +1230,7 @@
     border-radius: $border-radius;
     border: 1px solid $background-darker-color;
     display: inline-block;
+    white-space: nowrap;
   }
 
   &-action {
@@ -1296,10 +1298,12 @@
   }
 }
 
-.view-mode-selector-wrapper .fa {
-  margin-right: 4px;
-  margin-left: 0;
-  color: $text-secondary-color;
+.view-mode-selector-wrapper {
+  .label { margin-left: 4px; }
+  .fa {
+    margin-left: 0;
+    color: $text-secondary-color;
+  }
 }
 
 .network-selector-action {
@@ -1866,4 +1870,8 @@
   .fa-close {
     width: 25px;
   }
+}
+
+@media (max-width: 1330px) {
+  .view-mode-selector .label { display: none; }
 }

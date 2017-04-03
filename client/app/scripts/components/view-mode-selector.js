@@ -21,9 +21,10 @@ const Item = (icons, label, isSelected, onClick, isEnabled = true) => {
     <div
       className={className}
       disabled={!isEnabled}
-      onClick={isEnabled && onClick}>
+      onClick={isEnabled && onClick}
+      title={`View ${label.toLowerCase()}`}>
       <span className={icons} style={{fontSize: 12}} />
-      <span>{label}</span>
+      <span className="label">{label}</span>
     </div>
   );
 };
