@@ -73,6 +73,7 @@ var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
 	report.ECSService:     ecsServiceNodeSummary,
 	report.Host:           hostNodeSummary,
 	report.Overlay:        weaveNodeSummary,
+	report.Endpoint:       nil, // Do not render
 }
 
 var templates = map[string]struct{ Label, LabelMinor string }{
@@ -97,7 +98,14 @@ var primaryAPITopology = map[string]string{
 // MakeNodeSummary summarizes a node, if possible.
 func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
 	if renderer, ok := renderers[n.Topology]; ok {
-		return renderer(baseNodeSummary(r, n), n)
+		// Skip (and don't fall through to fallback) if renderer maps to nil
+		if renderer != nil {
+			return renderer(baseNodeSummary(r, n), n)
+		}
+	} else if _, ok := r.Topology(n.Topology); ok {
+		summary := baseNodeSummary(r, n)
+		summary.Label = n.ID // This is unlikely to look very good, but is a reasonable fallback
+		return summary, true
 	}
 	if strings.HasPrefix(n.Topology, "group:") {
 		return groupNodeSummary(baseNodeSummary(r, n), r, n)
