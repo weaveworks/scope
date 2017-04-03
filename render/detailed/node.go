@@ -246,13 +246,36 @@ func children(r report.Report, n report.Node) []NodeSummaryGroup {
 	})
 
 	nodeSummaryGroups := []NodeSummaryGroup{}
+	// Apply specific group specs in the order they're listed
 	for _, spec := range nodeSummaryGroupSpecs {
 		if len(summaries[spec.topologyID]) > 0 {
 			sort.Sort(nodeSummariesByID(summaries[spec.TopologyID]))
 			group := spec.NodeSummaryGroup
 			group.Nodes = summaries[spec.topologyID]
 			nodeSummaryGroups = append(nodeSummaryGroups, group)
+			delete(summaries, spec.topologyID)
 		}
+	}
+	// As a fallback, in case a topology has no group spec defined, add any remaining at the end
+	for topologyID, nodeSummaries := range summaries {
+		if len(nodeSummaries) == 0 {
+			continue
+		}
+		topology, ok := r.Topology(topologyID)
+		if !ok {
+			continue
+		}
+		apiTopology, ok := primaryAPITopology[topologyID]
+		if !ok {
+			continue
+		}
+		sort.Sort(nodeSummariesByID(nodeSummaries))
+		group := NodeSummaryGroup{
+			ID:      apiTopology,
+			Label:   topology.LabelPlural,
+			Columns: []Column{},
+		}
+		nodeSummaryGroups = append(nodeSummaryGroups, group)
 	}
 
 	return nodeSummaryGroups
