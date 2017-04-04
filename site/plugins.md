@@ -498,11 +498,12 @@ In the report the attribute `latest_controls` contains all the controls exposed 
 ### Metadata
 All metadata entries are placed within nodes in the section named `latest`.
 This section contains the latest values to display and consists of `timestamp` and `value`.
+Both should be written as strings in the json (with the double quotes).
 Scope uses `metadata_templates` to know how to display such data.
 To pair metadata with its template, it is necessary to use the `metadata-template-id` as a key to identify that particular piece of data. Example:
 
 ```json
-"metadata-templates": {
+"metadata_templates": {
       "metadata-templates-id": {
         "id": "metadata-templates-id",
         "label": "Human-readable description",
@@ -514,7 +515,7 @@ To pair metadata with its template, it is necessary to use the `metadata-templat
 "latest": {
 	"metadata-templates-id": {
 		"timestamp": "2016-11-17T08:53:02.189193735Z",
-		"value": "-"
+		"value": "42"
 	}
 }
 ```
@@ -538,7 +539,7 @@ This description is used to extract metadata from a node and display it on Scope
 
 - `metadata-template-identifier` and `id` identify a particular metadata template.
 - `label` contains the label that will be used by Scope UI.
-- `dataType` specifies the type of data, this will determine how the value is displayed. Possible values for this attribute are: number, ip, and datetime.
+- `dataType` specifies the type of data, this will determine how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime" and "" for strings.
 - `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If it is omitted the UI display the value as last.
 - `from` indicates where to look for the metadata. The possible values are:
  - `latest`
