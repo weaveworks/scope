@@ -395,7 +395,7 @@ func (p *Plugin) Report(w http.ResponseWriter, r *http.Request) {
 A report can contain many types of information.
 If you go back to the [Reporter Interface](#reporter-interface) section, you see the top-level `Plugins` attribute.
 Along with that, a report may contain multiple topologies.
-An example of a report containing few topologies is the following:
+An example of a report containing a few topologies is the following:
 
 ```json
 {
@@ -409,7 +409,7 @@ An example of a report containing few topologies is the following:
 
 ### Topologies
 Topologies can be of various types.
-Each topology consists of a list of nodes and other information about the topology.
+Each topology consists of some general information and a list of nodes.
 The available topologies are:
 
 - `Endpoint` nodes are (address, port) tuples on each host.
@@ -431,12 +431,13 @@ The topology structure consists of the following attributes:
 - `table_templates` - contains the templates used to render tables into the Scope UI.
 - `metric_templates` - contains the templates used to render metrics into the Scope UI.
 
-**Note**: These attribute are not required. But a topology with no `nodes` does not have any information to render, `metadata_templates`, as well as `table_templates`, are needed to know how to render the information carried by `nodes` in the Scope UI.
+**Note**: These attribute are not required. But a topology with no `nodes` does not have any information to render.
+`metadata_templates`, as well as `table_templates`, are needed to know how to render the information carried by `nodes` in the Scope UI.
 
 ### Nodes
 A Node contains information about a specific element of a topology.
-For example the Host topology will contain nodes describing all the hosts in it.
-The same is for containers and Container topology, pods and Pod topology and so on.
+For example, the Host topology will contain nodes describing all the hosts in it.
+The same applies for containers and the Container topology, pods and the Pod topology and so on.
 Nodes are represented as follows:
 
 ```json
@@ -455,18 +456,21 @@ Nodes are represented as follows:
 }
 ```
 
-Nodes are stored in dictionary. The ID of nodes representing hosts or containers have the format `ID;<type>`, with type equal to the literal string `host` or `container` accordingly. The `ID` is the alphanumeric identifier of the nodes.
-A node contains all the information about the represented object (e.g. host, container, pod, etc.).
-In particular a node may contain:
+Nodes are stored in a dictionary.
+The ID of nodes representing hosts or containers has the format `ID;<type>`, with type equal to the literal string `host` or `container` respectively.
+`ID` is the alphanumeric identifier of the nodes.
 
-- `latest` - an id-value map containing the latest values. These values are a single piece of information.
+A node contains all the information about the represented object (e.g. host, container, pod, etc.).
+In particular, a node may contain:
+
+- `latest` - an id-value map containing the latest values. As opposed to the values in metrics, these values will not normally change.
 - `latestControls` - the latest available controls.
 - `metrics` - the collection of metrics to display in the UI.
 
 ### Controls
 Controls describe interfaces that expose actions that the user can perform on different objects (e.g. host, container, etc.).
 Controls are an element of nodes. In this way, each control in a node is attached to it and performs an action on the object described by the node itself. Below is an example of how controls are represented in the JSON report.
-In the report the attribute `latest_controls` contains all the controls exposed by scope and/or plugins, but only the alive ones will be listed in the attribute `controls`.
+In the report the attribute `latest_controls` contains all the controls exposed by scope and/or plugins, but only those alive will be listed in the attribute `controls`.
 
 ```json
 "controls": {
@@ -491,7 +495,7 @@ In the report the attribute `latest_controls` contains all the controls exposed 
 }
 ```
 
-- `timestamp` is the timestamp of when the control was exposed.
+- `timestamp` specifies when the control was exposed.
 - `value` is an object containing the control value. At the moment, only the state is available.
  - `dead` is a boolean to know the state (active, dead) of a control. It is useful to show controls only when they are in a usable state.
 
@@ -540,7 +544,7 @@ This description is used to extract metadata from a node and display it on Scope
 - `metadata-template-identifier` and `id` identify a particular metadata template.
 - `label` contains the label that will be used by Scope UI.
 - `dataType` specifies the type of data, this will determine how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime" and "" for strings.
-- `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If it is omitted the UI display the value as last.
+- `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If omitted, the UI will display it last.
 - `from` indicates where to look for the metadata. The possible values are:
  - `latest`
  - `sets`
@@ -564,13 +568,13 @@ Table Templates describe a table and how to identify which metadata templates be
 - `label` contains the label that will be used by Scope UI.
 - `prefix` is used to identify which metadata templates belong to the table.
 
-If you want to display data in a table, you have to define a table template and prepend the table prefix to all the metadata templates that identifies the data you want to put in such table.
+If you want to display data in a table, you have to define a table template and prepend the table prefix to all the metadata templates that identify the data you want to put in such table.
 
 ### Metrics
 Metrics are a particular kind of data that can be plotted on the UI as a graph.
 Scope uses the `metric_templates` to know how to display such data. To pair a metric with its template, it is necessary to use the `metric-template-id` as key to identify that particular metric.
 Metrics are suitable for information such as CPU and memory usage, HTTP requests rate, I/O operations, etc.
-The following is an example of a report with a metric and a its metric template:
+The following is an example of a report with a metric preceded by its metric template:
 
 ```json
 "metric_templates": {
@@ -629,7 +633,7 @@ A report may have an attribute called `Window`.
 This is the time window, expressed as duration, within which the data contained in the report are considered valid.
 The default window is 15 seconds.
 You may change the window value using the option `-app.window <SECONDS>` when launching scope.
-However, using values less than 15 seconds increases the change of information not be correctly displayed.
+However, using values less than 15 seconds increases the chance of information not being correctly displayed.
 
 **See Also**
 
