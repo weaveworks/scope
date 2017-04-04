@@ -463,9 +463,9 @@ The ID of nodes representing hosts or containers has the format `ID;<type>`, wit
 A node contains all the information about the represented object (e.g. host, container, pod, etc.).
 In particular, a node may contain:
 
-- `latest` - an id-value map containing the latest values. As opposed to the values in metrics, these values will not normally change.
+- `latest` - an id-value map containing the latest values. Each id has only one value.
 - `latestControls` - the latest available controls.
-- `metrics` - the collection of metrics to display in the UI.
+- `metrics` - the collection of metrics to display in the UI. Each metric has multiple timestamped values.
 
 ### Controls
 Controls describe interfaces that expose actions that the user can perform on different objects (e.g. host, container, etc.).
@@ -592,6 +592,10 @@ The following is an example of a report with a metric preceded by its metric tem
 			{
 				"date": "2016-11-17T08:53:03.171424664Z",
 				"value": 98.24
+			},
+			{
+				"date": "2016-11-17T08:53:04.171789887Z",
+				"value": 80.11
 			}
 		],
 		"min": 0,
