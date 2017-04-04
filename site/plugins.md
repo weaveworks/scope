@@ -393,7 +393,7 @@ func (p *Plugin) Report(w http.ResponseWriter, r *http.Request) {
 
 ### <a id="report-data-structures"></a>Report Data structures
 A report can contain many types of information.
-If you go back to the [Reporter Interface](#reporter-interface) section, you see the top-level `Plugins` attribute.
+If you go back to the [Reporter Interface](#reporter-interface) section, you will see the top-level `Plugins` attribute.
 Along with that, a report may contain multiple topologies.
 An example of a report containing a few topologies is the following:
 
@@ -410,9 +410,9 @@ An example of a report containing a few topologies is the following:
 ### Topologies
 Topologies can be of various types.
 Each topology consists of some general information and a list of nodes.
-The available topologies are:
+These are the available topologies:
 
-- `Endpoint` nodes are (address, port) tuples on each host.
+- `Endpoint` nodes are `(address, port)` tuples on each host.
 - `Process` nodes are processes on each host.
 - `Container` nodes represent all Docker containers on hosts running probes.
 - `Pods` nodes represent all Kubernetes pods running on hosts running probes.
@@ -470,7 +470,7 @@ In particular, a node may contain:
 ### Controls
 Controls describe interfaces that expose actions that the user can perform on different objects (e.g. host, container, etc.).
 Controls are an element of nodes. In this way, each control in a node is attached to it and performs an action on the object described by the node itself. Below is an example of how controls are represented in the JSON report.
-In the report the attribute `latest_controls` contains all the controls exposed by scope and/or plugins, but only those alive will be listed in the attribute `controls`.
+In the report, the attribute `latest_controls` contains all the controls exposed by scope and/or plugins, but only those alive will be listed in the attribute `controls`.
 
 ```json
 "controls": {
@@ -502,7 +502,7 @@ In the report the attribute `latest_controls` contains all the controls exposed 
 ### Metadata
 All metadata entries are placed within nodes in the section named `latest`.
 This section contains the latest values to display and consists of `timestamp` and `value`.
-Both should be written as strings in the json (with the double quotes).
+Both should be written as json strings (with double quotes).
 Scope uses `metadata_templates` to know how to display such data.
 To pair metadata with its template, it is necessary to use the `metadata-template-id` as a key to identify that particular piece of data. Example:
 
@@ -546,9 +546,9 @@ This description is used to extract metadata from a node and display it on Scope
 - `dataType` specifies the type of data, this will determine how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime" and "" for strings.
 - `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If omitted, the UI will display it last.
 - `from` indicates where to look for the metadata. The possible values are:
- - `latest`
- - `sets`
- - `counters`
+  - `latest`
+  - `sets`
+  - `counters`
 
 ### Table Templates
 Table Templates describe a table and how to identify which metadata templates belong to the table.
@@ -627,9 +627,9 @@ The following is an example of metric template:
 - `metric-template-id` and `id` identify a particular metric template.
 - `label` contains the label that will be used by Scope UI.
 - `format` describes how the metrics is formatted.
- - `percent` the metric value is a percentage.
- - `filesize` the metric value is a file size (e.g. memory usage), it is displayed with the suffix KB, MB, GB, etc.
- - `integer` the metric value is an integer.
+  - `percent` the metric value is a percentage.
+  - `filesize` the metric value is a file size (e.g. memory usage), it is displayed with the suffix KB, MB, GB, etc.
+  - `integer` the metric value is an integer.
 - `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones).
 
 ### Time Window
