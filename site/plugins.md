@@ -637,7 +637,7 @@ A report may have an attribute called `Window`.
 This is the time window, expressed as duration, within which the data contained in the report are considered valid.
 The default window is 15 seconds.
 You may change the window value using the option `-app.window <SECONDS>` when launching scope.
-However, using values less than 15 seconds increases the chance of information not being correctly displayed.
+However, using values smaller than 15 seconds increases the chance of information not being correctly displayed.
 
 **See Also**
 
