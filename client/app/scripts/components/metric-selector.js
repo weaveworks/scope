@@ -18,10 +18,11 @@ class MetricSelector extends React.Component {
 
   render() {
     const { alwaysPinned, availableMetrics } = this.props;
+    const hasMetrics = !availableMetrics.isEmpty();
 
     return (
       <div className="metric-selector">
-        <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
+        {hasMetrics && <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
           {availableMetrics.map(metric => (
             <MetricSelectorItem
               key={metric.get('id')}
@@ -29,7 +30,7 @@ class MetricSelector extends React.Component {
               metric={metric}
             />
           ))}
-        </div>
+        </div>}
       </div>
     );
   }
