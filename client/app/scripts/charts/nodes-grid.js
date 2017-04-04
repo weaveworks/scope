@@ -84,12 +84,12 @@ class NodesGrid extends React.Component {
     this.onSortChange = this.onSortChange.bind(this);
   }
 
-  onClickRow(ev, node, el) {
+  onClickRow(ev, node) {
     // TODO: do this better
     if (ev.target.className === 'node-details-table-node-link') {
       return;
     }
-    this.props.clickNode(node.id, node.label, el.getBoundingClientRect());
+    this.props.clickNode(node.id, node.label, ev.target.getBoundingClientRect());
   }
 
   onSortChange(sortedBy, sortedDesc) {
