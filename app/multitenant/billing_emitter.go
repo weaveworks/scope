@@ -53,12 +53,14 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 	}
 	rowKey, colKey := calculateDynamoKeys(userID, now)
 
-	containerCount := int64(len(rep.Container.Nodes))
 	interval := e.reportInterval(rep)
 	hasher := sha256.New()
 	hasher.Write(buf)
 	hash := "sha256:" + base64.URLEncoding.EncodeToString(hasher.Sum(nil))
-	amounts := billing.Amounts{billing.ContainerSeconds: int64(interval/time.Second) * containerCount}
+	amounts := billing.Amounts{
+		billing.ContainerSeconds: int64(interval/time.Second) * int64(len(rep.Container.Nodes)),
+		billing.NodeSeconds:      int64(interval/time.Second) * int64(len(rep.Host.Nodes)),
+	}
 	metadata := map[string]string{
 		"row_key": rowKey,
 		"col_key": colKey,
