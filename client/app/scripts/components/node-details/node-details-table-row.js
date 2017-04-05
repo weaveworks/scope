@@ -79,15 +79,10 @@ export default class NodeDetailsTableRow extends React.Component {
     this.state = { focused: false };
     this.mouseDragOrigin = [0, 0];
 
-    this.saveLabelElementRef = this.saveLabelElementRef.bind(this);
     this.onMouseDown = this.onMouseDown.bind(this);
     this.onMouseUp = this.onMouseUp.bind(this);
     this.onMouseEnter = this.onMouseEnter.bind(this);
     this.onMouseLeave = this.onMouseLeave.bind(this);
-  }
-
-  saveLabelElementRef(ref) {
-    this.labelElement = ref;
   }
 
   onMouseEnter() {
@@ -121,8 +116,7 @@ export default class NodeDetailsTableRow extends React.Component {
       return;
     }
 
-    const { node, onClick } = this.props;
-    onClick(ev, node, this.labelElement);
+    this.props.onClick(ev, this.props.node);
   }
 
   render() {
@@ -143,9 +137,7 @@ export default class NodeDetailsTableRow extends React.Component {
         onMouseEnter={this.onMouseEnter}
         onMouseLeave={this.onMouseLeave}
         className={className}>
-        <td
-          className="node-details-table-node-label truncate"
-          ref={this.saveLabelElementRef} style={firstColumnStyle}>
+        <td className="node-details-table-node-label truncate" style={firstColumnStyle}>
           {this.props.renderIdCell(Object.assign(node, {topologyId, nodeId}))}
         </td>
         {values}
