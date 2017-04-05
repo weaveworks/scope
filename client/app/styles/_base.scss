@@ -424,7 +424,7 @@
     }
   }
 
-  .stack .shape .highlighted {
+  .stack .shape .highlight {
     display: none;
   }
 
@@ -432,7 +432,7 @@
     .border { display: none; }
     .shadow { display: none; }
     .node { display: none; }
-    .highlighted { display: inline; }
+    .highlight { display: inline; }
   }
 
   .stack .shape .metric-fill {
@@ -443,16 +443,17 @@
     transform: scale(1);
     cursor: pointer;
 
-    .border {
-      stroke-width: $node-border-stroke-width;
-      fill: $background-color;
-      transition: stroke-opacity 0.333s $base-ease, fill 0.333s $base-ease;
-      stroke-opacity: 1;
+    .highlight {
+      fill: $weave-blue;
+      fill-opacity: $node-highlight-fill-opacity;
+      stroke: $weave-blue;
+      stroke-width: $node-highlight-stroke-width;
+      stroke-opacity: $node-highlight-stroke-opacity;
     }
 
-    &.metrics .border {
+    .background {
+      stroke: none;
       fill: $background-lighter-color;
-      stroke-opacity: 0.3;
     }
 
     .metric-fill {
@@ -461,9 +462,21 @@
       fill-opacity: 0.7;
     }
 
+    .border {
+      fill: none;
+      stroke-opacity: 1;
+      stroke-width: $node-border-stroke-width;
+      transition: stroke-opacity 0.333s $base-ease, fill 0.333s $base-ease;
+    }
+
+    &.metrics .border {
+      stroke-opacity: 0.3;
+    }
+
     .shadow {
-      stroke: none;
-      fill: $background-lighter-color;
+      fill: none;
+      stroke: $background-color;
+      stroke-width: $node-shadow-stroke-width;
     }
 
     .node {
@@ -477,14 +490,6 @@
       font-size: 10px;
       dominant-baseline: middle;
       text-anchor: middle;
-    }
-
-    .highlighted {
-      fill: $weave-blue;
-      fill-opacity: $node-highlight-fill-opacity;
-      stroke: $weave-blue;
-      stroke-width: $node-highlight-stroke-width;
-      stroke-opacity: $node-highlight-stroke-opacity;
     }
   }
 

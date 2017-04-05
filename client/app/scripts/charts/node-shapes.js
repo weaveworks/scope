@@ -19,36 +19,41 @@ import {
 } from '../utils/node-shape-utils';
 
 
-function NodeShape(shapeType, renderShapeLayer, shapeProps, { id, highlighted, color, metric }) {
+function NodeShape(shapeType, shapeElement, shapeProps, { id, highlighted, color, metric }) {
   const { height, hasMetric, formattedValue } = getMetricValue(metric);
   const className = classNames('shape', `shape-${shapeType}`, { metrics: hasMetric });
   const metricStyle = { fill: getMetricColor(metric) };
-  const clipId = `mask-${id}`;
+  const clipId = `metric-clip-${id}`;
 
   return (
     <g className={className}>
-      {hasMetric && getClipPathDefinition(clipId, height)}
-      {highlighted && renderShapeLayer({
-        className: 'highlighted',
+      {highlighted && shapeElement({
+        className: 'highlight',
         transform: `scale(${NODE_BASE_SIZE * 0.7})`,
         ...shapeProps,
       })}
-      {renderShapeLayer({
+      {shapeElement({
+        className: 'background',
+        transform: `scale(${NODE_BASE_SIZE * 0.48})`,
+        ...shapeProps,
+      })}
+      {hasMetric && getClipPathDefinition(clipId, height, 0.48)}
+      {hasMetric && shapeElement({
+        className: 'metric-fill',
+        transform: `scale(${NODE_BASE_SIZE * 0.48})`,
+        clipPath: `url(#${clipId})`,
+        style: metricStyle,
+        ...shapeProps,
+      })}
+      {shapeElement({
+        className: 'shadow',
+        transform: `scale(${NODE_BASE_SIZE * 0.49})`,
+        ...shapeProps,
+      })}
+      {shapeElement({
         className: 'border',
         transform: `scale(${NODE_BASE_SIZE * 0.5})`,
         stroke: color,
-        ...shapeProps,
-      })}
-      {renderShapeLayer({
-        className: 'shadow',
-        transform: `scale(${NODE_BASE_SIZE * 0.45})`,
-        ...shapeProps,
-      })}
-      {hasMetric && renderShapeLayer({
-        className: 'metric-fill',
-        transform: `scale(${NODE_BASE_SIZE * 0.45})`,
-        clipPath: `url(#${clipId})`,
-        style: metricStyle,
         ...shapeProps,
       })}
       {hasMetric && highlighted ?
