@@ -44,6 +44,7 @@ For more information about Weave AMIs and running them see:
   * [Standalone mode](#running-weave-scope-in-standalone-mode)
   * [In Weave Cloud](#running-weave-scope-in-weave-cloud)
  * [Upgrading Weave Scope and Weave Net](#upgrading-weave-scope-and-weave-net)
+  * [Creating Your Own Customized Weave ECS AMI](#creating-your-own-customized-weave-ecs-ami)
 
 
 ## <a name="whats-in-ecs-ami"></a>What's in the Weave ECS AMIs?
@@ -138,7 +139,7 @@ of the instance.
 echo manual > /etc/weave/scope.override
 ~~~
 
-###<a name="running-weave-scope-in-standalone-mode"></a>Running `Weave Scope` in Standalone Mode
+### <a name="running-weave-scope-in-standalone-mode"></a>Running `Weave Scope` in Standalone Mode
 
 Running `Weave Scope` in standalone mode is the default mode.
 
@@ -165,7 +166,7 @@ port 4040. Ensure that your Amazon ECS container instances can talk to each
 other on that port before running `Weave Scope` in standalone mode (see
 [Required Open Ports](#required-open-ports) for more details).
 
-###<a name="running-weave-scope-in-weave-cloud"></a>Running `Weave Scope` in Weave Cloud
+### <a name="running-weave-scope-in-weave-cloud"></a>Running `Weave Scope` in Weave Cloud
 
 In Weave Cloud, you can visualize Amazon ECS containers as well as monitor Tasks 
 and Services all from within in Weave Cloud at [https://cloud.weave.works](https://cloud.weave.works). 
@@ -217,7 +218,7 @@ sudo start weave
 <!--- Do not change the title, otherwise links to
 https://github.com/weaveworks/integrations/tree/master/aws/ecs#creating-your-own-customized-weave-ecs-ami
 will break (e.g. from the ECS guide) -->
-## Creating Your Own Customized Weave ECS AMI
+## <a name="creating-your-own-customized-weave-ecs-ami"></a>Creating Your Own Customized Weave ECS AMI
 
 Clone the integrations repository and then change to the `packer` directory.
 
@@ -246,7 +247,7 @@ that region when invoking the script:
 ONLY_REGION=us-east-1 AWS_ACCSS_KEY_ID=XXXX AWS_SECRET_ACCESS_KEY=YYYY  ./build-all-amis.sh
 ~~~
 
-##Further Reading
+## Further Reading
 
 Read the
 [Service Discovery and Load Balancing with Weave on Amazon ECS](http://weave.works/guides/service-discovery-with-weave-aws-ecs.html)
