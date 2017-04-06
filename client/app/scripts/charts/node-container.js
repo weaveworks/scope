@@ -9,7 +9,7 @@ import Node from './node';
 const transformedNode = (otherProps, { x, y, k, opacity }) => (
   // NOTE: Controlling blurring and transform from here seems to re-render
   // faster than adding a CSS class and controlling it from there.
-  <g transform={`translate(${x},${y}) scale(${k})`} style={{opacity}}>
+  <g transform={`translate(${x},${y}) scale(${k})`} className={(opacity < 0) ? 'blurrr' : ''}>
     <Node {...otherProps} />
   </g>
 );

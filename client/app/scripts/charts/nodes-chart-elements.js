@@ -1,7 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import NodesChartEdges from './nodes-chart-edges';
 import NodesChartNodes from './nodes-chart-nodes';
 import { graphExceedsComplexityThreshSelector } from '../selectors/topology';
 import {
@@ -17,12 +16,9 @@ class NodesChartElements extends React.Component {
 
     return (
       <g className="nodes-chart-elements">
-        <NodesChartEdges
-          layoutEdges={layoutEdges}
-          selectedScale={selectedScale}
-          isAnimated={isAnimated} />
         <NodesChartNodes
           layoutNodes={layoutNodes}
+          layoutEdges={layoutEdges}
           selectedScale={selectedScale}
           isAnimated={isAnimated} />
       </g>
