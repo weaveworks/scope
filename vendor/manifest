@@ -1020,7 +1020,7 @@
 			"importpath": "github.com/iovisor/gobpf/elf",
 			"repository": "https://github.com/iovisor/gobpf",
 			"vcs": "git",
-			"revision": "21a9e281bf73650b9245d4ebcf111716338ae652",
+			"revision": "65e4048660d6c4339ebae113ac55b1af6f01305d",
 			"branch": "master",
 			"path": "/elf",
 			"notests": true
@@ -1462,7 +1462,7 @@
 			"importpath": "github.com/weaveworks/tcptracer-bpf",
 			"repository": "https://github.com/weaveworks/tcptracer-bpf",
 			"vcs": "git",
-			"revision": "5b0b56d81d81cf9739739d347798a04ba1754b2e",
+			"revision": "b715a3b635b8d9c4a096bbd6009826b57fe64c38",
 			"branch": "master",
 			"notests": true
 		},

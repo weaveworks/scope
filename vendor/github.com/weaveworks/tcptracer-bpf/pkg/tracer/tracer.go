@@ -16,6 +16,12 @@ type Tracer struct {
 	stopChan    chan struct{}
 }
 
+// maxActive configures the maximum number of instances of the probed functions
+// that can be handled simultaneously.
+// This value should be enough to handle typical workloads (for example, some
+// amount of processes blocked on the accept syscall).
+const maxActive = 128
+
 func TracerAsset() ([]byte, error) {
 	buf, err := Asset("tcptracer-ebpf.o")
 	if err != nil {
@@ -41,7 +47,7 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6)) (*Tracer, err
 		return nil, err
 	}
 
-	err = m.EnableKprobes()
+	err = m.EnableKprobes(maxActive)
 	if err != nil {
 		return nil, err
 	}
