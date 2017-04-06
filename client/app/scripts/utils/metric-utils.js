@@ -6,10 +6,11 @@ import { formatMetricSvg } from './string-utils';
 import { colors } from './color-utils';
 
 export function getClipPathDefinition(clipId, height, radius) {
+  const barHeight = 1 - (2 * height); // in the interval [-1, 1]
   return (
     <defs>
-      <clipPath id={clipId} transform={`scale(${4 * radius})`}>
-        <rect width={1} height={1} x={-0.5} y={0.5 - height} />
+      <clipPath id={clipId} transform={`scale(${2 * radius})`}>
+        <rect width={2} height={2} x={-1} y={barHeight} />
       </clipPath>
     </defs>
   );
