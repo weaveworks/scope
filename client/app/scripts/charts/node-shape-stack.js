@@ -2,6 +2,7 @@ import React from 'react';
 
 import { NODE_BASE_SIZE } from '../constants/styles';
 
+
 export default function NodeShapeStack(props) {
   const shift = props.contrastMode ? 0.15 : 0.1;
   const highlightScale = [1, 1 + shift];

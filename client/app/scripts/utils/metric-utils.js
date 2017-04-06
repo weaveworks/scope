@@ -2,22 +2,18 @@ import { includes } from 'lodash';
 import { scaleLog } from 'd3-scale';
 import React from 'react';
 
-import { NODE_BASE_SIZE, NODE_SHAPE_DOT_RADIUS } from '../constants/styles';
 import { formatMetricSvg } from './string-utils';
 import { colors } from './color-utils';
 
-export function getClipPathDefinition(clipId, height) {
+export function getClipPathDefinition(clipId, height, radius) {
+  const barHeight = 1 - (2 * height); // in the interval [-1, 1]
   return (
     <defs>
-      <clipPath id={clipId} transform={`scale(${NODE_BASE_SIZE})`}>
-        <rect width={1} height={1} x={-0.5} y={0.5 - height} />
+      <clipPath id={clipId} transform={`scale(${2 * radius})`}>
+        <rect width={2} height={2} x={-1} y={barHeight} />
       </clipPath>
     </defs>
   );
-}
-
-export function renderMetricValue(value, condition) {
-  return condition ? <text>{value}</text> : <circle className="node" r={NODE_SHAPE_DOT_RADIUS} />;
 }
 
 //
