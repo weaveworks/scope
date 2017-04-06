@@ -10,14 +10,14 @@ import (
 // EdgeMetadatas and Nodes respectively. Edges are directional, and embedded
 // in the Node struct.
 type Topology struct {
-	Shape             string `json:"shape,omitempty"`
-	Label             string `json:"label,omitempty"`
-	LabelPlural       string `json:"label_plural,omitempty"`
-	Nodes             `json:"nodes"`
-	Controls          `json:"controls,omitempty"`
-	MetadataTemplates `json:"metadata_templates,omitempty"`
-	MetricTemplates   `json:"metric_templates,omitempty"`
-	TableTemplates    `json:"table_templates,omitempty"`
+	Shape             string            `json:"shape,omitempty"`
+	Label             string            `json:"label,omitempty"`
+	LabelPlural       string            `json:"label_plural,omitempty"`
+	Nodes             Nodes             `json:"nodes"`
+	Controls          Controls          `json:"controls,omitempty"`
+	MetadataTemplates MetadataTemplates `json:"metadata_templates,omitempty"`
+	MetricTemplates   MetricTemplates   `json:"metric_templates,omitempty"`
+	TableTemplates    TableTemplates    `json:"table_templates,omitempty"`
 }
 
 // MakeTopology gives you a Topology.

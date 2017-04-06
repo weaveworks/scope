@@ -23,7 +23,7 @@ type Connection struct {
 	RemoteAddress net.IP
 	RemotePort    uint16
 	inode         uint64
-	Proc
+	Proc          Proc
 }
 
 // Proc is a single process with PID and process name.
