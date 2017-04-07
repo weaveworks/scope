@@ -425,6 +425,13 @@
     }
   }
 
+  .stack .highlight-only {
+    .background { display: none; }
+    .shadow { display: none; }
+    .border { display: none; }
+    .node { display: none; }
+  }
+
   .stack .shape .metric-fill {
     display: none;
   }
