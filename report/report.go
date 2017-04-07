@@ -234,19 +234,25 @@ func (r Report) Topologies() []Topology {
 // WalkTopologies iterates through the Topologies of the report,
 // potentially modifying them
 func (r *Report) WalkTopologies(f func(*Topology)) {
-	for _, t := range r.TopologyMap() {
-		f(t)
-	}
+	var dummy Report
+	r.WalkPairedTopologies(&dummy, func(t, _ *Topology) { f(t) })
 }
 
 // WalkPairedTopologies iterates through the Topologies of this and another report,
 // potentially modifying one or both.
 func (r *Report) WalkPairedTopologies(o *Report, f func(*Topology, *Topology)) {
-	rMap := r.TopologyMap()
-	oMap := o.TopologyMap()
-	for name := range rMap {
-		f(rMap[name], oMap[name])
-	}
+	f(&r.Endpoint, &o.Endpoint)
+	f(&r.Process, &o.Process)
+	f(&r.Container, &o.Container)
+	f(&r.ContainerImage, &o.ContainerImage)
+	f(&r.Pod, &o.Pod)
+	f(&r.Service, &o.Service)
+	f(&r.Deployment, &o.Deployment)
+	f(&r.ReplicaSet, &o.ReplicaSet)
+	f(&r.Host, &o.Host)
+	f(&r.Overlay, &o.Overlay)
+	f(&r.ECSTask, &o.ECSTask)
+	f(&r.ECSService, &o.ECSService)
 }
 
 // Topology gets a topology by name
