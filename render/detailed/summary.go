@@ -81,6 +81,19 @@ var templates = map[string]struct{ Label, LabelMinor string }{
 	render.OutgoingInternetID: {render.OutboundMajor, render.OutboundMinor},
 }
 
+// For each report.Topology, map to a 'primary' API topology. This can then be used in a variety of places.
+var primaryAPITopology = map[string]string{
+	report.Container:      "containers",
+	report.ContainerImage: "containers-by-image",
+	report.Pod:            "pods",
+	report.ReplicaSet:     "replica-sets",
+	report.Deployment:     "deployments",
+	report.Service:        "services",
+	report.ECSTask:        "ecs-tasks",
+	report.ECSService:     "ecs-services",
+	report.Host:           "hosts",
+}
+
 // MakeNodeSummary summarizes a node, if possible.
 func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
 	if renderer, ok := renderers[n.Topology]; ok {
