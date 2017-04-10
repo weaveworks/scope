@@ -84,6 +84,7 @@ var templates = map[string]struct{ Label, LabelMinor string }{
 
 // For each report.Topology, map to a 'primary' API topology. This can then be used in a variety of places.
 var primaryAPITopology = map[string]string{
+	report.Process:        "processes",
 	report.Container:      "containers",
 	report.ContainerImage: "containers-by-image",
 	report.Pod:            "pods",
