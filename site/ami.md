@@ -136,7 +136,7 @@ the
 of the instance.
 
 ~~~bash
-echo manual > /etc/weave/scope.override
+echo manual > /etc/init/scope.override
 ~~~
 
 ### <a name="running-weave-scope-in-standalone-mode"></a>Running `Weave Scope` in Standalone Mode
