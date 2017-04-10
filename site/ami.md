@@ -127,8 +127,7 @@ There are two methods for running `Weave Scope` within the Weave ECS AMIs:
 * [Standalone mode](#running-weave-scope-in-standalone-mode)
 * [In Weave Cloud](#running-weave-scope-in-weave-cloud)
 
-You can prevent Weave Scope from automatically starting at boot time by creating
-file `/etc/init/scope.override` with contents `manual`.
+You can prevent Weave Scope from automatically starting at boot time by removing  `/etc/init/scope`.
 
 This can be done at instance initialization time adding the following line to
 the
@@ -136,7 +135,7 @@ the
 of the instance.
 
 ~~~bash
-echo manual > /etc/weave/scope.override
+rm /etc/init/scope
 ~~~
 
 ### <a name="running-weave-scope-in-standalone-mode"></a>Running `Weave Scope` in Standalone Mode
