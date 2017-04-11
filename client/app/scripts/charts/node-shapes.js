@@ -28,8 +28,13 @@ function NodeShape(shapeType, shapeElement, shapeProps, { id, highlighted, color
   return (
     <g className={className}>
       {highlighted && shapeElement({
-        className: 'highlight',
-        transform: `scale(${NODE_BASE_SIZE * 0.7})`,
+        className: 'highlight-border',
+        transform: `scale(${NODE_BASE_SIZE * 0.5})`,
+        ...shapeProps,
+      })}
+      {highlighted && shapeElement({
+        className: 'highlight-shadow',
+        transform: `scale(${NODE_BASE_SIZE * 0.5})`,
         ...shapeProps,
       })}
       {shapeElement({

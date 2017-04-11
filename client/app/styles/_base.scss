@@ -425,15 +425,11 @@
     }
   }
 
-  .stack .shape .highlight {
-    display: none;
-  }
-
-  .stack .highlight .shape  {
-    .border { display: none; }
+  .stack .highlight-only {
+    .background { display: none; }
     .shadow { display: none; }
+    .border { display: none; }
     .node { display: none; }
-    .highlight { display: inline; }
   }
 
   .stack .shape .metric-fill {
@@ -444,12 +440,18 @@
     transform: scale(1);
     cursor: pointer;
 
-    .highlight {
-      fill: $weave-blue;
-      fill-opacity: $node-highlight-fill-opacity;
+    .highlight-border {
+      fill: none;
       stroke: $weave-blue;
-      stroke-width: $node-highlight-stroke-width;
+      stroke-width: 0.7 + $node-highlight-stroke-width * 2;
       stroke-opacity: $node-highlight-stroke-opacity;
+    }
+
+    .highlight-shadow {
+      fill: none;
+      stroke: white;
+      stroke-width: 0.7;
+      stroke-opacity: $node-highlight-shadow-opacity;
     }
 
     .background {
