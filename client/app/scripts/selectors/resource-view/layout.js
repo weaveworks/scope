@@ -162,11 +162,20 @@ export const layoutNodesByTopologyIdSelector = createSelector(
             `resource than the node itself - shrinking by factor ${shrinkFactor}`);
           // Shrink all the children.
           nodesBucket.forEach((_, nodeId) => {
-            const node = positionedNodes.get(nodeId);
-            positionedNodes = positionedNodes.mergeIn([nodeId], makeMap({
+            let node = positionedNodes.get(nodeId);
+            // Shrink the width of the resource box and update its relative offset.
+            node = node.merge(makeMap({
               offset: ((node.get('offset') - parentOffset) * shrinkFactor) + parentOffset,
               width: node.get('width') * shrinkFactor,
             }));
+            // Update the metrics summary to reflect the adjusted dimensions for consistent data.
+            node = nodeMetricSummaryDecoratorByType(
+              node.getIn(['metricSummary', 'type']),
+              node.get('showCapacity'),
+              shrinkFactor
+            )(node);
+            // Update the node in the layout.
+            positionedNodes = positionedNodes.mergeIn([nodeId], node);
           });
         }
       });
