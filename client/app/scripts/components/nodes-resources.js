@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import Logo from './logo';
 import ZoomWrapper from './zoom-wrapper';
 import NodeResourcesLayer from './nodes-resources/node-resources-layer';
-import NodeResourcesZoomContext from './nodes-resources/node-resources-zoom-context';
+import NodeResourcesZoomScale from './nodes-resources/node-resources-zoom-scale';
 import {
   layersTopologyIdsSelector,
   layoutNodesByTopologyIdSelector,
@@ -27,7 +27,7 @@ class NodesResources extends React.Component {
             svg="canvas" bounded forwardTransform fixVertical
             zoomLimitsSelector={resourcesZoomLimitsSelector}
             zoomStateSelector={resourcesZoomStateSelector}>
-            {transform => (
+            {transform => hasNodes && (
               <g className="nodes-resources-zoomed">
                 <g className="nodes-resources-layers">
                   {layersTopologyIds.map((topologyId, index) => (
@@ -39,7 +39,7 @@ class NodesResources extends React.Component {
                     />
                   ))}
                 </g>
-                {hasNodes && <NodeResourcesZoomContext transform={transform} />}
+                <NodeResourcesZoomScale zoomLevel={transform.scaleX} />
               </g>
             )}
           </ZoomWrapper>

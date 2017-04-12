@@ -1733,23 +1733,19 @@
 }
 
 //
-// Zoom context
+// Nodes resources zoom scale
 //
-.zoom-context {
+.nodes-resources-zoom-scale {
   color: $text-tertiary-color;
   stroke: $text-tertiary-color;
 
-  &-label {
-    font-size: 0.875rem;
-    text-align: right;
+  .frame {
+    stroke-width: 0.7;
+    fill: none;
   }
-  &-marker {
+  .value {
     font-size: 0.75rem;
     text-align: center;
-  }
-  &-line {
-    stroke-width: 1;
-    opacity: 0.8;
   }
 }
 

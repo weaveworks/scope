@@ -36,4 +36,23 @@ describe('MathUtils', () => {
       expect(f(0.0013, 5)).toBe(0.0013);
     });
   });
+
+  describe('greatestPowerOfTwoNotExceeding', () => {
+    const f = MathUtils.greatestPowerOfTwoNotExceeding;
+
+    it('it should give the maximal power of 2 that does not exceed the input value', () => {
+      expect(f(0)).toBe(0);
+      expect(f(0.0001)).toBe(0.00006103515625);
+      expect(f(0.24999)).toBe(0.125);
+      expect(f(0.25)).toBe(0.25);
+      expect(f(0.25001)).toBe(0.25);
+      expect(f(0.524)).toBe(0.5);
+      expect(f(1)).toBe(1);
+      expect(f(2)).toBe(2);
+      expect(f(3)).toBe(2);
+      expect(f(231)).toBe(128);
+      expect(f(94584374)).toBe(67108864);
+      expect(f(172 * 1024 * 1024 * 1024 * 1024)).toBe(128 * 1024 * 1024 * 1024 * 1024);
+    });
+  });
 });

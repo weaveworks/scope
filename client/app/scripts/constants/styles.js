@@ -34,8 +34,8 @@ export const NODE_BASE_SIZE = 100;
 
 export const CANVAS_MARGINS = {
   [GRAPH_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 150 },
-  [TABLE_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 50 },
-  [RESOURCE_VIEW_MODE]: { top: 100, left: 210, right: 40, bottom: 120 },
+  [TABLE_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 30 },
+  [RESOURCE_VIEW_MODE]: { top: 160, left: 210, right: 40, bottom: 50 },
 };
 
 // Node details table constants
