@@ -4,6 +4,7 @@
 package report
 
 import (
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -12,19 +13,21 @@ import (
 )
 
 type stringLatestEntry struct {
-	Timestamp time.Time `json:"timestamp"`
-	Value     string    `json:"value"`
+	Timestamp      *time.Time `json:"timestamp,omitempty"`
+	SmallTimestamp *string    `json:"t,omitempty"`
+
+	Value string `json:"value"`
 	dummySelfer
 }
 
 // String returns the StringLatestEntry's string representation.
 func (e *stringLatestEntry) String() string {
-	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.String())
+	return fmt.Sprintf("%v (%s)", e.Value, *e.SmallTimestamp)
 }
 
 // Equal returns true if the supplied StringLatestEntry is equal to this one.
 func (e *stringLatestEntry) Equal(e2 *stringLatestEntry) bool {
-	return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
+	return *e.SmallTimestamp == *e2.SmallTimestamp && e.Value == e2.Value
 }
 
 // StringLatestMap holds latest string instances.
@@ -55,7 +58,7 @@ func (m StringLatestMap) Size() int {
 // When both inputs contain the same key, the newer value is used.
 func (m StringLatestMap) Merge(other StringLatestMap) StringLatestMap {
 	output := mergeMaps(m.Map, other.Map, func(a, b interface{}) bool {
-		return a.(*stringLatestEntry).Timestamp.Before(b.(*stringLatestEntry).Timestamp)
+		return a.(*stringLatestEntry).Timestamp.Before(*b.(*stringLatestEntry).Timestamp)
 	})
 	return StringLatestMap{output}
 }
@@ -82,7 +85,7 @@ func (m StringLatestMap) LookupEntry(key string) (string, time.Time, bool) {
 		return zero, time.Time{}, false
 	}
 	e := value.(*stringLatestEntry)
-	return e.Value, e.Timestamp, true
+	return e.Value, *e.Timestamp, true
 }
 
 // Set the value for the given key.
@@ -90,7 +93,9 @@ func (m StringLatestMap) Set(key string, timestamp time.Time, value string) Stri
 	if m.Map == nil {
 		m.Map = ps.NewMap()
 	}
-	return StringLatestMap{m.Map.Set(key, &stringLatestEntry{Timestamp: timestamp, Value: value})}
+	bytesBuf, _ := timestamp.UTC().MarshalBinary()
+	smallTimestamp := base64.StdEncoding.EncodeToString(bytesBuf)
+	return StringLatestMap{m.Map.Set(key, &stringLatestEntry{Timestamp: &timestamp, SmallTimestamp: &smallTimestamp, Value: value})}
 }
 
 // Delete the value for the given key.
@@ -105,7 +110,7 @@ func (m StringLatestMap) Delete(key string) StringLatestMap {
 func (m StringLatestMap) ForEach(fn func(k string, timestamp time.Time, v string)) {
 	if m.Map != nil {
 		m.Map.ForEach(func(key string, value interface{}) {
-			fn(key, value.(*stringLatestEntry).Timestamp, value.(*stringLatestEntry).Value)
+			fn(key, *value.(*stringLatestEntry).Timestamp, value.(*stringLatestEntry).Value)
 		})
 	}
 }
@@ -126,7 +131,9 @@ func (m StringLatestMap) toIntermediate() map[string]stringLatestEntry {
 	intermediate := make(map[string]stringLatestEntry, m.Size())
 	if m.Map != nil {
 		m.Map.ForEach(func(key string, val interface{}) {
-			intermediate[key] = *val.(*stringLatestEntry)
+			var tmp = *val.(*stringLatestEntry)
+			tmp.Timestamp = nil
+			intermediate[key] = tmp
 		})
 	}
 	return intermediate
@@ -147,6 +154,16 @@ func (m *StringLatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 		value := &stringLatestEntry{}
 		if !isNil {
 			value.CodecDecodeSelf(decoder)
+			if value.SmallTimestamp == nil {
+				defaultSmallTimestamp := ""
+				value.SmallTimestamp = &defaultSmallTimestamp
+			}
+			if value.Timestamp == nil {
+				decoded, _ := base64.StdEncoding.DecodeString(*value.SmallTimestamp)
+				ts := time.Time{}
+				ts.UnmarshalBinary(decoded)
+				value.Timestamp = &ts
+			}
 		}
 		return value
 	})
@@ -164,19 +181,21 @@ func (*StringLatestMap) UnmarshalJSON(b []byte) error {
 }
 
 type nodeControlDataLatestEntry struct {
-	Timestamp time.Time       `json:"timestamp"`
-	Value     NodeControlData `json:"value"`
+	Timestamp      *time.Time `json:"timestamp,omitempty"`
+	SmallTimestamp *string    `json:"t,omitempty"`
+
+	Value NodeControlData `json:"value"`
 	dummySelfer
 }
 
 // String returns the StringLatestEntry's string representation.
 func (e *nodeControlDataLatestEntry) String() string {
-	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.String())
+	return fmt.Sprintf("%v (%s)", e.Value, *e.SmallTimestamp)
 }
 
 // Equal returns true if the supplied StringLatestEntry is equal to this one.
 func (e *nodeControlDataLatestEntry) Equal(e2 *nodeControlDataLatestEntry) bool {
-	return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
+	return *e.SmallTimestamp == *e2.SmallTimestamp && e.Value == e2.Value
 }
 
 // NodeControlDataLatestMap holds latest NodeControlData instances.
@@ -207,7 +226,7 @@ func (m NodeControlDataLatestMap) Size() int {
 // When both inputs contain the same key, the newer value is used.
 func (m NodeControlDataLatestMap) Merge(other NodeControlDataLatestMap) NodeControlDataLatestMap {
 	output := mergeMaps(m.Map, other.Map, func(a, b interface{}) bool {
-		return a.(*nodeControlDataLatestEntry).Timestamp.Before(b.(*nodeControlDataLatestEntry).Timestamp)
+		return a.(*nodeControlDataLatestEntry).Timestamp.Before(*b.(*nodeControlDataLatestEntry).Timestamp)
 	})
 	return NodeControlDataLatestMap{output}
 }
@@ -234,7 +253,7 @@ func (m NodeControlDataLatestMap) LookupEntry(key string) (NodeControlData, time
 		return zero, time.Time{}, false
 	}
 	e := value.(*nodeControlDataLatestEntry)
-	return e.Value, e.Timestamp, true
+	return e.Value, *e.Timestamp, true
 }
 
 // Set the value for the given key.
@@ -242,7 +261,9 @@ func (m NodeControlDataLatestMap) Set(key string, timestamp time.Time, value Nod
 	if m.Map == nil {
 		m.Map = ps.NewMap()
 	}
-	return NodeControlDataLatestMap{m.Map.Set(key, &nodeControlDataLatestEntry{Timestamp: timestamp, Value: value})}
+	bytesBuf, _ := timestamp.UTC().MarshalBinary()
+	smallTimestamp := base64.StdEncoding.EncodeToString(bytesBuf)
+	return NodeControlDataLatestMap{m.Map.Set(key, &nodeControlDataLatestEntry{Timestamp: &timestamp, SmallTimestamp: &smallTimestamp, Value: value})}
 }
 
 // Delete the value for the given key.
@@ -257,7 +278,7 @@ func (m NodeControlDataLatestMap) Delete(key string) NodeControlDataLatestMap {
 func (m NodeControlDataLatestMap) ForEach(fn func(k string, timestamp time.Time, v NodeControlData)) {
 	if m.Map != nil {
 		m.Map.ForEach(func(key string, value interface{}) {
-			fn(key, value.(*nodeControlDataLatestEntry).Timestamp, value.(*nodeControlDataLatestEntry).Value)
+			fn(key, *value.(*nodeControlDataLatestEntry).Timestamp, value.(*nodeControlDataLatestEntry).Value)
 		})
 	}
 }
@@ -278,7 +299,9 @@ func (m NodeControlDataLatestMap) toIntermediate() map[string]nodeControlDataLat
 	intermediate := make(map[string]nodeControlDataLatestEntry, m.Size())
 	if m.Map != nil {
 		m.Map.ForEach(func(key string, val interface{}) {
-			intermediate[key] = *val.(*nodeControlDataLatestEntry)
+			var tmp = *val.(*nodeControlDataLatestEntry)
+			tmp.Timestamp = nil
+			intermediate[key] = tmp
 		})
 	}
 	return intermediate
@@ -299,6 +322,16 @@ func (m *NodeControlDataLatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 		value := &nodeControlDataLatestEntry{}
 		if !isNil {
 			value.CodecDecodeSelf(decoder)
+			if value.SmallTimestamp == nil {
+				defaultSmallTimestamp := ""
+				value.SmallTimestamp = &defaultSmallTimestamp
+			}
+			if value.Timestamp == nil {
+				decoded, _ := base64.StdEncoding.DecodeString(*value.SmallTimestamp)
+				ts := time.Time{}
+				ts.UnmarshalBinary(decoded)
+				value.Timestamp = &ts
+			}
 		}
 		return value
 	})

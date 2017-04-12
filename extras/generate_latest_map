@@ -19,6 +19,7 @@ function generate_header() {
     package report
 
     import (
+	"encoding/base64"
         "fmt"
         "time"
 
@@ -39,25 +40,29 @@ function generate_latest_map() {
     local make_function="Make${latest_map_type}"
 
     # shellcheck disable=SC2016
-    local json_timestamp='`json:"timestamp"`'
+    local json_timestamp='`json:"timestamp,omitempty"`'
+    # shellcheck disable=SC2016
+    local json_small_timestamp='`json:"t,omitempty"`'
     # shellcheck disable=SC2016
     local json_value='`json:"value"`'
 
     cat <<EOF >>"${out_file}"
     type ${entry_type} struct {
-        Timestamp time.Time    ${json_timestamp}
+        Timestamp *time.Time ${json_timestamp}
+        SmallTimestamp *string    ${json_small_timestamp}
+
         Value     ${data_type} ${json_value}
         dummySelfer
     }
 
     // String returns the StringLatestEntry's string representation.
     func (e *${entry_type}) String() string {
-        return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.String())
+        return fmt.Sprintf("%v (%s)", e.Value, *e.SmallTimestamp)
     }
 
     // Equal returns true if the supplied StringLatestEntry is equal to this one.
     func (e *${entry_type}) Equal(e2 *${entry_type}) bool {
-        return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
+        return *e.SmallTimestamp == *e2.SmallTimestamp && e.Value == e2.Value
     }
 
     // ${latest_map_type} holds latest ${data_type} instances.
@@ -88,7 +93,7 @@ function generate_latest_map() {
     // When both inputs contain the same key, the newer value is used.
     func (m ${latest_map_type}) Merge(other ${latest_map_type}) ${latest_map_type} {
         output := mergeMaps(m.Map, other.Map, func(a, b interface{}) bool {
-	        return a.(*${entry_type}).Timestamp.Before(b.(*${entry_type}).Timestamp)
+	        return a.(*${entry_type}).Timestamp.Before(*b.(*${entry_type}).Timestamp)
         })
         return ${latest_map_type}{output}
     }
@@ -115,7 +120,7 @@ function generate_latest_map() {
 	        return zero, time.Time{}, false
         }
         e := value.(*${entry_type})
-        return e.Value, e.Timestamp, true
+        return e.Value, *e.Timestamp, true
     }
 
     // Set the value for the given key.
@@ -123,7 +128,9 @@ function generate_latest_map() {
         if m.Map == nil {
 	        m.Map = ps.NewMap()
         }
-        return ${latest_map_type}{m.Map.Set(key, &${entry_type}{Timestamp: timestamp, Value: value})}
+        bytesBuf, _ := timestamp.UTC().MarshalBinary()
+        smallTimestamp := base64.StdEncoding.EncodeToString(bytesBuf)
+        return ${latest_map_type}{m.Map.Set(key, &${entry_type}{Timestamp: &timestamp, SmallTimestamp: &smallTimestamp, Value: value})}
     }
 
     // Delete the value for the given key.
@@ -137,9 +144,9 @@ function generate_latest_map() {
     // ForEach executes fn on each key value pair in the map.
     func (m ${latest_map_type}) ForEach(fn func(k string, timestamp time.Time, v ${data_type})) {
         if m.Map != nil {
-	        m.Map.ForEach(func(key string, value interface{}) {
-		        fn(key, value.(*${entry_type}).Timestamp, value.(*${entry_type}).Value)
-	        })
+                m.Map.ForEach(func(key string, value interface{}) {
+                        fn(key, *value.(*${entry_type}).Timestamp, value.(*${entry_type}).Value)
+                })
         }
     }
 
@@ -151,16 +158,18 @@ function generate_latest_map() {
     // DeepEqual tests equality with other ${latest_map_type}.
     func (m ${latest_map_type}) DeepEqual(n ${latest_map_type}) bool {
         return mapEqual(m.Map, n.Map, func(val, otherValue interface{}) bool {
-	        return val.(*${entry_type}).Equal(otherValue.(*${entry_type}))
+                return val.(*${entry_type}).Equal(otherValue.(*${entry_type}))
         })
     }
 
     func (m ${latest_map_type}) toIntermediate() map[string]${entry_type} {
         intermediate := make(map[string]${entry_type}, m.Size())
         if m.Map != nil {
-	        m.Map.ForEach(func(key string, val interface{}) {
-		        intermediate[key] = *val.(*${entry_type})
-	        })
+                m.Map.ForEach(func(key string, val interface{}) {
+                        var tmp = *val.(*${entry_type})
+                        tmp.Timestamp = nil
+                        intermediate[key] = tmp
+                })
         }
         return intermediate
     }
@@ -180,6 +189,16 @@ function generate_latest_map() {
 	        value := &${entry_type}{}
 	        if !isNil {
 		        value.CodecDecodeSelf(decoder)
+			if value.SmallTimestamp == nil {
+				defaultSmallTimestamp := ""
+				value.SmallTimestamp = &defaultSmallTimestamp
+			}
+			if value.Timestamp == nil {
+				decoded, _ := base64.StdEncoding.DecodeString(*value.SmallTimestamp)
+				ts := time.Time{}
+				ts.UnmarshalBinary(decoded)
+				value.Timestamp = &ts
+			}
 	        }
 	        return value
         })
