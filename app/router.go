@@ -150,7 +150,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 		// a.Add(..., buf) assumes buf is gzip'd msgpack
 		if !isMsgpack {
 			buf = bytes.Buffer{}
-			rpt.WriteBinary(&buf, gzip.BestCompression)
+			rpt.WriteBinary(&buf, gzip.DefaultCompression)
 		}
 
 		if err := a.Add(ctx, rpt, buf.Bytes()); err != nil {
