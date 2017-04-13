@@ -26,7 +26,7 @@ Weave Scope consists of two components: the app and the probe. The components ar
     |  +-----------------+  |
     +-----------------------+
 
-##<a name="stand-alone-mode"></a>Standalone Mode
+## <a name="stand-alone-mode"></a>Standalone Mode
 
 When running Scope in a cluster, each probe sends its reports to a dedicated app. The app merges the reports from its probe into a comprehensive report that is sent to the browser.  To visualize your entire infrastructure and apps running on that infrastructure, Scope must be launched on to every machine you are using.
 
@@ -74,7 +74,7 @@ The cloud token is accessible from the settings page after you've clicked 'Explo
 
 ![Weave Cloud Token](images/weave-cloud-token.png)
 
-##<a name="disable"></a>Disabling Automatic Updates
+## <a name="disable"></a>Disabling Automatic Updates
 
 Scope periodically checks with our servers to see if a new version is available. You can disable this by setting:
 
