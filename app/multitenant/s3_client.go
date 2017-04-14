@@ -82,6 +82,7 @@ func (store *S3Store) fetchReport(ctx context.Context, key string) (*report.Repo
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	return report.MakeFromBinary(resp.Body)
 }
 
