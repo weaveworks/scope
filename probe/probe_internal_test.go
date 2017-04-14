@@ -81,18 +81,9 @@ func TestProbe(t *testing.T) {
 	// tags, transforming empty slices into nils. So, we make DeepEqual
 	// happy by setting empty `json:"omitempty"` entries to nil
 	node.Metrics = nil
-	want.Endpoint.Controls = nil
-	want.Process.Controls = nil
-	want.Container.Controls = nil
-	want.ContainerImage.Controls = nil
-	want.Pod.Controls = nil
-	want.Service.Controls = nil
-	want.Deployment.Controls = nil
-	want.ReplicaSet.Controls = nil
-	want.Host.Controls = nil
-	want.Overlay.Controls = nil
-	want.ECSTask.Controls = nil
-	want.ECSService.Controls = nil
+	want.WalkTopologies(func(t *report.Topology) {
+		t.Controls = nil
+	})
 	want.Endpoint.AddNode(node)
 
 	pub := mockPublisher{make(chan report.Report, 10)}

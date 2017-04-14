@@ -177,49 +177,49 @@ func MakeReport() Report {
 	}
 }
 
+// TopologyMap gets a map from topology names to pointers to the respective topologies
+func (r *Report) TopologyMap() map[string]*Topology {
+	return map[string]*Topology{
+		Endpoint:       &r.Endpoint,
+		Process:        &r.Process,
+		Container:      &r.Container,
+		ContainerImage: &r.ContainerImage,
+		Pod:            &r.Pod,
+		Service:        &r.Service,
+		Deployment:     &r.Deployment,
+		ReplicaSet:     &r.ReplicaSet,
+		Host:           &r.Host,
+		Overlay:        &r.Overlay,
+		ECSTask:        &r.ECSTask,
+		ECSService:     &r.ECSService,
+	}
+}
+
 // Copy returns a value copy of the report.
 func (r Report) Copy() Report {
-	return Report{
-		Endpoint:       r.Endpoint.Copy(),
-		Process:        r.Process.Copy(),
-		Container:      r.Container.Copy(),
-		ContainerImage: r.ContainerImage.Copy(),
-		Host:           r.Host.Copy(),
-		Pod:            r.Pod.Copy(),
-		Service:        r.Service.Copy(),
-		Deployment:     r.Deployment.Copy(),
-		ReplicaSet:     r.ReplicaSet.Copy(),
-		Overlay:        r.Overlay.Copy(),
-		ECSTask:        r.ECSTask.Copy(),
-		ECSService:     r.ECSService.Copy(),
-		Sampling:       r.Sampling,
-		Window:         r.Window,
-		Plugins:        r.Plugins.Copy(),
-		ID:             fmt.Sprintf("%d", rand.Int63()),
+	newReport := Report{
+		Sampling: r.Sampling,
+		Window:   r.Window,
+		Plugins:  r.Plugins.Copy(),
+		ID:       fmt.Sprintf("%d", rand.Int63()),
 	}
+	newReport.WalkPairedTopologies(&r, func(newTopology, oldTopology *Topology) {
+		*newTopology = oldTopology.Copy()
+	})
+	return newReport
 }
 
 // Merge merges another Report into the receiver and returns the result. The
 // original is not modified.
 func (r Report) Merge(other Report) Report {
-	return Report{
-		Endpoint:       r.Endpoint.Merge(other.Endpoint),
-		Process:        r.Process.Merge(other.Process),
-		Container:      r.Container.Merge(other.Container),
-		ContainerImage: r.ContainerImage.Merge(other.ContainerImage),
-		Host:           r.Host.Merge(other.Host),
-		Pod:            r.Pod.Merge(other.Pod),
-		Service:        r.Service.Merge(other.Service),
-		Deployment:     r.Deployment.Merge(other.Deployment),
-		ReplicaSet:     r.ReplicaSet.Merge(other.ReplicaSet),
-		Overlay:        r.Overlay.Merge(other.Overlay),
-		ECSTask:        r.ECSTask.Merge(other.ECSTask),
-		ECSService:     r.ECSService.Merge(other.ECSService),
-		Sampling:       r.Sampling.Merge(other.Sampling),
-		Window:         r.Window + other.Window,
-		Plugins:        r.Plugins.Merge(other.Plugins),
-		ID:             fmt.Sprintf("%d", rand.Int63()),
-	}
+	newReport := r.Copy()
+	newReport.Sampling = newReport.Sampling.Merge(other.Sampling)
+	newReport.Window = newReport.Window + other.Window
+	newReport.Plugins = newReport.Plugins.Merge(other.Plugins)
+	newReport.WalkPairedTopologies(&other, func(ourTopology, theirTopology *Topology) {
+		*ourTopology = ourTopology.Merge(*theirTopology)
+	})
+	return newReport
 }
 
 // Topologies returns a slice of Topologies in this report
@@ -234,37 +234,33 @@ func (r Report) Topologies() []Topology {
 // WalkTopologies iterates through the Topologies of the report,
 // potentially modifying them
 func (r *Report) WalkTopologies(f func(*Topology)) {
-	f(&r.Endpoint)
-	f(&r.Process)
-	f(&r.Container)
-	f(&r.ContainerImage)
-	f(&r.Pod)
-	f(&r.Service)
-	f(&r.Deployment)
-	f(&r.ReplicaSet)
-	f(&r.Host)
-	f(&r.Overlay)
-	f(&r.ECSTask)
-	f(&r.ECSService)
+	var dummy Report
+	r.WalkPairedTopologies(&dummy, func(t, _ *Topology) { f(t) })
+}
+
+// WalkPairedTopologies iterates through the Topologies of this and another report,
+// potentially modifying one or both.
+func (r *Report) WalkPairedTopologies(o *Report, f func(*Topology, *Topology)) {
+	f(&r.Endpoint, &o.Endpoint)
+	f(&r.Process, &o.Process)
+	f(&r.Container, &o.Container)
+	f(&r.ContainerImage, &o.ContainerImage)
+	f(&r.Pod, &o.Pod)
+	f(&r.Service, &o.Service)
+	f(&r.Deployment, &o.Deployment)
+	f(&r.ReplicaSet, &o.ReplicaSet)
+	f(&r.Host, &o.Host)
+	f(&r.Overlay, &o.Overlay)
+	f(&r.ECSTask, &o.ECSTask)
+	f(&r.ECSService, &o.ECSService)
 }
 
 // Topology gets a topology by name
 func (r Report) Topology(name string) (Topology, bool) {
-	t, ok := map[string]Topology{
-		Endpoint:       r.Endpoint,
-		Process:        r.Process,
-		Container:      r.Container,
-		ContainerImage: r.ContainerImage,
-		Pod:            r.Pod,
-		Service:        r.Service,
-		Deployment:     r.Deployment,
-		ReplicaSet:     r.ReplicaSet,
-		Host:           r.Host,
-		Overlay:        r.Overlay,
-		ECSTask:        r.ECSTask,
-		ECSService:     r.ECSService,
-	}[name]
-	return t, ok
+	if t, ok := r.TopologyMap()[name]; ok {
+		return *t, true
+	}
+	return Topology{}, false
 }
 
 // Validate checks the report for various inconsistencies.

@@ -16,18 +16,7 @@ func (topologyTagger) Name() string { return "Topology" }
 
 // Tag implements Tagger
 func (topologyTagger) Tag(r report.Report) (report.Report, error) {
-	for name, t := range map[string]*report.Topology{
-		report.Endpoint:       &(r.Endpoint),
-		report.Process:        &(r.Process),
-		report.Container:      &(r.Container),
-		report.ContainerImage: &(r.ContainerImage),
-		report.Pod:            &(r.Pod),
-		report.Service:        &(r.Service),
-		report.ECSTask:        &(r.ECSTask),
-		report.ECSService:     &(r.ECSService),
-		report.Host:           &(r.Host),
-		report.Overlay:        &(r.Overlay),
-	} {
+	for name, t := range r.TopologyMap() {
 		for _, node := range t.Nodes {
 			t.AddNode(node.WithTopology(name))
 		}

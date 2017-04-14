@@ -134,8 +134,7 @@ var (
 		{
 			topologyID: report.Host,
 			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "hosts",
-				Label:      "Hosts",
+				Label: "Hosts",
 				Columns: []Column{
 					{ID: host.CPUUsage, Label: "CPU", Datatype: "number"},
 					{ID: host.MemoryUsage, Label: "Memory", Datatype: "number"},
@@ -145,8 +144,7 @@ var (
 		{
 			topologyID: report.Service,
 			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "services",
-				Label:      "Services",
+				Label: "Services",
 				Columns: []Column{
 					{ID: report.Pod, Label: "# Pods", Datatype: "number"},
 					{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
@@ -156,8 +154,7 @@ var (
 		{
 			topologyID: report.ReplicaSet,
 			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "replica-sets",
-				Label:      "Replica Sets",
+				Label: "Replica Sets",
 				Columns: []Column{
 					{ID: report.Pod, Label: "# Pods", Datatype: "number"},
 					{ID: kubernetes.ObservedGeneration, Label: "Observed Gen.", Datatype: "number"},
@@ -167,8 +164,7 @@ var (
 		{
 			topologyID: report.Pod,
 			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "pods",
-				Label:      "Pods",
+				Label: "Pods",
 
 				Columns: []Column{
 					{ID: kubernetes.State, Label: "State"},
@@ -180,8 +176,7 @@ var (
 		{
 			topologyID: report.ECSService,
 			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "ecs-services",
-				Label:      "Services",
+				Label: "Services",
 				Columns: []Column{
 					{ID: awsecs.ServiceRunningCount, Label: "Running", Datatype: "number"},
 					{ID: awsecs.ServiceDesiredCount, Label: "Desired", Datatype: "number"},
@@ -191,8 +186,7 @@ var (
 		{
 			topologyID: report.ECSTask,
 			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "ecs-tasks",
-				Label:      "Tasks",
+				Label: "Tasks",
 				Columns: []Column{
 					{ID: awsecs.CreatedAt, Label: "Created At", Datatype: "datetime"},
 				},
@@ -201,8 +195,7 @@ var (
 		{
 			topologyID: report.Container,
 			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "containers",
-				Label:      "Containers", Columns: []Column{
+				Label: "Containers", Columns: []Column{
 					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
 					{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
 				},
@@ -211,8 +204,7 @@ var (
 		{
 			topologyID: report.Process,
 			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "processes",
-				Label:      "Processes", Columns: []Column{
+				Label: "Processes", Columns: []Column{
 					{ID: process.PID, Label: "PID", Datatype: "number"},
 					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
 					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
@@ -246,13 +238,42 @@ func children(r report.Report, n report.Node) []NodeSummaryGroup {
 	})
 
 	nodeSummaryGroups := []NodeSummaryGroup{}
+	// Apply specific group specs in the order they're listed
 	for _, spec := range nodeSummaryGroupSpecs {
-		if len(summaries[spec.topologyID]) > 0 {
-			sort.Sort(nodeSummariesByID(summaries[spec.TopologyID]))
-			group := spec.NodeSummaryGroup
-			group.Nodes = summaries[spec.topologyID]
-			nodeSummaryGroups = append(nodeSummaryGroups, group)
+		if len(summaries[spec.topologyID]) == 0 {
+			continue
 		}
+		apiTopology, ok := primaryAPITopology[spec.topologyID]
+		if !ok {
+			continue
+		}
+		sort.Sort(nodeSummariesByID(summaries[spec.topologyID]))
+		group := spec.NodeSummaryGroup
+		group.Nodes = summaries[spec.topologyID]
+		group.TopologyID = apiTopology
+		nodeSummaryGroups = append(nodeSummaryGroups, group)
+		delete(summaries, spec.topologyID)
+	}
+	// As a fallback, in case a topology has no group spec defined, add any remaining at the end
+	for topologyID, nodeSummaries := range summaries {
+		if len(nodeSummaries) == 0 {
+			continue
+		}
+		topology, ok := r.Topology(topologyID)
+		if !ok {
+			continue
+		}
+		apiTopology, ok := primaryAPITopology[topologyID]
+		if !ok {
+			continue
+		}
+		sort.Sort(nodeSummariesByID(nodeSummaries))
+		group := NodeSummaryGroup{
+			TopologyID: apiTopology,
+			Label:      topology.LabelPlural,
+			Columns:    []Column{},
+		}
+		nodeSummaryGroups = append(nodeSummaryGroups, group)
 	}
 
 	return nodeSummaryGroups
