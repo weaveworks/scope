@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/weaveworks/scope/probe/awsecs"
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
@@ -27,6 +28,7 @@ var (
 		report.Service:        kubernetesParentLabel,
 		report.ECSTask:        latestLookup(awsecs.TaskFamily),
 		report.ECSService:     ecsServiceParentLabel,
+		report.SwarmService:   latestLookup(docker.ServiceName),
 		report.ContainerImage: containerImageParentLabel,
 		report.Host:           latestLookup(host.HostName),
 	}
