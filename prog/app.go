@@ -282,8 +282,8 @@ func appMain(flags appFlags) {
 		}
 	})
 
-	// Periodically try and register out IP address in WeaveDNS.
-	if flags.weaveEnabled {
+	// Periodically try and register our IP address in WeaveDNS.
+	if flags.weaveEnabled && flags.weaveHostname != "" {
 		weave, err := newWeavePublisher(
 			flags.dockerEndpoint, flags.weaveAddr,
 			flags.weaveHostname, flags.containerName)

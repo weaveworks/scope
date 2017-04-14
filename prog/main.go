@@ -257,7 +257,7 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Force debug logging.")
 	flag.BoolVar(&dryRun, "dry-run", false, "Don't start scope, just parse the arguments.  For internal use only.")
 	flag.BoolVar(&weaveEnabled, "weave", true, "Enable Weave Net integrations.")
-	flag.StringVar(&weaveHostname, "weave.hostname", "", "Hostname to advertise/lookup in WeaveDNS")
+	flag.StringVar(&weaveHostname, "weave.hostname", app.DefaultHostname, "Hostname to advertise/lookup in WeaveDNS")
 
 	// We need to know how to parse them, but they are mainly interpreted by the entrypoint script.
 	// They are also here so they are included in usage, and the probe uses them to decide if to
@@ -321,7 +321,7 @@ func main() {
 
 	// Weave
 	flag.StringVar(&flags.probe.weaveAddr, "probe.weave.addr", "127.0.0.1:6784", "IP address & port of the Weave router")
-	flag.StringVar(&flags.probe.weaveHostname, "probe.weave.hostname", app.DefaultHostname, "Hostname to lookup in WeaveDNS")
+	flag.StringVar(&flags.probe.weaveHostname, "probe.weave.hostname", "", "Hostname to lookup in WeaveDNS")
 
 	// App flags
 	flag.DurationVar(&flags.app.window, "app.window", 15*time.Second, "window")
@@ -333,7 +333,7 @@ func main() {
 	flag.BoolVar(&flags.app.logHTTPHeaders, "app.log.httpHeaders", false, "Log HTTP headers. Needs app.log.http to be enabled.")
 
 	flag.StringVar(&flags.app.weaveAddr, "app.weave.addr", app.DefaultWeaveURL, "Address on which to contact WeaveDNS")
-	flag.StringVar(&flags.app.weaveHostname, "app.weave.hostname", app.DefaultHostname, "Hostname to advertise in WeaveDNS")
+	flag.StringVar(&flags.app.weaveHostname, "app.weave.hostname", "", "Hostname to advertise in WeaveDNS")
 	flag.StringVar(&flags.app.containerName, "app.container.name", app.DefaultContainerName, "Name of this container (to lookup container ID)")
 	flag.StringVar(&flags.app.dockerEndpoint, "app.docker", app.DefaultDockerEndpoint, "Location of docker endpoint (to lookup container ID)")
 	flag.Var(&containerLabelFilterFlags, "app.container-label-filter", "Add container label-based view filter, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter='Database Containers:role=db'")
@@ -369,8 +369,12 @@ func main() {
 		flags.app.logLevel = "debug"
 	}
 	if weaveHostname != "" {
-		flags.probe.weaveHostname = weaveHostname
-		flags.app.weaveHostname = weaveHostname
+		if flags.probe.weaveHostname == "" {
+			flags.probe.weaveHostname = weaveHostname
+		}
+		if flags.app.weaveHostname == "" {
+			flags.app.weaveHostname = weaveHostname
+		}
 	}
 	flags.probe.weaveEnabled = weaveEnabled
 	flags.app.weaveEnabled = weaveEnabled
