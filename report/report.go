@@ -24,6 +24,7 @@ const (
 	Overlay        = "overlay"
 	ECSService     = "ecs_service"
 	ECSTask        = "ecs_task"
+	SwarmService   = "swarm_service"
 
 	// Shapes used for different nodes
 	Circle   = "circle"
@@ -91,6 +92,11 @@ type Report struct {
 	// desired count of tasks with a task definition template.
 	// Metadata is limited for now, more to come later. Edges are not present.
 	ECSService Topology
+
+	// Swarm Service nodes are Docker Swarm services, which represent a specification for a
+	// group of tasks (either one per host, or a desired count).
+	// Edges are not present.
+	SwarmService Topology
 
 	// Overlay nodes are active peers in any software-defined network that's
 	// overlaid on the infrastructure. The information is scraped by polling
@@ -170,6 +176,10 @@ func MakeReport() Report {
 			WithShape(Heptagon).
 			WithLabel("service", "services"),
 
+		SwarmService: MakeTopology().
+			WithShape(Heptagon).
+			WithLabel("service", "services"),
+
 		Sampling: Sampling{},
 		Window:   0,
 		Plugins:  xfer.MakePluginSpecs(),
@@ -192,6 +202,7 @@ func (r *Report) TopologyMap() map[string]*Topology {
 		Overlay:        &r.Overlay,
 		ECSTask:        &r.ECSTask,
 		ECSService:     &r.ECSService,
+		SwarmService:   &r.SwarmService,
 	}
 }
 
@@ -253,6 +264,7 @@ func (r *Report) WalkPairedTopologies(o *Report, f func(*Topology, *Topology)) {
 	f(&r.Overlay, &o.Overlay)
 	f(&r.ECSTask, &o.ECSTask)
 	f(&r.ECSService, &o.ECSService)
+	f(&r.SwarmService, &o.SwarmService)
 }
 
 // Topology gets a topology by name

@@ -130,6 +130,12 @@ var (
 
 	// ParseECSTaskNodeID parses a replica set node ID
 	ParseECSTaskNodeID = parseSingleComponentID("ecs_task")
+
+	// MakeSwarmServiceNodeID produces a replica set node ID from its composite parts.
+	MakeSwarmServiceNodeID = makeSingleComponentID("swarm_service")
+
+	// ParseSwarmServiceNodeID parses a replica set node ID
+	ParseSwarmServiceNodeID = parseSingleComponentID("swarm_service")
 )
 
 // makeSingleComponentID makes a single-component node id encoder

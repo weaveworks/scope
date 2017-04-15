@@ -71,6 +71,7 @@ var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
 	report.ReplicaSet:     podGroupNodeSummary,
 	report.ECSTask:        ecsTaskNodeSummary,
 	report.ECSService:     ecsServiceNodeSummary,
+	report.SwarmService:   swarmServiceNodeSummary,
 	report.Host:           hostNodeSummary,
 	report.Overlay:        weaveNodeSummary,
 	report.Endpoint:       nil, // Do not render
@@ -93,6 +94,7 @@ var primaryAPITopology = map[string]string{
 	report.Service:        "services",
 	report.ECSTask:        "ecs-tasks",
 	report.ECSService:     "ecs-services",
+	report.SwarmService:   "swarm-services",
 	report.Host:           "hosts",
 }
 
@@ -273,6 +275,11 @@ func ecsTaskNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 func ecsServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	_, base.Label, _ = report.ParseECSServiceNodeID(n.ID)
 	base.Stack = true
+	return base, true
+}
+
+func swarmServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+	base.Label, _ = n.Latest.Lookup(docker.ServiceName)
 	return base, true
 }
 

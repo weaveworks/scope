@@ -21,6 +21,7 @@ const (
 	ImageLabelPrefix = "docker_image_label_"
 	IsInHostNetwork  = "docker_is_in_host_network"
 	ImageTableID     = "image_table"
+	ServiceName      = "service_name"
 )
 
 // Exposed for testing
@@ -132,6 +133,10 @@ var (
 			Rank:  8,
 		},
 	}
+
+	SwarmServiceMetadataTemplates = report.MetadataTemplates{
+		ServiceName: {ID: ServiceName, Label: "Service Name", From: report.FromLatest, Priority: 0},
+	}
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
@@ -177,6 +182,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.Container = result.Container.Merge(r.containerTopology(localAddrs))
 	result.ContainerImage = result.ContainerImage.Merge(r.containerImageTopology())
 	result.Overlay = result.Overlay.Merge(r.overlayTopology())
+	result.SwarmService = result.SwarmService.Merge(r.swarmServiceTopology())
 	return result, nil
 }
 
@@ -296,6 +302,10 @@ func (r *Reporter) overlayTopology() report.Topology {
 	node := report.MakeNode(report.MakeOverlayNodeID(report.DockerOverlayPeerPrefix, r.hostID)).WithSets(
 		report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(subnets...)))
 	return report.MakeTopology().AddNode(node)
+}
+
+func (r *Reporter) swarmServiceTopology() report.Topology {
+	return report.MakeTopology().WithMetadataTemplates(SwarmServiceMetadataTemplates)
 }
 
 // Docker sometimes prefixes ids with a "type" annotation, but it renders a bit

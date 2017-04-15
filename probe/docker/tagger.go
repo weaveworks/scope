@@ -2,6 +2,7 @@ package docker
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -21,6 +22,7 @@ var (
 
 // Tagger is a tagger that tags Docker container information to process
 // nodes that have a PID.
+// It also populates the SwarmService topology if any of the associated docker labels are present.
 type Tagger struct {
 	registry   Registry
 	procWalker process.Walker
@@ -44,6 +46,31 @@ func (t *Tagger) Tag(r report.Report) (report.Report, error) {
 		return report.MakeReport(), err
 	}
 	t.tag(tree, &r.Process)
+
+	// Scan for Swarm service info
+	for containerID, container := range r.Container.Nodes {
+		serviceID, ok := container.Latest.Lookup(LabelPrefix + "com.docker.swarm.service.id")
+		if !ok {
+			continue
+		}
+		serviceName, ok := container.Latest.Lookup(LabelPrefix + "com.docker.swarm.service.name")
+		if !ok {
+			continue
+		}
+
+		if strings.HasPrefix(serviceName, "dockerswarm_") {
+			serviceName = serviceName[len("dockerswarm_"):]
+		}
+
+		nodeID := report.MakeSwarmServiceNodeID(serviceID)
+		node := report.MakeNodeWith(nodeID, map[string]string{
+			ServiceName: serviceName,
+		})
+		r.SwarmService = r.SwarmService.AddNode(node)
+
+		r.Container.Nodes[containerID] = container.WithParents(container.Parents.Add(report.SwarmService, report.MakeStringSet(nodeID)))
+	}
+
 	return r, nil
 }
 

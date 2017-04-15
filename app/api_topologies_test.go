@@ -40,7 +40,7 @@ func TestAPITopology(t *testing.T) {
 	if err := decoder.Decode(&topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
-	equals(t, 5, len(topologies))
+	equals(t, 6, len(topologies))
 
 	for _, topology := range topologies {
 		is200(t, ts, topology.URL)
@@ -50,7 +50,7 @@ func TestAPITopology(t *testing.T) {
 		}
 
 		// TODO: add ECS nodes in report fixture
-		if topology.Name == "Tasks" {
+		if topology.Name == "Tasks" || topology.Name == "services" {
 			continue
 		}
 
@@ -200,7 +200,7 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 	if err := decoder.Decode(&topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
-	equals(t, 5, len(topologies))
+	equals(t, 6, len(topologies))
 
 	// Enable the kubernetes topologies
 	rpt := report.MakeReport()
@@ -234,7 +234,7 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 	if err := decoder.Decode(&topologies); err != nil {
 		t.Fatalf("JSON parse error: %s", err)
 	}
-	equals(t, 5, len(topologies))
+	equals(t, 6, len(topologies))
 
 	found := false
 	for _, topology := range topologies {

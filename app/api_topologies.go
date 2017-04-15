@@ -33,6 +33,7 @@ const (
 	weaveID                = "weave"
 	ecsTasksID             = "ecs-tasks"
 	ecsServicesID          = "ecs-services"
+	swarmServicesID        = "swarm-services"
 )
 
 var (
@@ -249,6 +250,14 @@ func MakeRegistry() *Registry {
 			parent:      ecsTasksID,
 			renderer:    render.ECSServiceRenderer,
 			Name:        "services",
+			Options:     []APITopologyOptionGroup{unmanagedFilter},
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          swarmServicesID,
+			renderer:    render.SwarmServiceRenderer,
+			Name:        "services",
+			Rank:        3,
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
 		},
