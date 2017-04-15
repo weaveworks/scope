@@ -115,6 +115,10 @@ check_probe_only() {
     echo "${ARGS}" | grep -q -E "\-\-no\-app|\-\-service\-token|\-\-probe\-only"
 }
 
+check_listen_address_arg() {
+    echo "${ARGS}" | grep -q -E "\-\-app\.http\.address"
+}
+
 check_docker_for_mac() {
     [ "$(uname)" = "Darwin" ] \
         && [ -S /var/run/docker.sock ] \
@@ -251,6 +255,10 @@ case "$COMMAND" in
             # - https://github.com/weaveworks/scope/issues/1411
             # - https://forums.docker.com/t/ports-in-host-network-namespace-are-not-accessible/10789
             dry_run "$@"
+            if check_listen_address_arg; then
+                echo "--app.http.address argument not supported on Docker for Mac" >&2
+                exit 1
+            fi
             check_not_running "$SCOPE_APP_CONTAINER_NAME" "$SCOPE_IMAGE_NAME"
             check_not_running "$SCOPE_CONTAINER_NAME" "$SCOPE_IMAGE_NAME"
             docker rm -f "$SCOPE_APP_CONTAINER_NAME" >/dev/null 2>&1 || true
@@ -266,12 +274,15 @@ case "$COMMAND" in
         dry_run "$@"
         launch "$@"
         if ! check_probe_only; then
-            # shellcheck disable=SC2086
-            IP_ADDRS=$(docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$IP_ADDR_CMD")
-            # shellcheck disable=SC2086
-            print_app_endpoints $IP_ADDRS
+            if check_listen_address_arg; then
+                echo "Weave Scope is reachable at the address specified with --app.http.address" >&2
+            else
+                # shellcheck disable=SC2086
+                IP_ADDRS=$(docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$IP_ADDR_CMD")
+                # shellcheck disable=SC2086
+                print_app_endpoints $IP_ADDRS
+            fi
         fi
-
         ;;
 
     stop)
