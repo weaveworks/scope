@@ -18,7 +18,10 @@ function runAction(action, args, dispatch, getState) {
 }
 
 function openNodeDetails(dispatch, getState, run, next) {
-  const { id, label } = getRandomNode(getState);
+  const { id, label } = getRandomNode(getState) || {};
+  if (!id || !label) {
+    return;
+  }
   run(clickNode, [id, label]);
   setTimeout(() => {
     run(clickCloseDetails, [id]);
@@ -28,7 +31,10 @@ function openNodeDetails(dispatch, getState, run, next) {
 
 function changeTopology(dispatch, getState, run, next) {
   const blacklist = ['hosts', 'weave', 'containers-by-hostname'];
-  const { topologies } = getState().toJS();
+  const { topologies } = getState().toJS() || {};
+  if (!topologies) {
+    return;
+  }
   const subTopologies = _.reduce(topologies, (result, t) => {
     if (t.sub_topologies) {
       return result.concat(t.sub_topologies);
