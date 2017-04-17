@@ -10,7 +10,8 @@ else
     IMAGE_VERSION="$SCRIPT_VERSION"
 fi
 IMAGE_VERSION=${VERSION:-$IMAGE_VERSION}
-SCOPE_IMAGE_NAME=weaveworks/scope
+DOCKERHUB_USER=${DOCKERHUB_USER:-weaveworks}
+SCOPE_IMAGE_NAME="$DOCKERHUB_USER/scope"
 SCOPE_IMAGE="$SCOPE_IMAGE_NAME:$IMAGE_VERSION"
 # Careful: it's easy to operate on (e.g. stop) the wrong scope instance
 # when SCOPE{_APP,}_CONTAINER_NAME values differ between runs. Handle
