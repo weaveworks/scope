@@ -12,8 +12,13 @@ import {
   layoutNodesSelector,
   layoutEdgesSelector
 } from '../selectors/graph-view/layout';
+import {
+  highlightedNodeIdsSelector,
+  highlightedEdgeIdsSelector,
+} from '../selectors/graph-view/elements';
 import NodeContainer from './node-container';
 import EdgeContainer from './edge-container';
+
 
 class NodesChartElements extends React.Component {
   constructor(props, context) {
@@ -233,13 +238,13 @@ function mapStateToProps(state) {
     selectedScale: selectedScaleSelector(state),
     isAnimated: !graphExceedsComplexityThreshSelector(state),
     hasSelectedNode: hasSelectedNodeFn(state),
-    highlightedEdgeIds: state.get('highlightedEdgeIds'),
+    highlightedEdgeIds: highlightedEdgeIdsSelector(state),
     nodeMetric: nodeMetricSelector(state),
     nodeNetworks: nodeNetworksSelector(state),
     searchNodeMatches: searchNodeMatchesSelector(state),
     selectedNetworkNodesIds: selectedNetworkNodesIdsSelector(state),
     neighborsOfSelectedNode: getAdjacentNodes(state),
-    highlightedNodeIds: state.get('highlightedNodeIds'),
+    highlightedNodeIds: highlightedNodeIdsSelector(state),
     mouseOverNodeId: state.get('mouseOverNodeId'),
     selectedNetwork: state.get('selectedNetwork'),
     selectedNodeId: state.get('selectedNodeId'),

@@ -2,11 +2,10 @@
 import debug from 'debug';
 import { size, each, includes, isEqual } from 'lodash';
 import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
-  OrderedMap as makeOrderedMap, Set as makeSet } from 'immutable';
+  OrderedMap as makeOrderedMap } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
 import {
-  EDGE_ID_SEPARATOR,
   GRAPH_VIEW_MODE,
   TABLE_VIEW_MODE,
 } from '../constants/naming';
@@ -19,7 +18,6 @@ import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/nod
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
-  getAdjacentNodes,
   setTopologyUrlsById,
   updateTopologyIds,
   filterHiddenTopologies,
@@ -47,9 +45,6 @@ export const initialState = makeMap({
   forceRelayout: false,
   gridSortedBy: null,
   gridSortedDesc: null,
-  // TODO: Calculate these sets from selectors instead.
-  highlightedEdgeIds: makeSet(),
-  highlightedNodeIds: makeSet(),
   hostname: '...',
   initialNodesLoaded: false,
   mouseOverEdgeId: null,
@@ -422,64 +417,19 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.ENTER_EDGE: {
-      // highlight adjacent nodes
-      state = state.update('highlightedNodeIds', (highlightedNodeIds) => {
-        highlightedNodeIds = highlightedNodeIds.clear();
-        return highlightedNodeIds.union(action.edgeId.split(EDGE_ID_SEPARATOR));
-      });
-
-      // highlight edge
-      state = state.update('highlightedEdgeIds', (highlightedEdgeIds) => {
-        highlightedEdgeIds = highlightedEdgeIds.clear();
-        highlightedEdgeIds = highlightedEdgeIds.add(action.edgeId);
-        const opposite = action.edgeId.split(EDGE_ID_SEPARATOR).reverse().join(EDGE_ID_SEPARATOR);
-        highlightedEdgeIds = highlightedEdgeIds.add(opposite);
-        return highlightedEdgeIds;
-      });
-
-      return state;
+      return state.set('mouseOverEdgeId', action.edgeId);
     }
 
     case ActionTypes.ENTER_NODE: {
-      const nodeId = action.nodeId;
-      const adjacentNodes = getAdjacentNodes(state, nodeId);
-
-      state = state.set('mouseOverNodeId', nodeId);
-
-      // highlight adjacent nodes
-      state = state.update('highlightedNodeIds', (highlightedNodeIds) => {
-        highlightedNodeIds = highlightedNodeIds.clear();
-        highlightedNodeIds = highlightedNodeIds.add(nodeId);
-        return highlightedNodeIds.union(adjacentNodes);
-      });
-
-      // highlight edge
-      state = state.update('highlightedEdgeIds', (highlightedEdgeIds) => {
-        highlightedEdgeIds = highlightedEdgeIds.clear();
-        if (adjacentNodes.size > 0) {
-          // all neighbour combinations because we dont know which direction exists
-          highlightedEdgeIds = highlightedEdgeIds.union(adjacentNodes.flatMap(adjacentId => [
-            [adjacentId, nodeId].join(EDGE_ID_SEPARATOR),
-            [nodeId, adjacentId].join(EDGE_ID_SEPARATOR)
-          ]));
-        }
-        return highlightedEdgeIds;
-      });
-
-      return state;
+      return state.set('mouseOverNodeId', action.nodeId);
     }
 
     case ActionTypes.LEAVE_EDGE: {
-      state = state.update('highlightedEdgeIds', highlightedEdgeIds => highlightedEdgeIds.clear());
-      state = state.update('highlightedNodeIds', highlightedNodeIds => highlightedNodeIds.clear());
-      return state;
+      return state.set('mouseOverEdgeId', null);
     }
 
     case ActionTypes.LEAVE_NODE: {
-      state = state.set('mouseOverNodeId', null);
-      state = state.update('highlightedEdgeIds', highlightedEdgeIds => highlightedEdgeIds.clear());
-      state = state.update('highlightedNodeIds', highlightedNodeIds => highlightedNodeIds.clear());
-      return state;
+      return state.set('mouseOverNodeId', null);
     }
 
     case ActionTypes.OPEN_WEBSOCKET: {
