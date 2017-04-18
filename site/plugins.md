@@ -421,6 +421,8 @@ These are the available topologies:
 - `ReplicaSet` nodes represent all Kubernetes ReplicaSets running on hosts running probes.
 - `ContainerImage` nodes represent all Docker container images on hosts running probes.
 - `Host` nodes are physical hosts that run probes.
+- `ECSTask` nodes represent [AWS ECS](https://aws.amazon.com/ecs/) [tasks](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html).
+- `ECSService` nodes represent [AWS ECS services](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html).
 - `Overlay` nodes are active peers in any software-defined network that's overlaid on the infrastructure.
 
 The topology structure consists of the following attributes:
