@@ -304,7 +304,7 @@
     fill: $text-secondary-color;
   }
 
-  .nodes-chart-nodes .node {
+  .nodes-chart-elements .node {
     transition: opacity .2s $base-ease;
     text-align: center;
 
@@ -1881,9 +1881,25 @@
   }
 }
 
-.blurrr > .node {
-  .highlight, .border, .node, .metric-fill, .node-labels-container {
-    opacity: 0.4;
+.nodes-chart .nodes-chart-elements .node {
+  &, &.pseudo {
+    .background {
+      transition: fill .5s $base-ease;
+    }
+    .shadow, .border, .node, .metric-fill, .node-labels-container {
+      transition: opacity .5s $base-ease;
+    }
+  }
+}
+
+.nodes-chart .nodes-chart-elements .blurrr > .node {
+  &, &.pseudo {
+    .background {
+      fill: mix($background-color, $white, $node-blur-opacity * 100%);
+    }
+    .shadow, .border, .node, .metric-fill, .node-labels-container {
+      opacity: $node-blur-opacity;
+    }
   }
 }
 
