@@ -532,18 +532,18 @@ This description is used to extract metadata from a node and display it on Scope
 
 ```json
 "metadata_templates": {
-      "metadata-template-id": {
-        "id": "metadata-template-id",
+      "traffic-control-pktloss": {
+        "id": "traffic-control-pktloss",
         "label": "Human-readable description",
         "dataType": "number",
         "priority": 13.5,
         "from": "latest"
       },
-      "another-metadata-template-id": {...}
+      "another-plugins-id": {...}
 }
 ```
 
-- `metadata-template-identifier` and `id` identify a particular metadata template.
+- `id` is a string identifying the particular metadata template (here `traffic-control-pktloss`) and is also used as a key to the template value.
 - `label` contains the label that will be used by Scope UI.
 - `dataType` specifies the type of data, this will determine how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime" and "" for strings.
 - `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If omitted, the UI will display it last.
