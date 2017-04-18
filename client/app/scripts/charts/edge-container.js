@@ -19,8 +19,8 @@ const spline = line()
   .x(d => d.x)
   .y(d => d.y);
 
-const transformedEdge = (props, path) => (
-  <Edge {...props} path={spline(path)} />
+const transformedEdge = (props, path, scale) => (
+  <Edge path={spline(path)} scale={scale} {...props} />
 );
 
 // Converts a waypoints map of the format {x0: 11, y0: 22, x1: 33, y1: 44}
@@ -56,18 +56,24 @@ export default class EdgeContainer extends React.PureComponent {
   }
 
   render() {
-    const { isAnimated, waypoints } = this.props;
-    const forwardedProps = omit(this.props, 'isAnimated', 'waypoints');
+    const { isAnimated, waypoints, scale } = this.props;
+    const forwardedProps = omit(this.props, 'isAnimated', 'waypoints', 'scale');
 
     if (!isAnimated) {
-      return transformedEdge(forwardedProps, waypoints.toJS());
+      return transformedEdge(forwardedProps, waypoints.toJS(), scale);
     }
 
     return (
       // For the Motion interpolation to work, the waypoints need to be in a map format like
       // {x0: 11, y0: 22, x1: 33, y1: 44} that we convert to the array format when rendering.
-      <Motion style={this.state.waypointsMap.toJS()}>
-        {interpolated => transformedEdge(forwardedProps, waypointsMapToArray(interpolated))}
+      <Motion
+        style={{
+          scale: spring(scale, NODES_SPRING_ANIMATION_CONFIG),
+          ...this.state.waypointsMap.toJS()
+        }}>
+        {({ scale: interpolatedScale, ...interpolatedWaypoints}) => transformedEdge(
+          forwardedProps, waypointsMapToArray(interpolatedWaypoints), interpolatedScale
+        )}
       </Motion>
     );
   }

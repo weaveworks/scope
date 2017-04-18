@@ -405,10 +405,6 @@
       opacity: $edge-opacity-blurred;
     }
 
-    &.focused {
-      animation: focusing 1.5s ease-in-out;
-    }
-
     .link {
       fill: none;
       stroke: $edge-color;
@@ -1519,16 +1515,6 @@
     font-size: 80%;
     position: relative;
     top: -1px;
-  }
-}
-
-@keyframes focusing {
-  0% {
-    opacity: 0;
-  } 33% {
-    opacity: 0.2;
-  } 100% {
-    opacity: 1;
   }
 }
 
