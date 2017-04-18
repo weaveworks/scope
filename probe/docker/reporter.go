@@ -22,6 +22,7 @@ const (
 	IsInHostNetwork  = "docker_is_in_host_network"
 	ImageTableID     = "image_table"
 	ServiceName      = "service_name"
+	StackNamespace   = "stack_namespace"
 )
 
 // Exposed for testing
@@ -135,7 +136,8 @@ var (
 	}
 
 	SwarmServiceMetadataTemplates = report.MetadataTemplates{
-		ServiceName: {ID: ServiceName, Label: "Service Name", From: report.FromLatest, Priority: 0},
+		ServiceName:    {ID: ServiceName, Label: "Service Name", From: report.FromLatest, Priority: 0},
+		StackNamespace: {ID: StackNamespace, Label: "Stack Namespace", From: report.FromLatest, Priority: 1},
 	}
 )
 
