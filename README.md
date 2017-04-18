@@ -27,6 +27,10 @@ View contextual metrics, tags and metadata for your containers.  Effortlessly na
 
 Interact with your containers directly: pause, restart and stop containers. Launch a command line. All without leaving the scope browser window.
 
+### Extend and customize via plugins
+
+Add custom details or interactions for your hosts, containers and/or processes by creating Scope plugins; or just choose from some that others have already written at the Github [Weaveworks Scope Plugins](https://github.com/weaveworks-plugins/) organization.
+
 ## <a name="getting-started"></a>Getting started
 
 ```
