@@ -23,6 +23,7 @@ const (
 	ImageTableID     = "image_table"
 	ServiceName      = "service_name"
 	StackNamespace   = "stack_namespace"
+	DefaultNamespace = "No Stack"
 )
 
 // Exposed for testing
