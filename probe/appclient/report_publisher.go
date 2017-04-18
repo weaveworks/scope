@@ -29,6 +29,6 @@ func (p *ReportPublisher) Publish(r report.Report) error {
 		})
 	}
 	buf := &bytes.Buffer{}
-	r.WriteBinary(buf, gzip.BestCompression)
+	r.WriteBinary(buf, gzip.DefaultCompression)
 	return p.publisher.Publish(buf)
 }
