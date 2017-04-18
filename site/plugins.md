@@ -467,6 +467,8 @@ In particular, a node may contain:
 - `latest` - an id-value map containing the latest values. Each id has only one value.
 - `latestControls` - the latest available controls.
 - `metrics` - the collection of metrics to display in the UI. Each metric has multiple timestamped values.
+- `sets` - a string->set-of-strings map, for example a list of local networks.
+- `counters` - a string->int map.
 
 ### Controls
 Controls describe interfaces that expose actions that the user can perform on different objects (e.g. host, container, etc.).
