@@ -3,7 +3,6 @@ package kubernetes
 import (
 	"io"
 	"strconv"
-	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -29,8 +28,6 @@ type Client interface {
 	WalkReplicationControllers(f func(ReplicationController) error) error
 	WalkNodes(f func(*api.Node) error) error
 
-	WatchPods(f func(Event, Pod))
-
 	GetLogs(namespaceID, podID string) (io.ReadCloser, error)
 	DeletePod(namespaceID, podID string) error
 	ScaleUp(resource, namespaceID, id string) error
@@ -48,9 +45,6 @@ type client struct {
 	replicaSetStore            *cache.StoreToReplicaSetLister
 	replicationControllerStore *cache.StoreToReplicationControllerLister
 	nodeStore                  *cache.StoreToNodeLister
-
-	podWatchesMutex sync.Mutex
-	podWatches      []func(Event, Pod)
 }
 
 // runReflectorUntil is equivalent to cache.Reflector.RunUntil, but it also logs
@@ -164,20 +158,6 @@ func (c *client) setupStore(kclient cache.Getter, resource string, itemType inte
 	store := cache.NewStore(cache.MetaNamespaceKeyFunc)
 	runReflectorUntil(cache.NewReflector(lw, itemType, store, c.resyncPeriod), c.resyncPeriod, c.quit)
 	return store
-}
-
-func (c *client) WatchPods(f func(Event, Pod)) {
-	c.podWatchesMutex.Lock()
-	defer c.podWatchesMutex.Unlock()
-	c.podWatches = append(c.podWatches, f)
-}
-
-func (c *client) triggerPodWatches(e Event, pod interface{}) {
-	c.podWatchesMutex.Lock()
-	defer c.podWatchesMutex.Unlock()
-	for _, watch := range c.podWatches {
-		watch(e, NewPod(pod.(*api.Pod)))
-	}
 }
 
 func (c *client) WalkPods(f func(Pod) error) error {

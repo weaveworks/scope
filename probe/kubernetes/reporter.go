@@ -114,7 +114,6 @@ func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostI
 		kubeletPort:     kubeletPort,
 	}
 	reporter.registerControls()
-	client.WatchPods(reporter.podEvent)
 	return reporter
 }
 
@@ -125,26 +124,6 @@ func (r *Reporter) Stop() {
 
 // Name of this reporter, for metrics gathering
 func (Reporter) Name() string { return "K8s" }
-
-func (r *Reporter) podEvent(e Event, pod Pod) {
-	switch e {
-	case ADD:
-		rpt := report.MakeReport()
-		rpt.Shortcut = true
-		rpt.Pod.AddNode(pod.GetNode(r.probeID))
-		r.probe.Publish(rpt)
-	case DELETE:
-		rpt := report.MakeReport()
-		rpt.Shortcut = true
-		rpt.Pod.AddNode(
-			report.MakeNodeWith(
-				report.MakePodNodeID(pod.UID()),
-				map[string]string{State: StateDeleted},
-			),
-		)
-		r.probe.Publish(rpt)
-	}
-}
 
 // IsPauseImageName indicates whether an image name corresponds to a
 // kubernetes pause container image.

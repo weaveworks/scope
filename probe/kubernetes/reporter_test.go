@@ -148,7 +148,6 @@ func (c *mockClient) WalkReplicationControllers(f func(kubernetes.ReplicationCon
 func (*mockClient) WalkNodes(f func(*api.Node) error) error {
 	return nil
 }
-func (*mockClient) WatchPods(func(kubernetes.Event, kubernetes.Pod)) {}
 func (c *mockClient) GetLogs(namespaceID, podName string) (io.ReadCloser, error) {
 	r, ok := c.logs[namespaceID+";"+podName]
 	if !ok {
