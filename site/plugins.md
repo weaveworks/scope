@@ -459,8 +459,7 @@ Nodes are represented as follows:
 ```
 
 Nodes are stored in a dictionary.
-The ID of nodes representing hosts or containers has the format `ID;<type>`, with type equal to the literal string `host` or `container` respectively.
-`ID` is the alphanumeric identifier of the nodes.
+The ID of nodes is different depending on the node topology. For instance, nodes representing hosts or containers have the format `ID;<type>`, where `ID` is the alphanumeric identifier of the nodes and type is the literal string `host` or `container` respectively. A node representing an endpoint could look like `pc-4026531969;127.0.0.1;36238`.
 
 A node contains all the information about the represented object (e.g. host, container, pod, etc.).
 In particular, a node may contain:
