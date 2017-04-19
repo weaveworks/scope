@@ -91,11 +91,35 @@ export const resourcesZoomLimitsSelector = createSelector(
   }
 );
 
+const resourceZoomFocusedStateSelector = createSelector(
+  [
+    layoutNodesByTopologyIdSelector,
+    state => state.get('selectedNodeId'),
+    canvasMarginsSelector,
+    canvasWidthSelector,
+  ],
+  (layoutNodesByTopologyId, selectedNodeId, canvasMargins, canvasWidth) => {
+    const node = layoutNodesByTopologyId.flatten(true).get(selectedNodeId);
+    if (!node) return makeMap();
+
+    console.log('Updated');
+
+    const xMin = node.get('offset');
+    const xMax = node.get('offset') + (node.get('width') * 2);
+    const scaleX = canvasWidth / (node.get('width') * 2);
+    const translateX = ((canvasWidth - ((xMax + xMin) * scaleX)) / 2) + canvasMargins.left + 50;
+
+    return makeMap({ translateX, scaleX });
+  }
+);
+
 export const resourcesZoomStateSelector = createSelector(
   [
     resourcesDefaultZoomSelector,
     activeLayoutCachedZoomSelector,
+    resourceZoomFocusedStateSelector,
   ],
   // All the cached fields override the calculated default ones.
-  (resourcesDefaultZoom, cachedZoomState) => resourcesDefaultZoom.merge(cachedZoomState)
+  (resourcesDefaultZoom, cachedZoomState, resourceZoomFocusedState) =>
+    resourcesDefaultZoom.merge(cachedZoomState).merge(resourceZoomFocusedState)
 );

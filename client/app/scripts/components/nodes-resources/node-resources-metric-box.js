@@ -4,6 +4,7 @@ import { Motion, spring } from 'react-motion';
 
 import NodeResourcesMetricBoxInfo from './node-resources-metric-box-info';
 import { applyTransform } from '../../utils/transform-utils';
+import { clickNode } from '../../actions/app-actions';
 import {
   RESOURCE_SPRING_ANIMATION_CONFIG,
   NODES_SPRING_ANIMATION_CONFIG,
@@ -53,6 +54,8 @@ class NodeResourcesMetricBox extends React.Component {
     super(props, context);
 
     this.state = transformedDimensions(props);
+    this.handleMouseClick = this.handleMouseClick.bind(this);
+    this.saveShapeRef = this.saveShapeRef.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -72,17 +75,26 @@ class NodeResourcesMetricBox extends React.Component {
     };
   }
 
+  saveShapeRef(ref) {
+    this.shapeRef = ref;
+  }
+
+  handleMouseClick(ev) {
+    ev.stopPropagation();
+    this.props.clickNode(this.props.id, this.props.label, this.shapeRef.getBoundingClientRect());
+  }
+
   render() {
     const { x, y, width, height } = this.state;
     const { label, color, metricSummary } = this.props;
     const { showCapacity, relativeConsumption, type } = metricSummary.toJS();
 
-    const showInfo = width >= RESOURCES_LABEL_MIN_SIZE;
-    const showNode = width >= 1; // hide the thin nodes
+    // const showInfo = width >= RESOURCES_LABEL_MIN_SIZE;
+    // const showNode = width >= 1; // hide the thin nodes
 
     // Don't display the nodes which are less than 1px wide.
     // TODO: Show `+ 31 nodes` kind of tag in their stead.
-    if (!showNode) return null;
+    // if (!showNode) return null;
 
     const resourceUsageTooltipInfo = showCapacity ?
       metricSummary.get('humanizedRelativeConsumption') :
@@ -96,20 +108,26 @@ class NodeResourcesMetricBox extends React.Component {
           width: spring(width, RESOURCE_SPRING_ANIMATION_CONFIG),
           height: spring(height, NODES_SPRING_ANIMATION_CONFIG),
         }}>
-        {i => (
-          <g className="node-resources-metric-box">
-            <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
-            {showCapacity && <rect className="frame" {...this.defaultRectProps(i)} />}
-            <rect className="bar" fill={color} {...this.defaultRectProps(i, relativeConsumption)} />
-            {showInfo && <NodeResourcesMetricBoxInfo
-              label={label}
-              metricSummary={metricSummary}
-              width={i.width - (2 * RESOURCES_LABEL_PADDING)}
-              x={i.x + RESOURCES_LABEL_PADDING}
-              y={i.y + RESOURCES_LABEL_PADDING}
-            />}
-          </g>
-        )}
+        {(i) => {
+          if (i.width < 1) return <g />;
+
+          return (
+            <g
+              className="node-resources-metric-box"
+              onClick={this.handleMouseClick} ref={this.saveShapeRef}>
+              <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
+              {showCapacity && <rect className="frame" {...this.defaultRectProps(i)} />}
+              <rect className="bar" fill={color} {...this.defaultRectProps(i, relativeConsumption)} />
+              {i.width >= RESOURCES_LABEL_MIN_SIZE && <NodeResourcesMetricBoxInfo
+                label={label}
+                metricSummary={metricSummary}
+                width={i.width - (2 * RESOURCES_LABEL_PADDING)}
+                x={i.x + RESOURCES_LABEL_PADDING}
+                y={i.y + RESOURCES_LABEL_PADDING}
+              />}
+            </g>
+          );
+        }}
       </Motion>
     );
   }
@@ -122,4 +140,7 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(mapStateToProps)(NodeResourcesMetricBox);
+export default connect(
+  mapStateToProps,
+  { clickNode }
+)(NodeResourcesMetricBox);

@@ -30,6 +30,7 @@ class NodesResources extends React.Component {
           <Logo transform="translate(24,24) scale(0.25)" />
           <ZoomWrapper
             svg="canvas" bounded forwardTransform fixVertical
+            disabled={this.props.selectedNodeId}
             zoomLimitsSelector={resourcesZoomLimitsSelector}
             zoomStateSelector={resourcesZoomStateSelector}>
             {transform => this.renderLayers(transform)}
@@ -42,6 +43,7 @@ class NodesResources extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    selectedNodeId: state.get('selectedNodeId'),
     layersTopologyIds: layersTopologyIdsSelector(state),
   };
 }

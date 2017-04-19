@@ -72,7 +72,7 @@ class ZoomWrapper extends React.Component {
     }
 
     this.updateZoomLimits(nextProps);
-    if (!this.zoomRestored) {
+    if (!this.zoomRestored || this.props.disabled || nextProps.disabled) {
       this.restoreZoomState(nextProps);
     }
   }
