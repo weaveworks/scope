@@ -1,8 +1,13 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { Motion, spring } from 'react-motion';
 
 import NodeResourcesMetricBoxInfo from './node-resources-metric-box-info';
 import { applyTransform } from '../../utils/transform-utils';
+import {
+  RESOURCE_SPRING_ANIMATION_CONFIG,
+  NODES_SPRING_ANIMATION_CONFIG,
+} from '../../constants/animation';
 import {
   RESOURCES_LAYER_TITLE_WIDTH,
   RESOURCES_LABEL_MIN_SIZE,
@@ -54,8 +59,7 @@ class NodeResourcesMetricBox extends React.Component {
     this.setState(transformedDimensions(nextProps));
   }
 
-  defaultRectProps(relativeHeight = 1) {
-    const { x, y, width, height } = this.state;
+  defaultRectProps({ x, y, width, height }, relativeHeight = 1) {
     const translateY = height * (1 - relativeHeight);
     return {
       transform: `translate(0, ${translateY})`,
@@ -69,7 +73,7 @@ class NodeResourcesMetricBox extends React.Component {
   }
 
   render() {
-    const { x, y, width } = this.state;
+    const { x, y, width, height } = this.state;
     const { label, color, metricSummary } = this.props;
     const { showCapacity, relativeConsumption, type } = metricSummary.toJS();
 
@@ -85,18 +89,28 @@ class NodeResourcesMetricBox extends React.Component {
       metricSummary.get('humanizedAbsoluteConsumption');
 
     return (
-      <g className="node-resources-metric-box">
-        <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
-        {showCapacity && <rect className="frame" {...this.defaultRectProps()} />}
-        <rect className="bar" fill={color} {...this.defaultRectProps(relativeConsumption)} />
-        {showInfo && <NodeResourcesMetricBoxInfo
-          label={label}
-          metricSummary={metricSummary}
-          width={width - (2 * RESOURCES_LABEL_PADDING)}
-          x={x + RESOURCES_LABEL_PADDING}
-          y={y + RESOURCES_LABEL_PADDING}
-        />}
-      </g>
+      <Motion
+        style={{
+          x: spring(x, RESOURCE_SPRING_ANIMATION_CONFIG),
+          y: spring(y, NODES_SPRING_ANIMATION_CONFIG),
+          width: spring(width, RESOURCE_SPRING_ANIMATION_CONFIG),
+          height: spring(height, NODES_SPRING_ANIMATION_CONFIG),
+        }}>
+        {i => (
+          <g className="node-resources-metric-box">
+            <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
+            {showCapacity && <rect className="frame" {...this.defaultRectProps(i)} />}
+            <rect className="bar" fill={color} {...this.defaultRectProps(i, relativeConsumption)} />
+            {showInfo && <NodeResourcesMetricBoxInfo
+              label={label}
+              metricSummary={metricSummary}
+              width={i.width - (2 * RESOURCES_LABEL_PADDING)}
+              x={i.x + RESOURCES_LABEL_PADDING}
+              y={i.y + RESOURCES_LABEL_PADDING}
+            />}
+          </g>
+        )}
+      </Motion>
     );
   }
 }
