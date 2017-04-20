@@ -14,8 +14,12 @@ import {
 } from '../selectors/graph-view/layout';
 import {
   highlightedNodeIdsSelector,
+  focusedNodeIdsSelector,
+  blurredNodeIdsSelector,
+} from '../selectors/graph-view/nodes';
+import {
   highlightedEdgeIdsSelector,
-} from '../selectors/graph-view/elements';
+} from '../selectors/graph-view/edges';
 import NodeContainer from './node-container';
 import EdgeContainer from './edge-container';
 
@@ -29,15 +33,11 @@ class NodesChartElements extends React.Component {
     // Node decorators
     // TODO: Consider moving some of these one level up (or even to global selectors) so that
     // other components, like NodesChartEdges, could read more info directly from the nodes.
-    this.nodeHighlightedDecorator = this.nodeHighlightedDecorator.bind(this);
-    this.nodeFocusedDecorator = this.nodeFocusedDecorator.bind(this);
-    this.nodeBlurredDecorator = this.nodeBlurredDecorator.bind(this);
     this.nodeMatchesDecorator = this.nodeMatchesDecorator.bind(this);
     this.nodeNetworksDecorator = this.nodeNetworksDecorator.bind(this);
     this.nodeMetricDecorator = this.nodeMetricDecorator.bind(this);
     this.nodeScaleDecorator = this.nodeScaleDecorator.bind(this);
     this.nodeHoveredDecorator = this.nodeHoveredDecorator.bind(this);
-    this.nodeNormalDecorator = this.nodeNormalDecorator.bind(this);
     // Edge decorators
     this.edgeFocusedDecorator = this.edgeFocusedDecorator.bind(this);
     this.edgeBlurredDecorator = this.edgeBlurredDecorator.bind(this);
@@ -45,27 +45,6 @@ class NodesChartElements extends React.Component {
     this.edgeScaleDecorator = this.edgeScaleDecorator.bind(this);
     this.edgeDisplayLayerDecorator = this.edgeDisplayLayerDecorator.bind(this);
     this.edgeRenderDecorator = this.edgeRenderDecorator.bind(this);
-  }
-
-  nodeHighlightedDecorator(node) {
-    const nodeSelected = (this.props.selectedNodeId === node.get('id'));
-    const nodeHighlighted = this.props.highlightedNodeIds.has(node.get('id'));
-    return node.set('highlighted', nodeHighlighted || nodeSelected);
-  }
-
-  nodeFocusedDecorator(node) {
-    const nodeSelected = (this.props.selectedNodeId === node.get('id'));
-    const isNeighborOfSelected = this.props.neighborsOfSelectedNode.includes(node.get('id'));
-    return node.set('focused', nodeSelected || isNeighborOfSelected);
-  }
-
-  nodeBlurredDecorator(node) {
-    const belongsToNetwork = this.props.selectedNetworkNodesIds.contains(node.get('id'));
-    const noMatches = this.props.searchNodeMatches.get(node.get('id'), makeMap()).isEmpty();
-    const notMatched = (this.props.searchQuery && !node.get('highlighted') && noMatches);
-    const notFocused = (this.props.selectedNodeId && !node.get('focused'));
-    const notInNetwork = (this.props.selectedNetwork && !belongsToNetwork);
-    return node.set('blurred', notMatched || notFocused || notInNetwork);
   }
 
   nodeMatchesDecorator(node) {
@@ -81,7 +60,7 @@ class NodesChartElements extends React.Component {
   }
 
   nodeScaleDecorator(node) {
-    return node.set('scale', node.get('focused') ? this.props.selectedScale : 1);
+    return node.set('scale', this.props.focusedNodeIds.has(node.get('id')) ? this.props.selectedScale : 1);
   }
 
   nodeHoveredDecorator(node) {
@@ -89,39 +68,38 @@ class NodesChartElements extends React.Component {
   }
 
   /* eslint class-methods-use-this: off */
-  nodeNormalDecorator(node) {
-    return node.set('normal',
-      !(node.get('hovered') || node.get('blurred') || node.get('highlighted')));
-  }
-
   // make sure blurred nodes are in the background
   nodeDisplayLayerDecorator(node) {
+    const id = node.get('id');
     let displayLayer;
-    if (node.get('hovered')) {
+
+    if (this.props.mouseOverNodeId === id) {
       displayLayer = 'hovered';
-    } else if (node.get('blurred') && !node.get('highlighted')) {
+    } else if (this.props.blurredNodeIds.has(id) && !this.props.highlightedNodeIds.has(id)) {
       displayLayer = 'blurred';
-    } else if (node.get('highlighted')) {
+    } else if (this.props.highlightedNodeIds.has(id)) {
       displayLayer = 'highlighted';
     } else {
       displayLayer = 'normal';
     }
+
     return node.set('displayLayer', displayLayer);
   }
 
   nodeRenderDecorator(node) {
+    const id = node.get('id');
     return node.set('render', () => (
       <NodeContainer
+        id={id}
+        key={id}
         matches={node.get('matches')}
         networks={node.get('networks')}
         metric={node.get('metric')}
-        blurred={node.get('blurred')}
-        focused={node.get('focused')}
-        highlighted={node.get('highlighted')}
+        blurred={this.props.blurredNodeIds.has(id)}
+        focused={this.props.focusedNodeIds.has(id)}
+        highlighted={this.props.highlightedNodeIds.has(id)}
         shape={node.get('shape')}
         stack={node.get('stack')}
-        key={node.get('id')}
-        id={node.get('id')}
         label={node.get('label')}
         labelMinor={node.get('labelMinor')}
         pseudo={node.get('pseudo')}
@@ -193,15 +171,11 @@ class NodesChartElements extends React.Component {
 
   render() {
     const nodesToRender = this.props.layoutNodes.toIndexedSeq()
-      .map(this.nodeHighlightedDecorator)
-      .map(this.nodeFocusedDecorator)
-      .map(this.nodeBlurredDecorator)
       .map(this.nodeMatchesDecorator)
       .map(this.nodeNetworksDecorator)
       .map(this.nodeMetricDecorator)
       .map(this.nodeScaleDecorator)
       .map(this.nodeHoveredDecorator)
-      .map(this.nodeNormalDecorator)
       .map(this.nodeDisplayLayerDecorator)
       .map(this.nodeRenderDecorator);
 
@@ -245,6 +219,8 @@ function mapStateToProps(state) {
     selectedNetworkNodesIds: selectedNetworkNodesIdsSelector(state),
     neighborsOfSelectedNode: getAdjacentNodes(state),
     highlightedNodeIds: highlightedNodeIdsSelector(state),
+    focusedNodeIds: focusedNodeIdsSelector(state),
+    blurredNodeIds: blurredNodeIdsSelector(state),
     mouseOverNodeId: state.get('mouseOverNodeId'),
     selectedNetwork: state.get('selectedNetwork'),
     selectedNodeId: state.get('selectedNodeId'),
