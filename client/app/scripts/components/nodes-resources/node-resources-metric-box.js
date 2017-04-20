@@ -70,8 +70,13 @@ class NodeResourcesMetricBox extends React.Component {
 
   render() {
     const { x, y, width } = this.state;
-    const { label, color, metricSummary } = this.props;
-    const { showCapacity, relativeConsumption, type } = metricSummary.toJS();
+    const { label, color, metricSummary, topId } = this.props;
+    const { showCapacity, type } = metricSummary.toJS();
+
+    let t;
+    if (topId === 'hosts') t = 'host';
+    if (topId === 'containers') t = 'container';
+    if (topId === 'processes') t = 'process';
 
     const showInfo = width >= RESOURCES_LABEL_MIN_SIZE;
     const showNode = width >= 1; // hide the thin nodes
@@ -87,14 +92,15 @@ class NodeResourcesMetricBox extends React.Component {
     return (
       <g className="node-resources-metric-box">
         <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
-        {showCapacity && <rect className="frame" {...this.defaultRectProps()} />}
-        <rect className="bar" fill={color} {...this.defaultRectProps(relativeConsumption)} />
+        <rect className="frame" {...this.defaultRectProps()} />
+        <rect className="bar" fill={color} {...this.defaultRectProps(1)} />
         {showInfo && <NodeResourcesMetricBoxInfo
           label={label}
           metricSummary={metricSummary}
           width={width - (2 * RESOURCES_LABEL_PADDING)}
           x={x + RESOURCES_LABEL_PADDING}
           y={y + RESOURCES_LABEL_PADDING}
+          type={t}
         />}
       </g>
     );

@@ -13,6 +13,15 @@ import {
 class NodesResourcesLayer extends React.Component {
   render() {
     const { layerVerticalPosition, topologyId, transform, layoutNodes } = this.props;
+    let height;
+    if (topologyId === 'hosts') height = 400;
+    if (topologyId === 'containers') height = 335;
+    if (topologyId === 'processes') height = 270;
+
+    let y;
+    if (topologyId === 'hosts') y = -400;
+    if (topologyId === 'containers') y = -345;
+    if (topologyId === 'processes') y = -290;
 
     return (
       <g className="node-resources-layer">
@@ -24,14 +33,15 @@ class NodesResourcesLayer extends React.Component {
               label={node.get('label')}
               metricSummary={node.get('metricSummary')}
               width={node.get('width')}
-              height={node.get('height')}
+              height={height}
               x={node.get('offset')}
-              y={layerVerticalPosition}
+              topId={topologyId}
+              y={y}
               transform={transform}
             />
           ))}
         </g>
-        {!layoutNodes.isEmpty() && <NodeResourcesLayerTopology
+        {!layoutNodes.isEmpty() && false && <NodeResourcesLayerTopology
           verticalPosition={layerVerticalPosition}
           transform={transform}
           topologyId={topologyId}
@@ -43,7 +53,7 @@ class NodesResourcesLayer extends React.Component {
 
 function mapStateToProps(state, props) {
   return {
-    layerVerticalPosition: layerVerticalPositionByTopologyIdSelector(state).get(props.topologyId),
+    layerVerticalPosition: layerVerticalPositionByTopologyIdSelector(state).get('hosts'),
     layoutNodes: layoutNodesByTopologyIdSelector(state).get(props.topologyId, makeMap()),
   };
 }

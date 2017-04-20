@@ -10,7 +10,7 @@ export const DETAILS_PANEL_MARGINS = {
 };
 
 // Resource view
-export const RESOURCES_LAYER_TITLE_WIDTH = 200;
+export const RESOURCES_LAYER_TITLE_WIDTH = 0;
 export const RESOURCES_LAYER_HEIGHT = 150;
 export const RESOURCES_LAYER_PADDING = 10;
 export const RESOURCES_LABEL_MIN_SIZE = 50;
@@ -35,7 +35,7 @@ export const NODE_BASE_SIZE = 100;
 export const CANVAS_MARGINS = {
   [GRAPH_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 150 },
   [TABLE_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 30 },
-  [RESOURCE_VIEW_MODE]: { top: 160, left: 210, right: 40, bottom: 50 },
+  [RESOURCE_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 50 },
 };
 
 // Node details table constants

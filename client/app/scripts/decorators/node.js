@@ -16,7 +16,7 @@ export function nodeResourceBoxDecorator(node) {
   const metricSummary = node.get('metricSummary', makeMap());
   const width = metricSummary.get('showCapacity') ?
     metricSummary.get('totalCapacity') :
-    metricSummary.get('absoluteConsumption');
+    metricSummary.get('absoluteConsumption') * 100;
   const height = RESOURCES_LAYER_HEIGHT;
 
   return node.merge(makeMap({ width, height }));
