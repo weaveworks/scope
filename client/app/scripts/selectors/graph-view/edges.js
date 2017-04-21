@@ -16,8 +16,8 @@ export const highlightedEdgeIdsSelector = createSelector(
 
     // If a node is hovered, highlight all the edges that go into or out from the node.
     if (mouseOverNodeId) {
-      const adjacencies = nodeAdjacencies.get(mouseOverNodeId, makeMap()).keySeq();
-      edgeIds = edgeIds.union(adjacencies.flatMap(adjacentId => [
+      const adjacencies = nodeAdjacencies.get(mouseOverNodeId, makeMap());
+      edgeIds = edgeIds.union(adjacencies.keySeq().flatMap(adjacentId => [
         [adjacentId, mouseOverNodeId].join(EDGE_ID_SEPARATOR),
         [mouseOverNodeId, adjacentId].join(EDGE_ID_SEPARATOR),
       ]));
@@ -28,6 +28,26 @@ export const highlightedEdgeIdsSelector = createSelector(
       const oppositeId = mouseOverEdgeId.split(EDGE_ID_SEPARATOR).reverse().join(EDGE_ID_SEPARATOR);
       edgeIds = edgeIds.add(mouseOverEdgeId);
       edgeIds = edgeIds.add(oppositeId);
+    }
+
+    return edgeIds;
+  }
+);
+
+export const focusedEdgeIdsSelector = createSelector(
+  [
+    nodeAdjacenciesSelector,
+    state => state.get('selectedNodeId'),
+  ],
+  (nodeAdjacencies, selectedNodeId) => {
+    let edgeIds = makeSet();
+
+    if (selectedNodeId) {
+      const adjacencies = nodeAdjacencies.get(selectedNodeId, makeMap());
+      edgeIds = edgeIds.union(adjacencies.keySeq().flatMap(adjacentId => [
+        [adjacentId, selectedNodeId].join(EDGE_ID_SEPARATOR),
+        [selectedNodeId, adjacentId].join(EDGE_ID_SEPARATOR),
+      ]));
     }
 
     return edgeIds;

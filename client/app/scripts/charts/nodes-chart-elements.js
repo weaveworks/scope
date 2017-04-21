@@ -19,6 +19,7 @@ import {
 } from '../selectors/graph-view/nodes';
 import {
   highlightedEdgeIdsSelector,
+  focusedEdgeIdsSelector,
 } from '../selectors/graph-view/edges';
 import NodeContainer from './node-container';
 import EdgeContainer from './edge-container';
@@ -33,30 +34,13 @@ class NodesChartElements extends React.Component {
     // Node decorators
     // TODO: Consider moving some of these one level up (or even to global selectors) so that
     // other components, like NodesChartEdges, could read more info directly from the nodes.
-    this.nodeMatchesDecorator = this.nodeMatchesDecorator.bind(this);
-    this.nodeNetworksDecorator = this.nodeNetworksDecorator.bind(this);
-    this.nodeMetricDecorator = this.nodeMetricDecorator.bind(this);
     this.nodeScaleDecorator = this.nodeScaleDecorator.bind(this);
     this.nodeHoveredDecorator = this.nodeHoveredDecorator.bind(this);
     // Edge decorators
-    this.edgeFocusedDecorator = this.edgeFocusedDecorator.bind(this);
     this.edgeBlurredDecorator = this.edgeBlurredDecorator.bind(this);
-    this.edgeHighlightedDecorator = this.edgeHighlightedDecorator.bind(this);
     this.edgeScaleDecorator = this.edgeScaleDecorator.bind(this);
     this.edgeDisplayLayerDecorator = this.edgeDisplayLayerDecorator.bind(this);
     this.edgeRenderDecorator = this.edgeRenderDecorator.bind(this);
-  }
-
-  nodeMatchesDecorator(node) {
-    return node.set('matches', this.props.searchNodeMatches.get(node.get('id')));
-  }
-
-  nodeNetworksDecorator(node) {
-    return node.set('networks', this.props.nodeNetworks.get(node.get('id')));
-  }
-
-  nodeMetricDecorator(node) {
-    return node.set('metric', this.props.nodeMetric.get(node.get('id')));
   }
 
   nodeScaleDecorator(node) {
@@ -92,9 +76,9 @@ class NodesChartElements extends React.Component {
       <NodeContainer
         id={id}
         key={id}
-        matches={node.get('matches')}
-        networks={node.get('networks')}
-        metric={node.get('metric')}
+        matches={this.props.searchNodeMatches.get(id)}
+        networks={this.props.nodeNetworks.get(id)}
+        metric={this.props.nodeMetric.get(id)}
         blurred={this.props.blurredNodeIds.has(id)}
         focused={this.props.focusedNodeIds.has(id)}
         highlighted={this.props.highlightedNodeIds.has(id)}
@@ -111,16 +95,6 @@ class NodesChartElements extends React.Component {
         contrastMode={this.props.contrastMode}
       />
     ));
-  }
-
-  edgeHighlightedDecorator(edge) {
-    return edge.set('highlighted', this.props.highlightedEdgeIds.has(edge.get('id')));
-  }
-
-  edgeFocusedDecorator(edge) {
-    const sourceSelected = (this.props.selectedNodeId === edge.get('source'));
-    const targetSelected = (this.props.selectedNodeId === edge.get('target'));
-    return edge.set('focused', this.props.hasSelectedNode && (sourceSelected || targetSelected));
   }
 
   edgeBlurredDecorator(edge) {
@@ -153,15 +127,16 @@ class NodesChartElements extends React.Component {
   }
 
   edgeRenderDecorator(edge) {
+    const id = edge.get('id');
     return edge.set('render', () => (
       <EdgeContainer
-        key={edge.get('id')}
-        id={edge.get('id')}
+        id={id}
+        key={id}
         source={edge.get('source')}
         target={edge.get('target')}
         waypoints={edge.get('points')}
-        highlighted={edge.get('highlighted')}
-        focused={edge.get('focused')}
+        highlighted={this.props.highlightedEdgeIds.has(id)}
+        focused={this.props.focusedEdgeIds.has(id)}
         blurred={edge.get('blurred')}
         scale={edge.get('scale')}
         isAnimated={this.props.isAnimated}
@@ -171,17 +146,12 @@ class NodesChartElements extends React.Component {
 
   render() {
     const nodesToRender = this.props.layoutNodes.toIndexedSeq()
-      .map(this.nodeMatchesDecorator)
-      .map(this.nodeNetworksDecorator)
-      .map(this.nodeMetricDecorator)
       .map(this.nodeScaleDecorator)
       .map(this.nodeHoveredDecorator)
       .map(this.nodeDisplayLayerDecorator)
       .map(this.nodeRenderDecorator);
 
     const edgesToRender = this.props.layoutEdges.toIndexedSeq()
-      .map(this.edgeHighlightedDecorator)
-      .map(this.edgeFocusedDecorator)
       .map(this.edgeBlurredDecorator)
       .map(this.edgeScaleDecorator)
       .map(this.edgeDisplayLayerDecorator)
@@ -195,7 +165,6 @@ class NodesChartElements extends React.Component {
       nodesToRender.filter(node => node.get('displayLayer') === 'highlighted'),
       nodesToRender.filter(node => node.get('displayLayer') === 'hovered'),
     ]).flatten(true);
-    // console.log(nodesToRenderWell.toJS());
 
     return (
       <g className="nodes-chart-elements">
@@ -213,6 +182,7 @@ function mapStateToProps(state) {
     isAnimated: !graphExceedsComplexityThreshSelector(state),
     hasSelectedNode: hasSelectedNodeFn(state),
     highlightedEdgeIds: highlightedEdgeIdsSelector(state),
+    focusedEdgeIds: focusedEdgeIdsSelector(state),
     nodeMetric: nodeMetricSelector(state),
     nodeNetworks: nodeNetworksSelector(state),
     searchNodeMatches: searchNodeMatchesSelector(state),
@@ -225,7 +195,7 @@ function mapStateToProps(state) {
     selectedNetwork: state.get('selectedNetwork'),
     selectedNodeId: state.get('selectedNodeId'),
     searchQuery: state.get('searchQuery'),
-    contrastMode: state.get('contrastMode')
+    contrastMode: state.get('contrastMode'),
   };
 }
 
