@@ -94,7 +94,9 @@ class ZoomWrapper extends React.Component {
 
   setZoomTriggers(zoomingEnabled) {
     if (zoomingEnabled) {
-      this.svg.call(this.zoom);
+      // use d3-zoom defaults but exclude double clicks
+      this.svg.call(this.zoom)
+        .on('dblclick.zoom', null);
     } else {
       this.svg.on('.zoom', null);
     }
