@@ -17,10 +17,6 @@ import {
   focusedNodeIdsSelector,
   blurredNodeIdsSelector,
 } from '../selectors/graph-view/nodes';
-import {
-  highlightedEdgeIdsSelector,
-  focusedEdgeIdsSelector,
-} from '../selectors/graph-view/edges';
 import NodeContainer from './node-container';
 import EdgeContainer from './edge-container';
 
@@ -35,7 +31,6 @@ class NodesChartElements extends React.Component {
     // TODO: Consider moving some of these one level up (or even to global selectors) so that
     // other components, like NodesChartEdges, could read more info directly from the nodes.
     this.nodeScaleDecorator = this.nodeScaleDecorator.bind(this);
-    this.nodeHoveredDecorator = this.nodeHoveredDecorator.bind(this);
     // Edge decorators
     this.edgeBlurredDecorator = this.edgeBlurredDecorator.bind(this);
     this.edgeScaleDecorator = this.edgeScaleDecorator.bind(this);
@@ -45,10 +40,6 @@ class NodesChartElements extends React.Component {
 
   nodeScaleDecorator(node) {
     return node.set('scale', this.props.focusedNodeIds.has(node.get('id')) ? this.props.selectedScale : 1);
-  }
-
-  nodeHoveredDecorator(node) {
-    return node.set('hovered', node.get('id') === this.props.mouseOverNodeId);
   }
 
   /* eslint class-methods-use-this: off */
@@ -135,8 +126,6 @@ class NodesChartElements extends React.Component {
         source={edge.get('source')}
         target={edge.get('target')}
         waypoints={edge.get('points')}
-        highlighted={this.props.highlightedEdgeIds.has(id)}
-        focused={this.props.focusedEdgeIds.has(id)}
         blurred={edge.get('blurred')}
         scale={edge.get('scale')}
         isAnimated={this.props.isAnimated}
@@ -147,7 +136,6 @@ class NodesChartElements extends React.Component {
   render() {
     const nodesToRender = this.props.layoutNodes.toIndexedSeq()
       .map(this.nodeScaleDecorator)
-      .map(this.nodeHoveredDecorator)
       .map(this.nodeDisplayLayerDecorator)
       .map(this.nodeRenderDecorator);
 
@@ -179,10 +167,8 @@ function mapStateToProps(state) {
     layoutNodes: layoutNodesSelector(state),
     layoutEdges: layoutEdgesSelector(state),
     selectedScale: selectedScaleSelector(state),
-    isAnimated: !graphExceedsComplexityThreshSelector(state),
+    isAnimated: false && !graphExceedsComplexityThreshSelector(state),
     hasSelectedNode: hasSelectedNodeFn(state),
-    highlightedEdgeIds: highlightedEdgeIdsSelector(state),
-    focusedEdgeIds: focusedEdgeIdsSelector(state),
     nodeMetric: nodeMetricSelector(state),
     nodeNetworks: nodeNetworksSelector(state),
     searchNodeMatches: searchNodeMatchesSelector(state),

@@ -2,8 +2,12 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 
-import { enterEdge, leaveEdge } from '../actions/app-actions';
 import { NODE_BASE_SIZE } from '../constants/styles';
+import { enterEdge, leaveEdge } from '../actions/app-actions';
+import {
+  highlightedEdgeIdsSelector,
+  focusedEdgeIdsSelector,
+} from '../selectors/graph-view/edges';
 
 class Edge extends React.Component {
 
@@ -14,16 +18,8 @@ class Edge extends React.Component {
   }
 
   render() {
-    const {
-      id,
-      path,
-      highlighted,
-      blurred,
-      focused,
-      scale,
-      source,
-      target
-    } = this.props;
+    const { id, path, highlighted, blurred, focused, scale, source, target } = this.props;
+
     const className = classNames('edge', { highlighted, blurred, focused });
     const thickness = (scale * 0.01) * NODE_BASE_SIZE;
     const strokeWidth = focused ? thickness * 3 : thickness;
@@ -56,9 +52,11 @@ class Edge extends React.Component {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state, { id }) {
   return {
-    contrastMode: state.get('contrastMode')
+    highlighted: highlightedEdgeIdsSelector(state).has(id),
+    focused: focusedEdgeIdsSelector(state).has(id),
+    contrastMode: state.get('contrastMode'),
   };
 }
 

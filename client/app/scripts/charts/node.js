@@ -160,7 +160,7 @@ function mapStateToProps(state) {
   return {
     exportingGraph: state.get('exportingGraph'),
     showingNetworks: state.get('showingNetworks'),
-    contrastMode: state.get('contrastMode')
+    contrastMode: state.get('contrastMode'),
   };
 }
 
