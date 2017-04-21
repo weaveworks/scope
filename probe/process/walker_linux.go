@@ -102,7 +102,7 @@ func (w *walker) Walk(f func(Process, Process)) error {
 			continue
 		}
 
-		openFiles, err := fs.ReadDirNames(path.Join(w.procRoot, filename, "fd"))
+		openFilesCount, err := fs.ReadDirCount(path.Join(w.procRoot, filename, "fd"))
 		if err != nil {
 			continue
 		}
@@ -139,7 +139,7 @@ func (w *walker) Walk(f func(Process, Process)) error {
 			Jiffies:        jiffies,
 			RSSBytes:       rss,
 			RSSBytesLimit:  rssLimit,
-			OpenFilesCount: len(openFiles),
+			OpenFilesCount: openFilesCount,
 			OpenFilesLimit: openFilesLimit,
 		}, Process{})
 	}
