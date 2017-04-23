@@ -81,7 +81,7 @@ func maybeExportProfileData(flags probeFlags) {
 		go func() {
 			http.Handle("/metrics", prometheus.Handler())
 			log.Infof("Profiling data being exported to %s", flags.httpListen)
-			log.Infof("go tool proof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
+			log.Infof("go tool pprof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
 			log.Infof("Profiling endpoint %s terminated: %v", flags.httpListen, http.ListenAndServe(flags.httpListen, nil))
 		}()
 	}
