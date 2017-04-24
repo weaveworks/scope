@@ -168,11 +168,10 @@ func (c EdgeMetadatas) fromIntermediate(in map[string]EdgeMetadata) EdgeMetadata
 
 // CodecEncodeSelf implements codec.Selfer
 func (c *EdgeMetadatas) CodecEncodeSelf(encoder *codec.Encoder) {
-	if c.psMap != nil {
-		encoder.Encode(c.toIntermediate())
-	} else {
-		encoder.Encode(nil)
-	}
+	mapWrite(c.psMap, encoder, func(encoder *codec.Encoder, val interface{}) {
+		e := val.(EdgeMetadata)
+		(&e).CodecEncodeSelf(encoder)
+	})
 }
 
 // CodecDecodeSelf implements codec.Selfer

@@ -168,11 +168,9 @@ func (s Sets) fromIntermediate(in map[string]StringSet) Sets {
 
 // CodecEncodeSelf implements codec.Selfer
 func (s *Sets) CodecEncodeSelf(encoder *codec.Encoder) {
-	if s.psMap != nil {
-		encoder.Encode(s.toIntermediate())
-	} else {
-		encoder.Encode(nil)
-	}
+	mapWrite(s.psMap, encoder, func(encoder *codec.Encoder, val interface{}) {
+		encoder.Encode(val.(StringSet))
+	})
 }
 
 // CodecDecodeSelf implements codec.Selfer

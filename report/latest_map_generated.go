@@ -122,23 +122,11 @@ func (m StringLatestMap) DeepEqual(n StringLatestMap) bool {
 	})
 }
 
-func (m StringLatestMap) toIntermediate() map[string]stringLatestEntry {
-	intermediate := make(map[string]stringLatestEntry, m.Size())
-	if m.Map != nil {
-		m.Map.ForEach(func(key string, val interface{}) {
-			intermediate[key] = *val.(*stringLatestEntry)
-		})
-	}
-	return intermediate
-}
-
 // CodecEncodeSelf implements codec.Selfer.
 func (m *StringLatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
-	if m.Map != nil {
-		encoder.Encode(m.toIntermediate())
-	} else {
-		encoder.Encode(nil)
-	}
+	mapWrite(m.Map, encoder, func(encoder *codec.Encoder, val interface{}) {
+		val.(*stringLatestEntry).CodecEncodeSelf(encoder)
+	})
 }
 
 // CodecDecodeSelf implements codec.Selfer.
@@ -274,23 +262,11 @@ func (m NodeControlDataLatestMap) DeepEqual(n NodeControlDataLatestMap) bool {
 	})
 }
 
-func (m NodeControlDataLatestMap) toIntermediate() map[string]nodeControlDataLatestEntry {
-	intermediate := make(map[string]nodeControlDataLatestEntry, m.Size())
-	if m.Map != nil {
-		m.Map.ForEach(func(key string, val interface{}) {
-			intermediate[key] = *val.(*nodeControlDataLatestEntry)
-		})
-	}
-	return intermediate
-}
-
 // CodecEncodeSelf implements codec.Selfer.
 func (m *NodeControlDataLatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
-	if m.Map != nil {
-		encoder.Encode(m.toIntermediate())
-	} else {
-		encoder.Encode(nil)
-	}
+	mapWrite(m.Map, encoder, func(encoder *codec.Encoder, val interface{}) {
+		val.(*nodeControlDataLatestEntry).CodecEncodeSelf(encoder)
+	})
 }
 
 // CodecDecodeSelf implements codec.Selfer.

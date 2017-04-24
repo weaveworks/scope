@@ -155,7 +155,10 @@ func (c Counters) fromIntermediate(in map[string]int) Counters {
 
 // CodecEncodeSelf implements codec.Selfer
 func (c *Counters) CodecEncodeSelf(encoder *codec.Encoder) {
-	encoder.Encode(c.toIntermediate())
+	mapWrite(c.psMap, encoder, func(encoder *codec.Encoder, val interface{}) {
+		i := val.(int)
+		encoder.Encode(i)
+	})
 }
 
 // CodecDecodeSelf implements codec.Selfer

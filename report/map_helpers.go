@@ -85,9 +85,10 @@ const (
 	containerMapKey   = 2
 	containerMapValue = 3
 	containerMapEnd   = 4
+	// from https://github.com/ugorji/go/blob/master/codec/helper.go#L152
+	cUTF8 = 2
 )
 
-// CodecDecodeSelf implements codec.Selfer.
 // This implementation does not use the intermediate form as that was a
 // performance issue; skipping it saved almost 10% CPU.  Note this means
 // we are using undocumented, internal APIs, which could break in the future.
@@ -117,4 +118,22 @@ func mapRead(decoder *codec.Decoder, decodeValue func(isNil bool) interface{}) p
 	}
 	z.DecSendContainerState(containerMapEnd)
 	return out
+}
+
+// Inverse of mapRead, done for performance. Same comments about
+// undocumented internal APIs apply.
+func mapWrite(m ps.Map, encoder *codec.Encoder, encodeValue func(*codec.Encoder, interface{})) {
+	z, r := codec.GenHelperEncoder(encoder)
+	if m == nil {
+		r.EncodeNil()
+		return
+	}
+	r.EncodeMapStart(m.Size())
+	m.ForEach(func(key string, val interface{}) {
+		z.EncSendContainerState(containerMapKey)
+		r.EncodeString(cUTF8, key)
+		z.EncSendContainerState(containerMapValue)
+		encodeValue(encoder, val)
+	})
+	z.EncSendContainerState(containerMapEnd)
 }
