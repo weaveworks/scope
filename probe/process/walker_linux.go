@@ -23,7 +23,42 @@ func NewWalker(procRoot string) Walker {
 	return &walker{procRoot: procRoot}
 }
 
+// skipNSpaces skips nSpaces in buf and updates the cursor 'pos'
+func skipNSpaces(buf *[]byte, pos *int, nSpaces int) {
+	for spaceCount := 0; *pos < len(*buf) && spaceCount < nSpaces; *pos++ {
+		if (*buf)[*pos] == ' ' {
+			spaceCount++
+		}
+	}
+}
+
+// parseUint64WithSpaces is similar to strconv.ParseUint64 but stops parsing
+// when reading a space instead of returning an error
+func parseUint64WithSpaces(buf *[]byte, pos *int) (ret uint64) {
+	for ; *pos < len(*buf) && (*buf)[*pos] != ' '; *pos++ {
+		ret = ret*10 + uint64((*buf)[*pos]-'0')
+	}
+	return
+}
+
+// parseIntWithSpaces is similar to strconv.ParseInt but stops parsing when
+// reading a space instead of returning an error
+func parseIntWithSpaces(buf *[]byte, pos *int) (ret int) {
+	return int(parseUint64WithSpaces(buf, pos))
+}
+
+// readStats reads and parses '/proc/<pid>/stat' files
 func readStats(path string) (ppid, threads int, jiffies, rss, rssLimit uint64, err error) {
+	const (
+		// /proc/<pid>/stat field positions, counting from zero
+		// see "man 5 proc"
+		procStatFieldPpid        int = 3
+		procStatFieldUserJiffies int = 13
+		procStatFieldSysJiffies  int = 14
+		procStatFieldThreads     int = 19
+		procStatFieldRssPages    int = 23
+		procStatFieldRssLimit    int = 24
+	)
 	var (
 		buf                               []byte
 		userJiffies, sysJiffies, rssPages uint64
@@ -32,34 +67,30 @@ func readStats(path string) (ppid, threads int, jiffies, rss, rssLimit uint64, e
 	if err != nil {
 		return
 	}
-	splits := strings.Fields(string(buf))
-	if len(splits) < 25 {
-		err = fmt.Errorf("Invalid /proc/PID/stat")
-		return
-	}
-	ppid, err = strconv.Atoi(splits[3])
-	if err != nil {
-		return
-	}
-	threads, err = strconv.Atoi(splits[19])
-	if err != nil {
-		return
-	}
-	userJiffies, err = strconv.ParseUint(splits[13], 10, 64)
-	if err != nil {
-		return
-	}
-	sysJiffies, err = strconv.ParseUint(splits[14], 10, 64)
-	if err != nil {
-		return
-	}
+
+	// Parse the file without using expensive extra string allocations
+
+	pos := 0
+	skipNSpaces(&buf, &pos, procStatFieldPpid)
+	ppid = parseIntWithSpaces(&buf, &pos)
+
+	skipNSpaces(&buf, &pos, procStatFieldUserJiffies-procStatFieldPpid)
+	userJiffies = parseUint64WithSpaces(&buf, &pos)
+
+	pos++ // 1 space between userJiffies and sysJiffies
+	sysJiffies = parseUint64WithSpaces(&buf, &pos)
+
+	skipNSpaces(&buf, &pos, procStatFieldThreads-procStatFieldSysJiffies)
+	threads = parseIntWithSpaces(&buf, &pos)
+
+	skipNSpaces(&buf, &pos, procStatFieldRssPages-procStatFieldThreads)
+	rssPages = parseUint64WithSpaces(&buf, &pos)
+
+	pos++ // 1 space between rssPages and rssLimit
+	rssLimit = parseUint64WithSpaces(&buf, &pos)
+
 	jiffies = userJiffies + sysJiffies
-	rssPages, err = strconv.ParseUint(splits[23], 10, 64)
-	if err != nil {
-		return
-	}
 	rss = rssPages * uint64(os.Getpagesize())
-	rssLimit, err = strconv.ParseUint(splits[24], 10, 64)
 	return
 }
 
