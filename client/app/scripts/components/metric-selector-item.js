@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 
 import { hoverMetric, pinMetric, unpinMetric } from '../actions/app-actions';
 import { selectedMetricTypeSelector } from '../selectors/node-metric';
+import { trackMixpanelEvent } from '../utils/tracking-utils';
 
 
 class MetricSelectorItem extends React.Component {
@@ -24,8 +25,20 @@ class MetricSelectorItem extends React.Component {
     const pinnedMetricType = this.props.pinnedMetricType;
 
     if (metricType !== pinnedMetricType) {
+      trackMixpanelEvent('scope.metric.resource.pin', {
+        metricType,
+        layout: this.props.topologyViewMode,
+        topologyId: this.props.currentTopology.get('id'),
+        parentTopologyId: this.props.currentTopology.get('parentId'),
+      });
       this.props.pinMetric(metricType);
     } else {
+      trackMixpanelEvent('scope.metric.resource.unpin', {
+        metricType,
+        layout: this.props.topologyViewMode,
+        topologyId: this.props.currentTopology.get('id'),
+        parentTopologyId: this.props.currentTopology.get('parentId'),
+      });
       this.props.unpinMetric();
     }
   }
@@ -54,8 +67,10 @@ class MetricSelectorItem extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    selectedMetricType: selectedMetricTypeSelector(state),
+    topologyViewMode: state.get('topologyViewMode'),
+    currentTopology: state.get('currentTopology'),
     pinnedMetricType: state.get('pinnedMetricType'),
+    selectedMetricType: selectedMetricTypeSelector(state),
   };
 }
 

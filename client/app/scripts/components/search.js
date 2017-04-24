@@ -8,6 +8,7 @@ import { searchMatchCountByTopologySelector } from '../selectors/search';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { slugify } from '../utils/string-utils';
 import { isTopologyEmpty } from '../utils/topology-utils';
+import { trackMixpanelEvent } from '../utils/tracking-utils';
 import SearchItem from './search-item';
 
 
@@ -71,7 +72,7 @@ class Search extends React.Component {
     if (this.state.value && value === '') {
       value = null;
     }
-    this.setState({value});
+    this.setState({ value });
     this.doSearch(inputValue);
   }
 
@@ -80,6 +81,14 @@ class Search extends React.Component {
   }
 
   doSearch(value) {
+    if (value !== '') {
+      trackMixpanelEvent('scope.search.query.change', {
+        query: value,
+        layout: this.props.topologyViewMode,
+        topologyId: this.props.currentTopology.get('id'),
+        parentTopologyId: this.props.currentTopology.get('parentId'),
+      });
+    }
     this.props.doSearch(value);
   }
 
@@ -155,8 +164,10 @@ class Search extends React.Component {
 export default connect(
   state => ({
     nodes: state.get('nodes'),
+    topologyViewMode: state.get('topologyViewMode'),
     isResourceViewMode: isResourceViewModeSelector(state),
     isTopologyEmpty: isTopologyEmpty(state),
+    currentTopology: state.get('currentTopology'),
     topologiesLoaded: state.get('topologiesLoaded'),
     pinnedSearches: state.get('pinnedSearches'),
     searchFocused: state.get('searchFocused'),
