@@ -2,17 +2,23 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { clickRelative } from '../../actions/app-actions';
+import { trackMixpanelEvent } from '../../utils/tracking-utils';
 import MatchedText from '../matched-text';
+
 
 class NodeDetailsRelativesLink extends React.Component {
   constructor(props, context) {
     super(props, context);
+
     this.handleClick = this.handleClick.bind(this);
     this.saveNodeRef = this.saveNodeRef.bind(this);
   }
 
   handleClick(ev) {
     ev.preventDefault();
+    trackMixpanelEvent('scope.node.relative.click', {
+      topologyId: this.props.topologyId,
+    });
     this.props.dispatch(clickRelative(
       this.props.id,
       this.props.topologyId,

@@ -4,19 +4,39 @@ import moment from 'moment';
 
 import Plugins from './plugins';
 import { getUpdateBufferSize } from '../utils/update-buffer-utils';
-import { clickDownloadGraph, clickForceRelayout, clickPauseUpdate,
-  clickResumeUpdate, toggleHelp, toggleTroubleshootingMenu, setContrastMode } from '../actions/app-actions';
+import { trackMixpanelEvent } from '../utils/tracking-utils';
+import {
+  clickDownloadGraph,
+  clickForceRelayout,
+  clickPauseUpdate,
+  clickResumeUpdate,
+  toggleHelp,
+  toggleTroubleshootingMenu,
+  setContrastMode
+} from '../actions/app-actions';
+
 
 class Footer extends React.Component {
   constructor(props, context) {
     super(props, context);
 
     this.handleContrastClick = this.handleContrastClick.bind(this);
+    this.handleRelayoutClick = this.handleRelayoutClick.bind(this);
   }
-  handleContrastClick(e) {
-    e.preventDefault();
+
+  handleContrastClick(ev) {
+    ev.preventDefault();
     this.props.setContrastMode(!this.props.contrastMode);
   }
+
+  handleRelayoutClick(ev) {
+    ev.preventDefault();
+    trackMixpanelEvent('scope.layout.refresh.click', {
+      layout: this.props.topologyViewMode,
+    });
+    this.props.clickForceRelayout();
+  }
+
   render() {
     const { hostname, updatePausedAt, version, versionUpdate, contrastMode } = this.props;
 
@@ -75,7 +95,7 @@ class Footer extends React.Component {
           </a>
           <a
             className="footer-icon"
-            onClick={this.props.clickForceRelayout}
+            onClick={this.handleRelayoutClick}
             title={forceRelayoutTitle}>
             <span className="fa fa-refresh" />
           </a>
@@ -103,9 +123,10 @@ function mapStateToProps(state) {
   return {
     hostname: state.get('hostname'),
     updatePausedAt: state.get('updatePausedAt'),
+    topologyViewMode: state.get('topologyViewMode'),
     version: state.get('version'),
     versionUpdate: state.get('versionUpdate'),
-    contrastMode: state.get('contrastMode')
+    contrastMode: state.get('contrastMode'),
   };
 }
 

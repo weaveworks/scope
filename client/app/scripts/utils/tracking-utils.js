@@ -6,7 +6,6 @@ const log = debug('service:tracking');
 export function trackMixpanelEvent(name, props) {
   if (window.mixpanel && process.env.WEAVE_CLOUD) {
     window.mixpanel.track(name, props);
-    log('trackMixpanelEvent', name, props);
   } else {
     log('trackMixpanelEvent', name, props);
   }

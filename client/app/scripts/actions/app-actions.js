@@ -23,7 +23,6 @@ import {
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
-import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
   availableMetricTypesSelector,
   selectedMetricTypeSelector,
@@ -210,13 +209,6 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     // update all request workers with new options
     resetUpdateBuffer();
     const state = getState();
-    trackMixpanelEvent('scope.topology.option.click', {
-      option,
-      value,
-      layout: state.get('topologyViewMode'),
-      topologyId: state.getIn(['currentTopology', 'id']),
-      parentTopologyId: state.getIn(['currentTopology', 'parentId']),
-    });
     getTopologies(activeTopologyOptionsSelector(state), dispatch);
     getNodesDelta(
       getCurrentTopologyUrl(state),
@@ -274,11 +266,7 @@ export function clickDownloadGraph() {
 }
 
 export function clickForceRelayout() {
-  return (dispatch, getState) => {
-    const state = getState();
-    trackMixpanelEvent('scope.layout.refresh.click', {
-      layout: state.get('topologyViewMode'),
-    });
+  return (dispatch) => {
     dispatch({
       type: ActionTypes.CLICK_FORCE_RELAYOUT,
       forceRelayout: true
@@ -356,11 +344,6 @@ export function clickNode(nodeId, label, origin) {
     });
     updateRoute(getState);
     const state = getState();
-    trackMixpanelEvent('scope.node.click', {
-      layout: state.get('topologyViewMode'),
-      topologyId: state.getIn(['currentTopology', 'id']),
-      parentTopologyId: state.getIn(['currentTopology', 'parentId']),
-    });
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
@@ -388,11 +371,6 @@ export function clickRelative(nodeId, topologyId, label, origin) {
     });
     updateRoute(getState);
     const state = getState();
-    trackMixpanelEvent('scope.node.relative.click', {
-      layout: state.get('topologyViewMode'),
-      topologyId: state.getIn(['currentTopology', 'id']),
-      parentTopologyId: state.getIn(['currentTopology', 'parentId']),
-    });
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
