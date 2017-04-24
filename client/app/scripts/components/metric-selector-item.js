@@ -15,6 +15,15 @@ class MetricSelectorItem extends React.Component {
     this.onMouseClick = this.onMouseClick.bind(this);
   }
 
+  trackEvent(eventName) {
+    trackMixpanelEvent(eventName, {
+      metricType: this.props.metric.get('label'),
+      layout: this.props.topologyViewMode,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+    });
+  }
+
   onMouseOver() {
     const metricType = this.props.metric.get('label');
     this.props.hoverMetric(metricType);
@@ -25,20 +34,10 @@ class MetricSelectorItem extends React.Component {
     const pinnedMetricType = this.props.pinnedMetricType;
 
     if (metricType !== pinnedMetricType) {
-      trackMixpanelEvent('scope.metric.resource.pin', {
-        metricType,
-        layout: this.props.topologyViewMode,
-        topologyId: this.props.currentTopology.get('id'),
-        parentTopologyId: this.props.currentTopology.get('parentId'),
-      });
+      this.trackEvent('scope.metric.resource.pin');
       this.props.pinMetric(metricType);
     } else {
-      trackMixpanelEvent('scope.metric.resource.unpin', {
-        metricType,
-        layout: this.props.topologyViewMode,
-        topologyId: this.props.currentTopology.get('id'),
-        parentTopologyId: this.props.currentTopology.get('parentId'),
-      });
+      this.trackEvent('scope.metric.resource.unpin');
       this.props.unpinMetric();
     }
   }

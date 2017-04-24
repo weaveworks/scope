@@ -4,7 +4,6 @@ import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
-import { parseQuery } from '../utils/search-utils';
 import {
   bufferDeltaUpdate,
   resumeUpdate,
@@ -171,6 +170,16 @@ export function pinNextMetric(delta) {
     const nextMetricType = metricTypes.get(nextIndex);
 
     dispatch(pinMetric(nextMetricType));
+  };
+}
+
+export function pinSearch() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.PIN_SEARCH,
+      query: getState().get('searchQuery'),
+    });
+    updateRoute(getState);
   };
 }
 
@@ -518,29 +527,6 @@ export function hitBackspace() {
       if (query) {
         dispatch({
           type: ActionTypes.UNPIN_SEARCH,
-          query
-        });
-        updateRoute(getState);
-      }
-    }
-  };
-}
-
-export function hitEnter() {
-  return (dispatch, getState) => {
-    const state = getState();
-    // pin query based on current search field
-    if (state.get('searchFocused')) {
-      const query = state.get('searchQuery');
-      if (query && parseQuery(query)) {
-        trackMixpanelEvent('scope.search.query.pin', {
-          query,
-          layout: state.get('topologyViewMode'),
-          topologyId: state.getIn(['currentTopology', 'id']),
-          parentTopologyId: state.getIn(['currentTopology', 'parentId']),
-        });
-        dispatch({
-          type: ActionTypes.PIN_SEARCH,
           query
         });
         updateRoute(getState);

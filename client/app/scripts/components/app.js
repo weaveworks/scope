@@ -16,7 +16,6 @@ import {
   focusSearch,
   pinNextMetric,
   hitBackspace,
-  hitEnter,
   hitEsc,
   unpinMetric,
   toggleHelp,
@@ -38,11 +37,11 @@ import {
   isTableViewModeSelector,
   isGraphViewModeSelector,
 } from '../selectors/topology';
+import {
+  BACKSPACE_KEY_CODE,
+  ESC_KEY_CODE,
+} from '../constants/key-codes';
 
-
-const BACKSPACE_KEY_CODE = 8;
-const ENTER_KEY_CODE = 13;
-const ESC_KEY_CODE = 27;
 const keyPressLog = debug('scope:app-key-press');
 
 class App extends React.Component {
@@ -79,8 +78,6 @@ class App extends React.Component {
     // don't get esc in onKeyPress
     if (ev.keyCode === ESC_KEY_CODE) {
       this.props.dispatch(hitEsc());
-    } else if (ev.keyCode === ENTER_KEY_CODE) {
-      this.props.dispatch(hitEnter());
     } else if (ev.keyCode === BACKSPACE_KEY_CODE) {
       this.props.dispatch(hitBackspace());
     } else if (ev.code === 'KeyD' && ev.ctrlKey && !showingTerminal) {
