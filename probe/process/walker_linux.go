@@ -2,12 +2,15 @@ package process
 
 import (
 	"bytes"
+	"encoding/binary"
+	"fmt"
 	"os"
 	"path"
 	"strconv"
 	"strings"
 
 	linuxproc "github.com/c9s/goprocinfo/linux"
+	"github.com/coocood/freecache"
 
 	"github.com/weaveworks/common/fs"
 	"github.com/weaveworks/scope/probe/host"
@@ -16,6 +19,23 @@ import (
 type walker struct {
 	procRoot string
 }
+
+var (
+	// limitsCache caches /proc/<pid>/limits
+	// key: filename in /proc. Example: "42"
+	// value: max open files (soft limit) stored in a [8]byte (uint64, little endian)
+	limitsCache = freecache.NewCache(1024 * 16)
+
+	// cmdlineCache caches /proc/<pid>/cmdline and /proc/<pid>/name
+	// key: filename in /proc. Example: "42"
+	// value: two strings separated by a '\0'
+	cmdlineCache = freecache.NewCache(1024 * 16)
+)
+
+const (
+	limitsCacheTimeout  = 60
+	cmdlineCacheTimeout = 60
+)
 
 // NewWalker creates a new process Walker.
 func NewWalker(procRoot string) Walker {
@@ -94,7 +114,7 @@ func readStats(path string) (ppid, threads int, jiffies, rss, rssLimit uint64, e
 }
 
 func readLimits(path string) (openFilesLimit uint64, err error) {
-	buf, err := cachedReadFile(path)
+	buf, err := fs.ReadFile(path)
 	if err != nil {
 		return 0, err
 	}
@@ -125,6 +145,27 @@ func readLimits(path string) (openFilesLimit uint64, err error) {
 	return softLimit, nil
 }
 
+func (w *walker) readCmdline(filename string) (cmdline, name string) {
+	if cmdlineBuf, err := fs.ReadFile(path.Join(w.procRoot, filename, "cmdline")); err == nil {
+		// like proc, treat name as the first element of command line
+		i := bytes.IndexByte(cmdlineBuf, '\000')
+		if i == -1 {
+			i = len(cmdlineBuf)
+		}
+		name = string(cmdlineBuf[:i])
+		cmdlineBuf = bytes.Replace(cmdlineBuf, []byte{'\000'}, []byte{' '}, -1)
+		cmdline = string(cmdlineBuf)
+	}
+	if name == "" {
+		if commBuf, err := fs.ReadFile(path.Join(w.procRoot, filename, "comm")); err == nil {
+			name = "[" + strings.TrimSpace(string(commBuf)) + "]"
+		} else {
+			name = "(unknown)"
+		}
+	}
+	return
+}
+
 // Walk walks the supplied directory (expecting it to look like /proc)
 // and marshalls the files into instances of Process, which it then
 // passes one-by-one to the supplied function. Walk is only made public
@@ -151,29 +192,29 @@ func (w *walker) Walk(f func(Process, Process)) error {
 			continue
 		}
 
-		openFilesLimit, err := readLimits(path.Join(w.procRoot, filename, "limits"))
-		if err != nil {
-			continue
+		var openFilesLimit uint64
+		if v, err := limitsCache.Get([]byte(filename)); err == nil {
+			openFilesLimit = binary.LittleEndian.Uint64(v)
+		} else {
+			openFilesLimit, err = readLimits(path.Join(w.procRoot, filename, "limits"))
+			if err != nil {
+				continue
+			}
+			buf := make([]byte, 8)
+			binary.LittleEndian.PutUint64(buf, openFilesLimit)
+			limitsCache.Set([]byte(filename), buf, limitsCacheTimeout)
 		}
 
 		cmdline, name := "", ""
-		if cmdlineBuf, err := cachedReadFile(path.Join(w.procRoot, filename, "cmdline")); err == nil {
-			// like proc, treat name as the first element of command line
-			i := bytes.IndexByte(cmdlineBuf, '\000')
-			if i == -1 {
-				i = len(cmdlineBuf)
-			}
-			name = string(cmdlineBuf[:i])
-			cmdlineBuf = bytes.Replace(cmdlineBuf, []byte{'\000'}, []byte{' '}, -1)
-			cmdline = string(cmdlineBuf)
+		if v, err := cmdlineCache.Get([]byte(filename)); err == nil {
+			separatorPos := strings.Index(string(v), "\x00")
+			cmdline = string(v[:separatorPos])
+			name = string(v[separatorPos+1:])
+		} else {
+			cmdline, name = w.readCmdline(filename)
+			cmdlineCache.Set([]byte(filename), []byte(fmt.Sprintf("%s\x00%s", cmdline, name)), cmdlineCacheTimeout)
 		}
-		if name == "" {
-			if commBuf, err := cachedReadFile(path.Join(w.procRoot, filename, "comm")); err == nil {
-				name = "[" + strings.TrimSpace(string(commBuf)) + "]"
-			} else {
-				name = "(unknown)"
-			}
-		}
+
 		f(Process{
 			PID:            pid,
 			PPID:           ppid,
