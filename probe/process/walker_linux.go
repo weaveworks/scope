@@ -2,7 +2,6 @@ package process
 
 import (
 	"bytes"
-	"fmt"
 	"os"
 	"path"
 	"strconv"
@@ -99,17 +98,31 @@ func readLimits(path string) (openFilesLimit uint64, err error) {
 	if err != nil {
 		return 0, err
 	}
-	for _, line := range strings.Split(string(buf), "\n") {
-		if strings.HasPrefix(line, "Max open files") {
-			splits := strings.Fields(line)
-			if len(splits) < 6 {
-				return 0, fmt.Errorf("Invalid /proc/PID/limits")
-			}
-			openFilesLimit, err := strconv.Atoi(splits[3])
-			return uint64(openFilesLimit), err
-		}
+	content := string(buf)
+
+	// File format: one line header + one line per limit
+	//
+	// Limit                     Soft Limit           Hard Limit           Units
+	// ...
+	// Max open files            1024                 4096                 files
+	// ...
+	delim := "\nMax open files"
+	pos := strings.Index(content, delim)
+
+	if pos < 0 {
+		// Tests such as TestWalker can synthetise empty files
+		return 0, nil
 	}
-	return 0, nil
+	pos += len(delim)
+
+	for pos < len(content) && content[pos] == ' ' {
+		pos++
+	}
+
+	var softLimit uint64
+	softLimit = parseUint64WithSpaces(&buf, &pos)
+
+	return softLimit, nil
 }
 
 // Walk walks the supplied directory (expecting it to look like /proc)

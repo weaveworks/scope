@@ -23,7 +23,7 @@ var mockFS = fs.Dir("",
 			},
 			fs.File{
 				FName:     "limits",
-				FContents: `Max open files 32768 65536 files`,
+				FContents: "Limit Soft-Limit Hard-Limit Units\nMax open files 32768 65536 files",
 			},
 			fs.Dir("fd", fs.File{FName: "0"}, fs.File{FName: "1"}, fs.File{FName: "2"}),
 		),
