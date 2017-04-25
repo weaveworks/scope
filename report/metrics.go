@@ -1,6 +1,7 @@
 package report
 
 import (
+	"encoding/base64"
 	"math"
 	"time"
 
@@ -51,12 +52,49 @@ type Metric struct {
 type Sample struct {
 	Timestamp time.Time `json:"date"`
 	Value     float64   `json:"value"`
+	dummySelfer
+}
+
+// CodecEncodeSelf implements codec.Selfer.
+func (s *Sample) CodecEncodeSelf(encoder *codec.Encoder) {
+	if s == nil {
+		encoder.Encode(nil)
+		return
+	}
+	type sampleMarshalled struct {
+		Timestamp string  `json:"t"`
+		Value     float64 `json:"v"`
+	}
+	encoder.Encode(func(s *Sample) sampleMarshalled {
+		bytesBuf, _ := s.Timestamp.UTC().MarshalBinary()
+		smallTimestamp := base64.StdEncoding.EncodeToString(bytesBuf)
+		return sampleMarshalled{smallTimestamp, s.Value}
+	}(s))
+}
+
+// CodecDecodeSelf implements codec.Selfer.
+func (s *Sample) CodecDecodeSelf(decoder *codec.Decoder) {
+	type sampleMarshalled struct {
+		Timestamp string  `json:"t"`
+		Value     float64 `json:"v"`
+	}
+
+	value := &sampleMarshalled{}
+	err := decoder.Decode(value)
+	if err != nil {
+		s = nil
+		return
+	}
+	decoded, _ := base64.StdEncoding.DecodeString(value.Timestamp)
+	ts := time.Time{}
+	ts.UnmarshalBinary(decoded)
+	*s = Sample{Timestamp: ts, Value: value.Value, dummySelfer: struct{}{}}
 }
 
 // MakeSingletonMetric makes a metric with a single value
 func MakeSingletonMetric(t time.Time, v float64) Metric {
 	return Metric{
-		Samples: []Sample{{t, v}},
+		Samples: []Sample{{t, v, struct{}{}}},
 		Min:     v,
 		Max:     v,
 		First:   t,
