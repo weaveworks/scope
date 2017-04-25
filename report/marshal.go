@@ -17,6 +17,10 @@ func (s *dummySelfer) CodecDecodeSelf(decoder *codec.Decoder) {
 	panic("This shouldn't happen: perhaps something has gone wrong in code generation?")
 }
 
+func (s *dummySelfer) CodecEncodeSelf(encoder *codec.Encoder) {
+	panic("This shouldn't happen: perhaps something has gone wrong in code generation?")
+}
+
 // WriteBinary writes a Report as a gzipped msgpack.
 func (rep Report) WriteBinary(w io.Writer, compressionLevel int) error {
 	gzwriter, err := gzip.NewWriterLevel(w, compressionLevel)

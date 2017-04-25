@@ -2,7 +2,6 @@ package report
 
 import (
 	"bytes"
-	"encoding/gob"
 	"fmt"
 	"reflect"
 	"sort"
@@ -148,31 +147,12 @@ func (c EdgeMetadatas) DeepEqual(d EdgeMetadatas) bool {
 	return equal
 }
 
-func (c EdgeMetadatas) toIntermediate() map[string]EdgeMetadata {
-	intermediate := map[string]EdgeMetadata{}
-	if c.psMap != nil {
-		c.psMap.ForEach(func(key string, val interface{}) {
-			intermediate[key] = val.(EdgeMetadata)
-		})
-	}
-	return intermediate
-}
-
-func (c EdgeMetadatas) fromIntermediate(in map[string]EdgeMetadata) EdgeMetadatas {
-	out := ps.NewMap()
-	for k, v := range in {
-		out = out.Set(k, v)
-	}
-	return EdgeMetadatas{out}
-}
-
 // CodecEncodeSelf implements codec.Selfer
 func (c *EdgeMetadatas) CodecEncodeSelf(encoder *codec.Encoder) {
-	if c.psMap != nil {
-		encoder.Encode(c.toIntermediate())
-	} else {
-		encoder.Encode(nil)
-	}
+	mapWrite(c.psMap, encoder, func(encoder *codec.Encoder, val interface{}) {
+		e := val.(EdgeMetadata)
+		(&e).CodecEncodeSelf(encoder)
+	})
 }
 
 // CodecDecodeSelf implements codec.Selfer
@@ -195,23 +175,6 @@ func (EdgeMetadatas) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
 func (*EdgeMetadatas) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
-}
-
-// GobEncode implements gob.Marshaller
-func (c EdgeMetadatas) GobEncode() ([]byte, error) {
-	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(c.toIntermediate())
-	return buf.Bytes(), err
-}
-
-// GobDecode implements gob.Unmarshaller
-func (c *EdgeMetadatas) GobDecode(input []byte) error {
-	in := map[string]EdgeMetadata{}
-	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
-	}
-	*c = EdgeMetadatas{}.fromIntermediate(in)
-	return nil
 }
 
 // EdgeMetadata describes a superset of the metadata that probes can possibly

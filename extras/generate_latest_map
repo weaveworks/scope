@@ -155,23 +155,11 @@ function generate_latest_map() {
         })
     }
 
-    func (m ${latest_map_type}) toIntermediate() map[string]${entry_type} {
-        intermediate := make(map[string]${entry_type}, m.Size())
-        if m.Map != nil {
-	        m.Map.ForEach(func(key string, val interface{}) {
-		        intermediate[key] = *val.(*${entry_type})
-	        })
-        }
-        return intermediate
-    }
-
     // CodecEncodeSelf implements codec.Selfer.
     func (m *${latest_map_type}) CodecEncodeSelf(encoder *codec.Encoder) {
-        if m.Map != nil {
-	        encoder.Encode(m.toIntermediate())
-        } else {
-	        encoder.Encode(nil)
-        }
+        mapWrite(m.Map, encoder, func(encoder *codec.Encoder, val interface{}) {
+            val.(*${entry_type}).CodecEncodeSelf(encoder)
+        })
     }
 
     // CodecDecodeSelf implements codec.Selfer.

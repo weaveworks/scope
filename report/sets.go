@@ -2,7 +2,6 @@ package report
 
 import (
 	"bytes"
-	"encoding/gob"
 	"fmt"
 	"reflect"
 	"sort"
@@ -148,31 +147,11 @@ func (s Sets) DeepEqual(t Sets) bool {
 	return equal
 }
 
-func (s Sets) toIntermediate() map[string]StringSet {
-	intermediate := map[string]StringSet{}
-	if s.psMap != nil {
-		s.psMap.ForEach(func(key string, val interface{}) {
-			intermediate[key] = val.(StringSet)
-		})
-	}
-	return intermediate
-}
-
-func (s Sets) fromIntermediate(in map[string]StringSet) Sets {
-	out := ps.NewMap()
-	for k, v := range in {
-		out = out.Set(k, v)
-	}
-	return Sets{out}
-}
-
 // CodecEncodeSelf implements codec.Selfer
 func (s *Sets) CodecEncodeSelf(encoder *codec.Encoder) {
-	if s.psMap != nil {
-		encoder.Encode(s.toIntermediate())
-	} else {
-		encoder.Encode(nil)
-	}
+	mapWrite(s.psMap, encoder, func(encoder *codec.Encoder, val interface{}) {
+		encoder.Encode(val.(StringSet))
+	})
 }
 
 // CodecDecodeSelf implements codec.Selfer
@@ -195,21 +174,4 @@ func (Sets) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
 func (*Sets) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
-}
-
-// GobEncode implements gob.Marshaller
-func (s Sets) GobEncode() ([]byte, error) {
-	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(s.toIntermediate())
-	return buf.Bytes(), err
-}
-
-// GobDecode implements gob.Unmarshaller
-func (s *Sets) GobDecode(input []byte) error {
-	in := map[string]StringSet{}
-	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
-	}
-	*s = Sets{}.fromIntermediate(in)
-	return nil
 }

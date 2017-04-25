@@ -2,7 +2,6 @@ package report
 
 import (
 	"bytes"
-	"encoding/gob"
 	"fmt"
 	"sort"
 
@@ -205,21 +204,4 @@ func (NodeSet) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
 func (*NodeSet) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
-}
-
-// GobEncode implements gob.Marshaller
-func (n NodeSet) GobEncode() ([]byte, error) {
-	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(n.toIntermediate())
-	return buf.Bytes(), err
-}
-
-// GobDecode implements gob.Unmarshaller
-func (n *NodeSet) GobDecode(input []byte) error {
-	in := []Node{}
-	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
-	}
-	*n = NodeSet{}.fromIntermediate(in)
-	return nil
 }
