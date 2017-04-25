@@ -59,12 +59,12 @@ func (t *Tagger) Tag(r report.Report) (report.Report, error) {
 		}
 		stackNamespace, ok := container.Latest.Lookup(LabelPrefix + "com.docker.stack.namespace")
 		if !ok {
-			continue
-		}
-
-		prefix := stackNamespace + "_"
-		if strings.HasPrefix(serviceName, prefix) {
-			serviceName = serviceName[len(prefix):]
+			stackNamespace = DefaultNamespace
+		} else {
+			prefix := stackNamespace + "_"
+			if strings.HasPrefix(serviceName, prefix) {
+				serviceName = serviceName[len(prefix):]
+			}
 		}
 
 		nodeID := report.MakeSwarmServiceNodeID(serviceID)

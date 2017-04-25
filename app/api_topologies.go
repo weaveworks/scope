@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/net/context"
 
+	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -48,12 +49,12 @@ var (
 	}
 )
 
-// kubernetesFilters generates the current kubernetes filters based on the
-// available k8s topologies.
-func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
-	options := APITopologyOptionGroup{ID: "namespace", Default: "", SelectType: "union", NoneLabel: "All Namespaces"}
+// namespaceFilters generates a namespace selector option group based on the given namespaces
+func namespaceFilters(namespaces []string, defaultNamespace, noneLabel string) APITopologyOptionGroup {
+	options := APITopologyOptionGroup{ID: "namespace", Default: "", SelectType: "union", NoneLabel: noneLabel}
 	for _, namespace := range namespaces {
-		if namespace == "default" {
+		if defaultNamespace != "" && namespace == defaultNamespace {
+			// We only set the default namespace as options.Default if it is present, otherwise default to All
 			options.Default = namespace
 		}
 		options.Options = append(options.Options, APITopologyOption{
@@ -64,8 +65,40 @@ func kubernetesFilters(namespaces ...string) APITopologyOptionGroup {
 }
 
 // updateFilters updates the available filters based on the current report.
-// Currently only kubernetes changes.
 func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
+	topologies = updateKubeFilters(rpt, topologies)
+	topologies = updateSwarmFilters(rpt, topologies)
+	return topologies
+}
+
+func updateSwarmFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
+	namespaces := map[string]struct{}{}
+	for _, n := range rpt.SwarmService.Nodes {
+		if namespace, ok := n.Latest.Lookup(docker.StackNamespace); ok {
+			namespaces[namespace] = struct{}{}
+		}
+	}
+	if len(namespaces) == 0 {
+		// We only want to apply filters when we have swarm-related nodes,
+		// so if we don't then return early
+		return topologies
+	}
+	ns := []string{}
+	for namespace := range namespaces {
+		ns = append(ns, namespace)
+	}
+	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
+	for i, t := range topologies {
+		if t.id == containersID || t.id == containersByImageID || t.id == containersByHostnameID || t.id == swarmServicesID {
+			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
+				namespaceFilters(ns, docker.DefaultNamespace, "All Stacks"),
+			})
+		}
+	}
+	return topologies
+}
+
+func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
 	namespaces := map[string]struct{}{}
 	for _, t := range []report.Topology{rpt.Pod, rpt.Service, rpt.Deployment, rpt.ReplicaSet} {
 		for _, n := range t.Nodes {
@@ -91,7 +124,7 @@ func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopolog
 	for i, t := range topologies {
 		if t.id == containersID || t.id == containersByImageID || t.id == containersByHostnameID || t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
 			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
-				kubernetesFilters(ns...),
+				namespaceFilters(ns, "default", "All Namespaces"),
 			})
 		}
 	}

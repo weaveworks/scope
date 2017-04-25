@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	k8sNamespaceLabel = "io.kubernetes.pod.namespace"
+	k8sNamespaceLabel   = "io.kubernetes.pod.namespace"
+	swarmNamespaceLabel = "com.docker.stack.namespace"
 )
 
 // PreciousNodeRenderer ensures a node is never filtered out by decorators
@@ -330,13 +331,17 @@ func IsPseudoTopology(n report.Node) bool {
 // IsNamespace checks if the node is a pod/service in the specified namespace
 func IsNamespace(namespace string) FilterFunc {
 	return func(n report.Node) bool {
-		tryKeys := []string{kubernetes.Namespace, docker.LabelPrefix + k8sNamespaceLabel}
+		tryKeys := []string{kubernetes.Namespace, docker.LabelPrefix + k8sNamespaceLabel, docker.StackNamespace, docker.LabelPrefix + swarmNamespaceLabel}
 		gotNamespace := ""
 		for _, key := range tryKeys {
 			if value, ok := n.Latest.Lookup(key); ok {
 				gotNamespace = value
 				break
 			}
+		}
+		// Special case for docker
+		if namespace == docker.DefaultNamespace && gotNamespace == "" {
+			return true
 		}
 		return namespace == gotNamespace
 	}
