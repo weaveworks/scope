@@ -76,7 +76,7 @@ deployment:
       - |
         test -z "${DOCKER_USER}" || (
           docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
-          (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" != "weaveworks" && (
+          (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" = "weaveworks" || (
             for IMAGE in $IMAGES; do
               docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest &&
               docker tag weaveworks/$IMAGE:$(./tools/image-tag) ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
