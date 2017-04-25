@@ -25,10 +25,11 @@ var (
 )
 
 type pidWalker struct {
-	walker      process.Walker
-	tickc       <-chan time.Time // Rate-limit clock. Sets the pace when traversing namespaces and /proc/PID/fd/* files.
-	stopc       chan struct{}    // Abort walk
-	fdBlockSize uint64           // Maximum number of /proc/PID/fd/* files to stat() per tick
+	walker                 process.Walker
+	tickc                  <-chan time.Time // Rate-limit clock. Sets the pace when traversing namespaces and /proc/PID/fd/* files.
+	stopc                  chan struct{}    // Abort walk
+	fdBlockSize            uint64           // Maximum number of /proc/PID/fd/* files to stat() per tick
+	netNamespacePathSuffix string
 }
 
 func newPidWalker(walker process.Walker, tickc <-chan time.Time, fdBlockSize uint64) pidWalker {
@@ -37,6 +38,7 @@ func newPidWalker(walker process.Walker, tickc <-chan time.Time, fdBlockSize uin
 		tickc:       tickc,
 		fdBlockSize: fdBlockSize,
 		stopc:       make(chan struct{}),
+		netNamespacePathSuffix: getNetNamespacePathSuffix(),
 	}
 	return w
 }
@@ -219,7 +221,7 @@ func (w pidWalker) walk(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 	w.walker.Walk(func(p, _ process.Process) {
 		dirName := strconv.Itoa(p.PID)
 
-		netNamespacePath := filepath.Join(procRoot, dirName, getNetNamespacePathSuffix())
+		netNamespacePath := filepath.Join(procRoot, dirName, w.netNamespacePathSuffix)
 		if err := fs.Stat(netNamespacePath, &statT); err != nil {
 			return
 		}
