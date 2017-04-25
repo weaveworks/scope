@@ -2,11 +2,11 @@ import React from 'react';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 
-import { selectMetric, pinMetric, unpinMetric } from '../actions/app-actions';
-import { pinnedMetricSelector } from '../selectors/node-metric';
+import { hoverMetric, pinMetric, unpinMetric } from '../actions/app-actions';
+import { selectedMetricTypeSelector } from '../selectors/node-metric';
+
 
 class MetricSelectorItem extends React.Component {
-
   constructor(props, context) {
     super(props, context);
 
@@ -15,37 +15,37 @@ class MetricSelectorItem extends React.Component {
   }
 
   onMouseOver() {
-    const k = this.props.metric.get('id');
-    this.props.selectMetric(k);
+    const metricType = this.props.metric.get('label');
+    this.props.hoverMetric(metricType);
   }
 
   onMouseClick() {
-    const k = this.props.metric.get('id');
-    const pinnedMetric = this.props.pinnedMetric;
+    const metricType = this.props.metric.get('label');
+    const pinnedMetricType = this.props.pinnedMetricType;
 
-    if (k !== pinnedMetric) {
-      this.props.pinMetric(k);
-    } else if (!this.props.alwaysPinned) {
-      this.props.unpinMetric(k);
+    if (metricType !== pinnedMetricType) {
+      this.props.pinMetric(metricType);
+    } else {
+      this.props.unpinMetric();
     }
   }
 
   render() {
-    const { metric, selectedMetric, pinnedMetric } = this.props;
-    const id = metric.get('id');
-    const isPinned = (id === pinnedMetric);
-    const isSelected = (id === selectedMetric);
+    const { metric, selectedMetricType, pinnedMetricType } = this.props;
+    const type = metric.get('label');
+    const isPinned = (type === pinnedMetricType);
+    const isSelected = (type === selectedMetricType);
     const className = classNames('metric-selector-action', {
       'metric-selector-action-selected': isSelected
     });
 
     return (
       <div
-        key={id}
+        key={type}
         className={className}
         onMouseOver={this.onMouseOver}
         onClick={this.onMouseClick}>
-        {metric.get('label')}
+        {type}
         {isPinned && <span className="fa fa-thumb-tack" />}
       </div>
     );
@@ -54,12 +54,12 @@ class MetricSelectorItem extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    selectedMetric: state.get('selectedMetric'),
-    pinnedMetric: pinnedMetricSelector(state),
+    selectedMetricType: selectedMetricTypeSelector(state),
+    pinnedMetricType: state.get('pinnedMetricType'),
   };
 }
 
 export default connect(
   mapStateToProps,
-  { selectMetric, pinMetric, unpinMetric }
+  { hoverMetric, pinMetric, unpinMetric }
 )(MetricSelectorItem);

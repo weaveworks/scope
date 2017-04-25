@@ -47,7 +47,7 @@ class ViewModeSelector extends React.Component {
           {Item('fa fa-bar-chart', 'Resources', isResourceViewMode, this.props.setResourceView,
             hasResourceView)}
         </div>
-        <MetricSelector alwaysPinned={isResourceViewMode} />
+        <MetricSelector />
       </div>
     );
   }

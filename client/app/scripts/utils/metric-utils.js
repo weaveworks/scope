@@ -52,15 +52,15 @@ export function getMetricValue(metric) {
 
 
 export function getMetricColor(metric) {
-  const selectedMetric = metric && metric.get('id');
-  if (/mem/.test(selectedMetric)) {
+  const metricId = metric && metric.get('id');
+  if (/mem/.test(metricId)) {
     return 'steelBlue';
-  } else if (/cpu/.test(selectedMetric)) {
+  } else if (/cpu/.test(metricId)) {
     return colors('cpu');
-  } else if (/files/.test(selectedMetric)) {
+  } else if (/files/.test(metricId)) {
     // purple
     return '#9467bd';
-  } else if (/load/.test(selectedMetric)) {
+  } else if (/load/.test(metricId)) {
     return colors('load');
   }
   return 'steelBlue';
