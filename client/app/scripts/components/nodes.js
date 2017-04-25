@@ -39,10 +39,10 @@ class Nodes extends React.Component {
 
     this.setDimensions = this.setDimensions.bind(this);
     this.handleResize = debounce(this.setDimensions, VIEWPORT_RESIZE_DEBOUNCE_INTERVAL);
-    this.setDimensions();
   }
 
   componentDidMount() {
+    this.setDimensions();
     window.addEventListener('resize', this.handleResize);
   }
 
@@ -73,7 +73,15 @@ class Nodes extends React.Component {
   }
 
   setDimensions() {
-    this.props.setViewportDimensions(window.innerWidth, window.innerHeight);
+    // Use the `scope-app` div to determine the viewport rectangle, because `window` gives
+    // wrong values for scope container inside Weave Cloud (on dev & prod), because of the
+    // top navigation toolbar that is counted in, even though it's not part of Scope.
+    const viewport = document.getElementsByClassName('scope-app')[0].getBoundingClientRect();
+    // Not sure why we need to subtract `left` and `top`, but that gives us correct values.
+    this.props.setViewportDimensions(
+      viewport.width - viewport.left,
+      viewport.height - viewport.top
+    );
   }
 }
 
