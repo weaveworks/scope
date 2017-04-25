@@ -102,18 +102,6 @@ func TestCountersEncoding(t *testing.T) {
 		Add("bar", 2)
 
 	{
-		gobs, err := want.GobEncode()
-		if err != nil {
-			t.Fatal(err)
-		}
-		have := EmptyCounters
-		have.GobDecode(gobs)
-		if !reflect.DeepEqual(want, have) {
-			t.Error(test.Diff(want, have))
-		}
-	}
-
-	{
 
 		for _, h := range []codec.Handle{
 			codec.Handle(&codec.MsgpackHandle{}),

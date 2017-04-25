@@ -2,7 +2,6 @@ package report
 
 import (
 	"bytes"
-	"encoding/gob"
 	"fmt"
 	"reflect"
 	"sort"
@@ -137,14 +136,6 @@ func (c Counters) DeepEqual(d Counters) bool {
 	return equal
 }
 
-func (c Counters) toIntermediate() map[string]int {
-	intermediate := map[string]int{}
-	c.ForEach(func(key string, val int) {
-		intermediate[key] = val
-	})
-	return intermediate
-}
-
 func (c Counters) fromIntermediate(in map[string]int) Counters {
 	out := ps.NewMap()
 	for k, v := range in {
@@ -181,21 +172,4 @@ func (Counters) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
 func (*Counters) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
-}
-
-// GobEncode implements gob.Marshaller
-func (c Counters) GobEncode() ([]byte, error) {
-	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(c.toIntermediate())
-	return buf.Bytes(), err
-}
-
-// GobDecode implements gob.Unmarshaller
-func (c *Counters) GobDecode(input []byte) error {
-	in := map[string]int{}
-	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
-	}
-	*c = Counters{}.fromIntermediate(in)
-	return nil
 }
