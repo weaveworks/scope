@@ -225,7 +225,7 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 	buf := &bytes.Buffer{}
 	encoder := codec.NewEncoder(buf, &codec.MsgpackHandle{})
 	if err := encoder.Encode(rpt); err != nil {
-		t.Fatalf("GOB encoding error: %s", err)
+		t.Fatalf("Msgpack encoding error: %s", err)
 	}
 	checkRequest(t, ts, "POST", "/api/report", buf.Bytes())
 
