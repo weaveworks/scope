@@ -10,8 +10,9 @@ const GENERAL_SHORTCUTS = [
   {key: 'esc', label: 'Close active panel'},
   {key: '/', label: 'Activate search field'},
   {key: '?', label: 'Toggle shortcut menu'},
-  {key: 't', label: 'Toggle Table mode'},
-  {key: 'g', label: 'Toggle Graph mode'},
+  {key: 'g', label: 'Switch to Graph view'},
+  {key: 't', label: 'Switch to Table view'},
+  {key: 'r', label: 'Switch to Resources view'},
 ];
 
 
