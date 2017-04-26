@@ -127,7 +127,7 @@ tests: $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS)
 	./tools/test -no-go-get
 
 lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
-	./tools/lint -ignorespelling "agre " -ignorespelling "AGRE " .
+	./tools/lint
 	./tools/shell-lint tools
 
 prog/staticui/staticui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
