@@ -16,9 +16,10 @@ The following topics are discussed:
      * [Naming Nodes](#naming-nodes)
  * [A Guide to Developing Plugins](#plugins-developing-guide)
   * [Setting up the Structure](#structure)
-  * [Defining the Reporter Interface](#reporter-interface)
+  * [Defining the Reporter Interface](#defining-reporter-interface)
+  * [Report Data Structures](#report-data-structures)
 
-Any kind of metrics can be generated and inserted into Scope using custom plugins. Metrics generated through your plugin are displayed in the user interface alongside the standard set of metrics that are found in Weave Scope.
+Any kind of metric can be generated and inserted in Scope with custom plugins. Metrics generated through a plugin are displayed in the user interface alongside the standard metrics found in Weave Scope.
 
 ![Custom Metrics With Plugins](images/plugin-features.png)
 
@@ -334,7 +335,7 @@ func main() {
 
 ```
 
-### <a id="reporter-interface"></a>Defining the Reporter Interface
+### <a id="defining-reporter-interface"></a>Defining the Reporter Interface
 
 As stated in the [How Plugins Communicate with Scope](#plugins-internals) section, the reporter interface is mandatory.
 Implementing the reporter interface means handling `GET /report` requests.
@@ -390,8 +391,255 @@ func (p *Plugin) Report(w http.ResponseWriter, r *http.Request) {
 
 ```
 
+### <a id="report-data-structures"></a>Report Data structures
+A report can contain many types of information.
+If you go back to the [Reporter Interface](#reporter-interface) section, you will see the top-level `Plugins` attribute.
+Along with that, a report may contain multiple topologies.
+An example of a report containing a few topologies is the following:
+
+```json
+{
+  "Host": {},
+  "Container": {},
+  "Process": {},
+  ...,
+  "Plugins": [...,]
+}
+```
+
+### Topologies
+A topology consists of a list of nodes along with controls and templates described below.
+These are the available topologies:
+
+- `Endpoint` nodes are `(address, port)` tuples on each host.
+- `Process` nodes are processes on each host.
+- `Container` nodes represent all Docker containers on hosts running probes.
+- `Pods` nodes represent all Kubernetes pods running on hosts running probes.
+- `Service` nodes represent all Kubernetes services running on hosts running probes.
+- `Deployment` nodes represent all Kubernetes deployments running on hosts running probes.
+- `ReplicaSet` nodes represent all Kubernetes ReplicaSets running on hosts running probes.
+- `ContainerImage` nodes represent all Docker container images on hosts running probes.
+- `Host` nodes are physical hosts that run probes.
+- `ECSTask` nodes represent [AWS ECS](https://aws.amazon.com/ecs/) [tasks](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definitions.html).
+- `ECSService` nodes represent [AWS ECS services](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs_services.html).
+- `Overlay` nodes are active peers in any software-defined network that's overlaid on the infrastructure.
+
+The topology structure consists of the following attributes:
+
+- `nodes` - is the list of the nodes that compose the topology.
+- `controls` - contains the list of IDs of the active controls at a particular time.
+- `metadata_templates` - contains the templates used to render data into the Scope UI.
+- `table_templates` - contains the templates used to render tables into the Scope UI.
+- `metric_templates` - contains the templates used to render metrics into the Scope UI.
+
+**Note**: These attribute are not required. But a topology with no `nodes` does not have any information to render.
+`metadata_templates`, as well as `table_templates`, are needed to know how to render the information carried by `nodes` in the Scope UI.
+
+### Nodes
+A Node contains information about a specific element of a topology.
+For example, the Host topology will contain nodes describing all the hosts in it.
+The same applies for containers and the Container topology, pods and the Pod topology and so on.
+Nodes are represented as follows:
+
+```json
+{
+  "Host": {
+    "nodes" : {
+      "hostID;<host>": {...}
+    }
+  },
+  "Container": {
+    "nodes" : {
+      "containerID;<container>": {...}
+    }
+  },
+  ...
+}
+```
+
+Nodes are stored in a dictionary.
+The ID of nodes is different depending on the node topology. For instance, nodes representing hosts or containers have the format `ID;<type>`, where `ID` is the alphanumeric identifier of the nodes and type is the literal string `host` or `container` respectively. A node representing an endpoint could look like `pc-4026531969;127.0.0.1;36238`.
+
+A node contains all the information about the represented object (e.g. host, container, pod, etc.).
+In particular, a node may contain:
+
+- `latest` - an id-value map containing the latest values. Each id has only one value.
+- `latestControls` - the latest available controls.
+- `metrics` - the collection of metrics to display in the UI. Each metric has multiple timestamped values.
+- `sets` - a string->set-of-strings map, for example a list of local networks.
+- `counters` - a string->int map.
+
+### Controls
+Controls describe interfaces that expose actions that the user can perform on different objects (e.g. host, container, etc.).
+Controls are an element of nodes. In this way, each control in a node is attached to it and performs an action on the object described by the node itself. Below is an example of how controls are represented in the JSON report.
+In the report, the attribute `latest_controls` contains all the controls exposed by scope and/or plugins, but only those alive will be listed in the attribute `controls`.
+
+```json
+"controls": {
+	"timestamp": "2016-11-17T08:53:04.567890059Z",
+	"controls": [
+		"switchToIOWait"
+	]
+},
+"latestControls": {
+	"switchToIOWait": {
+		"timestamp": "2016-11-17T08:53:03.171438309Z",
+		"value": {
+			"dead": false
+		}
+	},
+	"switchToIdle": {
+		"timestamp": "2016-11-17T08:53:03.171438309Z",
+		"value": {
+			"dead": true
+		}
+	}
+}
+```
+
+- `timestamp` specifies when the control was exposed.
+- `value` is an object containing the control value. At the moment, only the state is available.
+ - `dead` is a boolean to know the state (active, dead) of a control. It is useful to show controls only when they are in a usable state.
+
+### Metadata
+All metadata entries are placed within nodes in the section named `latest`.
+This section contains the latest values to display and consists of `timestamp` and `value`.
+Both should be written as JSON strings (with double quotes).
+Scope uses `metadata_templates` to display this data.
+To pair metadata with its template, it is necessary to use the `metadata-template-id` as a key to identify that particular piece of data. Example:
+
+```json
+"metadata_templates": {
+      "metadata-templates-id": {
+        "id": "metadata-templates-id",
+        "label": "Human-readable description",
+        "priority": 1.6,
+        "from": "latest"
+      }
+}
+
+"latest": {
+	"metadata-templates-id": {
+		"timestamp": "2016-11-17T08:53:02.189193735Z",
+		"value": "42"
+	}
+}
+```
+
+### Metadata Templates
+A metadata template describes a kind of metadata that is present in zero, one or several nodes of the topology and specifies how to display such metadata in Scope.
+Metadata templates are not placed within nodes but in the `metadata_templates` section of the JSON file.
+
+```json
+"metadata_templates": {
+      "traffic-control-pktloss": {
+        "id": "traffic-control-pktloss",
+        "label": "Human-readable description",
+        "dataType": "number",
+        "priority": 13.5,
+        "from": "latest"
+      },
+      "another-plugins-id": {...}
+}
+```
+
+- `id` is a string identifying the particular metadata template (here `traffic-control-pktloss`) and is also used as a key to the template value.
+- `label` contains the label used by the Scope UI.
+- `dataType` specifies the type of data, and determines how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime" and "" for strings.
+- `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If omitted, the UI displays it last.
+- `from` indicates where to look for the metadata. The possible values are:
+  - `latest`
+  - `sets`
+  - `counters`
+
+### Table Templates
+Table Templates describe a table and also how to identify the metadata templates that belong to the table.
+
+```json
+"table_templates": {
+      "table-template-id": {
+        "id": "table-template-id",
+        "label": "Human-readable description",
+        "prefix": "table-id-"
+      },
+      "another-table-template-id": {...}
+}
+```
+
+- `table-template-identifier` and `id` identify a particular table template.
+- `label` contains the label used by the Scope UI.
+- `prefix` is used to identify which metadata templates belong to the table.
+
+To display data in a table, define a table template and prepend the table prefix to all of the metadata templates that identify the data you want to put into the table.
+
+### Metrics
+Metrics are a particular kind of data that can be plotted on the UI as a graph.
+Scope uses `metric_templates` to display graph data in Scope. To pair a metric with its template, use the `metric-template-id` as the key for identifying a particular metric.
+Metrics can be used to display CPU and memory usage, HTTP requests rate, I/O operations, etc.
+The following is an example of a report with a metric preceded by its metric template:
+
+```json
+"metric_templates": {
+      "metric-template-id": {
+        "id": "metric-id",
+        "label": "Human-readable description",
+        "format": "percent",
+        "priority": 1.6
+      },
+}
+
+"metrics": {
+	"metadata-template-id": {
+		"samples": [
+			{
+				"date": "2016-11-17T08:53:03.171424664Z",
+				"value": 98.24
+			},
+			{
+				"date": "2016-11-17T08:53:04.171789887Z",
+				"value": 80.11
+			}
+		],
+		"min": 0,
+		"max": 100
+	}
+}
+```
+
+- `samples` is the list of the samples for this report.
+- `min` is the minimum value possible.
+- `max` is the maximum value possible.
+
+### Metric Templates
+Metric Templates describe a particular metric.
+The following is an example of metric template:
+
+```json
+"metric_templates": {
+      "metric-template-id": {
+        "id": "metric-id",
+        "label": "Human-readable description",
+        "format": "percent",
+        "priority": 1.6
+      },
+      "another-metric-template-id": {...}
+}
+```
+
+- `metric-template-id` and `id` identify a specific metric template.
+- `label` contains the label used by Scope UI.
+- `format` describes how the metrics are formatted and can be:
+  - `percent` the metric value is a percentage.
+  - `filesize` the metric value is a file size (e.g. memory usage), it is displayed with the suffix KB, MB, GB, etc.
+  - `integer` the metric value is an integer.
+- `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones).
+
+### Time Window
+The `Window` attribute is a time window, expressed as a duration and it defines the period from which data in the report is considered valid.
+The default window is 15 seconds.
+You may change the window value using the option `-app.window <SECONDS>` when launching scope.
+However, using values smaller than 15 seconds increases the chance of information not being correctly displayed.
+
 **See Also**
 
   * [Building Scope](/site/building.md)
-
-
