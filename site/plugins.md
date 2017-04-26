@@ -19,7 +19,7 @@ The following topics are discussed:
   * [Defining the Reporter Interface](#defining-reporter-interface)
   * [Report Data Structures](#report-data-structures)
 
-Any kind of metrics can be generated and inserted into Scope using custom plugins. Metrics generated through your plugin are displayed in the user interface alongside the standard set of metrics that are found in Weave Scope.
+Any kind of metric can be generated and inserted in Scope with custom plugins. Metrics generated through a plugin are displayed in the user interface alongside the standard metrics found in Weave Scope.
 
 ![Custom Metrics With Plugins](images/plugin-features.png)
 
@@ -408,8 +408,7 @@ An example of a report containing a few topologies is the following:
 ```
 
 ### Topologies
-Topologies can be of various types.
-Each topology consists of some general information and a list of nodes.
+A topology consists of a list of nodes along with controls and templates described below.
 These are the available topologies:
 
 - `Endpoint` nodes are `(address, port)` tuples on each host.
@@ -505,8 +504,8 @@ In the report, the attribute `latest_controls` contains all the controls exposed
 ### Metadata
 All metadata entries are placed within nodes in the section named `latest`.
 This section contains the latest values to display and consists of `timestamp` and `value`.
-Both should be written as json strings (with double quotes).
-Scope uses `metadata_templates` to know how to display such data.
+Both should be written as JSON strings (with double quotes).
+Scope uses `metadata_templates` to display this data.
 To pair metadata with its template, it is necessary to use the `metadata-template-id` as a key to identify that particular piece of data. Example:
 
 ```json
@@ -528,8 +527,8 @@ To pair metadata with its template, it is necessary to use the `metadata-templat
 ```
 
 ### Metadata Templates
-Metadata Templates describe a particular metadata item.
-This description is used to extract metadata from a node and display it on Scope UI.
+A metadata template describes a kind of metadata that is present in zero, one or several nodes and it specifies how to display such metadata in Scope.
+Metadata templates are not placed within nodes but in the `metadata_templates` section so that the same information do not need to be repeated in all nodes that use it.
 
 ```json
 "metadata_templates": {
@@ -545,16 +544,16 @@ This description is used to extract metadata from a node and display it on Scope
 ```
 
 - `id` is a string identifying the particular metadata template (here `traffic-control-pktloss`) and is also used as a key to the template value.
-- `label` contains the label that will be used by Scope UI.
-- `dataType` specifies the type of data, this will determine how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime" and "" for strings.
-- `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If omitted, the UI will display it last.
+- `label` contains the label used by the Scope UI.
+- `dataType` specifies the type of data, and determines how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime" and "" for strings.
+- `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If omitted, the UI displays it last.
 - `from` indicates where to look for the metadata. The possible values are:
   - `latest`
   - `sets`
   - `counters`
 
 ### Table Templates
-Table Templates describe a table and how to identify which metadata templates belong to the table.
+Table Templates describe a table and also how to identify the metadata templates that belong to the table.
 
 ```json
 "table_templates": {
@@ -568,15 +567,15 @@ Table Templates describe a table and how to identify which metadata templates be
 ```
 
 - `table-template-identifier` and `id` identify a particular table template.
-- `label` contains the label that will be used by Scope UI.
+- `label` contains the label used by the Scope UI.
 - `prefix` is used to identify which metadata templates belong to the table.
 
-If you want to display data in a table, you have to define a table template and prepend the table prefix to all the metadata templates that identify the data you want to put in such table.
+To display data in a table, define a table template and prepend the table prefix to all of the metadata templates that identify the data you want to put into the table.
 
 ### Metrics
 Metrics are a particular kind of data that can be plotted on the UI as a graph.
-Scope uses the `metric_templates` to know how to display such data. To pair a metric with its template, it is necessary to use the `metric-template-id` as key to identify that particular metric.
-Metrics are suitable for information such as CPU and memory usage, HTTP requests rate, I/O operations, etc.
+Scope uses `metric_templates` to display graph data in Scope. To pair a metric with its template, use the `metric-template-id` as the key for identifying a particular metric.
+Metrics can be used to display CPU and memory usage, HTTP requests rate, I/O operations, etc.
 The following is an example of a report with a metric preceded by its metric template:
 
 ```json
@@ -627,17 +626,16 @@ The following is an example of metric template:
 }
 ```
 
-- `metric-template-id` and `id` identify a particular metric template.
-- `label` contains the label that will be used by Scope UI.
-- `format` describes how the metrics is formatted.
+- `metric-template-id` and `id` identify a specific metric template.
+- `label` contains the label used by Scope UI.
+- `format` describes how the metrics are formatted and can be:
   - `percent` the metric value is a percentage.
   - `filesize` the metric value is a file size (e.g. memory usage), it is displayed with the suffix KB, MB, GB, etc.
   - `integer` the metric value is an integer.
 - `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones).
 
 ### Time Window
-A report may have an attribute called `Window`.
-This is the time window, expressed as duration, within which the data contained in the report are considered valid.
+The `Window` attribute is a time window, expressed as a duration and it defines the period from which data in the report is considered valid.
 The default window is 15 seconds.
 You may change the window value using the option `-app.window <SECONDS>` when launching scope.
 However, using values smaller than 15 seconds increases the chance of information not being correctly displayed.
