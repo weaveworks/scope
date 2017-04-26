@@ -527,8 +527,8 @@ To pair metadata with its template, it is necessary to use the `metadata-templat
 ```
 
 ### Metadata Templates
-A metadata template describes a kind of metadata that is present in zero, one or several nodes and it specifies how to display such metadata in Scope.
-Metadata templates are not placed within nodes but in the `metadata_templates` section so that the same information do not need to be repeated in all nodes that use it.
+A metadata template describes a kind of metadata that is present in zero, one or several nodes of the topology and specifies how to display such metadata in Scope.
+Metadata templates are not placed within nodes but in the `metadata_templates` section of the JSON file.
 
 ```json
 "metadata_templates": {
