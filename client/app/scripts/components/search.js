@@ -83,7 +83,6 @@ class Search extends React.Component {
     // If the search query is parsable, pin it when ENTER key is hit.
     if (ev.keyCode === ENTER_KEY_CODE && parseQuery(this.props.searchQuery)) {
       trackMixpanelEvent('scope.search.query.pin', {
-        query: this.props.searchQuery,
         layout: this.props.topologyViewMode,
         topologyId: this.props.currentTopology.get('id'),
         parentTopologyId: this.props.currentTopology.get('parentId'),
@@ -99,7 +98,6 @@ class Search extends React.Component {
   doSearch(value) {
     if (value !== '') {
       trackMixpanelEvent('scope.search.query.change', {
-        query: value,
         layout: this.props.topologyViewMode,
         topologyId: this.props.currentTopology.get('id'),
         parentTopologyId: this.props.currentTopology.get('parentId'),
