@@ -12,8 +12,20 @@ import Status from './status';
 import Topologies from './topologies';
 import TopologyOptions from './topology-options';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
-import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric,
-  selectMetric, toggleHelp, toggleGridMode, shutdown } from '../actions/app-actions';
+import {
+  focusSearch,
+  pinNextMetric,
+  hitBackspace,
+  hitEnter,
+  hitEsc,
+  unpinMetric,
+  selectMetric,
+  toggleHelp,
+  setGraphView,
+  setTableView,
+  setResourceView,
+  shutdown
+} from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import ViewModeSelector from './view-mode-selector';
@@ -92,8 +104,12 @@ class App extends React.Component {
         dispatch(pinNextMetric(-1));
       } else if (char === '>') {
         dispatch(pinNextMetric(1));
-      } else if (char === 't' || char === 'g') {
-        dispatch(toggleGridMode());
+      } else if (char === 'g') {
+        dispatch(setGraphView());
+      } else if (char === 't') {
+        dispatch(setTableView());
+      } else if (char === 'r') {
+        dispatch(setResourceView());
       } else if (char === 'q') {
         dispatch(unpinMetric());
         dispatch(selectMetric(null));
