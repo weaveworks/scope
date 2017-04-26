@@ -56,12 +56,10 @@ export const pinnedMetricSelector = createSelector(
 
 export const selectedMetricTypeSelector = createSelector(
   [
-    state => !!pinnedMetricSelector(state),
     state => state.get('pinnedMetricType'),
     state => state.get('hoveredMetricType'),
   ],
-  (hasPinnedMetric, pinnedMetricType, hoveredMetricType) =>
-    (hasPinnedMetric ? pinnedMetricType : hoveredMetricType)
+  (pinnedMetricType, hoveredMetricType) => hoveredMetricType || pinnedMetricType
 );
 
 const selectedMetricIdSelector = createSelector(
