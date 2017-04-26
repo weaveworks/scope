@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { debounce } from 'lodash';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesGrid from '../charts/nodes-grid';
@@ -9,14 +8,11 @@ import NodesError from '../charts/nodes-error';
 import DelayedShow from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
-import { setViewportDimensions } from '../actions/app-actions';
 import {
   isGraphViewModeSelector,
   isTableViewModeSelector,
   isResourceViewModeSelector,
 } from '../selectors/topology';
-
-import { VIEWPORT_RESIZE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
 const EmptyTopologyError = show => (
@@ -34,22 +30,6 @@ const EmptyTopologyError = show => (
 );
 
 class Nodes extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-
-    this.setDimensions = this.setDimensions.bind(this);
-    this.handleResize = debounce(this.setDimensions, VIEWPORT_RESIZE_DEBOUNCE_INTERVAL);
-  }
-
-  componentDidMount() {
-    this.setDimensions();
-    window.addEventListener('resize', this.handleResize);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
-  }
-
   render() {
     const { topologyEmpty, topologiesLoaded, nodesLoaded, topologies, currentTopology,
       isGraphViewMode, isTableViewMode, isResourceViewMode } = this.props;
@@ -71,18 +51,6 @@ class Nodes extends React.Component {
       </div>
     );
   }
-
-  setDimensions() {
-    // Use the `scope-app` div to determine the viewport rectangle, because `window` gives
-    // wrong values for scope container inside Weave Cloud (on dev & prod), because of the
-    // top navigation toolbar that is counted in, even though it's not part of Scope.
-    const viewport = document.getElementsByClassName('scope-app')[0].getBoundingClientRect();
-    // Not sure why we need to subtract `left` and `top`, but that gives us correct values.
-    this.props.setViewportDimensions(
-      viewport.width - viewport.left,
-      viewport.height - viewport.top
-    );
-  }
 }
 
 
@@ -101,6 +69,5 @@ function mapStateToProps(state) {
 
 
 export default connect(
-  mapStateToProps,
-  { setViewportDimensions }
+  mapStateToProps
 )(Nodes);

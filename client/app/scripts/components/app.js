@@ -1,6 +1,7 @@
 import debug from 'debug';
 import React from 'react';
 import { connect } from 'react-redux';
+import { debounce } from 'lodash';
 
 import Logo from './logo';
 import Footer from './footer';
@@ -23,7 +24,8 @@ import {
   setGraphView,
   setTableView,
   setResourceView,
-  shutdown
+  shutdown,
+  setViewportDimensions,
 } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
@@ -39,6 +41,7 @@ import {
   isTableViewModeSelector,
   isGraphViewModeSelector,
 } from '../selectors/topology';
+import { VIEWPORT_RESIZE_DEBOUNCE_INTERVAL } from '../constants/timer';
 import {
   BACKSPACE_KEY_CODE,
   ESC_KEY_CODE,
@@ -51,11 +54,17 @@ class App extends React.Component {
   constructor(props, context) {
     super(props, context);
 
+    this.setViewportDimensions = this.setViewportDimensions.bind(this);
+    this.handleResize = debounce(this.setViewportDimensions, VIEWPORT_RESIZE_DEBOUNCE_INTERVAL);
+
+    this.saveAppRef = this.saveAppRef.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
   }
 
   componentDidMount() {
+    this.setViewportDimensions();
+    window.addEventListener('resize', this.handleResize);
     window.addEventListener('keypress', this.onKeyPress);
     window.addEventListener('keyup', this.onKeyUp);
 
@@ -69,6 +78,7 @@ class App extends React.Component {
   }
 
   componentWillUnmount() {
+    window.addEventListener('resize', this.handleResize);
     window.removeEventListener('keypress', this.onKeyPress);
     window.removeEventListener('keyup', this.onKeyUp);
     this.props.dispatch(shutdown());
@@ -141,13 +151,24 @@ class App extends React.Component {
     });
   }
 
+  setViewportDimensions() {
+    if (this.appRef) {
+      const { width, height } = this.appRef.getBoundingClientRect();
+      this.props.dispatch(setViewportDimensions(width, height));
+    }
+  }
+
+  saveAppRef(ref) {
+    this.appRef = ref;
+  }
+
   render() {
     const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails, showingHelp,
       showingNetworkSelector, showingTroubleshootingMenu } = this.props;
     const isIframe = window !== window.top;
 
     return (
-      <div className="scope-app">
+      <div className="scope-app" ref={this.saveAppRef}>
         {showingDebugToolbar() && <DebugToolbar />}
 
         {showingHelp && <HelpPanel />}
