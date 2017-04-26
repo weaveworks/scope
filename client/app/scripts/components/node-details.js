@@ -18,6 +18,8 @@ import NodeDetailsInfo from './node-details/node-details-info';
 import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import Warning from './warning';
+import CloudFeature from './cloud-feature';
+import NodeDetailsImageStatus from './node-details/node-details-image-status';
 
 
 const log = debug('scope:node-details');
@@ -230,6 +232,9 @@ class NodeDetails extends React.Component {
             }
             return null;
           })}
+          <CloudFeature>
+            <NodeDetailsImageStatus name={details.label} metadata={details.metadata} />
+          </CloudFeature>
         </div>
       </div>
     );
