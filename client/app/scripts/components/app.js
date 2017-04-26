@@ -19,7 +19,6 @@ import {
   hitEnter,
   hitEsc,
   unpinMetric,
-  selectMetric,
   toggleHelp,
   setGraphView,
   setTableView,
@@ -112,7 +111,6 @@ class App extends React.Component {
         dispatch(setResourceView());
       } else if (char === 'q') {
         dispatch(unpinMetric());
-        dispatch(selectMetric(null));
       } else if (char === '/') {
         ev.preventDefault();
         dispatch(focusSearch());

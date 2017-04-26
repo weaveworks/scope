@@ -15,7 +15,6 @@ import {
   isResourceViewModeSelector,
 } from '../selectors/topology';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
-import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/node-metric';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
@@ -51,6 +50,7 @@ export const initialState = makeMap({
   highlightedEdgeIds: makeSet(),
   highlightedNodeIds: makeSet(),
   hostname: '...',
+  hoveredMetricType: null,
   initialNodesLoaded: false,
   mouseOverEdgeId: null,
   mouseOverNodeId: null,
@@ -68,7 +68,6 @@ export const initialState = makeMap({
   routeSet: false,
   searchFocused: false,
   searchQuery: null,
-  selectedMetric: null,
   selectedNetwork: null,
   selectedNodeId: null,
   showingHelp: false,
@@ -379,19 +378,16 @@ export function rootReducer(state = initialState, action) {
     // metrics
     //
 
-    case ActionTypes.SELECT_METRIC: {
-      return state.set('selectedMetric', action.metricId);
+    case ActionTypes.HOVER_METRIC: {
+      return state.set('hoveredMetricType', action.metricType);
+    }
+
+    case ActionTypes.UNHOVER_METRIC: {
+      return state.set('hoveredMetricType', null);
     }
 
     case ActionTypes.PIN_METRIC: {
-      const canvasMetrics = availableMetricsSelector(state);
-      const metricTypes = makeMap(canvasMetrics.map(m => [m.get('id'), m.get('label')]));
-      // Pin the first metric if no metric ID was explicitly given.
-      const metricId = action.metricId || (canvasMetrics.first() || makeMap()).get('id');
-      return state.merge({
-        pinnedMetricType: metricTypes.get(metricId),
-        selectedMetric: metricId,
-      });
+      return state.set('pinnedMetricType', action.metricType);
     }
 
     case ActionTypes.UNPIN_METRIC: {
@@ -611,14 +607,6 @@ export function rootReducer(state = initialState, action) {
 
       // apply pinned searches, filters nodes that dont match
       state = applyPinnedSearches(state);
-
-      // if something in the current topo is not already selected, select it.
-      if (!availableMetricsSelector(state)
-        .map(m => m.get('id'))
-        .toSet()
-        .has(state.get('selectedMetric'))) {
-        state = state.set('selectedMetric', pinnedMetricSelector(state));
-      }
 
       // Update the nodes cache only if we're not in the resource view mode, as we
       // intentionally want to keep it static before we figure how to keep it up-to-date.

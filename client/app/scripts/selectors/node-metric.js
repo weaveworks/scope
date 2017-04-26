@@ -1,5 +1,5 @@
 import { createSelector } from 'reselect';
-import { createMapSelector } from 'reselect-map';
+import { createMapSelector, createListSelector } from 'reselect-map';
 import { fromJS, Map as makeMap, List as makeList } from 'immutable';
 
 import { isGraphViewModeSelector, isResourceViewModeSelector } from '../selectors/topology';
@@ -39,15 +39,36 @@ export const availableMetricsSelector = createSelector(
   }
 );
 
+export const availableMetricTypesSelector = createListSelector(
+  [
+    availableMetricsSelector,
+  ],
+  metric => metric.get('label')
+);
+
 export const pinnedMetricSelector = createSelector(
   [
     availableMetricsSelector,
     state => state.get('pinnedMetricType'),
   ],
-  (availableMetrics, pinnedMetricType) => {
-    const metric = availableMetrics.find(m => m.get('label') === pinnedMetricType);
-    return metric && metric.get('id');
-  }
+  (availableMetrics, metricType) => availableMetrics.find(m => m.get('label') === metricType)
+);
+
+export const selectedMetricTypeSelector = createSelector(
+  [
+    state => state.get('pinnedMetricType'),
+    state => state.get('hoveredMetricType'),
+  ],
+  (pinnedMetricType, hoveredMetricType) => hoveredMetricType || pinnedMetricType
+);
+
+const selectedMetricIdSelector = createSelector(
+  [
+    availableMetricsSelector,
+    selectedMetricTypeSelector,
+  ],
+  (availableMetrics, metricType) =>
+    (availableMetrics.find(m => m.get('label') === metricType) || makeMap()).get('id')
 );
 
 const topCardNodeSelector = createSelector(
@@ -60,14 +81,14 @@ const topCardNodeSelector = createSelector(
 export const nodeMetricSelector = createMapSelector(
   [
     state => state.get('nodes'),
-    state => state.get('selectedMetric'),
+    selectedMetricIdSelector,
     topCardNodeSelector,
   ],
-  (node, selectedMetric, topCardNode) => {
+  (node, selectedMetricId, topCardNode) => {
     const isHighlighted = topCardNode && topCardNode.details && topCardNode.id === node.get('id');
     const sourceNode = isHighlighted ? fromJS(topCardNode.details) : node;
     return sourceNode.get('metrics') && sourceNode.get('metrics')
-      .filter(m => m.get('id') === selectedMetric)
+      .filter(m => m.get('id') === selectedMetricId)
       .first();
   }
 );

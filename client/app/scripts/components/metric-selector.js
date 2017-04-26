@@ -1,8 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { selectMetric } from '../actions/app-actions';
-import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/node-metric';
+import { unhoverMetric } from '../actions/app-actions';
+import { availableMetricsSelector } from '../selectors/node-metric';
 import MetricSelectorItem from './metric-selector-item';
 
 class MetricSelector extends React.Component {
@@ -13,11 +13,11 @@ class MetricSelector extends React.Component {
   }
 
   onMouseOut() {
-    this.props.selectMetric(this.props.pinnedMetric);
+    this.props.unhoverMetric();
   }
 
   render() {
-    const { alwaysPinned, availableMetrics } = this.props;
+    const { availableMetrics } = this.props;
     const hasMetrics = !availableMetrics.isEmpty();
 
     return (
@@ -26,7 +26,6 @@ class MetricSelector extends React.Component {
           {availableMetrics.map(metric => (
             <MetricSelectorItem
               key={metric.get('id')}
-              alwaysPinned={alwaysPinned}
               metric={metric}
             />
           ))}
@@ -39,11 +38,10 @@ class MetricSelector extends React.Component {
 function mapStateToProps(state) {
   return {
     availableMetrics: availableMetricsSelector(state),
-    pinnedMetric: pinnedMetricSelector(state),
   };
 }
 
 export default connect(
   mapStateToProps,
-  { selectMetric }
+  { unhoverMetric }
 )(MetricSelector);

@@ -24,7 +24,11 @@ import {
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
-import { availableMetricsSelector, pinnedMetricSelector } from '../selectors/node-metric';
+import {
+  availableMetricTypesSelector,
+  selectedMetricTypeSelector,
+  pinnedMetricSelector,
+} from '../selectors/node-metric';
 import {
   activeTopologyOptionsSelector,
   isResourceViewModeSelector,
@@ -122,19 +126,24 @@ export function unpinNetwork(networkId) {
 // Metrics
 //
 
-
-export function selectMetric(metricId) {
+export function hoverMetric(metricType) {
   return {
-    type: ActionTypes.SELECT_METRIC,
-    metricId
+    type: ActionTypes.HOVER_METRIC,
+    metricType,
   };
 }
 
-export function pinMetric(metricId) {
+export function unhoverMetric() {
+  return {
+    type: ActionTypes.UNHOVER_METRIC,
+  };
+}
+
+export function pinMetric(metricType) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.PIN_METRIC,
-      metricId,
+      metricType,
     });
     updateRoute(getState);
   };
@@ -142,22 +151,25 @@ export function pinMetric(metricId) {
 
 export function unpinMetric() {
   return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.UNPIN_METRIC,
-    });
-    updateRoute(getState);
+    // We always have to keep metrics pinned in the resource view.
+    if (!isResourceViewModeSelector(getState())) {
+      dispatch({
+        type: ActionTypes.UNPIN_METRIC,
+      });
+      updateRoute(getState);
+    }
   };
 }
 
 export function pinNextMetric(delta) {
   return (dispatch, getState) => {
     const state = getState();
-    const metrics = availableMetricsSelector(state).map(m => m.get('id'));
-    const currentIndex = metrics.indexOf(state.get('selectedMetric'));
-    const nextIndex = modulo(currentIndex + delta, metrics.count());
-    const nextMetric = metrics.get(nextIndex);
+    const metricTypes = availableMetricTypesSelector(state);
+    const currentIndex = metricTypes.indexOf(selectedMetricTypeSelector(state));
+    const nextIndex = modulo(currentIndex + delta, metricTypes.count());
+    const nextMetricType = metricTypes.get(nextIndex);
 
-    dispatch(pinMetric(nextMetric));
+    dispatch(pinMetric(nextMetricType));
   };
 }
 
@@ -303,8 +315,10 @@ export function setResourceView() {
       viewMode: RESOURCE_VIEW_MODE,
     });
     // Pin the first metric if none of the visible ones is pinned.
-    if (!pinnedMetricSelector(getState())) {
-      dispatch({ type: ActionTypes.PIN_METRIC });
+    const state = getState();
+    if (!pinnedMetricSelector(state)) {
+      const firstAvailableMetricType = availableMetricTypesSelector(state).first();
+      dispatch(pinMetric(firstAvailableMetricType));
     }
     getResourceViewNodesSnapshot(getState, dispatch);
     updateRoute(getState);
