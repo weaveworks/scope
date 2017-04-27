@@ -28,7 +28,7 @@ The following topics are discussed:
  * [Installing Scope on minimesos](#minimesos)
  * [Installing Scope on Mesosphere DC/OS](#dcos)
 
-##<a name="docker"></a>Installing Scope on Docker
+## <a name="docker"></a>Installing Scope on Docker
 
 To install Scope in stand-alone mode, run the following commands:
 
@@ -48,7 +48,7 @@ Where,
 
 >>**Note:** Scope allows anyone with access to the user interface, control over your containers. As such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Also traffic between the app and the probe is insecure and should not traverse the Internet. This means that you should either use the private / internal IP addresses of your nodes when setting it up, or route this traffic through Weave Net.  Put Scope behind a password, by using somthing like [Caddy](https://github.com/mholt/caddy) to protect the endpoint and make port 4040 available to localhost with Caddy proxying it. Or you can skip these steps, and just use Weave Cloud to manage the security for you.
 
-###<a name="docker-weave-cloud"></a>Using Weave Cloud
+### <a name="docker-weave-cloud"></a>Using Weave Cloud
 
 First, obtain a Weave Cloud token by signing up at [https://cloud.weave.works](https://cloud.weave.works/).
 
@@ -69,7 +69,7 @@ This script downloads and runs a recent Scope Docker image from the Docker Hub. 
 Open your web browser to [https://cloud.weave.works](https://cloud.weave.works) and login. Click 'View Instance' to see the Scope user interface.
 
 
-###<a name="cluster-no-net"></a>Installing Scope on a Local Cluster Without Weave Net
+### <a name="cluster-no-net"></a>Installing Scope on a Local Cluster Without Weave Net
 
 This example assumes a local cluster that is not networked with Weave Net, and also has no special hostnames or DNS settings. You will launch Scope with the IP addresses of all of the nodes in the cluster.
 
@@ -99,7 +99,7 @@ Using the above IP addresses, you will manually peer each node with all of the o
     scope launch 192.168.100.17 192.198.100.19 192.168.100.20
 
 
-###<a name="net-scope"></a> Weave Net and Scope
+### <a name="net-scope"></a> Weave Net and Scope
 
 If Scope is running on the same machine as the Weave Network, then the probe uses weaveDNS to automatically discover any other apps on the network. Scope does this by registering itself under the address `scope.weave.local`.
 
@@ -111,7 +111,7 @@ If you don’t want to use weaveDNS, then Scope can be instructed to cluster wit
 
 Hostnames will be regularly resolved as A records, and each answer used as a target.
 
-###<a name="docker-compose"></a>Using Docker Compose
+### <a name="docker-compose"></a>Using Docker Compose
 
 To install Scope on your local Docker machine in Standalone Mode using Docker Compose, run the following commands using one of the two fragments below.
 
@@ -153,7 +153,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 
 Version 2 of this YAML file supports networks and volumes as defined by any plugins you might be using. See [Compose File Reference](https://docs.docker.com/compose/compose-file/) for more information.
 
-###<a name="docker-compose-cloud"></a>Using Docker Compose with Weave Cloud
+### <a name="docker-compose-cloud"></a>Using Docker Compose with Weave Cloud
 
 **1.** First, obtain a Cloud token from Weave Cloud by signing up at [https://cloud.weave.works](https://cloud.weave.works/).
 
@@ -207,9 +207,9 @@ Note that you will need to launch Scope onto every node that you want to monitor
 
 **4.** Go to [https://cloud.weave.works](https://cloud.weave.works) and click 'View Instance'.
 
-##<a name="k8s"></a>Installing Scope on Kubernetes
+## <a name="k8s"></a>Installing Scope on Kubernetes
 
-###<a name="k8s-weave-cloud"></a>With Weave Cloud (recommended)
+### <a name="k8s-weave-cloud"></a>With Weave Cloud (recommended)
 
 Weave Cloud hosts the Scope UI for you, provides secure access control for your team and saves resources such as CPU or memory usage.
 
@@ -219,7 +219,7 @@ Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a tok
 
 **SECURITY NOTE: This allows control of your Kubernetes cluster from Weave Cloud, which is a hosted service.**
 
-###<a name="k8s-standalone"></a>Without Weave Cloud (run Scope in standalone mode)
+### <a name="k8s-standalone"></a>Without Weave Cloud (run Scope in standalone mode)
 
 The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is by running the following:
 
@@ -244,7 +244,7 @@ To download and read the Scope manifest run:
 The URL is: http://localhost:4040.
 
 <!-- uncomment once https://github.com/weaveworks/scope/issues/2258 is fixed
-##<a name="ose"></a>Installing Scope on OpenShift
+## <a name="ose"></a>Installing Scope on OpenShift
 
 To install Weave Scope on OpenShift, you first need to login as `system:admin` user with the following command:
 
@@ -270,7 +270,7 @@ And if you are to deploy Scope in standalone mode run:
 To access standalone Scope app from the browser, please refer to Kubernetes instructions above.
 -->
 
-##<a name="ecs"></a>Installing Scope on Amazon ECS
+## <a name="ecs"></a>Installing Scope on Amazon ECS
 
 There are currently three options for launching Weave Scope in ECS:
 
@@ -295,7 +295,7 @@ The link below will launch a sample app using a Cloudformation template, but you
 
 For step by step instructions on how to configure the stack, see: [Install Weave to AWS with One-Click](https://www.weave.works/deploy-weave-aws-cloudformation-template/)
 
-##<a name="minimesos"></a>Installing Scope on minimesos
+## <a name="minimesos"></a>Installing Scope on minimesos
 
 The [minimesos](https://github.com/ContainerSolutions/minimesos) project enables you to run an Apache Mesos cluster on a single machine, which makes it very easy to develop Mesos frameworks.
 
@@ -307,7 +307,7 @@ If Weave Scope is removed from your minimesos cluster, you can add it back with 
 minimesos install --marathonFile https://raw.githubusercontent.com/weaveworks/scope/master/examples/mesos/minimesos.json
 ```
 
-##<a name="dcos"></a>Installing Scope as a DC/OS Package
+## <a name="dcos"></a>Installing Scope as a DC/OS Package
 
 Scope can be installed as a DC/OS Package through the open Universe.
 
