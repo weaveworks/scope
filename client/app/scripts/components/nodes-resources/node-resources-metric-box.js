@@ -60,7 +60,9 @@ class NodeResourcesMetricBox extends React.Component {
     return {
       transform: `translate(0, ${translateY})`,
       opacity: this.props.contrastMode ? 1 : 0.85,
-      stroke: this.props.contrastMode ? 'black' : 'white',
+      // stroke: this.props.contrastMode ? 'black' : 'white',
+      stroke: this.props.color,
+      strokeWidth: 0.5,
       height: height * relativeHeight,
       width,
       x,
@@ -70,7 +72,7 @@ class NodeResourcesMetricBox extends React.Component {
 
   render() {
     const { x, y, width } = this.state;
-    const { label, color, metricSummary, topId } = this.props;
+    const { label, fill, metricSummary, topId } = this.props;
     const { showCapacity, type } = metricSummary.toJS();
 
     let t;
@@ -93,7 +95,7 @@ class NodeResourcesMetricBox extends React.Component {
       <g className="node-resources-metric-box">
         <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
         <rect className="frame" {...this.defaultRectProps()} />
-        <rect className="bar" fill={color} {...this.defaultRectProps(1)} />
+        <rect className="bar" fill={fill} {...this.defaultRectProps(1)} />
         {showInfo && <NodeResourcesMetricBoxInfo
           label={label}
           metricSummary={metricSummary}

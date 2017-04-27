@@ -8,7 +8,16 @@ import { RESOURCES_LAYER_HEIGHT } from '../constants/styles';
 export function nodeResourceViewColorDecorator(node) {
   // Color lightness is normally determined from the node label. However, in the resource view
   // mode, we don't want to vary the lightness so we just always forward the empty string instead.
-  return node.set('color', getNodeColor(node.get('rank'), '', node.get('pseudo')));
+  let text = 'containers';
+  if (node.get('label').substr(0, 2) === 'ip') text = 'a';
+  if (node.get('label')[0] === '/') text = 'processes';
+
+  // const text = node.get('label');
+  const subtext = node.get('rank');
+  return node.merge({
+    color: getNodeColor(text, subtext, node.get('pseudo')),
+    fill: getNodeColor(text, subtext, node.get('pseudo'), true),
+  });
 }
 
 // Decorates the resource node with dimensions taken from its metric summary.

@@ -15,13 +15,13 @@ class NodesResourcesLayer extends React.Component {
     const { layerVerticalPosition, topologyId, transform, layoutNodes } = this.props;
     let height;
     if (topologyId === 'hosts') height = 400;
-    if (topologyId === 'containers') height = 335;
-    if (topologyId === 'processes') height = 270;
+    if (topologyId === 'containers') height = 355;
+    if (topologyId === 'processes') height = 310;
 
     let y;
     if (topologyId === 'hosts') y = -400;
-    if (topologyId === 'containers') y = -345;
-    if (topologyId === 'processes') y = -290;
+    if (topologyId === 'containers') y = -360;
+    if (topologyId === 'processes') y = -320;
 
     return (
       <g className="node-resources-layer">
@@ -30,6 +30,7 @@ class NodesResourcesLayer extends React.Component {
             <NodeResourcesMetricBox
               key={node.get('id')}
               color={node.get('color')}
+              fill={node.get('fill')}
               label={node.get('label')}
               metricSummary={node.get('metricSummary')}
               width={node.get('width')}
