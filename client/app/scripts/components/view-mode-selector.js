@@ -5,9 +5,11 @@ import classNames from 'classnames';
 import MetricSelector from './metric-selector';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import { setGraphView, setTableView, setResourceView } from '../actions/app-actions';
-import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import { availableMetricsSelector } from '../selectors/node-metric';
-import { isResourceViewModeSelector } from '../selectors/topology';
+import {
+  isResourceViewModeSelector,
+  resourceViewAvailableSelector,
+} from '../selectors/topology';
 import {
   GRAPH_VIEW_MODE,
   TABLE_VIEW_MODE,
@@ -68,7 +70,7 @@ class ViewModeSelector extends React.Component {
 function mapStateToProps(state) {
   return {
     isResourceViewMode: isResourceViewModeSelector(state),
-    hasResourceView: !layersTopologyIdsSelector(state).isEmpty(),
+    hasResourceView: resourceViewAvailableSelector(state),
     showingMetricsSelector: availableMetricsSelector(state).count() > 0,
     topologyViewMode: state.get('topologyViewMode'),
     currentTopology: state.get('currentTopology'),

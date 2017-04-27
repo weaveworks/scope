@@ -31,6 +31,7 @@ import {
 import {
   activeTopologyOptionsSelector,
   isResourceViewModeSelector,
+  resourceViewAvailableSelector,
 } from '../selectors/topology';
 import {
   GRAPH_VIEW_MODE,
@@ -321,18 +322,20 @@ export function setTableView() {
 
 export function setResourceView() {
   return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.SET_VIEW_MODE,
-      viewMode: RESOURCE_VIEW_MODE,
-    });
-    // Pin the first metric if none of the visible ones is pinned.
-    const state = getState();
-    if (!pinnedMetricSelector(state)) {
-      const firstAvailableMetricType = availableMetricTypesSelector(state).first();
-      dispatch(pinMetric(firstAvailableMetricType));
+    if (resourceViewAvailableSelector(getState())) {
+      dispatch({
+        type: ActionTypes.SET_VIEW_MODE,
+        viewMode: RESOURCE_VIEW_MODE,
+      });
+      // Pin the first metric if none of the visible ones is pinned.
+      const state = getState();
+      if (!pinnedMetricSelector(state)) {
+        const firstAvailableMetricType = availableMetricTypesSelector(state).first();
+        dispatch(pinMetric(firstAvailableMetricType));
+      }
+      getResourceViewNodesSnapshot(getState, dispatch);
+      updateRoute(getState);
     }
-    getResourceViewNodesSnapshot(getState, dispatch);
-    updateRoute(getState);
   };
 }
 
