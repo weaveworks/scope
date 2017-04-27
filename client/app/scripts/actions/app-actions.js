@@ -2,7 +2,6 @@ import debug from 'debug';
 
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
-import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
 import {
   bufferDeltaUpdate,
@@ -25,7 +24,8 @@ import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
 import {
   availableMetricTypesSelector,
-  selectedMetricTypeSelector,
+  nextPinnedMetricTypeSelector,
+  previousPinnedMetricTypeSelector,
   pinnedMetricSelector,
 } from '../selectors/node-metric';
 import {
@@ -160,15 +160,17 @@ export function unpinMetric() {
   };
 }
 
-export function pinNextMetric(delta) {
+export function pinNextMetric() {
   return (dispatch, getState) => {
-    const state = getState();
-    const metricTypes = availableMetricTypesSelector(state);
-    const currentIndex = metricTypes.indexOf(selectedMetricTypeSelector(state));
-    const nextIndex = modulo(currentIndex + delta, metricTypes.count());
-    const nextMetricType = metricTypes.get(nextIndex);
+    const nextPinnedMetricType = nextPinnedMetricTypeSelector(getState());
+    dispatch(pinMetric(nextPinnedMetricType));
+  };
+}
 
-    dispatch(pinMetric(nextMetricType));
+export function pinPreviousMetric() {
+  return (dispatch, getState) => {
+    const previousPinnedMetricType = previousPinnedMetricTypeSelector(getState());
+    dispatch(pinMetric(previousPinnedMetricType));
   };
 }
 

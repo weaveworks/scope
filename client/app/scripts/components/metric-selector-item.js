@@ -34,10 +34,10 @@ class MetricSelectorItem extends React.Component {
     const pinnedMetricType = this.props.pinnedMetricType;
 
     if (metricType !== pinnedMetricType) {
-      this.trackEvent('scope.metric.resource.pin');
+      this.trackEvent('scope.metric.selector.pin.click');
       this.props.pinMetric(metricType);
     } else {
-      this.trackEvent('scope.metric.resource.unpin');
+      this.trackEvent('scope.metric.selector.unpin.click');
       this.props.unpinMetric();
     }
   }

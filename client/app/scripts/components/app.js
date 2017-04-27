@@ -15,6 +15,7 @@ import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import {
   focusSearch,
   pinNextMetric,
+  pinPreviousMetric,
   hitBackspace,
   hitEsc,
   unpinMetric,
@@ -30,6 +31,7 @@ import ViewModeSelector from './view-mode-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
 import { getRouter, getUrlState } from '../utils/router-utils';
+import { trackMixpanelEvent } from '../utils/tracking-utils';
 import { availableNetworksSelector } from '../selectors/node-networks';
 import {
   activeTopologyOptionsSelector,
@@ -44,10 +46,11 @@ import {
 
 const keyPressLog = debug('scope:app-key-press');
 
-class App extends React.Component {
 
+class App extends React.Component {
   constructor(props, context) {
     super(props, context);
+
     this.onKeyPress = this.onKeyPress.bind(this);
     this.onKeyUp = this.onKeyUp.bind(this);
   }
@@ -97,16 +100,28 @@ class App extends React.Component {
       keyPressLog('onKeyPress', 'keyCode', ev.keyCode, ev);
       const char = String.fromCharCode(ev.charCode);
       if (char === '<') {
-        dispatch(pinNextMetric(-1));
+        dispatch(pinPreviousMetric());
+        this.trackEvent('scope.metric.selector.pin.previous.keypress', {
+          metricType: this.props.pinnedMetricType
+        });
       } else if (char === '>') {
-        dispatch(pinNextMetric(1));
+        dispatch(pinNextMetric());
+        this.trackEvent('scope.metric.selector.pin.next.keypress', {
+          metricType: this.props.pinnedMetricType
+        });
       } else if (char === 'g') {
         dispatch(setGraphView());
+        this.trackEvent('scope.layout.selector.keypress');
       } else if (char === 't') {
         dispatch(setTableView());
+        this.trackEvent('scope.layout.selector.keypress');
       } else if (char === 'r') {
         dispatch(setResourceView());
+        this.trackEvent('scope.layout.selector.keypress');
       } else if (char === 'q') {
+        this.trackEvent('scope.metric.selector.unpin.keypress', {
+          metricType: this.props.pinnedMetricType
+        });
         dispatch(unpinMetric());
       } else if (char === '/') {
         ev.preventDefault();
@@ -115,6 +130,15 @@ class App extends React.Component {
         dispatch(toggleHelp());
       }
     }
+  }
+
+  trackEvent(eventName, additionalProps = {}) {
+    trackMixpanelEvent(eventName, {
+      layout: this.props.topologyViewMode,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+      ...additionalProps,
+    });
   }
 
   render() {
@@ -161,9 +185,11 @@ class App extends React.Component {
 function mapStateToProps(state) {
   return {
     activeTopologyOptions: activeTopologyOptionsSelector(state),
+    currentTopology: state.get('currentTopology'),
     isResourceViewMode: isResourceViewModeSelector(state),
     isTableViewMode: isTableViewModeSelector(state),
     isGraphViewMode: isGraphViewModeSelector(state),
+    pinnedMetricType: state.get('pinnedMetricType'),
     routeSet: state.get('routeSet'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
@@ -172,6 +198,7 @@ function mapStateToProps(state) {
     showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
+    topologyViewMode: state.get('topologyViewMode'),
     urlState: getUrlState(state)
   };
 }

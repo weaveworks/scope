@@ -2,6 +2,7 @@ import { createSelector } from 'reselect';
 import { createMapSelector, createListSelector } from 'reselect-map';
 import { fromJS, Map as makeMap, List as makeList } from 'immutable';
 
+import { modulo } from '../utils/math-utils';
 import { isGraphViewModeSelector, isResourceViewModeSelector } from '../selectors/topology';
 import { RESOURCE_VIEW_METRICS } from '../constants/resources';
 
@@ -52,6 +53,30 @@ export const pinnedMetricSelector = createSelector(
     state => state.get('pinnedMetricType'),
   ],
   (availableMetrics, metricType) => availableMetrics.find(m => m.get('label') === metricType)
+);
+
+export const nextPinnedMetricTypeSelector = createSelector(
+  [
+    availableMetricTypesSelector,
+    state => state.get('pinnedMetricType'),
+  ],
+  (metricTypes, pinnedMetricType) => {
+    const currentIndex = metricTypes.indexOf(pinnedMetricType);
+    const nextIndex = modulo(currentIndex + 1, metricTypes.count());
+    return metricTypes.get(pinnedMetricType ? nextIndex : 0);
+  }
+);
+
+export const previousPinnedMetricTypeSelector = createSelector(
+  [
+    availableMetricTypesSelector,
+    state => state.get('pinnedMetricType'),
+  ],
+  (metricTypes, pinnedMetricType) => {
+    const currentIndex = metricTypes.indexOf(pinnedMetricType);
+    const previousIndex = modulo(currentIndex - 1, metricTypes.count());
+    return metricTypes.get(pinnedMetricType ? previousIndex : 0);
+  }
 );
 
 export const selectedMetricTypeSelector = createSelector(
