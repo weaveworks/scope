@@ -1733,6 +1733,23 @@
 }
 
 //
+// Nodes resources zoom scale
+//
+.nodes-resources-zoom-scale {
+  color: $text-tertiary-color;
+  stroke: $text-tertiary-color;
+
+  .frame {
+    stroke-width: 0.7;
+    fill: none;
+  }
+  .value {
+    font-size: 0.75rem;
+    text-align: center;
+  }
+}
+
+//
 // Nodes grid.
 //
 

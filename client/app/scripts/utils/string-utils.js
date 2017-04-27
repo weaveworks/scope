@@ -5,8 +5,10 @@ import { isoFormat } from 'd3-time-format';
 import LCP from 'lcp';
 import moment from 'moment';
 
-const formatLargeValue = d3Format('s');
+import { round } from './math-utils';
 
+const formatLargeValue = d3Format('s');
+const formatFlexiblePrecision = v => round(v, 4).toString();
 
 function renderHtml(text, unit) {
   return (
@@ -50,8 +52,9 @@ function makeFormatters(renderFn) {
       return formatLargeValue(value);
     },
 
-    percent(value) {
-      return renderFn(formatters.number(value), '%');
+    percent(value, { fixedPrecision = true }) {
+      const format = fixedPrecision ? formatters.number : formatFlexiblePrecision;
+      return renderFn(format(value), '%');
     }
   };
 
@@ -63,7 +66,7 @@ function makeFormatMetric(renderFn) {
   const formatters = makeFormatters(renderFn);
   return (value, opts) => {
     const formatter = opts && formatters[opts.format] ? opts.format : 'number';
-    return formatters[formatter](value);
+    return formatters[formatter](value, opts);
   };
 }
 
