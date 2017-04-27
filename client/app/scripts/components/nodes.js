@@ -1,6 +1,5 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { debounce } from 'lodash';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesGrid from '../charts/nodes-grid';
@@ -9,14 +8,11 @@ import NodesError from '../charts/nodes-error';
 import DelayedShow from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
-import { setViewportDimensions } from '../actions/app-actions';
 import {
   isGraphViewModeSelector,
   isTableViewModeSelector,
   isResourceViewModeSelector,
 } from '../selectors/topology';
-
-import { VIEWPORT_RESIZE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
 const EmptyTopologyError = show => (
@@ -34,22 +30,6 @@ const EmptyTopologyError = show => (
 );
 
 class Nodes extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-
-    this.setDimensions = this.setDimensions.bind(this);
-    this.handleResize = debounce(this.setDimensions, VIEWPORT_RESIZE_DEBOUNCE_INTERVAL);
-    this.setDimensions();
-  }
-
-  componentDidMount() {
-    window.addEventListener('resize', this.handleResize);
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('resize', this.handleResize);
-  }
-
   render() {
     const { topologyEmpty, topologiesLoaded, nodesLoaded, topologies, currentTopology,
       isGraphViewMode, isTableViewMode, isResourceViewMode } = this.props;
@@ -71,10 +51,6 @@ class Nodes extends React.Component {
       </div>
     );
   }
-
-  setDimensions() {
-    this.props.setViewportDimensions(window.innerWidth, window.innerHeight);
-  }
 }
 
 
@@ -93,6 +69,5 @@ function mapStateToProps(state) {
 
 
 export default connect(
-  mapStateToProps,
-  { setViewportDimensions }
+  mapStateToProps
 )(Nodes);
