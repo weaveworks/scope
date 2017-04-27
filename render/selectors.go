@@ -30,6 +30,7 @@ var (
 	SelectPod            = TopologySelector(report.Pod)
 	SelectService        = TopologySelector(report.Service)
 	SelectDeployment     = TopologySelector(report.Deployment)
+	SelectDaemonSet      = TopologySelector(report.DaemonSet)
 	SelectReplicaSet     = TopologySelector(report.ReplicaSet)
 	SelectECSTask        = TopologySelector(report.ECSTask)
 	SelectECSService     = TopologySelector(report.ECSService)

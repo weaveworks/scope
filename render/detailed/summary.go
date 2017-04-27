@@ -68,6 +68,7 @@ var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
 	report.Pod:            podNodeSummary,
 	report.Service:        podGroupNodeSummary,
 	report.Deployment:     podGroupNodeSummary,
+	report.DaemonSet:      podGroupNodeSummary,
 	report.ReplicaSet:     podGroupNodeSummary,
 	report.ECSTask:        ecsTaskNodeSummary,
 	report.ECSService:     ecsServiceNodeSummary,

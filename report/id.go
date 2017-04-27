@@ -125,6 +125,12 @@ var (
 	// ParseReplicaSetNodeID parses a replica set node ID
 	ParseReplicaSetNodeID = parseSingleComponentID("replica_set")
 
+	// MakeDaemonSetNodeID produces a replica set node ID from its composite parts.
+	MakeDaemonSetNodeID = makeSingleComponentID("daemonset")
+
+	// ParseDaemonSetNodeID parses a daemon set node ID
+	ParseDaemonSetNodeID = parseSingleComponentID("daemonset")
+
 	// MakeECSTaskNodeID produces a replica set node ID from its composite parts.
 	MakeECSTaskNodeID = makeSingleComponentID("ecs_task")
 

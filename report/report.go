@@ -19,6 +19,7 @@ const (
 	Service        = "service"
 	Deployment     = "deployment"
 	ReplicaSet     = "replica_set"
+	DaemonSet      = "daemon_set"
 	ContainerImage = "container_image"
 	Host           = "host"
 	Overlay        = "overlay"
@@ -73,6 +74,11 @@ type Report struct {
 	// Metadata includes things like ReplicaSet id, name etc. Edges are not
 	// present.
 	ReplicaSet Topology
+
+	// DaemonSet nodes represent all Kubernetes DaemonSets running on hosts running probes.
+	// Metadata includes things like DaemonSet id, name etc. Edges are not
+	// present.
+	DaemonSet Topology
 
 	// ContainerImages nodes represent all Docker containers images on
 	// hosts running probes. Metadata includes things like image id, name etc.
@@ -164,6 +170,10 @@ func MakeReport() Report {
 			WithShape(Heptagon).
 			WithLabel("replica set", "replica sets"),
 
+		DaemonSet: MakeTopology().
+			WithShape(Heptagon).
+			WithLabel("daemonset", "daemonsets"),
+
 		Overlay: MakeTopology().
 			WithShape(Circle).
 			WithLabel("peer", "peers"),
@@ -198,6 +208,7 @@ func (r *Report) TopologyMap() map[string]*Topology {
 		Service:        &r.Service,
 		Deployment:     &r.Deployment,
 		ReplicaSet:     &r.ReplicaSet,
+		DaemonSet:      &r.DaemonSet,
 		Host:           &r.Host,
 		Overlay:        &r.Overlay,
 		ECSTask:        &r.ECSTask,
@@ -260,6 +271,7 @@ func (r *Report) WalkPairedTopologies(o *Report, f func(*Topology, *Topology)) {
 	f(&r.Service, &o.Service)
 	f(&r.Deployment, &o.Deployment)
 	f(&r.ReplicaSet, &o.ReplicaSet)
+	f(&r.DaemonSet, &o.DaemonSet)
 	f(&r.Host, &o.Host)
 	f(&r.Overlay, &o.Overlay)
 	f(&r.ECSTask, &o.ECSTask)
