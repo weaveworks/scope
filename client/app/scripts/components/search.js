@@ -3,12 +3,15 @@ import { connect } from 'react-redux';
 import classnames from 'classnames';
 import { debounce } from 'lodash';
 
-import { blurSearch, doSearch, focusSearch, toggleHelp } from '../actions/app-actions';
+import { blurSearch, doSearch, focusSearch, pinSearch, toggleHelp } from '../actions/app-actions';
 import { searchMatchCountByTopologySelector } from '../selectors/search';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { slugify } from '../utils/string-utils';
+import { parseQuery } from '../utils/search-utils';
 import { isTopologyEmpty } from '../utils/topology-utils';
+import { trackMixpanelEvent } from '../utils/tracking-utils';
 import SearchItem from './search-item';
+import { ENTER_KEY_CODE } from '../constants/key-codes';
 
 
 function shortenHintLabel(text) {
@@ -48,6 +51,7 @@ class Search extends React.Component {
     super(props, context);
     this.handleBlur = this.handleBlur.bind(this);
     this.handleChange = this.handleChange.bind(this);
+    this.handleKeyUp = this.handleKeyUp.bind(this);
     this.handleFocus = this.handleFocus.bind(this);
     this.saveQueryInputRef = this.saveQueryInputRef.bind(this);
     this.doSearch = debounce(this.doSearch.bind(this), 200);
@@ -71,8 +75,20 @@ class Search extends React.Component {
     if (this.state.value && value === '') {
       value = null;
     }
-    this.setState({value});
+    this.setState({ value });
     this.doSearch(inputValue);
+  }
+
+  handleKeyUp(ev) {
+    // If the search query is parsable, pin it when ENTER key is hit.
+    if (ev.keyCode === ENTER_KEY_CODE && parseQuery(this.props.searchQuery)) {
+      trackMixpanelEvent('scope.search.query.pin', {
+        layout: this.props.topologyViewMode,
+        topologyId: this.props.currentTopology.get('id'),
+        parentTopologyId: this.props.currentTopology.get('parentId'),
+      });
+      this.props.pinSearch();
+    }
   }
 
   handleFocus() {
@@ -80,6 +96,13 @@ class Search extends React.Component {
   }
 
   doSearch(value) {
+    if (value !== '') {
+      trackMixpanelEvent('scope.search.query.change', {
+        layout: this.props.topologyViewMode,
+        topologyId: this.props.currentTopology.get('id'),
+        parentTopologyId: this.props.currentTopology.get('parentId'),
+      });
+    }
     this.props.doSearch(value);
   }
 
@@ -130,7 +153,7 @@ class Search extends React.Component {
               .map(query => <SearchItem query={query} key={query} />)}
             <input
               className="search-input-field" type="text" id={inputId}
-              value={value} onChange={this.handleChange}
+              value={value} onChange={this.handleChange} onKeyUp={this.handleKeyUp}
               onFocus={this.handleFocus} onBlur={this.handleBlur}
               disabled={disabled} ref={this.saveQueryInputRef} />
           </div>
@@ -155,13 +178,15 @@ class Search extends React.Component {
 export default connect(
   state => ({
     nodes: state.get('nodes'),
+    topologyViewMode: state.get('topologyViewMode'),
     isResourceViewMode: isResourceViewModeSelector(state),
     isTopologyEmpty: isTopologyEmpty(state),
+    currentTopology: state.get('currentTopology'),
     topologiesLoaded: state.get('topologiesLoaded'),
     pinnedSearches: state.get('pinnedSearches'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
     searchMatchCountByTopology: searchMatchCountByTopologySelector(state),
   }),
-  { blurSearch, doSearch, focusSearch, toggleHelp }
+  { blurSearch, doSearch, focusSearch, pinSearch, toggleHelp }
 )(Search);

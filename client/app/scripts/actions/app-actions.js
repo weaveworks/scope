@@ -2,9 +2,7 @@ import debug from 'debug';
 
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
-import { modulo } from '../utils/math-utils';
 import { updateRoute } from '../utils/router-utils';
-import { parseQuery } from '../utils/search-utils';
 import {
   bufferDeltaUpdate,
   resumeUpdate,
@@ -26,12 +24,14 @@ import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
 import {
   availableMetricTypesSelector,
-  selectedMetricTypeSelector,
+  nextPinnedMetricTypeSelector,
+  previousPinnedMetricTypeSelector,
   pinnedMetricSelector,
 } from '../selectors/node-metric';
 import {
   activeTopologyOptionsSelector,
   isResourceViewModeSelector,
+  resourceViewAvailableSelector,
 } from '../selectors/topology';
 import {
   GRAPH_VIEW_MODE,
@@ -161,15 +161,27 @@ export function unpinMetric() {
   };
 }
 
-export function pinNextMetric(delta) {
+export function pinNextMetric() {
   return (dispatch, getState) => {
-    const state = getState();
-    const metricTypes = availableMetricTypesSelector(state);
-    const currentIndex = metricTypes.indexOf(selectedMetricTypeSelector(state));
-    const nextIndex = modulo(currentIndex + delta, metricTypes.count());
-    const nextMetricType = metricTypes.get(nextIndex);
+    const nextPinnedMetricType = nextPinnedMetricTypeSelector(getState());
+    dispatch(pinMetric(nextPinnedMetricType));
+  };
+}
 
-    dispatch(pinMetric(nextMetricType));
+export function pinPreviousMetric() {
+  return (dispatch, getState) => {
+    const previousPinnedMetricType = previousPinnedMetricTypeSelector(getState());
+    dispatch(pinMetric(previousPinnedMetricType));
+  };
+}
+
+export function pinSearch() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.PIN_SEARCH,
+      query: getState().get('searchQuery'),
+    });
+    updateRoute(getState);
   };
 }
 
@@ -310,18 +322,20 @@ export function setTableView() {
 
 export function setResourceView() {
   return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.SET_VIEW_MODE,
-      viewMode: RESOURCE_VIEW_MODE,
-    });
-    // Pin the first metric if none of the visible ones is pinned.
-    const state = getState();
-    if (!pinnedMetricSelector(state)) {
-      const firstAvailableMetricType = availableMetricTypesSelector(state).first();
-      dispatch(pinMetric(firstAvailableMetricType));
+    if (resourceViewAvailableSelector(getState())) {
+      dispatch({
+        type: ActionTypes.SET_VIEW_MODE,
+        viewMode: RESOURCE_VIEW_MODE,
+      });
+      // Pin the first metric if none of the visible ones is pinned.
+      const state = getState();
+      if (!pinnedMetricSelector(state)) {
+        const firstAvailableMetricType = availableMetricTypesSelector(state).first();
+        dispatch(pinMetric(firstAvailableMetricType));
+      }
+      getResourceViewNodesSnapshot(getState, dispatch);
+      updateRoute(getState);
     }
-    getResourceViewNodesSnapshot(getState, dispatch);
-    updateRoute(getState);
   };
 }
 
@@ -496,23 +510,6 @@ export function hitBackspace() {
       if (query) {
         dispatch({
           type: ActionTypes.UNPIN_SEARCH,
-          query
-        });
-        updateRoute(getState);
-      }
-    }
-  };
-}
-
-export function hitEnter() {
-  return (dispatch, getState) => {
-    const state = getState();
-    // pin query based on current search field
-    if (state.get('searchFocused')) {
-      const query = state.get('searchQuery');
-      if (query && parseQuery(query)) {
-        dispatch({
-          type: ActionTypes.PIN_SEARCH,
           query
         });
         updateRoute(getState);

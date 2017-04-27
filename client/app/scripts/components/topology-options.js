@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
 import includes from 'lodash/includes';
 
+import { trackMixpanelEvent } from '../utils/tracking-utils';
 import { getCurrentTopologyOptions } from '../utils/topology-utils';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
 import TopologyOptionAction from './topology-option-action';
@@ -12,8 +13,19 @@ class TopologyOptions extends React.Component {
   constructor(props, context) {
     super(props, context);
 
+    this.trackOptionClick = this.trackOptionClick.bind(this);
     this.handleOptionClick = this.handleOptionClick.bind(this);
     this.handleNoneClick = this.handleNoneClick.bind(this);
+  }
+
+  trackOptionClick(optionId, nextOptions) {
+    trackMixpanelEvent('scope.topology.option.click', {
+      optionId,
+      value: nextOptions,
+      layout: this.props.topologyViewMode,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+    });
   }
 
   handleOptionClick(optionId, value, topologyId) {
@@ -44,15 +56,18 @@ class TopologyOptions extends React.Component {
         nextOptions = nextOptions.filter(o => o !== 'none');
       }
     }
+    this.trackOptionClick(optionId, nextOptions);
     this.props.changeTopologyOption(optionId, nextOptions, topologyId);
   }
 
   handleNoneClick(optionId, value, topologyId) {
-    this.props.changeTopologyOption(optionId, ['none'], topologyId);
+    const nextOptions = ['none'];
+    this.trackOptionClick(optionId, nextOptions);
+    this.props.changeTopologyOption(optionId, nextOptions, topologyId);
   }
 
   renderOption(option) {
-    const { activeOptions, topologyId } = this.props;
+    const { activeOptions, currentTopologyId } = this.props;
     const optionId = option.get('id');
     const activeValue = activeOptions && activeOptions.has(optionId)
       ? activeOptions.get(optionId)
@@ -68,7 +83,7 @@ class TopologyOptions extends React.Component {
             <TopologyOptionAction
               onClick={this.handleOptionClick}
               optionId={optionId}
-              topologyId={topologyId}
+              topologyId={currentTopologyId}
               key={item.get('value')}
               activeValue={activeValue}
               item={item}
@@ -79,7 +94,7 @@ class TopologyOptions extends React.Component {
               onClick={this.handleNoneClick}
               optionId={optionId}
               item={noneItem}
-              topologyId={topologyId}
+              topologyId={currentTopologyId}
               activeValue={activeValue}
             />
           }
@@ -102,7 +117,9 @@ class TopologyOptions extends React.Component {
 function mapStateToProps(state) {
   return {
     options: getCurrentTopologyOptions(state),
-    topologyId: state.get('currentTopologyId'),
+    topologyViewMode: state.get('topologyViewMode'),
+    currentTopology: state.get('currentTopology'),
+    currentTopologyId: state.get('currentTopologyId'),
     activeOptions: activeTopologyOptionsSelector(state)
   };
 }

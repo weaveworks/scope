@@ -7,6 +7,8 @@ import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
 import { getNodeColor } from '../utils/color-utils';
 import MatchedText from '../components/matched-text';
 import MatchedResults from '../components/matched-results';
+import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { GRAPH_VIEW_MODE } from '../constants/naming';
 import { NODE_BASE_SIZE } from '../constants/styles';
 
 import NodeShapeStack from './node-shape-stack';
@@ -141,6 +143,11 @@ class Node extends React.Component {
 
   handleMouseClick(ev) {
     ev.stopPropagation();
+    trackMixpanelEvent('scope.node.click', {
+      layout: GRAPH_VIEW_MODE,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+    });
     this.props.clickNode(this.props.id, this.props.label, this.shapeRef.getBoundingClientRect());
   }
 
@@ -159,7 +166,8 @@ function mapStateToProps(state) {
   return {
     exportingGraph: state.get('exportingGraph'),
     showingNetworks: state.get('showingNetworks'),
-    contrastMode: state.get('contrastMode')
+    currentTopology: state.get('currentTopology'),
+    contrastMode: state.get('contrastMode'),
   };
 }
 

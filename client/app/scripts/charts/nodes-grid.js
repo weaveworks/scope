@@ -1,11 +1,13 @@
 /* eslint react/jsx-no-bind: "off", no-multi-comp: "off" */
-
 import React from 'react';
 import { connect } from 'react-redux';
 import { List as makeList, Map as makeMap } from 'immutable';
+
 import NodeDetailsTable from '../components/node-details/node-details-table';
 import { clickNode, sortOrderChanged } from '../actions/app-actions';
 import { shownNodesSelector } from '../selectors/node-filters';
+import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { TABLE_VIEW_MODE } from '../constants/naming';
 
 import { canvasMarginsSelector, canvasHeightSelector } from '../selectors/canvas';
 import { searchNodeMatchesSelector } from '../selectors/search';
@@ -89,6 +91,11 @@ class NodesGrid extends React.Component {
     if (ev.target.className === 'node-details-table-node-link') {
       return;
     }
+    trackMixpanelEvent('scope.node.click', {
+      layout: TABLE_VIEW_MODE,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+    });
     this.props.clickNode(node.id, node.label, ev.target.getBoundingClientRect());
   }
 
