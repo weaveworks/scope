@@ -60,3 +60,6 @@ client/build-external/*
 prog/staticui/*
 prog/externalui/*
 client/build-pkg
+
+# Website
+site-build
