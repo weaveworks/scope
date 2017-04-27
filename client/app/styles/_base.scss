@@ -304,7 +304,7 @@
     fill: $text-secondary-color;
   }
 
-  .nodes-chart-nodes .node {
+  .nodes-chart-elements .node {
     transition: opacity .2s $base-ease;
     text-align: center;
 
@@ -405,10 +405,6 @@
       opacity: $edge-opacity-blurred;
     }
 
-    &.focused {
-      animation: focusing 1.5s ease-in-out;
-    }
-
     .link {
       fill: none;
       stroke: $edge-color;
@@ -466,6 +462,7 @@
     }
 
     .border {
+      transition: opacity .5s $base-ease;
       fill: none;
       stroke-opacity: 1;
       stroke-width: $node-border-stroke-width;
@@ -483,6 +480,7 @@
     }
 
     .node {
+      transition: opacity .5s $base-ease;
       fill: $text-color;
       stroke: $background-lighter-color;
       stroke-width: 0.05;
@@ -1520,16 +1518,6 @@
   }
 }
 
-@keyframes focusing {
-  0% {
-    opacity: 0;
-  } 33% {
-    opacity: 0.2;
-  } 100% {
-    opacity: 1;
-  }
-}
-
 @keyframes blinking {
   0%, 50%, 100% {
     opacity: 1.0;
@@ -1876,6 +1864,28 @@
 
   .fa-close {
     width: 25px;
+  }
+}
+
+.nodes-chart .nodes-chart-elements .node {
+  &, &.pseudo {
+    .background {
+      transition: fill .5s $base-ease;
+    }
+    .shadow, .border, .node, .metric-fill, .node-labels-container {
+      transition: opacity .5s $base-ease;
+    }
+  }
+}
+
+.nodes-chart .nodes-chart-elements .blurrr > .node {
+  &, &.pseudo {
+    .background {
+      fill: mix($background-color, $white, $node-blur-opacity * 100%);
+    }
+    .shadow, .border, .node, .metric-fill, .node-labels-container {
+      opacity: $node-blur-opacity;
+    }
   }
 }
 

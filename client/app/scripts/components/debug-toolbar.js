@@ -158,7 +158,6 @@ class DebugToolbar extends React.Component {
     this.toggleColors = this.toggleColors.bind(this);
     this.addNodes = this.addNodes.bind(this);
     this.intermittentTimer = null;
-    this.intermittentNodes = makeSet();
     this.shortLivedTimer = null;
     this.shortLivedNodes = makeSet();
     this.state = {
@@ -202,7 +201,7 @@ class DebugToolbar extends React.Component {
         this.asyncDispatch(receiveNodesDelta({
           remove: [randomNode]
         }));
-      }, 1000);
+      }, 5000);
     }
   }
 

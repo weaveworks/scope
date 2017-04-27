@@ -75,22 +75,23 @@ class Node extends React.Component {
     const matchedNodeDetails = matchedMetadata.concat(matchedParents);
 
     return (
-      <foreignObject
-        className="node-labels-container"
-        y={labelOffsetY}
-        x={-0.5 * labelWidth}
-        width={labelWidth}
-        height="5em">
-        <div className="node-label-wrapper" {...mouseEvents}>
-          <div className={labelClassName}>
-            <MatchedText text={label} match={matches.get('label')} />
+      <g className="node-labels-container">
+        <foreignObject
+          y={labelOffsetY}
+          x={-0.5 * labelWidth}
+          width={labelWidth}
+          height="5em">
+          <div className="node-label-wrapper" {...mouseEvents}>
+            <div className={labelClassName}>
+              <MatchedText text={label} match={matches.get('label')} />
+            </div>
+            <div className={labelMinorClassName}>
+              <MatchedText text={labelMinor} match={matches.get('labelMinor')} />
+            </div>
+            <MatchedResults matches={matchedNodeDetails} />
           </div>
-          <div className={labelMinorClassName}>
-            <MatchedText text={labelMinor} match={matches.get('labelMinor')} />
-          </div>
-          <MatchedResults matches={matchedNodeDetails} />
-        </div>
-      </foreignObject>
+        </foreignObject>
+      </g>
     );
   }
 
@@ -159,7 +160,7 @@ function mapStateToProps(state) {
   return {
     exportingGraph: state.get('exportingGraph'),
     showingNetworks: state.get('showingNetworks'),
-    contrastMode: state.get('contrastMode')
+    contrastMode: state.get('contrastMode'),
   };
 }
 
