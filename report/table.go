@@ -20,8 +20,8 @@ const (
 	PropertyListType       = "property-list"
 )
 
-// WithTableTruncationInformation appends table truncation info to the node, returning the new node.
-func (node Node) WithTableTruncationInformation(prefix string, totalRowsCount int) Node {
+// withTableTruncationInformation appends table truncation info to the node, returning the new node.
+func (node Node) withTableTruncationInformation(prefix string, totalRowsCount int) Node {
 	if totalRowsCount > MaxTableRows {
 		truncationCount := fmt.Sprintf("%d", totalRowsCount-MaxTableRows)
 		node = node.WithLatest(TruncationCountPrefix+prefix, mtime.Now(), truncationCount)
@@ -43,7 +43,7 @@ func (node Node) AddPrefixMulticolumnTable(prefix string, rows []Row) Node {
 		}
 		addedRowsCount++
 	}
-	return node.WithTableTruncationInformation(prefix, len(rows))
+	return node.withTableTruncationInformation(prefix, len(rows))
 }
 
 // AddPrefixPropertyList appends arbitrary key-value pairs to the Node, returning a new node.
@@ -56,7 +56,7 @@ func (node Node) AddPrefixPropertyList(prefix string, propertyList map[string]st
 		node = node.WithLatest(prefix+label, mtime.Now(), value)
 		addedPropertiesCount++
 	}
-	return node.WithTableTruncationInformation(prefix, len(propertyList))
+	return node.withTableTruncationInformation(prefix, len(propertyList))
 }
 
 // WithoutPrefix returns the string with trimmed prefix and a
