@@ -21,16 +21,17 @@ const (
 )
 
 // withTableTruncationInformation appends table truncation info to the node, returning the new node.
-func (node Node) withTableTruncationInformation(prefix string, totalRowsCount int) Node {
+func (node Node) withTableTruncationInformation(prefix string, totalRowsCount int, now time.Time) Node {
 	if totalRowsCount > MaxTableRows {
 		truncationCount := fmt.Sprintf("%d", totalRowsCount-MaxTableRows)
-		node = node.WithLatest(TruncationCountPrefix+prefix, mtime.Now(), truncationCount)
+		node = node.WithLatest(TruncationCountPrefix+prefix, now, truncationCount)
 	}
 	return node
 }
 
 // AddPrefixMulticolumnTable appends arbitrary rows to the Node, returning a new node.
 func (node Node) AddPrefixMulticolumnTable(prefix string, rows []Row) Node {
+	now := mtime.Now()
 	addedRowsCount := 0
 	for _, row := range rows {
 		if addedRowsCount >= MaxTableRows {
@@ -39,24 +40,25 @@ func (node Node) AddPrefixMulticolumnTable(prefix string, rows []Row) Node {
 		// Add all the row values as separate entries
 		for columnID, value := range row.Entries {
 			key := strings.Join([]string{row.ID, columnID}, TableEntryKeySeparator)
-			node = node.WithLatest(prefix+key, mtime.Now(), value)
+			node = node.WithLatest(prefix+key, now, value)
 		}
 		addedRowsCount++
 	}
-	return node.withTableTruncationInformation(prefix, len(rows))
+	return node.withTableTruncationInformation(prefix, len(rows), now)
 }
 
 // AddPrefixPropertyList appends arbitrary key-value pairs to the Node, returning a new node.
 func (node Node) AddPrefixPropertyList(prefix string, propertyList map[string]string) Node {
+	now := mtime.Now()
 	addedPropertiesCount := 0
 	for label, value := range propertyList {
 		if addedPropertiesCount >= MaxTableRows {
 			break
 		}
-		node = node.WithLatest(prefix+label, mtime.Now(), value)
+		node = node.WithLatest(prefix+label, now, value)
 		addedPropertiesCount++
 	}
-	return node.withTableTruncationInformation(prefix, len(propertyList))
+	return node.withTableTruncationInformation(prefix, len(propertyList), now)
 }
 
 // WithoutPrefix returns the string with trimmed prefix and a
