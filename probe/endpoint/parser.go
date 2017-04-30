@@ -88,10 +88,7 @@ func (s *Scanner) scanIgnoreWhitespace() (tok Token, lit string) {
 
 // scanWhitespace consumes the current rune and all contiguous whitespace.
 func (s *Scanner) scanWhitespace() (tok Token, lit string) {
-	// Create a buffer and read the current character into it.
-	var buf bytes.Buffer
-	buf.WriteRune(s.read())
-
+	s.read()
 	// Read every subsequent whitespace character into the buffer.
 	// Non-whitespace characters and EOF will cause the loop to exit.
 	for {
@@ -100,12 +97,10 @@ func (s *Scanner) scanWhitespace() (tok Token, lit string) {
 		} else if !isWhitespace(ch) {
 			s.unread()
 			break
-		} else {
-			buf.WriteRune(ch)
 		}
 	}
 
-	return WS, buf.String()
+	return WS, ""
 }
 
 // scanIdent consumes the current rune and all contiguous ident runes.
