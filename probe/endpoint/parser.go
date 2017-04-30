@@ -40,7 +40,7 @@ func NewScanner(r io.Reader) *Scanner {
 
 // Scan returns the next token and literal value.
 func (s *Scanner) Scan() (tok Token, lit string) {
-	// Read the next rune.
+	// Read the next byte.
 	ch := s.read()
 
 	// If we see whitespace then consume all contiguous whitespace.
@@ -86,7 +86,7 @@ func (s *Scanner) scanIgnoreWhitespace() (tok Token, lit string) {
 	return
 }
 
-// scanWhitespace consumes the current rune and all contiguous whitespace.
+// scanWhitespace consumes the current byte and all contiguous whitespace.
 func (s *Scanner) scanWhitespace() (tok Token, lit string) {
 	s.read()
 	// Read every subsequent whitespace character into the buffer.
@@ -103,11 +103,11 @@ func (s *Scanner) scanWhitespace() (tok Token, lit string) {
 	return WS, ""
 }
 
-// scanIdent consumes the current rune and all contiguous ident runes.
+// scanIdent consumes the current byte and all contiguous ident bytes.
 func (s *Scanner) scanIdent() (tok Token, lit string) {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
-	buf.WriteRune(s.read())
+	buf.WriteByte(s.read())
 
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
@@ -118,18 +118,18 @@ func (s *Scanner) scanIdent() (tok Token, lit string) {
 			s.unread()
 			break
 		} else {
-			_, _ = buf.WriteRune(ch)
+			_ = buf.WriteByte(ch)
 		}
 	}
 
 	return IDENT, buf.String()
 }
 
-// scanNumeric consumes the current rune and all contiguous numeric runes.
+// scanNumeric consumes the current byte and all contiguous numeric bytes.
 func (s *Scanner) scanNumeric() (tok Token, lit string) {
 	// Create a buffer and read the current character into it.
 	var buf bytes.Buffer
-	buf.WriteRune(s.read())
+	buf.WriteByte(s.read())
 
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
@@ -140,37 +140,37 @@ func (s *Scanner) scanNumeric() (tok Token, lit string) {
 			s.unread()
 			break
 		} else {
-			_, _ = buf.WriteRune(ch)
+			_ = buf.WriteByte(ch)
 		}
 	}
 
 	return NUMERIC, buf.String()
 }
 
-// read reads the next rune from the bufferred reader.
-// Returns the rune(0) if an error occurs (or io.EOF is returned).
-func (s *Scanner) read() rune {
-	ch, _, err := s.r.ReadRune()
+// read reads the next byte from the bufferred reader.
+// Returns the byte(0) if an error occurs (or io.EOF is returned).
+func (s *Scanner) read() byte {
+	ch, err := s.r.ReadByte()
 	if err != nil {
 		return eof
 	}
 	return ch
 }
 
-// unread places the previously read rune back on the reader.
-func (s *Scanner) unread() { _ = s.r.UnreadRune() }
+// unread places the previously read byte back on the reader.
+func (s *Scanner) unread() { _ = s.r.UnreadByte() }
 
-// isWhitespace returns true if the rune is a space or tab - NOT newline which ends a line.
-func isWhitespace(ch rune) bool { return ch == ' ' || ch == '\t' }
+// isWhitespace returns true if the byte is a space or tab - NOT newline which ends a line.
+func isWhitespace(ch byte) bool { return ch == ' ' || ch == '\t' }
 
-// isLetter returns true if the rune is a letter.
-func isLetter(ch rune) bool { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') }
+// isLetter returns true if the byte is a letter.
+func isLetter(ch byte) bool { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') }
 
-// isDigit returns true if the rune is a digit.
-func isDigit(ch rune) bool { return (ch >= '0' && ch <= '9') }
+// isDigit returns true if the byte is a digit.
+func isDigit(ch byte) bool { return (ch >= '0' && ch <= '9') }
 
-// eof represents a marker rune for the end of the reader.
-var eof = rune(0)
+// eof represents a marker byte for the end of the reader.
+var eof = byte(0)
 
 // SelectStatement represents a SQL SELECT statement.
 type SelectStatement struct {
