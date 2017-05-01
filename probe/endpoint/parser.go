@@ -66,28 +66,23 @@ func NewScanner(r io.Reader) *Scanner {
 
 // Scan skips any whitespace then returns the next token
 func (s *Scanner) scan() (tok Token) {
-	// Read the next byte.
-	ch := s.read()
+	ch, err := s.r.ReadByte()
 
 	// If we see whitespace then consume all contiguous whitespace.
 	for isWhitespace(ch) {
-		ch = s.read()
+		ch, err = s.r.ReadByte()
 	}
-
-	// If we see a letter then consume as an ident or reserved word.
-	// If we see a digit then consume as a number.
-	if isLetter(ch) {
-		s.r.UnreadByte()
-		return s.scanIdent()
-	} else if isDigit(ch) {
-		s.r.UnreadByte()
-		return s.scanNumeric()
-	}
-
-	// Otherwise read the individual character.
-	switch ch {
-	case eof:
+	if err != nil {
 		return EOF
+	}
+
+	if isLetter(ch) {
+		return s.scanIdent(ch)
+	} else if isDigit(ch) {
+		return s.scanNumeric(ch)
+	}
+
+	switch ch {
 	case '=':
 		return EQUALS
 	case '[':
@@ -136,14 +131,14 @@ func (s *Scanner) stringIntern(b []byte) string {
 }
 
 // scanIdent consumes the current byte and all contiguous ident bytes.
-func (s *Scanner) scanIdent() (tok Token) {
+func (s *Scanner) scanIdent(firstChar byte) (tok Token) {
 	s.buf.Reset()
-	s.buf.WriteByte(s.read())
+	s.buf.WriteByte(firstChar)
 
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
 	for {
-		if ch := s.read(); ch == eof {
+		if ch, err := s.r.ReadByte(); err != nil {
 			break
 		} else if !isLetter(ch) && !isDigit(ch) && ch != '_' && ch != ':' {
 			s.r.UnreadByte()
@@ -157,14 +152,14 @@ func (s *Scanner) scanIdent() (tok Token) {
 }
 
 // scanNumeric consumes the current byte and all contiguous numeric bytes.
-func (s *Scanner) scanNumeric() (tok Token) {
+func (s *Scanner) scanNumeric(firstChar byte) (tok Token) {
 	s.buf.Reset()
-	s.buf.WriteByte(s.read())
+	s.buf.WriteByte(firstChar)
 
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
 	for {
-		if ch := s.read(); ch == eof {
+		if ch, err := s.r.ReadByte(); err != nil {
 			break
 		} else if !isDigit(ch) && ch != '.' {
 			s.r.UnreadByte()
@@ -175,16 +170,6 @@ func (s *Scanner) scanNumeric() (tok Token) {
 	}
 
 	return NUMERIC
-}
-
-// read reads the next byte from the bufferred reader.
-// Returns the byte(0) if an error occurs (or io.EOF is returned).
-func (s *Scanner) read() byte {
-	ch, err := s.r.ReadByte()
-	if err != nil {
-		return eof
-	}
-	return ch
 }
 
 func (s *Scanner) errorExpected(want, got Token) error {
@@ -213,9 +198,6 @@ func isLetter(ch byte) bool { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && c
 
 // isDigit returns true if the byte is a digit.
 func isDigit(ch byte) bool { return (ch >= '0' && ch <= '9') }
-
-// eof represents a marker byte for the end of the reader.
-var eof = byte(0)
 
 // SelectStatement represents a SQL SELECT statement.
 type SelectStatement struct {
