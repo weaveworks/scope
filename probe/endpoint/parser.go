@@ -181,6 +181,14 @@ func (s *Scanner) errorExpected(want, got Token) error {
 	return fmt.Errorf("found %q, expected %s", gotStr, want.String())
 }
 
+func (s *Scanner) mustBe(want Token) error {
+	tok := s.scan()
+	if tok != want {
+		return s.errorExpected(want, tok)
+	}
+	return nil
+}
+
 // isWhitespace returns true if the byte is a space or tab - NOT newline which ends a line.
 func isWhitespace(ch byte) bool { return ch == ' ' || ch == '\t' }
 
@@ -214,28 +222,25 @@ func decodeStreamedFlow(s *Scanner) (flow, error) {
 	} else if tok != LSQUARE {
 		return f, s.errorExpected(LSQUARE, tok)
 	}
-	if tok = s.scan(); tok != IDENT {
-		return f, s.errorExpected(IDENT, tok)
+	if err := s.mustBe(IDENT); err != nil {
+		return f, err
 	}
 	f.Type = s.lastSymbol()
-	if tok = s.scan(); tok != RSQUARE {
-		return f, s.errorExpected(RSQUARE, tok)
+	if err := s.mustBe(RSQUARE); err != nil {
+		return f, err
 	}
 
-	tok = s.scan()
-	if tok != IDENT {
-		return f, s.errorExpected(IDENT, tok)
+	if err := s.mustBe(IDENT); err != nil {
+		return f, err
 	}
 	f.Original.Layer4.Proto = s.lastSymbol()
 	f.Reply.Layer4.Proto = f.Original.Layer4.Proto
 
-	// one or two unused fields, depending on the type
-	s.scan()
+	s.scan() // unused
 	if f.Type != destroyType {
-		s.scan()
-		tok = s.scan()
-		if tok != IDENT {
-			return f, s.errorExpected(IDENT, tok)
+		s.scan() // unused
+		if err := s.mustBe(IDENT); err != nil {
+			return f, err
 		}
 		f.Independent.State = s.lastSymbol()
 	}
@@ -270,9 +275,8 @@ func decodeDumpedFlow(s *Scanner) (flow, error) {
 	s.scan()
 	s.scan()
 
-	tok = s.scan()
-	if tok != IDENT {
-		return f, s.errorExpected(IDENT, tok)
+	if err := s.mustBe(IDENT); err != nil {
+		return f, err
 	}
 	f.Independent.State = s.lastSymbol()
 
@@ -288,19 +292,19 @@ func decodeFlowKeyValues(s *Scanner, f *flow) error {
 			break
 		} else if tok == LSQUARE {
 			// Ignore a sequence like "[ASSURED]"
-			if tok := s.scan(); tok != IDENT {
-				return s.errorExpected(IDENT, tok)
+			if err := s.mustBe(IDENT); err != nil {
+				return err
 			}
-			if tok := s.scan(); tok != RSQUARE {
-				return s.errorExpected(RSQUARE, tok)
+			if err := s.mustBe(RSQUARE); err != nil {
+				return err
 			}
 			continue
 		} else if tok != IDENT {
 			return s.errorExpected(IDENT, tok)
 		}
 		key := s.lastSymbol()
-		if tok := s.scan(); tok != EQUALS {
-			return s.errorExpected(EQUALS, tok)
+		if err := s.mustBe(EQUALS); err != nil {
+			return err
 		}
 		if tok = s.scan(); tok != NUMERIC && tok != IDENT {
 			return s.errorExpected(IDENT, tok)
