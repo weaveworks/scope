@@ -28,86 +28,101 @@ const (
 	NEWLINE // \n
 )
 
+func (t Token) String() string {
+	switch t {
+	case ILLEGAL:
+		return "ILLEGAL"
+	case EOF:
+		return "EOF"
+	case WS:
+		return "whitespace"
+	case IDENT:
+		return "IDENT"
+	case NUMERIC:
+		return "NUMERIC"
+	case EQUALS:
+		return "'='"
+	case LSQUARE:
+		return "'['"
+	case RSQUARE:
+		return "']'"
+	case NEWLINE:
+		return "newline"
+	default:
+		return "unknown"
+	}
+}
+
 // Scanner represents a lexical scanner.
 type Scanner struct {
-	r *bufio.Reader
+	r               *bufio.Reader
+	buf             bytes.Buffer
+	internedStrings map[string]string
 }
 
 // NewScanner returns a new instance of Scanner.
 func NewScanner(r io.Reader) *Scanner {
-	return &Scanner{r: bufio.NewReader(r)}
+	return &Scanner{r: bufio.NewReader(r), internedStrings: make(map[string]string)}
 }
 
-// Scan returns the next token and literal value.
-func (s *Scanner) Scan() (tok Token, lit string) {
+// Scan skips any whitespace then returns the next token
+func (s *Scanner) scan() (tok Token) {
 	// Read the next byte.
 	ch := s.read()
 
 	// If we see whitespace then consume all contiguous whitespace.
+	for isWhitespace(ch) {
+		ch = s.read()
+	}
+
 	// If we see a letter then consume as an ident or reserved word.
 	// If we see a digit then consume as a number.
-	if isWhitespace(ch) {
-		s.unread()
-		return s.scanWhitespace()
-	} else if isLetter(ch) {
-		s.unread()
+	if isLetter(ch) {
+		s.r.UnreadByte()
 		return s.scanIdent()
 	} else if isDigit(ch) {
-		s.unread()
+		s.r.UnreadByte()
 		return s.scanNumeric()
 	}
 
 	// Otherwise read the individual character.
 	switch ch {
 	case eof:
-		return EOF, ""
+		return EOF
 	case '=':
-		return EQUALS, string(ch)
+		return EQUALS
 	case '[':
-		return LSQUARE, string(ch)
+		return LSQUARE
 	case ']':
-		return RSQUARE, string(ch)
+		return RSQUARE
 	case '\n':
-		return NEWLINE, string(ch)
+		return NEWLINE
 	}
 
-	return ILLEGAL, string(ch)
+	return ILLEGAL
 }
 
-// scanIgnoreWhitespace scans the next non-whitespace token.
-func (s *Scanner) scanIgnoreWhitespace() (tok Token, lit string) {
-	tok, lit = s.Scan()
-	if tok == WS {
-		tok, lit = s.Scan()
-		//fmt.Printf("Scanned %v %v\n", tok, lit)
-	} else {
-		//fmt.Printf("Scanned %v %v\n", tok, lit)
-	}
-	return
+func (s *Scanner) lastSymbol() string {
+	return s.stringIntern(s.buf.Bytes())
 }
 
-// scanWhitespace consumes the current byte and all contiguous whitespace.
-func (s *Scanner) scanWhitespace() (tok Token, lit string) {
-	s.read()
-	// Read every subsequent whitespace character into the buffer.
-	// Non-whitespace characters and EOF will cause the loop to exit.
-	for {
-		if ch := s.read(); ch == eof {
-			break
-		} else if !isWhitespace(ch) {
-			s.unread()
-			break
-		}
-	}
+func (s *Scanner) lastValue() string {
+	return s.buf.String()
+}
 
-	return WS, ""
+func (s *Scanner) stringIntern(b []byte) string {
+	str, found := s.internedStrings[string(b)]
+	if !found {
+		str = string(b)
+		s.internedStrings[str] = str
+	}
+	return str
 }
 
 // scanIdent consumes the current byte and all contiguous ident bytes.
-func (s *Scanner) scanIdent() (tok Token, lit string) {
-	// Create a buffer and read the current character into it.
-	var buf bytes.Buffer
-	buf.WriteByte(s.read())
+func (s *Scanner) scanIdent() (tok Token) {
+	s.buf.Reset()
+	s.buf.WriteByte(s.read())
 
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
@@ -115,21 +130,20 @@ func (s *Scanner) scanIdent() (tok Token, lit string) {
 		if ch := s.read(); ch == eof {
 			break
 		} else if !isLetter(ch) && !isDigit(ch) && ch != '_' && ch != ':' {
-			s.unread()
+			s.r.UnreadByte()
 			break
 		} else {
-			_ = buf.WriteByte(ch)
+			_ = s.buf.WriteByte(ch)
 		}
 	}
 
-	return IDENT, buf.String()
+	return IDENT
 }
 
 // scanNumeric consumes the current byte and all contiguous numeric bytes.
-func (s *Scanner) scanNumeric() (tok Token, lit string) {
-	// Create a buffer and read the current character into it.
-	var buf bytes.Buffer
-	buf.WriteByte(s.read())
+func (s *Scanner) scanNumeric() (tok Token) {
+	s.buf.Reset()
+	s.buf.WriteByte(s.read())
 
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
@@ -137,14 +151,14 @@ func (s *Scanner) scanNumeric() (tok Token, lit string) {
 		if ch := s.read(); ch == eof {
 			break
 		} else if !isDigit(ch) && ch != '.' {
-			s.unread()
+			s.r.UnreadByte()
 			break
 		} else {
-			_ = buf.WriteByte(ch)
+			_ = s.buf.WriteByte(ch)
 		}
 	}
 
-	return NUMERIC, buf.String()
+	return NUMERIC
 }
 
 // read reads the next byte from the bufferred reader.
@@ -157,8 +171,15 @@ func (s *Scanner) read() byte {
 	return ch
 }
 
-// unread places the previously read byte back on the reader.
-func (s *Scanner) unread() { _ = s.r.UnreadByte() }
+func (s *Scanner) errorExpected(want, got Token) error {
+	var gotStr string
+	if got == IDENT || got == NUMERIC {
+		gotStr = s.buf.String()
+	} else {
+		gotStr = got.String()
+	}
+	return fmt.Errorf("found %q, expected %s", gotStr, want.String())
+}
 
 // isWhitespace returns true if the byte is a space or tab - NOT newline which ends a line.
 func isWhitespace(ch byte) bool { return ch == ' ' || ch == '\t' }
@@ -187,33 +208,36 @@ func decodeStreamedFlow(s *Scanner) (flow, error) {
 	var f flow
 
 	// First token should be a square bracket for the protocol.
-	tok, lit := s.scanIgnoreWhitespace()
+	tok := s.scan()
 	if tok == EOF {
 		return f, io.EOF
 	} else if tok != LSQUARE {
-		return f, fmt.Errorf("found %q, expected '['", lit)
+		return f, s.errorExpected(LSQUARE, tok)
 	}
-	if tok, f.Type = s.scanIgnoreWhitespace(); tok != IDENT {
-		return f, fmt.Errorf("found %q, expected '='", f.Type)
+	if tok = s.scan(); tok != IDENT {
+		return f, s.errorExpected(IDENT, tok)
 	}
-	if tok, lit = s.scanIgnoreWhitespace(); tok != RSQUARE {
-		return f, fmt.Errorf("found %q, expected ']'", lit)
+	f.Type = s.lastSymbol()
+	if tok = s.scan(); tok != RSQUARE {
+		return f, s.errorExpected(RSQUARE, tok)
 	}
 
-	tok, f.Original.Layer4.Proto = s.scanIgnoreWhitespace()
+	tok = s.scan()
 	if tok != IDENT {
-		return f, fmt.Errorf("found %q, expected IDENT", f.Original.Layer4.Proto)
+		return f, s.errorExpected(IDENT, tok)
 	}
+	f.Original.Layer4.Proto = s.lastSymbol()
 	f.Reply.Layer4.Proto = f.Original.Layer4.Proto
 
 	// one or two unused fields, depending on the type
-	s.scanIgnoreWhitespace()
+	s.scan()
 	if f.Type != destroyType {
-		s.scanIgnoreWhitespace()
-		tok, f.Independent.State = s.scanIgnoreWhitespace()
+		s.scan()
+		tok = s.scan()
 		if tok != IDENT {
-			return f, fmt.Errorf("found %q, expected IDENT", f.Independent.State)
+			return f, s.errorExpected(IDENT, tok)
 		}
+		f.Independent.State = s.lastSymbol()
 	}
 
 	err := decodeFlowKeyValues(s, &f)
@@ -233,22 +257,24 @@ func decodeDumpedFlow(s *Scanner) (flow, error) {
 	var tok Token
 
 	// First token should be an IDENT for the protocol.
-	tok, f.Original.Layer4.Proto = s.scanIgnoreWhitespace()
+	tok = s.scan()
 	if tok == EOF {
 		return f, io.EOF
 	} else if tok != IDENT {
-		return f, fmt.Errorf("found %q, expected IDENT", f.Original.Layer4.Proto)
+		return f, s.errorExpected(IDENT, tok)
 	}
+	f.Original.Layer4.Proto = s.lastSymbol()
 	f.Reply.Layer4.Proto = f.Original.Layer4.Proto
 
 	// two unused fields
-	s.scanIgnoreWhitespace()
-	s.scanIgnoreWhitespace()
+	s.scan()
+	s.scan()
 
-	tok, f.Independent.State = s.scanIgnoreWhitespace()
+	tok = s.scan()
 	if tok != IDENT {
-		return f, fmt.Errorf("found %q, expected IDENT", f.Independent.State)
+		return f, s.errorExpected(IDENT, tok)
 	}
+	f.Independent.State = s.lastSymbol()
 
 	err := decodeFlowKeyValues(s, &f)
 	return f, err
@@ -257,28 +283,29 @@ func decodeDumpedFlow(s *Scanner) (flow, error) {
 func decodeFlowKeyValues(s *Scanner, f *flow) error {
 	for {
 		var err error
-		tok, key := s.scanIgnoreWhitespace()
+		tok := s.scan()
 		if tok == NEWLINE || tok == EOF {
 			break
 		} else if tok == LSQUARE {
 			// Ignore a sequence like "[ASSURED]"
-			if tok, lit := s.scanIgnoreWhitespace(); tok != IDENT {
-				return fmt.Errorf("found %q, expected IDENT", lit)
+			if tok := s.scan(); tok != IDENT {
+				return s.errorExpected(IDENT, tok)
 			}
-			if tok, lit := s.scanIgnoreWhitespace(); tok != RSQUARE {
-				return fmt.Errorf("found %q, expected ']'", lit)
+			if tok := s.scan(); tok != RSQUARE {
+				return s.errorExpected(RSQUARE, tok)
 			}
 			continue
 		} else if tok != IDENT {
-			return fmt.Errorf("found %q, expected IDENT", key)
+			return s.errorExpected(IDENT, tok)
 		}
-		if tok, lit := s.scanIgnoreWhitespace(); tok != EQUALS {
-			return fmt.Errorf("found %q, expected '='", lit)
+		key := s.lastSymbol()
+		if tok := s.scan(); tok != EQUALS {
+			return s.errorExpected(EQUALS, tok)
 		}
-		tok, value := s.scanIgnoreWhitespace()
-		if tok != NUMERIC && tok != IDENT {
-			return fmt.Errorf("found %q, expected NUMERIC or IDENT", value)
+		if tok = s.scan(); tok != NUMERIC && tok != IDENT {
+			return s.errorExpected(IDENT, tok)
 		}
+		value := s.lastValue()
 
 		firstTupleSet := f.Original.Layer4.DstPort != 0
 		switch {
