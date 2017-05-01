@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"strconv"
 )
 
 // Token represents a lexical token.
@@ -108,6 +107,23 @@ func (s *Scanner) lastSymbol() string {
 
 func (s *Scanner) lastValue() string {
 	return s.buf.String()
+}
+
+func (s *Scanner) lastInt() (int, error) {
+	x64, err := s.lastInt64()
+	return int(x64), err
+}
+
+func (s *Scanner) lastInt64() (int64, error) {
+	var x int64
+	for _, ch := range s.buf.Bytes() {
+		if isDigit(ch) {
+			x = x*10 + int64(ch-'0')
+		} else {
+			return x, fmt.Errorf("Non-digit in %q", s.lastValue())
+		}
+	}
+	return x, nil
 }
 
 func (s *Scanner) stringIntern(b []byte) string {
@@ -309,40 +325,39 @@ func decodeFlowKeyValues(s *Scanner, f *flow) error {
 		if tok = s.scan(); tok != NUMERIC && tok != IDENT {
 			return s.errorExpected(IDENT, tok)
 		}
-		value := s.lastValue()
 
 		firstTupleSet := f.Original.Layer4.DstPort != 0
 		switch {
 		case key == "src":
 			if !firstTupleSet {
-				f.Original.Layer3.SrcIP = value
+				f.Original.Layer3.SrcIP = s.lastValue()
 			} else {
-				f.Reply.Layer3.SrcIP = value
+				f.Reply.Layer3.SrcIP = s.lastValue()
 			}
 
 		case key == "dst":
 			if !firstTupleSet {
-				f.Original.Layer3.DstIP = value
+				f.Original.Layer3.DstIP = s.lastValue()
 			} else {
-				f.Reply.Layer3.DstIP = value
+				f.Reply.Layer3.DstIP = s.lastValue()
 			}
 
 		case key == "sport":
 			if !firstTupleSet {
-				f.Original.Layer4.SrcPort, err = strconv.Atoi(value)
+				f.Original.Layer4.SrcPort, err = s.lastInt()
 			} else {
-				f.Reply.Layer4.SrcPort, err = strconv.Atoi(value)
+				f.Reply.Layer4.SrcPort, err = s.lastInt()
 			}
 
 		case key == "dport":
 			if !firstTupleSet {
-				f.Original.Layer4.DstPort, err = strconv.Atoi(value)
+				f.Original.Layer4.DstPort, err = s.lastInt()
 			} else {
-				f.Reply.Layer4.DstPort, err = strconv.Atoi(value)
+				f.Reply.Layer4.DstPort, err = s.lastInt()
 			}
 
 		case key == "id":
-			f.Independent.ID, err = strconv.ParseInt(value, 10, 64)
+			f.Independent.ID, err = s.lastInt64()
 		}
 		if err != nil {
 			return err
