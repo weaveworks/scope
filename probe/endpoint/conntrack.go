@@ -26,12 +26,6 @@ const (
 	destroyType = "DESTROY"
 )
 
-var (
-	destroyTypeB = []byte(destroyType)
-	assured      = []byte("[ASSURED] ")
-	unreplied    = []byte("[UNREPLIED] ")
-)
-
 type layer3 struct {
 	SrcIP string
 	DstIP string
