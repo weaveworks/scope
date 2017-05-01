@@ -2,7 +2,6 @@ package endpoint
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 )
@@ -55,13 +54,13 @@ func (t Token) String() string {
 // Scanner represents a lexical scanner.
 type Scanner struct {
 	r               *bufio.Reader
-	buf             bytes.Buffer
+	buf             []byte
 	internedStrings map[string]string
 }
 
 // NewScanner returns a new instance of Scanner.
 func NewScanner(r io.Reader) *Scanner {
-	return &Scanner{r: bufio.NewReader(r), internedStrings: make(map[string]string)}
+	return &Scanner{r: bufio.NewReader(r), buf: make([]byte, 0, 1024), internedStrings: make(map[string]string)}
 }
 
 // Scan skips any whitespace then returns the next token
@@ -97,11 +96,11 @@ func (s *Scanner) scan() (tok Token) {
 }
 
 func (s *Scanner) lastSymbol() string {
-	return s.stringIntern(s.buf.Bytes())
+	return s.stringIntern(s.buf)
 }
 
 func (s *Scanner) lastValue() string {
-	return s.buf.String()
+	return string(s.buf)
 }
 
 func (s *Scanner) lastInt() (int, error) {
@@ -111,7 +110,7 @@ func (s *Scanner) lastInt() (int, error) {
 
 func (s *Scanner) lastInt64() (int64, error) {
 	var x int64
-	for _, ch := range s.buf.Bytes() {
+	for _, ch := range s.buf {
 		if isDigit(ch) {
 			x = x*10 + int64(ch-'0')
 		} else {
@@ -132,8 +131,8 @@ func (s *Scanner) stringIntern(b []byte) string {
 
 // scanIdent consumes the current byte and all contiguous ident bytes.
 func (s *Scanner) scanIdent(firstChar byte) (tok Token) {
-	s.buf.Reset()
-	s.buf.WriteByte(firstChar)
+	s.buf = s.buf[0:0]
+	s.buf = append(s.buf, firstChar)
 
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
@@ -144,7 +143,7 @@ func (s *Scanner) scanIdent(firstChar byte) (tok Token) {
 			s.r.UnreadByte()
 			break
 		} else {
-			_ = s.buf.WriteByte(ch)
+			s.buf = append(s.buf, ch)
 		}
 	}
 
@@ -153,8 +152,8 @@ func (s *Scanner) scanIdent(firstChar byte) (tok Token) {
 
 // scanNumeric consumes the current byte and all contiguous numeric bytes.
 func (s *Scanner) scanNumeric(firstChar byte) (tok Token) {
-	s.buf.Reset()
-	s.buf.WriteByte(firstChar)
+	s.buf = s.buf[0:0]
+	s.buf = append(s.buf, firstChar)
 
 	// Read every subsequent ident character into the buffer.
 	// Non-ident characters and EOF will cause the loop to exit.
@@ -165,7 +164,7 @@ func (s *Scanner) scanNumeric(firstChar byte) (tok Token) {
 			s.r.UnreadByte()
 			break
 		} else {
-			_ = s.buf.WriteByte(ch)
+			s.buf = append(s.buf, ch)
 		}
 	}
 
@@ -175,7 +174,7 @@ func (s *Scanner) scanNumeric(firstChar byte) (tok Token) {
 func (s *Scanner) errorExpected(want, got Token) error {
 	var gotStr string
 	if got == IDENT || got == NUMERIC {
-		gotStr = s.buf.String()
+		gotStr = string(s.buf)
 	} else {
 		gotStr = got.String()
 	}
