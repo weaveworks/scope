@@ -172,6 +172,15 @@ func (s *Scanner) scanNumeric(firstChar byte) (tok Token) {
 	return NUMERIC
 }
 
+func (s *Scanner) skipToWhitespace() {
+	for {
+		ch, err := s.r.ReadByte()
+		if err != nil || isWhitespace(ch) {
+			break
+		}
+	}
+}
+
 func (s *Scanner) errorExpected(want, got Token) error {
 	var gotStr string
 	if got == IDENT || got == NUMERIC {
@@ -310,22 +319,17 @@ func (s *Scanner) lastKeyType() int {
 func decodeFlowKeyValues(s *Scanner, f *flow) error {
 	for {
 		var err error
+		key := keyNone
 		tok := s.scan()
 		if tok == NEWLINE || tok == EOF {
 			break
-		} else if tok == LSQUARE {
-			// Ignore a sequence like "[ASSURED]"
-			if err := s.mustBe(IDENT); err != nil {
-				return err
-			}
-			if err := s.mustBe(RSQUARE); err != nil {
-				return err
-			}
-			continue
-		} else if tok != IDENT {
-			return s.errorExpected(IDENT, tok)
+		} else if tok == IDENT {
+			key = s.lastKeyType()
 		}
-		key := s.lastKeyType()
+		if key == keyNone {
+			s.skipToWhitespace()
+			continue
+		}
 		if err := s.mustBe(EQUALS); err != nil {
 			return err
 		}
