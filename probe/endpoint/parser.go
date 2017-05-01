@@ -208,12 +208,6 @@ func isLetter(ch byte) bool { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && c
 // isDigit returns true if the byte is a digit.
 func isDigit(ch byte) bool { return (ch >= '0' && ch <= '9') }
 
-// SelectStatement represents a SQL SELECT statement.
-type SelectStatement struct {
-	Fields    []string
-	TableName string
-}
-
 // Examples:
 // " [UPDATE] udp      17 29 src=192.168.2.100 dst=192.168.2.1 sport=57767 dport=53 src=192.168.2.1 dst=192.168.2.100 sport=53 dport=57767"
 // "    [NEW] tcp      6 120 SYN_SENT src=127.0.0.1 dst=127.0.0.1 sport=58958 dport=6784 [UNREPLIED] src=127.0.0.1 dst=127.0.0.1 sport=6784 dport=58958 id=1595499776"
