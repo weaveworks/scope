@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 )
@@ -281,6 +282,31 @@ func decodeDumpedFlow(s *Scanner) (flow, error) {
 	return f, err
 }
 
+const (
+	keyNone = iota
+	keySrc
+	keyDst
+	keySport
+	keyDport
+	keyID
+)
+
+func (s *Scanner) lastKeyType() int {
+	switch {
+	case bytes.Equal(s.buf, []byte{'s', 'r', 'c'}):
+		return keySrc
+	case bytes.Equal(s.buf, []byte{'d', 's', 't'}):
+		return keyDst
+	case bytes.Equal(s.buf, []byte{'s', 'p', 'o', 'r', 't'}):
+		return keySport
+	case bytes.Equal(s.buf, []byte{'d', 'p', 'o', 'r', 't'}):
+		return keyDport
+	case bytes.Equal(s.buf, []byte{'i', 'd'}):
+		return keyID
+	}
+	return keyNone
+}
+
 func decodeFlowKeyValues(s *Scanner, f *flow) error {
 	for {
 		var err error
@@ -299,7 +325,7 @@ func decodeFlowKeyValues(s *Scanner, f *flow) error {
 		} else if tok != IDENT {
 			return s.errorExpected(IDENT, tok)
 		}
-		key := s.lastSymbol()
+		key := s.lastKeyType()
 		if err := s.mustBe(EQUALS); err != nil {
 			return err
 		}
@@ -308,36 +334,36 @@ func decodeFlowKeyValues(s *Scanner, f *flow) error {
 		}
 
 		firstTupleSet := f.Original.Layer4.DstPort != 0
-		switch {
-		case key == "src":
+		switch key {
+		case keySrc:
 			if !firstTupleSet {
 				f.Original.Layer3.SrcIP = s.lastValue()
 			} else {
 				f.Reply.Layer3.SrcIP = s.lastValue()
 			}
 
-		case key == "dst":
+		case keyDst:
 			if !firstTupleSet {
 				f.Original.Layer3.DstIP = s.lastValue()
 			} else {
 				f.Reply.Layer3.DstIP = s.lastValue()
 			}
 
-		case key == "sport":
+		case keySport:
 			if !firstTupleSet {
 				f.Original.Layer4.SrcPort, err = s.lastInt()
 			} else {
 				f.Reply.Layer4.SrcPort, err = s.lastInt()
 			}
 
-		case key == "dport":
+		case keyDport:
 			if !firstTupleSet {
 				f.Original.Layer4.DstPort, err = s.lastInt()
 			} else {
 				f.Reply.Layer4.DstPort, err = s.lastInt()
 			}
 
-		case key == "id":
+		case keyID:
 			f.Independent.ID, err = s.lastInt64()
 		}
 		if err != nil {
