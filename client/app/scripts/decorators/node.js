@@ -5,12 +5,10 @@ import { formatMetricSvg } from '../utils/string-utils';
 import { RESOURCES_LAYER_HEIGHT } from '../constants/styles';
 
 
-export function nodeResourceViewColorDecorator(node) {
+export function nodeResourceViewColorDecorator(node, cat) {
   // Color lightness is normally determined from the node label. However, in the resource view
   // mode, we don't want to vary the lightness so we just always forward the empty string instead.
-  let text = 'containers';
-  if (node.get('label').substr(0, 2) === 'ip') text = 'a';
-  if (node.get('label')[0] === '/') text = 'processes';
+  const text = (cat === 'hosts' ? 'a' : cat);
 
   // const text = node.get('label');
   const subtext = node.get('rank');

@@ -26,11 +26,12 @@ export function text2degree(text) {
 }
 
 export function colors(text, secondText, blend = false) {
-  let hue = text2degree(text) + (text2degree(secondText) * 0.2);
+  let hue = text2degree(text) + (text2degree(secondText) * 0.15) + 360;
+  while (hue >= 360) hue -= 360;
   // skip green and shift to the end of the color wheel
-  if (hue > 70 && hue < 150) {
-    hue += 80;
-  }
+  // if (hue > 70 && hue < 150) {
+  //   hue += 80;
+  // }
   const saturation = blend ? 0.5 : 0.7;
   let lightness = blend ? 0.7 : 0.3;
   if (secondText && false) {

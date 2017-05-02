@@ -60,7 +60,6 @@ class NodeResourcesMetricBox extends React.Component {
     return {
       transform: `translate(0, ${translateY})`,
       opacity: this.props.contrastMode ? 1 : 0.85,
-      // stroke: this.props.contrastMode ? 'black' : 'white',
       stroke: this.props.color,
       strokeWidth: 0.5,
       height: height * relativeHeight,

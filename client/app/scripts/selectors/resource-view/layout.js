@@ -98,7 +98,7 @@ const decoratedNodesByTopologySelector = createSelector(
 
       // Color the node, deduce its anchor point, dimensions and info about its pinned metric.
       const decoratedTopologyNodes = (topologyNodes || makeMap())
-        .map(nodeResourceViewColorDecorator)
+        .map(n => nodeResourceViewColorDecorator(n, layerTopologyId))
         .map(nodeMetricSummaryDecorator)
         .map(nodeResourceBoxDecorator)
         .map(nodeParentDecorator);
