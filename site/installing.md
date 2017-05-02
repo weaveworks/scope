@@ -285,7 +285,7 @@ Use this specially created Weaveworks CloudFormation template to create an EC2 i
 Before launching the stack:
 
 * [Set up an Amazon Account](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/get-set-up-for-amazon-ec2.html)
-* [Create the Key Pairs]("http://docs.aws.amazon.com/gettingstarted/latest/wah/getting-started-prereq.html). You will need to reference the name of the key pairs when you create the stack.
+* [Create the Key Pairs](http://docs.aws.amazon.com/gettingstarted/latest/wah/getting-started-prereq.html). You will need to reference the name of the key pairs when you create the stack.
 
 The link below will launch a sample app using a Cloudformation template, but you can swap out the IdentiOrca app and use your own app instead.
 
