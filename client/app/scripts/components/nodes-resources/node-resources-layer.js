@@ -4,6 +4,7 @@ import { Map as makeMap } from 'immutable';
 
 import NodeResourcesMetricBox from './node-resources-metric-box';
 import NodeResourcesLayerTopology from './node-resources-layer-topology';
+import { canvasHeightSelector } from '../../selectors/canvas';
 import {
   layerVerticalPositionByTopologyIdSelector,
   layoutNodesByTopologyIdSelector,
@@ -13,15 +14,17 @@ import {
 class NodesResourcesLayer extends React.Component {
   render() {
     const { layerVerticalPosition, topologyId, transform, layoutNodes } = this.props;
+    const c = 1150 / this.props.canvasHeight;
+
     let height;
     if (topologyId === 'hosts') height = 400;
-    if (topologyId === 'containers') height = 355;
-    if (topologyId === 'processes') height = 310;
+    if (topologyId === 'containers') height = 400 - (c * 45);
+    if (topologyId === 'processes') height = 400 - (c * 90);
 
     let y;
     if (topologyId === 'hosts') y = -400;
-    if (topologyId === 'containers') y = -360;
-    if (topologyId === 'processes') y = -320;
+    if (topologyId === 'containers') y = -400 + (c * 40);
+    if (topologyId === 'processes') y = -400 + (c * 80);
 
     return (
       <g className="node-resources-layer">
@@ -56,6 +59,7 @@ function mapStateToProps(state, props) {
   return {
     layerVerticalPosition: layerVerticalPositionByTopologyIdSelector(state).get('hosts'),
     layoutNodes: layoutNodesByTopologyIdSelector(state).get(props.topologyId, makeMap()),
+    canvasHeight: canvasHeightSelector(state),
   };
 }
 

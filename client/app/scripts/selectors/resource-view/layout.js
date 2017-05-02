@@ -36,6 +36,13 @@ export const layersTopologyIdsSelector = createSelector(
   topologyId => fromJS(RESOURCE_VIEW_LAYERS[topologyId] || [])
 );
 
+export const resourceViewAvailableSelector = createSelector(
+  [
+    layersTopologyIdsSelector
+  ],
+  layersTopologyIds => !layersTopologyIds.isEmpty()
+);
+
 // Calculates the resource view layer Y-coordinate for every topology in the resource view.
 export const layerVerticalPositionByTopologyIdSelector = createSelector(
   [
@@ -144,7 +151,7 @@ export const layoutNodesByTopologyIdSelector = createSelector(
         nodesBucket.sortBy(resourceNodeConsumptionComparator).forEach((node, nodeId) => {
           const positionedNode = node.set('offset', currentOffset);
           positionedNodes = positionedNodes.set(nodeId, positionedNode);
-          currentOffset += node.get('width') + (c * 0.3);
+          currentOffset += node.get('width') + (c * 0.0);
         });
 
         // TODO: This block of code checks for the overlaps which are caused by children
