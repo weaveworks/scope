@@ -39,14 +39,15 @@ class TopologyOptions extends React.Component {
       // The component builds an array of the next selected values that are sent to the action.
       const opts = activeOptions.toJS();
       const selected = selectedOption.get('id');
-      const isSelectedAlready = includes(opts[selected], value);
+      const selectedActiveOptions = opts[selected] || [];
+      const isSelectedAlready = includes(selectedActiveOptions, value);
 
       if (isSelectedAlready) {
         // Remove the option if it is already selected
-        nextOptions = opts[selected].filter(o => o !== value);
+        nextOptions = selectedActiveOptions.filter(o => o !== value);
       } else {
         // Add it to the array if it's not selected
-        nextOptions = opts[selected].concat(value);
+        nextOptions = selectedActiveOptions.concat(value);
       }
       // Since the user is clicking an option, remove the highlighting from the 'none' option,
       // unless they are removing the last option. In that case, default to the 'none' label.
