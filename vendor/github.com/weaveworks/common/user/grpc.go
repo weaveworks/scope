@@ -10,20 +10,20 @@ import (
 func ExtractFromGRPCRequest(ctx context.Context) (string, context.Context, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {
-		return "", ctx, ErrNoUserID
+		return "", ctx, ErrNoOrgID
 	}
 
-	userIDs, ok := md[lowerOrgIDHeaderName]
-	if !ok || len(userIDs) != 1 {
-		return "", ctx, ErrNoUserID
+	orgIDs, ok := md[lowerOrgIDHeaderName]
+	if !ok || len(orgIDs) != 1 {
+		return "", ctx, ErrNoOrgID
 	}
 
-	return userIDs[0], Inject(ctx, userIDs[0]), nil
+	return orgIDs[0], InjectOrgID(ctx, orgIDs[0]), nil
 }
 
-// InjectIntoGRPCRequest injects the userID from the context into the request metadata.
+// InjectIntoGRPCRequest injects the orgID from the context into the request metadata.
 func InjectIntoGRPCRequest(ctx context.Context) (context.Context, error) {
-	userID, err := Extract(ctx)
+	orgID, err := ExtractOrgID(ctx)
 	if err != nil {
 		return ctx, err
 	}
@@ -33,17 +33,17 @@ func InjectIntoGRPCRequest(ctx context.Context) (context.Context, error) {
 		md = metadata.New(map[string]string{})
 	}
 	newCtx := ctx
-	if userIDs, ok := md[lowerOrgIDHeaderName]; ok {
-		if len(userIDs) == 1 {
-			if userIDs[0] != userID {
-				return ctx, ErrDifferentIDPresent
+	if orgIDs, ok := md[lowerOrgIDHeaderName]; ok {
+		if len(orgIDs) == 1 {
+			if orgIDs[0] != orgID {
+				return ctx, ErrDifferentOrgIDPresent
 			}
 		} else {
-			return ctx, ErrTooManyUserIDs
+			return ctx, ErrTooManyOrgIDs
 		}
 	} else {
 		md = md.Copy()
-		md[lowerOrgIDHeaderName] = []string{userID}
+		md[lowerOrgIDHeaderName] = []string{orgID}
 		newCtx = metadata.NewContext(ctx, md)
 	}
 

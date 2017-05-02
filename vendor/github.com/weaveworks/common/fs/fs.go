@@ -11,6 +11,7 @@ import (
 type Interface interface {
 	ReadDir(string) ([]os.FileInfo, error)
 	ReadDirNames(string) ([]string, error)
+	ReadDirCount(string) (int, error)
 	ReadFile(string) ([]byte, error)
 	Lstat(string, *syscall.Stat_t) error
 	Stat(string, *syscall.Stat_t) error
@@ -61,6 +62,11 @@ func ReadDir(path string) ([]os.FileInfo, error) {
 // ReadDirNames see os.File.ReadDirNames
 func ReadDirNames(path string) ([]string, error) {
 	return fs.ReadDirNames(path)
+}
+
+// ReadDirCount is an optimized way to call len(ReadDirNames)
+func ReadDirCount(path string) (int, error) {
+	return fs.ReadDirCount(path)
 }
 
 // ReadFile see ioutil.ReadFile

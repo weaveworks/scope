@@ -112,6 +112,11 @@ func (p dir) ReadDirNames(path string) ([]string, error) {
 	return fs.ReadDirNames(tail)
 }
 
+func (p dir) ReadDirCount(path string) (int, error) {
+	names, err := p.ReadDirNames(path)
+	return len(names), err
+}
+
 func (p dir) ReadFile(path string) ([]byte, error) {
 	if path == "/" {
 		return nil, fmt.Errorf("I'm a directory")
@@ -214,6 +219,11 @@ func (p File) ReadDir(path string) ([]os.FileInfo, error) {
 // ReadDirNames implements FS
 func (p File) ReadDirNames(path string) ([]string, error) {
 	return nil, fmt.Errorf("I'm a file")
+}
+
+// ReadDirCount implements FS
+func (p File) ReadDirCount(path string) (int, error) {
+	return 0, fmt.Errorf("I'm a file")
 }
 
 // ReadFile implements FS
