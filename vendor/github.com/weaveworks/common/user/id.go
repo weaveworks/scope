@@ -9,25 +9,38 @@ import (
 type contextKey int
 
 const (
-	// UserIDContextKey is the key used in contexts to find the userid
-	userIDContextKey contextKey = 0
-
-	// orgIDHeaderName is a legacy from scope as a service.
-	orgIDHeaderName = "X-Scope-OrgID"
-
-	// LowerOrgIDHeaderName as gRPC / HTTP2.0 headers are lowercased.
-	lowerOrgIDHeaderName = "x-scope-orgid"
+	// Keys used in contexts to find the org or user ID
+	orgIDContextKey  contextKey = 0
+	userIDContextKey contextKey = 1
 )
 
 // Errors that we return
 const (
-	ErrNoUserID           = errors.Error("no user id")
-	ErrDifferentIDPresent = errors.Error("different user ID already present")
-	ErrTooManyUserIDs     = errors.Error("multiple user IDs present")
+	ErrNoOrgID               = errors.Error("no org id")
+	ErrDifferentOrgIDPresent = errors.Error("different org ID already present")
+	ErrTooManyOrgIDs         = errors.Error("multiple org IDs present")
+
+	ErrNoUserID               = errors.Error("no user id")
+	ErrDifferentUserIDPresent = errors.Error("different user ID already present")
+	ErrTooManyUserIDs         = errors.Error("multiple user IDs present")
 )
 
-// Extract gets the user ID from the context
-func Extract(ctx context.Context) (string, error) {
+// ExtractOrgID gets the org ID from the context.
+func ExtractOrgID(ctx context.Context) (string, error) {
+	orgID, ok := ctx.Value(orgIDContextKey).(string)
+	if !ok {
+		return "", ErrNoOrgID
+	}
+	return orgID, nil
+}
+
+// InjectOrgID returns a derived context containing the org ID.
+func InjectOrgID(ctx context.Context, userID string) context.Context {
+	return context.WithValue(ctx, interface{}(orgIDContextKey), userID)
+}
+
+// ExtractUserID gets the user ID from the context.
+func ExtractUserID(ctx context.Context) (string, error) {
 	userID, ok := ctx.Value(userIDContextKey).(string)
 	if !ok {
 		return "", ErrNoUserID
@@ -35,7 +48,7 @@ func Extract(ctx context.Context) (string, error) {
 	return userID, nil
 }
 
-// Inject returns a derived context containing the user ID.
-func Inject(ctx context.Context, userID string) context.Context {
+// InjectUserID returns a derived context containing the user ID.
+func InjectUserID(ctx context.Context, userID string) context.Context {
 	return context.WithValue(ctx, interface{}(userIDContextKey), userID)
 }

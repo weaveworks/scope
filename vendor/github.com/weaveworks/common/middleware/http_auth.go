@@ -9,7 +9,7 @@ import (
 // AuthenticateUser propagates the user ID from HTTP headers back to the request's context.
 var AuthenticateUser = Func(func(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, ctx, err := user.ExtractFromHTTPRequest(r)
+		_, ctx, err := user.ExtractOrgIDFromHTTPRequest(r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
