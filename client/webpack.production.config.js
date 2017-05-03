@@ -50,9 +50,9 @@ module.exports = {
     new CleanWebpackPlugin(['build']),
     new webpack.DefinePlugin(GLOBALS),
     new webpack.optimize.CommonsChunkPlugin({ name: 'vendors', filename: 'vendors.js' }),
-    // new webpack.optimize.OccurenceOrderPlugin(true),
-    // new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-    // new webpack.IgnorePlugin(/.*\.map$/, /xterm\/lib\/addons/),
+    new webpack.optimize.OccurrenceOrderPlugin(true),
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new webpack.IgnorePlugin(/.*\.map$/, /xterm\/lib\/addons/),
     new webpack.optimize.UglifyJsPlugin({
       sourceMap: false,
       compress: {
@@ -79,9 +79,6 @@ module.exports = {
     // Webpack is opionated about how pkgs should be laid out:
     // https://github.com/webpack/webpack/issues/1617
     noParse: [/xterm\/dist\/xterm\.js/],
-    // include: [
-    //   path.resolve(__dirname, 'app/scripts', 'app/styles')
-    // ],
 
     rules: [
       {
@@ -118,7 +115,7 @@ module.exports = {
         loader: 'babel-loader'
       },
       {
-        test: /\.scss$/,
+        test: /\.(scss|css)$/,
         loader: ExtractTextPlugin.extract({
           fallback: 'style-loader',
           use: [{

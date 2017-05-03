@@ -53,9 +53,10 @@ module.exports = {
   // Necessary plugins for hot load
   plugins: [
     new webpack.optimize.CommonsChunkPlugin({ name: 'vendors', filename: 'vendors.js' }),
+    new webpack.optimize.OccurrenceOrderPlugin(),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoEmitOnErrorsPlugin(),
-    // new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
     new ExtractTextPlugin('style-[name]-[chunkhash].css'),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'terminal-app'],
@@ -80,9 +81,6 @@ module.exports = {
     // Webpack is opionated about how pkgs should be laid out:
     // https://github.com/webpack/webpack/issues/1617
     noParse: [/xterm\/(.*).map$/, /xterm\/dist\/xterm\.js/],
-    // include: [
-    //   path.resolve(__dirname, 'app/scripts', 'app/styles')
-    // ],
 
     rules: [
       {
