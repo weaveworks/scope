@@ -84,6 +84,7 @@ export const initialState = makeMap({
   viewport: makeMap(),
   websocketClosed: false,
   zoomCache: makeMap(),
+  serviceImages: makeMap()
 });
 
 function calcSelectType(topology) {
@@ -739,6 +740,22 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.SHUTDOWN: {
       state = clearNodes(state);
       return state.set('nodesLoaded', false);
+    }
+
+    case ActionTypes.REQUEST_SERVICE_IMAGES: {
+      return state.setIn(['serviceImages', action.serviceId], {
+        isFetching: true
+      });
+    }
+
+    case ActionTypes.RECEIVE_SERVICE_IMAGES: {
+      const { service, errors, serviceId } = action;
+
+      return state.setIn(['serviceImages', serviceId], {
+        isFetching: false,
+        containers: service ? service.Containers : null,
+        errors
+      });
     }
 
     default: {

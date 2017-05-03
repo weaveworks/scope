@@ -678,4 +678,37 @@ describe('RootReducer', () => {
       constructEdgeId('def456', 'abc123')
     ]);
   });
+  it('receives images for a service', () => {
+    const action = {
+      type: ActionTypes.RECEIVE_SERVICE_IMAGES,
+      serviceId: 'cortex/configs',
+      service: {
+        ID: 'cortex/configs',
+        Containers: [{
+          Available: [{
+            ID: 'quay.io/weaveworks/cortex-configs:master-1ca6274a',
+            CreatedAt: '2017-04-26T13:50:13.284736173Z'
+          }],
+          Current: { ID: 'quay.io/weaveworks/cortex-configs:master-1ca6274a' },
+          Name: 'configs'
+        }]
+      }
+    };
+
+    const nextState = reducer(initialState, action);
+    expect(nextState.getIn(['serviceImages', 'cortex/configs'])).toEqual({
+      isFetching: false,
+      errors: undefined,
+      containers: [{
+        Name: 'configs',
+        Current: {
+          ID: 'quay.io/weaveworks/cortex-configs:master-1ca6274a'
+        },
+        Available: [{
+          ID: 'quay.io/weaveworks/cortex-configs:master-1ca6274a',
+          CreatedAt: '2017-04-26T13:50:13.284736173Z'
+        }]
+      }]
+    });
+  });
 });
