@@ -1,6 +1,7 @@
 ---
 title: Weaveworks ECS AMIs
 menu_order: 25
+search_type: Documentation
 ---
 
 

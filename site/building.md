@@ -1,6 +1,7 @@
 ---
 title: Developing and Debugging
 menu_order: 90
+search_type: Documentation
 ---
 
 The following topics are discussed:

@@ -1,6 +1,7 @@
 ---
 title: Installing Weave Scope
 menu_order: 20
+search_type: Documentation
 ---
 
 

@@ -1,6 +1,7 @@
 ---
 title: Introducing Weave Scope
 menu_order: 10
+search_type: Documentation
 ---
 
 
