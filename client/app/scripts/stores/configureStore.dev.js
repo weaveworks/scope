@@ -1,5 +1,4 @@
 import { createStore, applyMiddleware, compose } from 'redux';
-// import { createLogger } from 'redux-logger';
 import thunkMiddleware from 'redux-thunk';
 
 import DevTools from '../components/dev-tools';

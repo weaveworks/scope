@@ -105,5 +105,6 @@ Sparkline.defaultProps = {
   strokeColor: '#7d7da8',
   strokeWidth: '0.5px',
   curve: curveLinear,
-  circleDiameter: 1.75
+  circleDiameter: 1.75,
+  data: [],
 };

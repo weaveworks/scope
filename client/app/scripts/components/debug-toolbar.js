@@ -339,8 +339,8 @@ class DebugToolbar extends React.Component {
           </tbody>
         </table>}
 
-        {this.state.showColors && [getNodeColor, getNodeColorDark].map((fn, i) => (
-          <table key={i}>
+        {this.state.showColors && [getNodeColor, getNodeColorDark].map(fn => (
+          <table key={fn}>
             <tbody>
               {LABEL_PREFIXES.map(r => (
                 <tr key={r}>
