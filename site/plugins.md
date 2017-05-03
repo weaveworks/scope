@@ -1,6 +1,7 @@
 ---
 title: Generating Custom Metrics with Plugins
 menu_order: 80
+search_type: Documentation
 ---
 
 The following topics are discussed:

@@ -1,6 +1,7 @@
 ---
 title: Understanding Weave Scope
 menu_order: 70
+search_type: Documentation
 ---
 
 The following topics are discussed:

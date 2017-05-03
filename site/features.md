@@ -1,6 +1,7 @@
 ---
 title: Feature Overview
 menu_order: 15
+search_type: Documentation
 ---
 
 Browse the current feature set for Scope with links to relevant indepth topics:
