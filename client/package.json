@@ -28,6 +28,7 @@
     "materialize-css": "0.98.1",
     "moment": "2.18.1",
     "page": "1.7.1",
+    "prop-types": "^15.5.8",
     "react": "15.5.4",
     "react-addons-perf": "15.4.2",
     "react-dom": "15.5.4",
@@ -41,9 +42,9 @@
     "reqwest": "2.0.5",
     "reselect": "3.0.0",
     "reselect-map": "1.0.1",
+    "weaveworks-ui-components": "git+https://github.com/weaveworks/ui-components.git#v0.1.19",
     "whatwg-fetch": "2.0.3",
-    "xterm": "2.5.0",
-    "weaveworks-ui-components": "git+https://github.com/weaveworks/ui-components.git#v0.1.19"
+    "xterm": "2.5.0"
   },
   "devDependencies": {
     "autoprefixer": "6.7.7",

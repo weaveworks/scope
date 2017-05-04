@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 
 class CloudFeature extends React.Component {
@@ -21,14 +22,14 @@ class CloudFeature extends React.Component {
 }
 
 CloudFeature.contextTypes = {
-  store: React.PropTypes.object.isRequired,
-  router: React.PropTypes.object,
-  serviceStore: React.PropTypes.object
+  store: PropTypes.object.isRequired,
+  router: PropTypes.object,
+  serviceStore: PropTypes.object
 };
 
 CloudFeature.childContextTypes = {
-  store: React.PropTypes.object,
-  router: React.PropTypes.object
+  store: PropTypes.object,
+  router: PropTypes.object
 };
 
 export default connect()(CloudFeature);
