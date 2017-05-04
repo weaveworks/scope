@@ -46,64 +46,11 @@ module.exports = {
     publicPath: PUBLIC_PATH
   },
 
-  module: {
-    // Webpack is opionated about how pkgs should be laid out:
-    // https://github.com/webpack/webpack/issues/1617
-    noParse: [/xterm\/dist\/xterm\.js/],
-    include: [
-      path.resolve(__dirname, 'app/scripts', 'app/styles')
-    ],
-    preLoaders: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules|vendor/,
-        loader: 'eslint-loader'
-      }
-    ],
-    loaders: [
-      {
-        test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        loader: 'url-loader?limit=10000&minetype=application/font-woff'
-      },
-      {
-        test: /\.(ttf|eot|svg|ico)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        loader: 'file-loader'
-      },
-      {
-        test: /\.ico$/,
-        loader: 'file-loader?name=[name].[ext]'
-      },
-      {
-        test: /\.jsx?$/,
-        exclude: /node_modules|vendor/,
-        loader: 'babel'
-      },
-      {
-        test: /\.scss$/,
-        loader: ExtractTextPlugin.extract('style-loader', 'css-loader!postcss!sass-loader?minimize')
-      }
-    ]
-  },
-
-  postcss: [
-    autoprefixer({
-      browsers: ['last 2 versions']
-    })
-  ],
-
-  eslint: {
-    failOnError: true
-  },
-
-  resolve: {
-    extensions: ['', '.js', '.jsx']
-  },
-
   plugins: [
     new CleanWebpackPlugin(['build']),
     new webpack.DefinePlugin(GLOBALS),
-    new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors-[chunkhash].js'),
-    new webpack.optimize.OccurenceOrderPlugin(true),
+    new webpack.optimize.CommonsChunkPlugin({ name: 'vendors', filename: 'vendors.js' }),
+    new webpack.optimize.OccurrenceOrderPlugin(true),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
     new webpack.IgnorePlugin(/.*\.map$/, /xterm\/lib\/addons/),
     new webpack.optimize.UglifyJsPlugin({
@@ -127,10 +74,77 @@ module.exports = {
     }),
     new ContrastStyleCompiler()
   ],
-  sassLoader: {
-    includePaths: [
-      path.resolve(__dirname, './node_modules/xterm'),
-      path.resolve(__dirname, './node_modules/font-awesome')
+
+  module: {
+    // Webpack is opionated about how pkgs should be laid out:
+    // https://github.com/webpack/webpack/issues/1617
+    noParse: [/xterm\/dist\/xterm\.js/],
+
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules|vendor/,
+        loader: 'eslint-loader',
+        enforce: 'pre',
+        options: {
+          failOnError: true
+        }
+      },
+      {
+        test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          minetype: 'application/font-woff',
+        }
+      },
+      {
+        test: /\.(ttf|eot|svg|ico)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+        loader: 'file-loader'
+      },
+      {
+        test: /\.ico$/,
+        loader: 'file-loader',
+        options: {
+          name: '[name].[ext]'
+        }
+      },
+      {
+        test: /\.jsx?$/,
+        exclude: /node_modules|vendor/,
+        loader: 'babel-loader'
+      },
+      {
+        test: /\.(scss|css)$/,
+        loader: ExtractTextPlugin.extract({
+          fallback: 'style-loader',
+          use: [{
+            loader: 'css-loader'
+          }, {
+            loader: 'postcss-loader',
+            options: {
+              plugins: [
+                autoprefixer({
+                  browsers: ['last 2 versions']
+                })
+              ]
+            }
+          }, {
+            loader: 'sass-loader',
+            options: {
+              minimize: true,
+              includePaths: [
+                path.resolve(__dirname, './node_modules/xterm'),
+                path.resolve(__dirname, './node_modules/font-awesome')
+              ]
+            }
+          }]
+        })
+      }
     ]
-  }
+  },
+
+  resolve: {
+    extensions: ['.js', '.jsx']
+  },
 };

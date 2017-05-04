@@ -17,7 +17,7 @@ function chunkText(text, { start, length }) {
       chunks.push({text: text.substr(0, start)});
     }
     // matching chunk
-    chunks.push({match: true, text: text.substr(start, length)});
+    chunks.push({match: true, offset: start, text: text.substr(start, length)});
     // text after match
     const remaining = start + length;
     if (remaining < text.length) {
@@ -93,10 +93,10 @@ export default class MatchedText extends React.PureComponent {
 
     return (
       <span className="matched-text" title={text}>
-        {truncateChunks(chunks, displayText, maxLength).map((chunk, index) => {
+        {truncateChunks(chunks, displayText, maxLength).map((chunk) => {
           if (chunk.match) {
             return (
-              <span className="match" key={index}>
+              <span className="match" key={chunk.offset}>
                 {chunk.text}
               </span>
             );
