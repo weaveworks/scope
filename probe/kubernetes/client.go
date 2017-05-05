@@ -150,7 +150,7 @@ func NewClient(config ClientConfig) (Client, error) {
 	// We would use NegotiateVersion, but Kubernetes 1.1 "supports"
 	// extensions/v1beta1, but not deployments or replicasets.
 	if _, err := ec.Deployments(api.NamespaceAll).List(api.ListOptions{}); err != nil {
-		log.Infof("Deployments and ReplicaSets are not supported by this Kubernetes version")
+		log.Infof("Deployments and ReplicaSets are not supported by this Kubernetes version: %v", err)
 	} else {
 		result.deploymentStore = &cache.StoreToDeploymentLister{Store: result.setupStore(ec, "deployments", &extensions.Deployment{})}
 		result.replicaSetStore = &cache.StoreToReplicaSetLister{Store: result.setupStore(ec, "replicasets", &extensions.ReplicaSet{})}
