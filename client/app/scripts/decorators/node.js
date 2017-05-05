@@ -23,7 +23,7 @@ export function nodeResourceBoxDecorator(node) {
 }
 
 // Decorates the node with the summary info of its metric of a fixed type.
-export function nodeMetricSummaryDecoratorByType(metricType, showCapacity) {
+export function nodeMetricSummaryDecoratorByType(metricType, showCapacity, scale = 1) {
   return (node) => {
     const metric = node
       .get('metrics', makeMap())
@@ -32,8 +32,9 @@ export function nodeMetricSummaryDecoratorByType(metricType, showCapacity) {
     // Do nothing if there is no metric info.
     if (!metric) return node;
 
-    const absoluteConsumption = metric.get('value');
-    const totalCapacity = showCapacity ? metric.get('max') : absoluteConsumption;
+    const absoluteConsumption = metric.get('value') * scale;
+    const historicalMaxValue = metric.get('max') * scale;
+    const totalCapacity = showCapacity ? historicalMaxValue : absoluteConsumption;
     const relativeConsumption = absoluteConsumption / totalCapacity;
     const defaultMetric = { format: metric.get('format') };
     const percentMetric = { format: 'percent' };
