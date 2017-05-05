@@ -6088,9 +6088,9 @@ wd@^0.4.0:
     underscore.string "~3.0.3"
     vargs "~0.1.0"
 
-"weaveworks-ui-components@git+https://github.com/weaveworks/ui-components.git#v0.1.19":
-  version "0.1.19"
-  resolved "git+https://github.com/weaveworks/ui-components.git#653b64bba230219756ff3b9b675d46e8a55e3e8f"
+"weaveworks-ui-components@git+https://github.com/weaveworks/ui-components.git#v0.1.20":
+  version "0.1.20"
+  resolved "git+https://github.com/weaveworks/ui-components.git#46e6165f39defe8a720b59a9db69c93514960e00"
   dependencies:
     babel-cli "^6.18.0"
     babel-plugin-transform-export-extensions "6.8.0"
@@ -6098,6 +6098,7 @@ wd@^0.4.0:
     babel-preset-react "6.16.0"
     classnames "^2.2.5"
     node-sass "3.13.0"
+    prop-types "^15.5.8"
 
 webidl-conversions@^3.0.0:
   version "3.0.1"
