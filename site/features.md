@@ -32,9 +32,9 @@ If your app is deployed to the Amazon EC2 cluster service, then Scope displays S
 
 !['ECS Views in Scope'](images/ECS-view-tasks.png)
 
-For information on how to install Scope on Kubernetes see, "[Installing Scope on Kubernetes](installing.md#k8s)
+For information on how to install Scope on Kubernetes see, "[Installing Scope on Kubernetes](/site/installing.md#k8s)
 
-For information on how to install Scope on the AWS EC2 Container Service see, "[Installing Scope on Amazon ECS](installing.md#ecs)
+For information on how to install Scope on the AWS EC2 Container Service see, "[Installing Scope on Amazon ECS](/site/installing.md#ecs)
 
 Under the hosts view, and if you are running Weave Net for container networking, a specific Weave Net view appears. This view is useful for troubleshooting any networking problems you may be having. This view displays a number of Weave Net specific attributes such as whether quorum has been reached, the IP addresses used, whether fast datapath is enabled, or if encryption is running and many other useful attributes. See [Weave Net User Guide](https://www.weave.works/docs/net/latest/features/) for more information. 
 
