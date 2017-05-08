@@ -6,6 +6,8 @@ import { fromJS } from 'immutable';
 import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
+import Logo from '../components/logo';
+import ZoomIndicator from '../components/zoom-indicator';
 import { cacheZoomState } from '../actions/app-actions';
 import { transformToString } from '../utils/transform-utils';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
@@ -18,7 +20,7 @@ import {
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
-class ZoomWrapper extends React.Component {
+class ZoomableCanvas extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -36,13 +38,14 @@ class ZoomWrapper extends React.Component {
     };
 
     this.debouncedCacheZoom = debounce(this.cacheZoom.bind(this), ZOOM_CACHE_DEBOUNCE_INTERVAL);
+    this.handleSlide = this.handleSlide.bind(this);
     this.zoomed = this.zoomed.bind(this);
   }
 
   componentDidMount() {
     this.zoomRestored = false;
     this.zoom = zoom().on('zoom', this.zoomed);
-    this.svg = select(`svg#${this.props.svg}`);
+    this.svg = select('svg#canvas');
 
     this.setZoomTriggers(!this.props.disabled);
     this.updateZoomLimits(this.props);
@@ -77,6 +80,18 @@ class ZoomWrapper extends React.Component {
     }
   }
 
+  handleSlide(scale) {
+    const updatedState = this.cachableState({
+      scaleX: scale,
+      scaleY: scale,
+    });
+
+    this.svg.call(this.zoom.scaleTo, scale);
+
+    this.setState(updatedState);
+    this.debouncedCacheZoom();
+  }
+
   render() {
     // `forwardTransform` says whether the zoom transform is forwarded to the child
     // component. The advantage of that is more control rendering control in the
@@ -86,8 +101,19 @@ class ZoomWrapper extends React.Component {
     const transform = forwardTransform ? '' : transformToString(this.state);
 
     return (
-      <g className="cachable-zoom-wrapper" transform={transform}>
-        {forwardTransform ? children(this.state) : children}
+      <g className="zoomable-canvas">
+        <svg id="canvas" width="100%" height="100%" onClick={this.props.onClick}>
+          <Logo transform="translate(24,24) scale(0.25)" />
+          <g className="zoom-content" transform={transform}>
+            {forwardTransform ? children(this.state) : children}
+          </g>
+        </svg>
+        <ZoomIndicator
+          slideAction={this.handleSlide}
+          minScale={this.state.minScale}
+          maxScale={this.state.maxScale}
+          scale={this.state.scaleX}
+        />
       </g>
     );
   }
@@ -189,4 +215,4 @@ function mapStateToProps(state, props) {
 export default connect(
   mapStateToProps,
   { cacheZoomState }
-)(ZoomWrapper);
+)(ZoomableCanvas);

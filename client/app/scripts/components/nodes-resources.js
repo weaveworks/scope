@@ -1,8 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import Logo from './logo';
-import ZoomWrapper from './zoom-wrapper';
+import ZoomableCanvas from './zoomable-canvas';
 import NodesResourcesLayer from './nodes-resources/node-resources-layer';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import {
@@ -26,15 +25,12 @@ class NodesResources extends React.Component {
   render() {
     return (
       <div className="nodes-resources">
-        <svg id="canvas" width="100%" height="100%">
-          <Logo transform="translate(24,24) scale(0.25)" />
-          <ZoomWrapper
-            svg="canvas" bounded forwardTransform fixVertical
-            zoomLimitsSelector={resourcesZoomLimitsSelector}
-            zoomStateSelector={resourcesZoomStateSelector}>
-            {transform => this.renderLayers(transform)}
-          </ZoomWrapper>
-        </svg>
+        <ZoomableCanvas
+          bounded forwardTransform fixVertical
+          zoomLimitsSelector={resourcesZoomLimitsSelector}
+          zoomStateSelector={resourcesZoomStateSelector}>
+          {transform => this.renderLayers(transform)}
+        </ZoomableCanvas>
       </div>
     );
   }

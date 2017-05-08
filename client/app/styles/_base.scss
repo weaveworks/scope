@@ -1,5 +1,6 @@
 @import '~xterm/dist/xterm.css';
 @import '~font-awesome/scss/font-awesome.scss';
+@import '~rc-slider/assets/index.css';
 
 @font-face {
   font-family: "Roboto";
@@ -1744,6 +1745,44 @@
           max-height: calc(100vh - 160px - 160px - 160px);
         }
       }
+    }
+  }
+}
+
+//
+// Zoom indicator
+//
+
+.zoom-indicator-wrapper {
+  color: $text-tertiary-color;
+  font-size: 0.875rem;
+  position: absolute;
+  text-align: right;
+  bottom: 45px;
+  right: 40px;
+  width: 200px;
+
+  .zoom-indicator {
+    display: flex;
+  }
+
+  .rc-slider {
+    margin: 2px 12px;
+
+    .rc-slider-step {
+      cursor: pointer;
+    }
+
+    .rc-slider-track {
+      background-color: $background-darker-color;
+    }
+
+    .rc-slider-rail {
+      background-color: $border-light-color;
+    }
+
+    .rc-slider-handle {
+      border-color: $background-darker-color;
     }
   }
 }
