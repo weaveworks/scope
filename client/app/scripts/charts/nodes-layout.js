@@ -10,10 +10,12 @@ import { buildTopologyCacheId, updateNodeDegrees } from '../utils/topology-utils
 const log = debug('scope:nodes-layout');
 
 const topologyCaches = {};
-export const DEFAULT_MARGINS = {top: 0, left: 0};
-const NODE_SIZE_FACTOR = NODE_BASE_SIZE;
-const NODE_SEPARATION_FACTOR = 1.5 * NODE_BASE_SIZE;
-const RANK_SEPARATION_FACTOR = 2.5 * NODE_BASE_SIZE;
+export const DEFAULT_MARGINS = { top: 0, left: 0 };
+// Pretend the nodes are bigger than they are so that the edges would not enter
+// them under a high curvature which would cause arrow heads to be misplaced.
+const NODE_SIZE_FACTOR = 1.5 * NODE_BASE_SIZE;
+const NODE_SEPARATION_FACTOR = 1 * NODE_BASE_SIZE;
+const RANK_SEPARATION_FACTOR = 2 * NODE_BASE_SIZE;
 let layoutRuns = 0;
 let layoutRunsTrivial = 0;
 
@@ -104,11 +106,20 @@ function runLayoutEngine(graph, imNodes, imEdges) {
     const edge = edges.get(graphEdgeMeta.id);
     let points = fromJS(graphEdgeMeta.points);
 
-    // set beginning and end points to node coordinates to ignore node bounding box
+    // Set beginning and end points to node coordinates to ignore node bounding box.
     const source = nodes.get(fromGraphNodeId(edge.get('source')));
     const target = nodes.get(fromGraphNodeId(edge.get('target')));
-    points = points.mergeIn([0], {x: source.get('x'), y: source.get('y')});
-    points = points.mergeIn([points.size - 1], {x: target.get('x'), y: target.get('y')});
+    const sourcePosition = { x: source.get('x'), y: source.get('y') };
+    const targetPosition = { x: target.get('x'), y: target.get('y') };
+    if (target !== source) {
+      // If this edge is not a loop, extend it to go into the centers of its end nodes.
+      points = points.insert(0, fromJS(sourcePosition));
+      points = points.push(fromJS(targetPosition));
+    } else {
+      // For loops we replace the endpoints instead to make them smoother.
+      points = points.mergeIn([0], sourcePosition);
+      points = points.mergeIn([points.size - 1], targetPosition);
+    }
 
     edges = edges.setIn([graphEdgeMeta.id, 'points'], points);
   });
