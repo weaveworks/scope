@@ -89,7 +89,7 @@ func updateSwarmFilters(rpt report.Report, topologies []APITopologyDesc) []APITo
 	}
 	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
 	for i, t := range topologies {
-		if t.id == containersID || t.id == containersByImageID || t.id == containersByHostnameID || t.id == swarmServicesID {
+		if t.id == containersID || t.id == swarmServicesID {
 			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
 				namespaceFilters(ns, docker.DefaultNamespace, "All Stacks"),
 			})
@@ -122,7 +122,7 @@ func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITop
 	sort.Strings(ns)
 	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
 	for i, t := range topologies {
-		if t.id == containersID || t.id == containersByImageID || t.id == containersByHostnameID || t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
+		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
 			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
 				namespaceFilters(ns, "default", "All Namespaces"),
 			})
