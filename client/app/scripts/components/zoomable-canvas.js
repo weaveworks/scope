@@ -38,6 +38,7 @@ class ZoomableCanvas extends React.Component {
     };
 
     this.debouncedCacheZoom = debounce(this.cacheZoom.bind(this), ZOOM_CACHE_DEBOUNCE_INTERVAL);
+    this.canChangeZoom = this.canChangeZoom.bind(this);
     this.handleSlide = this.handleSlide.bind(this);
     this.zoomed = this.zoomed.bind(this);
   }
@@ -108,12 +109,12 @@ class ZoomableCanvas extends React.Component {
             {forwardTransform ? children(this.state) : children}
           </g>
         </svg>
-        <ZoomIndicator
+        {this.canChangeZoom() && <ZoomIndicator
           slideAction={this.handleSlide}
           minScale={this.state.minScale}
           maxScale={this.state.maxScale}
           scale={this.state.scaleX}
-        />
+        />}
       </g>
     );
   }
@@ -183,8 +184,14 @@ class ZoomableCanvas extends React.Component {
     }
   }
 
+  canChangeZoom() {
+    const { disabled, layoutZoomLimits } = this.props;
+    const canvasHasContent = !layoutZoomLimits.isEmpty();
+    return !disabled && canvasHasContent;
+  }
+
   zoomed() {
-    if (!this.props.disabled) {
+    if (this.canChangeZoom()) {
       const updatedState = this.cachableState({
         scaleX: d3Event.transform.k,
         scaleY: d3Event.transform.k,
