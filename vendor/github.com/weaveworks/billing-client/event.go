@@ -37,6 +37,7 @@ const (
 	// ContainerSeconds is one of the billable metrics
 	ContainerSeconds AmountType = "container-seconds"
 	NodeSeconds      AmountType = "node-seconds"
+	WeaveNetSeconds  AmountType = "weavenet-seconds"
 	Samples          AmountType = "samples"
 )
 

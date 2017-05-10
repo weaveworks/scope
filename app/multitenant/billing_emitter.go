@@ -57,9 +57,15 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 	hasher := sha256.New()
 	hasher.Write(buf)
 	hash := "sha256:" + base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+	weaveNetCount := 0
+	if hasWeaveNet(rep) {
+		weaveNetCount = 1
+	}
+
 	amounts := billing.Amounts{
 		billing.ContainerSeconds: int64(interval/time.Second) * int64(len(rep.Container.Nodes)),
 		billing.NodeSeconds:      int64(interval/time.Second) * int64(len(rep.Host.Nodes)),
+		billing.WeaveNetSeconds:  int64(interval/time.Second) * int64(weaveNetCount),
 	}
 	metadata := map[string]string{
 		"row_key": rowKey,
@@ -110,6 +116,18 @@ func (e *BillingEmitter) reportInterval(r report.Report) time.Duration {
 		return e.DefaultInterval
 	}
 	return d
+}
+
+// Tries to determine if this report came from a host running Weave Net
+func hasWeaveNet(r report.Report) bool {
+	for _, n := range r.Overlay.Nodes {
+		overlayType, _ := report.ParseOverlayNodeID(n.ID)
+		if overlayType == report.WeaveOverlayPeerPrefix {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Close shuts down the billing emitter and billing client flushing events.
