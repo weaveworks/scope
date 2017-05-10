@@ -78,6 +78,26 @@ struct bpf_map_def SEC("maps/tuplepid_ipv6") tuplepid_ipv6 = {
 	.max_entries = 1024,
 };
 
+/* This is a key/value store with the keys being a pid
+ * and the values being a fd unsigned int.
+ */
+struct bpf_map_def SEC("maps/fdinstall_ret") fdinstall_ret = {
+	.type = BPF_MAP_TYPE_HASH,
+	.key_size = sizeof(__u64),
+	.value_size = sizeof(unsigned int),
+	.max_entries = 1024,
+};
+
+/* This is a key/value store with the keys being a pid (tgid)
+ * and the values being a boolean.
+ */
+struct bpf_map_def SEC("maps/fdinstall_pids") fdinstall_pids = {
+	.type = BPF_MAP_TYPE_HASH,
+	.key_size = sizeof(__u32),
+	.value_size = sizeof(__u32),
+	.max_entries = 1024,
+};
+
 /* http://stackoverflow.com/questions/1001307/detecting-endianness-programmatically-in-a-c-program */
 __attribute__((always_inline))
 static bool is_big_endian(void)
@@ -818,6 +838,48 @@ int kretprobe__inet_csk_accept(struct pt_regs *ctx)
 			bpf_perf_event_output(ctx, &tcp_event_ipv6, cpu, &evt, sizeof(evt));
 		}
 	}
+	return 0;
+}
+
+SEC("kprobe/fd_install")
+int kprobe__fd_install(struct pt_regs *ctx)
+{
+	u64 pid = bpf_get_current_pid_tgid();
+	u32 tgid = pid >> 32;
+	unsigned long fd = (unsigned long) PT_REGS_PARM1(ctx);
+	u32 *exists = NULL;
+
+	exists = bpf_map_lookup_elem(&fdinstall_pids, &tgid);
+	if (exists == NULL || !*exists)
+		return 0;
+
+	bpf_map_update_elem(&fdinstall_ret, &pid, &fd, BPF_ANY);
+
+	return 0;
+}
+
+SEC("kretprobe/fd_install")
+int kretprobe__fd_install(struct pt_regs *ctx)
+{
+	u64 pid = bpf_get_current_pid_tgid();
+	unsigned long *fd;
+	fd = bpf_map_lookup_elem(&fdinstall_ret, &pid);
+	if (fd == NULL) {
+		return 0;	// missed entry
+	}
+	bpf_map_delete_elem(&fdinstall_ret, &pid);
+
+	u32 cpu = bpf_get_smp_processor_id();
+	struct tcp_ipv4_event_t evt = {
+		.timestamp = bpf_ktime_get_ns(),
+		.cpu = cpu,
+		.type = TCP_EVENT_TYPE_FD_INSTALL,
+	};
+	evt.pid = pid >> 32;
+	evt.fd = *(__u32*)fd;
+	bpf_get_current_comm(&evt.comm, sizeof(evt.comm));
+	bpf_perf_event_output(ctx, &tcp_event_ipv4, cpu, &evt, sizeof(evt));
+
 	return 0;
 }
 

@@ -1,19 +1,28 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 
 	"github.com/weaveworks/tcptracer-bpf/pkg/tracer"
 )
 
+var watchFdInstallPids string
 var lastTimestampV4 uint64
 var lastTimestampV6 uint64
 
 func tcpEventCbV4(e tracer.TcpV4) {
-	fmt.Printf("%v cpu#%d %s %v %s %v:%v %v:%v %v\n",
-		e.Timestamp, e.CPU, e.Type, e.Pid, e.Comm, e.SAddr, e.SPort, e.DAddr, e.DPort, e.NetNS)
+	if e.Type == tracer.EventFdInstall {
+		fmt.Printf("%v cpu#%d %s %v %s %v\n",
+			e.Timestamp, e.CPU, e.Type, e.Pid, e.Comm, e.Fd)
+	} else {
+		fmt.Printf("%v cpu#%d %s %v %s %v:%v %v:%v %v\n",
+			e.Timestamp, e.CPU, e.Type, e.Pid, e.Comm, e.SAddr, e.SPort, e.DAddr, e.DPort, e.NetNS)
+	}
 
 	if lastTimestampV4 > e.Timestamp {
 		fmt.Printf("ERROR: late event!\n")
@@ -40,9 +49,15 @@ func lostCb(count uint64) {
 	os.Exit(1)
 }
 
+func init() {
+	flag.StringVar(&watchFdInstallPids, "monitor-fdinstall-pids", "", "a comma-separated list of pids that need to be monitored for fdinstall events")
+
+	flag.Parse()
+}
+
 func main() {
-	if len(os.Args) != 1 {
-		fmt.Fprintf(os.Stderr, "Usage: %s\n", os.Args[0])
+	if flag.NArg() > 1 {
+		flag.Usage()
 		os.Exit(1)
 	}
 
@@ -50,6 +65,20 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
+	}
+
+	for _, p := range strings.Split(watchFdInstallPids, ",") {
+		if p == "" {
+			continue
+		}
+
+		pid, err := strconv.ParseUint(p, 10, 32)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Invalid pid: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Printf("Monitor fdinstall events for pid %d\n", pid)
+		t.AddFdInstallWatcher(uint32(pid))
 	}
 
 	fmt.Printf("Ready\n")

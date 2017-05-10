@@ -3,9 +3,10 @@
 
 #include <linux/types.h>
 
-#define TCP_EVENT_TYPE_CONNECT 1
-#define TCP_EVENT_TYPE_ACCEPT  2
-#define TCP_EVENT_TYPE_CLOSE   3
+#define TCP_EVENT_TYPE_CONNECT          1
+#define TCP_EVENT_TYPE_ACCEPT           2
+#define TCP_EVENT_TYPE_CLOSE            3
+#define TCP_EVENT_TYPE_FD_INSTALL       4
 
 #define GUESS_SADDR      0
 #define GUESS_DADDR      1
@@ -30,6 +31,8 @@ struct tcp_ipv4_event_t {
 	__u16 sport;
 	__u16 dport;
 	__u32 netns;
+	__u32 fd;
+	__u32 dummy;
 };
 
 struct tcp_ipv6_event_t {
@@ -46,6 +49,8 @@ struct tcp_ipv6_event_t {
 	__u16 sport;
 	__u16 dport;
 	__u32 netns;
+	__u32 fd;
+	__u32 dummy;
 };
 
 // tcp_set_state doesn't run in the context of the process that initiated the
