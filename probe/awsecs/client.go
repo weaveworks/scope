@@ -140,8 +140,13 @@ func (c ecsClientImpl) listServices() []string {
 	err := c.client.ListServicesPages(
 		&ecs.ListServicesInput{Cluster: &c.cluster},
 		func(page *ecs.ListServicesOutput, lastPage bool) bool {
+			if page == nil {
+				return true
+			}
 			for _, name := range page.ServiceArns {
-				results = append(results, *name)
+				if name != nil {
+					results = append(results, *name)
+				}
 			}
 			return true
 		},
@@ -233,7 +238,9 @@ func (c ecsClientImpl) getTasks(taskARNs []string) {
 	}
 
 	for _, task := range resp.Tasks {
-		c.taskCache.Set(*task.TaskArn, newECSTask(task))
+		if task.TaskArn != nil {
+			c.taskCache.Set(*task.TaskArn, newECSTask(task))
+		}
 	}
 }
 
