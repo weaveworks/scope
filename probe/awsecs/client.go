@@ -209,7 +209,9 @@ func (c ecsClientImpl) describeServicesBatch(names []string) {
 	}
 
 	for _, service := range resp.Services {
-		c.serviceCache.Set(*service.ServiceName, newECSService(service))
+		if service != nil {
+			c.serviceCache.Set(*service.ServiceName, newECSService(service))
+		}
 	}
 }
 
