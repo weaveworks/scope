@@ -30,7 +30,7 @@ func TracerAsset() ([]byte, error) {
 	return buf, nil
 }
 
-func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6)) (*Tracer, error) {
+func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6), lostCb func(lost uint64)) (*Tracer, error) {
 	buf, err := Asset("tcptracer-ebpf.o")
 	if err != nil {
 		return nil, fmt.Errorf("couldn't find asset: %s", err)
@@ -42,7 +42,9 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6)) (*Tracer, err
 		return nil, fmt.Errorf("BPF not supported")
 	}
 
-	err = m.Load()
+	sectionParams := make(map[string]bpflib.SectionParams)
+	sectionParams["maps/tcp_event_ipv4"] = bpflib.SectionParams{PerfRingBufferPageCount: 256}
+	err = m.Load(sectionParams)
 	if err != nil {
 		return nil, err
 	}
@@ -54,13 +56,15 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6)) (*Tracer, err
 
 	channelV4 := make(chan []byte)
 	channelV6 := make(chan []byte)
+	lostChanV4 := make(chan uint64)
+	lostChanV6 := make(chan uint64)
 
-	perfMapIPV4, err := initializeIPv4(m, channelV4)
+	perfMapIPV4, err := initializeIPv4(m, channelV4, lostChanV4)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init perf map for IPv4 events: %s", err)
 	}
 
-	perfMapIPV6, err := initializeIPv6(m, channelV6)
+	perfMapIPV6, err := initializeIPv6(m, channelV6, lostChanV6)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init perf map for IPv6 events: %s", err)
 	}
@@ -77,6 +81,8 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6)) (*Tracer, err
 				return
 			case data := <-channelV4:
 				tcpEventCbV4(tcpV4ToGo(&data))
+			case lost := <-lostChanV4:
+				lostCb(lost)
 			}
 		}
 	}()
@@ -88,6 +94,8 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6)) (*Tracer, err
 				return
 			case data := <-channelV6:
 				tcpEventCbV6(tcpV6ToGo(&data))
+			case lost := <-lostChanV6:
+				lostCb(lost)
 			}
 		}
 	}()
@@ -109,12 +117,12 @@ func (t *Tracer) Stop() {
 	t.perfMapIPV6.PollStop()
 }
 
-func initialize(module *bpflib.Module, eventMapName string, eventChan chan []byte) (*bpflib.PerfMap, error) {
+func initialize(module *bpflib.Module, eventMapName string, eventChan chan []byte, lostChan chan uint64) (*bpflib.PerfMap, error) {
 	if err := guess(module); err != nil {
 		return nil, fmt.Errorf("error guessing offsets: %v", err)
 	}
 
-	pm, err := bpflib.InitPerfMap(module, eventMapName, eventChan)
+	pm, err := bpflib.InitPerfMap(module, eventMapName, eventChan, lostChan)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing perf map for %q: %v", eventMapName, err)
 	}
@@ -123,10 +131,10 @@ func initialize(module *bpflib.Module, eventMapName string, eventChan chan []byt
 
 }
 
-func initializeIPv4(module *bpflib.Module, eventChan chan []byte) (*bpflib.PerfMap, error) {
-	return initialize(module, "tcp_event_ipv4", eventChan)
+func initializeIPv4(module *bpflib.Module, eventChan chan []byte, lostChan chan uint64) (*bpflib.PerfMap, error) {
+	return initialize(module, "tcp_event_ipv4", eventChan, lostChan)
 }
 
-func initializeIPv6(module *bpflib.Module, eventChan chan []byte) (*bpflib.PerfMap, error) {
-	return initialize(module, "tcp_event_ipv6", eventChan)
+func initializeIPv6(module *bpflib.Module, eventChan chan []byte, lostChan chan uint64) (*bpflib.PerfMap, error) {
+	return initialize(module, "tcp_event_ipv6", eventChan, lostChan)
 }
