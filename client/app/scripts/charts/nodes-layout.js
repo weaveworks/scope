@@ -2,10 +2,11 @@ import dagre from 'dagre';
 import debug from 'debug';
 import { fromJS, Map as makeMap, Set as ImmSet } from 'immutable';
 
-import { NODE_BASE_SIZE } from '../constants/styles';
+import { NODE_BASE_SIZE, EDGE_WAYPOINTS_CAP } from '../constants/styles';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { featureIsEnabledAny } from '../utils/feature-utils';
 import { buildTopologyCacheId, updateNodeDegrees } from '../utils/topology-utils';
+import { uniformSelect } from '../utils/array-utils';
 
 const log = debug('scope:nodes-layout');
 
@@ -25,6 +26,29 @@ function graphNodeId(id) {
 
 function fromGraphNodeId(encodedId) {
   return encodedId.replace('<DOT>', '.');
+}
+
+function correctedEdgePath(waypoints, source, target) {
+  // Set beginning and end points to node coordinates to ignore node bounding box.
+  const sourcePoint = fromJS({ x: source.get('x'), y: source.get('y') });
+  const targetPoint = fromJS({ x: target.get('x'), y: target.get('y') });
+  const arrowPoint = waypoints.last();
+
+  if (target !== source) {
+    waypoints = fromJS(uniformSelect(waypoints.butLast().toJS(), EDGE_WAYPOINTS_CAP - 4));
+    // If this edge is not a loop, extend it to go into the centers of its end nodes.
+    waypoints = waypoints.insert(0, sourcePoint);
+    waypoints = waypoints.push(arrowPoint);
+    waypoints = waypoints.push(arrowPoint);
+    waypoints = waypoints.push(targetPoint);
+  } else {
+    waypoints = fromJS(uniformSelect(waypoints.toJS(), EDGE_WAYPOINTS_CAP));
+    // For loops we replace the endpoints instead to make them smoother.
+    waypoints = waypoints.set(0, sourcePoint);
+    waypoints = waypoints.set(waypoints.size - 1, targetPoint);
+  }
+
+  return waypoints;
 }
 
 /**
@@ -104,24 +128,12 @@ function runLayoutEngine(graph, imNodes, imEdges) {
   graph.edges().forEach((graphEdge) => {
     const graphEdgeMeta = graph.edge(graphEdge);
     const edge = edges.get(graphEdgeMeta.id);
-    let points = fromJS(graphEdgeMeta.points);
 
-    // Set beginning and end points to node coordinates to ignore node bounding box.
     const source = nodes.get(fromGraphNodeId(edge.get('source')));
     const target = nodes.get(fromGraphNodeId(edge.get('target')));
-    const sourcePosition = { x: source.get('x'), y: source.get('y') };
-    const targetPosition = { x: target.get('x'), y: target.get('y') };
-    if (target !== source) {
-      // If this edge is not a loop, extend it to go into the centers of its end nodes.
-      points = points.insert(0, fromJS(sourcePosition));
-      points = points.push(fromJS(targetPosition));
-    } else {
-      // For loops we replace the endpoints instead to make them smoother.
-      points = points.mergeIn([0], sourcePosition);
-      points = points.mergeIn([points.size - 1], targetPosition);
-    }
+    const waypoints = correctedEdgePath(fromJS(graphEdgeMeta.points), source, target);
 
-    edges = edges.setIn([graphEdgeMeta.id, 'points'], points);
+    edges = edges.setIn([graphEdgeMeta.id, 'points'], waypoints);
   });
 
   // return object with the width and height of layout

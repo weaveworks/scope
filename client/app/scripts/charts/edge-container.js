@@ -2,17 +2,12 @@ import React from 'react';
 import { Motion, spring } from 'react-motion';
 import { Map as makeMap } from 'immutable';
 import { line, curveBasis } from 'd3-shape';
-import { each, omit, times, constant } from 'lodash';
+import { each, omit, times } from 'lodash';
 
 import { NODES_SPRING_ANIMATION_CONFIG } from '../constants/animation';
-import { uniformSelect } from '../utils/array-utils';
+import { EDGE_WAYPOINTS_CAP } from '../constants/styles';
 import Edge from './edge';
 
-// Tweak this value for the number of control
-// points along the edge curve, e.g. values:
-//   * 2 -> edges are simply straight lines
-//   * 4 -> minimal value for loops to look ok
-const WAYPOINTS_COUNT = 8;
 
 const spline = line()
   .curve(curveBasis)
@@ -27,7 +22,8 @@ const transformedEdge = (props, path) => (
 // that is used by Motion to an array of waypoints in the format
 // [{x: 11, y: 22}, {x: 33, y: 44}] that can be used by D3.
 const waypointsMapToArray = (waypointsMap) => {
-  const waypointsArray = times(WAYPOINTS_COUNT, () => ({ x: 0, y: 0}));
+  const waypointsCount = Object.keys(waypointsMap).length / 2;
+  const waypointsArray = times(waypointsCount, () => ({ x: 0, y: 0 }));
   each(waypointsMap, (value, key) => {
     const [axis, index] = [key[0], key.slice(1)];
     waypointsArray[index][axis] = value;
@@ -73,27 +69,12 @@ export default class EdgeContainer extends React.PureComponent {
   }
 
   prepareWaypointsForMotion(nextWaypoints) {
-    nextWaypoints = nextWaypoints.toJS();
-
-    // Motion requires a constant number of waypoints along the path of each edge
-    // for the animation to work correctly, but dagre might be changing their number
-    // depending on the dynamic topology reconfiguration. Here we are transforming
-    // the waypoints array given by dagre to the fixed size of `WAYPOINTS_COUNT` that
-    // Motion could take over.
-    const waypointsMissing = WAYPOINTS_COUNT - nextWaypoints.length;
-    if (waypointsMissing > 0) {
-      // Whenever there are some waypoints missing, we simply populate the beginning of the
-      // array with the first element, as this leaves the curve interpolation unchanged.
-      nextWaypoints = times(waypointsMissing, constant(nextWaypoints[0])).concat(nextWaypoints);
-    } else if (waypointsMissing < 0) {
-      // If there are 'too many' waypoints given by dagre, we select a sub-array of
-      // uniformly distributed indices. Note that it is very important to keep the first
-      // and the last endpoints in the array as they are the ones connecting the nodes.
-      nextWaypoints = uniformSelect(nextWaypoints, WAYPOINTS_COUNT);
+    while (nextWaypoints.size < EDGE_WAYPOINTS_CAP) {
+      nextWaypoints = nextWaypoints.insert(0, nextWaypoints.first());
     }
 
     let { waypointsMap } = this.state;
-    nextWaypoints.forEach((point, index) => {
+    nextWaypoints.toJS().forEach((point, index) => {
       waypointsMap = waypointsMap.set(`x${index}`, spring(point.x, NODES_SPRING_ANIMATION_CONFIG));
       waypointsMap = waypointsMap.set(`y${index}`, spring(point.y, NODES_SPRING_ANIMATION_CONFIG));
     });

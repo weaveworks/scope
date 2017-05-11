@@ -31,6 +31,11 @@ export const UNIT_CLOUD_PATH = 'M-1.25 0.233Q-1.25 0.44-1.104 0.587-0.957 0.733-
 //      are given on a small unit scale as foreign objects in SVG.
 export const NODE_BASE_SIZE = 100;
 
+// Tweak this value for the number of control
+// points along the edge curve, e.g. values:
+//   * 2 -> edges are simply straight lines
+//   * 4 -> minimal value for loops to look ok
+export const EDGE_WAYPOINTS_CAP = 10;
 
 export const CANVAS_MARGINS = {
   [GRAPH_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 150 },
