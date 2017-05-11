@@ -171,7 +171,8 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 // once to initialize ebpfTracker
 func (t *connectionTracker) getInitialState() {
 	var processCache *process.CachingWalker
-	processCache = process.NewCachingWalker(process.NewWalker(t.conf.ProcRoot))
+	walker := process.NewWalker(t.conf.ProcRoot, true)
+	processCache = process.NewCachingWalker(walker)
 	processCache.Tick()
 
 	scanner := procspy.NewSyncConnectionScanner(processCache)
@@ -194,7 +195,14 @@ func (t *connectionTracker) getInitialState() {
 	}
 	scanner.Stop()
 
-	t.ebpfTracker.feedInitialConnections(conns, seenTuples, report.MakeHostNodeID(t.conf.HostID))
+	processesWaitingInAccept := []int{}
+	processCache.Walk(func(p, prev process.Process) {
+		if p.IsWaitingInAccept {
+			processesWaitingInAccept = append(processesWaitingInAccept, p.PID)
+		}
+	})
+
+	t.ebpfTracker.feedInitialConnections(conns, seenTuples, processesWaitingInAccept, report.MakeHostNodeID(t.conf.HostID))
 }
 
 func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID string) error {

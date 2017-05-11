@@ -22,7 +22,7 @@ type Connection struct {
 	LocalPort     uint16
 	RemoteAddress net.IP
 	RemotePort    uint16
-	inode         uint64
+	Inode         uint64
 	Proc          Proc
 }
 

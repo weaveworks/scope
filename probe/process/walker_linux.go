@@ -17,7 +17,8 @@ import (
 )
 
 type walker struct {
-	procRoot string
+	procRoot                 string
+	gatheringWaitingInAccept bool
 }
 
 var (
@@ -38,8 +39,11 @@ const (
 )
 
 // NewWalker creates a new process Walker.
-func NewWalker(procRoot string) Walker {
-	return &walker{procRoot: procRoot}
+func NewWalker(procRoot string, gatheringWaitingInAccept bool) Walker {
+	return &walker{
+		procRoot:                 procRoot,
+		gatheringWaitingInAccept: gatheringWaitingInAccept,
+	}
 }
 
 // skipNSpaces skips nSpaces in buf and updates the cursor 'pos'
@@ -166,6 +170,30 @@ func (w *walker) readCmdline(filename string) (cmdline, name string) {
 	return
 }
 
+// IsProcInAccept returns true if the process has a at least one thread
+// blocked on the accept() system call
+func IsProcInAccept(procRoot, pid string) (ret bool) {
+	tasks, err := fs.ReadDirNames(path.Join(procRoot, pid, "task"))
+	if err != nil {
+		// if the process has terminated, it is obviously not blocking
+		// on the accept system call
+		return false
+	}
+
+	for _, tid := range tasks {
+		buf, err := fs.ReadFile(path.Join(procRoot, pid, "task", tid, "wchan"))
+		if err != nil {
+			// if a thread has terminated, it is obviously not
+			// blocking on the accept system call
+			continue
+		}
+		if strings.TrimSpace(string(buf)) == "inet_csk_accept" {
+			return true
+		}
+	}
+	return false
+}
+
 // Walk walks the supplied directory (expecting it to look like /proc)
 // and marshalls the files into instances of Process, which it then
 // passes one-by-one to the supplied function. Walk is only made public
@@ -215,17 +243,23 @@ func (w *walker) Walk(f func(Process, Process)) error {
 			cmdlineCache.Set([]byte(filename), []byte(fmt.Sprintf("%s\x00%s", cmdline, name)), cmdlineCacheTimeout)
 		}
 
+		isWaitingInAccept := false
+		if w.gatheringWaitingInAccept {
+			isWaitingInAccept = IsProcInAccept(w.procRoot, filename)
+		}
+
 		f(Process{
-			PID:            pid,
-			PPID:           ppid,
-			Name:           name,
-			Cmdline:        cmdline,
-			Threads:        threads,
-			Jiffies:        jiffies,
-			RSSBytes:       rss,
-			RSSBytesLimit:  rssLimit,
-			OpenFilesCount: openFilesCount,
-			OpenFilesLimit: openFilesLimit,
+			PID:               pid,
+			PPID:              ppid,
+			Name:              name,
+			Cmdline:           cmdline,
+			Threads:           threads,
+			Jiffies:           jiffies,
+			RSSBytes:          rss,
+			RSSBytesLimit:     rssLimit,
+			OpenFilesCount:    openFilesCount,
+			OpenFilesLimit:    openFilesLimit,
+			IsWaitingInAccept: isWaitingInAccept,
 		}, Process{})
 	}
 
