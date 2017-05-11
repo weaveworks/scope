@@ -28,22 +28,35 @@ function fromGraphNodeId(encodedId) {
   return encodedId.replace('<DOT>', '.');
 }
 
+// Adds some additional waypoints to the edge to make sure the it connects the node
+// centers and that the edge enters the target node relatively straight so that the
+// arrow is drawn correctly. The total number of waypoints is capped to EDGE_WAYPOINTS_CAP.
 function correctedEdgePath(waypoints, source, target) {
-  // Set beginning and end points to node coordinates to ignore node bounding box.
+  // Get the relevant waypoints that will be added/replicated.
   const sourcePoint = fromJS({ x: source.get('x'), y: source.get('y') });
   const targetPoint = fromJS({ x: target.get('x'), y: target.get('y') });
-  const arrowPoint = waypoints.last();
+  const entrancePoint = waypoints.last();
 
   if (target !== source) {
+    // The strategy for the non-loop edges is the following:
+    //   * Uniformly select at most CAP - 4 of the central waypoints ignoring the target node
+    //     entrance point. Such a selection will ensure that both the source node exit point and
+    //     the point before the target node entrance point are taken as boundaries of the interval.
+    //   * Now manually add those 4 points that we always want to have included in the edge path -
+    //     centers of source/target nodes and twice the target node entrance point to ensure the
+    //     edge path actually goes through it and thus doesn't miss the arrow element.
+    //   * In the end, what matters for the arrow is that the last 4 points of the array are always
+    //     fixed regardless of the total number of waypoints. That way we ensure the arrow is drawn
+    //     correctly, but also that the edge path enters the target node smoothly.
     waypoints = fromJS(uniformSelect(waypoints.butLast().toJS(), EDGE_WAYPOINTS_CAP - 4));
-    // If this edge is not a loop, extend it to go into the centers of its end nodes.
-    waypoints = waypoints.insert(0, sourcePoint);
-    waypoints = waypoints.push(arrowPoint);
-    waypoints = waypoints.push(arrowPoint);
+    waypoints = waypoints.unshift(sourcePoint);
+    waypoints = waypoints.push(entrancePoint);
+    waypoints = waypoints.push(entrancePoint);
     waypoints = waypoints.push(targetPoint);
   } else {
+    // For loops we simply set the endpoints at the center of source/target node to
+    // make them smoother and, of course, we cap the total number of waypoints.
     waypoints = fromJS(uniformSelect(waypoints.toJS(), EDGE_WAYPOINTS_CAP));
-    // For loops we replace the endpoints instead to make them smoother.
     waypoints = waypoints.set(0, sourcePoint);
     waypoints = waypoints.set(waypoints.size - 1, targetPoint);
   }
