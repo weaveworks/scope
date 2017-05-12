@@ -2,18 +2,21 @@ import dagre from 'dagre';
 import debug from 'debug';
 import { fromJS, Map as makeMap, Set as ImmSet } from 'immutable';
 
-import { NODE_BASE_SIZE } from '../constants/styles';
+import { NODE_BASE_SIZE, EDGE_WAYPOINTS_CAP } from '../constants/styles';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { featureIsEnabledAny } from '../utils/feature-utils';
 import { buildTopologyCacheId, updateNodeDegrees } from '../utils/topology-utils';
+import { uniformSelect } from '../utils/array-utils';
 
 const log = debug('scope:nodes-layout');
 
 const topologyCaches = {};
-export const DEFAULT_MARGINS = {top: 0, left: 0};
-const NODE_SIZE_FACTOR = NODE_BASE_SIZE;
-const NODE_SEPARATION_FACTOR = 1.5 * NODE_BASE_SIZE;
-const RANK_SEPARATION_FACTOR = 2.5 * NODE_BASE_SIZE;
+export const DEFAULT_MARGINS = { top: 0, left: 0 };
+// Pretend the nodes are bigger than they are so that the edges would not enter
+// them under a high curvature which would cause arrow heads to be misplaced.
+const NODE_SIZE_FACTOR = 1.5 * NODE_BASE_SIZE;
+const NODE_SEPARATION_FACTOR = 1 * NODE_BASE_SIZE;
+const RANK_SEPARATION_FACTOR = 2 * NODE_BASE_SIZE;
 let layoutRuns = 0;
 let layoutRunsTrivial = 0;
 
@@ -23,6 +26,42 @@ function graphNodeId(id) {
 
 function fromGraphNodeId(encodedId) {
   return encodedId.replace('<DOT>', '.');
+}
+
+// Adds some additional waypoints to the edge to make sure the it connects the node
+// centers and that the edge enters the target node relatively straight so that the
+// arrow is drawn correctly. The total number of waypoints is capped to EDGE_WAYPOINTS_CAP.
+function correctedEdgePath(waypoints, source, target) {
+  // Get the relevant waypoints that will be added/replicated.
+  const sourcePoint = fromJS({ x: source.get('x'), y: source.get('y') });
+  const targetPoint = fromJS({ x: target.get('x'), y: target.get('y') });
+  const entrancePoint = waypoints.last();
+
+  if (target !== source) {
+    // The strategy for the non-loop edges is the following:
+    //   * Uniformly select at most CAP - 4 of the central waypoints ignoring the target node
+    //     entrance point. Such a selection will ensure that both the source node exit point and
+    //     the point before the target node entrance point are taken as boundaries of the interval.
+    //   * Now manually add those 4 points that we always want to have included in the edge path -
+    //     centers of source/target nodes and twice the target node entrance point to ensure the
+    //     edge path actually goes through it and thus doesn't miss the arrow element.
+    //   * In the end, what matters for the arrow is that the last 4 points of the array are always
+    //     fixed regardless of the total number of waypoints. That way we ensure the arrow is drawn
+    //     correctly, but also that the edge path enters the target node smoothly.
+    waypoints = fromJS(uniformSelect(waypoints.butLast().toJS(), EDGE_WAYPOINTS_CAP - 4));
+    waypoints = waypoints.unshift(sourcePoint);
+    waypoints = waypoints.push(entrancePoint);
+    waypoints = waypoints.push(entrancePoint);
+    waypoints = waypoints.push(targetPoint);
+  } else {
+    // For loops we simply set the endpoints at the center of source/target node to
+    // make them smoother and, of course, we cap the total number of waypoints.
+    waypoints = fromJS(uniformSelect(waypoints.toJS(), EDGE_WAYPOINTS_CAP));
+    waypoints = waypoints.set(0, sourcePoint);
+    waypoints = waypoints.set(waypoints.size - 1, targetPoint);
+  }
+
+  return waypoints;
 }
 
 /**
@@ -102,15 +141,12 @@ function runLayoutEngine(graph, imNodes, imEdges) {
   graph.edges().forEach((graphEdge) => {
     const graphEdgeMeta = graph.edge(graphEdge);
     const edge = edges.get(graphEdgeMeta.id);
-    let points = fromJS(graphEdgeMeta.points);
 
-    // set beginning and end points to node coordinates to ignore node bounding box
     const source = nodes.get(fromGraphNodeId(edge.get('source')));
     const target = nodes.get(fromGraphNodeId(edge.get('target')));
-    points = points.mergeIn([0], {x: source.get('x'), y: source.get('y')});
-    points = points.mergeIn([points.size - 1], {x: target.get('x'), y: target.get('y')});
+    const waypoints = correctedEdgePath(fromJS(graphEdgeMeta.points), source, target);
 
-    edges = edges.setIn([graphEdgeMeta.id, 'points'], points);
+    edges = edges.setIn([graphEdgeMeta.id, 'points'], waypoints);
   });
 
   // return object with the width and height of layout

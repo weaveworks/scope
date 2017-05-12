@@ -31,6 +31,11 @@ export const UNIT_CLOUD_PATH = 'M-1.25 0.233Q-1.25 0.44-1.104 0.587-0.957 0.733-
 //      are given on a small unit scale as foreign objects in SVG.
 export const NODE_BASE_SIZE = 100;
 
+// This value represents the upper bound on the number of control points along the graph edge
+// curve. Any integer value >= 6 should result in valid edges, but generally the greater this
+// value is, the nicer the edge bundling will be. On the other hand, big values would result
+// in slower rendering of the graph.
+export const EDGE_WAYPOINTS_CAP = 10;
 
 export const CANVAS_MARGINS = {
   [GRAPH_VIEW_MODE]: { top: 160, left: 40, right: 40, bottom: 150 },
