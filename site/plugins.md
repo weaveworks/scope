@@ -573,6 +573,48 @@ Table Templates describe a table and also how to identify the metadata templates
 
 To display data in a table, define a table template and prepend the table prefix to all of the metadata templates that identify the data you want to put into the table.
 
+#### Multicolumn table
+
+In order to display tabular data with multiple columns, additional fields are needed.
+
+```json
+"table_templates": {
+      "table-template-id": {
+        "id": "table-template-id",
+        "label": "Human-readable description",
+        "prefix": "table-id-",
+        "type": "multicolumn-table"
+        "columns": [
+          {
+            "id": "table-column-id-1",
+            "label": "Label 1",
+            "dataType": ""
+          },
+          {...}
+        ]
+      },
+      "another-table-template-id": {...}
+}
+```
+
+- `type` specifies the table type. Defaults to 'property-list' if absent.
+- `columns` defines the table's columns
+  - `id` the column id
+  - `label` the column header
+  - `dataType`: specifies the column type. Can be "" (for a string), "number" or "ip". Defaults to string if absent.
+
+Values are placed in their respective columns and rows by specially formatting the entries in latest (`prefix`{unique row id}___`column-id`). _**Note:** that's 3 underscores._
+
+```json
+"latest": {
+	"table-id-{unique-row-id}___table-column-id-1": {
+		"timestamp": "2017-05-05T08:53:23.183293735Z",
+		"value": "X"
+	}...
+}
+
+````
+
 ### Metrics
 Metrics are a particular kind of data that can be plotted on the UI as a graph.
 Scope uses `metric_templates` to display graph data in Scope. To pair a metric with its template, use the `metric-template-id` as the key for identifying a particular metric.
