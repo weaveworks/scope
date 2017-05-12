@@ -7,7 +7,7 @@ import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
 import Logo from '../components/logo';
-import ZoomIndicator from '../components/zoom-indicator';
+import ZoomControl from '../components/zoom-control';
 import { cacheZoomState } from '../actions/app-actions';
 import { transformToString } from '../utils/transform-utils';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
@@ -38,8 +38,8 @@ class ZoomableCanvas extends React.Component {
     };
 
     this.debouncedCacheZoom = debounce(this.cacheZoom.bind(this), ZOOM_CACHE_DEBOUNCE_INTERVAL);
+    this.handleZoomControlAction = this.handleZoomControlAction.bind(this);
     this.canChangeZoom = this.canChangeZoom.bind(this);
-    this.handleSlide = this.handleSlide.bind(this);
     this.zoomed = this.zoomed.bind(this);
   }
 
@@ -81,15 +81,15 @@ class ZoomableCanvas extends React.Component {
     }
   }
 
-  handleSlide(scale) {
-    const updatedState = this.cachableState({
-      scaleX: scale,
-      scaleY: scale,
-    });
-
+  handleZoomControlAction(scale) {
+    // Update the canvas scale (not touching the translation).
     this.svg.call(this.zoom.scaleTo, scale);
 
-    this.setState(updatedState);
+    // Update the scale state and propagate to the global cache.
+    this.setState(this.cachableState({
+      scaleX: scale,
+      scaleY: scale,
+    }));
     this.debouncedCacheZoom();
   }
 
@@ -109,8 +109,8 @@ class ZoomableCanvas extends React.Component {
             {forwardTransform ? children(this.state) : children}
           </g>
         </svg>
-        {this.canChangeZoom() && <ZoomIndicator
-          slideAction={this.handleSlide}
+        {this.canChangeZoom() && <ZoomControl
+          zoomAction={this.handleZoomControlAction}
           minScale={this.state.minScale}
           maxScale={this.state.maxScale}
           scale={this.state.scaleX}

@@ -64,8 +64,6 @@ class NodesChart extends React.Component {
 function mapStateToProps(state) {
   return {
     selectedNodeId: state.get('selectedNodeId'),
-    layoutZoomState: graphZoomStateSelector(state),
-    layoutZoomLimits: graphZoomLimitsSelector(state),
   };
 }
 

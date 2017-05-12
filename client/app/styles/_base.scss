@@ -47,6 +47,16 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 6px 10px rgba(0, 0, 0, 0.23);
 }
 
+.overlay-wrapper {
+  background-color: fade-out($background-average-color, 0.1);
+  border-radius: 4px;
+  color: $text-tertiary-color;
+  display: flex;
+  font-size: 0.7rem;
+  padding: 5px;
+  position: absolute;
+}
+
 .btn-opacity {
   @extend .palable;
   opacity: $btn-opacity-default;
@@ -128,18 +138,13 @@
 }
 
 .footer {
-  padding: 5px;
-  position: absolute;
+  @extend .overlay-wrapper;
   bottom: 11px;
   right: 43px;
-  color: $text-tertiary-color;
-  background-color: $background-average-color;
-  font-size: 0.7rem;
-  display: flex;
 
   a {
-    color: $text-secondary-color;
     @extend .btn-opacity;
+    color: $text-secondary-color;
     cursor: pointer;
   }
 
@@ -1750,56 +1755,32 @@
 }
 
 //
-// Zoom indicator
+// Zoom control
 //
 
-.zoom-indicator-wrapper {
-  color: $text-tertiary-color;
-  padding: 5px 10px;
-  border-radius: 5px;
-  background-color: $background-average-color;
-  font-size: 0.875rem;
-  position: absolute;
-  text-align: right;
+.zoom-control {
+  @extend .overlay-wrapper;
+  align-items: center;
+  flex-direction: column;
+  padding: 10px 10px 5px;
   bottom: 50px;
   right: 40px;
-  width: 40px;
-  height: auto;
-  padding: 10px 0 5px;
-  opacity: 0.9;
-
-  .zoom-indicator {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-  }
 
   .zoom-in, .zoom-out {
     @extend .btn-opacity;
     color: $text-secondary-color;
     cursor: pointer;
-    font-size: 125%;
+    font-size: 150%;
   }
 
   .rc-slider {
     margin: 10px 0;
     height: 60px;
 
-    .rc-slider-step {
-      cursor: pointer;
-    }
-
-    .rc-slider-track {
-      background-color: $text-tertiary-color;
-    }
-
-    .rc-slider-rail {
-      background-color: $border-light-color;
-    }
-
-    .rc-slider-handle {
-      border-color: $text-tertiary-color;
-    }
+    .rc-slider-step { cursor: pointer; }
+    .rc-slider-track { background-color: $text-tertiary-color; }
+    .rc-slider-rail { background-color: $border-light-color; }
+    .rc-slider-handle { border-color: $text-tertiary-color; }
   }
 }
 
