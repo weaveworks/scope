@@ -80,7 +80,7 @@ export const resourcesZoomLimitsSelector = createSelector(
 
     return makeMap({
       // Maximal zoom is such that the smallest box takes the whole canvas.
-      maxScale: width / minNodeWidth,
+      maxScale: width / Math.max(minNodeWidth, 1),
       // Minimal zoom is equivalent to the initial one, where the whole layout matches the canvas.
       minScale: defaultZoom.get('scaleX'),
       minTranslateX: xMin,

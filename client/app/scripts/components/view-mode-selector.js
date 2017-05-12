@@ -6,10 +6,8 @@ import MetricSelector from './metric-selector';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import { setGraphView, setTableView, setResourceView } from '../actions/app-actions';
 import { availableMetricsSelector } from '../selectors/node-metric';
-import {
-  isResourceViewModeSelector,
-  resourceViewAvailableSelector,
-} from '../selectors/topology';
+import { resourceViewAvailableSelector } from '../selectors/resource-view/layout';
+import { isResourceViewModeSelector } from '../selectors/topology';
 import {
   GRAPH_VIEW_MODE,
   TABLE_VIEW_MODE,

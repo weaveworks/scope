@@ -995,6 +995,8 @@
   &-metric-box {
     fill: rgba(150, 150, 150, 0.4);
 
+    .bar { opacity: 0.8; }
+
     &-info {
       background-color: rgba(white, 0.6);
       border-radius: 2px;

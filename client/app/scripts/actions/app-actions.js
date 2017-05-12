@@ -23,6 +23,7 @@ import {
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
+import { resourceViewAvailableSelector } from '../selectors/resource-view/layout';
 import {
   availableMetricTypesSelector,
   nextPinnedMetricTypeSelector,
@@ -32,7 +33,6 @@ import {
 import {
   activeTopologyOptionsSelector,
   isResourceViewModeSelector,
-  resourceViewAvailableSelector,
 } from '../selectors/topology';
 import {
   GRAPH_VIEW_MODE,

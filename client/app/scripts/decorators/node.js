@@ -5,10 +5,17 @@ import { formatMetricSvg } from '../utils/string-utils';
 import { RESOURCES_LAYER_HEIGHT } from '../constants/styles';
 
 
-export function nodeResourceViewColorDecorator(node) {
+export function nodeResourceViewColorDecorator(node, cat) {
   // Color lightness is normally determined from the node label. However, in the resource view
   // mode, we don't want to vary the lightness so we just always forward the empty string instead.
-  return node.set('color', getNodeColor(node.get('rank'), '', node.get('pseudo')));
+  const text = (cat === 'hosts' ? 'a' : cat);
+
+  // const text = node.get('label');
+  const subtext = node.get('rank');
+  return node.merge({
+    color: getNodeColor(text, subtext, node.get('pseudo')),
+    fill: getNodeColor(text, subtext, node.get('pseudo'), true),
+  });
 }
 
 // Decorates the resource node with dimensions taken from its metric summary.
@@ -16,7 +23,7 @@ export function nodeResourceBoxDecorator(node) {
   const metricSummary = node.get('metricSummary', makeMap());
   const width = metricSummary.get('showCapacity') ?
     metricSummary.get('totalCapacity') :
-    metricSummary.get('absoluteConsumption');
+    metricSummary.get('absoluteConsumption') * 1;
   const height = RESOURCES_LAYER_HEIGHT;
 
   return node.merge(makeMap({ width, height }));

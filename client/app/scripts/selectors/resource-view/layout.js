@@ -9,6 +9,7 @@ import {
   RESOURCE_VIEW_LAYERS,
   TOPOLOGIES_WITH_CAPACITY,
 } from '../../constants/resources';
+import { activeLayoutCachedZoomSelector } from '../zooming';
 import {
   nodeParentDecoratorByTopologyId,
   nodeMetricSummaryDecoratorByType,
@@ -33,6 +34,13 @@ export const layersTopologyIdsSelector = createSelector(
     state => state.get('currentTopologyId'),
   ],
   topologyId => fromJS(RESOURCE_VIEW_LAYERS[topologyId] || [])
+);
+
+export const resourceViewAvailableSelector = createSelector(
+  [
+    layersTopologyIdsSelector
+  ],
+  layersTopologyIds => !layersTopologyIds.isEmpty()
 );
 
 // Calculates the resource view layer Y-coordinate for every topology in the resource view.
@@ -90,7 +98,7 @@ const decoratedNodesByTopologySelector = createSelector(
 
       // Color the node, deduce its anchor point, dimensions and info about its pinned metric.
       const decoratedTopologyNodes = (topologyNodes || makeMap())
-        .map(nodeResourceViewColorDecorator)
+        .map(n => nodeResourceViewColorDecorator(n, layerTopologyId))
         .map(nodeMetricSummaryDecorator)
         .map(nodeResourceBoxDecorator)
         .map(nodeParentDecorator);
@@ -120,8 +128,9 @@ export const layoutNodesByTopologyIdSelector = createSelector(
   [
     layersTopologyIdsSelector,
     decoratedNodesByTopologySelector,
+    activeLayoutCachedZoomSelector,
   ],
-  (layersTopologyIds, nodesByTopology) => {
+  (layersTopologyIds, nodesByTopology, cachedZoom) => {
     let layoutNodes = makeMap();
     let parentTopologyId = null;
 
@@ -139,20 +148,21 @@ export const layoutNodesByTopologyIdSelector = createSelector(
         // Set the initial offset to the offset of the parent (that has already been set).
         // If there is no offset information, i.e. we're processing the base layer, set it to 0.
         const parentNode = layoutNodes.getIn([parentTopologyId, parentNodeId], makeMap());
-        let currentOffset = parentNode.get('offset', 0);
+        const c = 10 / (cachedZoom.get('scaleX') || 1);
+        let currentOffset = parentNode.get('offset', 0) + c;
 
         // Sort the nodes in the current bucket and lay them down one after another.
         nodesBucket.sortBy(resourceNodeConsumptionComparator).forEach((node, nodeId) => {
           const positionedNode = node.set('offset', currentOffset);
           positionedNodes = positionedNodes.set(nodeId, positionedNode);
-          currentOffset += node.get('width');
+          currentOffset += node.get('width') + (c * 0.0);
         });
 
         // TODO: This block of code checks for the overlaps which are caused by children
         // consuming more resources than their parent node. This happens due to inconsistent
         // data being sent from the backend and it needs to be fixed there.
-        const parentOffset = parentNode.get('offset', 0);
-        const parentWidth = parentNode.get('width', currentOffset);
+        const parentOffset = parentNode.get('offset', 0) + c;
+        const parentWidth = parentNode.get('width', currentOffset) - (2 * c);
         const totalChildrenWidth = currentOffset - parentOffset;
         // If the total width of the children exceeds the parent node box width, we have a problem.
         // We fix it by shrinking all the children to by a factor to perfectly fit into the parent.

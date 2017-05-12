@@ -20,11 +20,11 @@ export default class NodeResourcesMetricBoxInfo extends React.Component {
   }
 
   render() {
-    const { width, x, y } = this.props;
+    const { width, type, x, y } = this.props;
     return (
       <foreignObject x={x} y={y} width={width} height="45px">
         <div className="node-resources-metric-box-info">
-          <span className="wrapper label truncate">{this.props.label}</span>
+          <span className="wrapper label truncate">{this.props.label} <i>{type}</i></span>
           <span className="wrapper consumption truncate">{this.humanizedMetricInfo()}</span>
         </div>
       </foreignObject>

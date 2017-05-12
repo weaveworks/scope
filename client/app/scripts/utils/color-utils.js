@@ -25,15 +25,16 @@ export function text2degree(text) {
   return hueScale(num);
 }
 
-export function colors(text, secondText) {
-  let hue = text2degree(text);
+export function colors(text, secondText, blend = false) {
+  let hue = text2degree(text) + (text2degree(secondText) * 0.15) + 360;
+  while (hue >= 360) hue -= 360;
   // skip green and shift to the end of the color wheel
-  if (hue > 70 && hue < 150) {
-    hue += 80;
-  }
-  const saturation = 0.6;
-  let lightness = 0.5;
-  if (secondText) {
+  // if (hue > 70 && hue < 150) {
+  //   hue += 80;
+  // }
+  const saturation = blend ? 0.5 : 0.7;
+  let lightness = blend ? 0.7 : 0.3;
+  if (secondText && false) {
     // reuse text2degree and feed degree to lightness scale
     lightness = lightnessScale(text2degree(secondText));
   }
@@ -44,11 +45,11 @@ export function getNeutralColor() {
   return PSEUDO_COLOR;
 }
 
-export function getNodeColor(text = '', secondText = '', isPseudo = false) {
+export function getNodeColor(text = '', secondText = '', isPseudo = false, blend = false) {
   if (isPseudo) {
     return PSEUDO_COLOR;
   }
-  return colors(text, secondText).toString();
+  return colors(text, secondText, blend).toString();
 }
 
 export function getNodeColorDark(text = '', secondText = '', isPseudo = false) {

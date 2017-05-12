@@ -1,6 +1,5 @@
 import { createSelector } from 'reselect';
 
-import { layersTopologyIdsSelector } from './resource-view/layout';
 import {
   RESOURCE_VIEW_MODE,
   GRAPH_VIEW_MODE,
@@ -29,13 +28,6 @@ export const isResourceViewModeSelector = createSelector(
     state => state.get('topologyViewMode'),
   ],
   viewMode => viewMode === RESOURCE_VIEW_MODE
-);
-
-export const resourceViewAvailableSelector = createSelector(
-  [
-    layersTopologyIdsSelector
-  ],
-  layersTopologyIds => !layersTopologyIds.isEmpty()
 );
 
 // Checks if graph complexity is high. Used to trigger
