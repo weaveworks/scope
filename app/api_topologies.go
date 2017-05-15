@@ -31,6 +31,7 @@ const (
 	replicaSetsID          = "replica-sets"
 	deploymentsID          = "deployments"
 	daemonsetsID           = "daemonsets"
+	kubeCombinedID         = "kube-combined"
 	servicesID             = "services"
 	hostsID                = "hosts"
 	weaveID                = "weave"
@@ -120,7 +121,7 @@ func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITop
 	sort.Strings(ns)
 	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
 	for i, t := range topologies {
-		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID || t.id == daemonsetsID {
+		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID || t.id == daemonsetsID || t.id == kubeCombinedID {
 			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
 				namespaceFilters(ns, "All Namespaces"),
 			})
@@ -265,6 +266,14 @@ func MakeRegistry() *Registry {
 			parent:      podsID,
 			renderer:    render.DaemonSetRenderer,
 			Name:        "daemonsets",
+			Options:     []APITopologyOptionGroup{unmanagedFilter},
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          kubeCombinedID,
+			parent:      podsID,
+			renderer:    render.KubeCombinedRenderer,
+			Name:        "combined",
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
 		},
