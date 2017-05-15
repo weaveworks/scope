@@ -7,6 +7,7 @@
 package reflect
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -28,6 +29,7 @@ func deepValueEqual(v1, v2 reflect.Value, visited map[visit]bool, depth int) boo
 		return v1.IsValid() == v2.IsValid()
 	}
 	if v1.Type() != v2.Type() {
+		fmt.Printf("Type %s != %s\n", v1.Type().Name(), v2.Type().Name())
 		return false
 	}
 
@@ -147,6 +149,8 @@ func structEq(v1, v2 reflect.Value, visited map[visit]bool, depth int) bool {
 			continue
 		}
 		if !deepValueEqual(v1.Field(i), v2.Field(i), visited, depth+1) {
+			fmt.Printf("Comparing struct %s against %s, field %d\n", v1.Type().Name(), v2.Type().Name(), i)
+			fmt.Printf("Field %s %+v != %+v\n", v1.Type().Field(i).Name, v1.Field(i), v2.Field(i))
 			return false
 		}
 	}
@@ -155,6 +159,7 @@ func structEq(v1, v2 reflect.Value, visited map[visit]bool, depth int) bool {
 
 func mapEq(v1, v2 reflect.Value, visited map[visit]bool, depth int) bool {
 	if v1.IsNil() != v2.IsNil() {
+		fmt.Printf("Map IsNil %v != %v\n", v1.IsNil(), v2.IsNil())
 		return false
 	}
 	if v1.Len() != v2.Len() {
@@ -200,6 +205,7 @@ func normalEq(v1, v2 reflect.Value, _ map[visit]bool, _ int) bool {
 // equality. DeepEqual correctly handles recursive types. Functions are equal
 // only if they are both nil.
 // An empty slice is not equal to a nil slice.
+// If the value has a method DeepEqual, that will be called.
 func DeepEqual(a1, a2 interface{}) bool {
 	if a1 == nil || a2 == nil {
 		return a1 == a2
