@@ -18,7 +18,7 @@ var (
 		regexp.MustCompile(`^.+\.amazonaws\.com$`),
 		regexp.MustCompile(`^.+\.googleapis\.com$`),
 		regexp.MustCompile(`^.+\.core\.windows\.net$`),	// Azure Storage - Blob, Tables, Files & Queues
-		regexp.MustCompile(`^.+\.servicebus\.windows\.net$`),// Azure Service Bus
+		regexp.MustCompile(`^.+\.servicebus\.windows\.net$`), // Azure Service Bus
 		regexp.MustCompile(`^.+\.azure-api\.net$`), // Azure API Management
 		regexp.MustCompile(`^.+\.onmicrosoft\.com$`), // Azure Active Directory
 		regexp.MustCompile(`^.+\.cloudapp\.azure\.com$`),	// Azure IaaS
