@@ -1,14 +1,14 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import Logo from '../components/logo';
 import NodesChartElements from './nodes-chart-elements';
-import ZoomWrapper from '../components/zoom-wrapper';
+import ZoomableCanvas from '../components/zoomable-canvas';
 import { clickBackground } from '../actions/app-actions';
 import {
   graphZoomLimitsSelector,
   graphZoomStateSelector,
 } from '../selectors/graph-view/zoom';
+
 
 const EdgeMarkerDefinition = ({ selectedNodeId }) => {
   const markerOffset = selectedNodeId ? '35' : '40';
@@ -47,16 +47,14 @@ class NodesChart extends React.Component {
     const { selectedNodeId } = this.props;
     return (
       <div className="nodes-chart">
-        <svg id="canvas" width="100%" height="100%" onClick={this.handleMouseClick}>
-          <Logo transform="translate(24,24) scale(0.25)" />
+        <ZoomableCanvas
+          onClick={this.handleMouseClick}
+          zoomLimitsSelector={graphZoomLimitsSelector}
+          zoomStateSelector={graphZoomStateSelector}
+          disabled={selectedNodeId}>
           <EdgeMarkerDefinition selectedNodeId={selectedNodeId} />
-          <ZoomWrapper
-            svg="canvas" disabled={selectedNodeId}
-            zoomLimitsSelector={graphZoomLimitsSelector}
-            zoomStateSelector={graphZoomStateSelector}>
-            <NodesChartElements />
-          </ZoomWrapper>
-        </svg>
+          <NodesChartElements />
+        </ZoomableCanvas>
       </div>
     );
   }

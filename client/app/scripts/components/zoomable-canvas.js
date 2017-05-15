@@ -6,6 +6,8 @@ import { fromJS } from 'immutable';
 import { event as d3Event, select } from 'd3-selection';
 import { zoom, zoomIdentity } from 'd3-zoom';
 
+import Logo from '../components/logo';
+import ZoomControl from '../components/zoom-control';
 import { cacheZoomState } from '../actions/app-actions';
 import { transformToString } from '../utils/transform-utils';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
@@ -18,7 +20,7 @@ import {
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
-class ZoomWrapper extends React.Component {
+class ZoomableCanvas extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -36,13 +38,15 @@ class ZoomWrapper extends React.Component {
     };
 
     this.debouncedCacheZoom = debounce(this.cacheZoom.bind(this), ZOOM_CACHE_DEBOUNCE_INTERVAL);
+    this.handleZoomControlAction = this.handleZoomControlAction.bind(this);
+    this.canChangeZoom = this.canChangeZoom.bind(this);
     this.zoomed = this.zoomed.bind(this);
   }
 
   componentDidMount() {
     this.zoomRestored = false;
     this.zoom = zoom().on('zoom', this.zoomed);
-    this.svg = select(`svg#${this.props.svg}`);
+    this.svg = select('svg#canvas');
 
     this.setZoomTriggers(!this.props.disabled);
     this.updateZoomLimits(this.props);
@@ -77,6 +81,18 @@ class ZoomWrapper extends React.Component {
     }
   }
 
+  handleZoomControlAction(scale) {
+    // Update the canvas scale (not touching the translation).
+    this.svg.call(this.zoom.scaleTo, scale);
+
+    // Update the scale state and propagate to the global cache.
+    this.setState(this.cachableState({
+      scaleX: scale,
+      scaleY: scale,
+    }));
+    this.debouncedCacheZoom();
+  }
+
   render() {
     // `forwardTransform` says whether the zoom transform is forwarded to the child
     // component. The advantage of that is more control rendering control in the
@@ -86,8 +102,19 @@ class ZoomWrapper extends React.Component {
     const transform = forwardTransform ? '' : transformToString(this.state);
 
     return (
-      <g className="cachable-zoom-wrapper" transform={transform}>
-        {forwardTransform ? children(this.state) : children}
+      <g className="zoomable-canvas">
+        <svg id="canvas" width="100%" height="100%" onClick={this.props.onClick}>
+          <Logo transform="translate(24,24) scale(0.25)" />
+          <g className="zoom-content" transform={transform}>
+            {forwardTransform ? children(this.state) : children}
+          </g>
+        </svg>
+        {this.canChangeZoom() && <ZoomControl
+          zoomAction={this.handleZoomControlAction}
+          minScale={this.state.minScale}
+          maxScale={this.state.maxScale}
+          scale={this.state.scaleX}
+        />}
       </g>
     );
   }
@@ -157,8 +184,14 @@ class ZoomWrapper extends React.Component {
     }
   }
 
+  canChangeZoom() {
+    const { disabled, layoutZoomLimits } = this.props;
+    const canvasHasContent = !layoutZoomLimits.isEmpty();
+    return !disabled && canvasHasContent;
+  }
+
   zoomed() {
-    if (!this.props.disabled) {
+    if (this.canChangeZoom()) {
       const updatedState = this.cachableState({
         scaleX: d3Event.transform.k,
         scaleY: d3Event.transform.k,
@@ -189,4 +222,4 @@ function mapStateToProps(state, props) {
 export default connect(
   mapStateToProps,
   { cacheZoomState }
-)(ZoomWrapper);
+)(ZoomableCanvas);

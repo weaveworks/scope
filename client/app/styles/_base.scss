@@ -1,5 +1,6 @@
 @import '~xterm/dist/xterm.css';
 @import '~font-awesome/scss/font-awesome.scss';
+@import '~rc-slider/dist/rc-slider.css';
 
 @font-face {
   font-family: "Roboto";
@@ -44,6 +45,16 @@
 
 .shadow-3 {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 6px 10px rgba(0, 0, 0, 0.23);
+}
+
+.overlay-wrapper {
+  background-color: fade-out($background-average-color, 0.1);
+  border-radius: 4px;
+  color: $text-tertiary-color;
+  display: flex;
+  font-size: 0.7rem;
+  padding: 5px;
+  position: absolute;
 }
 
 .btn-opacity {
@@ -127,18 +138,13 @@
 }
 
 .footer {
-  padding: 5px;
-  position: absolute;
+  @extend .overlay-wrapper;
   bottom: 11px;
   right: 43px;
-  color: $text-tertiary-color;
-  background-color: fade-out($background-average-color, .1);
-  font-size: 0.7rem;
-  display: flex;
 
   a {
-    color: $text-secondary-color;
     @extend .btn-opacity;
+    color: $text-secondary-color;
     cursor: pointer;
   }
 
@@ -1745,6 +1751,36 @@
         }
       }
     }
+  }
+}
+
+//
+// Zoom control
+//
+
+.zoom-control {
+  @extend .overlay-wrapper;
+  align-items: center;
+  flex-direction: column;
+  padding: 10px 10px 5px;
+  bottom: 50px;
+  right: 40px;
+
+  .zoom-in, .zoom-out {
+    @extend .btn-opacity;
+    color: $text-secondary-color;
+    cursor: pointer;
+    font-size: 150%;
+  }
+
+  .rc-slider {
+    margin: 10px 0;
+    height: 60px;
+
+    .rc-slider-step { cursor: pointer; }
+    .rc-slider-track { background-color: $text-tertiary-color; }
+    .rc-slider-rail { background-color: $border-light-color; }
+    .rc-slider-handle { border-color: $text-tertiary-color; }
   }
 }
 
