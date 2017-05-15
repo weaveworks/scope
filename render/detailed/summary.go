@@ -92,6 +92,7 @@ var primaryAPITopology = map[string]string{
 	report.Pod:            "pods",
 	report.ReplicaSet:     "replica-sets",
 	report.Deployment:     "deployments",
+	report.DaemonSet:      "daemonsets",
 	report.Service:        "services",
 	report.ECSTask:        "ecs-tasks",
 	report.ECSService:     "ecs-services",
