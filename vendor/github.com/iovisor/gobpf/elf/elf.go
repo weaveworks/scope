@@ -348,7 +348,14 @@ func (b *Module) relocate(data []byte, rdata []byte) error {
 	}
 }
 
-func (b *Module) Load() error {
+type SectionParams struct {
+	PerfRingBufferPageCount   int
+	SkipPerfMapInitialization bool
+}
+
+// Load loads the BPF programs and BPF maps in the module. Each ELF section
+// can optionally have parameters that changes how it is configured.
+func (b *Module) Load(parameters map[string]SectionParams) error {
 	if b.fileName != "" {
 		fileReader, err := os.Open(b.fileName)
 		if err != nil {
@@ -541,15 +548,31 @@ func (b *Module) Load() error {
 		}
 	}
 
-	return b.initializePerfMaps()
+	return b.initializePerfMaps(parameters)
 }
 
-func (b *Module) initializePerfMaps() error {
+func (b *Module) initializePerfMaps(parameters map[string]SectionParams) error {
 	for name, m := range b.maps {
 		var cpu C.int = 0
 
 		if m.m != nil && m.m.def._type != C.BPF_MAP_TYPE_PERF_EVENT_ARRAY {
 			continue
+		}
+
+		pageSize := os.Getpagesize()
+		b.maps[name].pageCount = 8 // reasonable default
+
+		sectionName := "maps/" + name
+		if params, ok := parameters[sectionName]; ok {
+			if params.SkipPerfMapInitialization {
+				continue
+			}
+			if params.PerfRingBufferPageCount > 0 {
+				if params.PerfRingBufferPageCount <= 0 || (params.PerfRingBufferPageCount&(params.PerfRingBufferPageCount-1)) != 0 {
+					return fmt.Errorf("number of pages (%d) must be stricly positive and a power of 2", params.PerfRingBufferPageCount)
+				}
+				b.maps[name].pageCount = params.PerfRingBufferPageCount
+			}
 		}
 
 		for {
@@ -562,9 +585,7 @@ func (b *Module) initializePerfMaps() error {
 			}
 
 			// mmap
-			pageSize := os.Getpagesize()
-			pageCount := 8
-			mmapSize := pageSize * (pageCount + 1)
+			mmapSize := pageSize * (b.maps[name].pageCount + 1)
 
 			base, err := syscall.Mmap(int(pmuFD), 0, mmapSize, syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
 			if err != nil {
@@ -602,8 +623,9 @@ type Map struct {
 	m          *C.bpf_map
 
 	// only for perf maps
-	pmuFDs  []C.int
-	headers []*C.struct_perf_event_mmap_page
+	pmuFDs    []C.int
+	headers   []*C.struct_perf_event_mmap_page
+	pageCount int
 }
 
 func (b *Module) IterMaps() <-chan *Map {

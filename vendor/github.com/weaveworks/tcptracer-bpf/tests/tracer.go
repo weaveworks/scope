@@ -35,13 +35,18 @@ func tcpEventCbV6(e tracer.TcpV6) {
 	lastTimestampV6 = e.Timestamp
 }
 
+func lostCb(count uint64) {
+	fmt.Printf("ERROR: lost %d events!\n", count)
+	os.Exit(1)
+}
+
 func main() {
 	if len(os.Args) != 1 {
 		fmt.Fprintf(os.Stderr, "Usage: %s\n", os.Args[0])
 		os.Exit(1)
 	}
 
-	t, err := tracer.NewTracer(tcpEventCbV4, tcpEventCbV6)
+	t, err := tracer.NewTracer(tcpEventCbV4, tcpEventCbV6, lostCb)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)

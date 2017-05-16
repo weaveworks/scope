@@ -82,7 +82,7 @@ func newEbpfTracker() (eventTracker, error) {
 		return nil, fmt.Errorf("kernel not supported: %v", err)
 	}
 
-	t, err := tracer.NewTracer(tcpEventCbV4, tcpEventCbV6)
+	t, err := tracer.NewTracer(tcpEventCbV4, tcpEventCbV6, lostCb)
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +117,12 @@ func tcpEventCbV4(e tracer.TcpV4) {
 
 func tcpEventCbV6(e tracer.TcpV6) {
 	// TODO: IPv6 not supported in Scope
+}
+
+func lostCb(count uint64) {
+	log.Errorf("tcp tracer lost %d events. Stopping the eBPF tracker", count)
+	ebpfTracker.dead = true
+	ebpfTracker.stop()
 }
 
 func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid int, networkNamespace string) {

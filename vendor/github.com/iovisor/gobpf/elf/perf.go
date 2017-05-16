@@ -106,7 +106,9 @@ import "C"
 type PerfMap struct {
 	name         string
 	program      *Module
+	pageCount    int
 	receiverChan chan []byte
+	lostChan     chan uint64
 	pollStop     chan bool
 	timestamp    func(*[]byte) uint64
 }
@@ -118,8 +120,8 @@ type PerfEventSample struct {
 	data byte // Size bytes of data
 }
 
-func InitPerfMap(b *Module, mapName string, receiverChan chan []byte) (*PerfMap, error) {
-	_, ok := b.maps[mapName]
+func InitPerfMap(b *Module, mapName string, receiverChan chan []byte, lostChan chan uint64) (*PerfMap, error) {
+	m, ok := b.maps[mapName]
 	if !ok {
 		return nil, fmt.Errorf("no map with name %s", mapName)
 	}
@@ -127,7 +129,9 @@ func InitPerfMap(b *Module, mapName string, receiverChan chan []byte) (*PerfMap,
 	return &PerfMap{
 		name:         mapName,
 		program:      b,
+		pageCount:    m.pageCount,
 		receiverChan: receiverChan,
+		lostChan:     lostChan,
 		pollStop:     make(chan bool),
 	}, nil
 }
@@ -157,7 +161,6 @@ func (pm *PerfMap) PollStart() {
 	go func() {
 		cpuCount := len(m.pmuFDs)
 		pageSize := os.Getpagesize()
-		pageCount := 8
 		state := C.struct_read_state{}
 
 		for {
@@ -168,59 +171,61 @@ func (pm *PerfMap) PollStart() {
 				perfEventPoll(m.pmuFDs)
 			}
 
+		harvestLoop:
 			for {
 				var harvestCount C.int
 				beforeHarvest := nowNanoseconds()
 				for cpu := 0; cpu < cpuCount; cpu++ {
+				ringBufferLoop:
 					for {
 						var sample *PerfEventSample
 						var lost *PerfEventLost
 
-						ok := C.perf_event_read(C.int(pageCount), C.int(pageSize),
+						ok := C.perf_event_read(C.int(pm.pageCount), C.int(pageSize),
 							unsafe.Pointer(&state), unsafe.Pointer(m.headers[cpu]),
 							unsafe.Pointer(&sample), unsafe.Pointer(&lost))
 
 						switch ok {
 						case 0:
-							break // nothing to read
+							break ringBufferLoop // nothing to read
 						case C.PERF_RECORD_SAMPLE:
 							size := sample.Size - 4
 							b := C.GoBytes(unsafe.Pointer(&sample.data), C.int(size))
 							incoming.bytesArray = append(incoming.bytesArray, b)
 							harvestCount++
 							if pm.timestamp == nil {
-								continue
+								continue ringBufferLoop
 							}
 							if incoming.timestamp(&b) > beforeHarvest {
 								// see comment below
-								break
-							} else {
-								continue
+								break ringBufferLoop
 							}
 						case C.PERF_RECORD_LOST:
+							if pm.lostChan != nil {
+								pm.lostChan <- lost.Lost
+							}
 						default:
-							// TODO: handle lost/unknown events?
+							// ignore unknown events
 						}
-						break
 					}
 				}
 
 				if incoming.timestamp != nil {
 					sort.Sort(incoming)
 				}
-				for i := 0; i < incoming.Len(); i++ {
+				for incoming.Len() > 0 {
 					if incoming.timestamp != nil && incoming.timestamp(&incoming.bytesArray[0]) > beforeHarvest {
 						// This record has been sent after the beginning of the harvest. Stop
 						// processing here to keep the order. "incoming" is sorted, so the next
 						// elements also must not be processed now.
-						break
+						break harvestLoop
 					}
 					pm.receiverChan <- incoming.bytesArray[0]
 					// remove first element
 					incoming.bytesArray = incoming.bytesArray[1:]
 				}
 				if harvestCount == 0 && len(incoming.bytesArray) == 0 {
-					break
+					break harvestLoop
 				}
 			}
 		}
@@ -265,7 +270,7 @@ func (a OrderedBytesArray) Swap(i, j int) {
 }
 
 func (a OrderedBytesArray) Less(i, j int) bool {
-	return *(*C.uint64_t)(unsafe.Pointer(&a.bytesArray[i][0])) < *(*C.uint64_t)(unsafe.Pointer(&a.bytesArray[j][0]))
+	return a.timestamp(&a.bytesArray[i]) < a.timestamp(&a.bytesArray[j])
 }
 
 // Matching 'struct perf_event_header in <linux/perf_event.h>
