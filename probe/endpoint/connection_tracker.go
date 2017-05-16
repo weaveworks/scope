@@ -37,7 +37,7 @@ func newProcfsConnectionTracker(conf connectionTrackerConfig) connectionTracker 
 	}
 	return connectionTracker{
 		conf:            conf,
-		flowWalker:      newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, "--any-nat"),
+		flowWalker:      newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize),
 		ebpfTracker:     nil,
 		reverseResolver: newReverseResolver(),
 	}
