@@ -50,13 +50,9 @@ var (
 )
 
 // namespaceFilters generates a namespace selector option group based on the given namespaces
-func namespaceFilters(namespaces []string, defaultNamespace, noneLabel string) APITopologyOptionGroup {
-	options := APITopologyOptionGroup{ID: "namespace", Default: "", SelectType: "union", NoneLabel: noneLabel}
+func namespaceFilters(namespaces []string, noneLabel string) APITopologyOptionGroup {
+	options := APITopologyOptionGroup{ID: "namespace", Default: "none", SelectType: "union", NoneLabel: noneLabel}
 	for _, namespace := range namespaces {
-		if defaultNamespace != "" && namespace == defaultNamespace {
-			// We only set the default namespace as options.Default if it is present, otherwise default to All
-			options.Default = namespace
-		}
 		options.Options = append(options.Options, APITopologyOption{
 			Value: namespace, Label: namespace, filter: render.IsNamespace(namespace), filterPseudo: false,
 		})
@@ -91,7 +87,7 @@ func updateSwarmFilters(rpt report.Report, topologies []APITopologyDesc) []APITo
 	for i, t := range topologies {
 		if t.id == containersID || t.id == swarmServicesID {
 			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
-				namespaceFilters(ns, docker.DefaultNamespace, "All Stacks"),
+				namespaceFilters(ns, "All Stacks"),
 			})
 		}
 	}
@@ -124,7 +120,7 @@ func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITop
 	for i, t := range topologies {
 		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID {
 			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
-				namespaceFilters(ns, "default", "All Namespaces"),
+				namespaceFilters(ns, "All Namespaces"),
 			})
 		}
 	}
