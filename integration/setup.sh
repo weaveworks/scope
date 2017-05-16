@@ -26,6 +26,7 @@ setup_host() {
     echo Prefetching Images on "$HOST"
     docker_on "$HOST" pull peterbourgon/tns-db
     docker_on "$HOST" pull alpine
+    docker_on "$HOST" pull busybox
     docker_on "$HOST" pull nginx
 }
 
