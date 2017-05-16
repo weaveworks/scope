@@ -97,12 +97,21 @@ func handleWebsocket(
 		tick         = time.Tick(loop)
 		wait         = make(chan struct{}, 1)
 		topologyID   = mux.Vars(r)["topology"]
+		timestamp    = time.Now()
 	)
+
+	log.Debugf("BLUBLUBLUBLU")
+	if timestampStr := r.Form.Get("timestamp"); timestampStr != "" {
+		const ISO8601UTC = "2006-01-02T15:04:05Z"
+		timestamp, _ = time.Parse(ISO8601UTC, timestampStr)
+		log.Debugf("BLUBLUBLUBLU: %s %v", timestampStr, timestamp)
+	}
+
 	rep.WaitOn(ctx, wait)
 	defer rep.UnWait(ctx, wait)
 
 	for {
-		report, err := rep.Report(ctx)
+		report, err := rep.Report(ctx, timestamp)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return

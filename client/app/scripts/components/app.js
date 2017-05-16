@@ -29,6 +29,7 @@ import {
 } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
+import TimelineControl from './timeline-control';
 import ViewModeSelector from './view-mode-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
@@ -189,6 +190,8 @@ class App extends React.Component {
         </div>
 
         <Nodes />
+
+        <TimelineControl />
 
         <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
           {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}

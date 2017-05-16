@@ -217,6 +217,7 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     getNodesDelta(
       getCurrentTopologyUrl(state),
       activeTopologyOptionsSelector(state),
+      state.get('topologyTimestamp'),
       dispatch
     );
     getNodeDetails(
@@ -411,6 +412,7 @@ function updateTopology(dispatch, getState) {
   getNodesDelta(
     getCurrentTopologyUrl(state),
     activeTopologyOptionsSelector(state),
+    state.get('topologyTimestamp'),
     dispatch
   );
 }
@@ -431,6 +433,16 @@ export function clickTopology(topologyId) {
     dispatch({
       type: ActionTypes.CLICK_TOPOLOGY,
       topologyId
+    });
+    updateTopology(dispatch, getState);
+  };
+}
+
+export function changeTopologyTimestamp(timestamp) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.CLICK_TOPOLOGY,
+      timestamp
     });
     updateTopology(dispatch, getState);
   };
@@ -623,6 +635,7 @@ export function receiveTopologies(topologies) {
     getNodesDelta(
       getCurrentTopologyUrl(state),
       activeTopologyOptionsSelector(state),
+      state.get('topologyTimestamp'),
       dispatch
     );
     getNodeDetails(
@@ -744,6 +757,7 @@ export function route(urlState) {
     getNodesDelta(
       getCurrentTopologyUrl(state),
       activeTopologyOptionsSelector(state),
+      state.get('topologyTimestamp'),
       dispatch
     );
     getNodeDetails(

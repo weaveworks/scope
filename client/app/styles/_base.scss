@@ -197,6 +197,17 @@
   }
 }
 
+.timeline-control {
+  padding: 5px;
+  position: absolute;
+  bottom: 11px;
+  right: 500px;
+  color: $text-tertiary-color;
+  background-color: fade-out($background-average-color, .1);
+  font-size: 0.7rem;
+  display: flex;
+}
+
 .topologies {
   margin: 8px 4px;
   display: flex;

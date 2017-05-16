@@ -297,12 +297,13 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 	return reports, nil
 }
 
-func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
+func (c *awsCollector) Report(ctx context.Context, pointInTime time.Time) (report.Report, error) {
 	var (
-		now              = time.Now()
-		start            = now.Add(-c.window)
-		rowStart, rowEnd = start.UnixNano() / time.Hour.Nanoseconds(), now.UnixNano() / time.Hour.Nanoseconds()
-		userid, err      = c.userIDer(ctx)
+		end         = pointInTime
+		start       = end.Add(-c.window)
+		rowStart    = start.UnixNano() / time.Hour.Nanoseconds()
+		rowEnd      = end.UnixNano() / time.Hour.Nanoseconds()
+		userid, err = c.userIDer(ctx)
 	)
 	if err != nil {
 		return report.MakeReport(), err
@@ -311,12 +312,12 @@ func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 	// Queries will only every span 2 rows max.
 	var reportKeys []string
 	if rowStart != rowEnd {
-		reportKeys1, err := c.getReportKeys(ctx, userid, rowStart, start, now)
+		reportKeys1, err := c.getReportKeys(ctx, userid, rowStart, start, end)
 		if err != nil {
 			return report.MakeReport(), err
 		}
 
-		reportKeys2, err := c.getReportKeys(ctx, userid, rowEnd, start, now)
+		reportKeys2, err := c.getReportKeys(ctx, userid, rowEnd, start, end)
 		if err != nil {
 			return report.MakeReport(), err
 		}
@@ -324,12 +325,12 @@ func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
 		reportKeys = append(reportKeys, reportKeys1...)
 		reportKeys = append(reportKeys, reportKeys2...)
 	} else {
-		if reportKeys, err = c.getReportKeys(ctx, userid, rowEnd, start, now); err != nil {
+		if reportKeys, err = c.getReportKeys(ctx, userid, rowEnd, start, end); err != nil {
 			return report.MakeReport(), err
 		}
 	}
 
-	log.Debugf("Fetching %d reports from %v to %v", len(reportKeys), start, now)
+	log.Debugf("Fetching %d reports from %v to %v", len(reportKeys), start, end)
 	reports, err := c.getReports(ctx, reportKeys)
 	if err != nil {
 		return report.MakeReport(), err

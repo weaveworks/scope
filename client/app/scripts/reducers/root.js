@@ -122,7 +122,10 @@ function processTopologies(state, nextTopologies) {
   return state.mergeDeepIn(['topologies'], immNextTopologies);
 }
 
-function setTopology(state, topologyId) {
+function setTopology(state, topologyId, timestamp) {
+  if (timestamp) {
+    state = state.set('topologyTimestamp', timestamp);
+  }
   state = state.set('currentTopology', findTopologyById(state.get('topologies'), topologyId));
   return state.set('currentTopologyId', topologyId);
 }
@@ -331,8 +334,9 @@ export function rootReducer(state = initialState, action) {
       state = resumeUpdate(state);
       state = closeAllNodeDetails(state);
 
-      if (action.topologyId !== state.get('currentTopologyId')) {
-        state = setTopology(state, action.topologyId);
+      const currentTopologyId = state.get('currentTopologyId');
+      if (action.topologyId !== currentTopologyId || action.timestamp) {
+        state = setTopology(state, action.topologyId || currentTopologyId, action.timestamp);
         state = clearNodes(state);
       }
 

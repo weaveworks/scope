@@ -36,6 +36,7 @@ let socket;
 let reconnectTimer = 0;
 let currentUrl = null;
 let currentOptions = null;
+let currentTimestamp = null;
 let topologyTimer = 0;
 let apiDetailsTimer = 0;
 let controlErrorTimer = 0;
@@ -93,7 +94,7 @@ export function getWebsocketUrl(host = window.location.host, pathname = window.l
   return `${wsProto}://${host}${process.env.SCOPE_API_PREFIX || ''}${basePath(pathname)}`;
 }
 
-function createWebsocket(topologyUrl, optionsQuery, dispatch) {
+function createWebsocket(topologyUrl, optionsQuery, timestamp, dispatch) {
   if (socket) {
     socket.onclose = null;
     socket.onerror = null;
@@ -106,7 +107,14 @@ function createWebsocket(topologyUrl, optionsQuery, dispatch) {
   createWebsocketAt = new Date();
   firstMessageOnWebsocketAt = 0;
 
-  socket = new WebSocket(`${getWebsocketUrl()}${topologyUrl}/ws?t=${updateFrequency}&${optionsQuery}`);
+  let options = `t=${updateFrequency}`;
+  if (optionsQuery) {
+    options = `${options}&${optionsQuery}`;
+  }
+  if (timestamp) {
+    options = `${options}&timestamp=${timestamp}`;
+  }
+  socket = new WebSocket(`${getWebsocketUrl()}${topologyUrl}/ws?${options}`);
 
   socket.onopen = () => {
     dispatch(openWebsocket());
@@ -120,7 +128,7 @@ function createWebsocket(topologyUrl, optionsQuery, dispatch) {
 
     if (continuePolling) {
       reconnectTimer = setTimeout(() => {
-        createWebsocket(topologyUrl, optionsQuery, dispatch);
+        createWebsocket(topologyUrl, optionsQuery, timestamp, dispatch);
       }, reconnectTimerInterval);
     }
   };
@@ -227,18 +235,20 @@ export function getTopologies(options, dispatch, initialPoll) {
 
 // TODO: topologyUrl and options are always used for the current topology so they as arguments
 // can be replaced by the `state` and then retrieved here internally from selectors.
-export function getNodesDelta(topologyUrl, options, dispatch) {
+export function getNodesDelta(topologyUrl, options, timestamp, dispatch) {
   const optionsQuery = buildOptionsQuery(options);
   // Only recreate websocket if url changed or if forced (weave cloud instance reload);
   // Check for truthy options and that options have changed.
   const isNewOptions = currentOptions && currentOptions !== optionsQuery;
-  const isNewUrl = topologyUrl !== currentUrl || isNewOptions;
+  const isNewTimestamp = timestamp && currentTimestamp !== timestamp;
+  const isNewUrl = topologyUrl !== currentUrl || isNewOptions || isNewTimestamp;
   // `topologyUrl` can be undefined initially, so only create a socket if it is truthy
   // and no socket exists, or if we get a new url.
   if ((topologyUrl && !socket) || (topologyUrl && isNewUrl)) {
-    createWebsocket(topologyUrl, optionsQuery, dispatch);
+    createWebsocket(topologyUrl, optionsQuery, timestamp, dispatch);
     currentUrl = topologyUrl;
     currentOptions = optionsQuery;
+    currentTimestamp = timestamp;
   }
 }
 
