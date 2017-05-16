@@ -35,8 +35,8 @@ class NodeDetailsImageStatus extends React.PureComponent {
   }
 
   shouldRender() {
-    const { currentTopologyId } = this.props;
-    return currentTopologyId && topologyWhitelist.includes(currentTopologyId);
+    const { pseudo, currentTopologyId } = this.props;
+    return !pseudo && currentTopologyId && topologyWhitelist.includes(currentTopologyId);
   }
 
   renderImages() {

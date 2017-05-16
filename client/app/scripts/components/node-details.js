@@ -232,8 +232,13 @@ class NodeDetails extends React.Component {
             }
             return null;
           })}
+
           <CloudFeature>
-            <NodeDetailsImageStatus name={details.label} metadata={details.metadata} />
+            <NodeDetailsImageStatus
+              name={details.label}
+              metadata={details.metadata}
+              pseudo={details.pseudo}
+            />
           </CloudFeature>
         </div>
       </div>
