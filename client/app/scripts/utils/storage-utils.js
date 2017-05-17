@@ -1,4 +1,5 @@
 import debug from 'debug';
+import reduce from 'lodash/reduce';
 
 const log = debug('scope:storage-utils');
 
@@ -43,4 +44,30 @@ export function storageSetObject(key, obj) {
     log('Error encoding object for key', key);
   }
   return false;
+}
+
+function typeOf(obj) {
+  return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase();
+}
+
+// Checks the shape of an object. Ignores the signature of elements in arrays.
+function shapeOf(obj) {
+  return reduce(obj, (result, val, key) => {
+    const type = typeOf(val);
+    if (type === 'null' || type === 'undefined') {
+      // Do nothing
+      return result;
+    } else if (type === 'object') {
+      result[key] = shapeOf(val);
+    } else {
+      result[key] = type;
+    }
+    return result;
+  }, {});
+}
+
+export function isCompatibleShape(object, target) {
+  const shape = JSON.stringify(shapeOf(object));
+  const targetString = JSON.stringify(shapeOf(target));
+  return shape === targetString;
 }
