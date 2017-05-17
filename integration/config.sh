@@ -43,14 +43,15 @@ scope_end_suite() {
 list_containers() {
     local host=$1
     echo "Listing containers on ${host}:"
-    curl -s "http://${host}:4040/api/topology/containers?system=show" | jq -r '.nodes[] | select(has("metadata")) | .metadata[] | select(.id == "docker_image_name") | .value'
+    curl -s "http://${host}:4040/api/topology/containers?system=show" | jq -r '.nodes[] | select(has("metadata")) | { "image": .metadata[] | select(.id == "docker_image_name") | .value, "label": .label, "id": .id} | .id + " (" + .image + ", " + .label + ")"'
+    echo
 }
 
 list_connections() {
     local host=$1
     echo "Listing connections on ${host}:"
-    curl -s "http://${host}:4040/api/topology/containers?system=show" | jq -r '.nodes[] | select(has("adjacency")) | { "from": .id, "to": .adjacency[]} | .from + " -> " + .to'
-
+    curl -s "http://${host}:4040/api/topology/containers?system=show" | jq -r '.nodes[] | select(has("adjacency")) | { "from_name": .label, "from_id": .id, "to": .adjacency[]} | .from_id + " (" + .from_name+ ") -> " + .to'
+    echo
 }
 
 # this checks we have a named node in the given view
