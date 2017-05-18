@@ -141,10 +141,11 @@ func NewClient(config ClientConfig) (Client, error) {
 		extensionsClient: ec,
 	}
 
-	result.podStore = &cache.StoreToPodLister{Store: result.setupStore(c, "pods", &api.Pod{})}
-	result.serviceStore = &cache.StoreToServiceLister{Store: result.setupStore(c, "services", &api.Service{})}
-	result.replicationControllerStore = &cache.StoreToReplicationControllerLister{Store: result.setupStore(c, "replicationcontrollers", &api.ReplicationController{})}
-	result.nodeStore = &cache.StoreToNodeLister{Store: result.setupStore(c, "nodes", &api.Node{})}
+	podStore := NewEventStore(result.triggerPodWatches, cache.MetaNamespaceKeyFunc)
+	result.podStore = &cache.StoreToPodLister{Store: result.setupStore(c, "pods", &api.Pod{}, podStore)}
+	result.serviceStore = &cache.StoreToServiceLister{Store: result.setupStore(c, "services", &api.Service{}, nil)}
+	result.replicationControllerStore = &cache.StoreToReplicationControllerLister{Store: result.setupStore(c, "replicationcontrollers", &api.ReplicationController{}, nil)}
+	result.nodeStore = &cache.StoreToNodeLister{Store: result.setupStore(c, "nodes", &api.Node{}, nil)}
 
 	// We list deployments here to check if this version of kubernetes is >= 1.2.
 	// We would use NegotiateVersion, but Kubernetes 1.1 "supports"
@@ -152,16 +153,19 @@ func NewClient(config ClientConfig) (Client, error) {
 	if _, err := ec.Deployments(api.NamespaceAll).List(api.ListOptions{}); err != nil {
 		log.Infof("Deployments and ReplicaSets are not supported by this Kubernetes version: %v", err)
 	} else {
-		result.deploymentStore = &cache.StoreToDeploymentLister{Store: result.setupStore(ec, "deployments", &extensions.Deployment{})}
-		result.replicaSetStore = &cache.StoreToReplicaSetLister{Store: result.setupStore(ec, "replicasets", &extensions.ReplicaSet{})}
+		result.deploymentStore = &cache.StoreToDeploymentLister{Store: result.setupStore(ec, "deployments", &extensions.Deployment{}, nil)}
+		result.replicaSetStore = &cache.StoreToReplicaSetLister{Store: result.setupStore(ec, "replicasets", &extensions.ReplicaSet{}, nil)}
 	}
 
 	return result, nil
 }
 
-func (c *client) setupStore(kclient cache.Getter, resource string, itemType interface{}) cache.Store {
+func (c *client) setupStore(kclient cache.Getter, resource string, itemType interface{}, nonDefaultStore cache.Store) cache.Store {
 	lw := cache.NewListWatchFromClient(kclient, resource, api.NamespaceAll, fields.Everything())
-	store := cache.NewStore(cache.MetaNamespaceKeyFunc)
+	store := nonDefaultStore
+	if store == nil {
+		store = cache.NewStore(cache.MetaNamespaceKeyFunc)
+	}
 	runReflectorUntil(cache.NewReflector(lw, itemType, store, c.resyncPeriod), c.resyncPeriod, c.quit)
 	return store
 }
