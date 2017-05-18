@@ -3,8 +3,6 @@
 # shellcheck disable=SC1091
 . ./config.sh
 
-set -x
-
 start_suite "Test short lived connections between containers without Weave (no NAT)"
 
 scope_on "$HOST1" launch
