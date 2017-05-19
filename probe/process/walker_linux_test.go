@@ -88,7 +88,7 @@ func TestWalker(t *testing.T) {
 	}
 
 	have := map[int]process.Process{}
-	walker := process.NewWalker("/proc")
+	walker := process.NewWalker("/proc", false)
 	err := walker.Walk(func(p, _ process.Process) {
 		have[p.PID] = p
 	})

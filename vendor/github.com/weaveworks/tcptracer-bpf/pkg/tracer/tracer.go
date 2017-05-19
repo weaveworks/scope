@@ -5,6 +5,7 @@ package tracer
 import (
 	"bytes"
 	"fmt"
+	"unsafe"
 
 	bpflib "github.com/iovisor/gobpf/elf"
 )
@@ -109,6 +110,19 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6), lostCb func(l
 		perfMapIPV6: perfMapIPV6,
 		stopChan:    stopChan,
 	}, nil
+}
+
+func (t *Tracer) AddFdInstallWatcher(pid uint32) (err error) {
+	var one uint32 = 1
+	mapFdInstall := t.m.Map("fdinstall_pids")
+	err = t.m.UpdateElement(mapFdInstall, unsafe.Pointer(&pid), unsafe.Pointer(&one), 0)
+	return err
+}
+
+func (t *Tracer) RemoveFdInstallWatcher(pid uint32) (err error) {
+	mapFdInstall := t.m.Map("fdinstall_pids")
+	err = t.m.DeleteElement(mapFdInstall, unsafe.Pointer(&pid))
+	return err
 }
 
 func (t *Tracer) Stop() {

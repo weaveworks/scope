@@ -13,7 +13,7 @@ func TestBasicWalk(t *testing.T) {
 		procRoot = "/proc"
 		procFunc = func(process.Process, process.Process) {}
 	)
-	if err := process.NewWalker(procRoot).Walk(procFunc); err != nil {
+	if err := process.NewWalker(procRoot, false).Walk(procFunc); err != nil {
 		t.Fatal(err)
 	}
 }

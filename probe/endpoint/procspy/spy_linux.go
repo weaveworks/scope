@@ -26,7 +26,7 @@ func (c *pnConnIter) Next() *Connection {
 		bufPool.Put(c.buf)
 		return nil
 	}
-	if proc, ok := c.procs[n.inode]; ok {
+	if proc, ok := c.procs[n.Inode]; ok {
 		n.Proc = *proc
 	}
 	return n

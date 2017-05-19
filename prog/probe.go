@@ -158,7 +158,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 
 	var processCache *process.CachingWalker
 	if flags.procEnabled {
-		processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot))
+		processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot, false))
 		p.AddTicker(processCache)
 		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies, flags.noCommandLineArguments))
 	}

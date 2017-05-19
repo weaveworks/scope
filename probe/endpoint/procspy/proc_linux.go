@@ -25,11 +25,10 @@ var (
 )
 
 type pidWalker struct {
-	walker                 process.Walker
-	tickc                  <-chan time.Time // Rate-limit clock. Sets the pace when traversing namespaces and /proc/PID/fd/* files.
-	stopc                  chan struct{}    // Abort walk
-	fdBlockSize            uint64           // Maximum number of /proc/PID/fd/* files to stat() per tick
-	netNamespacePathSuffix string
+	walker      process.Walker
+	tickc       <-chan time.Time // Rate-limit clock. Sets the pace when traversing namespaces and /proc/PID/fd/* files.
+	stopc       chan struct{}    // Abort walk
+	fdBlockSize uint64           // Maximum number of /proc/PID/fd/* files to stat() per tick
 }
 
 func newPidWalker(walker process.Walker, tickc <-chan time.Time, fdBlockSize uint64) pidWalker {
@@ -38,7 +37,6 @@ func newPidWalker(walker process.Walker, tickc <-chan time.Time, fdBlockSize uin
 		tickc:       tickc,
 		fdBlockSize: fdBlockSize,
 		stopc:       make(chan struct{}),
-		netNamespacePathSuffix: getNetNamespacePathSuffix(),
 	}
 	return w
 }
@@ -91,10 +89,8 @@ func getNetNamespacePathSuffix() string {
 	return netNamespacePathSuffix
 }
 
-// Read the connections for a group of processes living in the same namespace,
-// which are found (identically) in /proc/PID/net/tcp{,6} for any of the
-// processes.
-func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process) (bool, error) {
+// ReadTCPFiles reads the proc files tcp and tcp6 for a pid
+func ReadTCPFiles(pid int, buf *bytes.Buffer) (int64, error) {
 	var (
 		errRead  error
 		errRead6 error
@@ -102,31 +98,42 @@ func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process
 		read6    int64
 	)
 
+	// even for tcp4 connections, we need to read the "tcp6" file because of IPv4-Mapped IPv6 Addresses
+
+	dirName := strconv.Itoa(pid)
+	read, errRead = readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
+	read6, errRead6 = readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
+
+	if errRead != nil {
+		return read + read6, errRead
+	}
+	return read + read6, errRead6
+}
+
+// Read the connections for a group of processes living in the same namespace,
+// which are found (identically) in /proc/PID/net/tcp{,6} for any of the
+// processes.
+func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process) (bool, error) {
+	var (
+		read int64
+		err  error
+	)
 	for _, p := range namespaceProcs {
-		dirName := strconv.Itoa(p.PID)
-
-		read, errRead = readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
-		read6, errRead6 = readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
-
-		if errRead != nil || errRead6 != nil {
+		read, err = ReadTCPFiles(p.PID, buf)
+		if err != nil {
 			// try next process
 			continue
 		}
 		// Return after succeeding on any process
 		// (proc/PID/net/tcp and proc/PID/net/tcp6 are identical for all the processes in the same namespace)
-		return read+read6 > 0, nil
+		return read > 0, nil
 	}
 
-	// It would be cool to have an "or" error combinator
-	if errRead != nil {
-		return false, errRead
-	}
-	if errRead6 != nil {
-		return false, errRead6
+	if err != nil {
+		return false, err
 	}
 
 	return false, nil
-
 }
 
 // walkNamespace does the work of walk for a single namespace
@@ -199,6 +206,19 @@ func (w pidWalker) walkNamespace(namespaceID uint64, buf *bytes.Buffer, sockets 
 	return nil
 }
 
+// ReadNetnsFromPID gets the netns inode of the specified pid
+func ReadNetnsFromPID(pid int) (uint64, error) {
+	var statT syscall.Stat_t
+
+	dirName := strconv.Itoa(pid)
+	netNamespacePath := filepath.Join(procRoot, dirName, getNetNamespacePathSuffix())
+	if err := fs.Stat(netNamespacePath, &statT); err != nil {
+		return 0, err
+	}
+
+	return statT.Ino, nil
+}
+
 // walk walks over all numerical (PID) /proc entries. It reads
 // /proc/PID/net/tcp{,6} for each namespace and sees if the ./fd/* files of each
 // process in that namespace are symlinks to sockets. Returns a map from socket
@@ -207,7 +227,6 @@ func (w pidWalker) walk(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 	var (
 		sockets    = map[uint64]*Proc{}              // map socket inode -> process
 		namespaces = map[uint64][]*process.Process{} // map network namespace id -> processes
-		statT      syscall.Stat_t
 	)
 
 	// We do two process traversals: One to group processes by namespace and
@@ -219,14 +238,11 @@ func (w pidWalker) walk(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 	// the processes living in that namespace.
 
 	w.walker.Walk(func(p, _ process.Process) {
-		dirName := strconv.Itoa(p.PID)
-
-		netNamespacePath := filepath.Join(procRoot, dirName, w.netNamespacePathSuffix)
-		if err := fs.Stat(netNamespacePath, &statT); err != nil {
+		namespaceID, err := ReadNetnsFromPID(p.PID)
+		if err != nil {
 			return
 		}
 
-		namespaceID := statT.Ino
 		namespaces[namespaceID] = append(namespaces[namespaceID], &p)
 	})
 

@@ -20,28 +20,28 @@ func TestProcNet(t *testing.T) {
 			LocalPort:     0xa6c0,
 			RemoteAddress: net.IP([]byte{0, 0, 0, 0}),
 			RemotePort:    0x0,
-			inode:         5107,
+			Inode:         5107,
 		},
 		{
 			LocalAddress:  net.IP([]byte{0, 0, 0, 0}),
 			LocalPort:     0x006f,
 			RemoteAddress: net.IP([]byte{0, 0, 0, 0}),
 			RemotePort:    0x0,
-			inode:         5084,
+			Inode:         5084,
 		},
 		{
 			LocalAddress:  net.IP([]byte{0x7f, 0x0, 0x0, 0x01}),
 			LocalPort:     0x0019,
 			RemoteAddress: net.IP([]byte{0, 0, 0, 0}),
 			RemotePort:    0x0,
-			inode:         10550,
+			Inode:         10550,
 		},
 		{
 			LocalAddress:  net.IP([]byte{0x2e, 0xf6, 0x2c, 0xa1}),
 			LocalPort:     0xe4d7,
 			RemoteAddress: net.IP([]byte{0xc0, 0x1e, 0xfc, 0x57}),
 			RemotePort:    0x01bb,
-			inode:         639474,
+			Inode:         639474,
 		},
 	}
 	for i := 0; i < 4; i++ {
@@ -73,7 +73,7 @@ func TestTransport6(t *testing.T) {
 			RemoteAddress: net.IP(make([]byte, 16)),
 			RemotePort:    0x0,
 			// uid:           0,
-			inode: 23661201,
+			Inode: 23661201,
 		},
 		{
 			// state: 1,
@@ -92,7 +92,7 @@ func TestTransport6(t *testing.T) {
 			}),
 			RemotePort: 0x01bb,
 			// uid:        1000,
-			inode: 36856710,
+			Inode: 36856710,
 		},
 	}
 
@@ -148,7 +148,7 @@ func TestProcNetFiltersDuplicates(t *testing.T) {
 		LocalPort:     0xa6c0,
 		RemoteAddress: net.IP([]byte{0, 0, 0, 0}),
 		RemotePort:    0x0,
-		inode:         5107,
+		Inode:         5107,
 	}
 	have := p.Next()
 	want := expected

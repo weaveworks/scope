@@ -63,12 +63,12 @@ again:
 
 	p.c.LocalAddress, p.c.LocalPort = scanAddressNA(local, &p.bytesLocal)
 	p.c.RemoteAddress, p.c.RemotePort = scanAddressNA(remote, &p.bytesRemote)
-	p.c.inode = parseDec(inode)
+	p.c.Inode = parseDec(inode)
 	p.b = nextLine(b)
-	if _, alreadySeen := p.seen[p.c.inode]; alreadySeen {
+	if _, alreadySeen := p.seen[p.c.Inode]; alreadySeen {
 		goto again
 	}
-	p.seen[p.c.inode] = struct{}{}
+	p.seen[p.c.Inode] = struct{}{}
 	return &p.c
 }
 

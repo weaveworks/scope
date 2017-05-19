@@ -32,6 +32,7 @@ func tcpV4ToGo(data *[]byte) (ret TcpV4) {
 	ret.SPort = uint16(eventC.sport)
 	ret.DPort = uint16(eventC.dport)
 	ret.NetNS = uint32(eventC.netns)
+	ret.Fd = uint32(eventC.fd)
 
 	return
 }
@@ -64,6 +65,7 @@ func tcpV6ToGo(data *[]byte) (ret TcpV6) {
 	ret.SPort = uint16(eventC.sport)
 	ret.DPort = uint16(eventC.dport)
 	ret.NetNS = uint32(eventC.netns)
+	ret.Fd = uint32(eventC.fd)
 
 	return
 }
