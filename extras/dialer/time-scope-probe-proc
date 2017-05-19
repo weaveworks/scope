@@ -25,7 +25,7 @@ TIME_K2=$(gawk '{print $15"*10"}' <"/proc/$(pidof scope-probe)/stat" | bc)
 TIME_T2=$((TIME_U2 + TIME_K2))
 
 echo "utime;stime;total_time"
-for ((i = 0; i < "$interval_num"; i++)); do
+for ((i = 0; i < interval_num; i++)); do
     sleep "$interval_sleep"
     TIME_U1=$TIME_U2
     TIME_K1=$TIME_K2
