@@ -43,8 +43,10 @@ variable "aws_amis" {
     "eu-west-2" = "ami-23d0da47"
 
     # Red Hat Enterprise Linux 7.3 (HVM), SSD Volume Type:
-
     #"us-east-1" = "ami-b63769a1"
+
+    # CentOS 7 (x86_64) - with Updates HVM
+    #"us-east-1" = "ami-6d1c2007"
   }
 }
 
@@ -54,6 +56,7 @@ variable "aws_usernames" {
   default = {
     "ami-40d28157" = "ubuntu"   # Ubuntu Server 16.04 LTS (HVM)
     "ami-b63769a1" = "ec2-user" # Red Hat Enterprise Linux 7.3 (HVM)
+    "ami-6d1c2007" = "centos"   # CentOS 7 (x86_64) - with Updates HVM
   }
 }
 

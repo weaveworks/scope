@@ -19,7 +19,7 @@
     create: yes
     mode: 0644
   become: '{{ item }}'
-  with_items: 
+  with_items:
     - true  # Run as root
     - false # Run as SSH user
 
@@ -31,6 +31,6 @@
     create: yes
     mode: 0644
   become: '{{ item }}'
-  with_items: 
+  with_items:
     - true  # Run as root
-    - false # Run as SSH user    
+    - false # Run as SSH user

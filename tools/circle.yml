@@ -28,4 +28,23 @@ test:
     - cd $SRCDIR/cover; make
     - cd $SRCDIR/socks; make
     - cd $SRCDIR/runner; make
+    - cd $SRCDIR/build; make
 
+deployment:
+  snapshot:
+    branch: master
+    commands:
+      - docker login -e "$DOCKER_REGISTRY_EMAIL" -u "$DOCKER_REGISTRY_USER" -p "$DOCKER_REGISTRY_PASS" "$DOCKER_REGISTRY_URL"
+      - |
+        cd $SRCDIR/build;
+        for image in $(make images); do
+          # Tag the built images with the revision of this repo.
+          docker push "${image}:${GIT_TAG}"
+
+          # Tag the built images with something derived from the base images in
+          # their respective Dockerfiles. So "FROM golang:1.8.0-stretch" as a
+          # base image would lead to a tag of "1.8.0-stretch"
+          IMG_TAG=$(make "imagetag-${image#quay.io/weaveworks/build-}")
+          docker tag "${image}:latest" "${image}:${IMG_TAG}"
+          docker push "${image}:${IMG_TAG}"
+        done

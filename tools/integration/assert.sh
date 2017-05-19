@@ -24,8 +24,8 @@ export INVARIANT=${INVARIANT:-}
 export CONTINUE=${CONTINUE:-}
 
 args="$(getopt -n "$0" -l \
-    verbose,help,stop,discover,invariant,continue vhxdic "$@")" \
-    || exit -1
+    verbose,help,stop,discover,invariant,continue vhxdic "$@")" ||
+    exit -1
 for arg in $args; do
     case "$arg" in
         -h)
