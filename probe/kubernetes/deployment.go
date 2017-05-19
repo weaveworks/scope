@@ -21,7 +21,7 @@ const (
 // Deployment represents a Kubernetes deployment
 type Deployment interface {
 	Meta
-	Selector() labels.Selector
+	Selector() (labels.Selector, error)
 	GetNode(probeID string) report.Node
 }
 
@@ -36,13 +36,12 @@ func NewDeployment(d *extensions.Deployment) Deployment {
 	return &deployment{Deployment: d, Meta: meta{d.ObjectMeta}}
 }
 
-func (d *deployment) Selector() labels.Selector {
+func (d *deployment) Selector() (labels.Selector, error) {
 	selector, err := unversioned.LabelSelectorAsSelector(d.Spec.Selector)
 	if err != nil {
-		// TODO(paulbellamy): Remove the panic!
-		panic(err)
+		return nil, err
 	}
-	return selector
+	return selector, nil
 }
 
 func (d *deployment) GetNode(probeID string) report.Node {

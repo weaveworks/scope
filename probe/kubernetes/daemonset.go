@@ -18,7 +18,7 @@ const (
 // DaemonSet represents a Kubernetes daemonset
 type DaemonSet interface {
 	Meta
-	Selector() labels.Selector
+	Selector() (labels.Selector, error)
 	GetNode() report.Node
 }
 
@@ -35,13 +35,12 @@ func NewDaemonSet(d *extensions.DaemonSet) DaemonSet {
 	}
 }
 
-func (d *daemonSet) Selector() labels.Selector {
+func (d *daemonSet) Selector() (labels.Selector, error) {
 	selector, err := unversioned.LabelSelectorAsSelector(d.Spec.Selector)
 	if err != nil {
-		// TODO(paulbellamy): Remove the panic!
-		panic(err)
+		return nil, err
 	}
-	return selector
+	return selector, nil
 }
 
 func (d *daemonSet) GetNode() report.Node {

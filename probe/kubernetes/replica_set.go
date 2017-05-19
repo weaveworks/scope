@@ -18,7 +18,7 @@ const (
 // ReplicaSet represents a Kubernetes replica set
 type ReplicaSet interface {
 	Meta
-	Selector() labels.Selector
+	Selector() (labels.Selector, error)
 	AddParent(topology, id string)
 	GetNode(probeID string) report.Node
 }
@@ -39,13 +39,12 @@ func NewReplicaSet(r *extensions.ReplicaSet) ReplicaSet {
 	}
 }
 
-func (r *replicaSet) Selector() labels.Selector {
+func (r *replicaSet) Selector() (labels.Selector, error) {
 	selector, err := unversioned.LabelSelectorAsSelector(r.Spec.Selector)
 	if err != nil {
-		// TODO(paulbellamy): Remove the panic!
-		panic(err)
+		return nil, err
 	}
-	return selector
+	return selector, nil
 }
 
 func (r *replicaSet) AddParent(topology, id string) {

@@ -11,11 +11,12 @@ import (
 // ReplicationController represents a Kubernetes replication controller
 type ReplicationController interface {
 	Meta
-	Selector() labels.Selector
+	Selector() (labels.Selector, error)
 	AddParent(topology, id string)
 	GetNode(probeID string) report.Node
 }
 
+// replicationController implements both ReplicationController and ReplicaSet
 type replicationController struct {
 	*api.ReplicationController
 	Meta
@@ -32,11 +33,11 @@ func NewReplicationController(r *api.ReplicationController) ReplicationControlle
 	}
 }
 
-func (r *replicationController) Selector() labels.Selector {
+func (r *replicationController) Selector() (labels.Selector, error) {
 	if r.Spec.Selector == nil {
-		return labels.Nothing()
+		return labels.Nothing(), nil
 	}
-	return labels.SelectorFromSet(labels.Set(r.Spec.Selector))
+	return labels.SelectorFromSet(labels.Set(r.Spec.Selector)), nil
 }
 
 func (r *replicationController) AddParent(topology, id string) {

@@ -317,9 +317,14 @@ func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) 
 	result.Controls.AddControls(ScalingControls)
 
 	for _, deployment := range deployments {
+		selector, err := deployment.Selector()
+		if err != nil {
+			return result, replicaSets, err
+		}
+
 		selectors = append(selectors, match(
 			deployment.Namespace(),
-			deployment.Selector(),
+			selector,
 			report.Deployment,
 			report.MakeDeploymentNodeID(deployment.UID()),
 		))
@@ -392,17 +397,25 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet, dae
 		))
 	}
 	for _, replicaSet := range replicaSets {
+		selector, err := replicaSet.Selector()
+		if err != nil {
+			return pods, err
+		}
 		selectors = append(selectors, match(
 			replicaSet.Namespace(),
-			replicaSet.Selector(),
+			selector,
 			report.ReplicaSet,
 			report.MakeReplicaSetNodeID(replicaSet.UID()),
 		))
 	}
 	for _, daemonSet := range daemonSets {
+		selector, err := daemonSet.Selector()
+		if err != nil {
+			return pods, err
+		}
 		selectors = append(selectors, match(
 			daemonSet.Namespace(),
-			daemonSet.Selector(),
+			selector,
 			report.DaemonSet,
 			report.MakeDaemonSetNodeID(daemonSet.UID()),
 		))
