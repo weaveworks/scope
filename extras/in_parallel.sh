@@ -26,7 +26,8 @@ echo Doing "$INPUTS"
 for INPUT in $INPUTS; do
     START=$(date +%s)
     $COMMAND "$INPUT"
-    RUNTIME=$(($(date +%s) - START))
+    END=$(date +%s)
+    RUNTIME=$((END - START))
 
     python "../tools/sched" time "$INPUT" "$RUNTIME"
 done
