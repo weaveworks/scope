@@ -7,6 +7,7 @@ SLOW=
 NO_GO_GET=true
 TAGS=
 PARALLEL=
+RACE="-race -covermode=atomic"
 TIMEOUT=1m
 
 usage() {
@@ -17,6 +18,10 @@ while [ $# -gt 0 ]; do
     case "$1" in
         "-slow")
             SLOW=true
+            shift 1
+            ;;
+        "-no-race")
+            RACE=
             shift 1
             ;;
         "-no-go-get")
@@ -53,7 +58,7 @@ if [ -n "$SLOW" ] || [ -n "$CIRCLECI" ]; then
 fi
 
 if [ -n "$SLOW" ]; then
-    GO_TEST_ARGS=("${GO_TEST_ARGS[@]}" -race -covermode=atomic)
+    GO_TEST_ARGS=("${GO_TEST_ARGS[@]}" ${RACE})
 
     # shellcheck disable=SC2153
     if [ -n "$COVERDIR" ]; then
@@ -112,7 +117,9 @@ run_test() {
     if ! go test "${GO_TEST_ARGS_RUN[@]}" "$dir"; then
         fail=1
     fi
-    local RUNTIME=$(($(date +%s) - START))
+    local END
+    END=$(date +%s)
+    local RUNTIME=$((END - START))
 
     # Report test runtime when running on circle, to help scheduler
     if [ -n "$CIRCLECI" ] && [ -z "$NO_SCHEDULER" ] && [ -x "$DIR/sched" ]; then

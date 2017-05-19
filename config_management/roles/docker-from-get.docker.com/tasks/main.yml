@@ -2,14 +2,9 @@
 # Set up Docker
 # See also: legacy gce.sh script
 
-- include_role:
-    name: docker-prerequisites
+# Distribution-specific tasks:
+- include: debian.yml
+  when: ansible_os_family == "Debian"
 
-- name: add apt key for the docker repository
-  shell: curl -sSL https://get.docker.com/gpg | sudo apt-key add -
-
-- name: install docker
-  shell: 'curl -sSL https://get.docker.com/ | sed -e s/docker-engine/docker-engine={{ docker_version }}*/ | sh'
-
-- include_role:
-    name: docker-configuration
+- include: redhat.yml
+  when: ansible_os_family == "RedHat"

@@ -8,13 +8,13 @@
     mode: 0555
 
 - name: stop weave net
-  command: weave stop
+  command: /usr/local/bin/weave stop
 
 - name: start weave net
-  command: weave launch
+  command: /usr/local/bin/weave launch
 
 - name: get weave net's status
-  command: weave status
+  command: /usr/local/bin/weave status
   changed_when: false
   register: weave_status
   tags:

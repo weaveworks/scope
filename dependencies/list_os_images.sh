@@ -8,11 +8,11 @@ Dependencies:
   - gcloud, Google Cloud Platform's CLI
   - aws,
 Usage: 
-  $ ./$(basename "$0") PROVIDER OS
+  \$ ./$(basename "$0") PROVIDER OS
   PROVIDER={gcp}
   OS={ubuntu|debian|centos}
 Example: 
-  $ ./$(basename "$0") gcp ubuntu
+  \$ ./$(basename "$0") gcp ubuntu
   ubuntu-os-cloud/ubuntu-1204-lts
   ubuntu-os-cloud/ubuntu-1404-lts
   ubuntu-os-cloud/ubuntu-1604-lts
@@ -58,8 +58,8 @@ fi
 case "$1" in
     'gcp')
         gcloud compute images list --standard-images --regexp=".*?$2.*" \
-            --format="csv[no-heading][separator=/](selfLink.map().scope(projects).segment(0),family)" \
-            | sort -d
+            --format="csv[no-heading][separator=/](selfLink.map().scope(projects).segment(0),family)" |
+            sort -d
         ;;
     'aws')
         aws --region "${3:-us-east-1}" ec2 describe-images \
@@ -74,8 +74,8 @@ case "$1" in
         curl -s -X GET \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" \
-            "https://api.digitalocean.com/v2/images?page=1&per_page=999999" \
-            | jq --raw-output ".images | .[] | .slug" | grep "$2" | sort -d
+            "https://api.digitalocean.com/v2/images?page=1&per_page=999999" |
+            jq --raw-output ".images | .[] | .slug" | grep "$2" | sort -d
         ;;
     *)
         echo >&2 "Unknown provider [$1]."
