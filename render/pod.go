@@ -96,6 +96,21 @@ var ReplicaSetRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	),
 )
 
+// DaemonSetRenderer is a Renderer which produces a renderable kubernetes daemonsets
+// graph by merging the pods graph and the daemonsets topology.
+var DaemonSetRenderer = ConditionalRenderer(renderKubernetesTopologies,
+	MakeMap(
+		PropagateSingleMetrics(report.Pod),
+		MakeReduce(
+			MakeMap(
+				Map2Parent(report.DaemonSet, "", nil),
+				PodRenderer,
+			),
+			SelectDaemonSet,
+		),
+	),
+)
+
 func mapPodCounts(parent, original report.Node) report.Node {
 	// When mapping ReplicaSets to Deployments, we want to propagate the Pods counter
 	if count, ok := original.Counters.Lookup(report.Pod); ok {

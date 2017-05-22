@@ -66,6 +66,15 @@ var (
 
 	ReplicaSetMetricTemplates = PodMetricTemplates
 
+	DaemonSetMetadataTemplates = report.MetadataTemplates{
+		Namespace:       {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Created:         {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
+		DesiredReplicas: {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 4},
+		report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 5},
+	}
+
+	DaemonSetMetricTemplates = PodMetricTemplates
+
 	TableTemplates = report.TableTemplates{
 		LabelPrefix: {
 			ID:     LabelPrefix,
@@ -204,6 +213,10 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
+	daemonSetTopology, daemonSets, err := r.daemonSetTopology()
+	if err != nil {
+		return result, err
+	}
 	deploymentTopology, deployments, err := r.deploymentTopology(r.probeID)
 	if err != nil {
 		return result, err
@@ -212,13 +225,14 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	podTopology, err := r.podTopology(services, replicaSets)
+	podTopology, err := r.podTopology(services, replicaSets, daemonSets)
 	if err != nil {
 		return result, err
 	}
 	result.Pod = result.Pod.Merge(podTopology)
 	result.Service = result.Service.Merge(serviceTopology)
 	result.Host = result.Host.Merge(hostTopology)
+	result.DaemonSet = result.DaemonSet.Merge(daemonSetTopology)
 	result.Deployment = result.Deployment.Merge(deploymentTopology)
 	result.ReplicaSet = result.ReplicaSet.Merge(replicaSetTopology)
 	return result, nil
@@ -277,6 +291,20 @@ func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deploy
 	return result, deployments, err
 }
 
+func (r *Reporter) daemonSetTopology() (report.Topology, []DaemonSet, error) {
+	daemonSets := []DaemonSet{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(DaemonSetMetadataTemplates).
+		WithMetricTemplates(DaemonSetMetricTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkDaemonSets(func(d DaemonSet) error {
+		result = result.AddNode(d.GetNode())
+		daemonSets = append(daemonSets, d)
+		return nil
+	})
+	return result, daemonSets, err
+}
+
 func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) (report.Topology, []ReplicaSet, error) {
 	var (
 		result = report.MakeTopology().
@@ -289,9 +317,14 @@ func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) 
 	result.Controls.AddControls(ScalingControls)
 
 	for _, deployment := range deployments {
+		selector, err := deployment.Selector()
+		if err != nil {
+			return result, replicaSets, err
+		}
+
 		selectors = append(selectors, match(
 			deployment.Namespace(),
-			deployment.Selector(),
+			selector,
 			report.Deployment,
 			report.MakeDeploymentNodeID(deployment.UID()),
 		))
@@ -335,7 +368,7 @@ func match(namespace string, selector labels.Selector, topology, id string) func
 	}
 }
 
-func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (report.Topology, error) {
+func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet, daemonSets []DaemonSet) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
@@ -364,11 +397,27 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (re
 		))
 	}
 	for _, replicaSet := range replicaSets {
+		selector, err := replicaSet.Selector()
+		if err != nil {
+			return pods, err
+		}
 		selectors = append(selectors, match(
 			replicaSet.Namespace(),
-			replicaSet.Selector(),
+			selector,
 			report.ReplicaSet,
 			report.MakeReplicaSetNodeID(replicaSet.UID()),
+		))
+	}
+	for _, daemonSet := range daemonSets {
+		selector, err := daemonSet.Selector()
+		if err != nil {
+			return pods, err
+		}
+		selectors = append(selectors, match(
+			daemonSet.Namespace(),
+			selector,
+			report.DaemonSet,
+			report.MakeDaemonSetNodeID(daemonSet.UID()),
 		))
 	}
 

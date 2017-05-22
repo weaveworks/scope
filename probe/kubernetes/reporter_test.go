@@ -136,6 +136,9 @@ func (c *mockClient) WalkServices(f func(kubernetes.Service) error) error {
 	}
 	return nil
 }
+func (c *mockClient) WalkDaemonSets(f func(kubernetes.DaemonSet) error) error {
+	return nil
+}
 func (c *mockClient) WalkDeployments(f func(kubernetes.Deployment) error) error {
 	return nil
 }
