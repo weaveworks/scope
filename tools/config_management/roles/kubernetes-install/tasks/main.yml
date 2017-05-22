@@ -8,10 +8,9 @@
 - include: redhat.yml
   when: ansible_os_family == "RedHat"
 
-- name: install ebtables and kubeadm
+- name: install ebtables
   package:
     name: "{{ item }}"
     state: present
-  with_items: 
+  with_items:
     - ebtables
-    - kubeadm

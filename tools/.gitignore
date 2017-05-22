@@ -7,3 +7,4 @@ runner/runner
 terraform.tfstate
 terraform.tfstate.backup
 *.retry
+build/**/.uptodate

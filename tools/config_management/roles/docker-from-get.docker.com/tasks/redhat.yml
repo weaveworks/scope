@@ -1,0 +1,11 @@
+---
+# RedHat / CentOS specific:
+
+- name: rpm-import gpg key for the docker repository
+  shell: curl -sSLo /tmp/docker.gpg https://get.docker.com/gpg && sudo rpm --import /tmp/docker.gpg
+
+- name: install docker
+  shell: 'curl -sSL https://get.docker.com/ | sed -e s/docker-engine/docker-engine-{{ docker_version }}*/ | sh'
+
+- name: wait for docker installation to complete
+  shell: yum install -y yum-utils && yum-complete-transaction

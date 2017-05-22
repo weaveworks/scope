@@ -5,7 +5,7 @@
   package:
     name: "{{ item }}"
     state: present
-  with_items: 
+  with_items:
     # weave net dependencies
     - make
     - vagrant

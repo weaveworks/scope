@@ -38,8 +38,14 @@ variable "gcp_project" {
 
 variable "gcp_image" {
   # See also: https://cloud.google.com/compute/docs/images
+  # For example:
+  # - "ubuntu-os-cloud/ubuntu-1604-lts"
+  # - "debian-cloud/debian-8"
+  # - "centos-cloud/centos-7"
+  # - "rhel-cloud/rhel7"
   description = "Google Cloud Platform OS"
-  default     = "ubuntu-os-cloud/ubuntu-1604-lts"
+
+  default = "ubuntu-os-cloud/ubuntu-1604-lts"
 }
 
 variable "gcp_size" {

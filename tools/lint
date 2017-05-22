@@ -113,7 +113,7 @@ lint_sh() {
     local filename="$1"
     local lint_result=0
 
-    if ! diff <(shfmt -i 4 "${filename}") "${filename}" >/dev/null; then
+    if ! diff -u <(shfmt -i 4 "${filename}") "${filename}"; then
         lint_result=1
         echo "${filename}: run shfmt -i 4 -w ${filename}"
     fi
@@ -131,7 +131,7 @@ lint_tf() {
     local filename="$1"
     local lint_result=0
 
-    if ! diff <(hclfmt "${filename}") "${filename}" >/dev/null; then
+    if ! diff -u <(hclfmt "${filename}") "${filename}"; then
         lint_result=1
         echo "${filename}: run hclfmt -w ${filename}"
     fi
