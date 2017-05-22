@@ -3,7 +3,7 @@
 
 - name: check if weave net has been checked out
   become: false  # Run as SSH-user
-  stat: 
+  stat:
     path: $HOME/src/github.com/weaveworks/weave
   register: weave
   failed_when: false

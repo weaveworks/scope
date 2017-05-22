@@ -6,7 +6,7 @@
   register: kubelet
 
 # avoids having weave-net and weave-kube conflict in some test cases (e.g. 130_expose_test.sh)
-- name: stop kubelet service 
+- name: stop kubelet service
   systemd:
     name: kubelet
     state: stopped

@@ -14,7 +14,7 @@
   register: yum_k8s_repo
 
 - name: update yum's cache
-  yum: 
+  yum:
     name: "*"
     update_cache: yes
   when: yum_k8s_repo.changed
@@ -23,7 +23,8 @@
   package:
     name: "{{ item }}"
     state: present
-  with_items: 
-    - kubelet-{{ kubernetes_version }}
-    - kubectl-{{ kubernetes_version }}
+  with_items:
+    - kubelet-{{ kubernetes_version }}*
+    - kubectl-{{ kubernetes_version }}*
+    - kubeadm-{{ kubernetes_version }}*
     - kubernetes-cni-{{ kubernetes_cni_version }}*

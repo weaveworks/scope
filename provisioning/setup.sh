@@ -278,8 +278,14 @@ function aws_on() {
     #   $ openssl enc -in /tmp/aws_secret_access_key.txt -e -aes256 -pass stdin | openssl base64 > /tmp/aws_secret_access_key.txt.aes.b64
     # The below commands do the reverse, i.e. base64-decode and AES-decrypt the encrypted and encoded strings, and print it to stdout.
     # N.B.: Ask the password to Marc, or otherwise re-generate the AWS access key ID and secret access key, as per ../tools/provisioning/aws/README.md.
-    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-$(decrypt "$SECRET_KEY" "AWS access key ID" "U2FsdGVkX1+MLsvG53ZVSmFhjvQtWio0pXQpG5Ua+5JaoizuZKtJZFJxrSSyx0jb")}
-    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-$(decrypt "$SECRET_KEY" "AWS secret access key" "U2FsdGVkX1+VNjgWv5iGKRqBYP7o8MpOIMnd3BOYPiEho1Mjosx++9CknaZJbeR59vSuz4UdgTS6ezH2dnq2Fw==")}
+    export AWS_ACCESS_KEY_ID="$(decrypt "$SECRET_KEY" "AWS access key ID" "U2FsdGVkX18Txjm2PWSlJsToYm1vv4dMTtVLkRNiQbrC6Y6GuIHb1ao5MmGPJ1wf")"
+    export AWS_SECRET_ACCESS_KEY="$(decrypt "$SECRET_KEY" "AWS secret access key" "$(
+        cat <<EOF
+U2FsdGVkX1/BFp/lQnSoy0LxUuDz0z0YnqxhO8KBrtt3x6YEWyVFzY34rFhpGiB7
+IxYq20K87Zrx/Q/urMoWgg==
+EOF
+    )")"
+
     export TF_VAR_client_ip=$(curl -s -X GET http://checkip.amazonaws.com/)
 }
 alias aws_on='aws_on'
@@ -298,10 +304,11 @@ function tf_ssh_usage() {
 ERROR: $1
 
 Usage:
-  $ tf_ssh <host ID (1-based)> [OPTION]...
+  \$ tf_ssh <host ID (1-based)> [OPTION]...
 Examples:
-  $ tf_ssh 1
-  $ tf_ssh 1 -o LogLevel VERBOSE
+  \$ tf_ssh 1
+  \$ tf_ssh 1 -o LogLevel VERBOSE
+  \$ tf_ssh 1 -i ~/.ssh/custom_private_key_id_rsa
 Available machines:
 EOF
     cat -n >&2 <<<"$(terraform output public_etc_hosts)"
@@ -323,11 +330,12 @@ function tf_ansi_usage() {
 ERROR: $1
 
 Usage:
-  $ tf_ansi <playbook or playbook ID (1-based)> [OPTION]...
+  \$ tf_ansi <playbook or playbook ID (1-based)> [OPTION]...
 Examples:
-  $ tf_ansi setup_weave-net_dev
-  $ tf_ansi 1
-  $ tf_ansi 1 -vvv
+  \$ tf_ansi setup_weave-net_dev
+  \$ tf_ansi 1
+  \$ tf_ansi 1 -vvv --private-key=~/.ssh/custom_private_key_id_rsa
+  \$ tf_ansi setup_weave-kube --extra-vars "docker_version=1.12.6 kubernetes_version=1.5.6"
 Available playbooks:
 EOF
     cat -n >&2 <<<"$(for file in "$(dirname "${BASH_SOURCE[0]}")"/../../config_management/*.yml; do basename "$file" | sed 's/.yml//'; done)"
@@ -340,7 +348,7 @@ function tf_ansi() {
     shift # Drop the first argument to allow passing other arguments to Ansible using "$@" -- see below.
     if [[ "$id" =~ ^[0-9]+$ ]]; then
         local playbooks=(../../config_management/*.yml)
-        local path="${playbooks[(($id-1))]}" # Select the ith entry in the list of playbooks (0-based).
+        local path="${playbooks[(($id - 1))]}" # Select the ith entry in the list of playbooks (0-based).
     else
         local path="$(dirname "${BASH_SOURCE[0]}")/../../config_management/$id.yml"
     fi
