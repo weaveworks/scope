@@ -1,0 +1,29 @@
+# Docker installation from Docker's CentOS Community Edition
+# See also: https://docs.docker.com/engine/installation/linux/centos/
+
+- name: remove all potentially pre existing packages
+  yum:
+    name: '{{ item }}'
+    state: absent
+  with_items:
+    - docker
+    - docker-common
+    - container-selinux
+    - docker-selinux
+    - docker-engine
+
+- name: install yum-utils
+  yum:
+    name: yum-utils
+    state: present
+
+- name: add docker ce repo
+  command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+# Note that Docker CE versions do not follow regular Docker versions, but look
+# like, for example: "17.03.0.el7"
+- name: install docker
+  yum:
+    name: 'docker-ce-{{ docker_version }}'
+    update_cache: yes
+    state: present

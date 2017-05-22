@@ -4,13 +4,13 @@
 # - kubernetes
 
 - name: create sock-shop namespace in k8s
-  command: kubectl create namespace sock-shop
+  command: kubectl --kubeconfig /etc/kubernetes/admin.conf create namespace sock-shop
 
 - name: create sock-shop in k8s
-  command: kubectl apply -n sock-shop -f "https://github.com/microservices-demo/microservices-demo/blob/master/deploy/kubernetes/complete-demo.yaml?raw=true"
+  command: kubectl --kubeconfig /etc/kubernetes/admin.conf apply -n sock-shop -f "https://github.com/microservices-demo/microservices-demo/blob/master/deploy/kubernetes/complete-demo.yaml?raw=true"
 
 - name: describe front-end service
-  command: kubectl describe svc front-end -n sock-shop
+  command: kubectl --kubeconfig /etc/kubernetes/admin.conf describe svc front-end -n sock-shop
   changed_when: false
   register: kubectl_describe_svc_frontend
   tags:
@@ -22,7 +22,7 @@
     - output
 
 - name: list sock-shop k8s' pods
-  command: kubectl get pods -n sock-shop
+  command: kubectl --kubeconfig /etc/kubernetes/admin.conf get pods -n sock-shop
   changed_when: false
   register: kubectl_get_pods
   tags:

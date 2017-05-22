@@ -8,12 +8,13 @@
   gather_facts: false  # required in case Python is not available on the host
   become: true
   become_user: root
-  
+
   pre_tasks:
     - include: library/setup_ansible_dependencies.yml
 
   roles:
-    - docker-from-get.docker.com
-    - kubernetes-install
+    - docker-install
     - weave-net-utilities
+    - kubernetes-install
+    - kubernetes-docker-images
     - kubelet-stop

@@ -45,8 +45,8 @@ DEPS={
 	'docker': {
 		'url': 'https://github.com/docker/docker',
 		're':  'v(?P<%s>\d+\.\d+\.\d+(?:\-rc\d)*)' % _VERSION,
-		# Weave Net only works with Docker from 1.6.0 onwards, so we ignore all previous versions:
-		'min': '1.6.0'
+		# Weave Net only works with Docker from 1.10.0 onwards, so we ignore all previous versions:
+		'min': '1.10.0'
 	},
 	'kubernetes': {
 		'url': 'https://github.com/kubernetes/kubernetes',
