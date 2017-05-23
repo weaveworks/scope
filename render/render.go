@@ -55,6 +55,40 @@ func (r *Reduce) Stats(rpt report.Report, dct Decorator) Stats {
 	return result
 }
 
+// ReduceFirstOnly renderer is a Renderer which merges together the output of several other renderers,
+// including only the nodes present in the first render, but merging in info from the same nodes
+// if present in the other renders.
+type ReduceFirstOnly struct {
+	first  Renderer
+	others []Renderer
+}
+
+// MakeReduceFirstOnly is the only sane way to produce a ReduceFirstOnly Renderer.
+func MakeReduceFirstOnly(first Renderer, others ...Renderer) Renderer {
+	r := ReduceFirstOnly{first, others}
+	return Memoise(&r)
+}
+
+// Render produces a set of Nodes given a Report.
+func (r *ReduceFirstOnly) Render(rpt report.Report, dct Decorator) report.Nodes {
+	result := r.first.Render(rpt, dct).Copy()
+	for _, other := range r.others {
+		for id, node := range other.Render(rpt, dct) {
+			if n, ok := result[id]; ok {
+				result[id] = n.Merge(node)
+			}
+		}
+	}
+	return result
+}
+
+// Stats implements Renderer
+func (r *ReduceFirstOnly) Stats(rpt report.Report, dct Decorator) Stats {
+	// Since we're just taking more detailed data from the other renderers,
+	// we probably only care about the filter stats for the 'main' renderer.
+	return r.first.Stats(rpt, dct)
+}
+
 // Map is a Renderer which produces a set of Nodes from the set of
 // Nodes produced by another Renderer.
 type Map struct {

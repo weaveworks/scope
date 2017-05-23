@@ -127,16 +127,25 @@ var DaemonSetRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // unchanged).
 // We can't simply combine the rendered graphs of the high level objects as they would never
 // have connections to each other.
+// We combine with all the full topologies using ReduceFirstOnly, which keeps the same
+// set of nodes but merges in the full data from the other renderers.
 var KubeCombinedRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	MakeMap(
-		Map2Parent([]string{report.Deployment}, NoParentsKeep, "", nil),
+	MakeReduceFirstOnly(
 		MakeMap(
-			Map2Parent([]string{
-				report.ReplicaSet,
-				report.DaemonSet,
-			}, NoParentsKeep, "", nil),
-			PodRenderer,
+			Map2Parent([]string{report.Deployment}, NoParentsKeep, "", nil),
+			MakeReduceFirstOnly(
+				MakeMap(
+					Map2Parent([]string{
+						report.ReplicaSet,
+						report.DaemonSet,
+					}, NoParentsKeep, "", nil),
+					PodRenderer,
+				),
+				SelectReplicaSet,
+				SelectDaemonSet,
+			),
 		),
+		SelectDeployment,
 	),
 )
 
