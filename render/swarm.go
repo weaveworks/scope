@@ -10,7 +10,7 @@ var SwarmServiceRenderer = ConditionalRenderer(renderSwarmTopologies,
 		PropagateSingleMetrics(report.Container),
 		MakeReduce(
 			MakeMap(
-				Map2Parent(report.SwarmService, UnmanagedID, nil),
+				Map2Parent([]string{report.SwarmService}, NoParentsPseudo, UnmanagedID, nil),
 				MakeFilter(
 					IsRunning,
 					ContainerWithImageNameRenderer,

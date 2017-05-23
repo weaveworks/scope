@@ -10,7 +10,7 @@ var ECSTaskRenderer = ConditionalRenderer(renderECSTopologies,
 		PropagateSingleMetrics(report.Container),
 		MakeReduce(
 			MakeMap(
-				Map2Parent(report.ECSTask, UnmanagedID, nil),
+				Map2Parent([]string{report.ECSTask}, NoParentsPseudo, UnmanagedID, nil),
 				MakeFilter(
 					IsRunning,
 					ContainerWithImageNameRenderer,
@@ -27,7 +27,7 @@ var ECSServiceRenderer = ConditionalRenderer(renderECSTopologies,
 		PropagateSingleMetrics(report.ECSTask),
 		MakeReduce(
 			MakeMap(
-				Map2Parent(report.ECSService, "", nil),
+				Map2Parent([]string{report.ECSService}, NoParentsDrop, "", nil),
 				ECSTaskRenderer,
 			),
 			SelectECSService,
