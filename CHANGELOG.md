@@ -1,3 +1,158 @@
+## Release 1.4.0
+
+Highlights:
+- New Docker Swarm view
+- New Kubernetes DaemonSets view 
+- Probe performance improvements
+- Many bugfixes
+
+New features and enhancements:
+- Add Docker Swarm view
+	[#2444](https://github.com/weaveworks/scope/pull/2444)
+	[#2452](https://github.com/weaveworks/scope/pull/2452)
+	[#2450](https://github.com/weaveworks/scope/pull/2450)
+- Kuebrnetes: add daemonsets
+	[#2526](https://github.com/weaveworks/scope/pull/2526)	
+- Canvas zoom control
+	[#2513](https://github.com/weaveworks/scope/pull/2513)
+- Consistent resource consumption info in the resource view
+	[#2499](https://github.com/weaveworks/scope/pull/2499)
+- k8s: show all namespaces by default
+	[#2522](https://github.com/weaveworks/scope/pull/2522)
+- Hide container image status for pseudo nodes
+	[#2520](https://github.com/weaveworks/scope/pull/2520)
+- Break out some Azure-based services from "The Internet"
+	[#2521](https://github.com/weaveworks/scope/pull/2521)
+- Remove zoom on double-click
+	[#2457](https://github.com/weaveworks/scope/pull/2457)
+- allow disabling of weaveDNS advertising/lookup
+	[#2445](https://github.com/weaveworks/scope/pull/2445)
+
+Performance improvements:
+- process walker perfs: optimize readLimits and readStats
+	[#2491](https://github.com/weaveworks/scope/pull/2491)
+- proc walker: optimize open file counter
+	[#2456](https://github.com/weaveworks/scope/pull/2456)
+- eliminate excessive calls to mtime.Now()
+	[#2486](https://github.com/weaveworks/scope/pull/2486)
+- Msgpack perf: write psMap out directly
+	[#2466](https://github.com/weaveworks/scope/pull/2466)
+- proc_linux: don't exec `getNetNamespacePathSuffix()` on every walk
+	[#2453](https://github.com/weaveworks/scope/pull/2453)
+- gzip: change compression level to the default
+	[#2437](https://github.com/weaveworks/scope/pull/2437)
+
+Bug fixes:
+- Let conntrack track non-NATed short-lived connections
+	[#2527](https://github.com/weaveworks/scope/pull/2527)
+- Re-enable pod shortcut reports
+	[#2528](https://github.com/weaveworks/scope/pull/2528)
+- ebpf connection tracker: perf map fixes
+	[#2507](https://github.com/weaveworks/scope/pull/2507)
+- ebpf: handle fdinstall events from tcptracer-bpf (aka "accept before kretprobe" issue)
+	[#2518](https://github.com/weaveworks/scope/pull/2518)	
+- Fix arrow heads positioning
+	[#2505](https://github.com/weaveworks/scope/pull/2505)
+- Avoid null dereferences in ECS client
+	[#2514](https://github.com/weaveworks/scope/pull/2514)
+	[#2515](https://github.com/weaveworks/scope/pull/2515)
+- api_topologies: Don't put namespace filters on containers-by-dns/image
+	[#2506](https://github.com/weaveworks/scope/pull/2506)
+- Log specific error when deployments are not supported
+	[#2501](https://github.com/weaveworks/scope/pull/2501)
+- Missing namespace option in url state breaks filters
+	[#2490](https://github.com/weaveworks/scope/issues/2490)
+- Metric selector not showing pinned metric highlighted
+	[#2467](https://github.com/weaveworks/scope/issues/2467)
+- Fixed view mode switching keyboard shortcuts
+	[#2471](https://github.com/weaveworks/scope/pull/2471)
+- don't lie about reachable address
+	[#2443](https://github.com/weaveworks/scope/pull/2443)
+- Fix node highlight for all shapes
+	[#2430](https://github.com/weaveworks/scope/pull/2430)
+- View mode selector not responding well to resize
+	[#2396](https://github.com/weaveworks/scope/issues/2396)
+- Empty metric selector appearing as a dot
+	[#2425](https://github.com/weaveworks/scope/issues/2425)
+- Cloud node border too thin comparing to other nodes
+	[#2417](https://github.com/weaveworks/scope/issues/2417)
+- Table-mode: origin of details panel is not where clicked
+	[#1754](https://github.com/weaveworks/scope/issues/1754)
+- Table-mode: tooltip for "The Internet" is missing minor label
+	[#1884](https://github.com/weaveworks/scope/issues/1884)
+- Fixes loading of viewState from localStorage into URL
+	[#2409](https://github.com/weaveworks/scope/pull/2409)
+- Don't reset zoom on refresh layout
+	[#2407](https://github.com/weaveworks/scope/pull/2407)
+- Hide the opened help panel when clicking on the search bar icon
+	[#2406](https://github.com/weaveworks/scope/pull/2406)
+
+Documentation:
+- Report data structure documentation
+	[#2025](https://github.com/weaveworks/scope/pull/2025)
+- Add multicolumn-table documentation
+	[#2516](https://github.com/weaveworks/scope/pull/2516)
+- Update k8s installation instructions
+	[#2512](https://github.com/weaveworks/scope/pull/2512)
+	[#2519](https://github.com/weaveworks/scope/pull/2519)
+- Update install docs
+	[#2257](https://github.com/weaveworks/scope/pull/2257)	
+- Add plugin mention to scope readme
+	[#2454](https://github.com/weaveworks/scope/pull/2454)
+- Fix disabling Scope in the ECS AMI
+	[#2435](https://github.com/weaveworks/scope/pull/2435)
+- Add AMI docs into main docs, modified weave token instructions in one place
+	[#2307](https://github.com/weaveworks/scope/pull/2307)
+	[#2416](https://github.com/weaveworks/scope/pull/2416)
+	[#2415](https://github.com/weaveworks/scope/pull/2415)
+
+Internal improvements and cleanup:
+- Reduce the number of places topologies are explicitly listed
+	[#2436](https://github.com/weaveworks/scope/pull/2436)
+- Use prop-types library to silence PropTypes deprecation warning
+	[#2498](https://github.com/weaveworks/scope/pull/2498)
+- Update node libraries
+	[#2292](https://github.com/weaveworks/scope/pull/2292)
+- Added search type variable
+	[#2493](https://github.com/weaveworks/scope/pull/2493)
+- Add website preview via Netlify
+	[#2480](https://github.com/weaveworks/scope/pull/2480)
+- Consisten spacing in Markdown headings
+	[#2438](https://github.com/weaveworks/scope/pull/2438)
+- only lint files in git ls-files, not .git/*
+	[#2477](https://github.com/weaveworks/scope/pull/2477)
+- publish master to dockerhub (again)
+	[#2449](https://github.com/weaveworks/scope/pull/2449)
+- scope script: Allow 'user' part of image name to be given by DOCKERHUB_USER env var
+	[#2447](https://github.com/weaveworks/scope/pull/2447)
+- Make various anonymous fields named
+	[#2419](https://github.com/weaveworks/scope/pull/2419)
+- vendor: update gobpf and tcptracer-bpf
+	[#2428](https://github.com/weaveworks/scope/pull/2428)
+- extras/dialer updates and fixes
+	[#2350](https://github.com/weaveworks/scope/pull/2350)
+- Update tcptracer-bpf and re-enable test 311
+	[#2411](https://github.com/weaveworks/scope/pull/2411)
+- Add check for old options
+	[#2405](https://github.com/weaveworks/scope/pull/2405)
+- shfmt: fix shell formatting
+	[#2533](https://github.com/weaveworks/scope/pull/2533)
+
+Weave Cloud related changes:
+- close s3 response body to prevent leaks
+	[#2442](https://github.com/weaveworks/scope/pull/2442)
+- Add service images widget
+	[#2487](https://github.com/weaveworks/scope/pull/2487)
+- Add weavenet metrics to billing
+	[#2504](https://github.com/weaveworks/scope/pull/2504)
+- Calculate viewport dimensions from the scope-app div
+	[#2473](https://github.com/weaveworks/scope/pull/2473)
+- Added mixpanel tracking for some basic events
+	[#2462](https://github.com/weaveworks/scope/pull/2462)
+- Add NodeSeconds to billing emitter
+	[#2422](https://github.com/weaveworks/scope/pull/2422)
+
+
 ## Release 1.3.0
 
 Highlights:
