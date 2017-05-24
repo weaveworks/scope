@@ -151,9 +151,9 @@ func NewClient(config ClientConfig) (Client, error) {
 
 	// We list deployments here to check if this version of kubernetes is >= 1.2.
 	// We would use NegotiateVersion, but Kubernetes 1.1 "supports"
-	// extensions/v1beta1, but not deployments or replicasets.
+	// extensions/v1beta1, but not deployments, replicasets or daemonsets.
 	if _, err := ec.Deployments(api.NamespaceAll).List(api.ListOptions{}); err != nil {
-		log.Infof("Deployments and ReplicaSets are not supported by this Kubernetes version: %v", err)
+		log.Infof("Deployments, ReplicaSets and DaemonSets are not supported by this Kubernetes version: %v", err)
 	} else {
 		result.deploymentStore = &cache.StoreToDeploymentLister{Store: result.setupStore(ec, "deployments", &extensions.Deployment{}, nil)}
 		result.replicaSetStore = &cache.StoreToReplicaSetLister{Store: result.setupStore(ec, "replicasets", &extensions.ReplicaSet{}, nil)}
@@ -263,6 +263,9 @@ func (c *client) WalkReplicationControllers(f func(ReplicationController) error)
 
 // WalkDaemonSets calls f for each daemonset
 func (c *client) WalkDaemonSets(f func(DaemonSet) error) error {
+	if c.daemonSetStore == nil {
+		return nil
+	}
 	list, err := c.daemonSetStore.List()
 	if err != nil {
 		return err
