@@ -96,9 +96,6 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 	if t.flowWalker != nil {
 		t.performFlowWalk(rpt, &seenTuples)
 	}
-	// if eBPF was enabled but failed to initialize, Scanner will be nil.
-	// We can't recover from this, so don't walk proc in that case.
-	// TODO: implement fallback
 	if t.conf.WalkProc && t.conf.Scanner != nil {
 		t.performWalkProc(rpt, hostNodeID, &seenTuples)
 	}
