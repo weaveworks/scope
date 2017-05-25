@@ -93,9 +93,7 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 
 	// seenTuples contains information about connections seen by conntrack and it will be passed to the /proc parser
 	seenTuples := map[string]fourTuple{}
-	if t.flowWalker != nil {
-		t.performFlowWalk(rpt, &seenTuples)
-	}
+	t.performFlowWalk(rpt, &seenTuples)
 	if t.conf.WalkProc && t.conf.Scanner != nil {
 		t.performWalkProc(rpt, hostNodeID, &seenTuples)
 	}
