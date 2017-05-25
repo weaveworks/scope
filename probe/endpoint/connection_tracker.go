@@ -31,36 +31,21 @@ type connectionTracker struct {
 	reverseResolver *reverseResolver
 }
 
-func newProcfsConnectionTracker(conf connectionTrackerConfig) connectionTracker {
-	if conf.WalkProc && conf.Scanner == nil {
-		conf.Scanner = procspy.NewConnectionScanner(conf.ProcessCache)
-	}
-	return connectionTracker{
-		conf:            conf,
-		flowWalker:      newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize),
-		ebpfTracker:     nil,
-		reverseResolver: newReverseResolver(),
-	}
-}
-
 func newConnectionTracker(conf connectionTrackerConfig) connectionTracker {
-	if !conf.UseEbpfConn {
-		// ebpf off, use proc scanning for connection tracking
-		return newProcfsConnectionTracker(conf)
-	}
-	et, err := newEbpfTracker()
-	if err != nil {
-		// ebpf failed, fallback to proc scanning for connection tracking
-		log.Warnf("Error setting up the eBPF tracker, falling back to proc scanning: %v", err)
-		return newProcfsConnectionTracker(conf)
-	}
 	ct := connectionTracker{
 		conf:            conf,
-		flowWalker:      nil,
-		ebpfTracker:     et,
 		reverseResolver: newReverseResolver(),
 	}
-	go ct.getInitialState()
+	if conf.UseEbpfConn {
+		et, err := newEbpfTracker()
+		if err == nil {
+			ct.ebpfTracker = et
+			go ct.getInitialState()
+			return ct
+		}
+		log.Warnf("Error setting up the eBPF tracker, falling back to proc scanning: %v", err)
+	}
+	ct.useProcfs()
 	return ct
 }
 
@@ -83,6 +68,16 @@ func flowToTuple(f flow) (ft fourTuple) {
 	return ft
 }
 
+func (t *connectionTracker) useProcfs() {
+	t.ebpfTracker = nil
+	if t.conf.WalkProc && t.conf.Scanner == nil {
+		t.conf.Scanner = procspy.NewConnectionScanner(t.conf.ProcessCache)
+	}
+	if t.flowWalker == nil {
+		t.flowWalker = newConntrackFlowWalker(t.conf.UseConntrack, t.conf.ProcRoot, t.conf.BufferSize)
+	}
+}
+
 // ReportConnections calls trackers according to the configuration.
 func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 	hostNodeID := report.MakeHostNodeID(t.conf.HostID)
@@ -93,13 +88,7 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 			return
 		}
 		log.Warnf("ebpf tracker died, gently falling back to proc scanning")
-		if t.conf.WalkProc && t.conf.Scanner == nil {
-			t.conf.Scanner = procspy.NewConnectionScanner(t.conf.ProcessCache)
-		}
-		if t.flowWalker == nil {
-			t.flowWalker = newConntrackFlowWalker(t.conf.UseConntrack, t.conf.ProcRoot, t.conf.BufferSize, "--any-nat")
-		}
-		t.ebpfTracker = nil
+		t.useProcfs()
 	}
 
 	// seenTuples contains information about connections seen by conntrack and it will be passed to the /proc parser
