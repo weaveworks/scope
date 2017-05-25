@@ -25,14 +25,17 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+	"unsafe"
 )
 
 /*
 #include <unistd.h>
 #include <strings.h>
+#include <stdlib.h>
 #include "include/bpf.h"
 #include <linux/perf_event.h>
 #include <linux/unistd.h>
@@ -124,14 +127,13 @@ func writeKprobeEvent(probeType, eventName, funcName, maxactiveStr string) (int,
 	kprobeEventsFileName := "/sys/kernel/debug/tracing/kprobe_events"
 	f, err := os.OpenFile(kprobeEventsFileName, os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
-		return -1, fmt.Errorf("cannot open kprobe_events: %v\n", err)
+		return -1, fmt.Errorf("cannot open kprobe_events: %v", err)
 	}
 	defer f.Close()
 
 	cmd := fmt.Sprintf("%s%s:%s %s\n", probeType, maxactiveStr, eventName, funcName)
-	_, err = f.WriteString(cmd)
-	if err != nil {
-		return -1, fmt.Errorf("cannot write %q to kprobe_events: %v\n", cmd, err)
+	if _, err = f.WriteString(cmd); err != nil {
+		return -1, fmt.Errorf("cannot write %q to kprobe_events: %v", cmd, err)
 	}
 
 	kprobeIdFile := fmt.Sprintf("/sys/kernel/debug/tracing/events/kprobes/%s/id", eventName)
@@ -140,12 +142,12 @@ func writeKprobeEvent(probeType, eventName, funcName, maxactiveStr string) (int,
 		if os.IsNotExist(err) {
 			return -1, kprobeIDNotExist
 		}
-		return -1, fmt.Errorf("cannot read kprobe id: %v\n", err)
+		return -1, fmt.Errorf("cannot read kprobe id: %v", err)
 	}
 
 	kprobeId, err := strconv.Atoi(strings.TrimSpace(string(kprobeIdBytes)))
 	if err != nil {
-		return -1, fmt.Errorf("invalid kprobe id: %v\n", err)
+		return -1, fmt.Errorf("invalid kprobe id: %v", err)
 	}
 
 	return kprobeId, nil
@@ -257,8 +259,115 @@ func (b *Module) AttachCgroupProgram(cgroupProg *CgroupProgram, cgroupPath strin
 	cgroupFd := C.int(f.Fd())
 	ret, err := C.bpf_prog_attach(progFd, cgroupFd, uint32(attachType))
 	if ret < 0 {
-		return fmt.Errorf("failed to attach prog to cgroup %q: %v\n", cgroupPath, err)
+		return fmt.Errorf("failed to attach prog to cgroup %q: %v", cgroupPath, err)
 	}
 
+	return nil
+}
+
+func (b *Module) Kprobe(name string) *Kprobe {
+	return b.probes[name]
+}
+
+func (kp *Kprobe) Fd() int {
+	return kp.fd
+}
+
+func disableKprobe(eventName string) error {
+	kprobeEventsFileName := "/sys/kernel/debug/tracing/kprobe_events"
+	f, err := os.OpenFile(kprobeEventsFileName, os.O_APPEND|os.O_WRONLY, 0)
+	if err != nil {
+		return fmt.Errorf("cannot open kprobe_events: %v", err)
+	}
+	defer f.Close()
+	cmd := fmt.Sprintf("-:%s\n", eventName)
+	if _, err = f.WriteString(cmd); err != nil {
+		pathErr, ok := err.(*os.PathError)
+		if ok && pathErr.Err == syscall.ENOENT {
+			// This can happen when for example two modules
+			// use the same elf object and both call `Close()`.
+			// The second will encounter the error as the
+			// probe already has been cleared by the first.
+			return nil
+		} else {
+			return fmt.Errorf("cannot write %q to kprobe_events: %v", cmd, err)
+		}
+	}
+	return nil
+}
+
+func (b *Module) closeProbes() error {
+	var funcName string
+	for _, probe := range b.probes {
+		if err := syscall.Close(probe.efd); err != nil {
+			return fmt.Errorf("error closing perf event fd: %v", err)
+		}
+		if err := syscall.Close(probe.fd); err != nil {
+			return fmt.Errorf("error closing probe fd: %v", err)
+		}
+		name := probe.Name
+		isKretprobe := strings.HasPrefix(name, "kretprobe/")
+		var err error
+		if isKretprobe {
+			funcName = strings.TrimPrefix(name, "kretprobe/")
+			err = disableKprobe("r" + funcName)
+		} else {
+			funcName = strings.TrimPrefix(name, "kprobe/")
+			err = disableKprobe("p" + funcName)
+		}
+		if err != nil {
+			return fmt.Errorf("error clearing probe: %v", err)
+		}
+	}
+	return nil
+}
+
+func (b *Module) closeCgroupPrograms() error {
+	for _, program := range b.cgroupPrograms {
+		if err := syscall.Close(program.fd); err != nil {
+			return fmt.Errorf("error closing cgroup program fd: %v", err)
+		}
+	}
+	return nil
+}
+
+func unpinMap(m *Map) error {
+	if m.m.def.pinning == 0 {
+		return nil
+	}
+	namespace := C.GoString(&m.m.def.namespace[0])
+	mapPath := filepath.Join(BPFFSPath, namespace, BPFDirGlobals, m.Name)
+	return syscall.Unlink(mapPath)
+}
+
+func (b *Module) closeMaps() error {
+	for _, m := range b.maps {
+		if m.m.def.pinning > 0 {
+			unpinMap(m)
+		}
+		for _, fd := range m.pmuFDs {
+			if err := syscall.Close(int(fd)); err != nil {
+				return fmt.Errorf("error closing perf event fd: %v", err)
+			}
+		}
+		if err := syscall.Close(int(m.m.fd)); err != nil {
+			return fmt.Errorf("error closing map fd: %v", err)
+		}
+		C.free(unsafe.Pointer(m.m))
+	}
+	return nil
+}
+
+// Close takes care of terminating all underlying BPF programs and structures
+func (b *Module) Close() error {
+	if err := b.closeMaps(); err != nil {
+		return err
+	}
+	if err := b.closeProbes(); err != nil {
+		return err
+	}
+	if err := b.closeCgroupPrograms(); err != nil {
+		return err
+	}
 	return nil
 }
