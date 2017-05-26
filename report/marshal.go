@@ -1,6 +1,7 @@
 package report
 
 import (
+	"bufio"
 	"bytes"
 	"compress/gzip"
 	"fmt"
@@ -133,22 +134,9 @@ func MakeFromFile(path string) (rpt Report, _ error) {
 	}
 	defer f.Close()
 
-	var (
-		handle  codec.Handle
-		gzipped bool
-	)
-	fileType := filepath.Ext(path)
-	if fileType == ".gz" {
-		gzipped = true
-		fileType = filepath.Ext(strings.TrimSuffix(path, fileType))
-	}
-	switch fileType {
-	case ".json":
-		handle = &codec.JsonHandle{}
-	case ".msgpack":
-		handle = &codec.MsgpackHandle{}
-	default:
-		return rpt, fmt.Errorf("Unsupported file extension: %v", fileType)
+	handle, gzipped, err := handlerFromFileType(path)
+	if err != nil {
+		return rpt, err
 	}
 
 	var buf []byte
@@ -167,4 +155,57 @@ func MakeFromFile(path string) (rpt Report, _ error) {
 	err = rpt.ReadBytes(buf, handle)
 
 	return rpt, err
+}
+
+// WriteToFile writes a Report to a file. The encoding is determined
+// by the file extension (".msgpack" or ".json", with an optional
+// ".gz").
+func (rep *Report) WriteToFile(path string, compressionLevel int) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	handle, gzipped, err := handlerFromFileType(path)
+	if err != nil {
+		return err
+	}
+
+	var w io.Writer
+	bufwriter := bufio.NewWriter(f)
+	defer bufwriter.Flush()
+	w = bufwriter
+	if gzipped {
+		gzwriter, err := gzip.NewWriterLevel(w, compressionLevel)
+		if err != nil {
+			return err
+		}
+		defer gzwriter.Close()
+		w = gzwriter
+	}
+
+	if err = codec.NewEncoder(w, handle).Encode(rep); err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func handlerFromFileType(path string) (codec.Handle, bool, error) {
+	fileType := filepath.Ext(path)
+	gzipped := false
+	if fileType == ".gz" {
+		gzipped = true
+		fileType = filepath.Ext(strings.TrimSuffix(path, fileType))
+	}
+	switch fileType {
+	case ".json":
+		return &codec.JsonHandle{}, gzipped, nil
+	case ".msgpack":
+		return &codec.MsgpackHandle{}, gzipped, nil
+	default:
+		return nil, false, fmt.Errorf("Unsupported file extension: %v", fileType)
+	}
 }
