@@ -3,8 +3,12 @@ package report
 import (
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
@@ -117,4 +121,50 @@ func MakeFromBytes(buf []byte) (*Report, error) {
 		return nil, err
 	}
 	return &rep, nil
+}
+
+// MakeFromFile construct a Report from a file, with the encoding
+// determined by the extension (".msgpack" or ".json", with an
+// optional ".gz").
+func MakeFromFile(path string) (rpt Report, _ error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return rpt, err
+	}
+	defer f.Close()
+
+	var (
+		handle  codec.Handle
+		gzipped bool
+	)
+	fileType := filepath.Ext(path)
+	if fileType == ".gz" {
+		gzipped = true
+		fileType = filepath.Ext(strings.TrimSuffix(path, fileType))
+	}
+	switch fileType {
+	case ".json":
+		handle = &codec.JsonHandle{}
+	case ".msgpack":
+		handle = &codec.MsgpackHandle{}
+	default:
+		return rpt, fmt.Errorf("Unsupported file extension: %v", fileType)
+	}
+
+	var buf []byte
+	if gzipped {
+		r, err := gzip.NewReader(f)
+		if err != nil {
+			return rpt, err
+		}
+		buf, err = ioutil.ReadAll(r)
+	} else {
+		buf, err = ioutil.ReadAll(f)
+	}
+	if err != nil {
+		return rpt, err
+	}
+	err = rpt.ReadBytes(buf, handle)
+
+	return rpt, err
 }

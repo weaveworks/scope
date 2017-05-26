@@ -1,9 +1,7 @@
 package app
 
 import (
-	"compress/gzip"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -11,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
 
 	"github.com/weaveworks/common/mtime"
@@ -234,7 +231,7 @@ func NewFileCollector(path string, window time.Duration) (Collector, error) {
 			}
 			timestamps = append(timestamps, t)
 
-			rpt, err := readReport(p)
+			rpt, err := report.MakeFromFile(p)
 			if err != nil {
 				return err
 			}
@@ -265,49 +262,6 @@ func timestampFromFilepath(path string) (time.Time, error) {
 		return time.Time{}, fmt.Errorf("filename '%s' is not a number (representing nanoseconds since epoch): %v", name, err)
 	}
 	return time.Unix(0, nanosecondsSinceEpoch), nil
-}
-
-func readReport(path string) (rpt report.Report, _ error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return rpt, err
-	}
-	defer f.Close()
-
-	var (
-		handle  codec.Handle
-		gzipped bool
-	)
-	fileType := filepath.Ext(path)
-	if fileType == ".gz" {
-		gzipped = true
-		fileType = filepath.Ext(strings.TrimSuffix(path, fileType))
-	}
-	switch fileType {
-	case ".json":
-		handle = &codec.JsonHandle{}
-	case ".msgpack":
-		handle = &codec.MsgpackHandle{}
-	default:
-		return rpt, fmt.Errorf("Unsupported file extension: %v", fileType)
-	}
-
-	var buf []byte
-	if gzipped {
-		r, err := gzip.NewReader(f)
-		if err != nil {
-			return rpt, err
-		}
-		buf, err = ioutil.ReadAll(r)
-	} else {
-		buf, err = ioutil.ReadAll(f)
-	}
-	if err != nil {
-		return rpt, err
-	}
-	err = rpt.ReadBytes(buf, handle)
-
-	return rpt, err
 }
 
 func replay(a Adder, timestamps []time.Time, reports []report.Report) {
