@@ -26,13 +26,18 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"unsafe"
+
+	"github.com/iovisor/gobpf/bpffs"
 )
 
 /*
+#define _GNU_SOURCE
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,17 +56,24 @@ import (
 // from https://github.com/safchain/goebpf
 // Apache License, Version 2.0
 
+#define BUF_SIZE_MAP_NS 256
+
 typedef struct bpf_map_def {
   unsigned int type;
   unsigned int key_size;
   unsigned int value_size;
   unsigned int max_entries;
+  unsigned int map_flags;
+  unsigned int pinning;
+  char namespace[BUF_SIZE_MAP_NS];
 } bpf_map_def;
 
 typedef struct bpf_map {
 	int         fd;
 	bpf_map_def def;
 } bpf_map;
+
+extern int bpf_pin_object(int fd, const char *pathname);
 
 __u64 ptr_to_u64(void *ptr)
 {
@@ -113,9 +125,25 @@ static int bpf_create_map(enum bpf_map_type map_type, int key_size,
 	return ret;
 }
 
-static bpf_map *bpf_load_map(bpf_map_def *map_def)
+void create_bpf_obj_get(const char *pathname, void *attr)
+{
+	union bpf_attr *ptr_bpf_attr;
+	ptr_bpf_attr = (union bpf_attr *)attr;
+	ptr_bpf_attr->pathname = ptr_to_u64((void *) pathname);
+}
+
+int get_pinned_obj_fd(const char *path)
+{
+	union bpf_attr attr = {};
+	create_bpf_obj_get(path, &attr);
+	return syscall(__NR_bpf, BPF_OBJ_GET, &attr, sizeof(attr));
+}
+
+static bpf_map *bpf_load_map(bpf_map_def *map_def, const char *path)
 {
 	bpf_map *map;
+	struct stat st;
+	int ret, do_pin = 0;
 
 	map = calloc(1, sizeof(bpf_map));
 	if (map == NULL)
@@ -123,14 +151,38 @@ static bpf_map *bpf_load_map(bpf_map_def *map_def)
 
 	memcpy(&map->def, map_def, sizeof(bpf_map_def));
 
+	switch (map_def->pinning) {
+	case 1: // PIN_OBJECT_NS
+		// TODO to be implemented
+		return 0;
+	case 2: // PIN_GLOBAL_NS
+		if (stat(path, &st) == 0) {
+			ret = get_pinned_obj_fd(path);
+			if (ret < 0) {
+				return 0;
+			}
+			map->fd = ret;
+			return map;
+		}
+		do_pin = 1;
+	}
+
 	map->fd = bpf_create_map(map_def->type,
 		map_def->key_size,
 		map_def->value_size,
 		map_def->max_entries
 	);
 
-	if (map->fd < 0)
+	if (map->fd < 0) {
 		return 0;
+	}
+
+	if (do_pin) {
+		ret = bpf_pin_object(map->fd, path);
+		if (ret < 0) {
+			return 0;
+		}
+	}
 
 	return map;
 }
@@ -203,8 +255,8 @@ static int perf_event_open_map(int pid, int cpu, int group_fd, unsigned long fla
 	attr.size = sizeof(struct perf_event_attr);
 	attr.config = 10; // PERF_COUNT_SW_BPF_OUTPUT
 
-       return syscall(__NR_perf_event_open, &attr, pid, cpu,
-                      group_fd, flags);
+	return syscall(__NR_perf_event_open, &attr, pid, cpu,
+		       group_fd, flags);
 }
 */
 import "C"
@@ -243,40 +295,78 @@ func elfReadVersion(file *elf.File) (uint32, error) {
 	return 0, nil
 }
 
+func prepareBPFFS(namespace, name string) (string, error) {
+	err := bpffs.Mount()
+	if err != nil {
+		return "", err
+	}
+	mapPath := filepath.Join(BPFFSPath, namespace, BPFDirGlobals, name)
+	err = os.MkdirAll(filepath.Dir(mapPath), syscall.S_IRWXU)
+	if err != nil {
+		return "", fmt.Errorf("error creating map directory %q: %v", filepath.Dir(mapPath), err)
+	}
+	return mapPath, nil
+}
+
+func validMapNamespace(namespaceRaw *C.char) (string, error) {
+	namespace := C.GoStringN(namespaceRaw, C.int(C.strnlen(namespaceRaw, C.BUF_SIZE_MAP_NS)))
+	if namespace == "" || namespace == "." || namespace == ".." {
+		return "", fmt.Errorf("namespace must not be %q", namespace)
+	}
+	if strings.Contains(namespace, "/") {
+		return "", fmt.Errorf("no '/' allowed in namespace")
+	}
+	return namespace, nil
+}
+
 func elfReadMaps(file *elf.File) (map[string]*Map, error) {
 	maps := make(map[string]*Map)
-	for sectionIdx, section := range file.Sections {
-		if strings.HasPrefix(section.Name, "maps/") {
-			data, err := section.Data()
+	for _, section := range file.Sections {
+		if !strings.HasPrefix(section.Name, "maps/") {
+			continue
+		}
+
+		data, err := section.Data()
+		if err != nil {
+			return nil, err
+		}
+		if len(data) != C.sizeof_struct_bpf_map_def {
+			return nil, fmt.Errorf("only one map with size %d allowed per section", C.sizeof_struct_bpf_map_def)
+		}
+
+		name := strings.TrimPrefix(section.Name, "maps/")
+
+		mapDef := (*C.bpf_map_def)(unsafe.Pointer(&data[0]))
+
+		var mapPathC *C.char
+		if mapDef.pinning > 0 {
+			namespace, err := validMapNamespace(&mapDef.namespace[0])
 			if err != nil {
 				return nil, err
 			}
-
-			name := strings.TrimPrefix(section.Name, "maps/")
-
-			mapCount := len(data) / C.sizeof_struct_bpf_map_def
-			for i := 0; i < mapCount; i++ {
-				pos := i * C.sizeof_struct_bpf_map_def
-				cm, err := C.bpf_load_map((*C.bpf_map_def)(unsafe.Pointer(&data[pos])))
-				if cm == nil {
-					return nil, fmt.Errorf("error while loading map %q: %v", section.Name, err)
-				}
-
-				m := &Map{
-					Name:       name,
-					SectionIdx: sectionIdx,
-					Idx:        i,
-					m:          cm,
-				}
-
-				if oldMap, ok := maps[name]; ok {
-					return nil, fmt.Errorf("duplicate map: %q (section %q) and %q (section %q)",
-						oldMap.Name, file.Sections[oldMap.SectionIdx].Name,
-						name, section.Name)
-				}
-				maps[name] = m
+			mapPath, err := prepareBPFFS(namespace, name)
+			if err != nil {
+				return nil, fmt.Errorf("error preparing bpf fs: %v", err)
 			}
+			mapPathC = C.CString(mapPath)
+			defer C.free(unsafe.Pointer(mapPathC))
+		} else {
+			mapPathC = nil
 		}
+
+		cm, err := C.bpf_load_map(mapDef, mapPathC)
+		if cm == nil {
+			return nil, fmt.Errorf("error while loading map %q: %v", section.Name, err)
+		}
+
+		if oldMap, ok := maps[name]; ok {
+			return nil, fmt.Errorf("duplicate map: %q and %q", oldMap.Name, name)
+		}
+		maps[name] = &Map{
+			Name: name,
+			m:    cm,
+		}
+
 	}
 	return maps, nil
 }
@@ -598,7 +688,7 @@ func (b *Module) initializePerfMaps(parameters map[string]SectionParams) error {
 				return fmt.Errorf("error enabling perf event: %v", err2)
 			}
 
-			// assign perf fd tp map
+			// assign perf fd to map
 			ret, err := C.bpf_update_element(C.int(b.maps[name].m.fd), unsafe.Pointer(&cpu), unsafe.Pointer(&pmuFD), C.BPF_ANY)
 			if ret != 0 {
 				return fmt.Errorf("cannot assign perf fd to map %q: %v (cpu %d)", name, err, cpu)
@@ -617,10 +707,8 @@ func (b *Module) initializePerfMaps(parameters map[string]SectionParams) error {
 // Map represents a eBPF map. An eBPF map has to be declared in the
 // C file.
 type Map struct {
-	Name       string
-	SectionIdx int
-	Idx        int
-	m          *C.bpf_map
+	Name string
+	m    *C.bpf_map
 
 	// only for perf maps
 	pmuFDs    []C.int
@@ -641,4 +729,8 @@ func (b *Module) IterMaps() <-chan *Map {
 
 func (b *Module) Map(name string) *Map {
 	return b.maps[name]
+}
+
+func (m *Map) Fd() int {
+	return int(m.m.fd)
 }

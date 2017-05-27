@@ -24,6 +24,8 @@ struct bpf_map_def SEC("maps/tcp_event_ipv4") tcp_event_ipv4 = {
 	.key_size = sizeof(int),
 	.value_size = sizeof(__u32),
 	.max_entries = 1024,
+	.pinning = 0,
+	.namespace = "",
 };
 
 /* This is a key/value store with the keys being the cpu number
@@ -34,6 +36,8 @@ struct bpf_map_def SEC("maps/tcp_event_ipv6") tcp_event_ipv6 = {
 	.key_size = sizeof(int),
 	.value_size = sizeof(__u32),
 	.max_entries = 1024,
+	.pinning = 0,
+	.namespace = "",
 };
 
 /* These maps are used to match the kprobe & kretprobe of connect */
@@ -46,6 +50,8 @@ struct bpf_map_def SEC("maps/connectsock_ipv4") connectsock_ipv4 = {
 	.key_size = sizeof(__u64),
 	.value_size = sizeof(void *),
 	.max_entries = 1024,
+	.pinning = 0,
+	.namespace = "",
 };
 
 /* This is a key/value store with the keys being a pid
@@ -56,6 +62,8 @@ struct bpf_map_def SEC("maps/connectsock_ipv6") connectsock_ipv6 = {
 	.key_size = sizeof(__u64),
 	.value_size = sizeof(void *),
 	.max_entries = 1024,
+	.pinning = 0,
+	.namespace = "",
 };
 
 /* This is a key/value store with the keys being an ipv4_tuple_t
@@ -66,6 +74,8 @@ struct bpf_map_def SEC("maps/tuplepid_ipv4") tuplepid_ipv4 = {
 	.key_size = sizeof(struct ipv4_tuple_t),
 	.value_size = sizeof(struct pid_comm_t),
 	.max_entries = 1024,
+	.pinning = 0,
+	.namespace = "",
 };
 
 /* This is a key/value store with the keys being an ipv6_tuple_t
@@ -76,6 +86,8 @@ struct bpf_map_def SEC("maps/tuplepid_ipv6") tuplepid_ipv6 = {
 	.key_size = sizeof(struct ipv6_tuple_t),
 	.value_size = sizeof(struct pid_comm_t),
 	.max_entries = 1024,
+	.pinning = 0,
+	.namespace = "",
 };
 
 /* This is a key/value store with the keys being a pid
@@ -86,6 +98,8 @@ struct bpf_map_def SEC("maps/fdinstall_ret") fdinstall_ret = {
 	.key_size = sizeof(__u64),
 	.value_size = sizeof(unsigned int),
 	.max_entries = 1024,
+	.pinning = 0,
+	.namespace = "",
 };
 
 /* This is a key/value store with the keys being a pid (tgid)
@@ -96,6 +110,8 @@ struct bpf_map_def SEC("maps/fdinstall_pids") fdinstall_pids = {
 	.key_size = sizeof(__u32),
 	.value_size = sizeof(__u32),
 	.max_entries = 1024,
+	.pinning = 0,
+	.namespace = "",
 };
 
 /* http://stackoverflow.com/questions/1001307/detecting-endianness-programmatically-in-a-c-program */
@@ -132,6 +148,8 @@ struct bpf_map_def SEC("maps/tcptracer_status") tcptracer_status = {
 	.key_size = sizeof(__u64),
 	.value_size = sizeof(struct tcptracer_status_t),
 	.max_entries = 1,
+	.pinning = 0,
+	.namespace = "",
 };
 
 __attribute__((always_inline))

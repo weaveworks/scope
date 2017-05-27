@@ -1017,10 +1017,19 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/iovisor/gobpf/bpffs",
+			"repository": "https://github.com/iovisor/gobpf",
+			"vcs": "git",
+			"revision": "aef06278f7e7142309a608d0e14e69cf94a5adae",
+			"branch": "master",
+			"path": "/bpffs",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/iovisor/gobpf/elf",
 			"repository": "https://github.com/iovisor/gobpf",
 			"vcs": "git",
-			"revision": "23f7ee81c1cc244d16ddc8110c2ec8b8a09d0448",
+			"revision": "aef06278f7e7142309a608d0e14e69cf94a5adae",
 			"branch": "master",
 			"path": "/elf",
 			"notests": true
@@ -1462,7 +1471,7 @@
 			"importpath": "github.com/weaveworks/tcptracer-bpf",
 			"repository": "https://github.com/weaveworks/tcptracer-bpf",
 			"vcs": "git",
-			"revision": "783f088bbe3e91d4d23cf2f48072f80de2fd03fc",
+			"revision": "a616ebc6c5ac196af743e5dfc621a52fce030f87",
 			"branch": "master",
 			"notests": true
 		},

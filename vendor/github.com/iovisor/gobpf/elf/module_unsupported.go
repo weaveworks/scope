@@ -40,6 +40,10 @@ func (b *Module) CgroupProgram(name string) *CgroupProgram {
 	return nil
 }
 
+func (b *Module) Kprobe(name string) *Kprobe {
+	return nil
+}
+
 func (b *Module) AttachProgram(cgroupProg *CgroupProgram, cgroupPath string, attachType AttachType) error {
 	return fmt.Errorf("not supported")
 }
