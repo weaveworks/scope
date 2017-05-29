@@ -129,22 +129,7 @@ func (c EdgeMetadatas) String() string {
 
 // DeepEqual tests equality with other Counters
 func (c EdgeMetadatas) DeepEqual(d EdgeMetadatas) bool {
-	if c.Size() != d.Size() {
-		return false
-	}
-	if c.Size() == 0 {
-		return true
-	}
-
-	equal := true
-	c.psMap.ForEach(func(k string, val interface{}) {
-		if otherValue, ok := d.psMap.Lookup(k); !ok {
-			equal = false
-		} else {
-			equal = equal && reflect.DeepEqual(val, otherValue)
-		}
-	})
-	return equal
+	return mapEqual(c.psMap, d.psMap, reflect.DeepEqual)
 }
 
 // CodecEncodeSelf implements codec.Selfer

@@ -115,25 +115,7 @@ func (c Counters) String() string {
 
 // DeepEqual tests equality with other Counters
 func (c Counters) DeepEqual(d Counters) bool {
-	if (c.psMap == nil) != (d.psMap == nil) {
-		return false
-	} else if c.psMap == nil && d.psMap == nil {
-		return true
-	}
-
-	if c.psMap.Size() != d.psMap.Size() {
-		return false
-	}
-
-	equal := true
-	c.psMap.ForEach(func(k string, val interface{}) {
-		if otherValue, ok := d.psMap.Lookup(k); !ok {
-			equal = false
-		} else {
-			equal = equal && reflect.DeepEqual(val, otherValue)
-		}
-	})
-	return equal
+	return mapEqual(c.psMap, d.psMap, reflect.DeepEqual)
 }
 
 func (c Counters) fromIntermediate(in map[string]int) Counters {

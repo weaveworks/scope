@@ -142,28 +142,8 @@ func (n NodeSet) String() string {
 }
 
 // DeepEqual tests equality with other NodeSets
-func (n NodeSet) DeepEqual(i interface{}) bool {
-	d, ok := i.(NodeSet)
-	if !ok {
-		return false
-	}
-
-	if n.Size() != d.Size() {
-		return false
-	}
-	if n.Size() == 0 {
-		return true
-	}
-
-	equal := true
-	n.psMap.ForEach(func(k string, val interface{}) {
-		if otherValue, ok := d.psMap.Lookup(k); !ok {
-			equal = false
-		} else {
-			equal = equal && reflect.DeepEqual(val, otherValue)
-		}
-	})
-	return equal
+func (n NodeSet) DeepEqual(o NodeSet) bool {
+	return mapEqual(n.psMap, o.psMap, reflect.DeepEqual)
 }
 
 func (n NodeSet) toIntermediate() []Node {

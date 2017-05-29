@@ -129,22 +129,7 @@ func (s Sets) String() string {
 
 // DeepEqual tests equality with other Sets
 func (s Sets) DeepEqual(t Sets) bool {
-	if s.Size() != t.Size() {
-		return false
-	}
-	if s.Size() == 0 {
-		return true
-	}
-
-	equal := true
-	s.psMap.ForEach(func(k string, val interface{}) {
-		if otherValue, ok := t.psMap.Lookup(k); !ok {
-			equal = false
-		} else {
-			equal = equal && reflect.DeepEqual(val, otherValue)
-		}
-	})
-	return equal
+	return mapEqual(s.psMap, t.psMap, reflect.DeepEqual)
 }
 
 // CodecEncodeSelf implements codec.Selfer
