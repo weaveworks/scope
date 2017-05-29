@@ -125,7 +125,7 @@ func mapRead(decoder *codec.Decoder, decodeValue func(isNil bool) interface{}) p
 // undocumented internal APIs apply.
 func mapWrite(m ps.Map, encoder *codec.Encoder, encodeValue func(*codec.Encoder, interface{})) {
 	z, r := codec.GenHelperEncoder(encoder)
-	if m == nil {
+	if m == nil || m.IsNil() {
 		r.EncodeNil()
 		return
 	}
