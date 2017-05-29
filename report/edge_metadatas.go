@@ -1,10 +1,8 @@
 package report
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
-	"sort"
 	"strconv"
 
 	"github.com/ugorji/go/codec"
@@ -109,22 +107,7 @@ func (c EdgeMetadatas) ForEach(fn func(k string, v EdgeMetadata)) {
 }
 
 func (c EdgeMetadatas) String() string {
-	keys := []string{}
-	if c.psMap == nil {
-		c = EmptyEdgeMetadatas
-	}
-	for _, k := range c.psMap.Keys() {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	buf := bytes.NewBufferString("{")
-	for _, key := range keys {
-		val, _ := c.psMap.Lookup(key)
-		fmt.Fprintf(buf, "%s: %v, ", key, val)
-	}
-	fmt.Fprintf(buf, "}")
-	return buf.String()
+	return mapToString(c.psMap)
 }
 
 // DeepEqual tests equality with other Counters
