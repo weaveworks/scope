@@ -3,7 +3,6 @@ package report
 import (
 	"bytes"
 	"fmt"
-	"sort"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ugorji/go/codec"
@@ -85,16 +84,6 @@ func (n NodeSet) Lookup(key string) (Node, bool) {
 	return Node{}, false
 }
 
-// Keys is a list of all the keys in this set.
-func (n NodeSet) Keys() []string {
-	if n.psMap == nil {
-		return nil
-	}
-	k := n.psMap.Keys()
-	sort.Strings(k)
-	return k
-}
-
 // Size is the number of nodes in the set
 func (n NodeSet) Size() int {
 	if n.psMap == nil {
@@ -106,7 +95,7 @@ func (n NodeSet) Size() int {
 // ForEach executes f for each node in the set. Nodes are traversed in sorted
 // order.
 func (n NodeSet) ForEach(f func(Node)) {
-	for _, key := range n.Keys() {
+	for _, key := range mapKeys(n.psMap) {
 		if val, ok := n.psMap.Lookup(key); ok {
 			f(val.(Node))
 		}
@@ -119,22 +108,9 @@ func (n NodeSet) Copy() NodeSet {
 }
 
 func (n NodeSet) String() string {
-	keys := []string{}
-	if n.psMap == nil {
-		n = EmptyNodeSet
-	}
-	psMap := n.psMap
-	if psMap == nil {
-		psMap = ps.NewMap()
-	}
-	for _, k := range psMap.Keys() {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
 	buf := bytes.NewBufferString("{")
-	for _, key := range keys {
-		val, _ := psMap.Lookup(key)
+	for _, key := range mapKeys(n.psMap) {
+		val, _ := n.psMap.Lookup(key)
 		fmt.Fprintf(buf, "%s: %s, ", key, spew.Sdump(val))
 	}
 	fmt.Fprintf(buf, "}")

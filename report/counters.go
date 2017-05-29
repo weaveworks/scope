@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
-	"sort"
 
 	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/ps"
@@ -87,28 +86,15 @@ func (c Counters) Merge(other Counters) Counters {
 	return Counters{output}
 }
 
-// ForEach calls f for each k/v pair of counters. Keys are iterated in
-// lexicographical order.
-func (c Counters) ForEach(f func(key string, val int)) {
-	if c.psMap != nil {
-		keys := c.psMap.Keys()
-		sort.Strings(keys)
-		for _, key := range keys {
-			if val, ok := c.psMap.Lookup(key); ok {
-				f(key, val.(int))
-			}
-		}
-	}
-}
-
 // String serializes Counters into a string.
 func (c Counters) String() string {
 	buf := bytes.NewBufferString("{")
 	prefix := ""
-	c.ForEach(func(k string, v int) {
-		fmt.Fprintf(buf, "%s%s: %d", prefix, k, v)
+	for _, key := range mapKeys(c.psMap) {
+		val, _ := c.psMap.Lookup(key)
+		fmt.Fprintf(buf, "%s%s: %d", prefix, key, val.(int))
 		prefix = ", "
-	})
+	}
 	fmt.Fprintf(buf, "}")
 	return buf.String()
 }
