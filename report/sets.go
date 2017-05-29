@@ -1,10 +1,7 @@
 package report
 
 import (
-	"bytes"
-	"fmt"
 	"reflect"
-	"sort"
 
 	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/ps"
@@ -109,42 +106,12 @@ func (s Sets) Copy() Sets {
 }
 
 func (s Sets) String() string {
-	if s.psMap == nil {
-		s = EmptySets
-	}
-	keys := []string{}
-	for _, k := range s.psMap.Keys() {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	buf := bytes.NewBufferString("{")
-	for _, key := range keys {
-		val, _ := s.psMap.Lookup(key)
-		fmt.Fprintf(buf, "%s: %v, ", key, val)
-	}
-	fmt.Fprintf(buf, "}")
-	return buf.String()
+	return mapToString(s.psMap)
 }
 
 // DeepEqual tests equality with other Sets
 func (s Sets) DeepEqual(t Sets) bool {
-	if s.Size() != t.Size() {
-		return false
-	}
-	if s.Size() == 0 {
-		return true
-	}
-
-	equal := true
-	s.psMap.ForEach(func(k string, val interface{}) {
-		if otherValue, ok := t.psMap.Lookup(k); !ok {
-			equal = false
-		} else {
-			equal = equal && reflect.DeepEqual(val, otherValue)
-		}
-	})
-	return equal
+	return mapEqual(s.psMap, t.psMap, reflect.DeepEqual)
 }
 
 // CodecEncodeSelf implements codec.Selfer
