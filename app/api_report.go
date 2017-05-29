@@ -13,7 +13,7 @@ import (
 // Raw report handler
 func makeRawReportHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		report, err := rep.Report(ctx, time.Now())
+		report, err := rep.Report(ctx, 0)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return
@@ -32,7 +32,7 @@ type probeDesc struct {
 // Probe handler
 func makeProbeHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		rpt, err := rep.Report(ctx, time.Now())
+		rpt, err := rep.Report(ctx, 0)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return

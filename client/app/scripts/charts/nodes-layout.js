@@ -422,7 +422,7 @@ export function doLayout(immNodes, immEdges, opts) {
   const cacheId = buildTopologyCacheId(options.topologyId, options.topologyOptions);
 
   // one engine and node and edge caches per topology, to keep renderings similar
-  if (options.noCache || !topologyCaches[cacheId]) {
+  if (true || options.noCache || !topologyCaches[cacheId]) {
     topologyCaches[cacheId] = {
       nodeCache: makeMap(),
       edgeCache: makeMap(),

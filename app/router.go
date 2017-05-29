@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/PuerkitoBio/ghost/handlers"
 	log "github.com/Sirupsen/logrus"
@@ -180,7 +179,7 @@ func NewVersion(version, downloadURL string) {
 
 func apiHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		report, err := rep.Report(ctx, time.Now())
+		report, err := rep.Report(ctx, 0)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return

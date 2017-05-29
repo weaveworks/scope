@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
@@ -477,7 +476,7 @@ func (r *Registry) walk(f func(APITopologyDesc)) {
 // makeTopologyList returns a handler that yields an APITopologyList.
 func (r *Registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		report, err := rep.Report(ctx, time.Now())
+		report, err := rep.Report(ctx, 0)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return
@@ -569,7 +568,7 @@ func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFu
 			http.NotFound(w, req)
 			return
 		}
-		rpt, err := rep.Report(ctx, time.Now())
+		rpt, err := rep.Report(ctx, 0)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return

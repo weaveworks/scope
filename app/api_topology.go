@@ -100,18 +100,19 @@ func handleWebsocket(
 		timestamp    = time.Now()
 	)
 
-	log.Debugf("BLUBLUBLUBLU")
 	if timestampStr := r.Form.Get("timestamp"); timestampStr != "" {
-		const ISO8601UTC = "2006-01-02T15:04:05Z"
-		timestamp, _ = time.Parse(ISO8601UTC, timestampStr)
-		log.Debugf("BLUBLUBLUBLU: %s %v", timestampStr, timestamp)
+		// Override the default current timestamp by the ISO8601 one explicitly provided by the UI.
+		timestamp, _ = time.Parse(time.RFC3339, timestampStr)
 	}
+	// Use the time offset instead of a timestamp here so that the value
+	// can stay constant when simulating past reports (with normal speed).
+	timeOffset := time.Since(timestamp)
 
 	rep.WaitOn(ctx, wait)
 	defer rep.UnWait(ctx, wait)
 
 	for {
-		report, err := rep.Report(ctx, timestamp)
+		report, err := rep.Report(ctx, timeOffset)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return
