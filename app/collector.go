@@ -28,7 +28,7 @@ const reportQuantisationInterval = 3 * time.Second
 // Reporter is something that can produce reports on demand. It's a convenient
 // interface for parts of the app, and several experimental components.
 type Reporter interface {
-	Report(context.Context, time.Duration) (report.Report, error)
+	Report(context.Context, time.Time) (report.Report, error)
 	WaitOn(context.Context, chan struct{})
 	UnWait(context.Context, chan struct{})
 }
@@ -118,14 +118,14 @@ func (c *collector) Add(_ context.Context, rpt report.Report, _ []byte) error {
 
 // Report returns a merged report over all added reports. It implements
 // Reporter.
-func (c *collector) Report(_ context.Context, timeOffset time.Duration) (report.Report, error) {
+func (c *collector) Report(_ context.Context, timestamp time.Time) (report.Report, error) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	// If the oldest report is still within range,
 	// and there is a cached report, return that.
 	if c.cached != nil && len(c.reports) > 0 {
-		oldest := mtime.Now().Add(-timeOffset - c.window)
+		oldest := timestamp.Add(-c.window)
 		if c.timestamps[0].After(oldest) {
 			return *c.cached, nil
 		}
@@ -191,7 +191,7 @@ type StaticCollector report.Report
 
 // Report returns a merged report over all added reports. It implements
 // Reporter.
-func (c StaticCollector) Report(context.Context, time.Duration) (report.Report, error) {
+func (c StaticCollector) Report(context.Context, time.Time) (report.Report, error) {
 	return report.Report(c), nil
 }
 

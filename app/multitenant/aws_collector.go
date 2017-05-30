@@ -297,9 +297,9 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 	return reports, nil
 }
 
-func (c *awsCollector) Report(ctx context.Context, timeOffset time.Duration) (report.Report, error) {
+func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.Report, error) {
 	var (
-		end         = time.Now().Add(-timeOffset)
+		end         = timestamp
 		start       = end.Add(-c.window)
 		rowStart    = start.UnixNano() / time.Hour.Nanoseconds()
 		rowEnd      = end.UnixNano() / time.Hour.Nanoseconds()

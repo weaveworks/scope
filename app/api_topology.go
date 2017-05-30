@@ -93,26 +93,33 @@ func handleWebsocket(
 	}(conn)
 
 	var (
-		previousTopo detailed.NodeSummaries
-		tick         = time.Tick(loop)
-		wait         = make(chan struct{}, 1)
-		topologyID   = mux.Vars(r)["topology"]
-		timestamp    = time.Now()
+		previousTopo    detailed.NodeSummaries
+		tick            = time.Tick(loop)
+		wait            = make(chan struct{}, 1)
+		topologyID      = mux.Vars(r)["topology"]
+		channelOpenedAt = time.Now()
+		// By default we will always be reporting the most recent state.
+		startReportingAt = time.Now()
 	)
 
+	// If the timestamp is provided explicitly by the UI, we start reporting from there.
 	if timestampStr := r.Form.Get("timestamp"); timestampStr != "" {
-		// Override the default current timestamp by the ISO8601 one explicitly provided by the UI.
-		timestamp, _ = time.Parse(time.RFC3339, timestampStr)
+		startReportingAt, _ = time.Parse(time.RFC3339, timestampStr)
 	}
-	// Use the time offset instead of a timestamp here so that the value
-	// can stay constant when simulating past reports (with normal speed).
-	timeOffset := time.Since(timestamp)
 
 	rep.WaitOn(ctx, wait)
 	defer rep.UnWait(ctx, wait)
 
 	for {
-		report, err := rep.Report(ctx, timeOffset)
+		// We measure how much time has passed since the channel was opened
+		// and add it to the initial report timestamp to get the timestamp
+		// of the snapshot we want to report right now.
+		// NOTE: Multiplying `timestampDelta` by a constant factor here
+		// would have an effect of fast-forward, which is something we
+		// might be interested in implementing in the future.
+		timestampDelta := time.Since(channelOpenedAt)
+		reportTimestamp := startReportingAt.Add(timestampDelta)
+		report, err := rep.Report(ctx, reportTimestamp)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return
