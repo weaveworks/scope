@@ -2,6 +2,7 @@ package report_test
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/weaveworks/scope/report"
@@ -40,6 +41,7 @@ func TestMakeNodeSet(t *testing.T) {
 		set := report.MakeNodeSet(inputs...)
 		var have []string
 		set.ForEach(func(node report.Node) { have = append(have, node.ID) })
+		sort.Strings(have)
 		if !reflect.DeepEqual(testcase.wants, have) {
 			t.Errorf("%#v: want %#v, have %#v", testcase.inputs, testcase.wants, have)
 		}
