@@ -92,13 +92,12 @@ func (n NodeSet) Size() int {
 	return n.psMap.Size()
 }
 
-// ForEach executes f for each node in the set. Nodes are traversed in sorted
-// order.
+// ForEach executes f for each node in the set.
 func (n NodeSet) ForEach(f func(Node)) {
-	for _, key := range mapKeys(n.psMap) {
-		if val, ok := n.psMap.Lookup(key); ok {
+	if n.psMap != nil {
+		n.psMap.ForEach(func(_ string, val interface{}) {
 			f(val.(Node))
-		}
+		})
 	}
 }
 
