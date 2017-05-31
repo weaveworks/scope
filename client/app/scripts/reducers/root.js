@@ -1,8 +1,14 @@
 /* eslint-disable import/no-webpack-loader-syntax, import/no-unresolved */
 import debug from 'debug';
 import { size, each, includes, isEqual } from 'lodash';
-import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
-  OrderedMap as makeOrderedMap, Set as makeSet } from 'immutable';
+import {
+  fromJS,
+  is as isDeepEqual,
+  List as makeList,
+  Map as makeMap,
+  OrderedMap as makeOrderedMap,
+  Set as makeSet,
+} from 'immutable';
 
 import ActionTypes from '../constants/action-types';
 import {

@@ -1,6 +1,6 @@
 
 import {OrderedMap as makeOrderedMap} from 'immutable';
-import { buildOptionsQuery, basePath, getApiPath, getWebsocketUrl } from '../web-api-utils';
+import { buildUrlQuery, basePath, getApiPath, getWebsocketUrl } from '../web-api-utils';
 
 describe('WebApiUtils', () => {
   describe('basePath', () => {
@@ -21,13 +21,13 @@ describe('WebApiUtils', () => {
     });
   });
 
-  describe('buildOptionsQuery', () => {
+  describe('buildUrlQuery', () => {
     it('should handle empty options', () => {
-      expect(buildOptionsQuery(makeOrderedMap({}))).toBe('');
+      expect(buildUrlQuery(makeOrderedMap({}))).toBe('');
     });
 
     it('should combine multiple options', () => {
-      expect(buildOptionsQuery(makeOrderedMap([
+      expect(buildUrlQuery(makeOrderedMap([
         ['foo', 2],
         ['bar', 4]
       ]))).toBe('foo=2&bar=4');

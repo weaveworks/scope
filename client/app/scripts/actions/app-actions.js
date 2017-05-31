@@ -13,14 +13,13 @@ import {
   doControlRequest,
   getAllNodes,
   getResourceViewNodesSnapshot,
-  getNodesDelta,
+  updateNodesDeltaChannel,
   getNodeDetails,
   getTopologies,
   deletePipe,
   stopPolling,
   teardownWebsockets,
 } from '../utils/web-api-utils';
-import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
 import {
@@ -214,12 +213,7 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     resetUpdateBuffer();
     const state = getState();
     getTopologies(activeTopologyOptionsSelector(state), dispatch);
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      state.get('topologyTimestamp'),
-      dispatch
-    );
+    updateNodesDeltaChannel(state, dispatch);
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
@@ -409,12 +403,7 @@ function updateTopology(dispatch, getState) {
   // NOTE: This is currently not needed for our static resource
   // view, but we'll need it here later and it's simpler to just
   // keep it than to redo the nodes delta updating logic.
-  getNodesDelta(
-    getCurrentTopologyUrl(state),
-    activeTopologyOptionsSelector(state),
-    state.get('topologyTimestamp'),
-    dispatch
-  );
+  updateNodesDeltaChannel(state, dispatch);
 }
 
 export function clickShowTopologyForNode(topologyId, nodeId) {
@@ -632,12 +621,7 @@ export function receiveTopologies(topologies) {
       topologies
     });
     const state = getState();
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      state.get('topologyTimestamp'),
-      dispatch
-    );
+    updateNodesDeltaChannel(state, dispatch);
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
@@ -754,12 +738,7 @@ export function route(urlState) {
     // update all request workers with new options
     const state = getState();
     getTopologies(activeTopologyOptionsSelector(state), dispatch);
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      state.get('topologyTimestamp'),
-      dispatch
-    );
+    updateNodesDeltaChannel(state, dispatch);
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
