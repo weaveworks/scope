@@ -15,7 +15,7 @@ weave_on "$HOST1" run -d --name server busybox /bin/sh -c "while true; do \
 		sleep 1 ;
 	done | nc -l -p 8080"
 
-scope_on "$HOST1" launch --probe.ebpf.connections=true
+scope_on "$HOST1" launch
 wait_for_containers "$HOST1" 60 server
 has_container "$HOST1" server
 
