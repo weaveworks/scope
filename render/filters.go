@@ -237,30 +237,18 @@ func IsRunning(n report.Node) bool {
 // IsStopped checks if the node is *not* a running docker container
 var IsStopped = Complement(IsRunning)
 
-func nonProcspiedFilter(node report.Node) bool {
-	_, ok := node.Latest.Lookup(endpoint.Procspied)
-	return ok
-}
-
-func nonEBPFFilter(node report.Node) bool {
+func procspiedOrEBPF(node report.Node) bool {
+	if _, ok := node.Latest.Lookup(endpoint.Procspied); ok {
+		return true
+	}
 	_, ok := node.Latest.Lookup(endpoint.EBPF)
 	return ok
 }
 
-// FilterNonProcspied removes endpoints which were not found in procspy.
-func FilterNonProcspied(r Renderer) Renderer {
-	return MakeFilter(nonProcspiedFilter, r)
-}
-
-// FilterNonEBPF removes endpoints which were not found via eBPF.
-func FilterNonEBPF(r Renderer) Renderer {
-	return MakeFilter(nonEBPFFilter, r)
-}
-
-// FilterNonProcspiedNorEBPF removes endpoints which were not found in procspy
-// nor via eBPF.
-func FilterNonProcspiedNorEBPF(r Renderer) Renderer {
-	return MakeFilter(AnyFilterFunc(nonProcspiedFilter, nonEBPFFilter), r)
+// FilterProcspiedOrEBPF keeps only endpoints which were found via
+// procspy or eBPF.
+func FilterProcspiedOrEBPF(r Renderer) Renderer {
+	return MakeFilter(procspiedOrEBPF, r)
 }
 
 // IsApplication checks if the node is an "application" node
