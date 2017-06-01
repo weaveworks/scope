@@ -163,7 +163,7 @@ docker/%: %
 docker/docker: $(DOCKER_DISTRIB)
 ifeq ($(ARCH),arm64)
 # When Docker supports aarch64, fix up
-        cp $(DOCKER_DISTRIB) docker/docker 
+	cp $(DOCKER_DISTRIB) docker/docker 
 endif
 ifeq ($(ARCH),amd64)
 	tar -xvzf $(DOCKER_DISTRIB) docker/docker
