@@ -102,11 +102,11 @@ all: $(SCOPE_EXPORT)
 
 # Creates the Dockerfile.your-user-here file from the templates
 # Also replaces all placeholders with real values
-docker/Dockerfile.cloud-agent.$(DOCKERHUB_USER): docker/Dockerfile-cloud-agent.template
+docker/Dockerfile.cloud-agent.$(DOCKERHUB_USER): docker/Dockerfile.cloud-agent.template
 	echo "DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|ALPINE_BASEIMAGE|$(ALPINE_BASEIMAGE)|g"
 	sed -e "s|DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|ALPINE_BASEIMAGE|$(ALPINE_BASEIMAGE)|g" $^ > $@
 
-docker/Dockerfile.scope.$(DOCKERHUB_USER): docker/Dockerfile-scope.template
+docker/Dockerfile.scope.$(DOCKERHUB_USER): docker/Dockerfile.scope.template
 	echo "DOCKERHUB_USER|$(DOCKERHUB_USER)|g"
 	sed -e "s|DOCKERHUB_USER|$(DOCKERHUB_USER)|g" $^ > $@
 
