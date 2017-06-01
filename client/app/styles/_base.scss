@@ -200,6 +200,12 @@
   }
 }
 
+.nodes-wrapper {
+  @extend .hideable;
+
+  &.blurred { opacity: 0.2; }
+}
+
 .timeline-control {
   @extend .overlay-wrapper;
   display: block;

@@ -89,6 +89,8 @@ export const initialState = makeMap({
   versionUpdate: null,
   viewport: makeMap(),
   websocketClosed: false,
+  websocketMovingInTime: false,
+  websocketQueryTimestamp: null,
   zoomCache: makeMap(),
   serviceImages: makeMap()
 });
@@ -128,10 +130,7 @@ function processTopologies(state, nextTopologies) {
   return state.mergeDeepIn(['topologies'], immNextTopologies);
 }
 
-function setTopology(state, topologyId, timestamp) {
-  if (timestamp) {
-    state = state.set('topologyTimestamp', timestamp);
-  }
+function setTopology(state, topologyId) {
   state = state.set('currentTopology', findTopologyById(state.get('topologies'), topologyId));
   return state.set('currentTopologyId', topologyId);
 }
@@ -341,19 +340,24 @@ export function rootReducer(state = initialState, action) {
       state = closeAllNodeDetails(state);
 
       const currentTopologyId = state.get('currentTopologyId');
-      if (action.topologyId !== currentTopologyId || action.timestamp) {
-        state = setTopology(state, action.topologyId || currentTopologyId, action.timestamp);
+      if (action.topologyId !== currentTopologyId) {
+        state = setTopology(state, action.topologyId);
         state = clearNodes(state);
       }
 
       return state;
     }
 
+    case ActionTypes.MOVE_IN_TIME: {
+      return state.set('websocketMovingInTime', true);
+    }
+
+    case ActionTypes.JUMP_TO_TIMESTAMP: {
+      return state.set('websocketQueryTimestamp', action.timestamp);
+    }
+
     case ActionTypes.CLOSE_WEBSOCKET: {
-      if (!state.get('websocketClosed')) {
-        state = state.set('websocketClosed', true);
-      }
-      return state;
+      return state.set('websocketClosed', true);
     }
 
     //
@@ -490,10 +494,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.OPEN_WEBSOCKET: {
-      // flush nodes cache after re-connect
-      state = state.update('nodes', nodes => nodes.clear());
-      state = state.set('websocketClosed', false);
-      return state;
+      return state.set('websocketClosed', false);
     }
 
     case ActionTypes.DO_CONTROL_ERROR: {
@@ -585,6 +586,12 @@ export function rootReducer(state = initialState, action) {
           'remove', size(action.delta.remove),
           'update', size(action.delta.update),
           'add', size(action.delta.add));
+      }
+
+      console.log('RECEIVE DELTA', state.get('websocketMovingInTime'));
+      if (state.get('websocketMovingInTime')) {
+        state = state.set('websocketMovingInTime', false);
+        state = clearNodes(state);
       }
 
       state = state.set('errorUrl', null);

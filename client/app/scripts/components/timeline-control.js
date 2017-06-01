@@ -10,8 +10,11 @@ import { getUpdateBufferSize } from '../utils/update-buffer-utils';
 import {
   clickPauseUpdate,
   clickResumeUpdate,
-  changeTopologyTimestamp,
+  jumpToTimestamp,
+  moveInTime,
 } from '../actions/app-actions';
+
+import { TIMELINE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
 const sliderRanges = {
@@ -111,13 +114,12 @@ class TimelineControl extends React.PureComponent {
     this.toggleTimelinePanel = this.toggleTimelinePanel.bind(this);
     this.handleSliderChange = this.handleSliderChange.bind(this);
     this.renderRangeOption = this.renderRangeOption.bind(this);
-    this.debouncedUpdateTimestamp = debounce(this.updateTimestamp.bind(this), 500);
+    this.debouncedUpdateTimestamp = debounce(
+      this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
   }
 
   updateTimestamp(timestamp) {
-    timestamp = timestamp || moment();
-    this.props.changeTopologyTimestamp(timestamp.toISOString());
-    console.log(timestamp.toISOString());
+    this.props.jumpToTimestamp(timestamp);
   }
 
   toggleTimelinePanel() {
@@ -127,6 +129,7 @@ class TimelineControl extends React.PureComponent {
   handleSliderChange(value) {
     const offsetMilliseconds = this.getRangeMilliseconds() - value;
     const timestamp = moment().utc().subtract(offsetMilliseconds);
+    this.props.moveInTime();
     this.debouncedUpdateTimestamp(timestamp);
     this.setState({ offsetMilliseconds });
   }
@@ -142,7 +145,8 @@ class TimelineControl extends React.PureComponent {
       offsetMilliseconds: 0,
       rangeOptionSelected: sliderRanges.last1Hour,
     });
-    this.updateTimestamp();
+    this.props.moveInTime();
+    this.updateTimestamp(moment());
   }
 
   renderRangeOption(option) {
@@ -256,6 +260,7 @@ export default connect(
   {
     clickPauseUpdate,
     clickResumeUpdate,
-    changeTopologyTimestamp,
+    jumpToTimestamp,
+    moveInTime,
   }
 )(TimelineControl);

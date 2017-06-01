@@ -1,4 +1,5 @@
 import React from 'react';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
@@ -32,11 +33,13 @@ const EmptyTopologyError = show => (
 class Nodes extends React.Component {
   render() {
     const { topologyEmpty, topologiesLoaded, nodesLoaded, topologies, currentTopology,
-      isGraphViewMode, isTableViewMode, isResourceViewMode } = this.props;
+      isGraphViewMode, isTableViewMode, isResourceViewMode, blurred } = this.props;
+
+    const className = classNames('nodes-wrapper', { blurred });
 
     // TODO: Rename view mode components.
     return (
-      <div className="nodes-wrapper">
+      <div className={className}>
         <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>
           <Loading itemType="topologies" show={!topologiesLoaded} />
           <Loading
@@ -59,6 +62,7 @@ function mapStateToProps(state) {
     isGraphViewMode: isGraphViewModeSelector(state),
     isTableViewMode: isTableViewModeSelector(state),
     isResourceViewMode: isResourceViewModeSelector(state),
+    blurred: state.get('websocketMovingInTime'),
     currentTopology: state.get('currentTopology'),
     nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),

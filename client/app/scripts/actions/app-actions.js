@@ -1,5 +1,5 @@
 import debug from 'debug';
-import find from 'lodash/find';
+import { find } from 'lodash';
 
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
@@ -427,13 +427,21 @@ export function clickTopology(topologyId) {
   };
 }
 
-export function changeTopologyTimestamp(timestamp) {
+export function moveInTime() {
+  return {
+    type: ActionTypes.MOVE_IN_TIME,
+  };
+}
+
+export function jumpToTimestamp(timestamp) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_TOPOLOGY,
-      timestamp
+      type: ActionTypes.JUMP_TO_TIMESTAMP,
+      timestamp: timestamp.toISOString(),
     });
-    updateTopology(dispatch, getState);
+    updateNodesDeltaChannel(getState(), dispatch);
+    // update all request workers with new options
+    resetUpdateBuffer();
   };
 }
 

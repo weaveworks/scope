@@ -1,6 +1,7 @@
 import debug from 'debug';
 import reqwest from 'reqwest';
-import defaults from 'lodash/defaults';
+import moment from 'moment';
+import { defaults } from 'lodash';
 import { fromJS, Map as makeMap, List } from 'immutable';
 
 import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
@@ -48,7 +49,7 @@ export function buildUrlQuery(params) {
   if (!params) return '';
 
   return params.map((value, param) => {
-    if (value === undefined) return null;
+    if (value === undefined || value === null) return null;
     if (List.isList(value)) {
       value = value.join(',');
     }
@@ -95,16 +96,23 @@ export function getWebsocketUrl(host = window.location.host, pathname = window.l
 }
 
 function buildWebsocketUrl(topologyUrl, topologyOptions = makeMap(), queryTimestamp) {
+  // If the timestamp stands for a time less than one second ago,
+  // assume we are actually interested in the current time.
+  if (moment().diff(moment(queryTimestamp)) < 1000) {
+    queryTimestamp = null;
+  }
+
   const query = buildUrlQuery(fromJS({
     t: updateFrequency,
     timestamp: queryTimestamp,
     ...topologyOptions.toJS(),
   }));
-  console.log(query);
   return `${getWebsocketUrl()}${topologyUrl}/ws?${query}`;
 }
 
 function createWebsocket(websocketUrl, dispatch) {
+  console.log('CREATING WEBSOCKET', websocketUrl);
+
   if (socket) {
     socket.onclose = null;
     socket.onerror = null;
@@ -239,7 +247,7 @@ export function getTopologies(options, dispatch, initialPoll) {
 export function updateNodesDeltaChannel(state, dispatch) {
   const topologyUrl = getCurrentTopologyUrl(state);
   const topologyOptions = activeTopologyOptionsSelector(state);
-  const queryTimestamp = state.get('topologyTimestamp');
+  const queryTimestamp = state.get('websocketQueryTimestamp');
   const websocketUrl = buildWebsocketUrl(topologyUrl, topologyOptions, queryTimestamp);
   // Only recreate websocket if url changed or if forced (weave cloud instance reload);
   const isNewUrl = websocketUrl !== currentUrl;
