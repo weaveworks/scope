@@ -110,11 +110,11 @@ docker/Dockerfile.scope.$(DOCKERHUB_USER): docker/Dockerfile.scope.template
 	echo "DOCKERHUB_USER|$(DOCKERHUB_USER)|g"
 	sed -e "s|DOCKERHUB_USER|$(DOCKERHUB_USER)|g" $^ > $@
 
-client/Dockerfile.$(DOCKERHUB_USER): docker/Dockerfile.template
+client/Dockerfile.$(DOCKERHUB_USER): client/Dockerfile.template
 	echo "DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|NODE_BASEIMAGE|$(NODE_BASEIMAGE)|g"
 	sed -e "s|DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|NODE_BASEIMAGE|$(NODE_BASEIMAGE)|g" $^ > $@
 	
-backend/Dockerfile.$(DOCKERHUB_USER): docker/Dockerfile.template
+backend/Dockerfile.$(DOCKERHUB_USER): backend/Dockerfile.template
 	echo "DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|UBUNTU_BASEIMAGE|$(UBUNTU_BASEIMAGE)|g"
 	sed -e "s|DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|UBUNTU_BASEIMAGE|$(UBUNTU_BASEIMAGE)|g" $^ > $@
 ifeq ($(ARCH),amd64)
@@ -292,10 +292,10 @@ client/build-external/index.html:
 endif
 
 $(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile.$(DOCKERHUB_USER) client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
-	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) -f client/Dockerfile..$(DOCKERHUB_USER) client
+	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) -f client/Dockerfile.$(DOCKERHUB_USER) client
 	touch $@
 
-$(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
+$(SCOPE_BACKEND_BUILD_UPTODATE): client/Dockerfile.$(DOCKERHUB_USER)
 	$(SUDO) docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) -f backend/Dockerfile.$(DOCKERHUB_USER) backend
 	touch $@
 
