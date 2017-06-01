@@ -48,8 +48,8 @@ ifeq ($(ARCH),arm64)
 	
 # The name of the node baseimage to use as the base for images:
 #	client/Dockerfile
-	NODE_BASEIMAGE?=node:6.9.0
-	
+	NODE_BASEIMAGE?=aarch64/node:6.9
+
 # The name of the Ubuntu baseimage to use as the base for images:
 #	backend/Dockerfile
 	UBUNTU_BASEIMAGE?=aarch64/ubuntu:yakkety
