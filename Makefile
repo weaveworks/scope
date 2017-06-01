@@ -1,24 +1,68 @@
 .PHONY: all deps static clean client-lint client-test client-sync backend frontend shell lint ui-upload
 
-#add multi arch support for Dockerfiles; x86_64, aarch64, ...
-ARCH=$(shell uname -m) 
+# This specifies the architecture we're building for
+# Use GOARCH, note this name differs from Linux ARCH
+ARCH?=$(shell go env GOARCH)
 
-#seperate arch dependant build requirements here
-ifeq ($(ARCH),aarch64)
-# for aarch64 use docker image from host /usr/bin until Docker supports binaries
-# todo add a check for host docker version 1.10 or higher, assume 1.12.6 for now
-	DOCKER_VERSION=1.12.6
-	DOCKER_DISTRIB=.pkg/docker
-else
-# assume x86_64
-	DOCKER_VERSION=1.13.1
+# A list of all supported architectures here. Should be named as Go is naming platforms
+# All supported architectures must have an "ifeq" block below that customizes the parameters
+ALL_ARCHITECTURES=amd64 arm64
+ML_PLATFORMS=linux/amd64,linux/arm64
+
+ifeq ($(ARCH),amd64)
+# The architecture to use when downloading the docker binary
+	WEAVEEXEC_DOCKER_ARCH?=x86_64
+# The Docker version to use when downloading the docker binary
+	DOCKER_VERSION=1.13.1	
+# Where to place/find Docker binary
 	DOCKER_DISTRIB=.pkg/docker-$(DOCKER_VERSION).tgz
+# Where to het Docker binary if arch supported by Docker
 	DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
+	
+# The name of the alpine baseimage to use as the base for images:
+#	docker/Dockerfile-cloud-agent
+	ALPINE_BASEIMAGE?=alpine:3.4
+
+# The name of the node baseimage to use as the base for images:
+#	client/Dockerfile
+	NODE_BASEIMAGE?=node:6.9.0
+
+# The name of the Ubuntu baseimage to use as the base for images:
+#	backend/Dockerfile
+	UBUNTU_BASEIMAGE?=ubuntu:yakkety
 endif
+
+ifeq ($(ARCH),arm64)
+# Use the host installed Docker binary for now
+	WEAVEEXEC_DOCKER_ARCH?=aarch64
+# The Docker version to use when downloading the docker binary
+	DOCKER_VERSION=1.12.6
+# Where to place/find Docker binary
+	DOCKER_DISTRIB=.pkg/docker
+# Where to het Docker binary if arch supported by Docker
+	DOCKER_DISTRIB_URL=
+	
+# Using the (semi-)official alpine image
+#	docker/Dockerfile-cloud-agent
+	ALPINE_BASEIMAGE?=aarch64/alpine:3.5
+	
+# The name of the node baseimage to use as the base for images:
+#	client/Dockerfile
+	NODE_BASEIMAGE?=node:6.9.0
+	
+# The name of the Ubuntu baseimage to use as the base for images:
+#	backend/Dockerfile
+	UBUNTU_BASEIMAGE?=aarch64/ubuntu:yakkety
+endif
+
+
+
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=$(shell docker info >/dev/null 2>&1 || echo "sudo -E")
-DOCKERHUB_USER=weaveworks
+# The name of the user that this Makefile should produce image artifacts for. Can/should be overridden
+DOCKERHUB_USER?=weaveworks
+
 SCOPE_EXE=prog/scope
 SCOPE_EXPORT=scope.tar
 CLOUD_AGENT_EXPORT=cloud-agent.tar
@@ -55,10 +99,40 @@ GO=env $(GO_ENV) go
 
 all: $(SCOPE_EXPORT)
 
+
+# Creates the Dockerfile.your-user-here file from the templates
+# Also replaces all placeholders with real values
+docker/Dockerfile.cloud-agent.$(DOCKERHUB_USER): docker/Dockerfile-cloud-agent.template
+	echo "DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|ALPINE_BASEIMAGE|$(ALPINE_BASEIMAGE)|g"
+	sed -e "s|DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|ALPINE_BASEIMAGE|$(ALPINE_BASEIMAGE)|g" $^ > $@
+
+docker/Dockerfile.scope.$(DOCKERHUB_USER): docker/Dockerfile-scope.template
+	echo "DOCKERHUB_USER|$(DOCKERHUB_USER)|g"
+	sed -e "s|DOCKERHUB_USER|$(DOCKERHUB_USER)|g" $^ > $@
+
+client/Dockerfile.$(DOCKERHUB_USER): docker/Dockerfile.template
+	echo "DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|NODE_BASEIMAGE|$(NODE_BASEIMAGE)|g"
+	sed -e "s|DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|NODE_BASEIMAGE|$(NODE_BASEIMAGE)|g" $^ > $@
+	
+backend/Dockerfile.$(DOCKERHUB_USER): docker/Dockerfile.template
+	echo "DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|UBUNTU_BASEIMAGE|$(UBUNTU_BASEIMAGE)|g"
+	sed -e "s|DOCKERHUB_USER|$(DOCKERHUB_USER)|g;s|UBUNTU_BASEIMAGE|$(UBUNTU_BASEIMAGE)|g" $^ > $@
+ifeq ($(ARCH),amd64)
+# only the placeholder "RACE_SUPPORT_" should be removed
+	sed -i "s/RACE_SUPPORT_//g" $@
+endif
+ifeq ($(ARCH),arm64)
+# Whole line with the placeholder "RACE_SUPPORT_" should be removed
+	sed -i "/RACE_SUPPORT_/d" $@
+endif
+
+
 $(DOCKER_DISTRIB):
-ifeq ($(ARCH),aarch64)
+ifeq ($(ARCH),arm64)
+# When Docker supports aarch64, fix up
 	cp /usr/bin/docker $(DOCKER_DISTRIB)
-else
+enduf
+ifeq ($(ARCH),amd64)
 	curl -o $(DOCKER_DISTRIB) $(DOCKER_DISTRIB_URL)
 endif
 
@@ -74,21 +148,23 @@ docker/weaveutil:
 docker/%: %
 	cp $* docker/
 
-docker/docker: #$(DOCKER_DISTRIB)
-ifeq ($(ARCH),aarch64)
+docker/docker: $(DOCKER_DISTRIB)
+ifeq ($(ARCH),arm64)
+# When Docker supports aarch64, fix up
         cp $(DOCKER_DISTRIB) docker/docker 
-else
+endif
+ifeq ($(ARCH),amd64)
 	tar -xvzf $(DOCKER_DISTRIB) docker/docker
 endif
 
-%.tar: docker/Dockerfile.%-$(ARCH)
+%.tar: docker/Dockerfile.%.$(DOCKERHUB_USER)
 	$(SUDO) docker build -t $(DOCKERHUB_USER)/$* -f $< docker/
 	$(SUDO) docker tag $(DOCKERHUB_USER)/$* $(DOCKERHUB_USER)/$*:$(IMAGE_TAG)
 	$(SUDO) docker save $(DOCKERHUB_USER)/$*:latest > $@
 
-$(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent-$(ARCH) docker/$(SCOPE_EXE) docker/docker docker/weave docker/weaveutil
+$(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent.$(DOCKERHUB_USER) docker/$(SCOPE_EXE) docker/docker docker/weave docker/weaveutil
 
-$(SCOPE_EXPORT): docker/Dockerfile.scope-$(ARCH) $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
+$(SCOPE_EXPORT): docker/Dockerfile.scope.$(DOCKERHUB_USER) $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
@@ -203,12 +279,12 @@ client/build-external/index.html:
 
 endif
 
-$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile.$(ARCH) client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
-	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) -f client/Dockerfile.$(ARCH) client
+$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile.$(DOCKERHUB_USER) client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
+	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) -f client/Dockerfile..$(DOCKERHUB_USER) client
 	touch $@
 
 $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
-	$(SUDO) docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) -f backend/Dockerfile.$(ARCH) backend
+	$(SUDO) docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) -f backend/Dockerfile.$(DOCKERHUB_USER) backend
 	touch $@
 
 ui-upload: client/build-external/index.html
@@ -228,7 +304,9 @@ clean:
 # $(SUDO) docker rmi $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) >/dev/null 2>&1 || true
 	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
 		$(SCOPE_EXE) $(RUNSVINIT) prog/staticui/staticui.go prog/externalui/externalui.go client/build/*.js client/build-external/*.js docker/weave .pkg \
-		$(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin
+		$(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin \
+		client/Dockerfile.$(DOCKERHUB_USER) backend/Dockerfile.$(DOCKERHUB_USER) \
+		docker/Dockerfile.*.$(DOCKERHUB_USER) 
 
 clean-codecgen:
 	rm -rf $(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin
