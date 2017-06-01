@@ -120,10 +120,22 @@ backend/Dockerfile.$(DOCKERHUB_USER): docker/Dockerfile.template
 ifeq ($(ARCH),amd64)
 # only the placeholder "RACE_SUPPORT_" should be removed
 	sed -i "s/RACE_SUPPORT_//g" $@
+# only the placeholder "CURL_SHFM" should be removed
+	sed -i "s/CURL_SHFMT//g" $@
+	sed -i "s/CURL_SHFMT1//g" $@	
+# Whole line with the placeholder "BUILD_SHFMT" should be removed
+	sed -i "/BUILD_SHFMT/d" $@
+	sed -i "/BUILD_SHFMT1/d" $@
 endif
 ifeq ($(ARCH),arm64)
 # Whole line with the placeholder "RACE_SUPPORT_" should be removed
 	sed -i "/RACE_SUPPORT_/d" $@
+# only the placeholder "BUILD_SHFMT" should be removed
+	sed -i "s/BUILD_SHFMTN//g" $@
+	sed -i "s/BUILD_SHFMT1//g" $@	
+# Whole line with the placeholder "CURL_SHFMT RUN" should be removed
+	sed -i "/CURL_SHFMT/d" $@
+	sed -i "/CURL_SHFMT1/d" $@
 endif
 
 
