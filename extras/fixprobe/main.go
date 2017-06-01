@@ -19,7 +19,7 @@ import (
 
 func main() {
 	var (
-		publish         = flag.String("publish", fmt.Sprintf("localhost:%d", xfer.AppPort), "publish target")
+		publish         = flag.String("publish", fmt.Sprintf("127.0.0.1:%d", xfer.AppPort), "publish target")
 		publishInterval = flag.Duration("publish.interval", 1*time.Second, "publish (output) interval")
 		publishToken    = flag.String("publish.token", "fixprobe", "publish token, for if we are talking to the service")
 		publishID       = flag.String("publish.id", "fixprobe", "publisher ID used to identify publishers")
