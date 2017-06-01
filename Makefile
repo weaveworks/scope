@@ -143,7 +143,7 @@ $(DOCKER_DISTRIB):
 ifeq ($(ARCH),arm64)
 # When Docker supports aarch64, fix up
 	cp /usr/bin/docker $(DOCKER_DISTRIB)
-enduf
+endif
 ifeq ($(ARCH),amd64)
 	curl -o $(DOCKER_DISTRIB) $(DOCKER_DISTRIB_URL)
 endif
