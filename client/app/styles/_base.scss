@@ -35,6 +35,10 @@
   transition: opacity .5s $base-ease;
 }
 
+.blinkable {
+  animation: blinking 1.5s infinite $base-ease;
+}
+
 .hang-around {
   transition-delay: .5s;
 }
@@ -77,8 +81,8 @@
     }
 
     .active {
+      @extend .blinkable;
       border: 1px solid $text-tertiary-color;
-      animation: blinking 1.5s infinite $base-ease;
     }
   }
 }
@@ -222,12 +226,12 @@
     .button { margin-left: 0.5em; }
 
     .jump-to-now {
-      animation: blinking 1.5s infinite $base-ease;
+      @extend .blinkable;
       margin-left: auto;
     }
 
-    &:not(.showing-current) {
-      .running-time { font-weight: bold; }
+    &:not(.showing-current) .running-time {
+      font-weight: bold;
     }
   }
 
@@ -237,6 +241,7 @@
       font-size: 0.8125rem;
       font-weight: normal;
       padding: 5px 10px;
+      text-decoration: underline;
     }
 
     .options {
@@ -346,7 +351,7 @@
   }
 
   &-loading &-error-icon-container {
-    animation: blinking 2.0s infinite $base-ease;
+    @extend .blinkable;
   }
 
   &-loading {
@@ -759,8 +764,8 @@
       color: $white;
 
       &-icon {
+        @extend .blinkable;
         margin-right: 0.5em;
-        animation: blinking 2.0s infinite $base-ease;
       }
     }
   }

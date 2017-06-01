@@ -195,7 +195,7 @@ class TimelineControl extends React.PureComponent {
     return (
       <div className="timeline-control">
         {showTimelinePanel && <div className="timeline-panel">
-          <strong>Explore</strong>
+          <strong>Move the slider to explore</strong>
           <div className="options">
             <div className="column">
               {this.renderRangeOption(sliderRanges.last15Minutes)}

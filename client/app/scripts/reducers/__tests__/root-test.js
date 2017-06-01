@@ -512,8 +512,6 @@ describe('RootReducer', () => {
 
     nextState = reducer(nextState, OpenWebsocketAction);
     expect(nextState.get('websocketClosed')).toBeFalsy();
-    // opened socket clears nodes
-    expect(nextState.get('nodes').toJS()).toEqual({});
   });
 
   // adjacency test
