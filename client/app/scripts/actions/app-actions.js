@@ -427,16 +427,16 @@ export function clickTopology(topologyId) {
   };
 }
 
-export function moveInTime() {
+export function startMovingInTime() {
   return {
-    type: ActionTypes.MOVE_IN_TIME,
+    type: ActionTypes.START_MOVING_IN_TIME,
   };
 }
 
-export function jumpToTimestamp(timestamp) {
+export function websocketQueryTimestamp(timestamp) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.JUMP_TO_TIMESTAMP,
+      type: ActionTypes.WEBSOCKET_QUERY_TIMESTAMP,
       timestamp: timestamp.toISOString(),
     });
     updateNodesDeltaChannel(getState(), dispatch);
@@ -599,8 +599,11 @@ export function receiveNodesDelta(delta) {
     //
     setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
-    if (delta.add || delta.update || delta.remove) {
-      const state = getState();
+    const state = getState();
+    const movingInTime = state.get('websocketMovingInTime');
+    const hasChanges = delta.add || delta.update || delta.remove;
+
+    if (hasChanges || movingInTime) {
       if (state.get('updatePausedAt') !== null) {
         bufferDeltaUpdate(delta);
       } else {

@@ -111,8 +111,6 @@ function buildWebsocketUrl(topologyUrl, topologyOptions = makeMap(), queryTimest
 }
 
 function createWebsocket(websocketUrl, dispatch) {
-  console.log('CREATING WEBSOCKET', websocketUrl);
-
   if (socket) {
     socket.onclose = null;
     socket.onerror = null;
@@ -128,6 +126,7 @@ function createWebsocket(websocketUrl, dispatch) {
   socket = new WebSocket(websocketUrl);
 
   socket.onopen = () => {
+    log(`Opening websocket to ${websocketUrl}`);
     dispatch(openWebsocket());
   };
 

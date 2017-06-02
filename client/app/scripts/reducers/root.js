@@ -348,11 +348,11 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
-    case ActionTypes.MOVE_IN_TIME: {
+    case ActionTypes.START_MOVING_IN_TIME: {
       return state.set('websocketMovingInTime', true);
     }
 
-    case ActionTypes.JUMP_TO_TIMESTAMP: {
+    case ActionTypes.WEBSOCKET_QUERY_TIMESTAMP: {
       return state.set('websocketQueryTimestamp', action.timestamp);
     }
 
@@ -578,23 +578,17 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_NODES_DELTA: {
-      const emptyMessage = !action.delta.add && !action.delta.remove
-        && !action.delta.update;
+      log('RECEIVE_NODES_DELTA',
+        'remove', size(action.delta.remove),
+        'update', size(action.delta.update),
+        'add', size(action.delta.add));
 
-      if (!emptyMessage) {
-        log('RECEIVE_NODES_DELTA',
-          'remove', size(action.delta.remove),
-          'update', size(action.delta.update),
-          'add', size(action.delta.add));
-      }
+      state = state.set('errorUrl', null);
 
-      console.log('RECEIVE DELTA', state.get('websocketMovingInTime'));
       if (state.get('websocketMovingInTime')) {
         state = state.set('websocketMovingInTime', false);
         state = clearNodes(state);
       }
-
-      state = state.set('errorUrl', null);
 
       // nodes that no longer exist
       each(action.delta.remove, (nodeId) => {

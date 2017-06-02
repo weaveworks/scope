@@ -10,8 +10,8 @@ import { getUpdateBufferSize } from '../utils/update-buffer-utils';
 import {
   clickPauseUpdate,
   clickResumeUpdate,
-  jumpToTimestamp,
-  moveInTime,
+  websocketQueryTimestamp,
+  startMovingInTime,
 } from '../actions/app-actions';
 
 import { TIMELINE_DEBOUNCE_INTERVAL } from '../constants/timer';
@@ -119,7 +119,7 @@ class TimelineControl extends React.PureComponent {
   }
 
   updateTimestamp(timestamp) {
-    this.props.jumpToTimestamp(timestamp);
+    this.props.websocketQueryTimestamp(timestamp);
   }
 
   toggleTimelinePanel() {
@@ -129,7 +129,7 @@ class TimelineControl extends React.PureComponent {
   handleSliderChange(value) {
     const offsetMilliseconds = this.getRangeMilliseconds() - value;
     const timestamp = moment().utc().subtract(offsetMilliseconds);
-    this.props.moveInTime();
+    this.props.startMovingInTime();
     this.debouncedUpdateTimestamp(timestamp);
     this.setState({ offsetMilliseconds });
   }
@@ -145,7 +145,7 @@ class TimelineControl extends React.PureComponent {
       offsetMilliseconds: 0,
       rangeOptionSelected: sliderRanges.last1Hour,
     });
-    this.props.moveInTime();
+    this.props.startMovingInTime();
     this.updateTimestamp(moment());
   }
 
@@ -260,7 +260,7 @@ export default connect(
   {
     clickPauseUpdate,
     clickResumeUpdate,
-    jumpToTimestamp,
-    moveInTime,
+    websocketQueryTimestamp,
+    startMovingInTime,
   }
 )(TimelineControl);
