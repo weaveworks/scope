@@ -8,45 +8,67 @@ import NodesResources from '../components/nodes-resources';
 import NodesError from '../charts/nodes-error';
 import DelayedShow from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
-import { isTopologyEmpty } from '../utils/topology-utils';
+import {
+  isTopologyNodeCountZero,
+  isNodesDisplayEmpty,
+  isTopologyEmpty,
+} from '../utils/topology-utils';
 import {
   isGraphViewModeSelector,
   isTableViewModeSelector,
   isResourceViewModeSelector,
 } from '../selectors/topology';
 
+import { TOPOLOGY_LOADER_DELAY } from '../constants/timer';
 
-const EmptyTopologyError = show => (
-  <NodesError faIconClass="fa-circle-thin" hidden={!show}>
-    <div className="heading">Nothing to show. This can have any of these reasons:</div>
-    <ul>
-      <li>We haven&apos;t received any reports from probes recently.
-       Are the probes properly configured?</li>
-      <li>There are nodes, but they&apos;re currently hidden. Check the view options
-       in the bottom-left if they allow for showing hidden nodes.</li>
-      <li>Containers view only: you&apos;re not running Docker,
-       or you don&apos;t have any containers.</li>
-    </ul>
-  </NodesError>
+
+const NODE_COUNT_ZERO_CAUSES = [
+  "We haven't received any reports from probes recently. Are the probes properly connected?",
+  "Containers view only: you're not running Docker, or you don't have any containers",
+];
+
+const NODES_DISPLAY_EMPTY_CAUSES = [
+  "There are nodes, but they're currently hidden. Check the view options in the bottom-left if they allow for showing hidden nodes.",
+];
+
+const renderCauses = causes => (
+  <ul>
+    {causes.map(cause => (
+      <li>{cause}</li>
+    ))}
+  </ul>
 );
 
 class Nodes extends React.Component {
+  renderConditionalEmptyTopologyError() {
+    const { topologyNodeCountZero, nodesDisplayEmpty, topologyEmpty } = this.props;
+
+    return (
+      <NodesError faIconClass="fa-circle-thin" hidden={!topologyEmpty}>
+        <div className="heading">Nothing to show. This can have any of these reasons:</div>
+        {topologyNodeCountZero && renderCauses(NODE_COUNT_ZERO_CAUSES)}
+        {!topologyNodeCountZero && nodesDisplayEmpty && renderCauses(NODES_DISPLAY_EMPTY_CAUSES)}
+      </NodesError>
+    );
+  }
+
   render() {
-    const { topologyEmpty, topologiesLoaded, nodesLoaded, topologies, currentTopology,
-      isGraphViewMode, isTableViewMode, isResourceViewMode, blurred } = this.props;
+    const { topologiesLoaded, nodesLoaded, topologies, currentTopology, isGraphViewMode,
+      isTableViewMode, isResourceViewMode, blurred } = this.props;
 
     const className = classNames('nodes-wrapper', { blurred });
 
     // TODO: Rename view mode components.
     return (
       <div className={className}>
-        <DelayedShow delay={1000} show={!topologiesLoaded || (topologiesLoaded && !nodesLoaded)}>
+        <DelayedShow delay={TOPOLOGY_LOADER_DELAY} show={!topologiesLoaded || !nodesLoaded}>
           <Loading itemType="topologies" show={!topologiesLoaded} />
           <Loading
             itemType={getNodeType(currentTopology, topologies)}
             show={topologiesLoaded && !nodesLoaded} />
         </DelayedShow>
-        {EmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
+
+        {topologiesLoaded && nodesLoaded && this.renderConditionalEmptyTopologyError()}
 
         {isGraphViewMode && <NodesChart />}
         {isTableViewMode && <NodesGrid />}
@@ -62,12 +84,14 @@ function mapStateToProps(state) {
     isGraphViewMode: isGraphViewModeSelector(state),
     isTableViewMode: isTableViewModeSelector(state),
     isResourceViewMode: isResourceViewModeSelector(state),
+    topologyNodeCountZero: isTopologyNodeCountZero(state),
+    nodesDisplayEmpty: isNodesDisplayEmpty(state),
+    topologyEmpty: isTopologyEmpty(state),
     blurred: state.get('websocketMovingInTime'),
     currentTopology: state.get('currentTopology'),
-    nodesLoaded: state.get('nodesLoaded'),
+    nodesLoaded: state.get('nodesLoaded') || state.get('websocketMovingInTime'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),
-    topologyEmpty: isTopologyEmpty(state),
   };
 }
 

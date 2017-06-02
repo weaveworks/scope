@@ -191,7 +191,7 @@ class App extends React.Component {
 
         <Nodes />
 
-        <TimelineControl />
+        {!isResourceViewMode && <TimelineControl />}
 
         <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
           {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}

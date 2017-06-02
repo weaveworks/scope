@@ -118,6 +118,10 @@ class TimelineControl extends React.PureComponent {
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
   }
 
+  componentWillUnmount() {
+    this.updateTimestamp(moment());
+  }
+
   updateTimestamp(timestamp) {
     this.props.websocketQueryTimestamp(timestamp);
   }

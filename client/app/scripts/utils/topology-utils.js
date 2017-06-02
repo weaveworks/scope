@@ -133,15 +133,22 @@ export function getCurrentTopologyOptions(state) {
   return state.getIn(['currentTopology', 'options']);
 }
 
-export function isTopologyEmpty(state) {
-  // Consider a topology in the resource view empty if it has no pinned metric.
-  const resourceViewEmpty = isResourceViewModeSelector(state) && !pinnedMetricSelector(state);
-  // Otherwise (in graph and table view), we only look at the node count.
-  const nodeCount = state.getIn(['currentTopology', 'stats', 'node_count'], 0);
-  const nodesEmpty = nodeCount === 0 && state.get('nodes').size === 0;
-  return resourceViewEmpty || nodesEmpty;
+export function isTopologyNodeCountZero(state) {
+  return state.getIn(['currentTopology', 'stats', 'node_count'], 0) === 0;
 }
 
+export function isNodesDisplayEmpty(state) {
+  // Consider a topology in the resource view empty if it has no pinned metric.
+  if (isResourceViewModeSelector(state)) {
+    return !pinnedMetricSelector(state);
+  }
+  // Otherwise (in graph and table view), we only look at the nodes content.
+  return state.get('nodes').isEmpty();
+}
+
+export function isTopologyEmpty(state) {
+  return isTopologyNodeCountZero(state) || isNodesDisplayEmpty(state);
+}
 
 export function getAdjacentNodes(state, originNodeId) {
   let adjacentNodes = makeSet();

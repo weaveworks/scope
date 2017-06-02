@@ -1,4 +1,5 @@
 import debug from 'debug';
+import moment from 'moment';
 import { find } from 'lodash';
 
 import ActionTypes from '../constants/action-types';
@@ -434,10 +435,18 @@ export function startMovingInTime() {
 }
 
 export function websocketQueryTimestamp(timestamp) {
+  // If the timestamp stands for a time less than one second ago,
+  // assume we are actually interested in the current time.
+  if (timestamp && moment().diff(timestamp) >= 1000) {
+    timestamp = timestamp.toISOString();
+  } else {
+    timestamp = null;
+  }
+
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.WEBSOCKET_QUERY_TIMESTAMP,
-      timestamp: timestamp.toISOString(),
+      timestamp,
     });
     updateNodesDeltaChannel(getState(), dispatch);
     // update all request workers with new options

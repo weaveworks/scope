@@ -1,6 +1,5 @@
 import debug from 'debug';
 import reqwest from 'reqwest';
-import moment from 'moment';
 import { defaults } from 'lodash';
 import { fromJS, Map as makeMap, List } from 'immutable';
 
@@ -13,7 +12,7 @@ import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveEr
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
-import { API_INTERVAL, TOPOLOGY_INTERVAL } from '../constants/timer';
+import { API_REFRESH_INTERVAL, TOPOLOGY_REFRESH_INTERVAL } from '../constants/timer';
 
 const log = debug('scope:web-api-utils');
 
@@ -96,12 +95,6 @@ export function getWebsocketUrl(host = window.location.host, pathname = window.l
 }
 
 function buildWebsocketUrl(topologyUrl, topologyOptions = makeMap(), queryTimestamp) {
-  // If the timestamp stands for a time less than one second ago,
-  // assume we are actually interested in the current time.
-  if (moment().diff(moment(queryTimestamp)) < 1000) {
-    queryTimestamp = null;
-  }
-
   const query = buildUrlQuery(fromJS({
     t: updateFrequency,
     timestamp: queryTimestamp,
@@ -227,7 +220,7 @@ export function getTopologies(options, dispatch, initialPoll) {
         dispatch(receiveTopologies(res));
         topologyTimer = setTimeout(() => {
           getTopologies(options, dispatch);
-        }, TOPOLOGY_INTERVAL);
+        }, TOPOLOGY_REFRESH_INTERVAL);
       }
     },
     error: (req) => {
@@ -237,7 +230,7 @@ export function getTopologies(options, dispatch, initialPoll) {
       if (continuePolling) {
         topologyTimer = setTimeout(() => {
           getTopologies(options, dispatch);
-        }, TOPOLOGY_INTERVAL);
+        }, TOPOLOGY_REFRESH_INTERVAL);
       }
     }
   });
@@ -304,7 +297,7 @@ export function getApiDetails(dispatch) {
       if (continuePolling) {
         apiDetailsTimer = setTimeout(() => {
           getApiDetails(dispatch);
-        }, API_INTERVAL);
+        }, API_REFRESH_INTERVAL);
       }
     },
     error: (req) => {
@@ -313,7 +306,7 @@ export function getApiDetails(dispatch) {
       if (continuePolling) {
         apiDetailsTimer = setTimeout(() => {
           getApiDetails(dispatch);
-        }, API_INTERVAL / 2);
+        }, API_REFRESH_INTERVAL / 2);
       }
     }
   });

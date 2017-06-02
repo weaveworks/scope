@@ -1,9 +1,11 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+
 class Status extends React.Component {
   render() {
-    const {errorUrl, topologiesLoaded, filteredNodeCount, topology, websocketClosed} = this.props;
+    const { errorUrl, topologiesLoaded, filteredNodeCount, topology,
+      websocketClosed, showingCurrentState } = this.props;
 
     let title = '';
     let text = 'Trying to reconnect...';
@@ -23,9 +25,13 @@ class Status extends React.Component {
       showWarningIcon = true;
     } else if (topology) {
       const stats = topology.get('stats');
-      text = `${stats.get('node_count') - filteredNodeCount} nodes`;
-      if (stats.get('filtered_nodes')) {
-        text = `${text} (${stats.get('filtered_nodes') + filteredNodeCount} filtered)`;
+      if (showingCurrentState) {
+        text = `${stats.get('node_count') - filteredNodeCount} nodes`;
+        if (stats.get('filtered_nodes')) {
+          text = `${text} (${stats.get('filtered_nodes') + filteredNodeCount} filtered)`;
+        }
+      } else {
+        text = '';
       }
       classNames += ' status-stats';
       showWarningIcon = false;
@@ -44,9 +50,10 @@ function mapStateToProps(state) {
   return {
     errorUrl: state.get('errorUrl'),
     filteredNodeCount: state.get('nodes').filter(node => node.get('filtered')).size,
+    showingCurrentState: !state.get('websocketQueryTimestamp'),
     topologiesLoaded: state.get('topologiesLoaded'),
     topology: state.get('currentTopology'),
-    websocketClosed: state.get('websocketClosed')
+    websocketClosed: state.get('websocketClosed'),
   };
 }
 
