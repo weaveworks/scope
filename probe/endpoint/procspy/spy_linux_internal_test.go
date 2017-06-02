@@ -14,13 +14,13 @@ import (
 func TestLinuxConnections(t *testing.T) {
 	fs_hook.Mock(mockFS)
 	defer fs_hook.Restore()
-	scanner := NewConnectionScanner(process.NewWalker("/proc", false))
+	scanner := NewConnectionScanner(process.NewWalker("/proc", false), true)
 	defer scanner.Stop()
 
 	// let the background scanner finish its first pass
 	time.Sleep(1 * time.Second)
 
-	iter, err := scanner.Connections(true)
+	iter, err := scanner.Connections()
 	if err != nil {
 		t.Fatal(err)
 	}
