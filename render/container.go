@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -45,7 +44,13 @@ var ContainerRenderer = MakeFilter(
 	),
 )
 
-var mapEndpoint2IP = MakeMap(endpoint2IP, SelectEndpoint)
+var mapEndpoint2IP = MakeMap(
+	endpoint2IP,
+	// We drop endpoint nodes with pids, as they will be joined to
+	// containers through the process topology, and we don't want to
+	// double count edges.
+	MakeFilter(Complement(procspiedOrEBPF), SelectEndpoint),
+)
 
 const originalNodeID = "original_node_id"
 const originalNodeTopology = "original_node_topology"
@@ -108,15 +113,8 @@ func ipToNode(n report.Node, _ report.Networks) report.Nodes {
 }
 
 // endpoint2IP maps endpoint nodes to their IP address, for joining
-// with container nodes.  We drop endpoint nodes with pids, as they
-// will be joined to containers through the process topology, and we
-// don't want to double count edges.
+// with container nodes.
 func endpoint2IP(m report.Node, local report.Networks) report.Nodes {
-	// Don't include procspied connections, to prevent double counting
-	_, ok := m.Latest.Lookup(endpoint.Procspied)
-	if ok {
-		return report.Nodes{}
-	}
 	scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
 	if !ok {
 		return report.Nodes{}
