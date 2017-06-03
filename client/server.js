@@ -67,7 +67,7 @@ if (process.env.NODE_ENV !== 'production') {
  *****************/
 
 const port = process.env.PORT || 4042;
-const server = app.listen(port, () => {
+const server = app.listen(port, 'localhost', () => {
   const host = server.address().address;
 
   console.log('Scope UI listening at http://%s:%s', host, port);
@@ -98,7 +98,7 @@ const proxyPathServer = http.createServer((req, res) => {
     return res.end('No rules matched! Check out /scoped/');
   }
   return pathProxy.web(req, res, {target});
-}).listen(pathProxyPort, () => {
+}).listen(pathProxyPort, 'localhost', () => {
   const pathProxyHost = proxyPathServer.address().address;
   console.log('Scope Proxy Path UI listening at http://%s:%s/scoped/',
     pathProxyHost, pathProxyPort);
