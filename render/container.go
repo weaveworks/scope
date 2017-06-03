@@ -66,67 +66,6 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 		return result
 	}
 
-	ipToNode := func(n report.Node, _ report.Networks) report.Nodes {
-		// If an IP is shared between multiple nodes, we can't
-		// reliably attribute an connection based on its IP
-		if count, _ := n.Counters.Lookup(IP); count > 1 {
-			return report.Nodes{}
-		}
-
-		// Propagate the internet and service pseudo nodes
-		if strings.HasSuffix(n.ID, TheInternetID) || strings.HasPrefix(n.ID, ServiceNodeIDPrefix) {
-			return report.Nodes{n.ID: n}
-		}
-
-		// If this node is not of the original type, exclude it.
-		// This excludes all the nodes we've dragged in from endpoint
-		// that we failed to join to a node.
-		id, ok := n.Latest.Lookup(originalNodeID)
-		if !ok {
-			return report.Nodes{}
-		}
-		topology, ok := n.Latest.Lookup(originalNodeTopology)
-		if !ok {
-			return report.Nodes{}
-		}
-
-		return report.Nodes{
-			id: NewDerivedNode(id, n).
-				WithTopology(topology),
-		}
-	}
-
-	// MapEndpoint2IP maps endpoint nodes to their IP address, for joining
-	// with container nodes.  We drop endpoint nodes with pids, as they
-	// will be joined to containers through the process topology, and we
-	// don't want to double count edges.
-	endpoint2IP := func(m report.Node, local report.Networks) report.Nodes {
-		// Don't include procspied connections, to prevent double counting
-		_, ok := m.Latest.Lookup(endpoint.Procspied)
-		if ok {
-			return report.Nodes{}
-		}
-		scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
-		if !ok {
-			return report.Nodes{}
-		}
-
-		if externalNode, ok := NewDerivedExternalNode(m, addr, local); ok {
-			return report.Nodes{externalNode.ID: externalNode}
-		}
-
-		// We also allow for joining on ip:port pairs.  This is useful
-		// for connections to the host IPs which have been port
-		// mapped to a container can only be unambiguously identified with the port.
-		// So we need to emit two nodes, for two different cases.
-		id := report.MakeScopedEndpointNodeID(scope, addr, "")
-		idWithPort := report.MakeScopedEndpointNodeID(scope, addr, port)
-		return report.Nodes{
-			id:         NewDerivedNode(id, m).WithTopology(IP),
-			idWithPort: NewDerivedNode(idWithPort, m).WithTopology(IP),
-		}
-	}
-
 	return FilterUnconnected(MakeMap(
 		ipToNode,
 		MakeReduce(
@@ -140,6 +79,67 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 			),
 		),
 	))
+}
+
+func ipToNode(n report.Node, _ report.Networks) report.Nodes {
+	// If an IP is shared between multiple nodes, we can't reliably
+	// attribute an connection based on its IP
+	if count, _ := n.Counters.Lookup(IP); count > 1 {
+		return report.Nodes{}
+	}
+
+	// Propagate the internet and service pseudo nodes
+	if strings.HasSuffix(n.ID, TheInternetID) || strings.HasPrefix(n.ID, ServiceNodeIDPrefix) {
+		return report.Nodes{n.ID: n}
+	}
+
+	// If this node is not of the original type, exclude it.  This
+	// excludes all the nodes we've dragged in from endpoint that we
+	// failed to join to a node.
+	id, ok := n.Latest.Lookup(originalNodeID)
+	if !ok {
+		return report.Nodes{}
+	}
+	topology, ok := n.Latest.Lookup(originalNodeTopology)
+	if !ok {
+		return report.Nodes{}
+	}
+
+	return report.Nodes{
+		id: NewDerivedNode(id, n).
+			WithTopology(topology),
+	}
+}
+
+// mapEndpoint2IP maps endpoint nodes to their IP address, for joining
+// with container nodes.  We drop endpoint nodes with pids, as they
+// will be joined to containers through the process topology, and we
+// don't want to double count edges.
+func mapEndpoint2IP(m report.Node, local report.Networks) report.Nodes {
+	// Don't include procspied connections, to prevent double counting
+	_, ok := m.Latest.Lookup(endpoint.Procspied)
+	if ok {
+		return report.Nodes{}
+	}
+	scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
+	if !ok {
+		return report.Nodes{}
+	}
+
+	if externalNode, ok := NewDerivedExternalNode(m, addr, local); ok {
+		return report.Nodes{externalNode.ID: externalNode}
+	}
+
+	// We also allow for joining on ip:port pairs.  This is useful for
+	// connections to the host IPs which have been port mapped to a
+	// container can only be unambiguously identified with the port.
+	// So we need to emit two nodes, for two different cases.
+	id := report.MakeScopedEndpointNodeID(scope, addr, "")
+	idWithPort := report.MakeScopedEndpointNodeID(scope, addr, port)
+	return report.Nodes{
+		id:         NewDerivedNode(id, m).WithTopology(IP),
+		idWithPort: NewDerivedNode(idWithPort, m).WithTopology(IP),
+	}
 }
 
 // FilterEmpty is a Renderer which filters out nodes which have no children
