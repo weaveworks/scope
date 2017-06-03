@@ -1,31 +1,28 @@
-var express = require('express');
-var http = require('http');
-var httpProxy = require('http-proxy');
-var HttpProxyRules = require('http-proxy-rules');
-var url = require('url');
+/* eslint no-console: 0 */
+const express = require('express');
+const http = require('http');
+const httpProxy = require('http-proxy');
+const HttpProxyRules = require('http-proxy-rules');
 
-var app = express();
+const app = express();
 
-var BACKEND_HOST = process.env.BACKEND_HOST || 'localhost';
-var WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
+const BACKEND_HOST = process.env.BACKEND_HOST || 'localhost';
 
-/************************************************************
+/**
  *
  * Proxy requests to:
  *   - /api -> :4040/api
  *
  ************************************************************/
 
-var backendProxy = httpProxy.createProxy({
+const backendProxy = httpProxy.createProxy({
   ws: true,
-  target: 'http://' + BACKEND_HOST + ':4040'
+  target: `http://${BACKEND_HOST}:4040`,
 });
-backendProxy.on('error', function(err) {
-  console.error('Proxy error', err);
-});
+backendProxy.on('error', err => console.error('Proxy error', err));
 app.all('/api*', backendProxy.web.bind(backendProxy));
 
-/************************************************************
+/**
  *
  * Production env serves precompiled content from build/
  *
@@ -35,7 +32,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static('build'));
 }
 
-/*************************************************************
+/**
  *
  * Webpack Dev Middleware with Hot Reload
  *
@@ -45,11 +42,11 @@ if (process.env.NODE_ENV === 'production') {
  *************************************************************/
 
 if (process.env.NODE_ENV !== 'production') {
-  var webpack = require('webpack');
-  var webpackMiddleware = require('webpack-dev-middleware');
-  var webpackHotMiddleware = require('webpack-hot-middleware');
-  var config = require('./webpack.local.config');
-  var compiler = webpack(config);
+  const webpack = require('webpack');
+  const webpackMiddleware = require('webpack-dev-middleware');
+  const webpackHotMiddleware = require('webpack-hot-middleware');
+  const config = require('./webpack.local.config');
+  const compiler = webpack(config);
 
   app.use(webpackMiddleware(compiler, {
     // required
@@ -63,16 +60,15 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 
-/******************
+/**
  *
  * Express server
  *
  *****************/
 
-var port = process.env.PORT || 4042;
-var server = app.listen(port, function () {
-  var host = server.address().address;
-  var port = server.address().port;
+const port = process.env.PORT || 4042;
+const server = app.listen(port, () => {
+  const host = server.address().address;
 
   console.log('Scope UI listening at http://%s:%s', host, port);
 });
@@ -80,38 +76,37 @@ var server = app.listen(port, function () {
 server.on('upgrade', backendProxy.ws.bind(backendProxy));
 
 
-/*************************************************************
+/**
  *
  * Path proxy server
  *
  *************************************************************/
 
-var proxyRules = new HttpProxyRules({
+const proxyRules = new HttpProxyRules({
   rules: {
-    '/scoped/': 'http://localhost:' + port
+    '/scoped/': `http://localhost:${port}`,
   }
 });
 
-var pathProxy = httpProxy.createProxy({ws: true});
-pathProxy.on('error', function(err) { console.error('path proxy error', err); });
-var pathProxyPort = port + 1;
-const proxyPathServer = http.createServer(function(req, res) {
-  var target = proxyRules.match(req);
+const pathProxy = httpProxy.createProxy({ws: true});
+pathProxy.on('error', err => console.error('path proxy error', err));
+const pathProxyPort = port + 1;
+const proxyPathServer = http.createServer((req, res) => {
+  const target = proxyRules.match(req);
   if (!target) {
     res.writeHead(500, {'Content-Type': 'text/plain'});
-    res.end('No rules matched! Check out /scoped/');
-    return;
+    return res.end('No rules matched! Check out /scoped/');
   }
-  return pathProxy.web(req, res, {target: target});
-}).listen(pathProxyPort, function() {
-  var pathProxyHost = proxyPathServer.address().address;
+  return pathProxy.web(req, res, {target});
+}).listen(pathProxyPort, () => {
+  const pathProxyHost = proxyPathServer.address().address;
   console.log('Scope Proxy Path UI listening at http://%s:%s/scoped/',
-              pathProxyHost, pathProxyPort);
+    pathProxyHost, pathProxyPort);
 });
 
-proxyPathServer.on('upgrade', function(req, socket, head) {
-  var target = proxyRules.match(req);
+proxyPathServer.on('upgrade', (req, socket, head) => {
+  const target = proxyRules.match(req);
   if (target) {
-    return pathProxy.ws(req, socket, head, {target: target});
+    pathProxy.ws(req, socket, head, {target});
   }
 });

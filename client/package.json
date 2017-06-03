@@ -103,7 +103,7 @@
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest",
     "coveralls": "cat coverage/lcov.info | coveralls",
-    "lint": "eslint app",
+    "lint": "eslint app server.js",
     "clean": "rm build/app.js",
     "noprobe": "../scope stop && ../scope launch --no-probe --app.window 8760h",
     "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d"
