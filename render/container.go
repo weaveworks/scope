@@ -45,6 +45,8 @@ var ContainerRenderer = MakeFilter(
 	),
 )
 
+var mapEndpoint2IP = MakeMap(endpoint2IP, SelectEndpoint)
+
 const originalNodeID = "original_node_id"
 const originalNodeTopology = "original_node_topology"
 
@@ -69,14 +71,8 @@ func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Rend
 	return FilterUnconnected(MakeMap(
 		ipToNode,
 		MakeReduce(
-			MakeMap(
-				nodeToIP,
-				r,
-			),
-			MakeMap(
-				endpoint2IP,
-				SelectEndpoint,
-			),
+			MakeMap(nodeToIP, r),
+			mapEndpoint2IP,
 		),
 	))
 }
@@ -111,11 +107,11 @@ func ipToNode(n report.Node, _ report.Networks) report.Nodes {
 	}
 }
 
-// mapEndpoint2IP maps endpoint nodes to their IP address, for joining
+// endpoint2IP maps endpoint nodes to their IP address, for joining
 // with container nodes.  We drop endpoint nodes with pids, as they
 // will be joined to containers through the process topology, and we
 // don't want to double count edges.
-func mapEndpoint2IP(m report.Node, local report.Networks) report.Nodes {
+func endpoint2IP(m report.Node, local report.Networks) report.Nodes {
 	// Don't include procspied connections, to prevent double counting
 	_, ok := m.Latest.Lookup(endpoint.Procspied)
 	if ok {
