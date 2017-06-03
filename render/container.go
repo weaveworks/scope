@@ -34,11 +34,11 @@ var ContainerRenderer = MakeFilter(
 			ProcessRenderer,
 		),
 
-		// This mapper brings in short lived connections by joining with container IPs.
-		// We need to be careful to ensure we only include each edge once.  Edges brought in
-		// by the above renders will have a pid, so its enough to filter out any nodes with
-		// pids.
-		ShortLivedConnectionJoin(SelectContainer, MapContainer2IP),
+		// This mapper brings in connections by joining with container
+		// IPs.  We need to be careful to ensure we only include each
+		// edge once.  Edges brought in by the above renders will have
+		// a pid, so its enough to filter out any nodes with pids.
+		ConnectionJoin(SelectContainer, MapContainer2IP),
 
 		SelectContainer,
 	),
@@ -55,10 +55,10 @@ var mapEndpoint2IP = MakeMap(
 const originalNodeID = "original_node_id"
 const originalNodeTopology = "original_node_topology"
 
-// ShortLivedConnectionJoin joins the given renderer with short lived connections
-// from the endpoints topology, using the toIPs function to extract IPs from
+// ConnectionJoin joins the given renderer with connections from the
+// endpoints topology, using the toIPs function to extract IPs from
 // the nodes.
-func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Renderer {
+func ConnectionJoin(r Renderer, toIPs func(report.Node) []string) Renderer {
 	nodeToIP := func(n report.Node, _ report.Networks) report.Nodes {
 		result := report.Nodes{}
 		for _, ip := range toIPs(n) {
