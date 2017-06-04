@@ -3,10 +3,10 @@
 # shellcheck disable=SC1091
 . ./config.sh
 
-start_suite "Test short lived connections from the Internet [DISABLED]"
+start_suite "Test short lived connections from the Internet without ebpf [DISABLED]"
 
 weave_on "$HOST1" launch
-scope_on "$HOST1" launch --probe.ebpf.connections=true
+scope_on "$HOST1" launch --probe.ebpf.connections=false
 
 ## Test disabled: it is currently flaky
 ## https://github.com/weaveworks/scope/issues/2308

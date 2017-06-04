@@ -11,7 +11,7 @@ weave_on "$HOST1" launch
 # to make ebpf fail and test the proc fallback.
 DOCKER_HOST=tcp://${HOST1}:${DOCKER_PORT} CHECKPOINT_DISABLE=true \
     WEAVESCOPE_DOCKER_ARGS="-v /tmp:/sys/kernel/debug/tracing:ro" \
-    "${SCOPE}" launch --probe.ebpf.connections=true
+    "${SCOPE}" launch
 weave_on "$HOST1" run -d --name nginx nginx
 weave_on "$HOST1" run -d --name client alpine /bin/sh -c "while true; do \
 	wget http://nginx.weave.local:80/ -O - >/dev/null || true; \

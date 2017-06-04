@@ -3,9 +3,9 @@
 # shellcheck disable=SC1091
 . ./config.sh
 
-start_suite "Test short lived connection between containers in same network namespace, with ebpf connection tracking enabled"
+start_suite "Test short lived connection between containers in same network namespace"
 
-scope_on "$HOST1" launch --probe.ebpf.connections=true
+scope_on "$HOST1" launch
 docker_on "$HOST1" run -d --name nginx nginx
 docker_on "$HOST1" run -d --net=container:nginx --name client albanc/dialer /go/bin/dialer connectshortlived localhost:80
 
