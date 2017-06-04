@@ -63,10 +63,6 @@ func ColorConnected(r Renderer) Renderer {
 			void := struct{}{}
 
 			for id, node := range input {
-				if len(node.Adjacency) == 0 {
-					continue
-				}
-
 				for _, adj := range node.Adjacency {
 					if adj != id {
 						connected[id] = void
