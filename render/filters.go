@@ -237,8 +237,13 @@ func IsRunning(n report.Node) bool {
 // IsStopped checks if the node is *not* a running docker container
 var IsStopped = Complement(IsRunning)
 
+func procspied(node report.Node) bool {
+	_, ok := node.Latest.Lookup(endpoint.Procspied)
+	return ok
+}
+
 func procspiedOrEBPF(node report.Node) bool {
-	if _, ok := node.Latest.Lookup(endpoint.Procspied); ok {
+	if procspied(node) {
 		return true
 	}
 	_, ok := node.Latest.Lookup(endpoint.EBPF)

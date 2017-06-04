@@ -44,10 +44,10 @@ var ContainerRenderer = MakeFilter(
 
 var mapEndpoint2IP = MakeMap(
 	endpoint2IP,
-	// We drop endpoint nodes which were procspied or eBBF-tracked, as
-	// they will be joined to containers through the process topology,
-	// and we don't want to double count edges.
-	MakeFilter(Complement(procspiedOrEBPF), SelectEndpoint),
+	// We drop endpoint nodes which were procspied, as they will be
+	// joined to containers through the process topology, and we don't
+	// want to double count edges.
+	MakeFilter(Complement(procspied), SelectEndpoint),
 )
 
 const originalNodeID = "original_node_id"
