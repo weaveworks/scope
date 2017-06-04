@@ -40,12 +40,8 @@ type ConnIter interface {
 
 // ConnectionScanner scans the system for established (TCP) connections
 type ConnectionScanner interface {
-	// Connections returns all established (TCP) connections.  If processes is
-	// false we'll just list all TCP connections, and there is no need to be root.
-	// If processes is true it'll additionally try to lookup the process owning the
-	// connection, filling in the Proc field. You will need to run this as root to
-	// find all processes.
-	Connections(processes bool) (ConnIter, error)
+	// Connections returns all established (TCP) connections.
+	Connections() (ConnIter, error)
 	// Stops the scanning
 	Stop()
 }

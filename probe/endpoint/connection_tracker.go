@@ -71,7 +71,7 @@ func flowToTuple(f flow) (ft fourTuple) {
 func (t *connectionTracker) useProcfs() {
 	t.ebpfTracker = nil
 	if t.conf.WalkProc && t.conf.Scanner == nil {
-		t.conf.Scanner = procspy.NewConnectionScanner(t.conf.ProcessCache)
+		t.conf.Scanner = procspy.NewConnectionScanner(t.conf.ProcessCache, t.conf.SpyProcs)
 	}
 	if t.flowWalker == nil {
 		t.flowWalker = newConntrackFlowWalker(t.conf.UseConntrack, t.conf.ProcRoot, t.conf.BufferSize)
@@ -112,7 +112,7 @@ func (t *connectionTracker) performFlowWalk(rpt *report.Report, seenTuples *map[
 }
 
 func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID string, seenTuples *map[string]fourTuple) error {
-	conns, err := t.conf.Scanner.Connections(t.conf.SpyProcs)
+	conns, err := t.conf.Scanner.Connections()
 	if err != nil {
 		return err
 	}
@@ -159,7 +159,7 @@ func (t *connectionTracker) getInitialState() {
 	processCache = process.NewCachingWalker(walker)
 	processCache.Tick()
 
-	scanner := procspy.NewSyncConnectionScanner(processCache)
+	scanner := procspy.NewSyncConnectionScanner(processCache, t.conf.SpyProcs)
 	seenTuples := map[string]fourTuple{}
 	// Consult the flowWalker to get the initial state
 	if err := IsConntrackSupported(t.conf.ProcRoot); t.conf.UseConntrack && err != nil {
@@ -173,7 +173,7 @@ func (t *connectionTracker) getInitialState() {
 		}
 	}
 
-	conns, err := scanner.Connections(t.conf.SpyProcs)
+	conns, err := scanner.Connections()
 	if err != nil {
 		log.Errorf("Error initializing ebpfTracker while scanning /proc, continuing without initial connections: %s", err)
 	}
