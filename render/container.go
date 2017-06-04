@@ -35,9 +35,7 @@ var ContainerRenderer = MakeFilter(
 		),
 
 		// This mapper brings in connections by joining with container
-		// IPs.  We need to be careful to ensure we only include each
-		// edge once.  Edges brought in by the above renders will have
-		// a pid, so its enough to filter out any nodes with pids.
+		// IPs.
 		ConnectionJoin(SelectContainer, MapContainer2IP),
 
 		SelectContainer,
@@ -46,9 +44,9 @@ var ContainerRenderer = MakeFilter(
 
 var mapEndpoint2IP = MakeMap(
 	endpoint2IP,
-	// We drop endpoint nodes with pids, as they will be joined to
-	// containers through the process topology, and we don't want to
-	// double count edges.
+	// We drop endpoint nodes which were procspied or eBBF-tracked, as
+	// they will be joined to containers through the process topology,
+	// and we don't want to double count edges.
 	MakeFilter(Complement(procspiedOrEBPF), SelectEndpoint),
 )
 
