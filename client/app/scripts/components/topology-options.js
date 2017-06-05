@@ -37,9 +37,9 @@ class TopologyOptions extends React.Component {
       // Multi-select topology options (such as k8s namespaces) are handled here.
       // Users can select one, many, or none of these options.
       // The component builds an array of the next selected values that are sent to the action.
-      const opts = activeOptions.toJS();
+      const opts = activeOptions;
       const selected = selectedOption.get('id');
-      const selectedActiveOptions = opts[selected] || [];
+      const selectedActiveOptions = opts ? opts.get(selected) : [];
       const isSelectedAlready = includes(selectedActiveOptions, value);
 
       if (isSelectedAlready) {
@@ -47,7 +47,7 @@ class TopologyOptions extends React.Component {
         nextOptions = selectedActiveOptions.filter(o => o !== value);
       } else {
         // Add it to the array if it's not selected
-        nextOptions = selectedActiveOptions.concat(value);
+        nextOptions = [].concat(selectedActiveOptions, value);
       }
       // Since the user is clicking an option, remove the highlighting from the 'none' option,
       // unless they are removing the last option. In that case, default to the 'none' label.
