@@ -1,12 +1,14 @@
 package kubernetes
 
 import (
+	"fmt"
 	"io"
 	"strconv"
 	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/weaveworks/common/backoff"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 	"k8s.io/kubernetes/pkg/client/cache"
@@ -16,10 +18,7 @@ import (
 	clientcmdapi "k8s.io/kubernetes/pkg/client/unversioned/clientcmd/api"
 	"k8s.io/kubernetes/pkg/fields"
 	"k8s.io/kubernetes/pkg/labels"
-	"k8s.io/kubernetes/pkg/util/runtime"
 )
-
-const maxBackoffTime = 5 * time.Minute
 
 // Client keeps track of running kubernetes pods and services
 type Client interface {
@@ -57,40 +56,22 @@ type client struct {
 	podWatches      []func(Event, Pod)
 }
 
-// runReflectorUntil is equivalent to cache.Reflector.RunUntil, but it also logs
-// errors (which cache.Reflector.RunUntil simply ignores) and backs off exponentially
-// on errors.
-func runReflectorUntil(r *cache.Reflector, resyncPeriod time.Duration, stopCh <-chan struct{}) {
-	select {
-	case <-stopCh:
-		return
-	default:
-	}
-
-	var err error
-	wait := resyncPeriod
-	for {
-		func() {
-			defer runtime.HandleCrash()
-			err = r.ListAndWatch(stopCh)
-		}()
-
-		if err != nil {
-			log.Errorf("Kubernetes reflector: %v", err)
-			wait *= 2
-			if wait > maxBackoffTime {
-				wait = maxBackoffTime
-			}
-		} else {
-			wait = resyncPeriod
-		}
-
+// runReflectorUntil runs cache.Reflector#ListAndWatch in an endless loop.
+// Errors are logged and retried with exponential backoff.
+func runReflectorUntil(r *cache.Reflector, resyncPeriod time.Duration, stopCh <-chan struct{}, msg string) {
+	listAndWatch := func() (bool, error) {
 		select {
 		case <-stopCh:
-			return
-		case <-time.After(wait):
+			return true, nil
+		default:
+			err := r.ListAndWatch(stopCh)
+			return false, err
 		}
 	}
+	bo := backoff.New(listAndWatch, fmt.Sprintf("Kubernetes reflector (%s)", msg))
+	bo.SetInitialBackoff(resyncPeriod)
+	bo.SetMaxBackoff(5 * time.Minute)
+	go bo.Start()
 }
 
 // ClientConfig establishes the configuration for the kubernetes client
@@ -196,7 +177,7 @@ func (c *client) setupStore(kclient cache.Getter, resource string, itemType inte
 	if store == nil {
 		store = cache.NewStore(cache.MetaNamespaceKeyFunc)
 	}
-	go runReflectorUntil(cache.NewReflector(lw, itemType, store, c.resyncPeriod), c.resyncPeriod, c.quit)
+	runReflectorUntil(cache.NewReflector(lw, itemType, store, c.resyncPeriod), c.resyncPeriod, c.quit, resource)
 	return store
 }
 
