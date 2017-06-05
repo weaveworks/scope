@@ -39,11 +39,25 @@ func MakeReduce(renderers ...Renderer) Renderer {
 
 // Render produces a set of Nodes given a Report.
 func (r *Reduce) Render(rpt report.Report, dct Decorator) report.Nodes {
-	result := report.Nodes{}
-	for _, renderer := range *r {
-		result = result.Merge(renderer.Render(rpt, dct))
+	l := len(*r)
+	switch l {
+	case 0:
+		return report.Nodes{}
 	}
-	return result
+	c := make(chan report.Nodes, l)
+	for _, renderer := range *r {
+		renderer := renderer // Pike!!
+		go func() {
+			c <- renderer.Render(rpt, dct)
+		}()
+	}
+	for ; l > 1; l-- {
+		left, right := <-c, <-c
+		go func() {
+			c <- left.Merge(right)
+		}()
+	}
+	return <-c
 }
 
 // Stats implements Renderer
