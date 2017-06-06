@@ -74,7 +74,7 @@ fail=0
 
 if [ -z "$TESTDIRS" ]; then
     # NB: Relies on paths being prefixed with './'.
-    TESTDIRS=($(git ls-files -- '*_test.go' | grep -vE '^(vendor|prog|experimental)/' | xargs -n1 dirname | sort -u | sed -e 's|^|./|'))
+    TESTDIRS=($(git ls-files -- '*_test.go' | grep -vE '^(vendor|experimental)/' | xargs -n1 dirname | sort -u | sed -e 's|^|./|'))
 else
     # TESTDIRS on the right side is not really an array variable, it
     # is just a string with spaces, but it is written like that to
