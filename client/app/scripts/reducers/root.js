@@ -22,6 +22,7 @@ import {
   isResourceViewModeSelector,
 } from '../selectors/topology';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
+import { consolidatedBeginningOfNodesDeltaBuffer } from '../utils/update-buffer-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
@@ -63,6 +64,7 @@ export const initialState = makeMap({
   mouseOverNodeId: null,
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
+  nodesDeltaBuffer: makeList(),
   nodesLoaded: false,
   // nodes cache, infrequently updated, used for search & resource view
   nodesByTopology: makeMap(), // topologyId -> nodes
@@ -362,6 +364,29 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.CLOSE_WEBSOCKET: {
       return state.set('websocketClosed', true);
+    }
+
+    //
+    // nodes delta buffer
+    //
+
+    case ActionTypes.CLEAR_NODES_DELTA_BUFFER: {
+      return state.update('nodesDeltaBuffer', buffer => buffer.clear());
+    }
+
+    case ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER: {
+      const deltaUnion = consolidatedBeginningOfNodesDeltaBuffer(state);
+      state = state.setIn(['nodesDeltaBuffer', 0], deltaUnion);
+      state = state.deleteIn(['nodesDeltaBuffer', 1]);
+      return state;
+    }
+
+    case ActionTypes.POP_NODES_DELTA_BUFFER: {
+      return state.update('nodesDeltaBuffer', buffer => buffer.shift());
+    }
+
+    case ActionTypes.ADD_TO_NODES_DELTA_BUFFER: {
+      return state.update('nodesDeltaBuffer', buffer => buffer.push(action.delta));
     }
 
     //

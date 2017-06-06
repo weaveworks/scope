@@ -2,10 +2,9 @@ import { is, fromJS } from 'immutable';
 import expect from 'expect';
 
 import { TABLE_VIEW_MODE } from '../../constants/naming';
-// Root reducer test suite using Jasmine matchers
 import { constructEdgeId } from '../../utils/layouter-utils';
-// import { isResourceViewModeSelector } from '../../selectors/topology';
 
+// Root reducer test suite using Jasmine matchers
 describe('RootReducer', () => {
   const ActionTypes = require('../../constants/action-types').default;
   const reducer = require('../root').default;
@@ -16,7 +15,6 @@ describe('RootReducer', () => {
   const activeTopologyOptionsSelector = topologySelectors.activeTopologyOptionsSelector;
   const getAdjacentNodes = topologyUtils.getAdjacentNodes;
   const isTopologyEmpty = topologyUtils.isTopologyEmpty;
-  const isNodesDisplayEmpty = topologyUtils.isNodesDisplayEmpty;
   const getUrlState = require('../../utils/router-utils').getUrlState;
 
   // fixtures

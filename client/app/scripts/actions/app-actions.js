@@ -6,9 +6,8 @@ import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { updateRoute } from '../utils/router-utils';
 import {
-  bufferDeltaUpdate,
-  resumeUpdate,
-  resetUpdateBuffer,
+  isNodesDeltaPaused,
+  getUpdateBufferSize,
 } from '../utils/update-buffer-utils';
 import {
   doControlRequest,
@@ -43,6 +42,9 @@ import {
 
 const log = debug('scope:app-actions');
 
+// TODO: This shouldn't be exposed here as a global variable.
+let nodesDeltaBufferUpdateTimer = null;
+
 export function showHelp() {
   return { type: ActionTypes.SHOW_HELP };
 }
@@ -75,6 +77,30 @@ export function sortOrderChanged(sortedBy, sortedDesc) {
   };
 }
 
+function resetNodesDeltaBuffer() {
+  clearTimeout(nodesDeltaBufferUpdateTimer);
+  return { type: ActionTypes.CLEAR_NODES_DELTA_BUFFER };
+}
+
+function bufferDeltaUpdate(delta) {
+  return (dispatch, getState) => {
+    if (delta.add === null && delta.update === null && delta.remove === null) {
+      log('Discarding empty nodes delta');
+      return;
+    }
+
+    const bufferLength = 100;
+    if (getUpdateBufferSize(getState()) >= bufferLength) {
+      dispatch({ type: ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER });
+    }
+
+    dispatch({
+      type: ActionTypes.ADD_TO_NODES_DELTA_BUFFER,
+      delta,
+    });
+    log('Buffering node delta, new size', getUpdateBufferSize(getState()));
+  };
+}
 
 //
 // Networks
@@ -211,7 +237,7 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     });
     updateRoute(getState);
     // update all request workers with new options
-    resetUpdateBuffer();
+    dispatch(resetNodesDeltaBuffer());
     const state = getState();
     getTopologies(activeTopologyOptionsSelector(state), dispatch);
     updateWebsocketChannel(state, dispatch);
@@ -383,15 +409,6 @@ export function clickRelative(nodeId, topologyId, label, origin) {
   };
 }
 
-export function clickResumeUpdate() {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.CLICK_RESUME_UPDATE
-    });
-    resumeUpdate(getState);
-  };
-}
-
 function updateTopology(dispatch, getState) {
   const state = getState();
   // If we're in the resource view, get the snapshot of all the relevant node topologies.
@@ -400,7 +417,7 @@ function updateTopology(dispatch, getState) {
   }
   updateRoute(getState);
   // update all request workers with new options
-  resetUpdateBuffer();
+  dispatch(resetNodesDeltaBuffer());
   // NOTE: This is currently not needed for our static resource
   // view, but we'll need it here later and it's simpler to just
   // keep it than to redo the nodes delta updating logic.
@@ -452,7 +469,7 @@ export function websocketQueryTimestamp(queryTimestamp) {
     });
     updateWebsocketChannel(getState(), dispatch);
     // update all request workers with new options
-    resetUpdateBuffer();
+    dispatch(resetNodesDeltaBuffer());
   };
 }
 
@@ -616,7 +633,7 @@ export function receiveNodesDelta(delta) {
 
     if (hasChanges || movingInTime) {
       if (state.get('updatePausedAt') !== null) {
-        bufferDeltaUpdate(delta);
+        dispatch(bufferDeltaUpdate(delta));
       } else {
         dispatch({
           type: ActionTypes.RECEIVE_NODES_DELTA,
@@ -624,6 +641,36 @@ export function receiveNodesDelta(delta) {
         });
       }
     }
+  };
+}
+
+function maybeUpdateFromNodesDeltaBuffer() {
+  return (dispatch, getState) => {
+    const state = getState();
+    if (isNodesDeltaPaused(state)) {
+      dispatch(resetNodesDeltaBuffer());
+    } else {
+      if (getUpdateBufferSize(state) > 0) {
+        const delta = state.get('nodesDeltaBuffer').first();
+        dispatch({ type: ActionTypes.POP_NODES_DELTA_BUFFER });
+        dispatch(receiveNodesDelta(delta));
+      }
+      if (getUpdateBufferSize(state) > 0) {
+        const feedInterval = 1000;
+        nodesDeltaBufferUpdateTimer = setTimeout(
+          () => dispatch(maybeUpdateFromNodesDeltaBuffer()),
+        feedInterval);
+      }
+    }
+  };
+}
+
+export function clickResumeUpdate() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.CLICK_RESUME_UPDATE
+    });
+    dispatch(maybeUpdateFromNodesDeltaBuffer(getState));
   };
 }
 

@@ -5,15 +5,9 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
+import PauseButton from './pause-button';
 import TopologyTimestampInfo from './topology-timestamp-info';
-import { getUpdateBufferSize } from '../utils/update-buffer-utils';
-import {
-  clickPauseUpdate,
-  clickResumeUpdate,
-  websocketQueryTimestamp,
-  startMovingInTime,
-} from '../actions/app-actions';
-
+import { websocketQueryTimestamp, startMovingInTime } from '../actions/app-actions';
 import { TIMELINE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
@@ -78,34 +72,27 @@ const sliderRanges = {
     getStart: () => moment().utc().startOf('year'),
     getEnd: () => moment().utc(),
   },
-  yesterday: {
-    label: 'Yesterday',
-    getStart: () => moment().utc().subtract(1, 'day').startOf('day'),
-    getEnd: () => moment().utc().subtract(1, 'day').endOf('day'),
-  },
-  previousWeek: {
-    label: 'Previous week',
-    getStart: () => moment().utc().subtract(1, 'week').startOf('week'),
-    getEnd: () => moment().utc().subtract(1, 'week').endOf('week'),
-  },
-  previousMonth: {
-    label: 'Previous month',
-    getStart: () => moment().utc().subtract(1, 'month').startOf('month'),
-    getEnd: () => moment().utc().subtract(1, 'month').endOf('month'),
-  },
-  previousYear: {
-    label: 'Previous year',
-    getStart: () => moment().utc().subtract(1, 'year').startOf('year'),
-    getEnd: () => moment().utc().subtract(1, 'year').endOf('year'),
-  },
+  // yesterday: {
+  //   label: 'Yesterday',
+  //   getStart: () => moment().utc().subtract(1, 'day').startOf('day'),
+  //   getEnd: () => moment().utc().subtract(1, 'day').endOf('day'),
+  // },
+  // previousWeek: {
+  //   label: 'Previous week',
+  //   getStart: () => moment().utc().subtract(1, 'week').startOf('week'),
+  //   getEnd: () => moment().utc().subtract(1, 'week').endOf('week'),
+  // },
+  // previousMonth: {
+  //   label: 'Previous month',
+  //   getStart: () => moment().utc().subtract(1, 'month').startOf('month'),
+  //   getEnd: () => moment().utc().subtract(1, 'month').endOf('month'),
+  // },
+  // previousYear: {
+  //   label: 'Previous year',
+  //   getStart: () => moment().utc().subtract(1, 'year').startOf('year'),
+  //   getEnd: () => moment().utc().subtract(1, 'year').endOf('year'),
+  // },
 };
-
-// <div className="column">
-//   {this.renderRangeOption(sliderRanges.yesterday)}
-//   {this.renderRangeOption(sliderRanges.previousWeek)}
-//   {this.renderRangeOption(sliderRanges.previousMonth)}
-//   {this.renderRangeOption(sliderRanges.previousYear)}
-// </div>
 
 class TimelineControl extends React.PureComponent {
   constructor(props, context) {
@@ -186,23 +173,6 @@ class TimelineControl extends React.PureComponent {
     const timeStatusClassName = classNames('time-status', { 'showing-current': showingCurrent });
     const toggleButtonClassName = classNames('button toggle', { selected: showTimelinePanel });
 
-    // pause button
-    const isPaused = this.props.updatePausedAt !== null;
-    const updateCount = getUpdateBufferSize();
-    const hasUpdates = updateCount > 0;
-    const pauseTitle = isPaused ?
-      `Paused ${moment(this.props.updatePausedAt).fromNow()}` :
-      'Pause updates (freezes the nodes in their current layout)';
-    const pauseAction = isPaused ? this.props.clickResumeUpdate : this.props.clickPauseUpdate;
-    let pauseLabel = '';
-    if (hasUpdates && isPaused) {
-      pauseLabel = `Paused +${updateCount}`;
-    } else if (hasUpdates && !isPaused) {
-      pauseLabel = `Resuming +${updateCount}`;
-    } else if (!hasUpdates && isPaused) {
-      pauseLabel = 'Paused';
-    }
-
     return (
       <div className="timeline-control">
         {showTimelinePanel && <div className="timeline-panel">
@@ -239,10 +209,7 @@ class TimelineControl extends React.PureComponent {
             <TopologyTimestampInfo />
             <span className="fa fa-clock-o" />
           </a>
-          <a className="button" onClick={pauseAction} title={pauseTitle}>
-            {pauseLabel !== '' && <span className="pause-text">{pauseLabel}</span>}
-            <span className="fa fa-pause" />
-          </a>
+          <PauseButton />
           {!showingCurrent && <a
             className="button jump-to-now"
             title="Jump to now"
@@ -255,17 +222,9 @@ class TimelineControl extends React.PureComponent {
   }
 }
 
-function mapStateToProps(state) {
-  return {
-    updatePausedAt: state.get('updatePausedAt'),
-  };
-}
-
 export default connect(
-  mapStateToProps,
+  null,
   {
-    clickPauseUpdate,
-    clickResumeUpdate,
     websocketQueryTimestamp,
     startMovingInTime,
   }
