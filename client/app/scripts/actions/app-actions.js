@@ -1,5 +1,4 @@
 import debug from 'debug';
-import moment from 'moment';
 import { find } from 'lodash';
 
 import ActionTypes from '../constants/action-types';
@@ -451,20 +450,17 @@ export function startMovingInTime() {
   };
 }
 
-export function websocketQueryTimestamp(queryTimestamp) {
-  const requestTimestamp = moment();
+export function websocketQueryTimestamp(timestampSinceNow) {
   // If the timestamp stands for a time less than one second ago,
   // assume we are actually interested in the current time.
-  if (requestTimestamp.diff(queryTimestamp) >= 1000) {
-    queryTimestamp = queryTimestamp.toISOString();
-  } else {
-    queryTimestamp = null;
+  if (timestampSinceNow < 1000) {
+    timestampSinceNow = null;
   }
 
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.WEBSOCKET_QUERY_TIMESTAMP,
-      queryTimestamp,
+      timestampSinceNow,
     });
     updateWebsocketChannel(getState(), dispatch);
     dispatch(resetNodesDeltaBuffer());

@@ -118,11 +118,11 @@ class TimelineControl extends React.Component {
   }
 
   componentWillUnmount() {
-    this.updateTimestamp(moment());
+    this.updateTimestamp(null);
   }
 
-  updateTimestamp(timestamp) {
-    this.props.websocketQueryTimestamp(timestamp);
+  updateTimestamp(timestampSinceNow) {
+    this.props.websocketQueryTimestamp(timestampSinceNow);
     this.props.clickResumeUpdate();
   }
 
@@ -132,9 +132,8 @@ class TimelineControl extends React.Component {
 
   handleSliderChange(value) {
     const offsetMilliseconds = this.getRangeMilliseconds() - value;
-    const timestamp = moment().utc().subtract(offsetMilliseconds);
     this.props.startMovingInTime();
-    this.debouncedUpdateTimestamp(timestamp);
+    this.debouncedUpdateTimestamp(offsetMilliseconds);
     this.setState({ offsetMilliseconds });
   }
 
@@ -150,12 +149,12 @@ class TimelineControl extends React.Component {
       rangeOptionSelected: sliderRanges.last1Hour,
     });
     this.props.startMovingInTime();
-    this.updateTimestamp(moment());
+    this.updateTimestamp(null);
   }
 
   getTotalOffset() {
     const { rangeOptionSelected, offsetMilliseconds } = this.state;
-    const rangeBehindMilliseconds = moment().diff(rangeOptionSelected.getEnd());
+    const rangeBehindMilliseconds = moment().utc().diff(rangeOptionSelected.getEnd());
     return offsetMilliseconds + rangeBehindMilliseconds;
   }
 

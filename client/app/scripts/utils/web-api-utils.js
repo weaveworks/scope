@@ -1,4 +1,5 @@
 import debug from 'debug';
+import moment from 'moment';
 import reqwest from 'reqwest';
 import { defaults } from 'lodash';
 import { fromJS, Map as makeMap, List } from 'immutable';
@@ -236,10 +237,15 @@ export function getTopologies(options, dispatch, initialPoll) {
   });
 }
 
+export function getWebsocketQueryTimestamp(state) {
+  const sinceNow = state.get('websocketQueryTimestampSinceNow');
+  return sinceNow ? moment().utc().subtract(sinceNow).toISOString() : null;
+}
+
 export function updateWebsocketChannel(state, dispatch) {
   const topologyUrl = getCurrentTopologyUrl(state);
   const topologyOptions = activeTopologyOptionsSelector(state);
-  const queryTimestamp = state.get('websocketQueryPastAt');
+  const queryTimestamp = getWebsocketQueryTimestamp(state);
   const websocketUrl = buildWebsocketUrl(topologyUrl, topologyOptions, queryTimestamp);
   // Only recreate websocket if url changed or if forced (weave cloud instance reload);
   const isNewUrl = websocketUrl !== currentUrl;

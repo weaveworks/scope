@@ -23,6 +23,7 @@ import {
 } from '../selectors/topology';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
 import { consolidatedBeginningOfNodesDeltaBuffer } from '../utils/update-buffer-utils';
+import { getWebsocketQueryTimestamp } from '../utils/web-api-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
@@ -93,7 +94,7 @@ export const initialState = makeMap({
   viewport: makeMap(),
   websocketClosed: false,
   websocketMovingInTime: false,
-  websocketQueryPastAt: null,
+  websocketQueryTimestampSinceNow: null,
   zoomCache: makeMap(),
   serviceImages: makeMap()
 });
@@ -296,7 +297,9 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_PAUSE_UPDATE: {
-      return state.set('updatePausedAt', moment().utc());
+      const pausedAt = state.get('websocketQueryTimestampSinceNow') ?
+        moment(getWebsocketQueryTimestamp(state)) : moment().utc();
+      return state.set('updatePausedAt', pausedAt);
     }
 
     case ActionTypes.CLICK_RELATIVE: {
@@ -356,7 +359,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.WEBSOCKET_QUERY_TIMESTAMP: {
-      return state.set('websocketQueryPastAt', action.queryTimestamp);
+      return state.set('websocketQueryTimestampSinceNow', action.timestampSinceNow);
     }
 
     case ActionTypes.CLOSE_WEBSOCKET: {
