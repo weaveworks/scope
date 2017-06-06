@@ -11,7 +11,7 @@ import (
 func TestLogCensoredArgs(t *testing.T) {
 	setupFlags(&flags{})
 	args := []string{
-		"-probe.token=foo",
+		"-probe.token=secret",
 		"-service-token=secret",
 		"-probe.kubernetes.password=secret",
 		"-probe.kubernetes.token=secret",
