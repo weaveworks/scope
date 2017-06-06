@@ -50,7 +50,7 @@ function mapStateToProps(state) {
   return {
     errorUrl: state.get('errorUrl'),
     filteredNodeCount: state.get('nodes').filter(node => node.get('filtered')).size,
-    showingCurrentState: !state.get('websocketQueryTimestamp'),
+    showingCurrentState: !state.get('websocketQueryPastAt'),
     topologiesLoaded: state.get('topologiesLoaded'),
     topology: state.get('currentTopology'),
     websocketClosed: state.get('websocketClosed'),

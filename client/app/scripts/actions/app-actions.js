@@ -14,7 +14,7 @@ import {
   doControlRequest,
   getAllNodes,
   getResourceViewNodesSnapshot,
-  updateNodesDeltaChannel,
+  updateWebsocketChannel,
   getNodeDetails,
   getTopologies,
   deletePipe,
@@ -214,7 +214,7 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     resetUpdateBuffer();
     const state = getState();
     getTopologies(activeTopologyOptionsSelector(state), dispatch);
-    updateNodesDeltaChannel(state, dispatch);
+    updateWebsocketChannel(state, dispatch);
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
@@ -404,7 +404,7 @@ function updateTopology(dispatch, getState) {
   // NOTE: This is currently not needed for our static resource
   // view, but we'll need it here later and it's simpler to just
   // keep it than to redo the nodes delta updating logic.
-  updateNodesDeltaChannel(state, dispatch);
+  updateWebsocketChannel(state, dispatch);
 }
 
 export function clickShowTopologyForNode(topologyId, nodeId) {
@@ -434,21 +434,23 @@ export function startMovingInTime() {
   };
 }
 
-export function websocketQueryTimestamp(timestamp) {
+export function websocketQueryTimestamp(queryTimestamp) {
+  const requestTimestamp = moment();
   // If the timestamp stands for a time less than one second ago,
   // assume we are actually interested in the current time.
-  if (timestamp && moment().diff(timestamp) >= 1000) {
-    timestamp = timestamp.toISOString();
+  if (requestTimestamp.diff(queryTimestamp) >= 1000) {
+    queryTimestamp = queryTimestamp.toISOString();
   } else {
-    timestamp = null;
+    queryTimestamp = null;
   }
 
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.WEBSOCKET_QUERY_TIMESTAMP,
-      timestamp,
+      requestTimestamp,
+      queryTimestamp,
     });
-    updateNodesDeltaChannel(getState(), dispatch);
+    updateWebsocketChannel(getState(), dispatch);
     // update all request workers with new options
     resetUpdateBuffer();
   };
@@ -641,7 +643,7 @@ export function receiveTopologies(topologies) {
       topologies
     });
     const state = getState();
-    updateNodesDeltaChannel(state, dispatch);
+    updateWebsocketChannel(state, dispatch);
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
@@ -758,7 +760,7 @@ export function route(urlState) {
     // update all request workers with new options
     const state = getState();
     getTopologies(activeTopologyOptionsSelector(state), dispatch);
-    updateNodesDeltaChannel(state, dispatch);
+    updateWebsocketChannel(state, dispatch);
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),

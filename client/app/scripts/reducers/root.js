@@ -1,5 +1,6 @@
 /* eslint-disable import/no-webpack-loader-syntax, import/no-unresolved */
 import debug from 'debug';
+import moment from 'moment';
 import { size, each, includes, isEqual } from 'lodash';
 import {
   fromJS,
@@ -90,7 +91,8 @@ export const initialState = makeMap({
   viewport: makeMap(),
   websocketClosed: false,
   websocketMovingInTime: false,
-  websocketQueryTimestamp: null,
+  websocketQueryPastAt: null,
+  websocketQueryPastRequestMadeAt: null,
   zoomCache: makeMap(),
   serviceImages: makeMap()
 });
@@ -293,7 +295,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_PAUSE_UPDATE: {
-      return state.set('updatePausedAt', new Date());
+      return state.set('updatePausedAt', moment().utc());
     }
 
     case ActionTypes.CLICK_RELATIVE: {
@@ -353,7 +355,9 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.WEBSOCKET_QUERY_TIMESTAMP: {
-      return state.set('websocketQueryTimestamp', action.timestamp);
+      const websocketPastRequestMadeAt = action.queryTimestamp ? action.requestTimestamp : null;
+      state = state.set('websocketQueryPastRequestMadeAt', websocketPastRequestMadeAt);
+      return state.set('websocketQueryPastAt', action.queryTimestamp);
     }
 
     case ActionTypes.CLOSE_WEBSOCKET: {

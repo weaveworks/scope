@@ -22,13 +22,15 @@ import {
 import { TOPOLOGY_LOADER_DELAY } from '../constants/timer';
 
 
+// TODO: The information that we already have available on the frontend should enable
+// us to determine which of these cases exactly is preventing us from seeing the nodes.
 const NODE_COUNT_ZERO_CAUSES = [
-  "We haven't received any reports from probes recently. Are the probes properly connected?",
-  "Containers view only: you're not running Docker, or you don't have any containers",
+  'We haven\'t received any reports from probes recently. Are the probes properly connected?',
+  'Containers view only: you\'re not running Docker, or you don\'t have any containers',
 ];
-
 const NODES_DISPLAY_EMPTY_CAUSES = [
-  "There are nodes, but they're currently hidden. Check the view options in the bottom-left if they allow for showing hidden nodes.",
+  'There are nodes, but they\'re currently hidden. Check the view options in the bottom-left if they allow for showing hidden nodes.',
+  'There are no nodes for this particular moment in time. Use the timeline feature at the bottom-right corner to explore different times.',
 ];
 
 const renderCauses = causes => (

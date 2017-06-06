@@ -61,6 +61,7 @@
   justify-content: center;
   padding: 5px;
   position: absolute;
+  bottom: 11px;
 
   a {
     @extend .btn-opacity;
@@ -68,7 +69,7 @@
     border-radius: 4px;
     color: $text-secondary-color;
     cursor: pointer;
-    padding: 4px 3px;
+    padding: 1px 3px;
 
     .fa {
       font-size: 150%;
@@ -177,7 +178,6 @@
 
 .footer {
   @extend .overlay-wrapper;
-  bottom: 11px;
   right: 43px;
 
   &-status {
@@ -192,6 +192,10 @@
   &-versionupdate {
     margin-right: 0.5em;
     text-transform: uppercase;
+  }
+
+  &-tools {
+    display: flex;
   }
 
   &-icon {
@@ -213,24 +217,22 @@
 .timeline-control {
   @extend .overlay-wrapper;
   display: block;
-  left: calc(50vw - #{$timeline-control-width} / 2);
-  width: $timeline-control-width;
-  bottom: 0;
+  right: 450px;
 
   .time-status {
     display: flex;
     align-items: center;
-    padding: 0 9px;
+    justify-content: flex-end;
 
-    .running-time { font-size: 115%; }
-    .button { margin-left: 0.5em; }
-
-    .jump-to-now {
-      @extend .blinkable;
-      margin-left: auto;
+    .topology-timestamp-info, .pause-text {
+      font-size: 115%;
+      margin-right: 5px;
     }
 
-    &:not(.showing-current) .running-time {
+    .button { margin-left: 0.5em; }
+    .jump-to-now { @extend .blinkable; }
+
+    &:not(.showing-current) .topology-timestamp-info {
       font-weight: bold;
     }
   }
@@ -259,7 +261,7 @@
     }
 
     .rc-slider {
-      margin: 0 10px 3px;
+      margin: 0 10px 8px;
       width: auto;
     }
   }
@@ -1480,9 +1482,9 @@
 
 .sidebar {
   position: fixed;
-  bottom: 12px;
-  left: 12px;
-  padding: 4px;
+  bottom: 11px;
+  left: 11px;
+  padding: 5px;
   font-size: .7rem;
   border-radius: 8px;
   border: 1px solid transparent;

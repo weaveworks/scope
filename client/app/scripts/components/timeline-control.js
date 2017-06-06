@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
-import RunningTime from './running-time';
+import TopologyTimestampInfo from './topology-timestamp-info';
 import { getUpdateBufferSize } from '../utils/update-buffer-utils';
 import {
   clickPauseUpdate,
@@ -99,6 +99,13 @@ const sliderRanges = {
     getEnd: () => moment().utc().subtract(1, 'year').endOf('year'),
   },
 };
+
+// <div className="column">
+//   {this.renderRangeOption(sliderRanges.yesterday)}
+//   {this.renderRangeOption(sliderRanges.previousWeek)}
+//   {this.renderRangeOption(sliderRanges.previousMonth)}
+//   {this.renderRangeOption(sliderRanges.previousYear)}
+// </div>
 
 class TimelineControl extends React.PureComponent {
   constructor(props, context) {
@@ -199,7 +206,7 @@ class TimelineControl extends React.PureComponent {
     return (
       <div className="timeline-control">
         {showTimelinePanel && <div className="timeline-panel">
-          <strong>Move the slider to explore</strong>
+          <strong>Explore</strong>
           <div className="options">
             <div className="column">
               {this.renderRangeOption(sliderRanges.last15Minutes)}
@@ -219,13 +226,8 @@ class TimelineControl extends React.PureComponent {
               {this.renderRangeOption(sliderRanges.thisMonthSoFar)}
               {this.renderRangeOption(sliderRanges.thisYearSoFar)}
             </div>
-            <div className="column">
-              {this.renderRangeOption(sliderRanges.yesterday)}
-              {this.renderRangeOption(sliderRanges.previousWeek)}
-              {this.renderRangeOption(sliderRanges.previousMonth)}
-              {this.renderRangeOption(sliderRanges.previousYear)}
-            </div>
           </div>
+          <strong>Move the slider to travel in time</strong>
           <Slider
             onChange={this.handleSliderChange}
             value={rangeMilliseconds - offsetMilliseconds}
@@ -233,17 +235,17 @@ class TimelineControl extends React.PureComponent {
           />
         </div>}
         <div className={timeStatusClassName}>
-          <RunningTime offsetMilliseconds={this.getTotalOffset()} />
           <a className={toggleButtonClassName} onClick={this.toggleTimelinePanel}>
+            <TopologyTimestampInfo />
             <span className="fa fa-clock-o" />
           </a>
           <a className="button" onClick={pauseAction} title={pauseTitle}>
-            {pauseLabel !== '' && <span>{pauseLabel}</span>}
+            {pauseLabel !== '' && <span className="pause-text">{pauseLabel}</span>}
             <span className="fa fa-pause" />
           </a>
           {!showingCurrent && <a
             className="button jump-to-now"
-            title="Jump to current state"
+            title="Jump to now"
             onClick={this.jumpToNow}>
             <span className="fa fa-step-forward" />
           </a>}

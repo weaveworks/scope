@@ -236,10 +236,10 @@ export function getTopologies(options, dispatch, initialPoll) {
   });
 }
 
-export function updateNodesDeltaChannel(state, dispatch) {
+export function updateWebsocketChannel(state, dispatch) {
   const topologyUrl = getCurrentTopologyUrl(state);
   const topologyOptions = activeTopologyOptionsSelector(state);
-  const queryTimestamp = state.get('websocketQueryTimestamp');
+  const queryTimestamp = state.get('websocketQueryPastAt');
   const websocketUrl = buildWebsocketUrl(topologyUrl, topologyOptions, queryTimestamp);
   // Only recreate websocket if url changed or if forced (weave cloud instance reload);
   const isNewUrl = websocketUrl !== currentUrl;

@@ -4,6 +4,7 @@ import expect from 'expect';
 import { TABLE_VIEW_MODE } from '../../constants/naming';
 // Root reducer test suite using Jasmine matchers
 import { constructEdgeId } from '../../utils/layouter-utils';
+// import { isResourceViewModeSelector } from '../../selectors/topology';
 
 describe('RootReducer', () => {
   const ActionTypes = require('../../constants/action-types').default;
@@ -15,6 +16,7 @@ describe('RootReducer', () => {
   const activeTopologyOptionsSelector = topologySelectors.activeTopologyOptionsSelector;
   const getAdjacentNodes = topologyUtils.getAdjacentNodes;
   const isTopologyEmpty = topologyUtils.isTopologyEmpty;
+  const isNodesDisplayEmpty = topologyUtils.isNodesDisplayEmpty;
   const getUrlState = require('../../utils/router-utils').getUrlState;
 
   // fixtures
@@ -536,12 +538,19 @@ describe('RootReducer', () => {
     let nextState = initialState;
     nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopologyAction);
+    expect(isTopologyEmpty(nextState)).toBeTruthy();
+
+    nextState = reducer(nextState, ReceiveNodesDeltaAction);
     expect(isTopologyEmpty(nextState)).toBeFalsy();
 
     nextState = reducer(nextState, ClickTopology2Action);
+    nextState = reducer(nextState, ReceiveNodesDeltaAction);
     expect(isTopologyEmpty(nextState)).toBeTruthy();
 
     nextState = reducer(nextState, ClickTopologyAction);
+    expect(isTopologyEmpty(nextState)).toBeTruthy();
+
+    nextState = reducer(nextState, ReceiveNodesDeltaAction);
     expect(isTopologyEmpty(nextState)).toBeFalsy();
   });
 
