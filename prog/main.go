@@ -41,6 +41,7 @@ var (
 	}
 	colonFinder         = regexp.MustCompile(`[^\\](:)`)
 	unescapeBackslashes = regexp.MustCompile(`\\(.)`)
+	elideUrlPassword    = regexp.MustCompile(`:[^/]+?@`)
 )
 
 type prefixFormatter struct {
@@ -223,7 +224,7 @@ func logCensoredArgs() {
 		prettyPrintedArgs += fmt.Sprintf(" --%s=%s", f.Name, value)
 	})
 	for _, arg := range flag.Args() {
-		prettyPrintedArgs += " " + arg
+		prettyPrintedArgs += " " + elideUrlPassword.ReplaceAllString(arg, ":<elided>@")
 	}
 	log.Infof("command line args:%s", prettyPrintedArgs)
 }
