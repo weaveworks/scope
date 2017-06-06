@@ -52,8 +52,8 @@
 		{
 			"importpath": "github.com/Sirupsen/logrus",
 			"repository": "https://github.com/Sirupsen/logrus",
-			"vcs": "",
-			"revision": "cdaedc68f2894175ac2b3221869685602c759e71",
+			"vcs": "git",
+			"revision": "5e5dc898656f695e2a086b8e12559febbfc01562",
 			"branch": "master"
 		},
 		{

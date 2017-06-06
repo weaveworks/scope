@@ -41,7 +41,7 @@ var (
 	}
 	colonFinder         = regexp.MustCompile(`[^\\](:)`)
 	unescapeBackslashes = regexp.MustCompile(`\\(.)`)
-	elideUrlPassword    = regexp.MustCompile(`:[^/]+?@`)
+	elideURLCredentials = regexp.MustCompile(`//.+:.+@`)
 )
 
 type prefixFormatter struct {
@@ -80,6 +80,16 @@ func setLogLevel(levelname string) {
 type flags struct {
 	probe probeFlags
 	app   appFlags
+
+	mode                             string
+	debug                            bool
+	weaveEnabled                     bool
+	weaveHostname                    string
+	dryRun                           bool
+	containerLabelFilterFlags        containerLabelFiltersFlag
+	containerLabelFilterFlagsExclude containerLabelFiltersFlag
+	noApp                            bool
+	probeOnly                        bool
 }
 
 type probeFlags struct {
@@ -224,7 +234,7 @@ func logCensoredArgs() {
 		prettyPrintedArgs += fmt.Sprintf(" --%s=%s", f.Name, value)
 	})
 	for _, arg := range flag.Args() {
-		prettyPrintedArgs += " " + elideUrlPassword.ReplaceAllString(arg, ":<elided>@")
+		prettyPrintedArgs += " " + elideURLCredentials.ReplaceAllString(arg, "//<elided>@")
 	}
 	log.Infof("command line args:%s", prettyPrintedArgs)
 }
@@ -241,30 +251,21 @@ func makeBaseCheckpointFlags() map[string]string {
 	}
 }
 
-func main() {
-	var (
-		flags                            = flags{}
-		mode                             string
-		debug                            bool
-		weaveEnabled                     bool
-		weaveHostname                    string
-		dryRun                           bool
-		containerLabelFilterFlags        = containerLabelFiltersFlag{exclude: false, filterIDPrefix: "containerLabelFilterExclude"}
-		containerLabelFilterFlagsExclude = containerLabelFiltersFlag{exclude: true, filterIDPrefix: "containerLabelFilter"}
-	)
-
+func setupFlags(flags *flags) {
+	flags.containerLabelFilterFlags = containerLabelFiltersFlag{exclude: false, filterIDPrefix: "containerLabelFilterExclude"}
+	flags.containerLabelFilterFlagsExclude = containerLabelFiltersFlag{exclude: true, filterIDPrefix: "containerLabelFilter"}
 	// Flags that apply to both probe and app
-	flag.StringVar(&mode, "mode", "help", "For internal use.")
-	flag.BoolVar(&debug, "debug", false, "Force debug logging.")
-	flag.BoolVar(&dryRun, "dry-run", false, "Don't start scope, just parse the arguments.  For internal use only.")
-	flag.BoolVar(&weaveEnabled, "weave", true, "Enable Weave Net integrations.")
-	flag.StringVar(&weaveHostname, "weave.hostname", app.DefaultHostname, "Hostname to advertise/lookup in WeaveDNS")
+	flag.StringVar(&flags.mode, "mode", "help", "For internal use.")
+	flag.BoolVar(&flags.debug, "debug", false, "Force debug logging.")
+	flag.BoolVar(&flags.dryRun, "dry-run", false, "Don't start scope, just parse the arguments.  For internal use only.")
+	flag.BoolVar(&flags.weaveEnabled, "weave", true, "Enable Weave Net integrations.")
+	flag.StringVar(&flags.weaveHostname, "weave.hostname", app.DefaultHostname, "Hostname to advertise/lookup in WeaveDNS")
 
 	// We need to know how to parse them, but they are mainly interpreted by the entrypoint script.
 	// They are also here so they are included in usage, and the probe uses them to decide if to
 	// publish to localhost.
-	noApp := flag.Bool("no-app", false, "Don't run the app.")
-	probeOnly := flag.Bool("probe-only", false, "Only run the probe.")
+	flag.BoolVar(&flags.noApp, "no-app", false, "Don't run the app.")
+	flag.BoolVar(&flags.probeOnly, "probe-only", false, "Only run the probe.")
 	flag.Bool("no-probe", false, "Don't run the probe.")
 	flag.Bool("app-only", false, "Only run the app.")
 
@@ -337,8 +338,8 @@ func main() {
 	flag.StringVar(&flags.app.weaveHostname, "app.weave.hostname", "", "Hostname to advertise in WeaveDNS")
 	flag.StringVar(&flags.app.containerName, "app.container.name", app.DefaultContainerName, "Name of this container (to lookup container ID)")
 	flag.StringVar(&flags.app.dockerEndpoint, "app.docker", app.DefaultDockerEndpoint, "Location of docker endpoint (to lookup container ID)")
-	flag.Var(&containerLabelFilterFlags, "app.container-label-filter", "Add container label-based view filter, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter='Database Containers:role=db'")
-	flag.Var(&containerLabelFilterFlagsExclude, "app.container-label-filter-exclude", "Add container label-based view filter that excludes containers with the given label, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter-exclude='Database Containers:role=db'")
+	flag.Var(&flags.containerLabelFilterFlags, "app.container-label-filter", "Add container label-based view filter, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter='Database Containers:role=db'")
+	flag.Var(&flags.containerLabelFilterFlagsExclude, "app.container-label-filter-exclude", "Add container label-based view filter that excludes containers with the given label, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter-exclude='Database Containers:role=db'")
 
 	flag.StringVar(&flags.app.collectorURL, "app.collector", "local", "Collector to use (local, dynamodb, or file/directory)")
 	flag.StringVar(&flags.app.s3URL, "app.collector.s3", "local", "S3 URL to use (when collector is dynamodb)")
@@ -357,29 +358,33 @@ func main() {
 
 	flag.BoolVar(&flags.app.awsCreateTables, "app.aws.create.tables", false, "Create the tables in DynamoDB")
 	flag.StringVar(&flags.app.consulInf, "app.consul.inf", "", "The interface who's address I should advertise myself under in consul")
+}
 
+func main() {
+	flags := flags{}
+	setupFlags(&flags)
 	flags.app.BillingEmitterConfig.RegisterFlags(flag.CommandLine)
 	flags.app.BillingClientConfig.RegisterFlags(flag.CommandLine)
 	flag.Parse()
 
-	app.AddContainerFilters(append(containerLabelFilterFlags.apiTopologyOptions, containerLabelFilterFlagsExclude.apiTopologyOptions...)...)
+	app.AddContainerFilters(append(flags.containerLabelFilterFlags.apiTopologyOptions, flags.containerLabelFilterFlagsExclude.apiTopologyOptions...)...)
 
 	// Deal with common args
-	if debug {
+	if flags.debug {
 		flags.probe.logLevel = "debug"
 		flags.app.logLevel = "debug"
 	}
-	if weaveHostname != "" {
+	if flags.weaveHostname != "" {
 		if flags.probe.weaveHostname == "" {
-			flags.probe.weaveHostname = weaveHostname
+			flags.probe.weaveHostname = flags.weaveHostname
 		}
 		if flags.app.weaveHostname == "" {
-			flags.app.weaveHostname = weaveHostname
+			flags.app.weaveHostname = flags.weaveHostname
 		}
 	}
-	flags.probe.weaveEnabled = weaveEnabled
-	flags.app.weaveEnabled = weaveEnabled
-	flags.probe.noApp = *noApp || *probeOnly
+	flags.probe.weaveEnabled = flags.weaveEnabled
+	flags.app.weaveEnabled = flags.weaveEnabled
+	flags.probe.noApp = flags.noApp || flags.probeOnly
 
 	// Special case for #1191, check listen address is well formed
 	_, port, err := net.SplitHostPort(flags.app.listen)
@@ -395,7 +400,7 @@ func main() {
 
 	// Special case probe push address parsing
 	targets := []appclient.Target{}
-	if mode == "probe" || dryRun {
+	if flags.mode == "probe" || flags.dryRun {
 		args := []string{}
 		if flags.probe.token != "" {
 			// service mode
@@ -408,7 +413,7 @@ func main() {
 			args = append(args, fmt.Sprintf("127.0.0.1:%s", port))
 		}
 		args = append(args, flag.Args()...)
-		if !dryRun {
+		if !flags.dryRun {
 			log.Infof("publishing to: %s", strings.Join(args, ", "))
 		}
 		targets, err = appclient.ParseTargets(args)
@@ -417,11 +422,11 @@ func main() {
 		}
 	}
 
-	if dryRun {
+	if flags.dryRun {
 		return
 	}
 
-	switch mode {
+	switch flags.mode {
 	case "app":
 		appMain(flags.app)
 	case "probe":
@@ -431,7 +436,7 @@ func main() {
 	case "help":
 		flag.PrintDefaults()
 	default:
-		fmt.Printf("command '%s' not recognized", mode)
+		fmt.Printf("command '%s' not recognized", flags.mode)
 		os.Exit(1)
 	}
 }
