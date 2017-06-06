@@ -94,7 +94,6 @@ export const initialState = makeMap({
   websocketClosed: false,
   websocketMovingInTime: false,
   websocketQueryPastAt: null,
-  websocketQueryPastRequestMadeAt: null,
   zoomCache: makeMap(),
   serviceImages: makeMap()
 });
@@ -357,8 +356,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.WEBSOCKET_QUERY_TIMESTAMP: {
-      const websocketPastRequestMadeAt = action.queryTimestamp ? action.requestTimestamp : null;
-      state = state.set('websocketQueryPastRequestMadeAt', websocketPastRequestMadeAt);
       return state.set('websocketQueryPastAt', action.queryTimestamp);
     }
 

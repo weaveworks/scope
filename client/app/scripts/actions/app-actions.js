@@ -464,11 +464,9 @@ export function websocketQueryTimestamp(queryTimestamp) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.WEBSOCKET_QUERY_TIMESTAMP,
-      requestTimestamp,
       queryTimestamp,
     });
     updateWebsocketChannel(getState(), dispatch);
-    // update all request workers with new options
     dispatch(resetNodesDeltaBuffer());
   };
 }

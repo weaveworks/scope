@@ -1,11 +1,12 @@
 import React from 'react';
 import moment from 'moment';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 
 
 const TIMESTAMP_TICK_INTERVAL = 500;
 
-class TopologyTimestampInfo extends React.PureComponent {
+class TopologyTimestampButton extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
 
@@ -25,7 +26,7 @@ class TopologyTimestampInfo extends React.PureComponent {
   }
 
   getFreshState() {
-    const { updatePausedAt, websocketQueryPastAt, websocketQueryPastRequestMadeAt } = this.props;
+    const { updatePausedAt, offset } = this.props;
 
     let timestamp = updatePausedAt;
     let showingCurrentState = false;
@@ -34,8 +35,7 @@ class TopologyTimestampInfo extends React.PureComponent {
       timestamp = moment().utc();
       showingCurrentState = true;
 
-      if (websocketQueryPastAt) {
-        const offset = moment(websocketQueryPastRequestMadeAt).diff(moment(websocketQueryPastAt));
+      if (offset >= 1000) {
         timestamp = timestamp.subtract(offset);
         showingCurrentState = false;
       }
@@ -45,17 +45,24 @@ class TopologyTimestampInfo extends React.PureComponent {
 
   renderTimestamp() {
     return (
-      <time>{this.state.timestamp.format('MMMM Do YYYY, h:mm:ss a')}</time>
+      <time>{this.state.timestamp.format('MMMM Do YYYY, h:mm:ss a')} UTC</time>
     );
   }
 
   render() {
+    const { selected, onClick } = this.props;
     const { showingCurrentState } = this.state;
+    const className = classNames('button topology-timestamp-button', {
+      selected, current: showingCurrentState,
+    });
 
     return (
-      <span className="topology-timestamp-info">
-        {showingCurrentState ? 'now' : this.renderTimestamp()}
-      </span>
+      <a className={className} onClick={onClick}>
+        <span className="topology-timestamp-info">
+          {showingCurrentState ? 'now' : this.renderTimestamp()}
+        </span>
+        <span className="fa fa-clock-o" />
+      </a>
     );
   }
 }
@@ -63,9 +70,7 @@ class TopologyTimestampInfo extends React.PureComponent {
 function mapStateToProps(state) {
   return {
     updatePausedAt: state.get('updatePausedAt'),
-    websocketQueryPastAt: state.get('websocketQueryPastAt'),
-    websocketQueryPastRequestMadeAt: state.get('websocketQueryPastRequestMadeAt'),
   };
 }
 
-export default connect(mapStateToProps)(TopologyTimestampInfo);
+export default connect(mapStateToProps)(TopologyTimestampButton);

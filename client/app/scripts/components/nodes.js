@@ -56,9 +56,9 @@ class Nodes extends React.Component {
 
   render() {
     const { topologiesLoaded, nodesLoaded, topologies, currentTopology, isGraphViewMode,
-      isTableViewMode, isResourceViewMode, blurred } = this.props;
+      isTableViewMode, isResourceViewMode, movingInTime } = this.props;
 
-    const className = classNames('nodes-wrapper', { blurred });
+    const className = classNames('nodes-wrapper', { blurred: movingInTime });
 
     // TODO: Rename view mode components.
     return (
@@ -89,7 +89,7 @@ function mapStateToProps(state) {
     topologyNodeCountZero: isTopologyNodeCountZero(state),
     nodesDisplayEmpty: isNodesDisplayEmpty(state),
     topologyEmpty: isTopologyEmpty(state),
-    blurred: state.get('websocketMovingInTime'),
+    movingInTime: state.get('websocketMovingInTime'),
     currentTopology: state.get('currentTopology'),
     nodesLoaded: state.get('nodesLoaded') || state.get('websocketMovingInTime'),
     topologies: state.get('topologies'),

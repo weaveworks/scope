@@ -1,5 +1,6 @@
 import React from 'react';
 import moment from 'moment';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 
 import { getUpdateBufferSize } from '../utils/update-buffer-utils';
@@ -15,6 +16,7 @@ class PauseButton extends React.Component {
       `Paused ${moment(this.props.updatePausedAt).fromNow()}` :
       'Pause updates (freezes the nodes in their current layout)';
     const action = isPaused ? this.props.clickResumeUpdate : this.props.clickPauseUpdate;
+    const className = classNames('button pause-button', { active: isPaused });
     let label = '';
     if (hasUpdates && isPaused) {
       label = `Paused +${updateCount}`;
@@ -25,7 +27,7 @@ class PauseButton extends React.Component {
     }
 
     return (
-      <a className="button pause-button" onClick={action} title={title}>
+      <a className={className} onClick={action} title={title}>
         {label !== '' && <span className="pause-text">{label}</span>}
         <span className="fa fa-pause" />
       </a>

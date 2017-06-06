@@ -81,7 +81,7 @@
       border: 1px solid $text-tertiary-color;
     }
 
-    .active {
+    &.active {
       @extend .blinkable;
       border: 1px solid $text-tertiary-color;
     }
@@ -217,12 +217,16 @@
 .timeline-control {
   @extend .overlay-wrapper;
   display: block;
-  right: 450px;
+  right: 500px;
 
   .time-status {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+
+    .timeline-jump-loader {
+      font-size: 1rem;
+    }
 
     .topology-timestamp-info, .pause-text {
       font-size: 115%;
@@ -230,21 +234,23 @@
     }
 
     .button { margin-left: 0.5em; }
-    .jump-to-now { @extend .blinkable; }
 
-    &:not(.showing-current) .topology-timestamp-info {
+    .topology-timestamp-button:not(.current) {
+      @extend .blinkable;
       font-weight: bold;
     }
   }
 
   .timeline-panel {
-    strong {
+    width: 355px;
+
+    .caption, .slider-tip {
       display: inline-block;
       font-size: 0.8125rem;
-      font-weight: normal;
       padding: 5px 10px;
-      text-decoration: underline;
     }
+
+    .slider-tip { font-style: italic; }
 
     .options {
       display: flex;

@@ -6,8 +6,13 @@ import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
 import PauseButton from './pause-button';
-import TopologyTimestampInfo from './topology-timestamp-info';
-import { websocketQueryTimestamp, startMovingInTime } from '../actions/app-actions';
+import TopologyTimestampButton from './topology-timestamp-button';
+import {
+  websocketQueryTimestamp,
+  clickResumeUpdate,
+  startMovingInTime,
+} from '../actions/app-actions';
+
 import { TIMELINE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
@@ -94,7 +99,7 @@ const sliderRanges = {
   // },
 };
 
-class TimelineControl extends React.PureComponent {
+class TimelineControl extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -118,6 +123,7 @@ class TimelineControl extends React.PureComponent {
 
   updateTimestamp(timestamp) {
     this.props.websocketQueryTimestamp(timestamp);
+    this.props.clickResumeUpdate();
   }
 
   toggleTimelinePanel() {
@@ -147,6 +153,12 @@ class TimelineControl extends React.PureComponent {
     this.updateTimestamp(moment());
   }
 
+  getTotalOffset() {
+    const { rangeOptionSelected, offsetMilliseconds } = this.state;
+    const rangeBehindMilliseconds = moment().diff(rangeOptionSelected.getEnd());
+    return offsetMilliseconds + rangeBehindMilliseconds;
+  }
+
   renderRangeOption(option) {
     const handleClick = () => { this.setState({ rangeOptionSelected: option }); };
     const selected = (this.state.rangeOptionSelected.label === option.label);
@@ -159,24 +171,37 @@ class TimelineControl extends React.PureComponent {
     );
   }
 
-  getTotalOffset() {
-    const { rangeOptionSelected, offsetMilliseconds } = this.state;
-    const rangeBehindMilliseconds = moment().diff(rangeOptionSelected.getEnd());
-    return offsetMilliseconds + rangeBehindMilliseconds;
+  renderJumpToNowButton() {
+    return (
+      <a className="button jump-to-now" title="Jump to now" onClick={this.jumpToNow}>
+        <span className="fa fa-step-forward" />
+      </a>
+    );
+  }
+
+  renderTimelineSlider() {
+    const { offsetMilliseconds } = this.state;
+    const rangeMilliseconds = this.getRangeMilliseconds();
+
+    return (
+      <Slider
+        onChange={this.handleSliderChange}
+        value={rangeMilliseconds - offsetMilliseconds}
+        max={rangeMilliseconds}
+      />
+    );
   }
 
   render() {
+    const { movingInTime } = this.props;
     const { showTimelinePanel, offsetMilliseconds } = this.state;
-    const rangeMilliseconds = this.getRangeMilliseconds();
 
     const showingCurrent = (this.getTotalOffset() === 0);
-    const timeStatusClassName = classNames('time-status', { 'showing-current': showingCurrent });
-    const toggleButtonClassName = classNames('button toggle', { selected: showTimelinePanel });
 
     return (
       <div className="timeline-control">
         {showTimelinePanel && <div className="timeline-panel">
-          <strong>Explore</strong>
+          <span className="caption">Explore</span>
           <div className="options">
             <div className="column">
               {this.renderRangeOption(sliderRanges.last15Minutes)}
@@ -197,35 +222,37 @@ class TimelineControl extends React.PureComponent {
               {this.renderRangeOption(sliderRanges.thisYearSoFar)}
             </div>
           </div>
-          <strong>Move the slider to travel in time</strong>
-          <Slider
-            onChange={this.handleSliderChange}
-            value={rangeMilliseconds - offsetMilliseconds}
-            max={rangeMilliseconds}
-          />
+          <span className="slider-tip">Move the slider to travel back in time</span>
+          {this.renderTimelineSlider()}
         </div>}
-        <div className={timeStatusClassName}>
-          <a className={toggleButtonClassName} onClick={this.toggleTimelinePanel}>
-            <TopologyTimestampInfo />
-            <span className="fa fa-clock-o" />
-          </a>
+        <div className="time-status">
+          {movingInTime && <div className="timeline-jump-loader">
+            <span className="fa fa-circle-o-notch fa-spin" />
+          </div>}
+          <TopologyTimestampButton
+            onClick={this.toggleTimelinePanel}
+            selected={showTimelinePanel}
+            offset={offsetMilliseconds}
+          />
+          {!showingCurrent && this.renderJumpToNowButton()}
           <PauseButton />
-          {!showingCurrent && <a
-            className="button jump-to-now"
-            title="Jump to now"
-            onClick={this.jumpToNow}>
-            <span className="fa fa-step-forward" />
-          </a>}
         </div>
       </div>
     );
   }
 }
 
+function mapStateToProps(state) {
+  return {
+    movingInTime: state.get('websocketMovingInTime'),
+  };
+}
+
 export default connect(
-  null,
+  mapStateToProps,
   {
     websocketQueryTimestamp,
+    clickResumeUpdate,
     startMovingInTime,
   }
 )(TimelineControl);
