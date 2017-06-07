@@ -5,10 +5,6 @@ import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { updateRoute } from '../utils/router-utils';
 import {
-  isNodesDeltaPaused,
-  getUpdateBufferSize,
-} from '../utils/update-buffer-utils';
-import {
   doControlRequest,
   getAllNodes,
   getResourceViewNodesSnapshot,
@@ -21,6 +17,7 @@ import {
 } from '../utils/web-api-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
+import { isPausedSelector } from '../selectors/timeline';
 import {
   availableMetricTypesSelector,
   nextPinnedMetricTypeSelector,
@@ -32,11 +29,14 @@ import {
   isResourceViewModeSelector,
   resourceViewAvailableSelector,
 } from '../selectors/topology';
+
+import { NODES_DELTA_BUFFER_SIZE_LIMIT } from '../constants/limits';
+import { NODES_DELTA_BUFFER_FEED_INTERVAL } from '../constants/timer';
 import {
   GRAPH_VIEW_MODE,
   TABLE_VIEW_MODE,
   RESOURCE_VIEW_MODE,
- } from '../constants/naming';
+} from '../constants/naming';
 
 
 const log = debug('scope:app-actions');
@@ -88,8 +88,7 @@ function bufferDeltaUpdate(delta) {
       return;
     }
 
-    const bufferLength = 100;
-    if (getUpdateBufferSize(getState()) >= bufferLength) {
+    if (getState().get('nodesDeltaBuffer').size >= NODES_DELTA_BUFFER_SIZE_LIMIT) {
       dispatch({ type: ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER });
     }
 
@@ -97,7 +96,7 @@ function bufferDeltaUpdate(delta) {
       type: ActionTypes.ADD_TO_NODES_DELTA_BUFFER,
       delta,
     });
-    log('Buffering node delta, new size', getUpdateBufferSize(getState()));
+    log('Buffering node delta, new size', getState().get('nodesDeltaBuffer').size);
   };
 }
 
@@ -626,7 +625,7 @@ export function receiveNodesDelta(delta) {
     const hasChanges = delta.add || delta.update || delta.remove;
 
     if (hasChanges || movingInTime) {
-      if (state.get('updatePausedAt') !== null) {
+      if (isPausedSelector(state)) {
         dispatch(bufferDeltaUpdate(delta));
       } else {
         dispatch({
@@ -640,20 +639,19 @@ export function receiveNodesDelta(delta) {
 
 function maybeUpdateFromNodesDeltaBuffer() {
   return (dispatch, getState) => {
-    const state = getState();
-    if (isNodesDeltaPaused(state)) {
+    if (isPausedSelector(getState())) {
       dispatch(resetNodesDeltaBuffer());
     } else {
-      if (getUpdateBufferSize(state) > 0) {
-        const delta = state.get('nodesDeltaBuffer').first();
+      if (!getState().get('nodesDeltaBuffer').isEmpty()) {
+        const delta = getState().get('nodesDeltaBuffer').first();
         dispatch({ type: ActionTypes.POP_NODES_DELTA_BUFFER });
         dispatch(receiveNodesDelta(delta));
       }
-      if (getUpdateBufferSize(state) > 0) {
-        const feedInterval = 1000;
+      if (!getState().get('nodesDeltaBuffer').isEmpty()) {
         nodesDeltaBufferUpdateTimer = setTimeout(
           () => dispatch(maybeUpdateFromNodesDeltaBuffer()),
-        feedInterval);
+          NODES_DELTA_BUFFER_FEED_INTERVAL,
+        );
       }
     }
   };

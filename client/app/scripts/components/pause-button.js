@@ -3,20 +3,20 @@ import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 
-import { getUpdateBufferSize } from '../utils/update-buffer-utils';
+import { isPausedSelector } from '../selectors/timeline';
 import { clickPauseUpdate, clickResumeUpdate } from '../actions/app-actions';
 
 
 class PauseButton extends React.Component {
   render() {
-    const isPaused = this.props.updatePausedAt !== null;
-    const updateCount = this.props.updateCount;
-    const hasUpdates = updateCount > 0;
-    const title = isPaused ?
-      `Paused ${moment(this.props.updatePausedAt).fromNow()}` :
-      'Pause updates (freezes the nodes in their current layout)';
+    const { isPaused, hasUpdates, updateCount, updatePausedAt } = this.props;
     const action = isPaused ? this.props.clickResumeUpdate : this.props.clickPauseUpdate;
     const className = classNames('button pause-button', { active: isPaused });
+
+    const title = isPaused ?
+      `Paused ${moment(updatePausedAt).fromNow()}` :
+      'Pause updates (freezes the nodes in their current layout)';
+
     let label = '';
     if (hasUpdates && isPaused) {
       label = `Paused +${updateCount}`;
@@ -37,8 +37,10 @@ class PauseButton extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    updateCount: getUpdateBufferSize(state),
+    hasUpdates: !state.get('nodesDeltaBuffer').isEmpty(),
+    updateCount: state.get('nodesDeltaBuffer').size,
     updatePausedAt: state.get('updatePausedAt'),
+    isPaused: isPausedSelector(state),
   };
 }
 

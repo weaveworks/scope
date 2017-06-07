@@ -3,63 +3,44 @@ import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 
+import { isPausedSelector } from '../selectors/timeline';
+import { TIMELINE_TICK_INTERVAL } from '../constants/timer';
 
-const TIMESTAMP_TICK_INTERVAL = 500;
 
 class TopologyTimestampButton extends React.PureComponent {
-  constructor(props, context) {
-    super(props, context);
-
-    this.state = this.getFreshState();
-  }
-
   componentDidMount() {
     this.timer = setInterval(() => {
-      if (!this.props.paused) {
-        this.setState(this.getFreshState());
+      if (!this.props.isPaused) {
+        this.forceUpdate();
       }
-    }, TIMESTAMP_TICK_INTERVAL);
+    }, TIMELINE_TICK_INTERVAL);
   }
 
   componentWillUnmount() {
     clearInterval(this.timer);
   }
 
-  getFreshState() {
-    const { updatePausedAt, offset } = this.props;
-
-    let timestamp = updatePausedAt;
-    let showingCurrentState = false;
-
-    if (!updatePausedAt) {
-      timestamp = moment().utc();
-      showingCurrentState = true;
-
-      if (offset >= 1000) {
-        timestamp = timestamp.subtract(offset);
-        showingCurrentState = false;
-      }
-    }
-    return { timestamp, showingCurrentState };
-  }
-
   renderTimestamp() {
+    const { isPaused, updatePausedAt, millisecondsInPast } = this.props;
+    const timestamp = isPaused ? updatePausedAt : moment().utc().subtract(millisecondsInPast);
+
     return (
-      <time>{this.state.timestamp.format('MMMM Do YYYY, h:mm:ss a')} UTC</time>
+      <time>{timestamp.format('MMMM Do YYYY, h:mm:ss a')} UTC</time>
     );
   }
 
   render() {
-    const { selected, onClick } = this.props;
-    const { showingCurrentState } = this.state;
+    const { selected, onClick, millisecondsInPast } = this.props;
+    const isCurrent = (millisecondsInPast === 0);
+
     const className = classNames('button topology-timestamp-button', {
-      selected, current: showingCurrentState,
+      selected, current: isCurrent
     });
 
     return (
       <a className={className} onClick={onClick}>
         <span className="topology-timestamp-info">
-          {showingCurrentState ? 'now' : this.renderTimestamp()}
+          {isCurrent ? 'now' : this.renderTimestamp()}
         </span>
         <span className="fa fa-clock-o" />
       </a>
@@ -69,6 +50,7 @@ class TopologyTimestampButton extends React.PureComponent {
 
 function mapStateToProps(state) {
   return {
+    isPaused: isPausedSelector(state),
     updatePausedAt: state.get('updatePausedAt'),
   };
 }

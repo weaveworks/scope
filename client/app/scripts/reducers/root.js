@@ -22,7 +22,7 @@ import {
   isResourceViewModeSelector,
 } from '../selectors/topology';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
-import { consolidatedBeginningOfNodesDeltaBuffer } from '../utils/update-buffer-utils';
+import { consolidateNodesDeltas } from '../utils/nodes-delta-utils';
 import { getWebsocketQueryTimestamp } from '../utils/web-api-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
@@ -88,7 +88,7 @@ export const initialState = makeMap({
   topologyOptions: makeOrderedMap(), // topologyId -> options
   topologyUrlsById: makeOrderedMap(), // topologyId -> topologyUrl
   topologyViewMode: GRAPH_VIEW_MODE,
-  updatePausedAt: null, // Date
+  updatePausedAt: null, // moment.js timestamp
   version: '...',
   versionUpdate: null,
   viewport: makeMap(),
@@ -375,10 +375,10 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER: {
-      const deltaUnion = consolidatedBeginningOfNodesDeltaBuffer(state);
-      state = state.setIn(['nodesDeltaBuffer', 0], deltaUnion);
-      state = state.deleteIn(['nodesDeltaBuffer', 1]);
-      return state;
+      const firstDelta = state.getIn(['nodesDeltaBuffer', 0]);
+      const secondDelta = state.getIn(['nodesDeltaBuffer', 1]);
+      const deltaUnion = consolidateNodesDeltas(firstDelta, secondDelta);
+      return state.update('nodesDeltaBuffer', buffer => buffer.shift().set(0, deltaUnion));
     }
 
     case ActionTypes.POP_NODES_DELTA_BUFFER: {

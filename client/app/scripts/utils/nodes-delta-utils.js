@@ -1,22 +1,18 @@
 import debug from 'debug';
 import { union, size, map, find, reject, each } from 'lodash';
 
-const log = debug('scope:update-buffer-utils');
+const log = debug('scope:nodes-delta-utils');
 
 
-export function isNodesDeltaPaused(state) {
-  return state.get('updatePausedAt') !== null;
-}
-
-// consolidate first buffer entry with second
-export function consolidatedBeginningOfNodesDeltaBuffer(state) {
-  const first = state.getIn(['nodesDeltaBuffer', 0]);
-  const second = state.getIn(['nodesDeltaBuffer', 1]);
+// TODO: Would be nice to have a unit test for this function.
+export function consolidateNodesDeltas(first, second) {
   let toAdd = union(first.add, second.add);
   let toUpdate = union(first.update, second.update);
   let toRemove = union(first.remove, second.remove);
-  log('Consolidating delta buffer', 'add', size(toAdd), 'update',
-    size(toUpdate), 'remove', size(toRemove));
+  log('Consolidating delta buffer',
+    'add', size(toAdd),
+    'update', size(toUpdate),
+    'remove', size(toRemove));
 
   // check if an added node in first was updated in second -> add second update
   toAdd = map(toAdd, (node) => {
@@ -51,16 +47,14 @@ export function consolidatedBeginningOfNodesDeltaBuffer(state) {
   // check if an removed node in first was added in second -> update
   // remove -> add is fine for the store
 
-  log('Consolidated delta buffer', 'add', size(toAdd), 'update',
-    size(toUpdate), 'remove', size(toRemove));
+  log('Consolidated delta buffer',
+    'add', size(toAdd),
+    'update', size(toUpdate),
+    'remove', size(toRemove));
 
   return {
     add: toAdd.length > 0 ? toAdd : null,
     update: toUpdate.length > 0 ? toUpdate : null,
     remove: toRemove.length > 0 ? toRemove : null
   };
-}
-
-export function getUpdateBufferSize(state) {
-  return state.get('nodesDeltaBuffer').size;
 }

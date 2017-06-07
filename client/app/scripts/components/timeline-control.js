@@ -20,83 +20,51 @@ const sliderRanges = {
   last15Minutes: {
     label: 'Last 15 minutes',
     getStart: () => moment().utc().subtract(15, 'minutes'),
-    getEnd: () => moment().utc(),
   },
   last1Hour: {
     label: 'Last 1 hour',
     getStart: () => moment().utc().subtract(1, 'hour'),
-    getEnd: () => moment().utc(),
   },
   last6Hours: {
     label: 'Last 6 hours',
     getStart: () => moment().utc().subtract(6, 'hours'),
-    getEnd: () => moment().utc(),
   },
   last24Hours: {
     label: 'Last 24 hours',
     getStart: () => moment().utc().subtract(24, 'hours'),
-    getEnd: () => moment().utc(),
   },
   last7Days: {
     label: 'Last 7 days',
     getStart: () => moment().utc().subtract(7, 'days'),
-    getEnd: () => moment().utc(),
   },
   last30Days: {
     label: 'Last 30 days',
     getStart: () => moment().utc().subtract(30, 'days'),
-    getEnd: () => moment().utc(),
   },
   last90Days: {
     label: 'Last 90 days',
     getStart: () => moment().utc().subtract(90, 'days'),
-    getEnd: () => moment().utc(),
   },
   last1Year: {
     label: 'Last 1 year',
     getStart: () => moment().subtract(1, 'year'),
-    getEnd: () => moment().utc(),
   },
   todaySoFar: {
     label: 'Today so far',
     getStart: () => moment().utc().startOf('day'),
-    getEnd: () => moment().utc(),
   },
   thisWeekSoFar: {
     label: 'This week so far',
     getStart: () => moment().utc().startOf('week'),
-    getEnd: () => moment().utc(),
   },
   thisMonthSoFar: {
     label: 'This month so far',
     getStart: () => moment().utc().startOf('month'),
-    getEnd: () => moment().utc(),
   },
   thisYearSoFar: {
     label: 'This year so far',
     getStart: () => moment().utc().startOf('year'),
-    getEnd: () => moment().utc(),
   },
-  // yesterday: {
-  //   label: 'Yesterday',
-  //   getStart: () => moment().utc().subtract(1, 'day').startOf('day'),
-  //   getEnd: () => moment().utc().subtract(1, 'day').endOf('day'),
-  // },
-  // previousWeek: {
-  //   label: 'Previous week',
-  //   getStart: () => moment().utc().subtract(1, 'week').startOf('week'),
-  //   getEnd: () => moment().utc().subtract(1, 'week').endOf('week'),
-  // },
-  // previousMonth: {
-  //   label: 'Previous month',
-  //   getStart: () => moment().utc().subtract(1, 'month').startOf('month'),
-  //   getEnd: () => moment().utc().subtract(1, 'month').endOf('month'),
-  // },
-  // previousYear: {
-  //   label: 'Previous year',
-  //   getStart: () => moment().utc().subtract(1, 'year').startOf('year'),
-  //   getEnd: () => moment().utc().subtract(1, 'year').endOf('year'),
-  // },
 };
 
 class TimelineControl extends React.Component {
@@ -105,7 +73,7 @@ class TimelineControl extends React.Component {
 
     this.state = {
       showTimelinePanel: false,
-      offsetMilliseconds: 0,
+      millisecondsInPast: 0,
       rangeOptionSelected: sliderRanges.last1Hour,
     };
 
@@ -130,42 +98,46 @@ class TimelineControl extends React.Component {
     this.setState({ showTimelinePanel: !this.state.showTimelinePanel });
   }
 
-  handleSliderChange(value) {
-    const offsetMilliseconds = this.getRangeMilliseconds() - value;
+  handleSliderChange(sliderValue) {
+    const millisecondsInPast = this.getRangeMilliseconds() - sliderValue;
     this.props.startMovingInTime();
-    this.debouncedUpdateTimestamp(offsetMilliseconds);
-    this.setState({ offsetMilliseconds });
+    this.debouncedUpdateTimestamp(millisecondsInPast);
+    this.setState({ millisecondsInPast });
   }
 
-  getRangeMilliseconds() {
-    const range = this.state.rangeOptionSelected;
-    return range.getEnd().diff(range.getStart());
+  handleRangeOptionClick(rangeOption) {
+    this.setState({ rangeOptionSelected: rangeOption });
+
+    const rangeMilliseconds = this.getRangeMilliseconds(rangeOption);
+    if (this.state.millisecondsInPast > rangeMilliseconds) {
+      this.updateTimestamp(rangeMilliseconds);
+      this.setState({ millisecondsInPast: rangeMilliseconds });
+    }
+  }
+
+  getRangeMilliseconds(rangeOption) {
+    rangeOption = rangeOption || this.state.rangeOptionSelected;
+    return moment().diff(rangeOption.getStart());
   }
 
   jumpToNow() {
     this.setState({
       showTimelinePanel: false,
-      offsetMilliseconds: 0,
+      millisecondsInPast: 0,
       rangeOptionSelected: sliderRanges.last1Hour,
     });
     this.props.startMovingInTime();
     this.updateTimestamp(null);
   }
 
-  getTotalOffset() {
-    const { rangeOptionSelected, offsetMilliseconds } = this.state;
-    const rangeBehindMilliseconds = moment().utc().diff(rangeOptionSelected.getEnd());
-    return offsetMilliseconds + rangeBehindMilliseconds;
-  }
-
-  renderRangeOption(option) {
-    const handleClick = () => { this.setState({ rangeOptionSelected: option }); };
-    const selected = (this.state.rangeOptionSelected.label === option.label);
+  renderRangeOption(rangeOption) {
+    const handleClick = () => { this.handleRangeOptionClick(rangeOption); };
+    const selected = (this.state.rangeOptionSelected.label === rangeOption.label);
     const className = classNames('option', { selected });
 
     return (
-      <a key={option.label} className={className} onClick={handleClick}>
-        {option.label}
+      <a key={rangeOption.label} className={className} onClick={handleClick}>
+        {rangeOption.label}
       </a>
     );
   }
@@ -179,13 +151,13 @@ class TimelineControl extends React.Component {
   }
 
   renderTimelineSlider() {
-    const { offsetMilliseconds } = this.state;
+    const { millisecondsInPast } = this.state;
     const rangeMilliseconds = this.getRangeMilliseconds();
 
     return (
       <Slider
         onChange={this.handleSliderChange}
-        value={rangeMilliseconds - offsetMilliseconds}
+        value={rangeMilliseconds - millisecondsInPast}
         max={rangeMilliseconds}
       />
     );
@@ -193,9 +165,8 @@ class TimelineControl extends React.Component {
 
   render() {
     const { movingInTime } = this.props;
-    const { showTimelinePanel, offsetMilliseconds } = this.state;
-
-    const showingCurrent = (this.getTotalOffset() === 0);
+    const { showTimelinePanel, millisecondsInPast } = this.state;
+    const isCurrent = (millisecondsInPast === 0);
 
     return (
       <div className="timeline-control">
@@ -230,10 +201,10 @@ class TimelineControl extends React.Component {
           </div>}
           <TopologyTimestampButton
             onClick={this.toggleTimelinePanel}
+            millisecondsInPast={millisecondsInPast}
             selected={showTimelinePanel}
-            offset={offsetMilliseconds}
           />
-          {!showingCurrent && this.renderJumpToNowButton()}
+          {!isCurrent && this.renderJumpToNowButton()}
           <PauseButton />
         </div>
       </div>
