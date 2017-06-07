@@ -23,7 +23,6 @@ dependencies:
     - "~/docker"
   override:
     - |
-      sudo apt-get update &&
       sudo apt-get install jq pv &&
       sudo chmod a+wr --recursive /usr/local/go/pkg &&
       sudo chown ubuntu:ubuntu "$HOME/.bashrc.backup"
