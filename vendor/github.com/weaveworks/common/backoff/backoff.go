@@ -17,7 +17,7 @@ type backoff struct {
 // each iterations.  If it hits an error, it exponentially backs
 // off to maxBackoff.  Backoff will log when it backs off, but
 // will stop logging when it reaches maxBackoff.  It will also
-// log on first success.
+// log on first success in the beginning and after errors.
 type Interface interface {
 	Start()
 	Stop()
@@ -65,12 +65,13 @@ func (b *backoff) Start() {
 
 		if err != nil {
 			backoff *= 2
+			shouldLog = true
 			if backoff > b.maxBackoff {
 				backoff = b.maxBackoff
+				shouldLog = false
 			}
-		} else if backoff > b.initialBackoff {
+		} else {
 			backoff = b.initialBackoff
-			shouldLog = true
 		}
 
 		if shouldLog {
@@ -82,9 +83,9 @@ func (b *backoff) Start() {
 			}
 		}
 
-		if backoff >= b.maxBackoff || err == nil {
-			shouldLog = false
-		}
+		// Re-enable logging if we came from an error (suppressed or not)
+		// since we want to log in case a success follows.
+		shouldLog = err != nil
 
 		select {
 		case <-time.After(backoff):
