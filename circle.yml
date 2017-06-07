@@ -24,7 +24,6 @@ dependencies:
   override:
     - |
       sudo apt-get install jq pv &&
-      sudo chmod a+wr --recursive /usr/local/go/pkg &&
       sudo chown ubuntu:ubuntu "$HOME/.bashrc.backup"
       (curl https://sdk.cloud.google.com | bash) &&
       (test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD") &&
