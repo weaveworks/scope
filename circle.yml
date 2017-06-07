@@ -44,7 +44,7 @@ test:
         parallel: true
     - cd $SRCDIR; COVERDIR=./coverage make RM= CODECGEN_UID=23 tests:
         parallel: true
-    - cd $SRCDIR; make RM= client-test static:
+    - cd $SRCDIR; make RM= RUN_FLAGS= client-test static:
         parallel: true
     - cd $SRCDIR; make RM= client-lint:
         parallel: true
