@@ -29,9 +29,12 @@ const (
 
 	// Shapes used for different nodes
 	Circle   = "circle"
+	Triangle = "triangle"
 	Square   = "square"
-	Heptagon = "heptagon"
+	Pentagon = "pentagon"
 	Hexagon  = "hexagon"
+	Heptagon = "heptagon"
+	Octagon  = "octagon"
 	Cloud    = "cloud"
 
 	// Used when counting the number of containers
@@ -163,15 +166,15 @@ func MakeReport() Report {
 			WithLabel("service", "services"),
 
 		Deployment: MakeTopology().
-			WithShape(Heptagon).
+			WithShape(Octagon).
 			WithLabel("deployment", "deployments"),
 
 		ReplicaSet: MakeTopology().
-			WithShape(Heptagon).
+			WithShape(Triangle).
 			WithLabel("replica set", "replica sets"),
 
 		DaemonSet: MakeTopology().
-			WithShape(Heptagon).
+			WithShape(Pentagon).
 			WithLabel("daemonset", "daemonsets"),
 
 		Overlay: MakeTopology().
