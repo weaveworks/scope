@@ -35,7 +35,7 @@ dependencies:
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh make_template):
         parallel: false
     - sudo apt-get update && sudo apt-get install python-pip && sudo pip install awscli
-    - cd $SRCDIR; make RM= CODECGEN_UID=23:
+    - cd $SRCDIR; make RM= CODECGEN_UID=23 all tools/runner/runner:
         parallel: true
 
 test:

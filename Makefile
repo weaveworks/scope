@@ -21,6 +21,7 @@ CODECGEN_EXE=$(CODECGEN_DIR)/bin/codecgen_$(shell go env GOHOSTOS)_$(shell go en
 CODECGEN_UID=0
 GET_CODECGEN_DEPS=$(shell find $(1) -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name '*.codecgen.go' -not -name '*.generated.go')
 CODECGEN_TARGETS=report/report.codecgen.go render/detailed/detailed.codecgen.go
+RUNNER_EXE=tools/runner/runner
 RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
@@ -86,7 +87,7 @@ prog/externalui/externalui.go: client/build-external/index.html
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 
-$(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/staticui/staticui.go prog/externalui/externalui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(SCOPE_EXE) $(RUNSVINIT) $(RUNNER_EXE) lint tests shell prog/staticui/staticui.go prog/externalui/externalui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	@mkdir -p $(shell pwd)/.pkg
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 		-v $(shell pwd):/go/src/github.com/weaveworks/scope \
@@ -98,7 +99,7 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/staticui/staticui.go prog/extern
 
 else
 
-$(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(SCOPE_EXE) $(RUNNER_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
