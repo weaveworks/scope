@@ -54,5 +54,6 @@ func (d *deployment) GetNode(probeID string) report.Node {
 		UnavailableReplicas:   fmt.Sprint(d.Status.UnavailableReplicas),
 		Strategy:              string(d.Spec.Strategy.Type),
 		report.ControlProbeID: probeID,
+		NodeType:              "Deployment",
 	}).WithLatestActiveControls(ScaleUp, ScaleDown)
 }

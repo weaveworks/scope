@@ -21,6 +21,7 @@ const (
 	ObservedGeneration = "kubernetes_observed_generation"
 	Replicas           = "kubernetes_replicas"
 	DesiredReplicas    = "kubernetes_desired_replicas"
+	NodeType           = "kubernetes_node_type"
 )
 
 // Exposed for testing
@@ -46,6 +47,7 @@ var (
 	ServiceMetricTemplates = PodMetricTemplates
 
 	DeploymentMetadataTemplates = report.MetadataTemplates{
+		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
 		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: "number", Priority: 4},
@@ -67,6 +69,7 @@ var (
 	ReplicaSetMetricTemplates = PodMetricTemplates
 
 	DaemonSetMetadataTemplates = report.MetadataTemplates{
+		NodeType:        {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:       {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:         {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
 		DesiredReplicas: {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 4},

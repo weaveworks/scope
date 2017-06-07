@@ -257,13 +257,24 @@ func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	return base, true
 }
 
+var podGroupNodeTypeName = map[string]string{
+	report.Deployment: "Deployment",
+	report.DaemonSet:  "Daemon Set",
+	report.ReplicaSet: "Replica Set",
+}
+
 func podGroupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base = addKubernetesLabelAndRank(base, n)
 	base.Stack = true
 
 	// NB: pods are the highest aggregation level for which we display
 	// counts.
-	base.LabelMinor = pluralize(n.Counters, report.Pod, "pod", "pods")
+	count := pluralize(n.Counters, report.Pod, "pod", "pods")
+	if typeName, ok := podGroupNodeTypeName[n.Topology]; ok {
+		base.LabelMinor = fmt.Sprintf("%s of %s", typeName, count)
+	} else {
+		base.LabelMinor = count
+	}
 
 	return base, true
 }
