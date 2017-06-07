@@ -123,7 +123,7 @@ $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	/bin/bash
 
-tests: $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS)
+tests: $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS) prog/staticui/staticui.go prog/externalui/externalui.go
 	./tools/test -no-go-get
 
 lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
