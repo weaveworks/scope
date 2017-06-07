@@ -179,11 +179,11 @@ tmp/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
 else
 
 client/build/index.html:
-	test "true" = "$(SCOPE_SKIP_UI_ASSETS)" && { mkdir -p client/build; } || \
+	test "true" = "$(SCOPE_SKIP_UI_ASSETS)" && mkdir -p client/build || \
 		{ cd client && npm run build; }
 
 client/build-external/index.html:
-	test "true" = "$(SCOPE_SKIP_UI_ASSETS)" && { mkdir -p client/build-external; } || \
+	test "true" = "$(SCOPE_SKIP_UI_ASSETS)" && mkdir -p client/build-external || \
 		{ cd client && npm run build-external; }
 
 endif
