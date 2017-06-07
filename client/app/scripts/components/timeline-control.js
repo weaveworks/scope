@@ -8,9 +8,9 @@ import { debounce } from 'lodash';
 import PauseButton from './pause-button';
 import TopologyTimestampButton from './topology-timestamp-button';
 import {
-  websocketQueryTimestamp,
+  websocketQueryInPast,
+  startWebsocketTransition,
   clickResumeUpdate,
-  startMovingInTime,
 } from '../actions/app-actions';
 
 import { TIMELINE_DEBOUNCE_INTERVAL } from '../constants/timer';
@@ -72,37 +72,28 @@ class TimelineControl extends React.Component {
     super(props, context);
 
     this.state = {
-      showTimelinePanel: false,
+      showSliderPanel: false,
       millisecondsInPast: 0,
       rangeOptionSelected: sliderRanges.last1Hour,
     };
 
-    this.jumpToNow = this.jumpToNow.bind(this);
-    this.toggleTimelinePanel = this.toggleTimelinePanel.bind(this);
-    this.handleSliderChange = this.handleSliderChange.bind(this);
     this.renderRangeOption = this.renderRangeOption.bind(this);
+    this.handleTimestampClick = this.handleTimestampClick.bind(this);
+    this.handleJumpToNowClick = this.handleJumpToNowClick.bind(this);
+    this.handleSliderChange = this.handleSliderChange.bind(this);
     this.debouncedUpdateTimestamp = debounce(
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
   }
 
   componentWillUnmount() {
-    this.updateTimestamp(null);
-  }
-
-  updateTimestamp(timestampSinceNow) {
-    this.props.websocketQueryTimestamp(timestampSinceNow);
-    this.props.clickResumeUpdate();
-  }
-
-  toggleTimelinePanel() {
-    this.setState({ showTimelinePanel: !this.state.showTimelinePanel });
+    this.updateTimestamp();
   }
 
   handleSliderChange(sliderValue) {
     const millisecondsInPast = this.getRangeMilliseconds() - sliderValue;
-    this.props.startMovingInTime();
-    this.debouncedUpdateTimestamp(millisecondsInPast);
     this.setState({ millisecondsInPast });
+    this.debouncedUpdateTimestamp(millisecondsInPast);
+    this.props.startWebsocketTransition();
   }
 
   handleRangeOptionClick(rangeOption) {
@@ -110,24 +101,33 @@ class TimelineControl extends React.Component {
 
     const rangeMilliseconds = this.getRangeMilliseconds(rangeOption);
     if (this.state.millisecondsInPast > rangeMilliseconds) {
-      this.updateTimestamp(rangeMilliseconds);
       this.setState({ millisecondsInPast: rangeMilliseconds });
+      this.updateTimestamp(rangeMilliseconds);
+      this.props.startWebsocketTransition();
     }
   }
 
-  getRangeMilliseconds(rangeOption) {
-    rangeOption = rangeOption || this.state.rangeOptionSelected;
-    return moment().diff(rangeOption.getStart());
-  }
-
-  jumpToNow() {
+  handleJumpToNowClick() {
     this.setState({
-      showTimelinePanel: false,
+      showSliderPanel: false,
       millisecondsInPast: 0,
       rangeOptionSelected: sliderRanges.last1Hour,
     });
-    this.props.startMovingInTime();
-    this.updateTimestamp(null);
+    this.updateTimestamp();
+    this.props.startWebsocketTransition();
+  }
+
+  handleTimestampClick() {
+    this.setState({ showSliderPanel: !this.state.showSliderPanel });
+  }
+
+  updateTimestamp(millisecondsInPast = 0) {
+    this.props.websocketQueryInPast(millisecondsInPast);
+    this.props.clickResumeUpdate();
+  }
+
+  getRangeMilliseconds(rangeOption = this.state.rangeOptionSelected) {
+    return moment().diff(rangeOption.getStart());
   }
 
   renderRangeOption(rangeOption) {
@@ -144,7 +144,7 @@ class TimelineControl extends React.Component {
 
   renderJumpToNowButton() {
     return (
-      <a className="button jump-to-now" title="Jump to now" onClick={this.jumpToNow}>
+      <a className="button jump-to-now" title="Jump to now" onClick={this.handleJumpToNowClick}>
         <span className="fa fa-step-forward" />
       </a>
     );
@@ -164,13 +164,13 @@ class TimelineControl extends React.Component {
   }
 
   render() {
-    const { movingInTime } = this.props;
-    const { showTimelinePanel, millisecondsInPast } = this.state;
+    const { websocketTransitioning } = this.props;
+    const { showSliderPanel, millisecondsInPast } = this.state;
     const isCurrent = (millisecondsInPast === 0);
 
     return (
       <div className="timeline-control">
-        {showTimelinePanel && <div className="timeline-panel">
+        {showSliderPanel && <div className="slider-panel">
           <span className="caption">Explore</span>
           <div className="options">
             <div className="column">
@@ -196,13 +196,13 @@ class TimelineControl extends React.Component {
           {this.renderTimelineSlider()}
         </div>}
         <div className="time-status">
-          {movingInTime && <div className="timeline-jump-loader">
+          {websocketTransitioning && <div className="timeline-jump-loader">
             <span className="fa fa-circle-o-notch fa-spin" />
           </div>}
           <TopologyTimestampButton
-            onClick={this.toggleTimelinePanel}
+            onClick={this.handleTimestampClick}
             millisecondsInPast={millisecondsInPast}
-            selected={showTimelinePanel}
+            selected={showSliderPanel}
           />
           {!isCurrent && this.renderJumpToNowButton()}
           <PauseButton />
@@ -214,15 +214,15 @@ class TimelineControl extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    movingInTime: state.get('websocketMovingInTime'),
+    websocketTransitioning: state.get('websocketTransitioning'),
   };
 }
 
 export default connect(
   mapStateToProps,
   {
-    websocketQueryTimestamp,
+    websocketQueryInPast,
+    startWebsocketTransition,
     clickResumeUpdate,
-    startMovingInTime,
   }
 )(TimelineControl);

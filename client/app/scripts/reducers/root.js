@@ -23,7 +23,6 @@ import {
 } from '../selectors/topology';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
 import { consolidateNodesDeltas } from '../utils/nodes-delta-utils';
-import { getWebsocketQueryTimestamp } from '../utils/web-api-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
@@ -93,8 +92,8 @@ export const initialState = makeMap({
   versionUpdate: null,
   viewport: makeMap(),
   websocketClosed: false,
-  websocketMovingInTime: false,
-  websocketQueryTimestampSinceNow: null,
+  websocketTransitioning: false,
+  websocketQueryMillisecondsInPast: 0,
   zoomCache: makeMap(),
   serviceImages: makeMap()
 });
@@ -297,9 +296,8 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_PAUSE_UPDATE: {
-      const pausedAt = state.get('websocketQueryTimestampSinceNow') ?
-        moment(getWebsocketQueryTimestamp(state)) : moment().utc();
-      return state.set('updatePausedAt', pausedAt);
+      const millisecondsInPast = state.get('websocketQueryMillisecondsInPast');
+      return state.set('updatePausedAt', moment().utc().subtract(millisecondsInPast));
     }
 
     case ActionTypes.CLICK_RELATIVE: {
@@ -354,12 +352,20 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
-    case ActionTypes.START_MOVING_IN_TIME: {
-      return state.set('websocketMovingInTime', true);
+    //
+    // websockets
+    //
+
+    case ActionTypes.OPEN_WEBSOCKET: {
+      return state.set('websocketClosed', false);
     }
 
-    case ActionTypes.WEBSOCKET_QUERY_TIMESTAMP: {
-      return state.set('websocketQueryTimestampSinceNow', action.timestampSinceNow);
+    case ActionTypes.START_WEBSOCKET_TRANSITION: {
+      return state.set('websocketTransitioning', true);
+    }
+
+    case ActionTypes.WEBSOCKET_QUERY_MILLISECONDS_IN_PAST: {
+      return state.set('websocketQueryMillisecondsInPast', action.millisecondsInPast);
     }
 
     case ActionTypes.CLOSE_WEBSOCKET: {
@@ -385,7 +391,7 @@ export function rootReducer(state = initialState, action) {
       return state.update('nodesDeltaBuffer', buffer => buffer.shift());
     }
 
-    case ActionTypes.ADD_TO_NODES_DELTA_BUFFER: {
+    case ActionTypes.BUFFER_NODES_DELTA: {
       return state.update('nodesDeltaBuffer', buffer => buffer.push(action.delta));
     }
 
@@ -522,10 +528,6 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
-    case ActionTypes.OPEN_WEBSOCKET: {
-      return state.set('websocketClosed', false);
-    }
-
     case ActionTypes.DO_CONTROL_ERROR: {
       return state.setIn(['controlStatus', action.nodeId], makeMap({
         pending: false,
@@ -614,8 +616,8 @@ export function rootReducer(state = initialState, action) {
 
       state = state.set('errorUrl', null);
 
-      if (state.get('websocketMovingInTime')) {
-        state = state.set('websocketMovingInTime', false);
+      if (state.get('websocketTransitioning')) {
+        state = state.set('websocketTransitioning', false);
         state = clearNodes(state);
       }
 

@@ -34,11 +34,7 @@ const NODES_DISPLAY_EMPTY_CAUSES = [
 ];
 
 const renderCauses = causes => (
-  <ul>
-    {causes.map(cause => (
-      <li>{cause}</li>
-    ))}
-  </ul>
+  <ul>{causes.map(cause => <li>{cause}</li>)}</ul>
 );
 
 class Nodes extends React.Component {
@@ -56,9 +52,9 @@ class Nodes extends React.Component {
 
   render() {
     const { topologiesLoaded, nodesLoaded, topologies, currentTopology, isGraphViewMode,
-      isTableViewMode, isResourceViewMode, movingInTime } = this.props;
+      isTableViewMode, isResourceViewMode, websocketTransitioning } = this.props;
 
-    const className = classNames('nodes-wrapper', { blurred: movingInTime });
+    const className = classNames('nodes-wrapper', { blurred: websocketTransitioning });
 
     // TODO: Rename view mode components.
     return (
@@ -89,9 +85,9 @@ function mapStateToProps(state) {
     topologyNodeCountZero: isTopologyNodeCountZero(state),
     nodesDisplayEmpty: isNodesDisplayEmpty(state),
     topologyEmpty: isTopologyEmpty(state),
-    movingInTime: state.get('websocketMovingInTime'),
+    websocketTransitioning: state.get('websocketTransitioning'),
     currentTopology: state.get('currentTopology'),
-    nodesLoaded: state.get('nodesLoaded') || state.get('websocketMovingInTime'),
+    nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),
   };

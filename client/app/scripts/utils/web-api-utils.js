@@ -237,9 +237,12 @@ export function getTopologies(options, dispatch, initialPoll) {
   });
 }
 
-export function getWebsocketQueryTimestamp(state) {
-  const sinceNow = state.get('websocketQueryTimestampSinceNow');
-  return sinceNow ? moment().utc().subtract(sinceNow).toISOString() : null;
+function getWebsocketQueryTimestamp(state) {
+  const millisecondsInPast = state.get('websocketQueryMillisecondsInPast');
+  // The timestamp query parameter will be used only if it's in the past.
+  if (millisecondsInPast === 0) return null;
+
+  return moment().utc().subtract(millisecondsInPast).toISOString();
 }
 
 export function updateWebsocketChannel(state, dispatch) {

@@ -77,28 +77,10 @@ export function sortOrderChanged(sortedBy, sortedDesc) {
 }
 
 function resetNodesDeltaBuffer() {
-  clearTimeout(nodesDeltaBufferUpdateTimer);
+  clearInterval(nodesDeltaBufferUpdateTimer);
   return { type: ActionTypes.CLEAR_NODES_DELTA_BUFFER };
 }
 
-function bufferDeltaUpdate(delta) {
-  return (dispatch, getState) => {
-    if (delta.add === null && delta.update === null && delta.remove === null) {
-      log('Discarding empty nodes delta');
-      return;
-    }
-
-    if (getState().get('nodesDeltaBuffer').size >= NODES_DELTA_BUFFER_SIZE_LIMIT) {
-      dispatch({ type: ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER });
-    }
-
-    dispatch({
-      type: ActionTypes.ADD_TO_NODES_DELTA_BUFFER,
-      delta,
-    });
-    log('Buffering node delta, new size', getState().get('nodesDeltaBuffer').size);
-  };
-}
 
 //
 // Networks
@@ -443,23 +425,17 @@ export function clickTopology(topologyId) {
   };
 }
 
-export function startMovingInTime() {
+export function startWebsocketTransition() {
   return {
-    type: ActionTypes.START_MOVING_IN_TIME,
+    type: ActionTypes.START_WEBSOCKET_TRANSITION,
   };
 }
 
-export function websocketQueryTimestamp(timestampSinceNow) {
-  // If the timestamp stands for a time less than one second ago,
-  // assume we are actually interested in the current time.
-  if (timestampSinceNow < 1000) {
-    timestampSinceNow = null;
-  }
-
+export function websocketQueryInPast(millisecondsInPast) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.WEBSOCKET_QUERY_TIMESTAMP,
-      timestampSinceNow,
+      type: ActionTypes.WEBSOCKET_QUERY_MILLISECONDS_IN_PAST,
+      millisecondsInPast,
     });
     updateWebsocketChannel(getState(), dispatch);
     dispatch(resetNodesDeltaBuffer());
@@ -621,12 +597,15 @@ export function receiveNodesDelta(delta) {
     setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
     const state = getState();
-    const movingInTime = state.get('websocketMovingInTime');
+    const movingInTime = state.get('websocketTransitioning');
     const hasChanges = delta.add || delta.update || delta.remove;
 
     if (hasChanges || movingInTime) {
       if (isPausedSelector(state)) {
-        dispatch(bufferDeltaUpdate(delta));
+        if (state.get('nodesDeltaBuffer').size >= NODES_DELTA_BUFFER_SIZE_LIMIT) {
+          dispatch({ type: ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER });
+        }
+        dispatch({ type: ActionTypes.BUFFER_NODES_DELTA, delta });
       } else {
         dispatch({
           type: ActionTypes.RECEIVE_NODES_DELTA,
@@ -637,24 +616,16 @@ export function receiveNodesDelta(delta) {
   };
 }
 
-function maybeUpdateFromNodesDeltaBuffer() {
-  return (dispatch, getState) => {
-    if (isPausedSelector(getState())) {
-      dispatch(resetNodesDeltaBuffer());
-    } else {
-      if (!getState().get('nodesDeltaBuffer').isEmpty()) {
-        const delta = getState().get('nodesDeltaBuffer').first();
-        dispatch({ type: ActionTypes.POP_NODES_DELTA_BUFFER });
-        dispatch(receiveNodesDelta(delta));
-      }
-      if (!getState().get('nodesDeltaBuffer').isEmpty()) {
-        nodesDeltaBufferUpdateTimer = setTimeout(
-          () => dispatch(maybeUpdateFromNodesDeltaBuffer()),
-          NODES_DELTA_BUFFER_FEED_INTERVAL,
-        );
-      }
-    }
-  };
+function updateFromNodesDeltaBuffer(dispatch, state) {
+  const isPaused = isPausedSelector(state);
+  const isBufferEmpty = state.get('nodesDeltaBuffer').isEmpty();
+
+  if (isPaused || isBufferEmpty) {
+    dispatch(resetNodesDeltaBuffer());
+  } else {
+    dispatch(receiveNodesDelta(state.get('nodesDeltaBuffer').first()));
+    dispatch({ type: ActionTypes.POP_NODES_DELTA_BUFFER });
+  }
 }
 
 export function clickResumeUpdate() {
@@ -662,7 +633,11 @@ export function clickResumeUpdate() {
     dispatch({
       type: ActionTypes.CLICK_RESUME_UPDATE
     });
-    dispatch(maybeUpdateFromNodesDeltaBuffer(getState));
+    // Periodically merge buffered nodes deltas until the buffer is emptied.
+    nodesDeltaBufferUpdateTimer = setInterval(
+      () => updateFromNodesDeltaBuffer(dispatch, getState()),
+      NODES_DELTA_BUFFER_FEED_INTERVAL,
+    );
   };
 }
 

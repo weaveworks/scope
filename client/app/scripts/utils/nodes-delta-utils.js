@@ -4,7 +4,7 @@ import { union, size, map, find, reject, each } from 'lodash';
 const log = debug('scope:nodes-delta-utils');
 
 
-// TODO: Would be nice to have a unit test for this function.
+// TODO: It would be nice to have a unit test for this function.
 export function consolidateNodesDeltas(first, second) {
   let toAdd = union(first.add, second.add);
   let toUpdate = union(first.update, second.update);

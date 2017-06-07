@@ -82,7 +82,7 @@
     }
 
     &.active {
-      @extend .blinkable;
+      & > * { @extend .blinkable; }
       border: 1px solid $text-tertiary-color;
     }
   }
@@ -236,12 +236,12 @@
     .button { margin-left: 0.5em; }
 
     .topology-timestamp-button:not(.current) {
-      @extend .blinkable;
+      & > * { @extend .blinkable; }
       font-weight: bold;
     }
   }
 
-  .timeline-panel {
+  .slider-panel {
     width: 355px;
 
     .caption, .slider-tip {
