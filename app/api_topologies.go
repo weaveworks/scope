@@ -29,9 +29,7 @@ const (
 	containersByImageID    = "containers-by-image"
 	podsID                 = "pods"
 	replicaSetsID          = "replica-sets"
-	deploymentsID          = "deployments"
-	daemonsetsID           = "daemonsets"
-	kubeCombinedID         = "kube-combined"
+	kubeControllersID      = "kube-controllers"
 	servicesID             = "services"
 	hostsID                = "hosts"
 	weaveID                = "weave"
@@ -121,7 +119,7 @@ func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITop
 	sort.Strings(ns)
 	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
 	for i, t := range topologies {
-		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == deploymentsID || t.id == replicaSetsID || t.id == daemonsetsID || t.id == kubeCombinedID {
+		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == replicaSetsID || t.id == kubeControllersID {
 			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
 				namespaceFilters(ns, "All Namespaces"),
 			})
@@ -197,7 +195,7 @@ func MakeRegistry() *Registry {
 		},
 	}
 
-	k8sCombinedTypeFilter := APITopologyOptionGroup{
+	k8sControllersTypeFilter := APITopologyOptionGroup{
 		ID:         "grouptype",
 		Default:    "",
 		SelectType: "union",
@@ -205,8 +203,6 @@ func MakeRegistry() *Registry {
 		Options: []APITopologyOption{
 			{Value: report.Deployment, Label: "Deployments", filter: render.IsTopology(report.Deployment), filterPseudo: false},
 			{Value: report.DaemonSet, Label: "Daemonsets", filter: render.IsTopology(report.DaemonSet), filterPseudo: false},
-			{Value: report.ReplicaSet, Label: "Replica sets", filter: render.IsTopology(report.ReplicaSet), filterPseudo: false},
-			{Value: report.Pod, Label: "Pods", filter: render.IsTopology(report.Pod), filterPseudo: false},
 		},
 	}
 
@@ -267,27 +263,11 @@ func MakeRegistry() *Registry {
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
-			id:          deploymentsID,
+			id:          kubeControllersID,
 			parent:      podsID,
-			renderer:    render.DeploymentRenderer,
-			Name:        "deployments",
-			Options:     []APITopologyOptionGroup{unmanagedFilter},
-			HideIfEmpty: true,
-		},
-		APITopologyDesc{
-			id:          daemonsetsID,
-			parent:      podsID,
-			renderer:    render.DaemonSetRenderer,
-			Name:        "daemonsets",
-			Options:     []APITopologyOptionGroup{unmanagedFilter},
-			HideIfEmpty: true,
-		},
-		APITopologyDesc{
-			id:          kubeCombinedID,
-			parent:      podsID,
-			renderer:    render.KubeCombinedRenderer,
-			Name:        "combined",
-			Options:     []APITopologyOptionGroup{unmanagedFilter, k8sCombinedTypeFilter},
+			renderer:    render.KubeControllerRenderer,
+			Name:        "controllers",
+			Options:     []APITopologyOptionGroup{unmanagedFilter, k8sControllersTypeFilter},
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{

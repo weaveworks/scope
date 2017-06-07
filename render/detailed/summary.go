@@ -90,8 +90,8 @@ var primaryAPITopology = map[string]string{
 	report.ContainerImage: "containers-by-image",
 	report.Pod:            "pods",
 	report.ReplicaSet:     "replica-sets",
-	report.Deployment:     "deployments",
-	report.DaemonSet:      "daemonsets",
+	report.Deployment:     "kube-controllers",
+	report.DaemonSet:      "kube-controllers",
 	report.Service:        "services",
 	report.ECSTask:        "ecs-tasks",
 	report.ECSService:     "ecs-services",
@@ -260,7 +260,6 @@ func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 var podGroupNodeTypeName = map[string]string{
 	report.Deployment: "Deployment",
 	report.DaemonSet:  "Daemon Set",
-	report.ReplicaSet: "Replica Set",
 }
 
 func podGroupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
