@@ -13,6 +13,7 @@ import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveEr
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
+import { isWebsocketQueryingCurrentSelector } from '../selectors/timeline';
 import { API_REFRESH_INTERVAL, TOPOLOGY_REFRESH_INTERVAL } from '../constants/timer';
 
 const log = debug('scope:web-api-utils');
@@ -48,6 +49,7 @@ let continuePolling = true;
 export function buildUrlQuery(params) {
   if (!params) return '';
 
+  // Ignore the entries with values `null` or `undefined`.
   return params.map((value, param) => {
     if (value === undefined || value === null) return null;
     if (List.isList(value)) {
@@ -238,10 +240,10 @@ export function getTopologies(options, dispatch, initialPoll) {
 }
 
 function getWebsocketQueryTimestamp(state) {
-  const millisecondsInPast = state.get('websocketQueryMillisecondsInPast');
   // The timestamp query parameter will be used only if it's in the past.
-  if (millisecondsInPast === 0) return null;
+  if (isWebsocketQueryingCurrentSelector(state)) return null;
 
+  const millisecondsInPast = state.get('websocketQueryMillisecondsInPast');
   return moment().utc().subtract(millisecondsInPast).toISOString();
 }
 

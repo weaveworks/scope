@@ -1,6 +1,7 @@
 import { endsWith } from 'lodash';
 import { Set as makeSet, List as makeList } from 'immutable';
 
+import { isWebsocketQueryingCurrentSelector } from '../selectors/timeline';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { pinnedMetricSelector } from '../selectors/node-metric';
 
@@ -134,7 +135,8 @@ export function getCurrentTopologyOptions(state) {
 }
 
 export function isTopologyNodeCountZero(state) {
-  return state.getIn(['currentTopology', 'stats', 'node_count'], 0) === 0;
+  const nodeCount = state.getIn(['currentTopology', 'stats', 'node_count'], 0);
+  return nodeCount === 0 && isWebsocketQueryingCurrentSelector(state);
 }
 
 export function isNodesDisplayEmpty(state) {

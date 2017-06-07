@@ -87,7 +87,7 @@ export const initialState = makeMap({
   topologyOptions: makeOrderedMap(), // topologyId -> options
   topologyUrlsById: makeOrderedMap(), // topologyId -> topologyUrl
   topologyViewMode: GRAPH_VIEW_MODE,
-  updatePausedAt: null, // moment.js timestamp
+  updatePausedAt: null,
   version: '...',
   versionUpdate: null,
   viewport: makeMap(),
@@ -616,6 +616,10 @@ export function rootReducer(state = initialState, action) {
 
       state = state.set('errorUrl', null);
 
+      // When moving in time, we will consider the transition complete
+      // only when the first batch of nodes delta has been received. We
+      // do that because we want to keep the previous state blurred instead
+      // of transitioning over an empty state like when switching topologies.
       if (state.get('websocketTransitioning')) {
         state = state.set('websocketTransitioning', false);
         state = clearNodes(state);

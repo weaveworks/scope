@@ -1,6 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { isWebsocketQueryingCurrentSelector } from '../selectors/timeline';
+
 
 class Status extends React.Component {
   render() {
@@ -25,13 +27,9 @@ class Status extends React.Component {
       showWarningIcon = true;
     } else if (topology) {
       const stats = topology.get('stats');
-      if (showingCurrentState) {
-        text = `${stats.get('node_count') - filteredNodeCount} nodes`;
-        if (stats.get('filtered_nodes')) {
-          text = `${text} (${stats.get('filtered_nodes') + filteredNodeCount} filtered)`;
-        }
-      } else {
-        text = '';
+      text = `${stats.get('node_count') - filteredNodeCount} nodes`;
+      if (stats.get('filtered_nodes')) {
+        text = `${text} (${stats.get('filtered_nodes') + filteredNodeCount} filtered)`;
       }
       classNames += ' status-stats';
       showWarningIcon = false;
@@ -40,7 +38,7 @@ class Status extends React.Component {
     return (
       <div className={classNames}>
         {showWarningIcon && <span className="status-icon fa fa-exclamation-circle" />}
-        <span className="status-label" title={title}>{text}</span>
+        <span className="status-label" title={title}>{showingCurrentState && text}</span>
       </div>
     );
   }
@@ -50,7 +48,7 @@ function mapStateToProps(state) {
   return {
     errorUrl: state.get('errorUrl'),
     filteredNodeCount: state.get('nodes').filter(node => node.get('filtered')).size,
-    showingCurrentState: !state.get('websocketTimestampOffset'),
+    showingCurrentState: isWebsocketQueryingCurrentSelector(state),
     topologiesLoaded: state.get('topologiesLoaded'),
     topology: state.get('currentTopology'),
     websocketClosed: state.get('websocketClosed'),
