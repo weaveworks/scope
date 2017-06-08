@@ -13,7 +13,7 @@ $(TARGETS):
 		weaveworks/scope-backend-build -C extras $@
 else
 $(TARGETS):
-	go build -ldflags "-extldflags \"-static\"" -tags netgo -o $@ ./$(@D)
+	go build -ldflags "-extldflags \"-static\"" -tags 'netgo unsafe' -o $@ ./$(@D)
 endif
 
 test:
