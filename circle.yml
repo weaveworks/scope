@@ -39,9 +39,7 @@ dependencies:
 
 test:
   override:
-    - cd $SRCDIR; make RM= lint:
-        parallel: true
-    - cd $SRCDIR; make RM= RUN_FLAGS= client-test client-lint:
+    - cd $SRCDIR; case $CIRCLE_NODE_INDEX in 0) make RM= lint ;; 1) make RM= RUN_FLAGS= client-test client-lint ;; esac:
         parallel: true
     - cd $SRCDIR; COVERDIR=./coverage make RM= CODECGEN_UID=23 tests:
         parallel: true
