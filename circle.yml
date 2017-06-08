@@ -34,7 +34,7 @@ dependencies:
     - "cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh && touch $SRCDIR/.scope_backend_build.uptodate"
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh make_template):
         parallel: false
-    - sudo apt-get update && sudo apt-get install python-pip && sudo pip install awscli
+    - sudo pip install awscli
     - cd $SRCDIR; make RM= CODECGEN_UID=23 all tools/runner/runner:
         parallel: true
 
