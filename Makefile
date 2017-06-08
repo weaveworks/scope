@@ -125,7 +125,7 @@ shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	/bin/bash
 
 tests: $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS)
-	./tools/test -no-go-get -netgo
+	./tools/test -no-go-get -tags $(GO_BUILD_TAGS)
 
 lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	./tools/lint
