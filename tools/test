@@ -36,6 +36,10 @@ while [ $# -gt 0 ]; do
             TAGS="netgo"
             shift 1
             ;;
+        "-tags")
+            TAGS="$2"
+            shift 2
+            ;;
         "-p")
             PARALLEL=true
             shift 1
