@@ -56,7 +56,6 @@ export const initialState = makeMap({
   gridSortedDesc: null,
   // TODO: Calculate these sets from selectors instead.
   highlightedEdgeIds: makeSet(),
-  highlightedNodeIds: makeSet(),
   hostname: '...',
   hoveredMetricType: null,
   initialNodesLoaded: false,
@@ -468,17 +467,16 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.ENTER_EDGE: {
-      // highlight adjacent nodes
-      state = state.update('highlightedNodeIds', (highlightedNodeIds) => {
-        highlightedNodeIds = highlightedNodeIds.clear();
-        return highlightedNodeIds.union(action.edgeId.split(EDGE_ID_SEPARATOR));
-      });
+      const edgeId = action.edgeId;
+      const adjacentNodes = edgeId.split(EDGE_ID_SEPARATOR);
+
+      state = state.set('mouseOverEdgeId', edgeId);
 
       // highlight edge
       state = state.update('highlightedEdgeIds', (highlightedEdgeIds) => {
         highlightedEdgeIds = highlightedEdgeIds.clear();
-        highlightedEdgeIds = highlightedEdgeIds.add(action.edgeId);
-        const opposite = action.edgeId.split(EDGE_ID_SEPARATOR).reverse().join(EDGE_ID_SEPARATOR);
+        highlightedEdgeIds = highlightedEdgeIds.add(edgeId);
+        const opposite = adjacentNodes.reverse().join(EDGE_ID_SEPARATOR);
         highlightedEdgeIds = highlightedEdgeIds.add(opposite);
         return highlightedEdgeIds;
       });
@@ -491,13 +489,6 @@ export function rootReducer(state = initialState, action) {
       const adjacentNodes = getAdjacentNodes(state, nodeId);
 
       state = state.set('mouseOverNodeId', nodeId);
-
-      // highlight adjacent nodes
-      state = state.update('highlightedNodeIds', (highlightedNodeIds) => {
-        highlightedNodeIds = highlightedNodeIds.clear();
-        highlightedNodeIds = highlightedNodeIds.add(nodeId);
-        return highlightedNodeIds.union(adjacentNodes);
-      });
 
       // highlight edge
       state = state.update('highlightedEdgeIds', (highlightedEdgeIds) => {
@@ -516,15 +507,14 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.LEAVE_EDGE: {
+      state = state.set('mouseOverEdgeId', null);
       state = state.update('highlightedEdgeIds', highlightedEdgeIds => highlightedEdgeIds.clear());
-      state = state.update('highlightedNodeIds', highlightedNodeIds => highlightedNodeIds.clear());
       return state;
     }
 
     case ActionTypes.LEAVE_NODE: {
       state = state.set('mouseOverNodeId', null);
       state = state.update('highlightedEdgeIds', highlightedEdgeIds => highlightedEdgeIds.clear());
-      state = state.update('highlightedNodeIds', highlightedNodeIds => highlightedNodeIds.clear());
       return state;
     }
 
