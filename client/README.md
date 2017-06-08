@@ -2,7 +2,7 @@
 
 ## Getting Started (using local node)
 
-- You need nodejs 4.2.2 and a running `weavescope` container
+- You need at least Node.js 6.9.0 and a running `weavescope` container
 - Setup: `npm install`
 - Develop: `BACKEND_HOST=<dockerhost-ip> npm start` and then open `http://localhost:4042/`
 
