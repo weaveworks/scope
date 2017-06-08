@@ -23,30 +23,26 @@ dependencies:
     - "~/docker"
   override:
     - |
-      sudo apt-get update &&
       sudo apt-get install jq pv &&
-      sudo chmod a+wr --recursive /usr/local/go/pkg &&
       sudo chown ubuntu:ubuntu "$HOME/.bashrc.backup"
       (curl https://sdk.cloud.google.com | bash) &&
       (test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD") &&
-      make deps &&
+      go get github.com/2opremio/trifles/wscat &&
       mkdir -p $(dirname $SRCDIR) &&
       cp -r $(pwd)/ $SRCDIR
     - "cd $SRCDIR/client; ../tools/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc .babelrc && touch $SRCDIR/.scope_ui_build.uptodate"
     - "cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh && touch $SRCDIR/.scope_backend_build.uptodate"
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh make_template):
         parallel: false
-    - sudo apt-get update && sudo apt-get install python-pip && sudo pip install awscli
+    - sudo pip install awscli
+    - cd $SRCDIR; make RM= CODECGEN_UID=23 all tools/runner/runner:
+        parallel: true
 
 test:
   override:
-    - cd $SRCDIR; make RM= lint:
+    - cd $SRCDIR; case $CIRCLE_NODE_INDEX in 0) make RM= lint ;; 1) make RM= RUN_FLAGS= client-test client-lint ;; esac:
         parallel: true
     - cd $SRCDIR; COVERDIR=./coverage make RM= CODECGEN_UID=23 tests:
-        parallel: true
-    - cd $SRCDIR; make RM= client-test static:
-        parallel: true
-    - cd $SRCDIR; make RM= client-lint static:
         parallel: true
     - cd $SRCDIR; rm -f prog/scope; if [ "$CIRCLE_NODE_INDEX" = "0" ]; then GOARCH=arm make GO_BUILD_INSTALL_DEPS= RM= prog/scope; else GOOS=darwin make GO_BUILD_INSTALL_DEPS= RM= prog/scope; fi:
         parallel: true
@@ -62,9 +58,10 @@ test:
   post:
     - test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy):
         parallel: true
+        background: true
     - test "$CIRCLE_NODE_INDEX" != "0" || (cd $SRCDIR; ./tools/cover/gather_coverage.sh ./coverage $SRCDIR/coverage):
         parallel: true
-    - test "$CIRCLE_NODE_INDEX" != "0" || (goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true):
+    - test "$CIRCLE_NODE_INDEX" != "0" || (go get github.com/mattn/goveralls && goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true):
         parallel: true
     - test "$CIRCLE_NODE_INDEX" != "0" || (cd $SRCDIR; cp scope.tar $CIRCLE_ARTIFACTS):
         parallel: true
