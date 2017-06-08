@@ -19,6 +19,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tylerb/graceful"
 	"github.com/weaveworks/go-checkpoint"
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/weave/common"
 
 	billing "github.com/weaveworks/billing-client"
@@ -50,7 +51,7 @@ func init() {
 }
 
 // Router creates the mux for all the various app components.
-func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter, externalUI bool) http.Handler {
+func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter, externalUI bool, capabilities map[string]bool) http.Handler {
 	router := mux.NewRouter().SkipClean(true)
 
 	// We pull in the http.DefaultServeMux to get the pprof routes
@@ -60,7 +61,7 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	app.RegisterReportPostHandler(collector, router)
 	app.RegisterControlRoutes(router, controlRouter)
 	app.RegisterPipeRoutes(router, pipeRouter)
-	app.RegisterTopologyRoutes(router, collector)
+	app.RegisterTopologyRoutes(router, collector, capabilities)
 
 	uiHandler := http.FileServer(GetFS(externalUI))
 	router.PathPrefix("/ui").Name("static").Handler(
@@ -294,7 +295,10 @@ func appMain(flags appFlags) {
 		}
 	}
 
-	handler := router(collector, controlRouter, pipeRouter, flags.externalUI)
+	capabilities := map[string]bool{
+		xfer.ReportPersistenceCapability: flags.s3URL != "local",
+	}
+	handler := router(collector, controlRouter, pipeRouter, flags.externalUI, capabilities)
 	if flags.logHTTP {
 		handler = middleware.Log{
 			LogRequestHeaders: flags.logHTTPHeaders,
