@@ -33,12 +33,17 @@ class Status extends React.Component {
       }
       classNames += ' status-stats';
       showWarningIcon = false;
+      // TODO: Currently the stats are always pulled for the current state of the system,
+      // so they are incorrect when showing the past. This should be addressed somehow.
+      if (!showingCurrentState) {
+        text = '';
+      }
     }
 
     return (
       <div className={classNames}>
         {showWarningIcon && <span className="status-icon fa fa-exclamation-circle" />}
-        <span className="status-label" title={title}>{showingCurrentState && text}</span>
+        <span className="status-label" title={title}>{text}</span>
       </div>
     );
   }

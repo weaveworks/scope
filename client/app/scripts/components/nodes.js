@@ -34,7 +34,7 @@ const NODES_DISPLAY_EMPTY_CAUSES = [
 ];
 
 const renderCauses = causes => (
-  <ul>{causes.map(cause => <li>{cause}</li>)}</ul>
+  <ul>{causes.map(cause => <li key={cause}>{cause}</li>)}</ul>
 );
 
 class Nodes extends React.Component {

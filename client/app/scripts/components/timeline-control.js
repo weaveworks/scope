@@ -13,7 +13,10 @@ import {
   clickResumeUpdate,
 } from '../actions/app-actions';
 
-import { TIMELINE_DEBOUNCE_INTERVAL } from '../constants/timer';
+import {
+  TIMELINE_SLIDER_UPDATE_INTERVAL,
+  TIMELINE_DEBOUNCE_INTERVAL,
+} from '../constants/timer';
 
 
 const sliderRanges = {
@@ -85,12 +88,26 @@ class TimelineControl extends React.Component {
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
   }
 
+  componentWillMount() {
+    // Force periodic re-renders to update the slider position as time goes by.
+    this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_SLIDER_UPDATE_INTERVAL);
+  }
+
   componentWillUnmount() {
+    clearInterval(this.timer);
     this.updateTimestamp();
   }
 
   handleSliderChange(sliderValue) {
-    const millisecondsInPast = this.getRangeMilliseconds() - sliderValue;
+    let millisecondsInPast = this.getRangeMilliseconds() - sliderValue;
+
+    // If the slider value is less than 1s away from the right-end (current time),
+    // assume we meant the current time - this is important for the '... so far'
+    // ranges where the range of values changes over time.
+    if (millisecondsInPast < 1000) {
+      millisecondsInPast = 0;
+    }
+
     this.setState({ millisecondsInPast });
     this.debouncedUpdateTimestamp(millisecondsInPast);
     this.props.startWebsocketTransition();
