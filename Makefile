@@ -1,5 +1,21 @@
 .PHONY: all deps static clean client-lint client-test client-sync backend frontend shell lint ui-upload
 
+#add multi arch support for Dockerfiles; x86_64, aarch64, ...
+ARCH=$(shell uname -m) 
+
+#seperate arch dependant build requirements here
+ifeq ($(ARCH),aarch64)
+# for aarch64 use docker image from host /usr/bin until Docker supports binaries
+# todo add a check for host docker version 1.10 or higher, assume 1.12.6 for now
+	DOCKER_VERSION=1.12.6
+	DOCKER_DISTRIB=.pkg/docker
+else
+# assume x86_64
+	DOCKER_VERSION=1.13.1
+	DOCKER_DISTRIB=.pkg/docker-$(DOCKER_VERSION).tgz
+	DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
+endif
+
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=$(shell docker info >/dev/null 2>&1 || echo "sudo -E")
 DOCKERHUB_USER=weaveworks
@@ -12,9 +28,6 @@ SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
 SCOPE_BACKEND_BUILD_UPTODATE=.scope_backend_build.uptodate
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
 WEAVENET_VERSION=1.9.0
-DOCKER_VERSION=1.13.1
-DOCKER_DISTRIB=.pkg/docker-$(DOCKER_VERSION).tgz
-DOCKER_DISTRIB_URL=https://get.docker.com/builds/Linux/x86_64/docker-$(DOCKER_VERSION).tgz
 RUNSVINIT=vendor/runsvinit/runsvinit
 CODECGEN_DIR=vendor/github.com/ugorji/go/codec/codecgen
 CODECGEN_EXE=$(CODECGEN_DIR)/bin/codecgen_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)
@@ -34,21 +47,21 @@ ifeq ($(GOOS),linux)
 GO_ENV+=CGO_ENABLED=1
 endif
 
-ifeq ($(GOARCH),arm)
-ARM_CC=CC=/usr/bin/arm-linux-gnueabihf-gcc
-endif
-
-GO=env $(GO_ENV) $(ARM_CC) go
-
-NO_CROSS_COMP=unset GOOS GOARCH
-GO_HOST=$(NO_CROSS_COMP); env $(GO_ENV) go
-WITH_GO_HOST_ENV=$(NO_CROSS_COMP); $(GO_ENV)
+GO_HOST=env $(GO_ENV) go
+WITH_GO_HOST_ENV=$(GO_ENV)
 IMAGE_TAG=$(shell ./tools/image-tag)
+
+GO=env $(GO_ENV) go
 
 all: $(SCOPE_EXPORT)
 
 $(DOCKER_DISTRIB):
+ifeq ($(ARCH),aarch64)
+	cp /usr/bin/docker $(DOCKER_DISTRIB)
+else
 	curl -o $(DOCKER_DISTRIB) $(DOCKER_DISTRIB_URL)
+endif
+
 
 docker/weave:
 	curl -L https://github.com/weaveworks/weave/releases/download/v$(WEAVENET_VERSION)/weave -o docker/weave
@@ -61,17 +74,21 @@ docker/weaveutil:
 docker/%: %
 	cp $* docker/
 
-docker/docker: $(DOCKER_DISTRIB)
+docker/docker: #$(DOCKER_DISTRIB)
+ifeq ($(ARCH),aarch64)
+        cp $(DOCKER_DISTRIB) docker/docker 
+else
 	tar -xvzf $(DOCKER_DISTRIB) docker/docker
+endif
 
-%.tar: docker/Dockerfile.%
+%.tar: docker/Dockerfile.%-$(ARCH)
 	$(SUDO) docker build -t $(DOCKERHUB_USER)/$* -f $< docker/
 	$(SUDO) docker tag $(DOCKERHUB_USER)/$* $(DOCKERHUB_USER)/$*:$(IMAGE_TAG)
 	$(SUDO) docker save $(DOCKERHUB_USER)/$*:latest > $@
 
-$(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent docker/$(SCOPE_EXE) docker/docker docker/weave docker/weaveutil
+$(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent-$(ARCH) docker/$(SCOPE_EXE) docker/docker docker/weave docker/weaveutil
 
-$(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
+$(SCOPE_EXPORT): docker/Dockerfile.scope-$(ARCH) $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
@@ -188,12 +205,12 @@ client/build-external/index.html:
 
 endif
 
-$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
-	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) client
+$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile.$(ARCH) client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
+	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) -f client/Dockerfile.$(ARCH) client
 	touch $@
 
 $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
-	$(SUDO) docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) backend
+	$(SUDO) docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) -f backend/Dockerfile.$(ARCH) backend
 	touch $@
 
 ui-upload: client/build-external/index.html
