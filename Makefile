@@ -123,7 +123,7 @@ $(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
 shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	/bin/bash
 
-tests: $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS)
+tests: $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS) prog/staticui/staticui.go prog/externalui/externalui.go
 	./tools/test -no-go-get
 
 lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
@@ -179,10 +179,12 @@ tmp/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
 else
 
 client/build/index.html:
-	cd client && npm run build
+	test "true" = "$(SCOPE_SKIP_UI_ASSETS)" && mkdir -p client/build || \
+		{ cd client && npm run build; }
 
 client/build-external/index.html:
-	cd client && npm run build-external
+	test "true" = "$(SCOPE_SKIP_UI_ASSETS)" && mkdir -p client/build-external || \
+		{ cd client && npm run build-external; }
 
 endif
 

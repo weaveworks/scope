@@ -2,6 +2,7 @@ FROM ubuntu:yakkety
 ENV GOPATH /go
 ENV GOVERSION 1.7
 ENV PATH /go/bin:/usr/lib/go-${GOVERSION}/bin:/usr/bin:/bin:/usr/sbin:/sbin
+ENV SCOPE_SKIP_UI_ASSETS true
 RUN apt-get update && \
 	apt-get install -y libpcap-dev python-requests time file shellcheck golang-${GOVERSION} git gcc-arm-linux-gnueabihf curl && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
