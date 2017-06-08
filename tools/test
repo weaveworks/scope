@@ -33,7 +33,7 @@ while [ $# -gt 0 ]; do
             shift 1
             ;;
         "-netgo")
-            TAGS="-tags netgo"
+            TAGS="netgo"
             shift 1
             ;;
         "-p")
@@ -51,7 +51,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-GO_TEST_ARGS=($TAGS -cpu 4 -timeout $TIMEOUT)
+GO_TEST_ARGS=(-tags "${TAGS[@]}" -cpu 4 -timeout $TIMEOUT)
 
 if [ -n "$SLOW" ] || [ -n "$CIRCLECI" ]; then
     SLOW=true
@@ -97,7 +97,7 @@ go test -i "${GO_TEST_ARGS[@]}" "${TESTDIRS[@]}"
 run_test() {
     local dir=$1
     if [ -z "$NO_GO_GET" ]; then
-        go get -t "$TAGS" "$dir"
+        go get -t -tags "${TAGS[@]}" "$dir"
     fi
 
     local GO_TEST_ARGS_RUN=("${GO_TEST_ARGS[@]}")
