@@ -124,7 +124,7 @@ shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	/bin/bash
 
 tests: $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS) prog/staticui/staticui.go prog/externalui/externalui.go
-	./tools/test -no-go-get
+	./tools/test -no-go-get -tags $(GO_BUILD_TAGS)
 
 lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	./tools/lint
