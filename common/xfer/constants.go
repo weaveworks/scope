@@ -14,6 +14,8 @@ const (
 	ScopeProbeVersionHeader = "X-Scope-Probe-Version"
 )
 
+// ReportPersistenceCapability indicates whether probe reports end up in a
+// long-term storage and can be retrieved.
 const ReportPersistenceCapability = "report_persistence"
 
 // Details are some generic details that can be fetched from /api
