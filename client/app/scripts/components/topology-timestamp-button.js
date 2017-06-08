@@ -7,7 +7,7 @@ import { isPausedSelector } from '../selectors/timeline';
 import { TIMELINE_TICK_INTERVAL } from '../constants/timer';
 
 
-class TopologyTimestampButton extends React.PureComponent {
+class TopologyTimestampButton extends React.Component {
   componentDidMount() {
     this.timer = setInterval(() => {
       if (!this.props.isPaused) {
@@ -48,10 +48,10 @@ class TopologyTimestampButton extends React.PureComponent {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps({ scope }) {
   return {
-    isPaused: isPausedSelector(state),
-    updatePausedAt: state.get('updatePausedAt'),
+    isPaused: isPausedSelector(scope),
+    updatePausedAt: scope.get('updatePausedAt'),
   };
 }
 

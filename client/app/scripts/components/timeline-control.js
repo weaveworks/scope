@@ -181,9 +181,12 @@ class TimelineControl extends React.Component {
   }
 
   render() {
-    const { websocketTransitioning } = this.props;
+    const { websocketTransitioning, hasTimelineControl } = this.props;
     const { showSliderPanel, millisecondsInPast } = this.state;
     const isCurrent = (millisecondsInPast === 0);
+
+    // Don't render the timeline control if it's not explicitly enabled for this instance.
+    if (!hasTimelineControl) return null;
 
     return (
       <div className="timeline-control">
@@ -229,9 +232,12 @@ class TimelineControl extends React.Component {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps({ scope, root }, { params }) {
+  const cloudInstance = root.instances[params.orgId] || {};
+  const featureFlags = cloudInstance.featureFlags || [];
   return {
-    websocketTransitioning: state.get('websocketTransitioning'),
+    hasTimelineControl: featureFlags.includes('timeline-control'),
+    websocketTransitioning: scope.get('websocketTransitioning'),
   };
 }
 

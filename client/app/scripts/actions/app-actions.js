@@ -432,12 +432,13 @@ export function startWebsocketTransition() {
 }
 
 export function websocketQueryInPast(millisecondsInPast) {
-  return (dispatch, getState) => {
+  return (dispatch, getServiceState) => {
     dispatch({
       type: ActionTypes.WEBSOCKET_QUERY_MILLISECONDS_IN_PAST,
       millisecondsInPast,
     });
-    updateWebsocketChannel(getState(), dispatch);
+    const scopeState = getServiceState().scope;
+    updateWebsocketChannel(scopeState, dispatch);
     dispatch(resetNodesDeltaBuffer());
   };
 }
@@ -596,7 +597,12 @@ export function receiveNodesDelta(delta) {
     //
     setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
-    const state = getState();
+    // TODO: This way of getting the Scope state is a bit hacky, so try to replace
+    // it with something better. The problem is that all the actions that are called
+    // from the components wrapped in <CloudFeature /> have a global Service state
+    // returned by getState(). Since method is called from both contexts, getState()
+    // will sometimes return Scope state subtree and sometimes the whole Service state.
+    const state = getState().scope || getState();
     const movingInTime = state.get('websocketTransitioning');
     const hasChanges = delta.add || delta.update || delta.remove;
 
@@ -629,13 +635,13 @@ function updateFromNodesDeltaBuffer(dispatch, state) {
 }
 
 export function clickResumeUpdate() {
-  return (dispatch, getState) => {
+  return (dispatch, getServiceState) => {
     dispatch({
       type: ActionTypes.CLICK_RESUME_UPDATE
     });
     // Periodically merge buffered nodes deltas until the buffer is emptied.
     nodesDeltaBufferUpdateTimer = setInterval(
-      () => updateFromNodesDeltaBuffer(dispatch, getState()),
+      () => updateFromNodesDeltaBuffer(dispatch, getServiceState().scope),
       NODES_DELTA_BUFFER_FEED_INTERVAL,
     );
   };

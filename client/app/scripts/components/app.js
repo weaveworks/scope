@@ -12,6 +12,7 @@ import Search from './search';
 import Status from './status';
 import Topologies from './topologies';
 import TopologyOptions from './topology-options';
+import CloudFeature from './cloud-feature';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import {
   focusSearch,
@@ -191,7 +192,9 @@ class App extends React.Component {
 
         <Nodes />
 
-        {!isResourceViewMode && <TimelineControl />}
+        <CloudFeature>
+          {!isResourceViewMode && <TimelineControl />}
+        </CloudFeature>
 
         <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
           {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
