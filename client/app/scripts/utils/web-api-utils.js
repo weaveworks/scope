@@ -13,7 +13,7 @@ import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveEr
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
-import { isWebsocketQueryingCurrentSelector } from '../selectors/timeline';
+import { isWebsocketQueryingCurrentSelector } from '../selectors/time-travel';
 import { API_REFRESH_INTERVAL, TOPOLOGY_REFRESH_INTERVAL } from '../constants/timer';
 
 const log = debug('scope:web-api-utils');

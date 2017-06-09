@@ -214,43 +214,42 @@
   &.blurred { opacity: 0.2; }
 }
 
-.timeline-control {
+.time-travel {
   @extend .overlay-wrapper;
   display: block;
   right: 530px;
 
-  .time-status {
+  &-status {
     display: flex;
     align-items: center;
     justify-content: flex-end;
 
-    .timeline-jump-loader {
+    .time-travel-jump-loader {
       font-size: 1rem;
     }
 
-    .topology-timestamp-info, .pause-text {
+    .time-travel-timestamp-info, .pause-text {
       font-size: 115%;
       margin-right: 5px;
     }
 
     .button { margin-left: 0.5em; }
 
-    .topology-timestamp-button:not(.current) {
+    .time-travel-timestamp:not(.current) {
       & > * { @extend .blinkable; }
       font-weight: bold;
     }
   }
 
-  .slider-panel {
+  &-slider {
     width: 355px;
 
-    .caption, .slider-tip {
+    .slider-tip {
       display: inline-block;
       font-size: 0.8125rem;
+      font-style: italic;
       padding: 5px 10px;
     }
-
-    .slider-tip { font-style: italic; }
 
     .options {
       display: flex;

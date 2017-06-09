@@ -30,7 +30,7 @@ const NODE_COUNT_ZERO_CAUSES = [
 ];
 const NODES_DISPLAY_EMPTY_CAUSES = [
   'There are nodes, but they\'re currently hidden. Check the view options in the bottom-left if they allow for showing hidden nodes.',
-  'There are no nodes for this particular moment in time. Use the timeline feature at the bottom-right corner to explore different times.',
+  'There are no nodes for this particular moment in time. Use the time travel feature at the bottom-right corner to explore different times.',
 ];
 
 const renderCauses = causes => (

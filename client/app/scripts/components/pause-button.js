@@ -3,7 +3,7 @@ import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 
-import { isPausedSelector } from '../selectors/timeline';
+import { isPausedSelector } from '../selectors/time-travel';
 import { clickPauseUpdate, clickResumeUpdate } from '../actions/app-actions';
 
 

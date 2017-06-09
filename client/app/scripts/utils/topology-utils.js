@@ -1,7 +1,7 @@
 import { endsWith } from 'lodash';
 import { Set as makeSet, List as makeList } from 'immutable';
 
-import { isWebsocketQueryingCurrentSelector } from '../selectors/timeline';
+import { isWebsocketQueryingCurrentSelector } from '../selectors/time-travel';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { pinnedMetricSelector } from '../selectors/node-metric';
 

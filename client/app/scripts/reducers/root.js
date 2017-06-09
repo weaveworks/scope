@@ -360,7 +360,7 @@ export function rootReducer(state = initialState, action) {
       return state.set('websocketClosed', false);
     }
 
-    case ActionTypes.START_WEBSOCKET_TRANSITION: {
+    case ActionTypes.START_WEBSOCKET_TRANSITION_LOADER: {
       return state.set('websocketTransitioning', true);
     }
 

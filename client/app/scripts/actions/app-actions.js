@@ -17,7 +17,7 @@ import {
 } from '../utils/web-api-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
-import { isPausedSelector } from '../selectors/timeline';
+import { isPausedSelector } from '../selectors/time-travel';
 import {
   availableMetricTypesSelector,
   nextPinnedMetricTypeSelector,
@@ -425,9 +425,9 @@ export function clickTopology(topologyId) {
   };
 }
 
-export function startWebsocketTransition() {
+export function startWebsocketTransitionLoader() {
   return {
-    type: ActionTypes.START_WEBSOCKET_TRANSITION,
+    type: ActionTypes.START_WEBSOCKET_TRANSITION_LOADER,
   };
 }
 

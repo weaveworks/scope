@@ -30,7 +30,7 @@ import {
 } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
-import TimelineControl from './timeline-control';
+import TimeTravel from './time-travel';
 import ViewModeSelector from './view-mode-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
@@ -193,7 +193,7 @@ class App extends React.Component {
         <Nodes />
 
         <CloudFeature>
-          {!isResourceViewMode && <TimelineControl />}
+          {!isResourceViewMode && <TimeTravel />}
         </CloudFeature>
 
         <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>

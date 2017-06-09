@@ -6,10 +6,10 @@ import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
 import PauseButton from './pause-button';
-import TopologyTimestampButton from './topology-timestamp-button';
+import TimeTravelTimestamp from './time-travel-timestamp';
 import {
   websocketQueryInPast,
-  startWebsocketTransition,
+  startWebsocketTransitionLoader,
   clickResumeUpdate,
 } from '../actions/app-actions';
 
@@ -70,7 +70,7 @@ const sliderRanges = {
   },
 };
 
-class TimelineControl extends React.Component {
+class TimeTravel extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -88,7 +88,7 @@ class TimelineControl extends React.Component {
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
   }
 
-  componentWillMount() {
+  componentDidMount() {
     // Force periodic re-renders to update the slider position as time goes by.
     this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_SLIDER_UPDATE_INTERVAL);
   }
@@ -110,7 +110,7 @@ class TimelineControl extends React.Component {
 
     this.setState({ millisecondsInPast });
     this.debouncedUpdateTimestamp(millisecondsInPast);
-    this.props.startWebsocketTransition();
+    this.props.startWebsocketTransitionLoader();
   }
 
   handleRangeOptionClick(rangeOption) {
@@ -120,7 +120,7 @@ class TimelineControl extends React.Component {
     if (this.state.millisecondsInPast > rangeMilliseconds) {
       this.setState({ millisecondsInPast: rangeMilliseconds });
       this.updateTimestamp(rangeMilliseconds);
-      this.props.startWebsocketTransition();
+      this.props.startWebsocketTransitionLoader();
     }
   }
 
@@ -131,7 +131,7 @@ class TimelineControl extends React.Component {
       rangeOptionSelected: sliderRanges.last1Hour,
     });
     this.updateTimestamp();
-    this.props.startWebsocketTransition();
+    this.props.startWebsocketTransitionLoader();
   }
 
   handleTimestampClick() {
@@ -167,7 +167,7 @@ class TimelineControl extends React.Component {
     );
   }
 
-  renderTimelineSlider() {
+  renderTimeSlider() {
     const { millisecondsInPast } = this.state;
     const rangeMilliseconds = this.getRangeMilliseconds();
 
@@ -181,17 +181,17 @@ class TimelineControl extends React.Component {
   }
 
   render() {
-    const { websocketTransitioning, hasTimelineControl } = this.props;
-    const { showSliderPanel, millisecondsInPast } = this.state;
+    const { websocketTransitioning, hasTimeTravel } = this.props;
+    const { showSliderPanel, millisecondsInPast, rangeOptionSelected } = this.state;
+    const lowerCaseLabel = rangeOptionSelected.label.toLowerCase();
     const isCurrent = (millisecondsInPast === 0);
 
-    // Don't render the timeline control if it's not explicitly enabled for this instance.
-    if (!hasTimelineControl) return null;
+    // Don't render the time travel control if it's not explicitly enabled for this instance.
+    if (!hasTimeTravel) return null;
 
     return (
-      <div className="timeline-control">
-        {showSliderPanel && <div className="slider-panel">
-          <span className="caption">Explore</span>
+      <div className="time-travel">
+        {showSliderPanel && <div className="time-travel-slider">
           <div className="options">
             <div className="column">
               {this.renderRangeOption(sliderRanges.last15Minutes)}
@@ -212,14 +212,14 @@ class TimelineControl extends React.Component {
               {this.renderRangeOption(sliderRanges.thisYearSoFar)}
             </div>
           </div>
-          <span className="slider-tip">Move the slider to travel back in time</span>
-          {this.renderTimelineSlider()}
+          <span className="slider-tip">Move the slider to explore {lowerCaseLabel}</span>
+          {this.renderTimeSlider()}
         </div>}
-        <div className="time-status">
-          {websocketTransitioning && <div className="timeline-jump-loader">
+        <div className="time-travel-status">
+          {websocketTransitioning && <div className="time-travel-jump-loader">
             <span className="fa fa-circle-o-notch fa-spin" />
           </div>}
-          <TopologyTimestampButton
+          <TimeTravelTimestamp
             onClick={this.handleTimestampClick}
             millisecondsInPast={millisecondsInPast}
             selected={showSliderPanel}
@@ -236,7 +236,7 @@ function mapStateToProps({ scope, root }, { params }) {
   const cloudInstance = root.instances[params.orgId] || {};
   const featureFlags = cloudInstance.featureFlags || [];
   return {
-    hasTimelineControl: featureFlags.includes('timeline-control'),
+    hasTimeTravel: featureFlags.includes('timeline-control'),
     websocketTransitioning: scope.get('websocketTransitioning'),
   };
 }
@@ -245,7 +245,7 @@ export default connect(
   mapStateToProps,
   {
     websocketQueryInPast,
-    startWebsocketTransition,
+    startWebsocketTransitionLoader,
     clickResumeUpdate,
   }
-)(TimelineControl);
+)(TimeTravel);

@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { isWebsocketQueryingCurrentSelector } from '../selectors/timeline';
+import { isWebsocketQueryingCurrentSelector } from '../selectors/time-travel';
 
 
 class Status extends React.Component {

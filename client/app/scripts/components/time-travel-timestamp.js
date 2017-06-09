@@ -3,11 +3,11 @@ import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 
-import { isPausedSelector } from '../selectors/timeline';
+import { isPausedSelector } from '../selectors/time-travel';
 import { TIMELINE_TICK_INTERVAL } from '../constants/timer';
 
 
-class TopologyTimestampButton extends React.Component {
+class TimeTravelTimestamp extends React.Component {
   componentDidMount() {
     this.timer = setInterval(() => {
       if (!this.props.isPaused) {
@@ -25,7 +25,7 @@ class TopologyTimestampButton extends React.Component {
     const timestamp = isPaused ? updatePausedAt : moment().utc().subtract(millisecondsInPast);
 
     return (
-      <time>{timestamp.format('MMMM Do YYYY, h:mm:ss a')} UTC</time>
+      <time>{timestamp.format()}</time>
     );
   }
 
@@ -33,13 +33,13 @@ class TopologyTimestampButton extends React.Component {
     const { selected, onClick, millisecondsInPast } = this.props;
     const isCurrent = (millisecondsInPast === 0);
 
-    const className = classNames('button topology-timestamp-button', {
+    const className = classNames('button time-travel-timestamp', {
       selected, current: isCurrent
     });
 
     return (
       <a className={className} onClick={onClick}>
-        <span className="topology-timestamp-info">
+        <span className="time-travel-timestamp-info">
           {isCurrent ? 'now' : this.renderTimestamp()}
         </span>
         <span className="fa fa-clock-o" />
@@ -55,4 +55,4 @@ function mapStateToProps({ scope }) {
   };
 }
 
-export default connect(mapStateToProps)(TopologyTimestampButton);
+export default connect(mapStateToProps)(TimeTravelTimestamp);
