@@ -1,7 +1,7 @@
 import { createSelector } from 'reselect';
 import { Set as makeSet } from 'immutable';
 
-import { getNodesFromEdgeId } from '../../utils/layouter-utils';
+import { constructEdgeId, getNodesFromEdgeId } from '../../utils/layouter-utils';
 
 
 const adjacentToHoveredNodeIdsSelector = createSelector(
@@ -45,5 +45,32 @@ export const highlightedNodeIdsSelector = createSelector(
     }
 
     return highlightedNodeIds;
+  }
+);
+
+export const highlightedEdgeIdsSelector = createSelector(
+  [
+    adjacentToHoveredNodeIdsSelector,
+    state => state.get('mouseOverNodeId'),
+    state => state.get('mouseOverEdgeId'),
+  ],
+  (adjacentToHoveredNodeIds, mouseOverNodeId, mouseOverEdgeId) => {
+    let highlightedEdgeIds = makeSet();
+
+    if (mouseOverEdgeId) {
+      const [sourceNode, targetNode] = getNodesFromEdgeId(mouseOverEdgeId);
+      highlightedEdgeIds = highlightedEdgeIds.add(constructEdgeId(sourceNode, targetNode));
+      highlightedEdgeIds = highlightedEdgeIds.add(constructEdgeId(targetNode, sourceNode));
+    }
+
+    if (mouseOverNodeId) {
+      // all neighbour combinations because we dont know which direction exists
+      highlightedEdgeIds = highlightedEdgeIds.union(adjacentToHoveredNodeIds.flatMap(adjacentId => [
+        constructEdgeId(adjacentId, mouseOverNodeId),
+        constructEdgeId(mouseOverNodeId, adjacentId),
+      ]));
+    }
+
+    return highlightedEdgeIds;
   }
 );

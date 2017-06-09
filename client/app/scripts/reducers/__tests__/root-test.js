@@ -3,6 +3,8 @@ import expect from 'expect';
 
 import { TABLE_VIEW_MODE } from '../../constants/naming';
 import { constructEdgeId } from '../../utils/layouter-utils';
+import { highlightedEdgeIdsSelector } from '../../selectors/graph-view/decorators';
+
 
 // Root reducer test suite using Jasmine matchers
 describe('RootReducer', () => {
@@ -678,7 +680,7 @@ describe('RootReducer', () => {
       edgeId: constructEdgeId('abc123', 'def456')
     };
     const nextState = reducer(initialState, action);
-    expect(nextState.get('highlightedEdgeIds').toJS()).toEqual([
+    expect(highlightedEdgeIdsSelector(nextState).toJS()).toEqual([
       constructEdgeId('abc123', 'def456'),
       constructEdgeId('def456', 'abc123')
     ]);

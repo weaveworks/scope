@@ -8,12 +8,10 @@ import {
   List as makeList,
   Map as makeMap,
   OrderedMap as makeOrderedMap,
-  Set as makeSet,
 } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
 import {
-  EDGE_ID_SEPARATOR,
   GRAPH_VIEW_MODE,
   TABLE_VIEW_MODE,
 } from '../constants/naming';
@@ -26,7 +24,6 @@ import { consolidateNodesDeltas } from '../utils/nodes-delta-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
-  getAdjacentNodes,
   setTopologyUrlsById,
   updateTopologyIds,
   filterHiddenTopologies,
@@ -54,8 +51,6 @@ export const initialState = makeMap({
   forceRelayout: false,
   gridSortedBy: null,
   gridSortedDesc: null,
-  // TODO: Calculate these sets from selectors instead.
-  highlightedEdgeIds: makeSet(),
   hostname: '...',
   hoveredMetricType: null,
   initialNodesLoaded: false,
@@ -467,55 +462,19 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.ENTER_EDGE: {
-      const edgeId = action.edgeId;
-      const adjacentNodes = edgeId.split(EDGE_ID_SEPARATOR);
-
-      state = state.set('mouseOverEdgeId', edgeId);
-
-      // highlight edge
-      state = state.update('highlightedEdgeIds', (highlightedEdgeIds) => {
-        highlightedEdgeIds = highlightedEdgeIds.clear();
-        highlightedEdgeIds = highlightedEdgeIds.add(edgeId);
-        const opposite = adjacentNodes.reverse().join(EDGE_ID_SEPARATOR);
-        highlightedEdgeIds = highlightedEdgeIds.add(opposite);
-        return highlightedEdgeIds;
-      });
-
-      return state;
+      return state.set('mouseOverEdgeId', action.edgeId);
     }
 
     case ActionTypes.ENTER_NODE: {
-      const nodeId = action.nodeId;
-      const adjacentNodes = getAdjacentNodes(state, nodeId);
-
-      state = state.set('mouseOverNodeId', nodeId);
-
-      // highlight edge
-      state = state.update('highlightedEdgeIds', (highlightedEdgeIds) => {
-        highlightedEdgeIds = highlightedEdgeIds.clear();
-        if (adjacentNodes.size > 0) {
-          // all neighbour combinations because we dont know which direction exists
-          highlightedEdgeIds = highlightedEdgeIds.union(adjacentNodes.flatMap(adjacentId => [
-            [adjacentId, nodeId].join(EDGE_ID_SEPARATOR),
-            [nodeId, adjacentId].join(EDGE_ID_SEPARATOR)
-          ]));
-        }
-        return highlightedEdgeIds;
-      });
-
-      return state;
+      return state.set('mouseOverNodeId', action.nodeId);
     }
 
     case ActionTypes.LEAVE_EDGE: {
-      state = state.set('mouseOverEdgeId', null);
-      state = state.update('highlightedEdgeIds', highlightedEdgeIds => highlightedEdgeIds.clear());
-      return state;
+      return state.set('mouseOverEdgeId', null);
     }
 
     case ActionTypes.LEAVE_NODE: {
-      state = state.set('mouseOverNodeId', null);
-      state = state.update('highlightedEdgeIds', highlightedEdgeIds => highlightedEdgeIds.clear());
-      return state;
+      return state.set('mouseOverNodeId', null);
     }
 
     case ActionTypes.DO_CONTROL_ERROR: {
