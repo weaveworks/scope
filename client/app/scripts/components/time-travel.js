@@ -7,6 +7,7 @@ import { debounce } from 'lodash';
 
 import PauseButton from './pause-button';
 import TimeTravelTimestamp from './time-travel-timestamp';
+import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
   websocketQueryInPast,
   startWebsocketTransitionLoader,
@@ -84,8 +85,11 @@ class TimeTravel extends React.Component {
     this.handleTimestampClick = this.handleTimestampClick.bind(this);
     this.handleJumpToNowClick = this.handleJumpToNowClick.bind(this);
     this.handleSliderChange = this.handleSliderChange.bind(this);
+
     this.debouncedUpdateTimestamp = debounce(
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
+    this.debouncedTrackSliderChange = debounce(
+      this.trackSliderChange.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
   }
 
   componentDidMount() {
@@ -109,8 +113,10 @@ class TimeTravel extends React.Component {
     }
 
     this.setState({ millisecondsInPast });
-    this.debouncedUpdateTimestamp(millisecondsInPast);
     this.props.startWebsocketTransitionLoader();
+    this.debouncedUpdateTimestamp(millisecondsInPast);
+
+    this.debouncedTrackSliderChange();
   }
 
   handleRangeOptionClick(rangeOption) {
@@ -122,6 +128,13 @@ class TimeTravel extends React.Component {
       this.updateTimestamp(rangeMilliseconds);
       this.props.startWebsocketTransitionLoader();
     }
+
+    trackMixpanelEvent('scope.time.range.select', {
+      layout: this.props.topologyViewMode,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+      label: rangeOption.label,
+    });
   }
 
   handleJumpToNowClick() {
@@ -132,10 +145,24 @@ class TimeTravel extends React.Component {
     });
     this.updateTimestamp();
     this.props.startWebsocketTransitionLoader();
+
+    trackMixpanelEvent('scope.time.now.click', {
+      layout: this.props.topologyViewMode,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+    });
   }
 
   handleTimestampClick() {
-    this.setState({ showSliderPanel: !this.state.showSliderPanel });
+    const showSliderPanel = !this.state.showSliderPanel;
+    this.setState({ showSliderPanel });
+
+    trackMixpanelEvent('scope.time.timestamp.click', {
+      layout: this.props.topologyViewMode,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+      showSliderPanel,
+    });
   }
 
   updateTimestamp(millisecondsInPast = 0) {
@@ -145,6 +172,14 @@ class TimeTravel extends React.Component {
 
   getRangeMilliseconds(rangeOption = this.state.rangeOptionSelected) {
     return moment().diff(rangeOption.getStart());
+  }
+
+  trackSliderChange() {
+    trackMixpanelEvent('scope.time.slider.change', {
+      layout: this.props.topologyViewMode,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+    });
   }
 
   renderRangeOption(rangeOption) {
@@ -238,6 +273,8 @@ function mapStateToProps({ scope, root }, { params }) {
   return {
     hasTimeTravel: featureFlags.includes('timeline-control'),
     websocketTransitioning: scope.get('websocketTransitioning'),
+    topologyViewMode: scope.get('topologyViewMode'),
+    currentTopology: scope.get('currentTopology'),
   };
 }
 
