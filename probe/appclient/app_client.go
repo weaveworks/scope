@@ -24,7 +24,7 @@ const (
 	maxBackoff        = 60 * time.Second
 )
 
-// AppClient is a client to an app for dealing with controls.
+// AppClient is a client to an app, dealing with report publishing, controls and pipes.
 type AppClient interface {
 	Details() (xfer.Details, error)
 	ControlConnection()
@@ -34,7 +34,7 @@ type AppClient interface {
 	Stop()
 }
 
-// appClient is a client to an app for dealing with controls.
+// appClient is a client to an app, dealing with report publishing, controls and pipes.
 type appClient struct {
 	ProbeConfig
 
