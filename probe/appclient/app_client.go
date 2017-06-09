@@ -31,6 +31,8 @@ type AppClient interface {
 	PipeConnection(string, xfer.Pipe)
 	PipeClose(string) error
 	Publish(r io.Reader) error
+	Target() url.URL
+	ReTarget(url.URL)
 	Stop()
 }
 
@@ -84,10 +86,14 @@ func NewAppClient(pc ProbeConfig, hostname string, target url.URL, control xfer.
 }
 
 func (c *appClient) url(path string) string {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 	return c.target.String() + path
 }
 
 func (c *appClient) wsURL(path string) string {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
 	output := c.target //copy the url
 	if output.Scheme == "https" {
 		output.Scheme = "wss"
@@ -138,6 +144,23 @@ func (c *appClient) retainGoroutine() bool {
 
 func (c *appClient) releaseGoroutine() {
 	c.backgroundWait.Done()
+}
+
+func (c *appClient) Target() url.URL {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	return c.target
+}
+
+// Re-target the appClient, publishing to a new URL. Note that control
+// and pipe websocket connections are left untouched since we don't
+// want to disrupt them just because there's some load-balancing going
+// on. They *will* however pick up the new URL when terminating
+// (e.g. due to errors or when the connection drops).
+func (c *appClient) ReTarget(target url.URL) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	c.target = target
 }
 
 // Stop stops the appClient.
