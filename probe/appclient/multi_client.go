@@ -103,7 +103,9 @@ func (c *multiClient) Set(hostname string, urls []url.URL) {
 	hostIDs := report.MakeIDList()
 	for tuple := range clients {
 		hostIDs = hostIDs.Add(tuple.ID)
-		if _, ok := c.clients[tuple.ID]; !ok {
+		if client, ok := c.clients[tuple.ID]; ok {
+			client.ReTarget(tuple.AppClient.Target())
+		} else {
 			c.clients[tuple.ID] = tuple.AppClient
 			if !c.noControls {
 				tuple.AppClient.ControlConnection()

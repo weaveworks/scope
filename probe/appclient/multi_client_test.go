@@ -26,6 +26,13 @@ func (c *mockClient) ControlConnection() {
 	c.count++
 }
 
+func (c *mockClient) Target() url.URL {
+	return url.URL{}
+}
+
+func (c *mockClient) ReTarget(_ url.URL) {
+}
+
 func (c *mockClient) Stop() {
 	c.stopped++
 }
