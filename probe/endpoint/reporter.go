@@ -11,8 +11,6 @@ import (
 
 // Node metadata keys.
 const (
-	Addr            = "addr" // typically IPv4
-	Port            = "port"
 	Conntracked     = "conntracked"
 	EBPF            = "eBPF"
 	Procspied       = "procspied"

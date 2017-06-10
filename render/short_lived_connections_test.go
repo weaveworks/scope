@@ -52,29 +52,21 @@ var (
 		Endpoint: report.Topology{
 			Nodes: report.Nodes{
 				randomEndpointNodeID: report.MakeNodeWith(randomEndpointNodeID, map[string]string{
-					endpoint.Addr:        randomIP,
-					endpoint.Port:        randomPort,
 					endpoint.Conntracked: "true",
 				}).
 					WithAdjacent(serverEndpointNodeID).WithTopology(report.Endpoint),
 
 				serverEndpointNodeID: report.MakeNodeWith(serverEndpointNodeID, map[string]string{
-					endpoint.Addr:        serverIP,
-					endpoint.Port:        serverPort,
 					endpoint.Conntracked: "true",
 				}).
 					WithTopology(report.Endpoint),
 
 				container1EndpointNodeID: report.MakeNodeWith(container1EndpointNodeID, map[string]string{
-					endpoint.Addr:        container1IP,
-					endpoint.Port:        container1Port,
 					endpoint.Conntracked: "true",
 				}).
 					WithAdjacent(duplicatedEndpointNodeID).WithTopology(report.Endpoint),
 
 				duplicatedEndpointNodeID: report.MakeNodeWith(duplicatedEndpointNodeID, map[string]string{
-					endpoint.Addr:        duplicatedIP,
-					endpoint.Port:        duplicatedPort,
 					endpoint.Conntracked: "true",
 				}).
 					WithTopology(report.Endpoint),

@@ -2,7 +2,6 @@ package render
 
 import (
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -82,7 +81,7 @@ var ProcessNameRenderer = ConditionalRenderer(renderProcesses,
 
 // MapEndpoint2Pseudo makes internet of host pesudo nodes from a endpoint node.
 func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
-	addr, ok := n.Latest.Lookup(endpoint.Addr)
+	_, addr, _, ok := report.ParseEndpointNodeID(n.ID)
 	if !ok {
 		return report.Nodes{}
 	}

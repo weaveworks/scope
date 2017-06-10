@@ -223,9 +223,7 @@ func (t *connectionTracker) addConnection(rpt *report.Report, ft fourTuple, name
 
 func (t *connectionTracker) makeEndpointNode(namespaceID string, addr string, port uint16, extra map[string]string) report.Node {
 	portStr := strconv.Itoa(int(port))
-	node := report.MakeNodeWith(
-		report.MakeEndpointNodeID(t.conf.HostID, namespaceID, addr, portStr),
-		map[string]string{Addr: addr, Port: portStr})
+	node := report.MakeNodeWith(report.MakeEndpointNodeID(t.conf.HostID, namespaceID, addr, portStr), nil)
 	if names := t.conf.DNSSnooper.CachedNamesForIP(addr); len(names) > 0 {
 		node = node.WithSet(SnoopedDNSNames, report.MakeStringSet(names...))
 	}

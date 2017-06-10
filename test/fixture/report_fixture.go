@@ -128,8 +128,6 @@ var (
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
 				Client54001NodeID: report.MakeNode(Client54001NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Addr:      ClientIP,
-					endpoint.Port:      ClientPort54001,
 					process.PID:        Client1PID,
 					report.HostNodeID:  ClientHostNodeID,
 					endpoint.Procspied: True,
@@ -139,8 +137,6 @@ var (
 				}),
 
 				Client54002NodeID: report.MakeNode(Client54002NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Addr:      ClientIP,
-					endpoint.Port:      ClientPort54002,
 					process.PID:        Client2PID,
 					report.HostNodeID:  ClientHostNodeID,
 					endpoint.Procspied: True,
@@ -150,16 +146,12 @@ var (
 				}),
 
 				Server80NodeID: report.MakeNode(Server80NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Addr:      ServerIP,
-					endpoint.Port:      ServerPort,
 					process.PID:        ServerPID,
 					report.HostNodeID:  ServerHostNodeID,
 					endpoint.Procspied: True,
 				}),
 
 				NonContainerNodeID: report.MakeNode(NonContainerNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Addr:      ServerIP,
-					endpoint.Port:      NonContainerClientPort,
 					process.PID:        NonContainerPID,
 					report.HostNodeID:  ServerHostNodeID,
 					endpoint.Procspied: True,
@@ -167,8 +159,6 @@ var (
 
 				// Probe pseudo nodes
 				UnknownClient1NodeID: report.MakeNode(UnknownClient1NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Addr:      UnknownClient1IP,
-					endpoint.Port:      UnknownClient1Port,
 					endpoint.Procspied: True,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(30),
@@ -176,8 +166,6 @@ var (
 				}),
 
 				UnknownClient2NodeID: report.MakeNode(UnknownClient2NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Addr:      UnknownClient2IP,
-					endpoint.Port:      UnknownClient2Port,
 					endpoint.Procspied: True,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(40),
@@ -185,8 +173,6 @@ var (
 				}),
 
 				UnknownClient3NodeID: report.MakeNode(UnknownClient3NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Addr:      UnknownClient3IP,
-					endpoint.Port:      UnknownClient3Port,
 					endpoint.Procspied: True,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(50),
@@ -194,8 +180,6 @@ var (
 				}),
 
 				RandomClientNodeID: report.MakeNode(RandomClientNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Addr:      RandomClientIP,
-					endpoint.Port:      RandomClientPort,
 					endpoint.Procspied: True,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(60),
@@ -203,8 +187,6 @@ var (
 				}),
 
 				GoogleEndpointNodeID: report.MakeNode(GoogleEndpointNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Addr:      GoogleIP,
-					endpoint.Port:      GooglePort,
 					endpoint.Procspied: True,
 				}),
 			},
