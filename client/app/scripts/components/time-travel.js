@@ -269,7 +269,7 @@ function mapStateToProps({ scope, root }, { params }) {
   const cloudInstance = root.instances[params.orgId] || {};
   const featureFlags = cloudInstance.featureFlags || [];
   return {
-    hasTimeTravel: featureFlags.includes('time-travel'),
+    hasTimeTravel: featureFlags.includes('time-travel') || true,
     websocketTransitioning: scope.get('websocketTransitioning'),
     topologyViewMode: scope.get('topologyViewMode'),
     currentTopology: scope.get('currentTopology'),

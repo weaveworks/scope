@@ -221,13 +221,7 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     const state = getState();
     getTopologies(activeTopologyOptionsSelector(state), dispatch);
     updateWebsocketChannel(state, dispatch);
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('currentTopologyId'),
-      activeTopologyOptionsSelector(state),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(state, dispatch);
   };
 }
 
@@ -351,14 +345,7 @@ export function clickNode(nodeId, label, origin) {
       nodeId
     });
     updateRoute(getState);
-    const state = getState();
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('currentTopologyId'),
-      activeTopologyOptionsSelector(state),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(getState(), dispatch);
   };
 }
 
@@ -378,14 +365,7 @@ export function clickRelative(nodeId, topologyId, label, origin) {
       topologyId
     });
     updateRoute(getState);
-    const state = getState();
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('currentTopologyId'),
-      activeTopologyOptionsSelector(state),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(getState(), dispatch);
   };
 }
 
@@ -666,13 +646,7 @@ export function receiveTopologies(topologies) {
     });
     const state = getState();
     updateWebsocketChannel(state, dispatch);
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('currentTopologyId'),
-      activeTopologyOptionsSelector(state),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(state, dispatch);
     // Populate search matches on first load
     if (firstLoad && state.get('searchQuery')) {
       dispatch(focusSearch());
@@ -783,13 +757,7 @@ export function route(urlState) {
     const state = getState();
     getTopologies(activeTopologyOptionsSelector(state), dispatch);
     updateWebsocketChannel(state, dispatch);
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('currentTopologyId'),
-      activeTopologyOptionsSelector(state),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(state, dispatch);
     // If we are landing on the resource view page, we need to fetch not only all the
     // nodes for the current topology, but also the nodes of all the topologies that make
     // the layers in the resource view.

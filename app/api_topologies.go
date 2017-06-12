@@ -564,12 +564,19 @@ type rendererHandler func(context.Context, render.Renderer, render.Decorator, re
 
 func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		topologyID := mux.Vars(req)["topology"]
+		var (
+			topologyID  = mux.Vars(req)["topology"]
+			queryParams = req.URL.Query()
+			timestamp   = time.Now()
+		)
 		if _, ok := r.get(topologyID); !ok {
 			http.NotFound(w, req)
 			return
 		}
-		rpt, err := rep.Report(ctx, time.Now())
+		if timestampStr := queryParams.Get("timestamp"); timestampStr != "" {
+			timestamp, _ = time.Parse(time.RFC3339, timestampStr)
+		}
+		rpt, err := rep.Report(ctx, timestamp)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return

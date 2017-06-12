@@ -262,7 +262,12 @@ export function updateWebsocketChannel(state, dispatch) {
   }
 }
 
-export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nodeMap, dispatch) {
+export function getNodeDetails(state, dispatch) {
+  const nodeMap = state.get('nodeDetails');
+  const topologyUrlsById = state.get('topologyUrlsById');
+  const currentTopologyId = state.get('currentTopologyId');
+  let options = activeTopologyOptionsSelector(state);
+
   // get details for all opened nodes
   const obj = nodeMap.last();
   if (obj && topologyUrlsById.has(obj.topologyId)) {
@@ -270,6 +275,7 @@ export function getNodeDetails(topologyUrlsById, currentTopologyId, options, nod
     let urlComponents = [getApiPath(), topologyUrl, '/', encodeURIComponent(obj.id)];
     if (currentTopologyId === obj.topologyId) {
       // Only forward filters for nodes in the current topology
+      options = options.set('timestamp', getWebsocketQueryTimestamp(state));
       const optionsQuery = buildUrlQuery(options);
       urlComponents = urlComponents.concat(['?', optionsQuery]);
     }
