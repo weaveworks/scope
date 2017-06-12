@@ -6,7 +6,6 @@ import (
 
 	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
@@ -182,7 +181,7 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	}
 
 	// try rendering it as an endpoint
-	if addr, ok := n.Latest.Lookup(endpoint.Addr); ok {
+	if _, addr, _, ok := report.ParseEndpointNodeID(n.ID); ok {
 		base.Label = addr
 		base.Shape = report.Circle
 		return base, true
