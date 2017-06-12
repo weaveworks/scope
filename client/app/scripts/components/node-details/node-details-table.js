@@ -202,7 +202,8 @@ export default class NodeDetailsTable extends React.Component {
 
     const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
     const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
-    const sortedDesc = this.state.sortedDesc || defaultSortDesc(sortedByHeader);
+    const sortedDesc = (this.state.sortedDesc === undefined) ?
+      defaultSortDesc(sortedByHeader) : this.state.sortedDesc;
 
     let nodes = getSortedNodes(this.props.nodes, sortedByHeader, sortedDesc);
 
