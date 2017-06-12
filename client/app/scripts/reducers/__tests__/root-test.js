@@ -2,9 +2,9 @@ import { is, fromJS } from 'immutable';
 import expect from 'expect';
 
 import { TABLE_VIEW_MODE } from '../../constants/naming';
-// Root reducer test suite using Jasmine matchers
 import { constructEdgeId } from '../../utils/layouter-utils';
 
+// Root reducer test suite using Jasmine matchers
 describe('RootReducer', () => {
   const ActionTypes = require('../../constants/action-types').default;
   const reducer = require('../root').default;
@@ -512,8 +512,6 @@ describe('RootReducer', () => {
 
     nextState = reducer(nextState, OpenWebsocketAction);
     expect(nextState.get('websocketClosed')).toBeFalsy();
-    // opened socket clears nodes
-    expect(nextState.get('nodes').toJS()).toEqual({});
   });
 
   // adjacency test
@@ -538,12 +536,19 @@ describe('RootReducer', () => {
     let nextState = initialState;
     nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopologyAction);
+    expect(isTopologyEmpty(nextState)).toBeTruthy();
+
+    nextState = reducer(nextState, ReceiveNodesDeltaAction);
     expect(isTopologyEmpty(nextState)).toBeFalsy();
 
     nextState = reducer(nextState, ClickTopology2Action);
+    nextState = reducer(nextState, ReceiveNodesDeltaAction);
     expect(isTopologyEmpty(nextState)).toBeTruthy();
 
     nextState = reducer(nextState, ClickTopologyAction);
+    expect(isTopologyEmpty(nextState)).toBeTruthy();
+
+    nextState = reducer(nextState, ReceiveNodesDeltaAction);
     expect(isTopologyEmpty(nextState)).toBeFalsy();
   });
 

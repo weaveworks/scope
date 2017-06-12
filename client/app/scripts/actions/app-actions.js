@@ -1,28 +1,23 @@
 import debug from 'debug';
-import find from 'lodash/find';
+import { find } from 'lodash';
 
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { updateRoute } from '../utils/router-utils';
 import {
-  bufferDeltaUpdate,
-  resumeUpdate,
-  resetUpdateBuffer,
-} from '../utils/update-buffer-utils';
-import {
   doControlRequest,
   getAllNodes,
   getResourceViewNodesSnapshot,
-  getNodesDelta,
+  updateWebsocketChannel,
   getNodeDetails,
   getTopologies,
   deletePipe,
   stopPolling,
   teardownWebsockets,
 } from '../utils/web-api-utils';
-import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
+import { isPausedSelector } from '../selectors/time-travel';
 import {
   availableMetricTypesSelector,
   nextPinnedMetricTypeSelector,
@@ -34,14 +29,20 @@ import {
   isResourceViewModeSelector,
   resourceViewAvailableSelector,
 } from '../selectors/topology';
+
+import { NODES_DELTA_BUFFER_SIZE_LIMIT } from '../constants/limits';
+import { NODES_DELTA_BUFFER_FEED_INTERVAL } from '../constants/timer';
 import {
   GRAPH_VIEW_MODE,
   TABLE_VIEW_MODE,
   RESOURCE_VIEW_MODE,
- } from '../constants/naming';
+} from '../constants/naming';
 
 
 const log = debug('scope:app-actions');
+
+// TODO: This shouldn't be exposed here as a global variable.
+let nodesDeltaBufferUpdateTimer = null;
 
 export function showHelp() {
   return { type: ActionTypes.SHOW_HELP };
@@ -73,6 +74,11 @@ export function sortOrderChanged(sortedBy, sortedDesc) {
     });
     updateRoute(getState);
   };
+}
+
+function resetNodesDeltaBuffer() {
+  clearInterval(nodesDeltaBufferUpdateTimer);
+  return { type: ActionTypes.CLEAR_NODES_DELTA_BUFFER };
 }
 
 
@@ -211,14 +217,10 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     });
     updateRoute(getState);
     // update all request workers with new options
-    resetUpdateBuffer();
+    dispatch(resetNodesDeltaBuffer());
     const state = getState();
     getTopologies(activeTopologyOptionsSelector(state), dispatch);
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      dispatch
-    );
+    updateWebsocketChannel(state, dispatch);
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
@@ -387,15 +389,6 @@ export function clickRelative(nodeId, topologyId, label, origin) {
   };
 }
 
-export function clickResumeUpdate() {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.CLICK_RESUME_UPDATE
-    });
-    resumeUpdate(getState);
-  };
-}
-
 function updateTopology(dispatch, getState) {
   const state = getState();
   // If we're in the resource view, get the snapshot of all the relevant node topologies.
@@ -404,15 +397,11 @@ function updateTopology(dispatch, getState) {
   }
   updateRoute(getState);
   // update all request workers with new options
-  resetUpdateBuffer();
+  dispatch(resetNodesDeltaBuffer());
   // NOTE: This is currently not needed for our static resource
   // view, but we'll need it here later and it's simpler to just
   // keep it than to redo the nodes delta updating logic.
-  getNodesDelta(
-    getCurrentTopologyUrl(state),
-    activeTopologyOptionsSelector(state),
-    dispatch
-  );
+  updateWebsocketChannel(state, dispatch);
 }
 
 export function clickShowTopologyForNode(topologyId, nodeId) {
@@ -433,6 +422,24 @@ export function clickTopology(topologyId) {
       topologyId
     });
     updateTopology(dispatch, getState);
+  };
+}
+
+export function startWebsocketTransitionLoader() {
+  return {
+    type: ActionTypes.START_WEBSOCKET_TRANSITION_LOADER,
+  };
+}
+
+export function websocketQueryInPast(millisecondsInPast) {
+  return (dispatch, getServiceState) => {
+    dispatch({
+      type: ActionTypes.WEBSOCKET_QUERY_MILLISECONDS_IN_PAST,
+      millisecondsInPast,
+    });
+    const scopeState = getServiceState().scope;
+    updateWebsocketChannel(scopeState, dispatch);
+    dispatch(resetNodesDeltaBuffer());
   };
 }
 
@@ -590,10 +597,21 @@ export function receiveNodesDelta(delta) {
     //
     setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
-    if (delta.add || delta.update || delta.remove) {
-      const state = getState();
-      if (state.get('updatePausedAt') !== null) {
-        bufferDeltaUpdate(delta);
+    // TODO: This way of getting the Scope state is a bit hacky, so try to replace
+    // it with something better. The problem is that all the actions that are called
+    // from the components wrapped in <CloudFeature /> have a global Service state
+    // returned by getState(). Since method is called from both contexts, getState()
+    // will sometimes return Scope state subtree and sometimes the whole Service state.
+    const state = getState().scope || getState();
+    const movingInTime = state.get('websocketTransitioning');
+    const hasChanges = delta.add || delta.update || delta.remove;
+
+    if (hasChanges || movingInTime) {
+      if (isPausedSelector(state)) {
+        if (state.get('nodesDeltaBuffer').size >= NODES_DELTA_BUFFER_SIZE_LIMIT) {
+          dispatch({ type: ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER });
+        }
+        dispatch({ type: ActionTypes.BUFFER_NODES_DELTA, delta });
       } else {
         dispatch({
           type: ActionTypes.RECEIVE_NODES_DELTA,
@@ -601,6 +619,31 @@ export function receiveNodesDelta(delta) {
         });
       }
     }
+  };
+}
+
+function updateFromNodesDeltaBuffer(dispatch, state) {
+  const isPaused = isPausedSelector(state);
+  const isBufferEmpty = state.get('nodesDeltaBuffer').isEmpty();
+
+  if (isPaused || isBufferEmpty) {
+    dispatch(resetNodesDeltaBuffer());
+  } else {
+    dispatch(receiveNodesDelta(state.get('nodesDeltaBuffer').first()));
+    dispatch({ type: ActionTypes.POP_NODES_DELTA_BUFFER });
+  }
+}
+
+export function clickResumeUpdate() {
+  return (dispatch, getServiceState) => {
+    dispatch({
+      type: ActionTypes.CLICK_RESUME_UPDATE
+    });
+    // Periodically merge buffered nodes deltas until the buffer is emptied.
+    nodesDeltaBufferUpdateTimer = setInterval(
+      () => updateFromNodesDeltaBuffer(dispatch, getServiceState().scope),
+      NODES_DELTA_BUFFER_FEED_INTERVAL,
+    );
   };
 }
 
@@ -620,11 +663,7 @@ export function receiveTopologies(topologies) {
       topologies
     });
     const state = getState();
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      dispatch
-    );
+    updateWebsocketChannel(state, dispatch);
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),
@@ -741,11 +780,7 @@ export function route(urlState) {
     // update all request workers with new options
     const state = getState();
     getTopologies(activeTopologyOptionsSelector(state), dispatch);
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      activeTopologyOptionsSelector(state),
-      dispatch
-    );
+    updateWebsocketChannel(state, dispatch);
     getNodeDetails(
       state.get('topologyUrlsById'),
       state.get('currentTopologyId'),

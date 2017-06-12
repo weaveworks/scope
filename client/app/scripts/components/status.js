@@ -1,9 +1,13 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { isWebsocketQueryingCurrentSelector } from '../selectors/time-travel';
+
+
 class Status extends React.Component {
   render() {
-    const {errorUrl, topologiesLoaded, filteredNodeCount, topology, websocketClosed} = this.props;
+    const { errorUrl, topologiesLoaded, filteredNodeCount, topology,
+      websocketClosed, showingCurrentState } = this.props;
 
     let title = '';
     let text = 'Trying to reconnect...';
@@ -29,6 +33,11 @@ class Status extends React.Component {
       }
       classNames += ' status-stats';
       showWarningIcon = false;
+      // TODO: Currently the stats are always pulled for the current state of the system,
+      // so they are incorrect when showing the past. This should be addressed somehow.
+      if (!showingCurrentState) {
+        text = '';
+      }
     }
 
     return (
@@ -44,9 +53,10 @@ function mapStateToProps(state) {
   return {
     errorUrl: state.get('errorUrl'),
     filteredNodeCount: state.get('nodes').filter(node => node.get('filtered')).size,
+    showingCurrentState: isWebsocketQueryingCurrentSelector(state),
     topologiesLoaded: state.get('topologiesLoaded'),
     topology: state.get('currentTopology'),
-    websocketClosed: state.get('websocketClosed')
+    websocketClosed: state.get('websocketClosed'),
   };
 }
 

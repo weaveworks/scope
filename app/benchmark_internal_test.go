@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -27,7 +28,7 @@ func loadReport() (report.Report, error) {
 		return fixture.Report, err
 	}
 
-	return c.Report(context.Background())
+	return c.Report(context.Background(), time.Now())
 }
 
 func BenchmarkTopologyList(b *testing.B) {

@@ -1,8 +1,15 @@
 /* eslint-disable import/no-webpack-loader-syntax, import/no-unresolved */
 import debug from 'debug';
+import moment from 'moment';
 import { size, each, includes, isEqual } from 'lodash';
-import { fromJS, is as isDeepEqual, List as makeList, Map as makeMap,
-  OrderedMap as makeOrderedMap, Set as makeSet } from 'immutable';
+import {
+  fromJS,
+  is as isDeepEqual,
+  List as makeList,
+  Map as makeMap,
+  OrderedMap as makeOrderedMap,
+  Set as makeSet,
+} from 'immutable';
 
 import ActionTypes from '../constants/action-types';
 import {
@@ -15,6 +22,7 @@ import {
   isResourceViewModeSelector,
 } from '../selectors/topology';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
+import { consolidateNodesDeltas } from '../utils/nodes-delta-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
@@ -56,6 +64,7 @@ export const initialState = makeMap({
   mouseOverNodeId: null,
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
+  nodesDeltaBuffer: makeList(),
   nodesLoaded: false,
   // nodes cache, infrequently updated, used for search & resource view
   nodesByTopology: makeMap(), // topologyId -> nodes
@@ -78,11 +87,13 @@ export const initialState = makeMap({
   topologyOptions: makeOrderedMap(), // topologyId -> options
   topologyUrlsById: makeOrderedMap(), // topologyId -> topologyUrl
   topologyViewMode: GRAPH_VIEW_MODE,
-  updatePausedAt: null, // Date
+  updatePausedAt: null,
   version: '...',
   versionUpdate: null,
   viewport: makeMap(),
   websocketClosed: false,
+  websocketTransitioning: false,
+  websocketQueryMillisecondsInPast: 0,
   zoomCache: makeMap(),
   serviceImages: makeMap()
 });
@@ -285,7 +296,8 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_PAUSE_UPDATE: {
-      return state.set('updatePausedAt', new Date());
+      const millisecondsInPast = state.get('websocketQueryMillisecondsInPast');
+      return state.set('updatePausedAt', moment().utc().subtract(millisecondsInPast));
     }
 
     case ActionTypes.CLICK_RELATIVE: {
@@ -331,7 +343,8 @@ export function rootReducer(state = initialState, action) {
       state = resumeUpdate(state);
       state = closeAllNodeDetails(state);
 
-      if (action.topologyId !== state.get('currentTopologyId')) {
+      const currentTopologyId = state.get('currentTopologyId');
+      if (action.topologyId !== currentTopologyId) {
         state = setTopology(state, action.topologyId);
         state = clearNodes(state);
       }
@@ -339,11 +352,47 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
+    //
+    // websockets
+    //
+
+    case ActionTypes.OPEN_WEBSOCKET: {
+      return state.set('websocketClosed', false);
+    }
+
+    case ActionTypes.START_WEBSOCKET_TRANSITION_LOADER: {
+      return state.set('websocketTransitioning', true);
+    }
+
+    case ActionTypes.WEBSOCKET_QUERY_MILLISECONDS_IN_PAST: {
+      return state.set('websocketQueryMillisecondsInPast', action.millisecondsInPast);
+    }
+
     case ActionTypes.CLOSE_WEBSOCKET: {
-      if (!state.get('websocketClosed')) {
-        state = state.set('websocketClosed', true);
-      }
-      return state;
+      return state.set('websocketClosed', true);
+    }
+
+    //
+    // nodes delta buffer
+    //
+
+    case ActionTypes.CLEAR_NODES_DELTA_BUFFER: {
+      return state.update('nodesDeltaBuffer', buffer => buffer.clear());
+    }
+
+    case ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER: {
+      const firstDelta = state.getIn(['nodesDeltaBuffer', 0]);
+      const secondDelta = state.getIn(['nodesDeltaBuffer', 1]);
+      const deltaUnion = consolidateNodesDeltas(firstDelta, secondDelta);
+      return state.update('nodesDeltaBuffer', buffer => buffer.shift().set(0, deltaUnion));
+    }
+
+    case ActionTypes.POP_NODES_DELTA_BUFFER: {
+      return state.update('nodesDeltaBuffer', buffer => buffer.shift());
+    }
+
+    case ActionTypes.BUFFER_NODES_DELTA: {
+      return state.update('nodesDeltaBuffer', buffer => buffer.push(action.delta));
     }
 
     //
@@ -479,13 +528,6 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
-    case ActionTypes.OPEN_WEBSOCKET: {
-      // flush nodes cache after re-connect
-      state = state.update('nodes', nodes => nodes.clear());
-      state = state.set('websocketClosed', false);
-      return state;
-    }
-
     case ActionTypes.DO_CONTROL_ERROR: {
       return state.setIn(['controlStatus', action.nodeId], makeMap({
         pending: false,
@@ -567,17 +609,21 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_NODES_DELTA: {
-      const emptyMessage = !action.delta.add && !action.delta.remove
-        && !action.delta.update;
-
-      if (!emptyMessage) {
-        log('RECEIVE_NODES_DELTA',
-          'remove', size(action.delta.remove),
-          'update', size(action.delta.update),
-          'add', size(action.delta.add));
-      }
+      log('RECEIVE_NODES_DELTA',
+        'remove', size(action.delta.remove),
+        'update', size(action.delta.update),
+        'add', size(action.delta.add));
 
       state = state.set('errorUrl', null);
+
+      // When moving in time, we will consider the transition complete
+      // only when the first batch of nodes delta has been received. We
+      // do that because we want to keep the previous state blurred instead
+      // of transitioning over an empty state like when switching topologies.
+      if (state.get('websocketTransitioning')) {
+        state = state.set('websocketTransitioning', false);
+        state = clearNodes(state);
+      }
 
       // nodes that no longer exist
       each(action.delta.remove, (nodeId) => {

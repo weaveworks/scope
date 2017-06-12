@@ -93,16 +93,33 @@ func handleWebsocket(
 	}(conn)
 
 	var (
-		previousTopo detailed.NodeSummaries
-		tick         = time.Tick(loop)
-		wait         = make(chan struct{}, 1)
-		topologyID   = mux.Vars(r)["topology"]
+		previousTopo    detailed.NodeSummaries
+		tick            = time.Tick(loop)
+		wait            = make(chan struct{}, 1)
+		topologyID      = mux.Vars(r)["topology"]
+		channelOpenedAt = time.Now()
+		// By default we will always be reporting the most recent state.
+		startReportingAt = time.Now()
 	)
+
+	// If the timestamp is provided explicitly by the UI, we start reporting from there.
+	if timestampStr := r.Form.Get("timestamp"); timestampStr != "" {
+		startReportingAt, _ = time.Parse(time.RFC3339, timestampStr)
+	}
+
 	rep.WaitOn(ctx, wait)
 	defer rep.UnWait(ctx, wait)
 
 	for {
-		report, err := rep.Report(ctx)
+		// We measure how much time has passed since the channel was opened
+		// and add it to the initial report timestamp to get the timestamp
+		// of the snapshot we want to report right now.
+		// NOTE: Multiplying `timestampDelta` by a constant factor here
+		// would have an effect of fast-forward, which is something we
+		// might be interested in implementing in the future.
+		timestampDelta := time.Since(channelOpenedAt)
+		reportTimestamp := startReportingAt.Add(timestampDelta)
+		report, err := rep.Report(ctx, reportTimestamp)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return

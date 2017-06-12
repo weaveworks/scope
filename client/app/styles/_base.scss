@@ -35,6 +35,10 @@
   transition: opacity .5s $base-ease;
 }
 
+.blinkable {
+  animation: blinking 1.5s infinite $base-ease;
+}
+
 .hang-around {
   transition-delay: .5s;
 }
@@ -48,13 +52,40 @@
 }
 
 .overlay-wrapper {
+  align-items: center;
   background-color: fade-out($background-average-color, 0.1);
   border-radius: 4px;
   color: $text-tertiary-color;
   display: flex;
   font-size: 0.7rem;
+  justify-content: center;
   padding: 5px;
   position: absolute;
+  bottom: 11px;
+
+  a {
+    @extend .btn-opacity;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: $text-secondary-color;
+    cursor: pointer;
+    padding: 1px 3px;
+
+    .fa {
+      font-size: 150%;
+      position: relative;
+      top: 2px;
+    }
+
+    &:hover, &.selected {
+      border: 1px solid $text-tertiary-color;
+    }
+
+    &.active {
+      & > * { @extend .blinkable; }
+      border: 1px solid $text-tertiary-color;
+    }
+  }
 }
 
 .btn-opacity {
@@ -137,16 +168,17 @@
   }
 }
 
+
+.rc-slider {
+  .rc-slider-step { cursor: pointer; }
+  .rc-slider-track { background-color: $text-tertiary-color; }
+  .rc-slider-rail { background-color: $border-light-color; }
+  .rc-slider-handle { border-color: $text-tertiary-color; }
+}
+
 .footer {
   @extend .overlay-wrapper;
-  bottom: 11px;
   right: 43px;
-
-  a {
-    @extend .btn-opacity;
-    color: $text-secondary-color;
-    cursor: pointer;
-  }
 
   &-status {
     margin-right: 1em;
@@ -162,33 +194,12 @@
     text-transform: uppercase;
   }
 
-  &-icon {
-    margin-left: 0.5em;
-    padding: 4px 3px;
-    color: $text-color;
-    position: relative;
-    top: -1px;
-    border: 1px solid transparent;
-    border-radius: 4px;
-
-    &:hover {
-      border: 1px solid $text-tertiary-color;
-    }
-
-    .fa {
-      font-size: 150%;
-      position: relative;
-      top: 2px;
-    }
-
-    &-active {
-      border: 1px solid $text-tertiary-color;
-      animation: blinking 1.5s infinite $base-ease;
-    }
+  &-tools {
+    display: flex;
   }
 
-  &-icon &-label {
-    margin-right: 0.5em;
+  &-icon {
+    margin-left: 0.5em;
   }
 
   .tooltip {
@@ -196,6 +207,71 @@
     z-index: 20000;
   }
 }
+
+.nodes-wrapper {
+  @extend .hideable;
+
+  &.blurred { opacity: 0.2; }
+}
+
+.time-travel {
+  @extend .overlay-wrapper;
+  display: block;
+  right: 530px;
+
+  &-status {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    .time-travel-jump-loader {
+      font-size: 1rem;
+    }
+
+    .time-travel-timestamp-info, .pause-text {
+      font-size: 115%;
+      margin-right: 5px;
+    }
+
+    .button { margin-left: 0.5em; }
+
+    .time-travel-timestamp:not(.current) {
+      & > * { @extend .blinkable; }
+      font-weight: bold;
+    }
+  }
+
+  &-slider {
+    width: 355px;
+
+    .slider-tip {
+      display: inline-block;
+      font-size: 0.8125rem;
+      font-style: italic;
+      padding: 5px 10px;
+    }
+
+    .options {
+      display: flex;
+      padding: 2px 0 10px;
+
+      .column {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        padding: 0 7px;
+
+        a { padding: 0 3px; }
+      }
+    }
+
+    .rc-slider {
+      margin: 0 10px 8px;
+      width: auto;
+    }
+  }
+}
+
 
 .topologies {
   margin: 8px 4px;
@@ -279,10 +355,12 @@
       opacity: 0.25;
       font-size: 320px;
     }
+
+    li { padding-top: 5px; }
   }
 
   &-loading &-error-icon-container {
-    animation: blinking 2.0s infinite $base-ease;
+    @extend .blinkable;
   }
 
   &-loading {
@@ -695,8 +773,8 @@
       color: $white;
 
       &-icon {
+        @extend .blinkable;
         margin-right: 0.5em;
-        animation: blinking 2.0s infinite $base-ease;
       }
     }
   }
@@ -1409,9 +1487,9 @@
 
 .sidebar {
   position: fixed;
-  bottom: 12px;
-  left: 12px;
-  padding: 4px;
+  bottom: 11px;
+  left: 11px;
+  padding: 5px;
   font-size: .7rem;
   border-radius: 8px;
   border: 1px solid transparent;
@@ -1760,27 +1838,16 @@
 
 .zoom-control {
   @extend .overlay-wrapper;
-  align-items: center;
   flex-direction: column;
-  padding: 10px 10px 5px;
+  padding: 5px 7px 0;
   bottom: 50px;
   right: 40px;
 
-  .zoom-in, .zoom-out {
-    @extend .btn-opacity;
-    color: $text-secondary-color;
-    cursor: pointer;
-    font-size: 150%;
-  }
+  a:hover { border-color: transparent; }
 
   .rc-slider {
-    margin: 10px 0;
+    margin: 5px 0;
     height: 60px;
-
-    .rc-slider-step { cursor: pointer; }
-    .rc-slider-track { background-color: $text-tertiary-color; }
-    .rc-slider-rail { background-color: $border-light-color; }
-    .rc-slider-handle { border-color: $text-tertiary-color; }
   }
 }
 
