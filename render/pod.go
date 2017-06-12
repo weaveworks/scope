@@ -15,7 +15,7 @@ const (
 )
 
 func renderKubernetesTopologies(rpt report.Report) bool {
-	return len(rpt.Pod.Nodes)+len(rpt.Service.Nodes)+len(rpt.Deployment.Nodes)+len(rpt.ReplicaSet.Nodes) >= 1
+	return len(rpt.Pod.Nodes)+len(rpt.Service.Nodes)+len(rpt.Deployment.Nodes)+len(rpt.ReplicaSet.Nodes)+len(rpt.DaemonSet.Nodes) >= 1
 }
 
 func isPauseContainer(n report.Node) bool {
