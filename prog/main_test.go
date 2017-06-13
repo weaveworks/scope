@@ -36,6 +36,7 @@ func TestLogCensoredArgs(t *testing.T) {
 		"-probe.kubernetes.token=secret",
 		"http://secret:secret@frontend.dev.weave.works:80",
 		"https://secret:secret@cloud.weave.works:443",
+		"https://secret@cloud.weave.works",
 	}
 	flag.CommandLine.Parse(args)
 

@@ -41,7 +41,7 @@ var (
 	}
 	colonFinder         = regexp.MustCompile(`[^\\](:)`)
 	unescapeBackslashes = regexp.MustCompile(`\\(.)`)
-	elideURLCredentials = regexp.MustCompile(`//.+:.+@`)
+	elideURLCredentials = regexp.MustCompile(`//.+@`)
 )
 
 type prefixFormatter struct {
