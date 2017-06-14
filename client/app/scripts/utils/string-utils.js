@@ -89,18 +89,19 @@ export function ipToPaddedString(value) {
 // Formats metadata values. Add a key to the `formatters` obj
 // that matches the `dataType` of the field. You must return an Object
 // with the keys `value` and `title` defined.
-export function formatDataType(field) {
+export function formatDataType(field, currentTimestamp) {
   const formatters = {
-    datetime(dateString) {
-      const date = moment(new Date(dateString));
+    datetime(timestampString) {
+      const timestamp = moment(timestampString);
+      const now = currentTimestamp ? moment(currentTimestamp) : moment();
       return {
-        value: date.fromNow(),
-        title: date.format('YYYY-MM-DD HH:mm:ss.SSS')
+        value: timestamp.from(now),
+        title: timestamp.utc().toISOString()
       };
     }
   };
   const format = formatters[field.dataType];
   return format
     ? format(field.value)
-    : {value: field.value, title: field.value};
+    : { value: field.value, title: field.value };
 }

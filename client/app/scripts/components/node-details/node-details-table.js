@@ -1,15 +1,17 @@
 import React from 'react';
 import classNames from 'classnames';
+import { connect } from 'react-redux';
 import { find, get, union, sortBy, groupBy, concat, debounce } from 'lodash';
 
 import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
+import { TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL } from '../../constants/timer';
 
 import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
 import NodeDetailsTableHeaders from './node-details-table-headers';
 import { ipToPaddedString } from '../../utils/string-utils';
 import { moveElement, insertElement } from '../../utils/array-utils';
-import { TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL } from '../../constants/timer';
+import { getWebsocketQueryTimestamp } from '../../utils/web-api-utils';
 import {
   isIP, isNumber, defaultSortDesc, getTableColumnsStyles
 } from '../../utils/node-details-utils';
@@ -125,8 +127,7 @@ function minHeightConstraint(height = 0) {
 }
 
 
-export default class NodeDetailsTable extends React.Component {
-
+class NodeDetailsTable extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -198,7 +199,8 @@ export default class NodeDetailsTable extends React.Component {
   }
 
   render() {
-    const { nodeIdKey, columns, topologyId, onClickRow, onMouseEnter, onMouseLeave } = this.props;
+    const { nodeIdKey, columns, topologyId, onClickRow,
+      onMouseEnter, onMouseLeave, timestamp } = this.props;
 
     const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
     const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
@@ -265,6 +267,7 @@ export default class NodeDetailsTable extends React.Component {
                   onClick={onClickRow}
                   onMouseEnter={this.onMouseEnterRow}
                   onMouseLeave={this.onMouseLeaveRow}
+                  timestamp={timestamp}
                   topologyId={topologyId} />
               ))}
               {minHeightConstraint(tableContentMinHeightConstraint)}
@@ -288,3 +291,11 @@ NodeDetailsTable.defaultProps = {
   sortedDesc: null,
   sortedBy: null,
 };
+
+function mapStateToProps(state) {
+  return {
+    timestamp: getWebsocketQueryTimestamp(state),
+  };
+}
+
+export default connect(mapStateToProps)(NodeDetailsTable);

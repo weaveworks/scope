@@ -30,14 +30,14 @@ function getValuesForNode(node) {
   return values;
 }
 
-function renderValues(node, columns = [], columnStyles = []) {
+function renderValues(node, columns = [], columnStyles = [], timestamp = null) {
   const fields = getValuesForNode(node);
   return columns.map(({id}, i) => {
     const field = fields[id];
     const style = columnStyles[i];
     if (field) {
       if (field.valueType === 'metadata') {
-        const {value, title} = formatDataType(field);
+        const { value, title } = formatDataType(field, timestamp);
         return (
           <td
             className="node-details-table-node-value truncate"
@@ -120,9 +120,9 @@ export default class NodeDetailsTableRow extends React.Component {
   }
 
   render() {
-    const { node, nodeIdKey, topologyId, columns, onClick, colStyles } = this.props;
+    const { node, nodeIdKey, topologyId, columns, onClick, colStyles, timestamp } = this.props;
     const [firstColumnStyle, ...columnStyles] = colStyles;
-    const values = renderValues(node, columns, columnStyles);
+    const values = renderValues(node, columns, columnStyles, timestamp);
     const nodeId = node[nodeIdKey];
 
     const className = classNames('node-details-table-node', {

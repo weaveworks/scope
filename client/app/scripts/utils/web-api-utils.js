@@ -239,7 +239,7 @@ export function getTopologies(options, dispatch, initialPoll) {
   });
 }
 
-function getWebsocketQueryTimestamp(state) {
+export function getWebsocketQueryTimestamp(state) {
   // The timestamp query parameter will be used only if it's in the past.
   if (isWebsocketQueryingCurrentSelector(state)) return null;
 
