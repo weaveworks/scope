@@ -4,6 +4,7 @@ import { Map as makeMap } from 'immutable';
 
 import { nodeMetricSelector } from '../selectors/node-metric';
 import { searchNodeMatchesSelector } from '../selectors/search';
+import { highlightedNodeIdsSelector } from '../selectors/graph-view/decorators';
 import { nodeNetworksSelector, selectedNetworkNodesIdsSelector } from '../selectors/node-networks';
 import { getAdjacentNodes } from '../utils/topology-utils';
 import NodeContainer from './node-container';
@@ -126,7 +127,7 @@ function mapStateToProps(state) {
     searchNodeMatches: searchNodeMatchesSelector(state),
     selectedNetworkNodesIds: selectedNetworkNodesIdsSelector(state),
     neighborsOfSelectedNode: getAdjacentNodes(state),
-    highlightedNodeIds: state.get('highlightedNodeIds'),
+    highlightedNodeIds: highlightedNodeIdsSelector(state),
     mouseOverNodeId: state.get('mouseOverNodeId'),
     selectedNetwork: state.get('selectedNetwork'),
     selectedNodeId: state.get('selectedNodeId'),

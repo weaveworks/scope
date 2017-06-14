@@ -3,6 +3,10 @@ import { Map as makeMap } from 'immutable';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 
 
+export function getNodesFromEdgeId(edgeId) {
+  return edgeId.split(EDGE_ID_SEPARATOR);
+}
+
 export function constructEdgeId(source, target) {
   return [source, target].join(EDGE_ID_SEPARATOR);
 }

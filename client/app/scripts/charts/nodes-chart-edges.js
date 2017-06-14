@@ -4,6 +4,7 @@ import { Map as makeMap } from 'immutable';
 
 import { searchNodeMatchesSelector } from '../selectors/search';
 import { selectedNetworkNodesIdsSelector } from '../selectors/node-networks';
+import { highlightedEdgeIdsSelector } from '../selectors/graph-view/decorators';
 import { hasSelectedNode as hasSelectedNodeFn } from '../utils/topology-utils';
 import EdgeContainer from './edge-container';
 
@@ -82,8 +83,8 @@ export default connect(
     hasSelectedNode: hasSelectedNodeFn(state),
     searchNodeMatches: searchNodeMatchesSelector(state),
     selectedNetworkNodesIds: selectedNetworkNodesIdsSelector(state),
+    highlightedEdgeIds: highlightedEdgeIdsSelector(state),
     searchQuery: state.get('searchQuery'),
-    highlightedEdgeIds: state.get('highlightedEdgeIds'),
     selectedNetwork: state.get('selectedNetwork'),
     selectedNodeId: state.get('selectedNodeId'),
   })
