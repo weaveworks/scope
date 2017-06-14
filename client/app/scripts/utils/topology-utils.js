@@ -4,6 +4,7 @@ import { Set as makeSet, List as makeList } from 'immutable';
 import { isWebsocketQueryingCurrentSelector } from '../selectors/time-travel';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { pinnedMetricSelector } from '../selectors/node-metric';
+import { shownNodesSelector } from '../selectors/node-filters';
 
 //
 // top priority first
@@ -145,11 +146,7 @@ export function isNodesDisplayEmpty(state) {
     return !pinnedMetricSelector(state);
   }
   // Otherwise (in graph and table view), we only look at the nodes content.
-  return state.get('nodes').isEmpty();
-}
-
-export function isTopologyEmpty(state) {
-  return isTopologyNodeCountZero(state) || isNodesDisplayEmpty(state);
+  return shownNodesSelector(state).isEmpty();
 }
 
 export function getAdjacentNodes(state, originNodeId) {

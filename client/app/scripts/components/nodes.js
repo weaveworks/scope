@@ -11,7 +11,6 @@ import { Loading, getNodeType } from './loading';
 import {
   isTopologyNodeCountZero,
   isNodesDisplayEmpty,
-  isTopologyEmpty,
 } from '../utils/topology-utils';
 import {
   isGraphViewModeSelector,
@@ -24,11 +23,12 @@ import { TOPOLOGY_LOADER_DELAY } from '../constants/timer';
 
 // TODO: The information that we already have available on the frontend should enable
 // us to determine which of these cases exactly is preventing us from seeing the nodes.
-const NODE_COUNT_ZERO_CAUSES = [
+const NODES_STATS_COUNT_ZERO_CAUSES = [
   'We haven\'t received any reports from probes recently. Are the probes properly connected?',
   'Containers view only: you\'re not running Docker, or you don\'t have any containers',
 ];
-const NODES_DISPLAY_EMPTY_CAUSES = [
+const NODES_NOT_DISPLAYED_CAUSES = [
+  'There are nodes, but they\'ve been filtered out by pinned searches in the top-left corner.',
   'There are nodes, but they\'re currently hidden. Check the view options in the bottom-left if they allow for showing hidden nodes.',
   'There are no nodes for this particular moment in time. Use the time travel feature at the bottom-right corner to explore different times.',
 ];
@@ -39,13 +39,14 @@ const renderCauses = causes => (
 
 class Nodes extends React.Component {
   renderConditionalEmptyTopologyError() {
-    const { topologyNodeCountZero, nodesDisplayEmpty, topologyEmpty } = this.props;
+    const { topologyNodeCountZero, nodesDisplayEmpty } = this.props;
 
     return (
-      <NodesError faIconClass="fa-circle-thin" hidden={!topologyEmpty}>
+      <NodesError faIconClass="fa-circle-thin" hidden={!nodesDisplayEmpty}>
         <div className="heading">Nothing to show. This can have any of these reasons:</div>
-        {topologyNodeCountZero && renderCauses(NODE_COUNT_ZERO_CAUSES)}
-        {!topologyNodeCountZero && nodesDisplayEmpty && renderCauses(NODES_DISPLAY_EMPTY_CAUSES)}
+        {topologyNodeCountZero ?
+          renderCauses(NODES_STATS_COUNT_ZERO_CAUSES) :
+          renderCauses(NODES_NOT_DISPLAYED_CAUSES)}
       </NodesError>
     );
   }
@@ -84,7 +85,6 @@ function mapStateToProps(state) {
     isResourceViewMode: isResourceViewModeSelector(state),
     topologyNodeCountZero: isTopologyNodeCountZero(state),
     nodesDisplayEmpty: isNodesDisplayEmpty(state),
-    topologyEmpty: isTopologyEmpty(state),
     websocketTransitioning: state.get('websocketTransitioning'),
     currentTopology: state.get('currentTopology'),
     nodesLoaded: state.get('nodesLoaded'),

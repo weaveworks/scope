@@ -8,7 +8,7 @@ import { searchMatchCountByTopologySelector } from '../selectors/search';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { slugify } from '../utils/string-utils';
 import { parseQuery } from '../utils/search-utils';
-import { isTopologyEmpty } from '../utils/topology-utils';
+import { isTopologyNodeCountZero } from '../utils/topology-utils';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import SearchItem from './search-item';
 import { ENTER_KEY_CODE } from '../constants/key-codes';
@@ -129,7 +129,7 @@ class Search extends React.Component {
     const { nodes, pinnedSearches, searchFocused, searchMatchCountByTopology,
       isResourceViewMode, searchQuery, topologiesLoaded, inputId = 'search' } = this.props;
     const hidden = !topologiesLoaded || isResourceViewMode;
-    const disabled = this.props.isTopologyEmpty && !hidden;
+    const disabled = this.props.isTopologyNodeCountZero && !hidden;
     const matchCount = searchMatchCountByTopology
       .reduce((count, topologyMatchCount) => count + topologyMatchCount, 0);
     const showPinnedSearches = pinnedSearches.size > 0;
@@ -180,7 +180,7 @@ export default connect(
     nodes: state.get('nodes'),
     topologyViewMode: state.get('topologyViewMode'),
     isResourceViewMode: isResourceViewModeSelector(state),
-    isTopologyEmpty: isTopologyEmpty(state),
+    isTopologyNodeCountZero: isTopologyNodeCountZero(state),
     currentTopology: state.get('currentTopology'),
     topologiesLoaded: state.get('topologiesLoaded'),
     pinnedSearches: state.get('pinnedSearches'),

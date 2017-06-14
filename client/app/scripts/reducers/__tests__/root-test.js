@@ -14,7 +14,8 @@ describe('RootReducer', () => {
   // TODO maybe extract those to topology-utils tests?
   const activeTopologyOptionsSelector = topologySelectors.activeTopologyOptionsSelector;
   const getAdjacentNodes = topologyUtils.getAdjacentNodes;
-  const isTopologyEmpty = topologyUtils.isTopologyEmpty;
+  const isNodesDisplayEmpty = topologyUtils.isNodesDisplayEmpty;
+  const isTopologyNodeCountZero = topologyUtils.isTopologyNodeCountZero;
   const getUrlState = require('../../utils/router-utils').getUrlState;
 
   // fixtures
@@ -532,24 +533,36 @@ describe('RootReducer', () => {
 
   // empty topology
 
-  it('detects that the topology is empty', () => {
+  it('detects that the nodes display is empty', () => {
     let nextState = initialState;
     nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopologyAction);
-    expect(isTopologyEmpty(nextState)).toBeTruthy();
+    expect(isNodesDisplayEmpty(nextState)).toBeTruthy();
 
     nextState = reducer(nextState, ReceiveNodesDeltaAction);
-    expect(isTopologyEmpty(nextState)).toBeFalsy();
+    expect(isNodesDisplayEmpty(nextState)).toBeFalsy();
 
     nextState = reducer(nextState, ClickTopology2Action);
+    expect(isNodesDisplayEmpty(nextState)).toBeTruthy();
+
     nextState = reducer(nextState, ReceiveNodesDeltaAction);
-    expect(isTopologyEmpty(nextState)).toBeTruthy();
+    expect(isNodesDisplayEmpty(nextState)).toBeFalsy();
+  });
+
+  it('detects that the topo stats are empty', () => {
+    let nextState = initialState;
+    nextState = reducer(nextState, ReceiveTopologiesAction);
+    nextState = reducer(nextState, ClickTopologyAction);
+    expect(isTopologyNodeCountZero(nextState)).toBeFalsy();
+
+    nextState = reducer(nextState, ReceiveNodesDeltaAction);
+    expect(isTopologyNodeCountZero(nextState)).toBeFalsy();
+
+    nextState = reducer(nextState, ClickTopology2Action);
+    expect(isTopologyNodeCountZero(nextState)).toBeTruthy();
 
     nextState = reducer(nextState, ClickTopologyAction);
-    expect(isTopologyEmpty(nextState)).toBeTruthy();
-
-    nextState = reducer(nextState, ReceiveNodesDeltaAction);
-    expect(isTopologyEmpty(nextState)).toBeFalsy();
+    expect(isTopologyNodeCountZero(nextState)).toBeFalsy();
   });
 
   // selection of relatives
