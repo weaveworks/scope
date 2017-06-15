@@ -8,8 +8,8 @@ import { debounce } from 'lodash';
 import TimeTravelTimestamp from './time-travel-timestamp';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
-  websocketQueryInPast,
-  startWebsocketTransitionLoader,
+  timeTravelJumpToPast,
+  timeTravelStartTransition,
   clickResumeUpdate,
 } from '../actions/app-actions';
 
@@ -112,7 +112,7 @@ class TimeTravel extends React.Component {
     }
 
     this.setState({ millisecondsInPast });
-    this.props.startWebsocketTransitionLoader();
+    this.props.timeTravelStartTransition();
     this.debouncedUpdateTimestamp(millisecondsInPast);
 
     this.debouncedTrackSliderChange();
@@ -125,7 +125,7 @@ class TimeTravel extends React.Component {
     if (this.state.millisecondsInPast > rangeMilliseconds) {
       this.setState({ millisecondsInPast: rangeMilliseconds });
       this.updateTimestamp(rangeMilliseconds);
-      this.props.startWebsocketTransitionLoader();
+      this.props.timeTravelStartTransition();
     }
 
     trackMixpanelEvent('scope.time.range.select', {
@@ -143,7 +143,7 @@ class TimeTravel extends React.Component {
       rangeOptionSelected: sliderRanges.last1Hour,
     });
     this.updateTimestamp();
-    this.props.startWebsocketTransitionLoader();
+    this.props.timeTravelStartTransition();
 
     trackMixpanelEvent('scope.time.now.click', {
       layout: this.props.topologyViewMode,
@@ -165,7 +165,7 @@ class TimeTravel extends React.Component {
   }
 
   updateTimestamp(millisecondsInPast = 0) {
-    this.props.websocketQueryInPast(millisecondsInPast);
+    this.props.timeTravelJumpToPast(millisecondsInPast);
     this.props.clickResumeUpdate();
   }
 
@@ -215,7 +215,7 @@ class TimeTravel extends React.Component {
   }
 
   render() {
-    const { websocketTransitioning, hasTimeTravel } = this.props;
+    const { timeTravelTransitioning, hasTimeTravel } = this.props;
     const { showSliderPanel, millisecondsInPast, rangeOptionSelected } = this.state;
     const lowerCaseLabel = rangeOptionSelected.label.toLowerCase();
     const isCurrent = (millisecondsInPast === 0);
@@ -250,7 +250,7 @@ class TimeTravel extends React.Component {
           {this.renderTimeSlider()}
         </div>}
         <div className="time-travel-status">
-          {websocketTransitioning && <div className="time-travel-jump-loader">
+          {timeTravelTransitioning && <div className="time-travel-jump-loader">
             <span className="fa fa-circle-o-notch fa-spin" />
           </div>}
           <TimeTravelTimestamp
@@ -270,7 +270,7 @@ function mapStateToProps({ scope, root }, { params }) {
   const featureFlags = cloudInstance.featureFlags || [];
   return {
     hasTimeTravel: featureFlags.includes('time-travel') || true,
-    websocketTransitioning: scope.get('websocketTransitioning'),
+    timeTravelTransitioning: scope.get('timeTravelTransitioning'),
     topologyViewMode: scope.get('topologyViewMode'),
     currentTopology: scope.get('currentTopology'),
   };
@@ -279,8 +279,8 @@ function mapStateToProps({ scope, root }, { params }) {
 export default connect(
   mapStateToProps,
   {
-    websocketQueryInPast,
-    startWebsocketTransitionLoader,
+    timeTravelJumpToPast,
+    timeTravelStartTransition,
     clickResumeUpdate,
   }
 )(TimeTravel);

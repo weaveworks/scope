@@ -405,16 +405,16 @@ export function clickTopology(topologyId) {
   };
 }
 
-export function startWebsocketTransitionLoader() {
+export function timeTravelStartTransition() {
   return {
-    type: ActionTypes.START_WEBSOCKET_TRANSITION_LOADER,
+    type: ActionTypes.TIME_TRAVEL_START_TRANSITION,
   };
 }
 
-export function websocketQueryInPast(millisecondsInPast) {
+export function timeTravelJumpToPast(millisecondsInPast) {
   return (dispatch, getServiceState) => {
     dispatch({
-      type: ActionTypes.WEBSOCKET_QUERY_MILLISECONDS_IN_PAST,
+      type: ActionTypes.TIME_TRAVEL_MILLISECONDS_IN_PAST,
       millisecondsInPast,
     });
     const scopeState = getServiceState().scope;
@@ -583,7 +583,7 @@ export function receiveNodesDelta(delta) {
     // returned by getState(). Since method is called from both contexts, getState()
     // will sometimes return Scope state subtree and sometimes the whole Service state.
     const state = getState().scope || getState();
-    const movingInTime = state.get('websocketTransitioning');
+    const movingInTime = state.get('timeTravelTransitioning');
     const hasChanges = delta.add || delta.update || delta.remove;
 
     if (hasChanges || movingInTime) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { isWebsocketQueryingCurrentSelector } from '../selectors/time-travel';
+import { isNowSelector } from '../selectors/time-travel';
 
 
 class Status extends React.Component {
@@ -53,7 +53,7 @@ function mapStateToProps(state) {
   return {
     errorUrl: state.get('errorUrl'),
     filteredNodeCount: state.get('nodes').filter(node => node.get('filtered')).size,
-    showingCurrentState: isWebsocketQueryingCurrentSelector(state),
+    showingCurrentState: isNowSelector(state),
     topologiesLoaded: state.get('topologiesLoaded'),
     topology: state.get('currentTopology'),
     websocketClosed: state.get('websocketClosed'),
