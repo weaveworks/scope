@@ -69,7 +69,9 @@ func (s *linuxScanner) Connections() (ConnIter, error) {
 
 	if buf.Len() == 0 {
 		readFile(procRoot+"/net/tcp", buf)
-		readFile(procRoot+"/net/tcp6", buf)
+		if ipv6IsSupported {
+			readFile(procRoot+"/net/tcp6", buf)
+		}
 	}
 
 	return &pnConnIter{
