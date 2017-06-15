@@ -13,6 +13,7 @@ import Status from './status';
 import Topologies from './topologies';
 import TopologyOptions from './topology-options';
 import CloudFeature from './cloud-feature';
+import Overlay from './overlay';
 import { getApiDetails } from '../utils/web-api-utils';
 import {
   focusSearch,
@@ -166,7 +167,7 @@ class App extends React.Component {
 
   render() {
     const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails, showingHelp,
-      showingNetworkSelector, showingTroubleshootingMenu } = this.props;
+      showingNetworkSelector, showingTroubleshootingMenu, timeTravelTransitioning } = this.props;
     const isIframe = window !== window.top;
 
     return (
@@ -203,6 +204,8 @@ class App extends React.Component {
         </Sidebar>
 
         <Footer />
+
+        <Overlay faded={timeTravelTransitioning} />
       </div>
     );
   }
@@ -225,6 +228,7 @@ function mapStateToProps(state) {
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
     topologyViewMode: state.get('topologyViewMode'),
+    timeTravelTransitioning: state.get('timeTravelTransitioning'),
     urlState: getUrlState(state)
   };
 }

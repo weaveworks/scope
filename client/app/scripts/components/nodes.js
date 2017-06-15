@@ -1,5 +1,4 @@
 import React from 'react';
-import classNames from 'classnames';
 import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
@@ -53,13 +52,11 @@ class Nodes extends React.Component {
 
   render() {
     const { topologiesLoaded, nodesLoaded, topologies, currentTopology, isGraphViewMode,
-      isTableViewMode, isResourceViewMode, timeTravelTransitioning } = this.props;
-
-    const className = classNames('nodes-wrapper', { blurred: timeTravelTransitioning });
+      isTableViewMode, isResourceViewMode } = this.props;
 
     // TODO: Rename view mode components.
     return (
-      <div className={className}>
+      <div className="nodes-wrapper">
         <DelayedShow delay={TOPOLOGY_LOADER_DELAY} show={!topologiesLoaded || !nodesLoaded}>
           <Loading itemType="topologies" show={!topologiesLoaded} />
           <Loading
