@@ -25,7 +25,6 @@ import {
   pinnedMetricSelector,
 } from '../selectors/node-metric';
 import {
-  activeTopologyOptionsSelector,
   isResourceViewModeSelector,
   resourceViewAvailableSelector,
 } from '../selectors/topology';
@@ -219,7 +218,7 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     // update all request workers with new options
     dispatch(resetNodesDeltaBuffer());
     const state = getState();
-    getTopologies(activeTopologyOptionsSelector(state), dispatch);
+    getTopologies(state, dispatch);
     updateWebsocketChannel(state, dispatch);
     getNodeDetails(state, dispatch);
   };
@@ -420,6 +419,7 @@ export function timeTravelJumpToPast(millisecondsInPast) {
     const scopeState = getServiceState().scope;
     updateWebsocketChannel(scopeState, dispatch);
     dispatch(resetNodesDeltaBuffer());
+    getTopologies(getServiceState().scope, dispatch);
   };
 }
 
@@ -638,7 +638,8 @@ export function receiveNodesForTopology(nodes, topologyId) {
 }
 
 export function receiveTopologies(topologies) {
-  return (dispatch, getState) => {
+  return (dispatch, getWeirdState) => {
+    const getState = () => getWeirdState().scope || getWeirdState();
     const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
@@ -747,6 +748,12 @@ export function setContrastMode(enabled) {
   };
 }
 
+export function getTopologiesWithInitialPoll() {
+  return (dispatch, getState) => {
+    getTopologies(getState(), dispatch, true);
+  };
+}
+
 export function route(urlState) {
   return (dispatch, getState) => {
     dispatch({
@@ -755,7 +762,7 @@ export function route(urlState) {
     });
     // update all request workers with new options
     const state = getState();
-    getTopologies(activeTopologyOptionsSelector(state), dispatch);
+    getTopologies(state, dispatch);
     updateWebsocketChannel(state, dispatch);
     getNodeDetails(state, dispatch);
     // If we are landing on the resource view page, we need to fetch not only all the

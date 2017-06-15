@@ -6,8 +6,7 @@ import { isNowSelector } from '../selectors/time-travel';
 
 class Status extends React.Component {
   render() {
-    const { errorUrl, topologiesLoaded, filteredNodeCount, topology,
-      websocketClosed, showingCurrentState } = this.props;
+    const { errorUrl, topologiesLoaded, filteredNodeCount, topology, websocketClosed } = this.props;
 
     let title = '';
     let text = 'Trying to reconnect...';
@@ -33,11 +32,6 @@ class Status extends React.Component {
       }
       classNames += ' status-stats';
       showWarningIcon = false;
-      // TODO: Currently the stats are always pulled for the current state of the system,
-      // so they are incorrect when showing the past. This should be addressed somehow.
-      if (!showingCurrentState) {
-        text = '';
-      }
     }
 
     return (

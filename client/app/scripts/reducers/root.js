@@ -124,7 +124,7 @@ function processTopologies(state, nextTopologies) {
 
   const topologiesWithFullnames = addTopologyFullname(topologiesWithId);
   const immNextTopologies = fromJS(topologiesWithFullnames).sortBy(topologySorter);
-  return state.mergeDeepIn(['topologies'], immNextTopologies);
+  return state.set('topologies', immNextTopologies);
 }
 
 function setTopology(state, topologyId) {

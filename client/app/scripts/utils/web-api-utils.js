@@ -211,7 +211,19 @@ export function getResourceViewNodesSnapshot(getState, dispatch) {
   getNodesForTopologies(getState, dispatch, topologyIds);
 }
 
-export function getTopologies(options, dispatch, initialPoll) {
+export function getWebsocketQueryTimestamp(state) {
+  // The timestamp query parameter will be used only if it's in the past.
+  if (isNowSelector(state)) return null;
+
+  const millisecondsInPast = state.get('timeTravelMillisecondsInPast');
+  return moment().utc().subtract(millisecondsInPast).toISOString();
+}
+
+export function getTopologies(state, dispatch, initialPoll = false) {
+  state = state.scope || state;
+  let options = activeTopologyOptionsSelector(state);
+  options = options.set('timestamp', getWebsocketQueryTimestamp(state));
+
   // Used to resume polling when navigating between pages in Weave Cloud.
   continuePolling = initialPoll === true ? true : continuePolling;
   clearTimeout(topologyTimer);
@@ -223,7 +235,7 @@ export function getTopologies(options, dispatch, initialPoll) {
       if (continuePolling) {
         dispatch(receiveTopologies(res));
         topologyTimer = setTimeout(() => {
-          getTopologies(options, dispatch);
+          getTopologies(state, dispatch);
         }, TOPOLOGY_REFRESH_INTERVAL);
       }
     },
@@ -233,19 +245,11 @@ export function getTopologies(options, dispatch, initialPoll) {
       // Only retry in stand-alone mode
       if (continuePolling) {
         topologyTimer = setTimeout(() => {
-          getTopologies(options, dispatch);
+          getTopologies(state, dispatch);
         }, TOPOLOGY_REFRESH_INTERVAL);
       }
     }
   });
-}
-
-export function getWebsocketQueryTimestamp(state) {
-  // The timestamp query parameter will be used only if it's in the past.
-  if (isNowSelector(state)) return null;
-
-  const millisecondsInPast = state.get('timeTravelMillisecondsInPast');
-  return moment().utc().subtract(millisecondsInPast).toISOString();
 }
 
 export function updateWebsocketChannel(state, dispatch) {

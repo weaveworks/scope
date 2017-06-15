@@ -477,7 +477,14 @@ func (r *Registry) walk(f func(APITopologyDesc)) {
 // makeTopologyList returns a handler that yields an APITopologyList.
 func (r *Registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		report, err := rep.Report(ctx, time.Now())
+		var (
+			queryParams = req.URL.Query()
+			timestamp   = time.Now()
+		)
+		if timestampStr := queryParams.Get("timestamp"); timestampStr != "" {
+			timestamp, _ = time.Parse(time.RFC3339, timestampStr)
+		}
+		report, err := rep.Report(ctx, timestamp)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return
