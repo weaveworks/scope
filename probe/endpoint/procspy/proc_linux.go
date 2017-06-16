@@ -22,7 +22,18 @@ var (
 	procRoot               = "/proc"
 	namespaceKey           = []string{"procspy", "namespaces"}
 	netNamespacePathSuffix = ""
+	ipv6IsSupported        = tcp6FileExists()
 )
+
+func tcp6FileExists() bool {
+	filename := filepath.Join(procRoot, "self/net/tcp6")
+	f, err := fs.Open(filename)
+	if err != nil {
+		return false
+	}
+	f.Close()
+	return true
+}
 
 type pidWalker struct {
 	walker      process.Walker
@@ -39,11 +50,6 @@ func newPidWalker(walker process.Walker, tickc <-chan time.Time, fdBlockSize uin
 		stopc:       make(chan struct{}),
 	}
 	return w
-}
-
-// SetProcRoot sets the location of the proc filesystem.
-func SetProcRoot(root string) {
-	procRoot = root
 }
 
 func getKernelVersion() (major, minor int, err error) {
@@ -102,7 +108,9 @@ func ReadTCPFiles(pid int, buf *bytes.Buffer) (int64, error) {
 
 	dirName := strconv.Itoa(pid)
 	read, errRead = readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
-	read6, errRead6 = readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
+	if ipv6IsSupported {
+		read6, errRead6 = readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
+	}
 
 	if errRead != nil {
 		return read + read6, errRead
