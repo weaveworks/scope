@@ -5,7 +5,7 @@ import { Map as makeMap } from 'immutable';
 import MatchedText from '../matched-text';
 import ShowMore from '../show-more';
 import { formatDataType } from '../../utils/string-utils';
-import { getWebsocketQueryTimestamp } from '../../utils/web-api-utils';
+import { getSerializedTimeTravelTimestamp } from '../../utils/web-api-utils';
 
 
 class NodeDetailsInfo extends React.Component {
@@ -66,7 +66,7 @@ class NodeDetailsInfo extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    timestamp: getWebsocketQueryTimestamp(state),
+    timestamp: getSerializedTimeTravelTimestamp(state),
   };
 }
 

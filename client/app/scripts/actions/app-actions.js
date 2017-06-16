@@ -329,7 +329,7 @@ export function setResourceView() {
         const firstAvailableMetricType = availableMetricTypesSelector(state).first();
         dispatch(pinMetric(firstAvailableMetricType));
       }
-      getResourceViewNodesSnapshot(getState, dispatch);
+      getResourceViewNodesSnapshot(getState(), dispatch);
       updateRoute(getState);
     }
   };
@@ -372,7 +372,7 @@ function updateTopology(dispatch, getState) {
   const state = getState();
   // If we're in the resource view, get the snapshot of all the relevant node topologies.
   if (isResourceViewModeSelector(state)) {
-    getResourceViewNodesSnapshot(getState, dispatch);
+    getResourceViewNodesSnapshot(state, dispatch);
   }
   updateRoute(getState);
   // update all request workers with new options
@@ -420,6 +420,9 @@ export function timeTravelJumpToPast(millisecondsInPast) {
     updateWebsocketChannel(scopeState, dispatch);
     dispatch(resetNodesDeltaBuffer());
     getTopologies(getServiceState().scope, dispatch);
+    if (isResourceViewModeSelector(scopeState)) {
+      getResourceViewNodesSnapshot(scopeState, dispatch);
+    }
   };
 }
 
@@ -484,7 +487,7 @@ export function focusSearch() {
     // the nodes delta. The solution would be to implement deeper
     // search selectors with per-node caching instead of per-topology.
     setTimeout(() => {
-      getAllNodes(getState, dispatch);
+      getAllNodes(getState(), dispatch);
     }, 1200);
   };
 }
@@ -654,7 +657,7 @@ export function receiveTopologies(topologies) {
     }
     // Fetch all the relevant nodes once on first load
     if (firstLoad && isResourceViewModeSelector(state)) {
-      getResourceViewNodesSnapshot(getState, dispatch);
+      getResourceViewNodesSnapshot(state, dispatch);
     }
   };
 }
@@ -769,7 +772,7 @@ export function route(urlState) {
     // nodes for the current topology, but also the nodes of all the topologies that make
     // the layers in the resource view.
     if (isResourceViewModeSelector(state)) {
-      getResourceViewNodesSnapshot(getState, dispatch);
+      getResourceViewNodesSnapshot(state, dispatch);
     }
   };
 }

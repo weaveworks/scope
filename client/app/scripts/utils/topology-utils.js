@@ -143,6 +143,7 @@ export function isTopologyNodeCountZero(state) {
 export function isNodesDisplayEmpty(state) {
   // Consider a topology in the resource view empty if it has no pinned metric.
   if (isResourceViewModeSelector(state)) {
+    // TODO: Check for empty displays here after Scope v1.5.0 has been released.
     return !pinnedMetricSelector(state);
   }
   // Otherwise (in graph and table view), we only look at the nodes content.
