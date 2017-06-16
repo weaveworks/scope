@@ -43,22 +43,18 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 			state, ok := n.Latest.Lookup(kubernetes.State)
 			return (!ok || state != kubernetes.StateDeleted)
 		},
-		MakeMap(
-			PropagateSingleMetrics(report.Container),
-			MakeReduce(
-				MakeMap(
-					Map2Parent([]string{report.Pod}, NoParentsPseudo, UnmanagedID, nil),
-					MakeFilter(
-						ComposeFilterFuncs(
-							IsRunning,
-							Complement(isPauseContainer),
-						),
-						ContainerWithImageNameRenderer,
+		MakeReduce(
+			renderParents(
+				report.Container, []string{report.Pod}, NoParentsPseudo, UnmanagedID, nil,
+				MakeFilter(
+					ComposeFilterFuncs(
+						IsRunning,
+						Complement(isPauseContainer),
 					),
+					ContainerWithImageNameRenderer,
 				),
-				ConnectionJoin(SelectPod, MapPod2IP),
-				SelectPod,
 			),
+			ConnectionJoin(SelectPod, MapPod2IP),
 		),
 	),
 )
@@ -66,30 +62,18 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
 var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	MakeMap(
-		PropagateSingleMetrics(report.Pod),
-		MakeReduce(
-			MakeMap(
-				Map2Parent([]string{report.Service}, NoParentsDrop, "", nil),
-				PodRenderer,
-			),
-			SelectService,
-		),
+	renderParents(
+		report.Pod, []string{report.Service}, NoParentsDrop, "", nil,
+		PodRenderer,
 	),
 )
 
 // ReplicaSetRenderer is a Renderer which produces a renderable kubernetes replica sets
 // graph by merging the pods graph and the replica sets topology.
 var ReplicaSetRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	MakeMap(
-		PropagateSingleMetrics(report.Pod),
-		MakeReduce(
-			MakeMap(
-				Map2Parent([]string{report.ReplicaSet}, NoParentsDrop, "", nil),
-				PodRenderer,
-			),
-			SelectReplicaSet,
-		),
+	renderParents(
+		report.Pod, []string{report.ReplicaSet}, NoParentsDrop, "", nil,
+		PodRenderer,
 	),
 )
 
@@ -100,40 +84,41 @@ var ReplicaSetRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // We can't simply combine the rendered graphs of the high level objects as they would never
 // have connections to each other.
 var KubeControllerRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	MakeReduce(
-		// Include full deployment topology
-		MakeFilter(
-			// Filter out any remaining unmatched replica sets
-			Complement(IsTopology(report.ReplicaSet)),
-			MakeMap(
-				// Include pod metrics previously mapped to replica sets, in deployments
-				PropagateSingleMetrics(report.ReplicaSet),
-				MakeMap(
-					// Map replica sets to deployments, leaving unmatched replica sets and anything else unchanged
-					Map2Parent([]string{report.Deployment}, NoParentsKeep, "", mapPodCounts),
-					MakeReduce(
-						// Include full replica set and daemonset topologies
-						MakeMap(
-							// Include pod metrics in mapped nodes
-							PropagateSingleMetrics(report.Pod),
-							MakeMap(
-								// Transform pods to replica sets, daemonsets and 'unmanaged'
-								Map2Parent([]string{
-									report.ReplicaSet,
-									report.DaemonSet,
-								}, NoParentsPseudo, UnmanagedID, nil),
-								PodRenderer,
-							),
-						),
-						SelectReplicaSet,
-						SelectDaemonSet,
-					),
-				),
+	MakeFilter(
+		// Filter out any remaining unmatched replica sets
+		Complement(IsTopology(report.ReplicaSet)),
+		renderParents(
+			report.ReplicaSet, []string{report.Deployment}, NoParentsKeep, "", mapPodCounts,
+			renderParents(
+				report.Pod, []string{report.ReplicaSet, report.DaemonSet},
+				NoParentsPseudo, UnmanagedID, nil,
+				PodRenderer,
 			),
 		),
-		SelectDeployment,
 	),
 )
+
+// renderParents produces a 'standard' renderer for mapping from some child topology to some parent topologies,
+// by taking a child renderer, mapping to parents, propagating single metrics, and joining with full parent topology.
+// Most options are as per Map2Parent.
+func renderParents(childTopology string, parentTopologies []string, noParentsAction noParentsActionEnum,
+	noParentsPseudoID string, modifyMappedNode func(parent, original report.Node) report.Node,
+	childRenderer Renderer) Renderer {
+	selectors := make([]Renderer, len(parentTopologies))
+	for i, topology := range parentTopologies {
+		selectors[i] = TopologySelector(topology)
+	}
+	return MakeReduce(append(
+		selectors,
+		MakeMap(
+			PropagateSingleMetrics(childTopology),
+			MakeMap(
+				Map2Parent(parentTopologies, noParentsAction, noParentsPseudoID, modifyMappedNode),
+				childRenderer,
+			),
+		),
+	)...)
+}
 
 func mapPodCounts(parent, original report.Node) report.Node {
 	// When mapping ReplicaSets to Deployments, we want to propagate the Pods counter
