@@ -93,19 +93,13 @@ func handleWebsocket(
 	}(conn)
 
 	var (
-		previousTopo    detailed.NodeSummaries
-		tick            = time.Tick(loop)
-		wait            = make(chan struct{}, 1)
-		topologyID      = mux.Vars(r)["topology"]
-		channelOpenedAt = time.Now()
-		// By default we will always be reporting the most recent state.
-		startReportingAt = time.Now()
+		previousTopo     detailed.NodeSummaries
+		tick             = time.Tick(loop)
+		wait             = make(chan struct{}, 1)
+		topologyID       = mux.Vars(r)["topology"]
+		startReportingAt = deserializedTimestamp(r.Form.Get("timestamp"))
+		channelOpenedAt  = time.Now()
 	)
-
-	// If the timestamp is provided explicitly by the UI, we start reporting from there.
-	if timestampStr := r.Form.Get("timestamp"); timestampStr != "" {
-		startReportingAt, _ = time.Parse(time.RFC3339, timestampStr)
-	}
 
 	rep.WaitOn(ctx, wait)
 	defer rep.UnWait(ctx, wait)

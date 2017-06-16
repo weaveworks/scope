@@ -415,6 +415,16 @@ type topologyStats struct {
 	FilteredNodes      int `json:"filtered_nodes"`
 }
 
+// deserializedTimestamp converts the ISO8601 query param into a proper timestamp.
+func deserializedTimestamp(timestampStr string) time.Time {
+	// If no timestamp is given, assume the current time.
+	timestamp := time.Now()
+	if timestampStr != "" {
+		timestamp, _ = time.Parse(time.RFC3339, timestampStr)
+	}
+	return timestamp
+}
+
 // AddContainerFilters adds to the default Registry (topologyRegistry)'s containerFilters
 func AddContainerFilters(newFilters ...APITopologyOption) {
 	topologyRegistry.AddContainerFilters(newFilters...)
@@ -477,13 +487,7 @@ func (r *Registry) walk(f func(APITopologyDesc)) {
 // makeTopologyList returns a handler that yields an APITopologyList.
 func (r *Registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		var (
-			queryParams = req.URL.Query()
-			timestamp   = time.Now()
-		)
-		if timestampStr := queryParams.Get("timestamp"); timestampStr != "" {
-			timestamp, _ = time.Parse(time.RFC3339, timestampStr)
-		}
+		timestamp := deserializedTimestamp(req.URL.Query().Get("timestamp"))
 		report, err := rep.Report(ctx, timestamp)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
@@ -572,16 +576,12 @@ type rendererHandler func(context.Context, render.Renderer, render.Decorator, re
 func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		var (
-			topologyID  = mux.Vars(req)["topology"]
-			queryParams = req.URL.Query()
-			timestamp   = time.Now()
+			topologyID = mux.Vars(req)["topology"]
+			timestamp  = deserializedTimestamp(req.URL.Query().Get("timestamp"))
 		)
 		if _, ok := r.get(topologyID); !ok {
 			http.NotFound(w, req)
 			return
-		}
-		if timestampStr := queryParams.Get("timestamp"); timestampStr != "" {
-			timestamp, _ = time.Parse(time.RFC3339, timestampStr)
 		}
 		rpt, err := rep.Report(ctx, timestamp)
 		if err != nil {
