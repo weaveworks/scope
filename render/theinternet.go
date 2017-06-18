@@ -3,6 +3,7 @@ package render
 import (
 	"net"
 	"regexp"
+	"strings"
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -12,46 +13,31 @@ var (
 	// ServiceNodeIDPrefix is how the ID of all service pseudo nodes begin
 	ServiceNodeIDPrefix = "service-"
 
-	knownServiceMatchers = []*regexp.Regexp{
-		// See http://docs.aws.amazon.com/general/latest/gr/rande.html for fainer grained
-		// details
-		regexp.MustCompile(`^.+\.amazonaws\.com$`),
-		regexp.MustCompile(`^.+\.googleapis\.com$`),
-		regexp.MustCompile(`^.+\.core\.windows\.net$`),       // Azure Storage - Blob, Tables, Files & Queues
-		regexp.MustCompile(`^.+\.servicebus\.windows\.net$`), // Azure Service Bus
-		regexp.MustCompile(`^.+\.azure-api\.net$`),           // Azure API Management
-		regexp.MustCompile(`^.+\.onmicrosoft\.com$`),         // Azure Active Directory
-		regexp.MustCompile(`^.+\.cloudapp\.azure\.com$`),     // Azure IaaS
-		regexp.MustCompile(`^.+\.database\.windows\.net$`),   // Azure SQL DB
-		regexp.MustCompile(`^.+\.documents\.azure\.com$`),    // Azure DocumentDB/CosmosDB
-	}
+	knownServiceMatcher = regexp.MustCompile(`^.+\.(` + strings.Join([]string{
+		// See http://docs.aws.amazon.com/general/latest/gr/rande.html
+		// for finer grained details
+		`amazonaws\.com`,
+		`googleapis\.com`,
+		`core\.windows\.net`,       // Azure Storage - Blob, Tables, Files & Queues
+		`servicebus\.windows\.net`, // Azure Service Bus
+		`azure-api\.net`,           // Azure API Management
+		`onmicrosoft\.com`,         // Azure Active Directory
+		`cloudapp\.azure\.com`,     // Azure IaaS
+		`database\.windows\.net`,   // Azure SQL DB
+		`documents\.azure\.com`,    // Azure DocumentDB/CosmosDB
+	}, `|`) + `)$`)
 
-	knownServiceExcluders = []*regexp.Regexp{
+	knownServiceExcluder = regexp.MustCompile(`^(` + strings.Join([]string{
 		// We exclude ec2 machines because they are too generic
 		// and having separate nodes for them makes visualizations worse
-		regexp.MustCompile(`^ec2.*\.amazonaws\.com$`),
-	}
+		`ec2.*\.amazonaws\.com`,
+	}, `|`) + `)$`)
 )
 
 // TODO: Make it user-customizable https://github.com/weaveworks/scope/issues/1876
+// NB: this is a hotspot in rendering performance.
 func isKnownService(hostname string) bool {
-	foundMatch := false
-	for _, matcher := range knownServiceMatchers {
-		if matcher.MatchString(hostname) {
-			foundMatch = true
-			break
-		}
-	}
-	if !foundMatch {
-		return false
-	}
-
-	for _, excluder := range knownServiceExcluders {
-		if excluder.MatchString(hostname) {
-			return false
-		}
-	}
-	return true
+	return knownServiceMatcher.MatchString(hostname) && !knownServiceExcluder.MatchString(hostname)
 }
 
 // LocalNetworks returns a superset of the networks (think: CIDRs) that are
