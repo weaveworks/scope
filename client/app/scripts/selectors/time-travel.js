@@ -12,5 +12,6 @@ export const isNowSelector = createSelector(
   [
     state => state.get('timeTravelMillisecondsInPast')
   ],
-  timeTravelMillisecondsInPast => timeTravelMillisecondsInPast === 0
+  // true for values 0, undefined, null, etc...
+  timeTravelMillisecondsInPast => !(timeTravelMillisecondsInPast > 0)
 );

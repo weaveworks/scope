@@ -2,7 +2,7 @@ import debug from 'debug';
 import moment from 'moment';
 import reqwest from 'reqwest';
 import { defaults } from 'lodash';
-import { fromJS, Map as makeMap, List } from 'immutable';
+import { Map as makeMap, List } from 'immutable';
 
 import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
@@ -109,11 +109,9 @@ export function getWebsocketUrl(host = window.location.host, pathname = window.l
 }
 
 function buildWebsocketUrl(topologyUrl, topologyOptions = makeMap(), state) {
-  const query = buildUrlQuery(fromJS({
-    t: updateFrequency,
-    ...topologyOptions.toJS(),
-  }), state);
-  return `${getWebsocketUrl()}${topologyUrl}/ws?${query}`;
+  topologyOptions = topologyOptions.set('t', updateFrequency);
+  const optionsQuery = buildUrlQuery(topologyOptions, state);
+  return `${getWebsocketUrl()}${topologyUrl}/ws?${optionsQuery}`;
 }
 
 function createWebsocket(websocketUrl, dispatch) {
@@ -268,7 +266,6 @@ export function getNodeDetails(state, dispatch) {
   const nodeMap = state.get('nodeDetails');
   const topologyUrlsById = state.get('topologyUrlsById');
   const currentTopologyId = state.get('currentTopologyId');
-  const options = activeTopologyOptionsSelector(state);
 
   // get details for all opened nodes
   const obj = nodeMap.last();
@@ -277,7 +274,7 @@ export function getNodeDetails(state, dispatch) {
     let urlComponents = [getApiPath(), topologyUrl, '/', encodeURIComponent(obj.id)];
     if (currentTopologyId === obj.topologyId) {
       // Only forward filters for nodes in the current topology
-      const optionsQuery = buildUrlQuery(options, state);
+      const optionsQuery = buildUrlQuery(activeTopologyOptionsSelector(state), state);
       urlComponents = urlComponents.concat(['?', optionsQuery]);
     }
     const url = urlComponents.join('');
