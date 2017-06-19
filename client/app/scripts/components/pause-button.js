@@ -60,14 +60,14 @@ class PauseButton extends React.Component {
   }
 }
 
-function mapStateToProps({ scope }) {
+function mapStateToProps(state) {
   return {
-    hasUpdates: !scope.get('nodesDeltaBuffer').isEmpty(),
-    updateCount: scope.get('nodesDeltaBuffer').size,
-    updatePausedAt: scope.get('updatePausedAt'),
-    topologyViewMode: scope.get('topologyViewMode'),
-    currentTopology: scope.get('currentTopology'),
-    isPaused: isPausedSelector(scope),
+    hasUpdates: !state.get('nodesDeltaBuffer').isEmpty(),
+    updateCount: state.get('nodesDeltaBuffer').size,
+    updatePausedAt: state.get('updatePausedAt'),
+    topologyViewMode: state.get('topologyViewMode'),
+    currentTopology: state.get('currentTopology'),
+    isPaused: isPausedSelector(state),
   };
 }
 

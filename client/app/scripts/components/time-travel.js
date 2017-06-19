@@ -5,7 +5,6 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
-import PauseButton from './pause-button';
 import TimeTravelTimestamp from './time-travel-timestamp';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
@@ -260,7 +259,6 @@ class TimeTravel extends React.Component {
             selected={showSliderPanel}
           />
           {!isCurrent && this.renderJumpToNowButton()}
-          <PauseButton />
         </div>
       </div>
     );
@@ -271,7 +269,7 @@ function mapStateToProps({ scope, root }, { params }) {
   const cloudInstance = root.instances[params.orgId] || {};
   const featureFlags = cloudInstance.featureFlags || [];
   return {
-    hasTimeTravel: featureFlags.includes('timeline-control'),
+    hasTimeTravel: featureFlags.includes('time-travel'),
     websocketTransitioning: scope.get('websocketTransitioning'),
     topologyViewMode: scope.get('topologyViewMode'),
     currentTopology: scope.get('currentTopology'),

@@ -635,13 +635,15 @@ function updateFromNodesDeltaBuffer(dispatch, state) {
 }
 
 export function clickResumeUpdate() {
-  return (dispatch, getServiceState) => {
+  return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.CLICK_RESUME_UPDATE
     });
+    // TODO: Find a better way to do this (see the comment above).
+    const state = getState().scope || getState();
     // Periodically merge buffered nodes deltas until the buffer is emptied.
     nodesDeltaBufferUpdateTimer = setInterval(
-      () => updateFromNodesDeltaBuffer(dispatch, getServiceState().scope),
+      () => updateFromNodesDeltaBuffer(dispatch, state),
       NODES_DELTA_BUFFER_FEED_INTERVAL,
     );
   };

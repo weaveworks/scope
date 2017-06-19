@@ -1,3 +1,64 @@
+## Release 1.5.0
+
+Highlights:
+- More accurate and cheaper connection tracking with eBPF, which now is enabled by default.
+- Bug fixes and performance improvements.
+
+New features and enhancements:
+- Enable eBPF tracking by default
+	[#2535](https://github.com/weaveworks/scope/pull/2535)
+- Elide url passwords in cli arguments
+	[#2568](https://github.com/weaveworks/scope/pull/2568)
+
+Performance improvements:
+- drop addr and port from Endpoint.Latest map
+	[#2581](https://github.com/weaveworks/scope/pull/2581)
+- parallel reduce
+	[#2561](https://github.com/weaveworks/scope/pull/2561)
+- don't read all of /proc when probe.proc.spy=false
+	[#2557](https://github.com/weaveworks/scope/pull/2557)
+- optimise: don't sort in NodeSet.ForEach
+	[#2548](https://github.com/weaveworks/scope/pull/2548)
+- encode empty ps.Maps as nil
+	[#2547](https://github.com/weaveworks/scope/pull/2547)
+
+Bug fixes:
+- re-target app clients when name resolution changes
+	[#2579](https://github.com/weaveworks/scope/pull/2579)
+- correct type for "Observed Gen."
+	[#2572](https://github.com/weaveworks/scope/pull/2572)
+- Back off upon errored kubernetes api requests
+	[#2562](https://github.com/weaveworks/scope/pull/2562)
+- Close eBPF tracker cleanly
+	[#2541](https://github.com/weaveworks/scope/pull/2541)
+- Simplify connection tracker init and fix procfs scan fallback
+	[#2539](https://github.com/weaveworks/scope/pull/2539)
+- Guard against null DaemonSet store
+	[#2538](https://github.com/weaveworks/scope/pull/2538)
+
+Internal improvements and cleanup:
+- es6ify server.js and include in eslint
+	[#2560](https://github.com/weaveworks/scope/pull/2560)
+- Fix prog/main_test.go
+	[#2567](https://github.com/weaveworks/scope/pull/2567)
+- Fix incomplete dependencies for `make scope/prog`
+	[#2563](https://github.com/weaveworks/scope/pull/2563)
+- bump package.json version to current scope version
+	[#2555](https://github.com/weaveworks/scope/pull/2555)
+- simplify connection join
+	[#2559](https://github.com/weaveworks/scope/pull/2559)
+- Use map helpers
+	[#2546](https://github.com/weaveworks/scope/pull/2546)
+- add copyreport utility
+	[#2542](https://github.com/weaveworks/scope/pull/2542)
+
+Weave Cloud related changes:
+- Time travel control
+	[#2524](https://github.com/weaveworks/scope/pull/2524)
+- Add app capabilities to /api endpoint
+	[#2575](https://github.com/weaveworks/scope/pull/2575)
+
+
 ## Release 1.4.0
 
 Highlights:
