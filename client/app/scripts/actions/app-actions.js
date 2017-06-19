@@ -641,8 +641,9 @@ export function receiveNodesForTopology(nodes, topologyId) {
 }
 
 export function receiveTopologies(topologies) {
-  return (dispatch, getWeirdState) => {
-    const getState = () => getWeirdState().scope || getWeirdState();
+  return (dispatch, getGlobalState) => {
+    // NOTE: Fortunately, this will go when Time Travel is out of <CloudFeature />.
+    const getState = () => getGlobalState().scope || getGlobalState();
     const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
