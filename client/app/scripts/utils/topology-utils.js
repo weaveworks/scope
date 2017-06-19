@@ -4,7 +4,7 @@ import { Set as makeSet, List as makeList } from 'immutable';
 import { isNowSelector } from '../selectors/time-travel';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { pinnedMetricSelector } from '../selectors/node-metric';
-import { shownNodesSelector } from '../selectors/node-filters';
+import { shownNodesSelector, shownResourceTopologyIdsSelector } from '../selectors/node-filters';
 
 //
 // top priority first
@@ -137,14 +137,15 @@ export function getCurrentTopologyOptions(state) {
 
 export function isTopologyNodeCountZero(state) {
   const nodeCount = state.getIn(['currentTopology', 'stats', 'node_count'], 0);
-  return nodeCount === 0 && isNowSelector(state);
+  // If we are browsing the past, assume there would normally be some nodes at different times.
+  // If we are in the resource view, don't rely on these stats at all (for now).
+  return nodeCount === 0 && isNowSelector(state) && !isResourceViewModeSelector(state);
 }
 
 export function isNodesDisplayEmpty(state) {
   // Consider a topology in the resource view empty if it has no pinned metric.
   if (isResourceViewModeSelector(state)) {
-    // TODO: Check for empty displays here after Scope v1.5.0 has been released.
-    return !pinnedMetricSelector(state);
+    return !pinnedMetricSelector(state) || shownResourceTopologyIdsSelector(state).isEmpty();
   }
   // Otherwise (in graph and table view), we only look at the nodes content.
   return shownNodesSelector(state).isEmpty();

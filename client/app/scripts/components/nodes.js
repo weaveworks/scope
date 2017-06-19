@@ -11,6 +11,7 @@ import {
   isTopologyNodeCountZero,
   isNodesDisplayEmpty,
 } from '../utils/topology-utils';
+import { nodesLoadedSelector } from '../selectors/node-filters';
 import {
   isGraphViewModeSelector,
   isTableViewModeSelector,
@@ -82,9 +83,9 @@ function mapStateToProps(state) {
     isResourceViewMode: isResourceViewModeSelector(state),
     topologyNodeCountZero: isTopologyNodeCountZero(state),
     nodesDisplayEmpty: isNodesDisplayEmpty(state),
+    nodesLoaded: nodesLoadedSelector(state),
     timeTravelTransitioning: state.get('timeTravelTransitioning'),
     currentTopology: state.get('currentTopology'),
-    nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),
   };
