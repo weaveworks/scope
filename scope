@@ -165,7 +165,8 @@ create_plugins_dir() {
     # is not shared from OS X and does not belong to the system."
     # In any case, creating /var/run/scope/plugins on Mac OS would not work, as domain
     # sockets do not cross VM boundaries. We need this directory to exits on the VM.
-    docker run --rm --entrypoint=/bin/sh \
+    # shellcheck disable=SC2086
+    docker run $USERNS_HOST --rm --entrypoint=/bin/sh \
         -v /var/run:/var/run \
         "$SCOPE_IMAGE" -c "mkdir -p /var/run/scope/plugins"
 }
