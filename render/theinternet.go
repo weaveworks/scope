@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/bluele/gcache"
+
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
@@ -32,12 +34,33 @@ var (
 		// and having separate nodes for them makes visualizations worse
 		`ec2.*\.amazonaws\.com`,
 	}, `|`) + `)$`)
+
+	// Memoization for isKnownService.
+	//
+	// The 10000 comes from the observation that large reports contain
+	// hundreds of names, and in a multi-tenant context we want to be
+	// able to render a few dozen reports concurrently. Also, unlike
+	// memoization in the reducers, which is keyed on reports, this
+	// cache is effective when rendering multiple reports from the
+	// same cluster of probes, e.g. from different points in time,
+	// since names tend to change infrequently.
+	//
+	// Since names are generally <50 bytes, this shouldn't weight in
+	// at more than a few MB of memory.
+	knownServiceCache = gcache.New(10000).ARC().Build()
 )
 
 // TODO: Make it user-customizable https://github.com/weaveworks/scope/issues/1876
 // NB: this is a hotspot in rendering performance.
 func isKnownService(hostname string) bool {
-	return knownServiceMatcher.MatchString(hostname) && !knownServiceExcluder.MatchString(hostname)
+	if v, err := knownServiceCache.Get(hostname); err == nil {
+		return v.(bool)
+	}
+
+	known := knownServiceMatcher.MatchString(hostname) && !knownServiceExcluder.MatchString(hostname)
+	knownServiceCache.Set(hostname, known)
+
+	return known
 }
 
 // LocalNetworks returns a superset of the networks (think: CIDRs) that are
