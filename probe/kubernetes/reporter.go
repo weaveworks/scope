@@ -429,7 +429,7 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet, dae
 	// 1. reconstructing the NodeName requires cloud provider credentials
 	// 2. inferring the NodeName out of the hostname or system uuid is unreliable
 	//    (uuids and hostnames can be duplicated across the cluster).
-	localPodUIDs, errUIDs := GetLocalPodUIDs(fmt.Sprintf("localhost:%d", r.kubeletPort))
+	localPodUIDs, errUIDs := GetLocalPodUIDs(fmt.Sprintf("127.0.0.1:%d", r.kubeletPort))
 	if errUIDs != nil {
 		log.Warnf("Cannot obtain local pods, reporting all (which may impact performance): %v", errUIDs)
 	}
