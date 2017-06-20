@@ -415,14 +415,17 @@ type topologyStats struct {
 	FilteredNodes      int `json:"filtered_nodes"`
 }
 
-// deserializedTimestamp converts the ISO8601 query param into a proper timestamp.
-func deserializedTimestamp(timestampStr string) time.Time {
-	// If no timestamp is given, assume the current time.
-	timestamp := time.Now()
-	if timestampStr != "" {
-		timestamp, _ = time.Parse(time.RFC3339, timestampStr)
+// deserializeTimestamp converts the ISO8601 query param into a proper timestamp.
+func deserializeTimestamp(timestamp string) time.Time {
+	if timestamp != "" {
+		result, err := time.Parse(time.RFC3339, timestamp)
+		if err != nil {
+			log.Errorf("Error parsing timestamp '%s' - make sure the time format is correct", timestamp)
+		}
+		return result
 	}
-	return timestamp
+	// Default to current time if no timestamp is provided.
+	return time.Now()
 }
 
 // AddContainerFilters adds to the default Registry (topologyRegistry)'s containerFilters
@@ -487,7 +490,7 @@ func (r *Registry) walk(f func(APITopologyDesc)) {
 // makeTopologyList returns a handler that yields an APITopologyList.
 func (r *Registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
-		timestamp := deserializedTimestamp(req.URL.Query().Get("timestamp"))
+		timestamp := deserializeTimestamp(req.URL.Query().Get("timestamp"))
 		report, err := rep.Report(ctx, timestamp)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
@@ -577,7 +580,7 @@ func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFu
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		var (
 			topologyID = mux.Vars(req)["topology"]
-			timestamp  = deserializedTimestamp(req.URL.Query().Get("timestamp"))
+			timestamp  = deserializeTimestamp(req.URL.Query().Get("timestamp"))
 		)
 		if _, ok := r.get(topologyID); !ok {
 			http.NotFound(w, req)

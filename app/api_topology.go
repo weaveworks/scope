@@ -97,7 +97,7 @@ func handleWebsocket(
 		tick             = time.Tick(loop)
 		wait             = make(chan struct{}, 1)
 		topologyID       = mux.Vars(r)["topology"]
-		startReportingAt = deserializedTimestamp(r.Form.Get("timestamp"))
+		startReportingAt = deserializeTimestamp(r.Form.Get("timestamp"))
 		channelOpenedAt  = time.Now()
 	)
 
