@@ -1049,6 +1049,14 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/k-sone/critbitgo",
+			"repository": "https://github.com/k-sone/critbitgo",
+			"vcs": "git",
+			"revision": "327359a051d71948cb756142d112c7df283fac4d",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/kr/pretty",
 			"repository": "https://github.com/kr/pretty",
 			"vcs": "git",
