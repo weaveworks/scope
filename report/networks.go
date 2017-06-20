@@ -8,17 +8,11 @@ import (
 // Networks represent a set of subnets
 type Networks []*net.IPNet
 
-// Interface is exported for testing.
-type Interface interface {
-	Addrs() ([]net.Addr, error)
-}
-
-// Variables exposed for testing.
+// LocalNetworks helps in determining which addresses a probe reports
+// as being host-scoped.
+//
 // TODO this design is broken, make it consistent with probe networks.
-var (
-	LocalNetworks       = Networks{}
-	InterfaceByNameStub = func(name string) (Interface, error) { return net.InterfaceByName(name) }
-)
+var LocalNetworks = Networks{}
 
 // Contains returns true if IP is in Networks.
 func (n Networks) Contains(ip net.IP) bool {
@@ -65,7 +59,7 @@ func LocalAddresses() ([]net.IP, error) {
 // supplied, such that MakeAddressNodeID will scope addresses in this subnet
 // as local.
 func AddLocalBridge(name string) error {
-	inf, err := InterfaceByNameStub(name)
+	inf, err := net.InterfaceByName(name)
 	if err != nil {
 		return err
 	}
