@@ -19,16 +19,16 @@ import {
   layoutEdgesSelector
 } from '../selectors/graph-view/layout';
 
-
-const BLURRED_NODES_LAYER = 'blurred-nodes';
-const NORMAL_NODES_LAYER = 'normal-nodes';
-const HIGHLIGHTED_NODES_LAYER = 'highlighted-nodes';
-const HOVERED_NODES_LAYER = 'hovered-nodes';
-
-const BLURRED_EDGES_LAYER = 'blurred-edges';
-const NORMAL_EDGES_LAYER = 'normal-edges';
-const HIGHLIGHTED_EDGES_LAYER = 'highlighted-edges';
-const HOVERED_EDGES_LAYER = 'hovered-edges';
+import {
+  BLURRED_EDGES_LAYER,
+  BLURRED_NODES_LAYER,
+  NORMAL_EDGES_LAYER,
+  NORMAL_NODES_LAYER,
+  HIGHLIGHTED_EDGES_LAYER,
+  HIGHLIGHTED_NODES_LAYER,
+  HOVERED_EDGES_LAYER,
+  HOVERED_NODES_LAYER,
+} from '../constants/naming';
 
 
 class NodesChartElements extends React.Component {
