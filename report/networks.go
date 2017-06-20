@@ -8,17 +8,11 @@ import (
 // Networks represent a set of subnets
 type Networks []*net.IPNet
 
-// Interface is exported for testing.
-type Interface interface {
-	Addrs() ([]net.Addr, error)
-}
-
-// Variables exposed for testing.
+// LocalNetworks helps in determining which addresses a probe reports
+// as being host-scoped.
+//
 // TODO this design is broken, make it consistent with probe networks.
-var (
-	LocalNetworks       = Networks{}
-	InterfaceByNameStub = func(name string) (Interface, error) { return net.InterfaceByName(name) }
-)
+var LocalNetworks = Networks{}
 
 // Contains returns true if IP is in Networks.
 func (n Networks) Contains(ip net.IP) bool {
@@ -51,12 +45,7 @@ func LocalAddresses() ([]net.IP, error) {
 			return []net.IP{}, err
 		}
 
-		for _, addr := range addrs {
-			ipnet, ok := addr.(*net.IPNet)
-			if !ok {
-				continue
-			}
-
+		for _, ipnet := range ipv4Nets(addrs) {
 			result = append(result, ipnet.IP)
 		}
 	}
@@ -68,7 +57,7 @@ func LocalAddresses() ([]net.IP, error) {
 // supplied, such that MakeAddressNodeID will scope addresses in this subnet
 // as local.
 func AddLocalBridge(name string) error {
-	inf, err := InterfaceByNameStub(name)
+	inf, err := net.InterfaceByName(name)
 	if err != nil {
 		return err
 	}
@@ -77,18 +66,27 @@ func AddLocalBridge(name string) error {
 	if err != nil {
 		return err
 	}
-	for _, addr := range addrs {
-		_, network, err := net.ParseCIDR(addr.String())
-		if err != nil {
-			return err
-		}
 
-		if network == nil {
-			continue
-		}
-
-		LocalNetworks = append(LocalNetworks, network)
-	}
+	LocalNetworks = ipv4Nets(addrs)
 
 	return nil
+}
+
+// GetLocalNetworks returns all the local networks.
+func GetLocalNetworks() ([]*net.IPNet, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, err
+	}
+	return ipv4Nets(addrs), nil
+}
+
+func ipv4Nets(addrs []net.Addr) []*net.IPNet {
+	nets := Networks{}
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
+			nets = append(nets, ipnet)
+		}
+	}
+	return nets
 }
