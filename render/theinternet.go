@@ -1,6 +1,7 @@
 package render
 
 import (
+	"net"
 	"regexp"
 	"strings"
 
@@ -67,15 +68,26 @@ func isKnownService(hostname string) bool {
 // used to determine which nodes in the report are "remote", i.e. outside of
 // our infrastructure.
 func LocalNetworks(r report.Report) report.Networks {
-	networks := report.NewNetworks()
+	var (
+		result   = report.Networks{}
+		networks = map[string]struct{}{}
+	)
 
 	for _, topology := range []report.Topology{r.Host, r.Overlay} {
 		for _, md := range topology.Nodes {
 			nets, _ := md.Sets.Lookup(host.LocalNetworks)
 			for _, s := range nets {
-				networks.AddCIDR(s)
+				_, ipNet, err := net.ParseCIDR(s)
+				if err != nil {
+					continue
+				}
+				_, ok := networks[ipNet.String()]
+				if !ok {
+					result = append(result, ipNet)
+					networks[ipNet.String()] = struct{}{}
+				}
 			}
 		}
 	}
-	return networks
+	return result
 }

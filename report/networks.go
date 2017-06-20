@@ -3,38 +3,25 @@ package report
 import (
 	"net"
 	"strings"
-
-	"github.com/k-sone/critbitgo"
 )
 
 // Networks represent a set of subnets
-type Networks struct{ *critbitgo.Net }
+type Networks []*net.IPNet
 
 // LocalNetworks helps in determining which addresses a probe reports
 // as being host-scoped.
 //
 // TODO this design is broken, make it consistent with probe networks.
-var LocalNetworks = NewNetworks()
-
-// Create datastructure for set of subnets.
-func NewNetworks() Networks {
-	return Networks{critbitgo.NewNet()}
-}
-
-// Add a network.
-func (n Networks) Add(ipnet *net.IPNet) error {
-	return n.Net.Add(ipnet, struct{}{})
-}
-
-// Add a network, represented as CIDR.
-func (n Networks) AddCIDR(cidr string) error {
-	return n.Net.AddCIDR(cidr, struct{}{})
-}
+var LocalNetworks = Networks{}
 
 // Contains returns true if IP is in Networks.
 func (n Networks) Contains(ip net.IP) bool {
-	network, _, _ := n.MatchIP(ip)
-	return network != nil
+	for _, net := range n {
+		if net.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
 
 // LocalAddresses returns a list of the local IP addresses.
@@ -80,9 +67,7 @@ func AddLocalBridge(name string) error {
 		return err
 	}
 
-	for _, ipnet := range ipv4Nets(addrs) {
-		LocalNetworks.Add(ipnet)
-	}
+	LocalNetworks = ipv4Nets(addrs)
 
 	return nil
 }
@@ -97,7 +82,7 @@ func GetLocalNetworks() ([]*net.IPNet, error) {
 }
 
 func ipv4Nets(addrs []net.Addr) []*net.IPNet {
-	nets := []*net.IPNet{}
+	nets := Networks{}
 	for _, addr := range addrs {
 		if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
 			nets = append(nets, ipnet)

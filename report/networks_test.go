@@ -8,12 +8,10 @@ import (
 )
 
 func TestContains(t *testing.T) {
-	networks := report.NewNetworks()
-	for _, cidr := range []string{"10.0.0.1/8", "192.168.1.1/24"} {
-		if err := networks.AddCIDR(cidr); err != nil {
-			panic(err)
-		}
-	}
+	networks := report.Networks([]*net.IPNet{
+		mustParseCIDR("10.0.0.1/8"),
+		mustParseCIDR("192.168.1.1/24"),
+	})
 
 	if networks.Contains(net.ParseIP("52.52.52.52")) {
 		t.Errorf("52.52.52.52 not in %v", networks)
@@ -22,4 +20,12 @@ func TestContains(t *testing.T) {
 	if !networks.Contains(net.ParseIP("10.0.0.1")) {
 		t.Errorf("10.0.0.1 in %v", networks)
 	}
+}
+
+func mustParseCIDR(s string) *net.IPNet {
+	_, ipNet, err := net.ParseCIDR(s)
+	if err != nil {
+		panic(err)
+	}
+	return ipNet
 }
