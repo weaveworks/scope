@@ -82,3 +82,18 @@ func AddLocalBridge(name string) error {
 
 	return nil
 }
+
+// GetLocalNetworks returns all the local networks.
+func GetLocalNetworks() ([]*net.IPNet, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, err
+	}
+	localNets := Networks{}
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
+			localNets = append(localNets, ipnet)
+		}
+	}
+	return localNets, nil
+}
