@@ -632,7 +632,7 @@ The following is an example of a report with a metric preceded by its metric tem
 }
 
 "metrics": {
-	"metadata-template-id": {
+	"metric-template-id": {
 		"samples": [
 			{
 				"date": "2016-11-17T08:53:03.171424664Z",
