@@ -52,12 +52,9 @@ func LocalAddresses() ([]net.IP, error) {
 		}
 
 		for _, addr := range addrs {
-			ipnet, ok := addr.(*net.IPNet)
-			if !ok {
-				continue
+			if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
+				result = append(result, ipnet.IP)
 			}
-
-			result = append(result, ipnet.IP)
 		}
 	}
 
@@ -78,16 +75,9 @@ func AddLocalBridge(name string) error {
 		return err
 	}
 	for _, addr := range addrs {
-		_, network, err := net.ParseCIDR(addr.String())
-		if err != nil {
-			return err
+		if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
+			LocalNetworks = append(LocalNetworks, ipnet)
 		}
-
-		if network == nil {
-			continue
-		}
-
-		LocalNetworks = append(LocalNetworks, network)
 	}
 
 	return nil

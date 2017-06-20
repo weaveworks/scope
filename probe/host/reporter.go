@@ -93,9 +93,8 @@ var GetLocalNetworks = func() ([]*net.IPNet, error) {
 	}
 	localNets := report.Networks{}
 	for _, addr := range addrs {
-		// Not all addrs are IPNets.
-		if ipNet, ok := addr.(*net.IPNet); ok {
-			localNets = append(localNets, ipNet)
+		if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
+			localNets = append(localNets, ipnet)
 		}
 	}
 	return localNets, nil
