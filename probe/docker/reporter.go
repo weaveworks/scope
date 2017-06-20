@@ -190,16 +190,13 @@ func (r *Reporter) Report() (report.Report, error) {
 }
 
 func getLocalIPs() ([]string, error) {
-	addrs, err := net.InterfaceAddrs()
+	ipnets, err := report.GetLocalNetworks()
 	if err != nil {
 		return nil, err
 	}
 	ips := []string{}
-	for _, addr := range addrs {
-		// Not all addrs are IPNets.
-		if ipNet, ok := addr.(*net.IPNet); ok {
-			ips = append(ips, ipNet.IP.String())
-		}
+	for _, ipnet := range ipnets {
+		ips = append(ips, ipnet.IP.String())
 	}
 	return ips, nil
 }
