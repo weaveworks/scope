@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Map as makeMap } from 'immutable';
+import { Map as makeMap, List as makeList } from 'immutable';
 
 import NodeContainer from './node-container';
 import EdgeContainer from './edge-container';
@@ -20,11 +20,25 @@ import {
 } from '../selectors/graph-view/layout';
 
 
+const BLURRED_NODES_LAYER = 'blurred-nodes';
+const NORMAL_NODES_LAYER = 'normal-nodes';
+const HIGHLIGHTED_NODES_LAYER = 'highlighted-nodes';
+const HOVERED_NODES_LAYER = 'hovered-nodes';
+
+const NORMAL_EDGES_LAYER = 'normal-edges';
+
+function edgeDisplayLayer() {
+  return NORMAL_EDGES_LAYER;
+}
+
 class NodesChartElements extends React.Component {
   constructor(props, context) {
     super(props, context);
 
+    this.renderNode = this.renderNode.bind(this);
+    this.renderEdge = this.renderEdge.bind(this);
     this.nodeDisplayLayer = this.nodeDisplayLayer.bind(this);
+    // this.edgeDisplayLayer = this.edgeDisplayLayer.bind(this);
 
     // Node decorators
     this.nodeHighlightedDecorator = this.nodeHighlightedDecorator.bind(this);
@@ -45,15 +59,13 @@ class NodesChartElements extends React.Component {
   // make sure blurred nodes are in the background
   nodeDisplayLayer(node) {
     if (node.get('id') === this.props.mouseOverNodeId) {
-      return 3;
+      return HOVERED_NODES_LAYER;
+    } else if (node.get('blurred') && !node.get('focused')) {
+      return BLURRED_NODES_LAYER;
+    } else if (node.get('highlighted')) {
+      return HIGHLIGHTED_NODES_LAYER;
     }
-    if (node.get('blurred') && !node.get('focused')) {
-      return 0;
-    }
-    if (node.get('highlighted')) {
-      return 2;
-    }
-    return 1;
+    return NORMAL_NODES_LAYER;
   }
 
   nodeHighlightedDecorator(node) {
@@ -122,10 +134,53 @@ class NodesChartElements extends React.Component {
     return edge.set('scale', edge.get('focused') ? this.props.selectedScale : 1);
   }
 
-  render() {
-    const { layoutNodes, layoutEdges, isAnimated, contrastMode } = this.props;
+  renderNode(node) {
+    const { isAnimated, contrastMode } = this.props;
+    return (
+      <NodeContainer
+        matches={node.get('matches')}
+        networks={node.get('networks')}
+        metric={node.get('metric')}
+        blurred={node.get('blurred')}
+        focused={node.get('focused')}
+        highlighted={node.get('highlighted')}
+        shape={node.get('shape')}
+        stack={node.get('stack')}
+        key={node.get('id')}
+        id={node.get('id')}
+        label={node.get('label')}
+        labelMinor={node.get('labelMinor')}
+        pseudo={node.get('pseudo')}
+        rank={node.get('rank')}
+        dx={node.get('x')}
+        dy={node.get('y')}
+        scale={node.get('scale')}
+        isAnimated={isAnimated}
+        contrastMode={contrastMode}
+      />
+    );
+  }
 
-    const nodesToRender = layoutNodes.toIndexedSeq()
+  renderEdge(edge) {
+    const { isAnimated } = this.props;
+    return (
+      <EdgeContainer
+        key={edge.get('id')}
+        id={edge.get('id')}
+        source={edge.get('source')}
+        target={edge.get('target')}
+        waypoints={edge.get('points')}
+        highlighted={edge.get('highlighted')}
+        focused={edge.get('focused')}
+        blurred={edge.get('blurred')}
+        scale={edge.get('scale')}
+        isAnimated={isAnimated}
+      />
+    );
+  }
+
+  render() {
+    const nodes = this.props.layoutNodes.toIndexedSeq()
       .map(this.nodeHighlightedDecorator)
       .map(this.nodeFocusedDecorator)
       .map(this.nodeBlurredDecorator)
@@ -133,53 +188,23 @@ class NodesChartElements extends React.Component {
       .map(this.nodeNetworksDecorator)
       .map(this.nodeMetricDecorator)
       .map(this.nodeScaleDecorator)
-      .sortBy(this.nodeDisplayLayer);
+      .groupBy(this.nodeDisplayLayer);
 
-    const edgesToRender = layoutEdges.toIndexedSeq()
+    const edges = this.props.layoutEdges.toIndexedSeq()
       .map(this.edgeHighlightedDecorator)
       .map(this.edgeFocusedDecorator)
       .map(this.edgeBlurredDecorator)
-      .map(this.edgeScaleDecorator);
+      .map(this.edgeScaleDecorator)
+      .groupBy(edgeDisplayLayer);
 
+    console.log(nodes.toJS(), edges.toJS());
     return (
       <g className="nodes-chart-elements">
-        {edgesToRender.map(edge => (
-          <EdgeContainer
-            key={edge.get('id')}
-            id={edge.get('id')}
-            source={edge.get('source')}
-            target={edge.get('target')}
-            waypoints={edge.get('points')}
-            highlighted={edge.get('highlighted')}
-            focused={edge.get('focused')}
-            blurred={edge.get('blurred')}
-            scale={edge.get('scale')}
-            isAnimated={isAnimated}
-          />
-        ))}
-        {nodesToRender.map(node => (
-          <NodeContainer
-            matches={node.get('matches')}
-            networks={node.get('networks')}
-            metric={node.get('metric')}
-            blurred={node.get('blurred')}
-            focused={node.get('focused')}
-            highlighted={node.get('highlighted')}
-            shape={node.get('shape')}
-            stack={node.get('stack')}
-            key={node.get('id')}
-            id={node.get('id')}
-            label={node.get('label')}
-            labelMinor={node.get('labelMinor')}
-            pseudo={node.get('pseudo')}
-            rank={node.get('rank')}
-            dx={node.get('x')}
-            dy={node.get('y')}
-            scale={node.get('scale')}
-            isAnimated={isAnimated}
-            contrastMode={contrastMode}
-          />
-        ))}
+        {edges.get(NORMAL_EDGES_LAYER, makeList()).map(this.renderEdge)}
+        {nodes.get(BLURRED_NODES_LAYER, makeList()).map(this.renderNode)}
+        {nodes.get(NORMAL_NODES_LAYER, makeList()).map(this.renderNode)}
+        {nodes.get(HIGHLIGHTED_NODES_LAYER, makeList()).map(this.renderNode)}
+        {nodes.get(HOVERED_NODES_LAYER, makeList()).map(this.renderNode)}
       </g>
     );
   }
