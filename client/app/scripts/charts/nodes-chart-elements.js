@@ -216,7 +216,7 @@ class NodesChartElements extends React.Component {
     // NOTE: The elements need to be arranged into a single array outside
     // of DOM structure for React rendering engine to do smart rearrangements
     // without unnecessary re-rendering of the elements themselves. So e.g.
-    // rendering the element layers individualy below would be significantly slower.
+    // rendering the element layers individually below would be significantly slower.
     const orderedElements = makeList([
       edges.get(BLURRED_EDGES_LAYER, makeList()),
       nodes.get(BLURRED_NODES_LAYER, makeList()),
