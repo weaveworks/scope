@@ -4,7 +4,7 @@ ENV GOVERSION 1.8
 ENV PATH /go/bin:/usr/local/go/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ENV SCOPE_SKIP_UI_ASSETS true
 RUN apt-get update && \
-	apt-get install -y libpcap-dev python-requests time file shellcheck git gcc-arm-linux-gnueabihf curl && \
+	apt-get install -y libpcap-dev python-requests time file shellcheck git gcc-arm-linux-gnueabihf curl build-essential && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN curl -Ls https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz | tar xz -C /usr/local
 RUN go clean -i net && \
