@@ -76,6 +76,8 @@ export const initialState = makeMap({
   showingHelp: false,
   showingTroubleshootingMenu: false,
   showingNetworks: false,
+  timeTravelTransitioning: false,
+  timeTravelMillisecondsInPast: 0,
   topologies: makeList(),
   topologiesLoaded: false,
   topologyOptions: makeOrderedMap(), // topologyId -> options
@@ -86,8 +88,6 @@ export const initialState = makeMap({
   versionUpdate: null,
   viewport: makeMap(),
   websocketClosed: false,
-  websocketTransitioning: false,
-  websocketQueryMillisecondsInPast: 0,
   zoomCache: makeMap(),
   serviceImages: makeMap()
 });
@@ -124,7 +124,7 @@ function processTopologies(state, nextTopologies) {
 
   const topologiesWithFullnames = addTopologyFullname(topologiesWithId);
   const immNextTopologies = fromJS(topologiesWithFullnames).sortBy(topologySorter);
-  return state.mergeDeepIn(['topologies'], immNextTopologies);
+  return state.set('topologies', immNextTopologies);
 }
 
 function setTopology(state, topologyId) {
@@ -290,7 +290,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_PAUSE_UPDATE: {
-      const millisecondsInPast = state.get('websocketQueryMillisecondsInPast');
+      const millisecondsInPast = state.get('timeTravelMillisecondsInPast');
       return state.set('updatePausedAt', moment().utc().subtract(millisecondsInPast));
     }
 
@@ -347,19 +347,23 @@ export function rootReducer(state = initialState, action) {
     }
 
     //
+    // time travel
+    //
+
+    case ActionTypes.TIME_TRAVEL_START_TRANSITION: {
+      return state.set('timeTravelTransitioning', true);
+    }
+
+    case ActionTypes.TIME_TRAVEL_MILLISECONDS_IN_PAST: {
+      return state.set('timeTravelMillisecondsInPast', action.millisecondsInPast);
+    }
+
+    //
     // websockets
     //
 
     case ActionTypes.OPEN_WEBSOCKET: {
       return state.set('websocketClosed', false);
-    }
-
-    case ActionTypes.START_WEBSOCKET_TRANSITION_LOADER: {
-      return state.set('websocketTransitioning', true);
-    }
-
-    case ActionTypes.WEBSOCKET_QUERY_MILLISECONDS_IN_PAST: {
-      return state.set('websocketQueryMillisecondsInPast', action.millisecondsInPast);
     }
 
     case ActionTypes.CLOSE_WEBSOCKET: {
@@ -569,8 +573,8 @@ export function rootReducer(state = initialState, action) {
       // only when the first batch of nodes delta has been received. We
       // do that because we want to keep the previous state blurred instead
       // of transitioning over an empty state like when switching topologies.
-      if (state.get('websocketTransitioning')) {
-        state = state.set('websocketTransitioning', false);
+      if (state.get('timeTravelTransitioning')) {
+        state = state.set('timeTravelTransitioning', false);
         state = clearNodes(state);
       }
 

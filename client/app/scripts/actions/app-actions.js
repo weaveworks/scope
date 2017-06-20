@@ -25,7 +25,6 @@ import {
   pinnedMetricSelector,
 } from '../selectors/node-metric';
 import {
-  activeTopologyOptionsSelector,
   isResourceViewModeSelector,
   resourceViewAvailableSelector,
 } from '../selectors/topology';
@@ -219,15 +218,9 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     // update all request workers with new options
     dispatch(resetNodesDeltaBuffer());
     const state = getState();
-    getTopologies(activeTopologyOptionsSelector(state), dispatch);
+    getTopologies(state, dispatch);
     updateWebsocketChannel(state, dispatch);
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('currentTopologyId'),
-      activeTopologyOptionsSelector(state),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(state, dispatch);
   };
 }
 
@@ -336,7 +329,7 @@ export function setResourceView() {
         const firstAvailableMetricType = availableMetricTypesSelector(state).first();
         dispatch(pinMetric(firstAvailableMetricType));
       }
-      getResourceViewNodesSnapshot(getState, dispatch);
+      getResourceViewNodesSnapshot(getState(), dispatch);
       updateRoute(getState);
     }
   };
@@ -351,14 +344,7 @@ export function clickNode(nodeId, label, origin) {
       nodeId
     });
     updateRoute(getState);
-    const state = getState();
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('currentTopologyId'),
-      activeTopologyOptionsSelector(state),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(getState(), dispatch);
   };
 }
 
@@ -378,14 +364,7 @@ export function clickRelative(nodeId, topologyId, label, origin) {
       topologyId
     });
     updateRoute(getState);
-    const state = getState();
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('currentTopologyId'),
-      activeTopologyOptionsSelector(state),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(getState(), dispatch);
   };
 }
 
@@ -393,7 +372,7 @@ function updateTopology(dispatch, getState) {
   const state = getState();
   // If we're in the resource view, get the snapshot of all the relevant node topologies.
   if (isResourceViewModeSelector(state)) {
-    getResourceViewNodesSnapshot(getState, dispatch);
+    getResourceViewNodesSnapshot(state, dispatch);
   }
   updateRoute(getState);
   // update all request workers with new options
@@ -425,21 +404,25 @@ export function clickTopology(topologyId) {
   };
 }
 
-export function startWebsocketTransitionLoader() {
+export function timeTravelStartTransition() {
   return {
-    type: ActionTypes.START_WEBSOCKET_TRANSITION_LOADER,
+    type: ActionTypes.TIME_TRAVEL_START_TRANSITION,
   };
 }
 
-export function websocketQueryInPast(millisecondsInPast) {
+export function timeTravelJumpToPast(millisecondsInPast) {
   return (dispatch, getServiceState) => {
     dispatch({
-      type: ActionTypes.WEBSOCKET_QUERY_MILLISECONDS_IN_PAST,
+      type: ActionTypes.TIME_TRAVEL_MILLISECONDS_IN_PAST,
       millisecondsInPast,
     });
     const scopeState = getServiceState().scope;
     updateWebsocketChannel(scopeState, dispatch);
     dispatch(resetNodesDeltaBuffer());
+    getTopologies(getServiceState().scope, dispatch);
+    if (isResourceViewModeSelector(scopeState)) {
+      getResourceViewNodesSnapshot(scopeState, dispatch);
+    }
   };
 }
 
@@ -504,7 +487,7 @@ export function focusSearch() {
     // the nodes delta. The solution would be to implement deeper
     // search selectors with per-node caching instead of per-topology.
     setTimeout(() => {
-      getAllNodes(getState, dispatch);
+      getAllNodes(getState(), dispatch);
     }, 1200);
   };
 }
@@ -603,7 +586,7 @@ export function receiveNodesDelta(delta) {
     // returned by getState(). Since method is called from both contexts, getState()
     // will sometimes return Scope state subtree and sometimes the whole Service state.
     const state = getState().scope || getState();
-    const movingInTime = state.get('websocketTransitioning');
+    const movingInTime = state.get('timeTravelTransitioning');
     const hasChanges = delta.add || delta.update || delta.remove;
 
     if (hasChanges || movingInTime) {
@@ -658,7 +641,9 @@ export function receiveNodesForTopology(nodes, topologyId) {
 }
 
 export function receiveTopologies(topologies) {
-  return (dispatch, getState) => {
+  return (dispatch, getGlobalState) => {
+    // NOTE: Fortunately, this will go when Time Travel is out of <CloudFeature />.
+    const getState = () => getGlobalState().scope || getGlobalState();
     const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
@@ -666,20 +651,14 @@ export function receiveTopologies(topologies) {
     });
     const state = getState();
     updateWebsocketChannel(state, dispatch);
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('currentTopologyId'),
-      activeTopologyOptionsSelector(state),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(state, dispatch);
     // Populate search matches on first load
     if (firstLoad && state.get('searchQuery')) {
       dispatch(focusSearch());
     }
     // Fetch all the relevant nodes once on first load
     if (firstLoad && isResourceViewModeSelector(state)) {
-      getResourceViewNodesSnapshot(getState, dispatch);
+      getResourceViewNodesSnapshot(state, dispatch);
     }
   };
 }
@@ -773,6 +752,12 @@ export function setContrastMode(enabled) {
   };
 }
 
+export function getTopologiesWithInitialPoll() {
+  return (dispatch, getState) => {
+    getTopologies(getState(), dispatch, true);
+  };
+}
+
 export function route(urlState) {
   return (dispatch, getState) => {
     dispatch({
@@ -781,20 +766,14 @@ export function route(urlState) {
     });
     // update all request workers with new options
     const state = getState();
-    getTopologies(activeTopologyOptionsSelector(state), dispatch);
+    getTopologies(state, dispatch);
     updateWebsocketChannel(state, dispatch);
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('currentTopologyId'),
-      activeTopologyOptionsSelector(state),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(state, dispatch);
     // If we are landing on the resource view page, we need to fetch not only all the
     // nodes for the current topology, but also the nodes of all the topologies that make
     // the layers in the resource view.
     if (isResourceViewModeSelector(state)) {
-      getResourceViewNodesSnapshot(getState, dispatch);
+      getResourceViewNodesSnapshot(state, dispatch);
     }
   };
 }

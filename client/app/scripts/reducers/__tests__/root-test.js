@@ -365,7 +365,7 @@ describe('RootReducer', () => {
 
     // other topology w/o options dont return options, but keep in app state
     nextState = reducer(nextState, ClickTopology2Action);
-    expect(activeTopologyOptionsSelector(nextState)).toNotExist();
+    expect(activeTopologyOptionsSelector(nextState).size).toEqual(0);
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
   });
 

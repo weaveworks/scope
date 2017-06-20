@@ -1,5 +1,4 @@
 import React from 'react';
-import classNames from 'classnames';
 import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
@@ -12,6 +11,7 @@ import {
   isTopologyNodeCountZero,
   isNodesDisplayEmpty,
 } from '../utils/topology-utils';
+import { nodesLoadedSelector } from '../selectors/node-filters';
 import {
   isGraphViewModeSelector,
   isTableViewModeSelector,
@@ -53,13 +53,11 @@ class Nodes extends React.Component {
 
   render() {
     const { topologiesLoaded, nodesLoaded, topologies, currentTopology, isGraphViewMode,
-      isTableViewMode, isResourceViewMode, websocketTransitioning } = this.props;
-
-    const className = classNames('nodes-wrapper', { blurred: websocketTransitioning });
+      isTableViewMode, isResourceViewMode } = this.props;
 
     // TODO: Rename view mode components.
     return (
-      <div className={className}>
+      <div className="nodes-wrapper">
         <DelayedShow delay={TOPOLOGY_LOADER_DELAY} show={!topologiesLoaded || !nodesLoaded}>
           <Loading itemType="topologies" show={!topologiesLoaded} />
           <Loading
@@ -85,9 +83,9 @@ function mapStateToProps(state) {
     isResourceViewMode: isResourceViewModeSelector(state),
     topologyNodeCountZero: isTopologyNodeCountZero(state),
     nodesDisplayEmpty: isNodesDisplayEmpty(state),
-    websocketTransitioning: state.get('websocketTransitioning'),
+    nodesLoaded: nodesLoadedSelector(state),
+    timeTravelTransitioning: state.get('timeTravelTransitioning'),
     currentTopology: state.get('currentTopology'),
-    nodesLoaded: state.get('nodesLoaded'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),
   };

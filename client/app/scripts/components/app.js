@@ -13,7 +13,8 @@ import Status from './status';
 import Topologies from './topologies';
 import TopologyOptions from './topology-options';
 import CloudFeature from './cloud-feature';
-import { getApiDetails, getTopologies } from '../utils/web-api-utils';
+import Overlay from './overlay';
+import { getApiDetails } from '../utils/web-api-utils';
 import {
   focusSearch,
   pinNextMetric,
@@ -27,6 +28,7 @@ import {
   setResourceView,
   shutdown,
   setViewportDimensions,
+  getTopologiesWithInitialPoll,
 } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
@@ -38,7 +40,6 @@ import { getRouter, getUrlState } from '../utils/router-utils';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import { availableNetworksSelector } from '../selectors/node-networks';
 import {
-  activeTopologyOptionsSelector,
   isResourceViewModeSelector,
   isTableViewModeSelector,
   isGraphViewModeSelector,
@@ -74,7 +75,7 @@ class App extends React.Component {
     if (!this.props.routeSet || process.env.WEAVE_CLOUD) {
       // dont request topologies when already done via router.
       // If running as a component, always request topologies when the app mounts.
-      getTopologies(this.props.activeTopologyOptions, this.props.dispatch, true);
+      this.props.dispatch(getTopologiesWithInitialPoll());
     }
     getApiDetails(this.props.dispatch);
   }
@@ -166,7 +167,7 @@ class App extends React.Component {
 
   render() {
     const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails, showingHelp,
-      showingNetworkSelector, showingTroubleshootingMenu } = this.props;
+      showingNetworkSelector, showingTroubleshootingMenu, timeTravelTransitioning } = this.props;
     const isIframe = window !== window.top;
 
     return (
@@ -203,6 +204,8 @@ class App extends React.Component {
         </Sidebar>
 
         <Footer />
+
+        <Overlay faded={timeTravelTransitioning} />
       </div>
     );
   }
@@ -211,7 +214,6 @@ class App extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    activeTopologyOptions: activeTopologyOptionsSelector(state),
     currentTopology: state.get('currentTopology'),
     isResourceViewMode: isResourceViewModeSelector(state),
     isTableViewMode: isTableViewModeSelector(state),
@@ -226,6 +228,7 @@ function mapStateToProps(state) {
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
     topologyViewMode: state.get('topologyViewMode'),
+    timeTravelTransitioning: state.get('timeTravelTransitioning'),
     urlState: getUrlState(state)
   };
 }

@@ -8,9 +8,10 @@ export const isPausedSelector = createSelector(
   updatePausedAt => updatePausedAt !== null
 );
 
-export const isWebsocketQueryingCurrentSelector = createSelector(
+export const isNowSelector = createSelector(
   [
-    state => state.get('websocketQueryMillisecondsInPast')
+    state => state.get('timeTravelMillisecondsInPast')
   ],
-  websocketQueryMillisecondsInPast => websocketQueryMillisecondsInPast === 0
+  // true for values 0, undefined, null, etc...
+  timeTravelMillisecondsInPast => !(timeTravelMillisecondsInPast > 0)
 );

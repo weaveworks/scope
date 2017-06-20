@@ -1,4 +1,5 @@
 import { createSelector } from 'reselect';
+import { Map as makeMap } from 'immutable';
 
 import { layersTopologyIdsSelector } from './resource-view/layout';
 import {
@@ -56,6 +57,6 @@ export const activeTopologyOptionsSelector = createSelector(
     state => state.get('topologyOptions'),
   ],
   (parentTopologyId, currentTopologyId, topologyOptions) => (
-    topologyOptions.get(parentTopologyId || currentTopologyId)
+    topologyOptions.get(parentTopologyId || currentTopologyId, makeMap())
   )
 );
