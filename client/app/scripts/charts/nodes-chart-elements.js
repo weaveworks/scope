@@ -37,6 +37,7 @@ class NodesChartElements extends React.Component {
 
     this.renderNode = this.renderNode.bind(this);
     this.renderEdge = this.renderEdge.bind(this);
+    this.renderElement = this.renderElement.bind(this);
     this.nodeDisplayLayer = this.nodeDisplayLayer.bind(this);
     // this.edgeDisplayLayer = this.edgeDisplayLayer.bind(this);
 
@@ -179,6 +180,11 @@ class NodesChartElements extends React.Component {
     );
   }
 
+  renderElement(element) {
+    // This heuristics is not ideal but it works.
+    return element.get('points') ? this.renderEdge(element) : this.renderNode(element);
+  }
+
   render() {
     const nodes = this.props.layoutNodes.toIndexedSeq()
       .map(this.nodeHighlightedDecorator)
@@ -197,14 +203,21 @@ class NodesChartElements extends React.Component {
       .map(this.edgeScaleDecorator)
       .groupBy(edgeDisplayLayer);
 
-    console.log(nodes.toJS(), edges.toJS());
+    // NOTE: The elements need to be arranged into a single array outside
+    // of DOM structure for React rendering engine to do smart rearrangements
+    // without unnecessary re-rendering of the elements themselves. So e.g.
+    // rendering the element layers individualy below would be significantly slower.
+    const orderedElements = makeList([
+      edges.get(NORMAL_EDGES_LAYER, makeList()),
+      nodes.get(BLURRED_NODES_LAYER, makeList()),
+      nodes.get(NORMAL_NODES_LAYER, makeList()),
+      nodes.get(HIGHLIGHTED_NODES_LAYER, makeList()),
+      nodes.get(HOVERED_NODES_LAYER, makeList()),
+    ]).flatten(true);
+
     return (
       <g className="nodes-chart-elements">
-        {edges.get(NORMAL_EDGES_LAYER, makeList()).map(this.renderEdge)}
-        {nodes.get(BLURRED_NODES_LAYER, makeList()).map(this.renderNode)}
-        {nodes.get(NORMAL_NODES_LAYER, makeList()).map(this.renderNode)}
-        {nodes.get(HIGHLIGHTED_NODES_LAYER, makeList()).map(this.renderNode)}
-        {nodes.get(HOVERED_NODES_LAYER, makeList()).map(this.renderNode)}
+        {orderedElements.map(this.renderElement)}
       </g>
     );
   }
