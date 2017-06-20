@@ -25,11 +25,11 @@ const NORMAL_NODES_LAYER = 'normal-nodes';
 const HIGHLIGHTED_NODES_LAYER = 'highlighted-nodes';
 const HOVERED_NODES_LAYER = 'hovered-nodes';
 
+const BLURRED_EDGES_LAYER = 'blurred-edges';
 const NORMAL_EDGES_LAYER = 'normal-edges';
+const HIGHLIGHTED_EDGES_LAYER = 'highlighted-edges';
+const HOVERED_EDGES_LAYER = 'hovered-edges';
 
-function edgeDisplayLayer() {
-  return NORMAL_EDGES_LAYER;
-}
 
 class NodesChartElements extends React.Component {
   constructor(props, context) {
@@ -39,7 +39,7 @@ class NodesChartElements extends React.Component {
     this.renderEdge = this.renderEdge.bind(this);
     this.renderElement = this.renderElement.bind(this);
     this.nodeDisplayLayer = this.nodeDisplayLayer.bind(this);
-    // this.edgeDisplayLayer = this.edgeDisplayLayer.bind(this);
+    this.edgeDisplayLayer = this.edgeDisplayLayer.bind(this);
 
     // Node decorators
     this.nodeHighlightedDecorator = this.nodeHighlightedDecorator.bind(this);
@@ -57,7 +57,6 @@ class NodesChartElements extends React.Component {
     this.edgeScaleDecorator = this.edgeScaleDecorator.bind(this);
   }
 
-  // make sure blurred nodes are in the background
   nodeDisplayLayer(node) {
     if (node.get('id') === this.props.mouseOverNodeId) {
       return HOVERED_NODES_LAYER;
@@ -67,6 +66,17 @@ class NodesChartElements extends React.Component {
       return HIGHLIGHTED_NODES_LAYER;
     }
     return NORMAL_NODES_LAYER;
+  }
+
+  edgeDisplayLayer(edge) {
+    if (edge.get('id') === this.props.mouseOverEdgeId) {
+      return HOVERED_EDGES_LAYER;
+    } else if (edge.get('blurred') && !edge.get('focused')) {
+      return BLURRED_EDGES_LAYER;
+    } else if (edge.get('highlighted')) {
+      return HIGHLIGHTED_EDGES_LAYER;
+    }
+    return NORMAL_EDGES_LAYER;
   }
 
   nodeHighlightedDecorator(node) {
@@ -201,17 +211,20 @@ class NodesChartElements extends React.Component {
       .map(this.edgeFocusedDecorator)
       .map(this.edgeBlurredDecorator)
       .map(this.edgeScaleDecorator)
-      .groupBy(edgeDisplayLayer);
+      .groupBy(this.edgeDisplayLayer);
 
     // NOTE: The elements need to be arranged into a single array outside
     // of DOM structure for React rendering engine to do smart rearrangements
     // without unnecessary re-rendering of the elements themselves. So e.g.
     // rendering the element layers individualy below would be significantly slower.
     const orderedElements = makeList([
-      edges.get(NORMAL_EDGES_LAYER, makeList()),
+      edges.get(BLURRED_EDGES_LAYER, makeList()),
       nodes.get(BLURRED_NODES_LAYER, makeList()),
+      edges.get(NORMAL_EDGES_LAYER, makeList()),
       nodes.get(NORMAL_NODES_LAYER, makeList()),
+      edges.get(HIGHLIGHTED_EDGES_LAYER, makeList()),
       nodes.get(HIGHLIGHTED_NODES_LAYER, makeList()),
+      edges.get(HOVERED_EDGES_LAYER, makeList()),
       nodes.get(HOVERED_NODES_LAYER, makeList()),
     ]).flatten(true);
 
@@ -242,6 +255,7 @@ function mapStateToProps(state) {
     selectedNetwork: state.get('selectedNetwork'),
     selectedNodeId: state.get('selectedNodeId'),
     mouseOverNodeId: state.get('mouseOverNodeId'),
+    mouseOverEdgeId: state.get('mouseOverEdgeId'),
     contrastMode: state.get('contrastMode'),
   };
 }
