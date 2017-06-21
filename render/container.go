@@ -17,6 +17,9 @@ const (
 	IP = "IP"
 )
 
+// UncontainedIDPrefix is the prefix of uncontained pseudo nodes
+var UncontainedIDPrefix = MakePseudoNodeID(UncontainedID)
+
 // ContainerRenderer is a Renderer which produces a renderable container
 // graph by merging the process graph and the container topology.
 // NB We only want processes in container _or_ processes with network connections

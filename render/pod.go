@@ -14,6 +14,9 @@ const (
 	UnmanagedMajor = "Unmanaged"
 )
 
+// UnmanagedIDPrefix is the prefix of unmanaged pseudo nodes
+var UnmanagedIDPrefix = MakePseudoNodeID(UnmanagedID)
+
 func renderKubernetesTopologies(rpt report.Report) bool {
 	return len(rpt.Pod.Nodes)+len(rpt.Service.Nodes)+len(rpt.Deployment.Nodes)+len(rpt.ReplicaSet.Nodes)+len(rpt.DaemonSet.Nodes) >= 1
 }
@@ -149,7 +152,7 @@ func Map2Parent(
 ) MapFunc {
 	return func(n report.Node, _ report.Networks) report.Nodes {
 		// Uncontained becomes Unmanaged/whatever if noParentsPseudoID is set
-		if noParentsPseudoID != "" && strings.HasPrefix(n.ID, MakePseudoNodeID(UncontainedID)) {
+		if noParentsPseudoID != "" && strings.HasPrefix(n.ID, UncontainedIDPrefix) {
 			id := MakePseudoNodeID(noParentsPseudoID, report.ExtractHostID(n))
 			node := NewDerivedPseudoNode(id, n)
 			return report.Nodes{id: node}
