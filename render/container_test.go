@@ -2,7 +2,6 @@ package render_test
 
 import (
 	"fmt"
-	"net"
 	"testing"
 
 	"github.com/weaveworks/common/test"
@@ -46,11 +45,10 @@ type testcase struct {
 }
 
 func testMap(t *testing.T, f render.MapFunc, input testcase) {
-	_, ipNet, err := net.ParseCIDR("1.2.3.0/16")
-	if err != nil {
+	localNetworks := report.NewNetworks()
+	if err := localNetworks.AddCIDR("1.2.3.0/16"); err != nil {
 		t.Fatalf(err.Error())
 	}
-	localNetworks := report.Networks([]*net.IPNet{ipNet})
 	if have := f(input.n, localNetworks); input.ok != (len(have) > 0) {
 		name := input.name
 		if name == "" {
