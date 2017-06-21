@@ -8,7 +8,6 @@ import (
 
 	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -126,30 +125,12 @@ func controls(r report.Report, n report.Node) []ControlInstance {
 	return []ControlInstance{}
 }
 
+// We only need to include topologies here where the nodes may appear
+// as children of other nodes in some topology.
 var nodeSummaryGroupSpecs = []struct {
 	topologyID string
 	NodeSummaryGroup
 }{
-	{
-		topologyID: report.Host,
-		NodeSummaryGroup: NodeSummaryGroup{
-			Label: "Hosts",
-			Columns: []Column{
-				{ID: host.CPUUsage, Label: "CPU", Datatype: "number"},
-				{ID: host.MemoryUsage, Label: "Memory", Datatype: "number"},
-			},
-		},
-	},
-	{
-		topologyID: report.Service,
-		NodeSummaryGroup: NodeSummaryGroup{
-			Label: "Services",
-			Columns: []Column{
-				{ID: report.Pod, Label: "# Pods", Datatype: "number"},
-				{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
-			},
-		},
-	},
 	{
 		topologyID: report.ReplicaSet,
 		NodeSummaryGroup: NodeSummaryGroup{
@@ -169,16 +150,6 @@ var nodeSummaryGroupSpecs = []struct {
 				{ID: kubernetes.State, Label: "State"},
 				{ID: report.Container, Label: "# Containers", Datatype: "number"},
 				{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
-			},
-		},
-	},
-	{
-		topologyID: report.ECSService,
-		NodeSummaryGroup: NodeSummaryGroup{
-			Label: "Services",
-			Columns: []Column{
-				{ID: awsecs.ServiceRunningCount, Label: "Running", Datatype: "number"},
-				{ID: awsecs.ServiceDesiredCount, Label: "Desired", Datatype: "number"},
 			},
 		},
 	},
