@@ -152,8 +152,8 @@ type DockerClient interface {
 	InspectContainer(id string) (*docker_client.Container, error)
 }
 
-func newDockerClient(endpoint string) (DockerClient, error) {
-	return docker_client.NewClient(endpoint)
+func newDockerClient() (DockerClient, error) {
+	return docker_client.NewClientFromEnv()
 }
 
 // Weave represents a single Weave router, presumably on the same host
@@ -181,8 +181,8 @@ type Weave struct {
 
 // NewWeave returns a new Weave tagger based on the Weave router at
 // address. The address should be an IP or FQDN, no port.
-func NewWeave(hostID string, client weave.Client, dockerEndpoint string) (*Weave, error) {
-	dockerClient, err := NewDockerClientStub(dockerEndpoint)
+func NewWeave(hostID string, client weave.Client) (*Weave, error) {
+	dockerClient, err := NewDockerClientStub()
 	if err != nil {
 		return nil, err
 	}

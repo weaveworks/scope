@@ -42,7 +42,6 @@ const (
 
 var (
 	pluginAPIVersion = "1"
-	dockerEndpoint   = "unix:///var/run/docker.sock"
 )
 
 func checkNewScopeVersion(flags probeFlags) {
@@ -199,7 +198,6 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			CollectStats:           true,
 			HostID:                 hostID,
 			HandlerRegistry:        handlerRegistry,
-			DockerEndpoint:         dockerEndpoint,
 			NoCommandLineArguments: flags.noCommandLineArguments,
 			NoEnvironmentVariables: flags.noEnvironmentVariables,
 		}
@@ -236,7 +234,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 
 	if flags.weaveEnabled {
 		client := weave.NewClient(sanitize.URL("http://", 6784, "")(flags.weaveAddr))
-		weave, err := overlay.NewWeave(hostID, client, dockerEndpoint)
+		weave, err := overlay.NewWeave(hostID, client)
 		if err != nil {
 			log.Errorf("Weave: failed to start client: %v", err)
 		} else {

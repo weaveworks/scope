@@ -337,7 +337,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.app.weaveAddr, "app.weave.addr", app.DefaultWeaveURL, "Address on which to contact WeaveDNS")
 	flag.StringVar(&flags.app.weaveHostname, "app.weave.hostname", "", "Hostname to advertise in WeaveDNS")
 	flag.StringVar(&flags.app.containerName, "app.container.name", app.DefaultContainerName, "Name of this container (to lookup container ID)")
-	flag.StringVar(&flags.app.dockerEndpoint, "app.docker", app.DefaultDockerEndpoint, "Location of docker endpoint (to lookup container ID)")
+	flag.StringVar(&flags.app.dockerEndpoint, "app.docker", "", "Overwrite location of docker endpoint (to lookup container ID) (default \"$DOCKER_HOST\")")
 	flag.Var(&flags.containerLabelFilterFlags, "app.container-label-filter", "Add container label-based view filter, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter='Database Containers:role=db'")
 	flag.Var(&flags.containerLabelFilterFlagsExclude, "app.container-label-filter-exclude", "Add container label-based view filter that excludes containers with the given label, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter-exclude='Database Containers:role=db'")
 
@@ -394,7 +394,7 @@ func main() {
 	if flags.probe.httpListen != "" {
 		_, _, err := net.SplitHostPort(flags.probe.httpListen)
 		if err != nil {
-			log.Fatalf("Invalid value for -app.http.address: %v", err)
+			log.Fatalf("Invalid value for -probe.http.address: %v", err)
 		}
 	}
 
