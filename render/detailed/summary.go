@@ -163,7 +163,7 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	}
 
 	// try rendering it as an uncontained node
-	if strings.HasPrefix(n.ID, render.MakePseudoNodeID(render.UncontainedID)) {
+	if strings.HasPrefix(n.ID, render.UncontainedIDPrefix) {
 		base.Label = render.UncontainedMajor
 		base.LabelMinor = report.ExtractHostID(n)
 		base.Shape = report.Square
@@ -172,7 +172,7 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	}
 
 	// try rendering it as an unmanaged node
-	if strings.HasPrefix(n.ID, render.MakePseudoNodeID(render.UnmanagedID)) {
+	if strings.HasPrefix(n.ID, render.UnmanagedIDPrefix) {
 		base.Label = render.UnmanagedMajor
 		base.Shape = report.Square
 		base.Stack = true
