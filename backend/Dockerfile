@@ -1,6 +1,6 @@
 FROM ubuntu:yakkety
 ENV GOPATH /go
-ENV GOVERSION 1.8
+ENV GOVERSION 1.8.3
 ENV PATH /go/bin:/usr/local/go/bin:/usr/bin:/bin:/usr/sbin:/sbin
 ENV SCOPE_SKIP_UI_ASSETS true
 RUN apt-get update && \
