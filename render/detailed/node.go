@@ -126,103 +126,101 @@ func controls(r report.Report, n report.Node) []ControlInstance {
 	return []ControlInstance{}
 }
 
-var (
-	nodeSummaryGroupSpecs = []struct {
-		topologyID string
-		NodeSummaryGroup
-	}{
-		{
-			topologyID: report.Host,
-			NodeSummaryGroup: NodeSummaryGroup{
-				Label: "Hosts",
-				Columns: []Column{
-					{ID: host.CPUUsage, Label: "CPU", Datatype: "number"},
-					{ID: host.MemoryUsage, Label: "Memory", Datatype: "number"},
-				},
+var nodeSummaryGroupSpecs = []struct {
+	topologyID string
+	NodeSummaryGroup
+}{
+	{
+		topologyID: report.Host,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label: "Hosts",
+			Columns: []Column{
+				{ID: host.CPUUsage, Label: "CPU", Datatype: "number"},
+				{ID: host.MemoryUsage, Label: "Memory", Datatype: "number"},
 			},
 		},
-		{
-			topologyID: report.Service,
-			NodeSummaryGroup: NodeSummaryGroup{
-				Label: "Services",
-				Columns: []Column{
-					{ID: report.Pod, Label: "# Pods", Datatype: "number"},
-					{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
-				},
+	},
+	{
+		topologyID: report.Service,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label: "Services",
+			Columns: []Column{
+				{ID: report.Pod, Label: "# Pods", Datatype: "number"},
+				{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
 			},
 		},
-		{
-			topologyID: report.ReplicaSet,
-			NodeSummaryGroup: NodeSummaryGroup{
-				Label: "Replica Sets",
-				Columns: []Column{
-					{ID: report.Pod, Label: "# Pods", Datatype: "number"},
-					{ID: kubernetes.ObservedGeneration, Label: "Observed Gen.", Datatype: "number"},
-				},
+	},
+	{
+		topologyID: report.ReplicaSet,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label: "Replica Sets",
+			Columns: []Column{
+				{ID: report.Pod, Label: "# Pods", Datatype: "number"},
+				{ID: kubernetes.ObservedGeneration, Label: "Observed Gen.", Datatype: "number"},
 			},
 		},
-		{
-			topologyID: report.Pod,
-			NodeSummaryGroup: NodeSummaryGroup{
-				Label: "Pods",
+	},
+	{
+		topologyID: report.Pod,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label: "Pods",
 
-				Columns: []Column{
-					{ID: kubernetes.State, Label: "State"},
-					{ID: report.Container, Label: "# Containers", Datatype: "number"},
-					{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
-				},
+			Columns: []Column{
+				{ID: kubernetes.State, Label: "State"},
+				{ID: report.Container, Label: "# Containers", Datatype: "number"},
+				{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
 			},
 		},
-		{
-			topologyID: report.ECSService,
-			NodeSummaryGroup: NodeSummaryGroup{
-				Label: "Services",
-				Columns: []Column{
-					{ID: awsecs.ServiceRunningCount, Label: "Running", Datatype: "number"},
-					{ID: awsecs.ServiceDesiredCount, Label: "Desired", Datatype: "number"},
-				},
+	},
+	{
+		topologyID: report.ECSService,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label: "Services",
+			Columns: []Column{
+				{ID: awsecs.ServiceRunningCount, Label: "Running", Datatype: "number"},
+				{ID: awsecs.ServiceDesiredCount, Label: "Desired", Datatype: "number"},
 			},
 		},
-		{
-			topologyID: report.ECSTask,
-			NodeSummaryGroup: NodeSummaryGroup{
-				Label: "Tasks",
-				Columns: []Column{
-					{ID: awsecs.CreatedAt, Label: "Created At", Datatype: "datetime"},
-				},
+	},
+	{
+		topologyID: report.ECSTask,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label: "Tasks",
+			Columns: []Column{
+				{ID: awsecs.CreatedAt, Label: "Created At", Datatype: "datetime"},
 			},
 		},
-		{
-			topologyID: report.Container,
-			NodeSummaryGroup: NodeSummaryGroup{
-				Label: "Containers", Columns: []Column{
-					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
-					{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
-				},
+	},
+	{
+		topologyID: report.Container,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label: "Containers", Columns: []Column{
+				{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
+				{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
 			},
 		},
-		{
-			topologyID: report.Process,
-			NodeSummaryGroup: NodeSummaryGroup{
-				Label: "Processes", Columns: []Column{
-					{ID: process.PID, Label: "PID", Datatype: "number"},
-					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
-					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
-				},
+	},
+	{
+		topologyID: report.Process,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label: "Processes", Columns: []Column{
+				{ID: process.PID, Label: "PID", Datatype: "number"},
+				{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
+				{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
 			},
 		},
-		{
-			topologyID: report.ContainerImage,
-			NodeSummaryGroup: NodeSummaryGroup{
-				TopologyID: "containers-by-image",
-				Label:      "Container Images",
-				Columns: []Column{
-					{ID: report.Container, Label: "# Containers", DefaultSort: true, Datatype: "number"},
-				},
+	},
+	{
+		topologyID: report.ContainerImage,
+		NodeSummaryGroup: NodeSummaryGroup{
+			TopologyID: "containers-by-image",
+			Label:      "Container Images",
+			Columns: []Column{
+				{ID: report.Container, Label: "# Containers", DefaultSort: true, Datatype: "number"},
 			},
 		},
-	}
-)
+	},
+}
 
 func children(r report.Report, n report.Node) []NodeSummaryGroup {
 	summaries := map[string][]NodeSummary{}
