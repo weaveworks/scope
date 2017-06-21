@@ -53,7 +53,7 @@ var (
 
 // namespaceFilters generates a namespace selector option group based on the given namespaces
 func namespaceFilters(namespaces []string, noneLabel string) APITopologyOptionGroup {
-	options := APITopologyOptionGroup{ID: "namespace", Default: "none", SelectType: "union", NoneLabel: noneLabel}
+	options := APITopologyOptionGroup{ID: "namespace", Default: "", SelectType: "union", NoneLabel: noneLabel}
 	for _, namespace := range namespaces {
 		options.Options = append(options.Options, APITopologyOption{
 			Value: namespace, Label: namespace, filter: render.IsNamespace(namespace), filterPseudo: false,
