@@ -96,7 +96,7 @@ func TestReporter(t *testing.T) {
 		} else if sample, ok := metric.LastSample(); !ok {
 			t.Errorf("Expected %s metric to have a sample, but there were none", key)
 		} else if sample.Value != wantSample.Value {
-			t.Errorf("Expected %s metric sample %f, got %f", key, wantSample, sample.Value)
+			t.Errorf("Expected %s metric sample %f, got %f", key, wantSample.Value, sample.Value)
 		}
 	}
 }
