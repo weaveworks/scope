@@ -225,17 +225,39 @@
 }
 
 .time-travel {
+  align-items: center;
   display: flex;
   position: relative;
   padding: 15px;
   width: 100%;
-  z-index: 50;
+  z-index: 2001;
 
   &-slider-wrapper {
     flex-grow: 1;
     margin-right: 50px;
   }
 
+  &-timestamp-controls-wrapper {
+    align-items: center;
+    display: flex;
+
+    .button.jump {
+      display: block;
+      margin: 8px;
+      font-size: 0.625rem;
+      text-align: center;
+      text-transform: uppercase;
+      word-spacing: -1px;
+
+      .fa {
+        display: block;
+        font-size: 150%;
+        margin-bottom: 3px;
+      }
+    }
+  }
+
+  // blu
   &-status {
     display: flex;
     align-items: center;

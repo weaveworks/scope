@@ -1,9 +1,9 @@
 import React from 'react';
 import Slider from 'rc-slider';
+import moment from 'moment';
 import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
-import TimeTravelTimestamp from './time-travel-timestamp';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
   timeTravelJumpToPast,
@@ -11,13 +11,16 @@ import {
 } from '../actions/app-actions';
 
 import {
-  TIMELINE_SLIDER_UPDATE_INTERVAL,
+  TIMELINE_TICK_INTERVAL,
   TIMELINE_DEBOUNCE_INTERVAL,
 } from '../constants/timer';
 
 
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const FIVE_MINUTES_MS = 5 * 60 * 1000;
+
 function getRangeMilliseconds() {
-  return 90 * 24 * 60 * 60 * 1000;
+  return 90 * 24 * ONE_HOUR_MS;
 }
 
 class TimeTravel extends React.Component {
@@ -31,6 +34,7 @@ class TimeTravel extends React.Component {
 
     this.handleTimestampClick = this.handleTimestampClick.bind(this);
     this.handleSliderChange = this.handleSliderChange.bind(this);
+    this.jumpInTime = this.jumpInTime.bind(this);
 
     this.debouncedUpdateTimestamp = debounce(
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
@@ -40,7 +44,7 @@ class TimeTravel extends React.Component {
 
   componentDidMount() {
     // Force periodic re-renders to update the slider position as time goes by.
-    this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_SLIDER_UPDATE_INTERVAL);
+    this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_TICK_INTERVAL);
   }
 
   componentWillUnmount() {
@@ -77,6 +81,15 @@ class TimeTravel extends React.Component {
     this.props.timeTravelJumpToPast(millisecondsInPast);
   }
 
+  jumpInTime(millisecondsDelta) {
+    let millisecondsInPast = this.state.millisecondsInPast - millisecondsDelta;
+    millisecondsInPast = Math.min(millisecondsInPast, getRangeMilliseconds());
+    millisecondsInPast = Math.max(millisecondsInPast, 0);
+    this.debouncedUpdateTimestamp(millisecondsInPast);
+    this.props.timeTravelStartTransition();
+    this.setState({ millisecondsInPast });
+  }
+
   trackSliderChange() {
     trackMixpanelEvent('scope.time.slider.change', {
       layout: this.props.topologyViewMode,
@@ -86,8 +99,9 @@ class TimeTravel extends React.Component {
   }
 
   render() {
+    const { millisecondsInPast } = this.state;
     const { timeTravelTransitioning, hasTimeTravel } = this.props;
-    const { showSliderPanel, millisecondsInPast } = this.state;
+    const timestamp = moment().utc().subtract(millisecondsInPast);
     const rangeMilliseconds = getRangeMilliseconds();
 
     // Don't render the time travel control if it's not explicitly enabled for this instance.
@@ -106,11 +120,23 @@ class TimeTravel extends React.Component {
           {timeTravelTransitioning && <div className="time-travel-jump-loader">
             <span className="fa fa-circle-o-notch fa-spin" />
           </div>}
-          <TimeTravelTimestamp
-            onClick={this.handleTimestampClick}
-            millisecondsInPast={millisecondsInPast}
-            selected={showSliderPanel}
-          />
+          <a className="button jump" onClick={() => this.jumpInTime(-ONE_HOUR_MS)}>
+            <span className="fa fa-fast-backward" /> 1 hour
+          </a>
+          <a className="button jump" onClick={() => this.jumpInTime(-FIVE_MINUTES_MS)}>
+            <span className="fa fa-step-backward" /> 5 mins
+          </a>
+          <a className="button time-travel-timestamp" onClick={this.handleTimestampClick}>
+            <span className="time-travel-timestamp-info">
+              <time>{timestamp.format()}</time>
+            </span>
+          </a>
+          <a className="button jump" onClick={() => this.jumpInTime(FIVE_MINUTES_MS)}>
+            <span className="fa fa-step-forward" /> 5 mins
+          </a>
+          <a className="button jump" onClick={() => this.jumpInTime(ONE_HOUR_MS)}>
+            <span className="fa fa-fast-forward" /> 1 hour
+          </a>
         </div>
       </div>
     );
