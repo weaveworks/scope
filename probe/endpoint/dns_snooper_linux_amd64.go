@@ -34,7 +34,7 @@ type domainSet struct {
 	// Not worth using a RMutex since we don't expect a lot of contention
 	// and they are considerably larger (8 bytes vs 24 bytes), which would
 	// bloat the cache
-	sync.Mutex
+	mutex   *sync.Mutex
 	domains map[string]struct{}
 }
 
@@ -112,11 +112,11 @@ func (s *DNSSnooper) CachedNamesForIP(ip string) []string {
 	}
 
 	domainSet := domains.(domainSet)
-	domainSet.Lock()
+	domainSet.mutex.Lock()
 	for domain := range domainSet.domains {
 		result = append(result, domain)
 	}
-	domainSet.Unlock()
+	domainSet.mutex.Unlock()
 
 	return result
 }
@@ -281,13 +281,17 @@ func (s *DNSSnooper) processDNSMessage(dns *layers.DNS) {
 	log.Debugf("DNSSnooper: caught DNS lookup: %s -> %v", newDomain, ips)
 	for ip := range ips {
 		if existingDomains, err := s.reverseDNSCache.Get(ip); err != nil {
-			s.reverseDNSCache.Set(ip, domainSet{domains: map[string]struct{}{newDomain: {}}})
+			singleton := domainSet{
+				domains: map[string]struct{}{newDomain: {}},
+				mutex:   &sync.Mutex{},
+			}
+			s.reverseDNSCache.Set(ip, singleton)
 		} else {
 			// TODO: Be smarter about the expiration of entries with pre-existing associated domains
 			domainSet := existingDomains.(domainSet)
-			domainSet.Lock()
+			domainSet.mutex.Lock()
 			domainSet.domains[newDomain] = struct{}{}
-			domainSet.Unlock()
+			domainSet.mutex.Unlock()
 		}
 	}
 }
