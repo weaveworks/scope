@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -27,6 +28,14 @@ type DNSSnooper struct {
 	pcapHandle          *pcap.Handle
 	reverseDNSCache     gcache.Cache
 	decodingErrorCounts map[string]uint64 // for limiting
+}
+
+type domainSet struct {
+	// Not worth using a RMutex since we don't expect a lot of contention
+	// and they are considerably larger (8 bytes vs 24 bytes), which would
+	// bloat the cache
+	sync.Mutex
+	domains map[string]struct{}
 }
 
 // NewDNSSnooper creates a new snooper of DNS queries
@@ -102,9 +111,12 @@ func (s *DNSSnooper) CachedNamesForIP(ip string) []string {
 		return result
 	}
 
-	for domain := range domains.(map[string]struct{}) {
+	domainSet := domains.(domainSet)
+	domainSet.Lock()
+	for domain := range domainSet.domains {
 		result = append(result, domain)
 	}
+	domainSet.Unlock()
 
 	return result
 }
@@ -269,10 +281,13 @@ func (s *DNSSnooper) processDNSMessage(dns *layers.DNS) {
 	log.Debugf("DNSSnooper: caught DNS lookup: %s -> %v", newDomain, ips)
 	for ip := range ips {
 		if existingDomains, err := s.reverseDNSCache.Get(ip); err != nil {
-			s.reverseDNSCache.Set(ip, map[string]struct{}{newDomain: {}})
+			s.reverseDNSCache.Set(ip, domainSet{domains: map[string]struct{}{newDomain: {}}})
 		} else {
 			// TODO: Be smarter about the expiration of entries with pre-existing associated domains
-			existingDomains.(map[string]struct{})[newDomain] = struct{}{}
+			domainSet := existingDomains.(domainSet)
+			domainSet.Lock()
+			domainSet.domains[newDomain] = struct{}{}
+			domainSet.Unlock()
 		}
 	}
 }
