@@ -34,7 +34,7 @@ var ContainerRenderer = MakeFilter(
 	MakeReduce(
 		MakeMap(
 			MapProcess2Container,
-			ProcessRenderer,
+			ColorConnectedProcessRenderer,
 		),
 
 		// This mapper brings in connections by joining with container
