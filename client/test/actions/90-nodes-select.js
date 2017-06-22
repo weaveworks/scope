@@ -21,7 +21,7 @@ function clickIfVisible(list, index) {
 
 function selectNode(browser) {
   debug('select node');
-  return browser.elementByCssSelector('.nodes-chart-nodes .node:nth-child(1) > g', function(err, el) {
+  return browser.elementByCssSelector('.nodes-chart-elements .node:nth-child(1) > g', function(err, el) {
     return el.click();
   });
 }

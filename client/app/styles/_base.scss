@@ -399,7 +399,7 @@
     fill: $text-secondary-color;
   }
 
-  .nodes-chart-nodes .node {
+  .nodes-chart-elements .node {
     transition: opacity .2s $base-ease;
     text-align: center;
 
@@ -498,10 +498,6 @@
 
     &.blurred {
       opacity: $edge-opacity-blurred;
-    }
-
-    &.focused {
-      animation: focusing 1.5s ease-in-out;
     }
 
     .link {
@@ -1659,16 +1655,6 @@
     font-size: 80%;
     position: relative;
     top: -1px;
-  }
-}
-
-@keyframes focusing {
-  0% {
-    opacity: 0;
-  } 33% {
-    opacity: 0.2;
-  } 100% {
-    opacity: 1;
   }
 }
 
