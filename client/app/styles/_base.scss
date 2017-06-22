@@ -171,7 +171,7 @@
   pointer-events: none;
 
   position: absolute;
-  top: 32px;
+  top: 60px;
   width: 100%;
   height: 80px;
   z-index: 20;
@@ -225,10 +225,16 @@
 }
 
 .time-travel {
-  @extend .overlay-wrapper;
-  display: block;
-  right: 530px;
-  z-index: 2001;
+  display: flex;
+  position: relative;
+  padding: 15px;
+  width: 100%;
+  z-index: 50;
+
+  &-slider-wrapper {
+    flex-grow: 1;
+    margin-right: 50px;
+  }
 
   &-status {
     display: flex;

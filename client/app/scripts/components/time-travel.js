@@ -1,7 +1,5 @@
 import React from 'react';
-import moment from 'moment';
 import Slider from 'rc-slider';
-import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
@@ -10,7 +8,6 @@ import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
   timeTravelJumpToPast,
   timeTravelStartTransition,
-  clickResumeUpdate,
 } from '../actions/app-actions';
 
 import {
@@ -19,56 +16,9 @@ import {
 } from '../constants/timer';
 
 
-const sliderRanges = {
-  last15Minutes: {
-    label: 'Last 15 minutes',
-    getStart: () => moment().utc().subtract(15, 'minutes'),
-  },
-  last1Hour: {
-    label: 'Last 1 hour',
-    getStart: () => moment().utc().subtract(1, 'hour'),
-  },
-  last6Hours: {
-    label: 'Last 6 hours',
-    getStart: () => moment().utc().subtract(6, 'hours'),
-  },
-  last24Hours: {
-    label: 'Last 24 hours',
-    getStart: () => moment().utc().subtract(24, 'hours'),
-  },
-  last7Days: {
-    label: 'Last 7 days',
-    getStart: () => moment().utc().subtract(7, 'days'),
-  },
-  last30Days: {
-    label: 'Last 30 days',
-    getStart: () => moment().utc().subtract(30, 'days'),
-  },
-  last90Days: {
-    label: 'Last 90 days',
-    getStart: () => moment().utc().subtract(90, 'days'),
-  },
-  last1Year: {
-    label: 'Last 1 year',
-    getStart: () => moment().subtract(1, 'year'),
-  },
-  todaySoFar: {
-    label: 'Today so far',
-    getStart: () => moment().utc().startOf('day'),
-  },
-  thisWeekSoFar: {
-    label: 'This week so far',
-    getStart: () => moment().utc().startOf('week'),
-  },
-  thisMonthSoFar: {
-    label: 'This month so far',
-    getStart: () => moment().utc().startOf('month'),
-  },
-  thisYearSoFar: {
-    label: 'This year so far',
-    getStart: () => moment().utc().startOf('year'),
-  },
-};
+function getRangeMilliseconds() {
+  return 90 * 24 * 60 * 60 * 1000;
+}
 
 class TimeTravel extends React.Component {
   constructor(props, context) {
@@ -77,12 +27,9 @@ class TimeTravel extends React.Component {
     this.state = {
       showSliderPanel: false,
       millisecondsInPast: 0,
-      rangeOptionSelected: sliderRanges.last1Hour,
     };
 
-    this.renderRangeOption = this.renderRangeOption.bind(this);
     this.handleTimestampClick = this.handleTimestampClick.bind(this);
-    this.handleJumpToNowClick = this.handleJumpToNowClick.bind(this);
     this.handleSliderChange = this.handleSliderChange.bind(this);
 
     this.debouncedUpdateTimestamp = debounce(
@@ -102,7 +49,7 @@ class TimeTravel extends React.Component {
   }
 
   handleSliderChange(sliderValue) {
-    let millisecondsInPast = this.getRangeMilliseconds() - sliderValue;
+    let millisecondsInPast = getRangeMilliseconds() - sliderValue;
 
     // If the slider value is less than 1s away from the right-end (current time),
     // assume we meant the current time - this is important for the '... so far'
@@ -118,59 +65,16 @@ class TimeTravel extends React.Component {
     this.debouncedTrackSliderChange();
   }
 
-  handleRangeOptionClick(rangeOption) {
-    this.setState({ rangeOptionSelected: rangeOption });
-
-    const rangeMilliseconds = this.getRangeMilliseconds(rangeOption);
-    if (this.state.millisecondsInPast > rangeMilliseconds) {
-      this.setState({ millisecondsInPast: rangeMilliseconds });
-      this.updateTimestamp(rangeMilliseconds);
-      this.props.timeTravelStartTransition();
-    }
-
-    trackMixpanelEvent('scope.time.range.select', {
-      layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
-      parentTopologyId: this.props.currentTopology.get('parentId'),
-      label: rangeOption.label,
-    });
-  }
-
-  handleJumpToNowClick() {
-    this.setState({
-      showSliderPanel: false,
-      millisecondsInPast: 0,
-      rangeOptionSelected: sliderRanges.last1Hour,
-    });
-    this.updateTimestamp();
-    this.props.timeTravelStartTransition();
-
-    trackMixpanelEvent('scope.time.now.click', {
-      layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
-      parentTopologyId: this.props.currentTopology.get('parentId'),
-    });
-  }
-
   handleTimestampClick() {
-    const showSliderPanel = !this.state.showSliderPanel;
-    this.setState({ showSliderPanel });
-
     trackMixpanelEvent('scope.time.timestamp.click', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
-      showSliderPanel,
     });
   }
 
   updateTimestamp(millisecondsInPast = 0) {
     this.props.timeTravelJumpToPast(millisecondsInPast);
-    this.props.clickResumeUpdate();
-  }
-
-  getRangeMilliseconds(rangeOption = this.state.rangeOptionSelected) {
-    return moment().diff(rangeOption.getStart());
   }
 
   trackSliderChange() {
@@ -181,75 +85,24 @@ class TimeTravel extends React.Component {
     });
   }
 
-  renderRangeOption(rangeOption) {
-    const handleClick = () => { this.handleRangeOptionClick(rangeOption); };
-    const selected = (this.state.rangeOptionSelected.label === rangeOption.label);
-    const className = classNames('option', { selected });
-
-    return (
-      <a key={rangeOption.label} className={className} onClick={handleClick}>
-        {rangeOption.label}
-      </a>
-    );
-  }
-
-  renderJumpToNowButton() {
-    return (
-      <a className="button jump-to-now" title="Jump to now" onClick={this.handleJumpToNowClick}>
-        <span className="fa fa-step-forward" />
-      </a>
-    );
-  }
-
-  renderTimeSlider() {
-    const { millisecondsInPast } = this.state;
-    const rangeMilliseconds = this.getRangeMilliseconds();
-
-    return (
-      <Slider
-        onChange={this.handleSliderChange}
-        value={rangeMilliseconds - millisecondsInPast}
-        max={rangeMilliseconds}
-      />
-    );
-  }
-
   render() {
     const { timeTravelTransitioning, hasTimeTravel } = this.props;
-    const { showSliderPanel, millisecondsInPast, rangeOptionSelected } = this.state;
-    const lowerCaseLabel = rangeOptionSelected.label.toLowerCase();
-    const isCurrent = (millisecondsInPast === 0);
+    const { showSliderPanel, millisecondsInPast } = this.state;
+    const rangeMilliseconds = getRangeMilliseconds();
 
     // Don't render the time travel control if it's not explicitly enabled for this instance.
     if (!hasTimeTravel) return null;
 
     return (
       <div className="time-travel">
-        {showSliderPanel && <div className="time-travel-slider">
-          <div className="options">
-            <div className="column">
-              {this.renderRangeOption(sliderRanges.last15Minutes)}
-              {this.renderRangeOption(sliderRanges.last1Hour)}
-              {this.renderRangeOption(sliderRanges.last6Hours)}
-              {this.renderRangeOption(sliderRanges.last24Hours)}
-            </div>
-            <div className="column">
-              {this.renderRangeOption(sliderRanges.last7Days)}
-              {this.renderRangeOption(sliderRanges.last30Days)}
-              {this.renderRangeOption(sliderRanges.last90Days)}
-              {this.renderRangeOption(sliderRanges.last1Year)}
-            </div>
-            <div className="column">
-              {this.renderRangeOption(sliderRanges.todaySoFar)}
-              {this.renderRangeOption(sliderRanges.thisWeekSoFar)}
-              {this.renderRangeOption(sliderRanges.thisMonthSoFar)}
-              {this.renderRangeOption(sliderRanges.thisYearSoFar)}
-            </div>
-          </div>
-          <span className="slider-tip">Move the slider to explore {lowerCaseLabel}</span>
-          {this.renderTimeSlider()}
-        </div>}
-        <div className="time-travel-status">
+        <div className="time-travel-slider-wrapper">
+          <Slider
+            onChange={this.handleSliderChange}
+            value={rangeMilliseconds - millisecondsInPast}
+            max={rangeMilliseconds}
+          />
+        </div>
+        <div className="time-travel-timestamp-controls-wrapper">
           {timeTravelTransitioning && <div className="time-travel-jump-loader">
             <span className="fa fa-circle-o-notch fa-spin" />
           </div>}
@@ -258,7 +111,6 @@ class TimeTravel extends React.Component {
             millisecondsInPast={millisecondsInPast}
             selected={showSliderPanel}
           />
-          {!isCurrent && this.renderJumpToNowButton()}
         </div>
       </div>
     );
@@ -281,6 +133,5 @@ export default connect(
   {
     timeTravelJumpToPast,
     timeTravelStartTransition,
-    clickResumeUpdate,
   }
 )(TimeTravel);
