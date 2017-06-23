@@ -26,8 +26,7 @@ const (
 type DNSSnooper struct {
 	stop       chan struct{}
 	pcapHandle *pcap.Handle
-	// gcache is goroutine-safe, but the
-	// values cached values aren't
+	// gcache is goroutine-safe, but the cached values aren't
 	reverseDNSMutex     sync.RWMutex
 	reverseDNSCache     gcache.Cache
 	decodingErrorCounts map[string]uint64 // for limiting
