@@ -53,7 +53,7 @@ var (
 
 // namespaceFilters generates a namespace selector option group based on the given namespaces
 func namespaceFilters(namespaces []string, noneLabel string) APITopologyOptionGroup {
-	options := APITopologyOptionGroup{ID: "namespace", Default: "none", SelectType: "union", NoneLabel: noneLabel}
+	options := APITopologyOptionGroup{ID: "namespace", Default: "", SelectType: "union", NoneLabel: noneLabel}
 	for _, namespace := range namespaces {
 		options.Options = append(options.Options, APITopologyOption{
 			Value: namespace, Label: namespace, filter: render.IsNamespace(namespace), filterPseudo: false,
@@ -343,7 +343,7 @@ func (a byName) Less(i, j int) bool { return a[i].Name < a[j].Name }
 type APITopologyOptionGroup struct {
 	ID string `json:"id"`
 	// Default value for the UI to adopt. NOT used as the default if the value is omitted, allowing "" as a distinct value.
-	Default string              `json:"defaultValue,omitempty"`
+	Default string              `json:"defaultValue"`
 	Options []APITopologyOption `json:"options,omitempty"`
 	// SelectType describes how options can be picked. Currently defined values:
 	//   "one": Default if empty. Exactly one option may be picked from the list.

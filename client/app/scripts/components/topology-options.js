@@ -49,12 +49,15 @@ class TopologyOptions extends React.Component {
         // Add it to the array if it's not selected
         nextOptions = selectedActiveOptions.concat(value);
       }
-      // Since the user is clicking an option, remove the highlighting from the 'none' option,
-      // unless they are removing the last option. In that case, default to the 'none' label.
+      // Since the user is clicking an option, remove the highlighting from the none option,
+      // unless they are removing the last option. In that case, default to the none label.
+      // Note that since the other ids are potentially user-controlled (eg. k8s namespaces),
+      // the only string we can use for the none option is the empty string '',
+      // since that can't collide.
       if (nextOptions.length === 0) {
-        nextOptions = ['none'];
+        nextOptions = [''];
       } else {
-        nextOptions = nextOptions.filter(o => o !== 'none');
+        nextOptions = nextOptions.filter(o => o !== '');
       }
     }
     this.trackOptionClick(optionId, nextOptions);
@@ -62,7 +65,7 @@ class TopologyOptions extends React.Component {
   }
 
   handleNoneClick(optionId, value, topologyId) {
-    const nextOptions = ['none'];
+    const nextOptions = [''];
     this.trackOptionClick(optionId, nextOptions);
     this.props.changeTopologyOption(optionId, nextOptions, topologyId);
   }
@@ -74,7 +77,7 @@ class TopologyOptions extends React.Component {
       ? activeOptions.get(optionId)
       : option.get('defaultValue');
     const noneItem = makeMap({
-      value: 'none',
+      value: '',
       label: option.get('noneLabel')
     });
     return (
