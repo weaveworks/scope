@@ -27,14 +27,20 @@ var EndpointRenderer = FilterProcspiedOrEBPF(SelectEndpoint)
 // ProcessRenderer is a Renderer which produces a renderable process
 // graph by merging the endpoint graph and the process topology.
 var ProcessRenderer = ConditionalRenderer(renderProcesses,
-	ColorConnected(MakeReduce(
+	MakeReduce(
 		MakeMap(
 			MapEndpoint2Process,
 			EndpointRenderer,
 		),
 		SelectProcess,
-	)),
+	),
 )
+
+// ColorConnectedProcessRenderer colors connected nodes from
+// ProcessRenderer. Since the process topology views only show
+// connected processes, we need this info to determine whether
+// processes appearing in a details panel are linkable.
+var ColorConnectedProcessRenderer = ColorConnected(ProcessRenderer)
 
 // processWithContainerNameRenderer is a Renderer which produces a process
 // graph enriched with container names where appropriate

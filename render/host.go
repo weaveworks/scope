@@ -13,7 +13,7 @@ var HostRenderer = MakeReduce(
 	),
 	MakeMap(
 		MapX2Host,
-		ProcessRenderer,
+		ColorConnectedProcessRenderer,
 	),
 	MakeMap(
 		MapX2Host,
