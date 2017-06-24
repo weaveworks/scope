@@ -28,6 +28,11 @@ func (c *pnConnIter) Next() *Connection {
 	}
 	if proc, ok := c.procs[n.Inode]; ok {
 		n.Proc = *proc
+	} else {
+		// ProcNet.Next() always returns a pointer to the same
+		// struct. We therefore must clear any garbage left over from
+		// the previous call.
+		n.Proc = Proc{}
 	}
 	return n
 }
