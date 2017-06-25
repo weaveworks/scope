@@ -11,7 +11,7 @@ weave_on "$HOST2" launch "$HOST1" "$HOST2"
 scope_on "$HOST1" launch --probe.conntrack=false
 scope_on "$HOST2" launch --probe.conntrack=false
 
-weave_proxy_on "$HOST1" run -d --name nginx nginx
+server_on "$HOST1"
 weave_proxy_on "$HOST2" run -dti --name client alpine /bin/sh -c "while true; do \
 	nc nginx.weave.local 80 || true; \
 	sleep 1; \

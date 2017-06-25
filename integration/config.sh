@@ -35,6 +35,17 @@ weave_proxy_on() {
     DOCKER_PORT=12375 docker_on "$host" "$@"
 }
 
+server_on() {
+    weave_proxy_on "$1" run -d --name nginx nginx
+}
+
+client_on() {
+    weave_proxy_on "$1" run -d --name client alpine /bin/sh -c "while true; do \
+    	wget http://nginx.weave.local:80/ -O - >/dev/null || true; \
+	sleep 1; \
+    done"
+}
+
 scope_end_suite() {
     end_suite
     for host in $HOSTS; do
