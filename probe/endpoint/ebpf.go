@@ -276,9 +276,9 @@ func (t *EbpfTracker) feedInitialConnections(conns procspy.ConnIter, seenTuples 
 		// We assume that tuple.fromPort < tuple.toPort is a connect event (outgoing)
 		canonical, ok := seenTuples[tuple.key()]
 		if (ok && canonical != tuple) || (!ok && tuple.fromPort < tuple.toPort) {
-			t.handleConnection(tracer.EventConnect, tuple, int(conn.Proc.PID), namespaceID)
-		} else {
 			t.handleConnection(tracer.EventAccept, tuple, int(conn.Proc.PID), namespaceID)
+		} else {
+			t.handleConnection(tracer.EventConnect, tuple, int(conn.Proc.PID), namespaceID)
 		}
 	}
 	for _, p := range processesWaitingInAccept {
