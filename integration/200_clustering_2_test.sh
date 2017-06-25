@@ -18,7 +18,6 @@ sleep 30 # need to allow the scopes to poll dns, resolve the other app ids, and 
 
 check() {
     has_container "$1" weave 2
-    has_container "$1" weaveproxy 2
     has_container "$1" weavescope 2
     has_container "$1" db1
     has_container "$1" db2
