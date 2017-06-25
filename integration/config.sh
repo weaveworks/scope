@@ -28,6 +28,24 @@ weave_on() {
     DOCKER_HOST=tcp://$host:$DOCKER_PORT CHECKPOINT_DISABLE=true "$WEAVE" "$@"
 }
 
+weave_proxy_on() {
+    local host=$1
+    shift 1
+    [ -z "$DEBUG" ] || greyly echo "Weave proxy on $host: $*" >&2
+    DOCKER_PORT=12375 docker_on "$host" "$@"
+}
+
+server_on() {
+    weave_proxy_on "$1" run -d --name nginx nginx
+}
+
+client_on() {
+    weave_proxy_on "$1" run -d --name client alpine /bin/sh -c "while true; do \
+    	wget http://nginx.weave.local:80/ -O - >/dev/null || true; \
+	sleep 1; \
+    done"
+}
+
 scope_end_suite() {
     end_suite
     for host in $HOSTS; do

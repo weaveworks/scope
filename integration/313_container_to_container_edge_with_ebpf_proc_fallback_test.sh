@@ -12,11 +12,9 @@ weave_on "$HOST1" launch
 DOCKER_HOST=tcp://${HOST1}:${DOCKER_PORT} CHECKPOINT_DISABLE=true \
     WEAVESCOPE_DOCKER_ARGS="-v /tmp:/sys/kernel/debug/tracing:ro" \
     "${SCOPE}" launch
-weave_on "$HOST1" run -d --name nginx nginx
-weave_on "$HOST1" run -d --name client alpine /bin/sh -c "while true; do \
-	wget http://nginx.weave.local:80/ -O - >/dev/null || true; \
-	sleep 1; \
-done"
+
+server_on "$HOST1"
+client_on "$HOST1"
 
 wait_for_containers "$HOST1" 60 nginx client
 
