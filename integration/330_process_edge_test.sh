@@ -7,8 +7,8 @@ start_suite "Test long connections (procspy) between processes"
 
 weave_on "$HOST1" launch
 scope_on "$HOST1" launch --probe.conntrack=false
-weave_on "$HOST1" run -d --name nginx nginx
-weave_on "$HOST1" run -dti --name client alpine /bin/sh -c "while true; do \
+weave_proxy_on "$HOST1" run -d --name nginx nginx
+weave_proxy_on "$HOST1" run -dti --name client alpine /bin/sh -c "while true; do \
 	nc nginx.weave.local 80 || true; \
 	sleep 1; \
 done"

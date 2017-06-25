@@ -8,7 +8,7 @@ start_suite "Test container controls"
 weave_on "$HOST1" launch
 scope_on "$HOST1" launch
 
-CID=$(weave_on "$HOST1" run -dti --name alpine alpine /bin/sh)
+CID=$(weave_proxy_on "$HOST1" run -dti --name alpine alpine /bin/sh)
 
 wait_for_containers "$HOST1" 60 alpine
 

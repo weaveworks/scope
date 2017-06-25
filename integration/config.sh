@@ -28,6 +28,13 @@ weave_on() {
     DOCKER_HOST=tcp://$host:$DOCKER_PORT CHECKPOINT_DISABLE=true "$WEAVE" "$@"
 }
 
+weave_proxy_on() {
+    local host=$1
+    shift 1
+    [ -z "$DEBUG" ] || greyly echo "Weave proxy on $host: $*" >&2
+    DOCKER_PORT=12375 docker_on "$host" "$@"
+}
+
 scope_end_suite() {
     end_suite
     for host in $HOSTS; do
