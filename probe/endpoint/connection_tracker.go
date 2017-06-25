@@ -117,14 +117,8 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 		return err
 	}
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
+		tuple, namespaceID, incoming := connectionTuple(conn, *seenTuples)
 		var (
-			namespaceID string
-			tuple       = fourTuple{
-				conn.LocalAddress.String(),
-				conn.RemoteAddress.String(),
-				conn.LocalPort,
-				conn.RemotePort,
-			}
 			toNodeInfo   = map[string]string{Procspied: "true"}
 			fromNodeInfo = map[string]string{Procspied: "true"}
 		)
@@ -132,17 +126,7 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 			fromNodeInfo[process.PID] = strconv.FormatUint(uint64(conn.Proc.PID), 10)
 			fromNodeInfo[report.HostNodeID] = hostNodeID
 		}
-
-		if conn.Proc.NetNamespaceID > 0 {
-			namespaceID = strconv.FormatUint(conn.Proc.NetNamespaceID, 10)
-		}
-
-		// If we've already seen this connection, we should know the direction
-		// (or have already figured it out), so we normalize and use the
-		// canonical direction. Otherwise, we can use a port-heuristic to guess
-		// the direction.
-		canonical, ok := (*seenTuples)[tuple.key()]
-		if (ok && canonical != tuple) || (!ok && tuple.fromPort < tuple.toPort) {
+		if incoming {
 			tuple.reverse()
 			toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
 		}
@@ -245,4 +229,24 @@ func (t *connectionTracker) Stop() error {
 	}
 	t.reverseResolver.stop()
 	return nil
+}
+
+func connectionTuple(conn *procspy.Connection, seenTuples map[string]fourTuple) (fourTuple, string, bool) {
+	namespaceID := ""
+	tuple := fourTuple{
+		conn.LocalAddress.String(),
+		conn.RemoteAddress.String(),
+		conn.LocalPort,
+		conn.RemotePort,
+	}
+	if conn.Proc.NetNamespaceID > 0 {
+		namespaceID = strconv.FormatUint(conn.Proc.NetNamespaceID, 10)
+	}
+
+	// If we've already seen this connection, we should know the direction
+	// (or have already figured it out), so we normalize and use the
+	// canonical direction. Otherwise, we can use a port-heuristic to guess
+	// the direction.
+	canonical, ok := seenTuples[tuple.key()]
+	return tuple, namespaceID, (ok && canonical != tuple) || (!ok && tuple.fromPort < tuple.toPort)
 }
