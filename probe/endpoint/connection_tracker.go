@@ -93,38 +93,32 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 
 	// seenTuples contains information about connections seen by conntrack and it will be passed to the /proc parser
 	seenTuples := map[string]fourTuple{}
-	t.performFlowWalk(rpt, &seenTuples)
+	t.performFlowWalk(rpt, seenTuples)
 	if t.conf.WalkProc && t.conf.Scanner != nil {
-		t.performWalkProc(rpt, hostNodeID, &seenTuples)
+		t.performWalkProc(rpt, hostNodeID, seenTuples)
 	}
 }
 
-func (t *connectionTracker) performFlowWalk(rpt *report.Report, seenTuples *map[string]fourTuple) {
+func (t *connectionTracker) performFlowWalk(rpt *report.Report, seenTuples map[string]fourTuple) {
 	// Consult the flowWalker for short-lived connections
 	extraNodeInfo := map[string]string{
 		Conntracked: "true",
 	}
 	t.flowWalker.walkFlows(func(f flow, alive bool) {
 		tuple := flowToTuple(f)
-		(*seenTuples)[tuple.key()] = tuple
+		seenTuples[tuple.key()] = tuple
 		t.addConnection(rpt, tuple, "", extraNodeInfo, extraNodeInfo)
 	})
 }
 
-func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID string, seenTuples *map[string]fourTuple) error {
+func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID string, seenTuples map[string]fourTuple) error {
 	conns, err := t.conf.Scanner.Connections()
 	if err != nil {
 		return err
 	}
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
+		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
 		var (
-			namespaceID string
-			tuple       = fourTuple{
-				conn.LocalAddress.String(),
-				conn.RemoteAddress.String(),
-				conn.LocalPort,
-				conn.RemotePort,
-			}
 			toNodeInfo   = map[string]string{Procspied: "true"}
 			fromNodeInfo = map[string]string{Procspied: "true"}
 		)
@@ -132,17 +126,7 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 			fromNodeInfo[process.PID] = strconv.FormatUint(uint64(conn.Proc.PID), 10)
 			fromNodeInfo[report.HostNodeID] = hostNodeID
 		}
-
-		if conn.Proc.NetNamespaceID > 0 {
-			namespaceID = strconv.FormatUint(conn.Proc.NetNamespaceID, 10)
-		}
-
-		// If we've already seen this connection, we should know the direction
-		// (or have already figured it out), so we normalize and use the
-		// canonical direction. Otherwise, we can use a port-heuristic to guess
-		// the direction.
-		canonical, ok := (*seenTuples)[tuple.key()]
-		if (ok && canonical != tuple) || (!ok && tuple.fromPort < tuple.toPort) {
+		if incoming {
 			tuple.reverse()
 			toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
 		}
@@ -245,4 +229,24 @@ func (t *connectionTracker) Stop() error {
 	}
 	t.reverseResolver.stop()
 	return nil
+}
+
+func connectionTuple(conn *procspy.Connection, seenTuples map[string]fourTuple) (fourTuple, string, bool) {
+	namespaceID := ""
+	tuple := fourTuple{
+		conn.LocalAddress.String(),
+		conn.RemoteAddress.String(),
+		conn.LocalPort,
+		conn.RemotePort,
+	}
+	if conn.Proc.NetNamespaceID > 0 {
+		namespaceID = strconv.FormatUint(conn.Proc.NetNamespaceID, 10)
+	}
+
+	// If we've already seen this connection, we should know the direction
+	// (or have already figured it out), so we normalize and use the
+	// canonical direction. Otherwise, we can use a port-heuristic to guess
+	// the direction.
+	canonical, ok := seenTuples[tuple.key()]
+	return tuple, namespaceID, (ok && canonical != tuple) || (!ok && tuple.fromPort < tuple.toPort)
 }
