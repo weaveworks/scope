@@ -116,7 +116,7 @@ class TimeTravel extends React.Component {
             max={rangeMilliseconds}
           />
         </div>
-        <div className="time-travel-timestamp-controls-wrapper">
+        <div className="time-travel-jump-controls">
           {timeTravelTransitioning && <div className="time-travel-jump-loader">
             <span className="fa fa-circle-o-notch fa-spin" />
           </div>}
@@ -126,11 +126,9 @@ class TimeTravel extends React.Component {
           <a className="button jump" onClick={() => this.jumpInTime(-FIVE_MINUTES_MS)}>
             <span className="fa fa-step-backward" /> 5 mins
           </a>
-          <a className="button time-travel-timestamp" onClick={this.handleTimestampClick}>
-            <span className="time-travel-timestamp-info">
-              <time>{timestamp.format()}</time>
-            </span>
-          </a>
+          <span className="time-travel-jump-controls-timestamp">
+            <input value={timestamp.format()} /> UTC
+          </span>
           <a className="button jump" onClick={() => this.jumpInTime(FIVE_MINUTES_MS)}>
             <span className="fa fa-step-forward" /> 5 mins
           </a>

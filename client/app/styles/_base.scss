@@ -228,17 +228,17 @@
   align-items: center;
   display: flex;
   position: relative;
-  padding: 15px;
+  padding: 15px 20px;
   width: 100%;
   z-index: 2001;
 
   &-slider-wrapper {
     flex-grow: 1;
     margin-right: 50px;
+    margin-bottom: 20px;
   }
 
-  &-timestamp-controls-wrapper {
-    align-items: center;
+  &-jump-controls {
     display: flex;
 
     .button.jump {
@@ -253,6 +253,22 @@
         display: block;
         font-size: 150%;
         margin-bottom: 3px;
+      }
+    }
+
+    &-timestamp {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 2px 8px;
+      margin: 4px 8px 25px;
+
+      input {
+        border: 0;
+        background-color: transparent;
+        font-family: $mono-font;
+        font-size: 0.875rem;
+        margin-right: 2px;
+        outline: 0;
       }
     }
   }
