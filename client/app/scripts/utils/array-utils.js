@@ -26,3 +26,7 @@ export function moveElement(array, from, to) {
   }
   return insertElement(removeElement(array, from), to, array[from]);
 }
+
+export function intersperse(items, value) {
+  return [].concat(...items.map(e => [value, e])).slice(1);
+}

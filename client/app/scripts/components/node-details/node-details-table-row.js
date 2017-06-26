@@ -1,5 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
+import groupBy from 'lodash/groupBy';
+import forEach from 'lodash/forEach';
+import mapValues from 'lodash/mapValues';
+import { intersperse } from '../../utils/array-utils';
+
 
 import NodeDetailsTableNodeLink from './node-details-table-node-link';
 import NodeDetailsTableNodeMetric from './node-details-table-node-metric';
@@ -17,22 +22,28 @@ function getValuesForNode(node) {
     }
   });
 
-  (node.parents || []).forEach((p) => {
-    values[p.topologyId] = {
-      id: p.topologyId,
-      label: p.topologyId,
-      value: p.label,
-      relative: p,
+  if (node.parents) {
+    const byTopologyId = groupBy(node.parents, parent => parent.topologyId);
+    const relativesByTopologyId = mapValues(byTopologyId, (relatives, topologyId) => ({
+      id: topologyId,
+      label: topologyId,
+      value: relatives.map(relative => relative.label).join(', '),
       valueType: 'relatives',
-    };
-  });
+      relatives,
+    }));
+
+    forEach(relativesByTopologyId, (columnData, topologyId) => {
+      values[topologyId] = columnData;
+    });
+  }
 
   return values;
 }
 
+
 function renderValues(node, columns = [], columnStyles = [], timestamp = null) {
   const fields = getValuesForNode(node);
-  return columns.map(({id}, i) => {
+  return columns.map(({ id }, i) => {
     const field = fields[id];
     const style = columnStyles[i];
     if (field) {
@@ -55,17 +66,27 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null) {
             title={field.value}
             style={style}
             key={field.id}>
-            {<NodeDetailsTableNodeLink linkable nodeId={field.relative.id} {...field.relative} />}
+            {intersperse(field.relatives.map(relative =>
+              <NodeDetailsTableNodeLink
+                key={relative.id}
+                linkable
+                nodeId={relative.id}
+                {...relative}
+              />
+            ), ' ')}
           </td>
         );
       }
-      return <NodeDetailsTableNodeMetric style={style} key={field.id} {...field} />;
+      return (
+        <NodeDetailsTableNodeMetric style={style} key={field.id} {...field} />
+      );
     }
     // empty cell to complete the row for proper hover
-    return <td className="node-details-table-node-value" style={style} key={id} />;
+    return (
+      <td className="node-details-table-node-value" style={style} key={id} />
+    );
   });
 }
-
 
 export default class NodeDetailsTableRow extends React.Component {
   constructor(props, context) {
