@@ -45,13 +45,7 @@ var ContainerRenderer = MakeFilter(
 	),
 )
 
-var mapEndpoint2IP = MakeMap(
-	endpoint2IP,
-	// We drop endpoint nodes which were procspied, as they will be
-	// joined to containers through the process topology, and we don't
-	// want to double count edges.
-	MakeFilter(Complement(procspied), SelectEndpoint),
-)
+var mapEndpoint2IP = MakeMap(endpoint2IP, SelectEndpoint)
 
 const originalNodeID = "original_node_id"
 const originalNodeTopology = "original_node_topology"
@@ -121,8 +115,11 @@ func endpoint2IP(m report.Node, local report.Networks) report.Nodes {
 		return report.Nodes{}
 	}
 
-	if externalNode, ok := NewDerivedExternalNode(m, addr, local); ok {
-		return report.Nodes{externalNode.ID: externalNode}
+	// Nodes without a hostid may be pseudo nodes
+	if _, ok := m.Latest.Lookup(report.HostNodeID); !ok {
+		if externalNode, ok := NewDerivedExternalNode(m, addr, local); ok {
+			return report.Nodes{externalNode.ID: externalNode}
+		}
 	}
 
 	// We also allow for joining on ip:port pairs.  This is useful for

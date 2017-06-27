@@ -5,7 +5,6 @@ import (
 
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
@@ -236,25 +235,6 @@ func IsRunning(n report.Node) bool {
 
 // IsStopped checks if the node is *not* a running docker container
 var IsStopped = Complement(IsRunning)
-
-func procspied(node report.Node) bool {
-	_, ok := node.Latest.Lookup(endpoint.Procspied)
-	return ok
-}
-
-func procspiedOrEBPF(node report.Node) bool {
-	if procspied(node) {
-		return true
-	}
-	_, ok := node.Latest.Lookup(endpoint.EBPF)
-	return ok
-}
-
-// FilterProcspiedOrEBPF keeps only endpoints which were found via
-// procspy or eBPF.
-func FilterProcspiedOrEBPF(r Renderer) Renderer {
-	return MakeFilter(procspiedOrEBPF, r)
-}
 
 // IsApplication checks if the node is an "application" node
 func IsApplication(n report.Node) bool {

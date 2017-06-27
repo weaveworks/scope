@@ -22,7 +22,7 @@ func renderProcesses(rpt report.Report) bool {
 }
 
 // EndpointRenderer is a Renderer which produces a renderable endpoint graph.
-var EndpointRenderer = FilterProcspiedOrEBPF(SelectEndpoint)
+var EndpointRenderer = SelectEndpoint
 
 // ProcessRenderer is a Renderer which produces a renderable process
 // graph by merging the endpoint graph and the process topology.
