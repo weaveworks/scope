@@ -68,13 +68,13 @@ func ConnectionJoin(r Renderer, toIPs func(report.Node) []string) Renderer {
 		return result
 	}
 
-	return FilterUnconnected(MakeMap(
+	return MakeMap(
 		ipToNode,
 		MakeReduce(
 			MakeMap(nodeToIP, r),
 			mapEndpoint2IP,
 		),
-	))
+	)
 }
 
 func ipToNode(n report.Node, _ report.Networks) report.Nodes {

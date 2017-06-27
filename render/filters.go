@@ -215,8 +215,23 @@ func Complement(f FilterFunc) FilterFunc {
 // FilterUnconnected produces a renderer that filters unconnected nodes
 // from the given renderer
 func FilterUnconnected(r Renderer) Renderer {
-	return MakeFilter(
+	return MakeFilterPseudo(
 		func(node report.Node) bool {
+			_, ok := node.Latest.Lookup(IsConnected)
+			return ok
+		},
+		ColorConnected(r),
+	)
+}
+
+// FilterUnconnectedPseudo produces a renderer that filters
+// unconnected pseudo nodes from the given renderer
+func FilterUnconnectedPseudo(r Renderer) Renderer {
+	return MakeFilterPseudo(
+		func(node report.Node) bool {
+			if !IsPseudoTopology(node) {
+				return true
+			}
 			_, ok := node.Latest.Lookup(IsConnected)
 			return ok
 		},
