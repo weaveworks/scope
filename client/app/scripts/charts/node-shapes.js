@@ -11,11 +11,14 @@ import {
   pathElement,
   circleElement,
   rectangleElement,
-  cloudShapeProps,
   circleShapeProps,
+  triangleShapeProps,
   squareShapeProps,
+  pentagonShapeProps,
   hexagonShapeProps,
   heptagonShapeProps,
+  octagonShapeProps,
+  cloudShapeProps,
 } from '../utils/node-shape-utils';
 
 
@@ -69,8 +72,11 @@ function NodeShape(shapeType, shapeElement, shapeProps, { id, highlighted, color
   );
 }
 
-export const NodeShapeCloud = props => NodeShape('cloud', pathElement, cloudShapeProps, props);
 export const NodeShapeCircle = props => NodeShape('circle', circleElement, circleShapeProps, props);
+export const NodeShapeTriangle = props => NodeShape('triangle', pathElement, triangleShapeProps, props);
+export const NodeShapeSquare = props => NodeShape('square', rectangleElement, squareShapeProps, props);
+export const NodeShapePentagon = props => NodeShape('pentagon', pathElement, pentagonShapeProps, props);
 export const NodeShapeHexagon = props => NodeShape('hexagon', pathElement, hexagonShapeProps, props);
 export const NodeShapeHeptagon = props => NodeShape('heptagon', pathElement, heptagonShapeProps, props);
-export const NodeShapeSquare = props => NodeShape('square', rectangleElement, squareShapeProps, props);
+export const NodeShapeOctagon = props => NodeShape('octagon', pathElement, octagonShapeProps, props);
+export const NodeShapeCloud = props => NodeShape('cloud', pathElement, cloudShapeProps, props);
