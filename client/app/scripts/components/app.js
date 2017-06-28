@@ -33,6 +33,7 @@ import {
 import Details from './details';
 import Nodes from './nodes';
 import TimeTravel from './time-travel';
+import TimeControl from './time-control';
 import ViewModeSelector from './view-mode-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
@@ -193,6 +194,7 @@ class App extends React.Component {
           <Search />
           <Topologies />
           <ViewModeSelector />
+          <TimeControl />
         </div>
 
         <Nodes />

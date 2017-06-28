@@ -1,5 +1,4 @@
 import debug from 'debug';
-import moment from 'moment';
 import reqwest from 'reqwest';
 import { defaults } from 'lodash';
 import { Map as makeMap, List } from 'immutable';
@@ -13,7 +12,7 @@ import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveEr
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
-import { isNowSelector } from '../selectors/time-travel';
+import { isPausedSelector } from '../selectors/time-travel';
 
 import { API_REFRESH_INTERVAL, TOPOLOGY_REFRESH_INTERVAL } from '../constants/timer';
 
@@ -50,10 +49,9 @@ let continuePolling = true;
 
 export function getSerializedTimeTravelTimestamp(state) {
   // The timestamp parameter will be used only if it's in the past.
-  if (isNowSelector(state)) return null;
+  if (!isPausedSelector(state)) return null;
 
-  const millisecondsInPast = state.get('timeTravelMillisecondsInPast');
-  return moment().utc().subtract(millisecondsInPast).toISOString();
+  return state.get('pausedAt').toISOString();
 }
 
 export function buildUrlQuery(params = makeMap(), state) {

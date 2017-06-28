@@ -64,6 +64,7 @@ export const initialState = makeMap({
   nodesByTopology: makeMap(), // topologyId -> nodes
   // class of metric, e.g. 'cpu', rather than 'host_cpu' or 'process_cpu'.
   // allows us to keep the same metric "type" selected when the topology changes.
+  pausedAt: null,
   pinnedMetricType: null,
   pinnedNetwork: null,
   plugins: makeList(),
@@ -74,16 +75,15 @@ export const initialState = makeMap({
   selectedNetwork: null,
   selectedNodeId: null,
   showingHelp: false,
+  showingTimeTravel: false,
   showingTroubleshootingMenu: false,
   showingNetworks: false,
   timeTravelTransitioning: false,
-  timeTravelMillisecondsInPast: 0,
   topologies: makeList(),
   topologiesLoaded: false,
   topologyOptions: makeOrderedMap(), // topologyId -> options
   topologyUrlsById: makeOrderedMap(), // topologyId -> topologyUrl
   topologyViewMode: GRAPH_VIEW_MODE,
-  updatePausedAt: null,
   version: '...',
   versionUpdate: null,
   viewport: makeMap(),
@@ -174,8 +174,9 @@ function closeAllNodeDetails(state) {
   return state;
 }
 
-function resumeUpdate(state) {
-  return state.set('updatePausedAt', null);
+function resumeTimeFromNow(state) {
+  state = state.set('showingTimeTravel', false);
+  return state.set('pausedAt', null);
 }
 
 function clearNodes(state) {
@@ -195,7 +196,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CHANGE_TOPOLOGY_OPTION: {
-      state = resumeUpdate(state);
+      state = resumeTimeFromNow(state);
       // set option on parent topology
       const topology = findTopologyById(state.get('topologies'), action.topologyId);
       if (topology) {
@@ -289,11 +290,6 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
-    case ActionTypes.CLICK_PAUSE_UPDATE: {
-      const millisecondsInPast = state.get('timeTravelMillisecondsInPast');
-      return state.set('updatePausedAt', moment().utc().subtract(millisecondsInPast));
-    }
-
     case ActionTypes.CLICK_RELATIVE: {
       if (state.hasIn(['nodeDetails', action.nodeId])) {
         // bring to front
@@ -313,12 +309,13 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
-    case ActionTypes.CLICK_RESUME_UPDATE: {
-      return resumeUpdate(state);
+    case ActionTypes.FINISH_TIME_TRAVEL_TRANSITION: {
+      state = state.set('timeTravelTransitioning', false);
+      return clearNodes(state);
     }
 
     case ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE: {
-      state = resumeUpdate(state);
+      state = resumeTimeFromNow(state);
 
       state = state.update('nodeDetails',
         nodeDetails => nodeDetails.filter((v, k) => k === action.nodeId));
@@ -334,7 +331,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_TOPOLOGY: {
-      state = resumeUpdate(state);
+      state = resumeTimeFromNow(state);
       state = closeAllNodeDetails(state);
 
       const currentTopologyId = state.get('currentTopologyId');
@@ -347,15 +344,28 @@ export function rootReducer(state = initialState, action) {
     }
 
     //
-    // time travel
+    // time control
     //
+
+    case ActionTypes.RESUME_TIME_FROM_NOW: {
+      return resumeTimeFromNow(state);
+    }
+
+    case ActionTypes.PAUSE_TIME_AT_NOW: {
+      return state.set('pausedAt', moment().utc());
+    }
+
+    case ActionTypes.START_TIME_TRAVEL: {
+      state = state.set('showingTimeTravel', true);
+      return state.set('pausedAt', moment().utc());
+    }
+
+    case ActionTypes.JUMP_TO_TIME: {
+      return state.set('pausedAt', action.timestamp);
+    }
 
     case ActionTypes.TIME_TRAVEL_START_TRANSITION: {
       return state.set('timeTravelTransitioning', true);
-    }
-
-    case ActionTypes.TIME_TRAVEL_MILLISECONDS_IN_PAST: {
-      return state.set('timeTravelMillisecondsInPast', action.millisecondsInPast);
     }
 
     //
@@ -568,15 +578,6 @@ export function rootReducer(state = initialState, action) {
         'add', size(action.delta.add));
 
       state = state.set('errorUrl', null);
-
-      // When moving in time, we will consider the transition complete
-      // only when the first batch of nodes delta has been received. We
-      // do that because we want to keep the previous state blurred instead
-      // of transitioning over an empty state like when switching topologies.
-      if (state.get('timeTravelTransitioning')) {
-        state = state.set('timeTravelTransitioning', false);
-        state = clearNodes(state);
-      }
 
       // nodes that no longer exist
       each(action.delta.remove, (nodeId) => {

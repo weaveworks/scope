@@ -350,7 +350,7 @@ export function clickNode(nodeId, label, origin) {
 
 export function clickPauseUpdate() {
   return {
-    type: ActionTypes.CLICK_PAUSE_UPDATE
+    type: ActionTypes.PAUSE_TIME_AT_NOW
   };
 }
 
@@ -410,11 +410,11 @@ export function timeTravelStartTransition() {
   };
 }
 
-export function timeTravelJumpToPast(millisecondsInPast) {
+export function jumpToTime(timestamp) {
   return (dispatch, getServiceState) => {
     dispatch({
-      type: ActionTypes.TIME_TRAVEL_MILLISECONDS_IN_PAST,
-      millisecondsInPast,
+      type: ActionTypes.JUMP_TO_TIME,
+      timestamp,
     });
     const scopeState = getServiceState().scope;
     updateWebsocketChannel(scopeState, dispatch);
@@ -589,6 +589,14 @@ export function receiveNodesDelta(delta) {
     const movingInTime = state.get('timeTravelTransitioning');
     const hasChanges = delta.add || delta.update || delta.remove;
 
+    // When moving in time, we will consider the transition complete
+    // only when the first batch of nodes delta has been received. We
+    // do that because we want to keep the previous state blurred instead
+    // of transitioning over an empty state like when switching topologies.
+    if (state.get('timeTravelTransitioning')) {
+      dispatch({ type: ActionTypes.FINISH_TIME_TRAVEL_TRANSITION });
+    }
+
     if (hasChanges || movingInTime) {
       if (isPausedSelector(state)) {
         if (state.get('nodesDeltaBuffer').size >= NODES_DELTA_BUFFER_SIZE_LIMIT) {
@@ -620,7 +628,7 @@ function updateFromNodesDeltaBuffer(dispatch, state) {
 export function clickResumeUpdate() {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_RESUME_UPDATE
+      type: ActionTypes.RESUME_TIME_FROM_NOW
     });
     // TODO: Find a better way to do this (see the comment above).
     const state = getState().scope || getState();
@@ -629,6 +637,12 @@ export function clickResumeUpdate() {
       () => updateFromNodesDeltaBuffer(dispatch, state),
       NODES_DELTA_BUFFER_FEED_INTERVAL,
     );
+  };
+}
+
+export function clickTimeTravel() {
+  return {
+    type: ActionTypes.START_TIME_TRAVEL
   };
 }
 

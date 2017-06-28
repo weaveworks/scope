@@ -228,7 +228,7 @@
   align-items: center;
   display: flex;
   position: relative;
-  padding: 15px 20px;
+  padding: 10px 20px 0;
   width: 100%;
   z-index: 2001;
 
@@ -1401,7 +1401,7 @@
   }
 }
 
-.topology-option, .metric-selector, .network-selector, .view-mode-selector {
+.topology-option, .metric-selector, .network-selector, .view-mode-selector, .time-control {
   color: $text-secondary-color;
   margin: 6px 0;
 
@@ -1447,7 +1447,9 @@
   }
 }
 
-.view-mode-selector {
+.setup-nav-button { display: none; }
+
+.view-mode-selector, .time-control {
   margin-top: 8px;
   margin-left: 20px;
   min-width: 161px;
@@ -1479,6 +1481,22 @@
   }
 }
 
+.time-control {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  right: 36px;
+
+  &-icon {
+    margin-right: 15px;
+
+    .fa {
+      color: $text-secondary-color;
+      font-size: 125%;
+    }
+  }
+}
+
 .topology-option {
   &-action {
     &-selected {
@@ -1487,7 +1505,7 @@
   }
 }
 
-.view-mode-selector-wrapper {
+.view-mode-selector-wrapper, .time-control-wrapper {
   .label { margin-left: 4px; }
   .fa {
     margin-left: 0;

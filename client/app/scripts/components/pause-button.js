@@ -35,11 +35,11 @@ class PauseButton extends React.Component {
   }
 
   render() {
-    const { isPaused, hasUpdates, updateCount, updatePausedAt } = this.props;
+    const { isPaused, hasUpdates, updateCount, pausedAt } = this.props;
     const className = classNames('button pause-button', { active: isPaused });
 
     const title = isPaused ?
-      `Paused ${moment(updatePausedAt).fromNow()}` :
+      `Paused ${moment(pausedAt).fromNow()}` :
       'Pause updates (freezes the nodes in their current layout)';
 
     let label = '';
@@ -64,7 +64,7 @@ function mapStateToProps(state) {
   return {
     hasUpdates: !state.get('nodesDeltaBuffer').isEmpty(),
     updateCount: state.get('nodesDeltaBuffer').size,
-    updatePausedAt: state.get('updatePausedAt'),
+    pausedAt: state.get('pausedAt'),
     topologyViewMode: state.get('topologyViewMode'),
     currentTopology: state.get('currentTopology'),
     isPaused: isPausedSelector(state),

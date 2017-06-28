@@ -1,7 +1,7 @@
 import { endsWith } from 'lodash';
 import { Set as makeSet, List as makeList } from 'immutable';
 
-import { isNowSelector } from '../selectors/time-travel';
+import { isPausedSelector } from '../selectors/time-travel';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { pinnedMetricSelector } from '../selectors/node-metric';
 import { shownNodesSelector, shownResourceTopologyIdsSelector } from '../selectors/node-filters';
@@ -139,7 +139,7 @@ export function isTopologyNodeCountZero(state) {
   const nodeCount = state.getIn(['currentTopology', 'stats', 'node_count'], 0);
   // If we are browsing the past, assume there would normally be some nodes at different times.
   // If we are in the resource view, don't rely on these stats at all (for now).
-  return nodeCount === 0 && isNowSelector(state) && !isResourceViewModeSelector(state);
+  return nodeCount === 0 && !isPausedSelector(state) && !isResourceViewModeSelector(state);
 }
 
 export function isNodesDisplayEmpty(state) {

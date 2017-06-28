@@ -6,7 +6,8 @@ import { debounce } from 'lodash';
 
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
-  timeTravelJumpToPast,
+  jumpToTime,
+  clickResumeUpdate,
   timeTravelStartTransition,
 } from '../actions/app-actions';
 
@@ -19,19 +20,20 @@ import {
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
-function getRangeMilliseconds() {
-  return 90 * 24 * ONE_HOUR_MS;
-}
-
 class TimeTravel extends React.Component {
   constructor(props, context) {
     super(props, context);
 
     this.state = {
-      showSliderPanel: false,
-      millisecondsInPast: 0,
+      // TODO: Showing a three months of history is quite arbitrary;
+      // we should instead get some meaningful 'beginning of time' from
+      // the backend and make the slider show whole active history.
+      sliderMinValue: moment().subtract(3, 'months').valueOf(),
+      sliderValue: props.pausedAt && props.pausedAt.valueOf(),
+      inputValue: props.pausedAt && moment(props.pausedAt).utc().format(),
     };
 
+    this.handleTimestampInputChange = this.handleTimestampInputChange.bind(this);
     this.handleTimestampClick = this.handleTimestampClick.bind(this);
     this.handleSliderChange = this.handleSliderChange.bind(this);
     this.jumpInTime = this.jumpInTime.bind(this);
@@ -47,25 +49,28 @@ class TimeTravel extends React.Component {
     this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_TICK_INTERVAL);
   }
 
-  componentWillUnmount() {
-    clearInterval(this.timer);
-    this.updateTimestamp();
+  componentWillReceiveProps(props) {
+    this.setState({
+      sliderValue: props.pausedAt && props.pausedAt.valueOf(),
+      inputValue: props.pausedAt && moment(props.pausedAt).utc().format(),
+    });
   }
 
-  handleSliderChange(sliderValue) {
-    let millisecondsInPast = getRangeMilliseconds() - sliderValue;
+  componentWillUnmount() {
+    clearInterval(this.timer);
+    this.props.clickResumeUpdate();
+  }
 
-    // If the slider value is less than 1s away from the right-end (current time),
-    // assume we meant the current time - this is important for the '... so far'
-    // ranges where the range of values changes over time.
-    if (millisecondsInPast < 1000) {
-      millisecondsInPast = 0;
-    }
+  handleSliderChange(value) {
+    const timestamp = moment(value).utc();
 
-    this.setState({ millisecondsInPast });
+    this.setState({
+      inputValue: timestamp.format(),
+      sliderValue: value,
+    });
+
     this.props.timeTravelStartTransition();
-    this.debouncedUpdateTimestamp(millisecondsInPast);
-
+    this.debouncedUpdateTimestamp(timestamp);
     this.debouncedTrackSliderChange();
   }
 
@@ -77,17 +82,21 @@ class TimeTravel extends React.Component {
     });
   }
 
-  updateTimestamp(millisecondsInPast = 0) {
-    this.props.timeTravelJumpToPast(millisecondsInPast);
+  handleTimestampInputChange(ev) {
+    this.setState({ inputValue: ev.target.value });
+  }
+
+  updateTimestamp(timestamp) {
+    this.props.jumpToTime(timestamp);
   }
 
   jumpInTime(millisecondsDelta) {
-    let millisecondsInPast = this.state.millisecondsInPast - millisecondsDelta;
-    millisecondsInPast = Math.min(millisecondsInPast, getRangeMilliseconds());
-    millisecondsInPast = Math.max(millisecondsInPast, 0);
-    this.debouncedUpdateTimestamp(millisecondsInPast);
+    let timestamp = this.state.sliderValue - millisecondsDelta;
+    timestamp = Math.min(timestamp, this.state.sliderStartTimestamp);
+    timestamp = Math.max(timestamp, moment().valueOf());
+
     this.props.timeTravelStartTransition();
-    this.setState({ millisecondsInPast });
+    this.debouncedUpdateTimestamp(moment(timestamp));
   }
 
   trackSliderChange() {
@@ -99,27 +108,23 @@ class TimeTravel extends React.Component {
   }
 
   render() {
-    const { millisecondsInPast } = this.state;
-    const { timeTravelTransitioning, hasTimeTravel } = this.props;
-    const timestamp = moment().utc().subtract(millisecondsInPast);
-    const rangeMilliseconds = getRangeMilliseconds();
-
     // Don't render the time travel control if it's not explicitly enabled for this instance.
-    if (!hasTimeTravel) return null;
+    if (!this.props.showingTimeTravel) return null;
+
+    const { sliderValue, sliderMinValue, inputValue } = this.state;
+    const sliderMaxValue = moment().valueOf();
 
     return (
       <div className="time-travel">
         <div className="time-travel-slider-wrapper">
           <Slider
             onChange={this.handleSliderChange}
-            value={rangeMilliseconds - millisecondsInPast}
-            max={rangeMilliseconds}
+            value={sliderValue}
+            min={sliderMinValue}
+            max={sliderMaxValue}
           />
         </div>
         <div className="time-travel-jump-controls">
-          {timeTravelTransitioning && <div className="time-travel-jump-loader">
-            <span className="fa fa-circle-o-notch fa-spin" />
-          </div>}
           <a className="button jump" onClick={() => this.jumpInTime(-ONE_HOUR_MS)}>
             <span className="fa fa-fast-backward" /> 1 hour
           </a>
@@ -127,7 +132,7 @@ class TimeTravel extends React.Component {
             <span className="fa fa-step-backward" /> 5 mins
           </a>
           <span className="time-travel-jump-controls-timestamp">
-            <input value={timestamp.format()} /> UTC
+            <input value={inputValue} onChange={this.handleTimestampInputChange} /> UTC
           </span>
           <a className="button jump" onClick={() => this.jumpInTime(FIVE_MINUTES_MS)}>
             <span className="fa fa-step-forward" /> 5 mins
@@ -145,17 +150,18 @@ function mapStateToProps({ scope, root }, { params }) {
   const cloudInstance = root.instances[params.orgId] || {};
   const featureFlags = cloudInstance.featureFlags || [];
   return {
-    hasTimeTravel: featureFlags.includes('time-travel'),
-    timeTravelTransitioning: scope.get('timeTravelTransitioning'),
+    showingTimeTravel: featureFlags.includes('time-travel') && scope.get('showingTimeTravel'),
     topologyViewMode: scope.get('topologyViewMode'),
     currentTopology: scope.get('currentTopology'),
+    pausedAt: scope.get('pausedAt'),
   };
 }
 
 export default connect(
   mapStateToProps,
   {
-    timeTravelJumpToPast,
+    jumpToTime,
+    clickResumeUpdate,
     timeTravelStartTransition,
   }
 )(TimeTravel);
