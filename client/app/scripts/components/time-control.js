@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 
@@ -49,10 +50,25 @@ class TimeControl extends React.Component {
   }
 
   render() {
-    const { showingTimeTravel, pausedAt, timeTravelTransitioning } = this.props;
+    const { showingTimeTravel, pausedAt, timeTravelTransitioning,
+      hasUpdates, updateCount } = this.props;
+
     const isPausedNow = pausedAt && !showingTimeTravel;
     const isTimeTravelling = showingTimeTravel;
     const isRunningNow = !pausedAt;
+
+    const pauseTitle = isPausedNow ?
+      `Paused ${moment(pausedAt).fromNow()}` :
+      'Pause updates (freezes the nodes in their current layout)';
+
+    let info = '';
+    if (hasUpdates && isPausedNow) {
+      info = `Paused +${updateCount}`;
+    } else if (hasUpdates && !isPausedNow) {
+      info = `Resuming +${updateCount}`;
+    } else if (!hasUpdates && isPausedNow) {
+      info = 'Paused';
+    }
 
     return (
       <div className="time-control">
@@ -69,7 +85,8 @@ class TimeControl extends React.Component {
           <span
             className={className(isPausedNow)}
             onClick={this.handlePauseClick}
-            disabled={isTimeTravelling}>
+            disabled={isTimeTravelling}
+            title={pauseTitle}>
             {isPausedNow && <span className="fa fa-pause" />}
             <span className="label">{isPausedNow ? 'Paused' : 'Pause'}</span>
           </span>
@@ -79,6 +96,7 @@ class TimeControl extends React.Component {
             <span className="label">Time Travel</span>
           </span>
         </div>
+        <span>{info}</span>
       </div>
     );
   }
@@ -95,6 +113,8 @@ function mapStateToProps(state) {
     showingTimeTravel: state.get('showingTimeTravel'),
     timeTravelTransitioning: state.get('timeTravelTransitioning'),
     pausedAt: state.get('pausedAt'),
+    hasUpdates: !state.get('nodesDeltaBuffer').isEmpty(),
+    updateCount: state.get('nodesDeltaBuffer').size,
   };
 }
 

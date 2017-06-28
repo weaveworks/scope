@@ -174,11 +174,6 @@ function closeAllNodeDetails(state) {
   return state;
 }
 
-function resumeTimeFromNow(state) {
-  state = state.set('showingTimeTravel', false);
-  return state.set('pausedAt', null);
-}
-
 function clearNodes(state) {
   return state
     .update('nodes', nodes => nodes.clear())
@@ -196,7 +191,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CHANGE_TOPOLOGY_OPTION: {
-      state = resumeTimeFromNow(state);
       // set option on parent topology
       const topology = findTopologyById(state.get('topologies'), action.topologyId);
       if (topology) {
@@ -315,8 +309,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE: {
-      state = resumeTimeFromNow(state);
-
       state = state.update('nodeDetails',
         nodeDetails => nodeDetails.filter((v, k) => k === action.nodeId));
       state = state.update('controlPipes', controlPipes => controlPipes.clear());
@@ -331,7 +323,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_TOPOLOGY: {
-      state = resumeTimeFromNow(state);
       state = closeAllNodeDetails(state);
 
       const currentTopologyId = state.get('currentTopologyId');
@@ -348,10 +339,12 @@ export function rootReducer(state = initialState, action) {
     //
 
     case ActionTypes.RESUME_TIME_FROM_NOW: {
-      return resumeTimeFromNow(state);
+      state = state.set('showingTimeTravel', false);
+      return state.set('pausedAt', null);
     }
 
     case ActionTypes.PAUSE_TIME_AT_NOW: {
+      state = state.set('showingTimeTravel', false);
       return state.set('pausedAt', moment().utc());
     }
 

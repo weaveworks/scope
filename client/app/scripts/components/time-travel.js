@@ -17,8 +17,8 @@ import {
 } from '../constants/timer';
 
 
-const ONE_HOUR_MS = 60 * 60 * 1000;
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
+const ONE_HOUR_MS = moment.duration(1, 'hour');
+const FIVE_MINUTES_MS = moment.duration(5, 'minutes');
 
 class TimeTravel extends React.Component {
   constructor(props, context) {
@@ -134,10 +134,10 @@ class TimeTravel extends React.Component {
           <span className="time-travel-jump-controls-timestamp">
             <input value={inputValue} onChange={this.handleTimestampInputChange} /> UTC
           </span>
-          <a className="button jump" onClick={() => this.jumpInTime(FIVE_MINUTES_MS)}>
+          <a className="button jump" onClick={() => this.jumpInTime(+FIVE_MINUTES_MS)}>
             <span className="fa fa-step-forward" /> 5 mins
           </a>
-          <a className="button jump" onClick={() => this.jumpInTime(ONE_HOUR_MS)}>
+          <a className="button jump" onClick={() => this.jumpInTime(+ONE_HOUR_MS)}>
             <span className="fa fa-fast-forward" /> 1 hour
           </a>
         </div>

@@ -2,7 +2,6 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import Plugins from './plugins';
-import PauseButton from './pause-button';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
   clickDownloadGraph,
@@ -66,7 +65,6 @@ class Footer extends React.Component {
         </div>
 
         <div className="footer-tools">
-          <PauseButton />
           <a
             className="footer-icon"
             onClick={this.handleRelayoutClick}
