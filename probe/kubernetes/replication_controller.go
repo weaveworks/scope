@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/weaveworks/scope/report"
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/labels"
+
+	"k8s.io/apimachinery/pkg/labels"
+	apiv1 "k8s.io/client-go/pkg/api/v1"
 )
 
 // ReplicationController represents a Kubernetes replication controller
@@ -18,14 +19,14 @@ type ReplicationController interface {
 
 // replicationController implements both ReplicationController and ReplicaSet
 type replicationController struct {
-	*api.ReplicationController
+	*apiv1.ReplicationController
 	Meta
 	parents report.Sets
-	Node    *api.Node
+	Node    *apiv1.Node
 }
 
 // NewReplicationController creates a new ReplicationController
-func NewReplicationController(r *api.ReplicationController) ReplicationController {
+func NewReplicationController(r *apiv1.ReplicationController) ReplicationController {
 	return &replicationController{
 		ReplicationController: r,
 		Meta:    meta{r.ObjectMeta},
