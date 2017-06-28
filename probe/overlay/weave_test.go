@@ -64,12 +64,12 @@ var mockWeaveContainers = map[string]*docker_client.Container{
 func runTest(t *testing.T, f func(*overlay.Weave)) {
 	// Place and restore docker client
 	origNewDockerClientStub := overlay.NewDockerClientStub
-	overlay.NewDockerClientStub = func(string) (overlay.DockerClient, error) {
+	overlay.NewDockerClientStub = func() (overlay.DockerClient, error) {
 		return &mockDockerClient{containers: mockWeaveContainers}, nil
 	}
 	defer func() { overlay.NewDockerClientStub = origNewDockerClientStub }()
 
-	w, err := overlay.NewWeave(mockHostID, weave.MockClient{}, "")
+	w, err := overlay.NewWeave(mockHostID, weave.MockClient{})
 	if err != nil {
 		t.Fatal(err)
 	}
