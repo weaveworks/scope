@@ -1628,6 +1628,51 @@
 			"notests": true
 		},
 		{
+			"importpath": "golang.org/x/text/internal/gen",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "6353ef0f924300eea566d3438817aa4d3374817e",
+			"branch": "master",
+			"path": "internal/gen",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text/internal/triegen",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "6353ef0f924300eea566d3438817aa4d3374817e",
+			"branch": "master",
+			"path": "internal/triegen",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text/internal/ucd",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "6353ef0f924300eea566d3438817aa4d3374817e",
+			"branch": "master",
+			"path": "/internal/ucd",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text/unicode/cldr",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "6353ef0f924300eea566d3438817aa4d3374817e",
+			"branch": "master",
+			"path": "unicode/cldr",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/text/unicode/rangetable",
+			"repository": "https://go.googlesource.com/text",
+			"vcs": "git",
+			"revision": "6353ef0f924300eea566d3438817aa4d3374817e",
+			"branch": "master",
+			"path": "unicode/rangetable",
+			"notests": true
+		},
+		{
 			"importpath": "golang.org/x/tools/cover",
 			"repository": "https://go.googlesource.com/tools",
 			"vcs": "git",
@@ -1758,6 +1803,22 @@
 			"vcs": "",
 			"revision": "53feefa2559fb8dfa8d81baad31be332c97d6c77",
 			"branch": "v2"
+		},
+		{
+			"importpath": "k8s.io/apimachinery",
+			"repository": "https://github.com/kubernetes/apimachinery",
+			"vcs": "git",
+			"revision": "85ace5365f33b16fc735c866a12e3c765b9700f2",
+			"branch": "release-1.6",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/client-go",
+			"repository": "https://github.com/kubernetes/client-go",
+			"vcs": "git",
+			"revision": "99c1992389642cae4f41b931eca21827f9cc35b7",
+			"branch": "release-3.0",
+			"notests": true
 		},
 		{
 			"importpath": "k8s.io/kubernetes/pkg",
