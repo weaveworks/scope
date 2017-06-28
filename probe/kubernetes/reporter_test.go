@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	"k8s.io/kubernetes/pkg/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	apiv1 "k8s.io/client-go/pkg/api/v1"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
@@ -24,77 +24,74 @@ var (
 	pod1UID     = "a1b2c3d4e5"
 	pod2UID     = "f6g7h8i9j0"
 	serviceUID  = "service1234"
-	podTypeMeta = unversioned.TypeMeta{
+	podTypeMeta = metav1.TypeMeta{
 		Kind:       "Pod",
 		APIVersion: "v1",
 	}
-	apiPod1 = api.Pod{
+	apiPod1 = apiv1.Pod{
 		TypeMeta: podTypeMeta,
-		ObjectMeta: api.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "pong-a",
 			UID:               types.UID(pod1UID),
 			Namespace:         "ping",
-			CreationTimestamp: unversioned.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels:            map[string]string{"ponger": "true"},
 		},
-		Status: api.PodStatus{
+		Status: apiv1.PodStatus{
 			HostIP: "1.2.3.4",
-			ContainerStatuses: []api.ContainerStatus{
+			ContainerStatuses: []apiv1.ContainerStatus{
 				{ContainerID: "container1"},
 				{ContainerID: "container2"},
 			},
 		},
-		Spec: api.PodSpec{
-			NodeName: nodeName,
-			SecurityContext: &api.PodSecurityContext{
-				HostNetwork: true,
-			},
+		Spec: apiv1.PodSpec{
+			NodeName:    nodeName,
+			HostNetwork: true,
 		},
 	}
-	apiPod2 = api.Pod{
+	apiPod2 = apiv1.Pod{
 		TypeMeta: podTypeMeta,
-		ObjectMeta: api.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "pong-b",
 			UID:               types.UID(pod2UID),
 			Namespace:         "ping",
-			CreationTimestamp: unversioned.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels:            map[string]string{"ponger": "true"},
 		},
-		Status: api.PodStatus{
+		Status: apiv1.PodStatus{
 			HostIP: "1.2.3.4",
-			ContainerStatuses: []api.ContainerStatus{
+			ContainerStatuses: []apiv1.ContainerStatus{
 				{ContainerID: "container3"},
 				{ContainerID: "container4"},
 			},
 		},
-		Spec: api.PodSpec{
-			NodeName:        nodeName,
-			SecurityContext: &api.PodSecurityContext{},
+		Spec: apiv1.PodSpec{
+			NodeName: nodeName,
 		},
 	}
-	apiService1 = api.Service{
-		TypeMeta: unversioned.TypeMeta{
+	apiService1 = apiv1.Service{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
 			APIVersion: "v1",
 		},
-		ObjectMeta: api.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "pongservice",
 			UID:               types.UID(serviceUID),
 			Namespace:         "ping",
-			CreationTimestamp: unversioned.Now(),
+			CreationTimestamp: metav1.Now(),
 		},
-		Spec: api.ServiceSpec{
-			Type:           api.ServiceTypeLoadBalancer,
+		Spec: apiv1.ServiceSpec{
+			Type:           apiv1.ServiceTypeLoadBalancer,
 			ClusterIP:      "10.0.1.1",
 			LoadBalancerIP: "10.0.1.2",
-			Ports: []api.ServicePort{
+			Ports: []apiv1.ServicePort{
 				{Protocol: "TCP", Port: 6379},
 			},
 			Selector: map[string]string{"ponger": "true"},
 		},
-		Status: api.ServiceStatus{
-			LoadBalancer: api.LoadBalancerStatus{
-				Ingress: []api.LoadBalancerIngress{
+		Status: apiv1.ServiceStatus{
+			LoadBalancer: apiv1.LoadBalancerStatus{
+				Ingress: []apiv1.LoadBalancerIngress{
 					{IP: "10.0.1.2"},
 				},
 			},
@@ -148,7 +145,7 @@ func (c *mockClient) WalkReplicaSets(f func(kubernetes.ReplicaSet) error) error 
 func (c *mockClient) WalkReplicationControllers(f func(kubernetes.ReplicationController) error) error {
 	return nil
 }
-func (*mockClient) WalkNodes(f func(*api.Node) error) error {
+func (*mockClient) WalkNodes(f func(*apiv1.Node) error) error {
 	return nil
 }
 func (*mockClient) WatchPods(func(kubernetes.Event, kubernetes.Pod)) {}
