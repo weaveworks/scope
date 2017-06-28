@@ -132,16 +132,6 @@ var nodeSummaryGroupSpecs = []struct {
 	NodeSummaryGroup
 }{
 	{
-		topologyID: report.ReplicaSet,
-		NodeSummaryGroup: NodeSummaryGroup{
-			Label: "Replica Sets",
-			Columns: []Column{
-				{ID: report.Pod, Label: "# Pods", Datatype: "number"},
-				{ID: kubernetes.ObservedGeneration, Label: "Observed Gen.", Datatype: "number"},
-			},
-		},
-	},
-	{
 		topologyID: report.Pod,
 		NodeSummaryGroup: NodeSummaryGroup{
 			Label: "Pods",

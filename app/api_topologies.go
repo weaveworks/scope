@@ -28,7 +28,6 @@ const (
 	containersByHostnameID = "containers-by-hostname"
 	containersByImageID    = "containers-by-image"
 	podsID                 = "pods"
-	replicaSetsID          = "replica-sets"
 	kubeControllersID      = "kube-controllers"
 	servicesID             = "services"
 	hostsID                = "hosts"
@@ -97,7 +96,7 @@ func updateSwarmFilters(rpt report.Report, topologies []APITopologyDesc) []APITo
 
 func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
 	namespaces := map[string]struct{}{}
-	for _, t := range []report.Topology{rpt.Pod, rpt.Service, rpt.Deployment, rpt.ReplicaSet} {
+	for _, t := range []report.Topology{rpt.Pod, rpt.Service, rpt.Deployment} {
 		for _, n := range t.Nodes {
 			if state, ok := n.Latest.Lookup(kubernetes.State); ok && state == kubernetes.StateDeleted {
 				continue
@@ -119,7 +118,7 @@ func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITop
 	sort.Strings(ns)
 	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
 	for i, t := range topologies {
-		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == replicaSetsID || t.id == kubeControllersID {
+		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == kubeControllersID {
 			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
 				namespaceFilters(ns, "All Namespaces"),
 			})
@@ -251,14 +250,6 @@ func MakeRegistry() *Registry {
 			renderer:    render.FilterUnconnectedPseudo(render.PodRenderer),
 			Name:        "Pods",
 			Rank:        3,
-			Options:     []APITopologyOptionGroup{unmanagedFilter},
-			HideIfEmpty: true,
-		},
-		APITopologyDesc{
-			id:          replicaSetsID,
-			parent:      podsID,
-			renderer:    render.FilterUnconnectedPseudo(render.ReplicaSetRenderer),
-			Name:        "replica sets",
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
 		},
