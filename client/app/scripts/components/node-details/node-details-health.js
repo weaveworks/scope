@@ -21,8 +21,7 @@ export default class NodeDetailsHealth extends React.Component {
   }
 
   render() {
-    const metrics = this.props.metrics || [];
-    const metricLinks = this.props.metricLinks || {};
+    const { metrics = [], metricLinks = {}, topologyId } = this.props;
     const unattachedLinks = this.props.unattachedLinks || {};
     const hasUnattached = Object.keys(unattachedLinks).length > 0;
     const primeCutoff = metrics.length > 3 && !this.state.expanded ? 2 : metrics.length;
@@ -40,6 +39,7 @@ export default class NodeDetailsHealth extends React.Component {
             <NodeDetailsHealthLinkItem
               {...item}
               links={metricLinks}
+              topologyId={topologyId}
             />
           </CloudFeature>)}
           {showOverflow && <NodeDetailsHealthOverflow
@@ -57,6 +57,7 @@ export default class NodeDetailsHealth extends React.Component {
               withoutGraph
               {...unattachedLinks[id]}
               links={unattachedLinks}
+              topologyId={topologyId}
               />
           </CloudFeature>)}
         </div>}

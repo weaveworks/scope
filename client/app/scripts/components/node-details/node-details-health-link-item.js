@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { trackMixpanelEvent } from '../../utils/tracking-utils';
 import NodeDetailsHealthItem from './node-details-health-item';
 
 export default class NodeDetailsHealthLinkItem extends React.Component {
@@ -15,7 +16,9 @@ export default class NodeDetailsHealthLinkItem extends React.Component {
     ev.preventDefault();
     if (!href) return;
 
-    const {router} = this.props;
+    const { router, topologyId } = this.props;
+    trackMixpanelEvent('scope.node.health.click', { topologyId });
+
     if (router && href[0] === '/') {
       router.push(href);
     } else {
@@ -29,7 +32,7 @@ export default class NodeDetailsHealthLinkItem extends React.Component {
   }
 
   render() {
-    const {links, withoutGraph, id, ...props} = this.props;
+    const { links, withoutGraph, id, ...props } = this.props;
     const href = this.buildHref(links[id] && links[id].url);
 
     if (!href) return <NodeDetailsHealthItem {...props} />;
