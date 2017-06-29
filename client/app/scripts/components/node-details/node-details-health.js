@@ -1,4 +1,5 @@
 import React from 'react';
+import { Map as makeMap, List as makeList } from 'immutable';
 
 import ShowMore from '../show-more';
 import NodeDetailsHealthOverflow from './node-details-health-overflow';
@@ -21,8 +22,13 @@ export default class NodeDetailsHealth extends React.Component {
   }
 
   render() {
-    const { metrics = [], metricLinks = {}, topologyId } = this.props;
-    const unattachedLinks = this.props.unattachedLinks || {};
+    const {
+      metrics = makeList(),
+      metricLinks = makeMap(),
+      unattachedLinks = makeMap(),
+      topologyId,
+    } = this.props;
+
     const hasUnattached = Object.keys(unattachedLinks).length > 0;
     const primeCutoff = metrics.length > 3 && !this.state.expanded ? 2 : metrics.length;
     const primeMetrics = metrics.slice(0, primeCutoff);
