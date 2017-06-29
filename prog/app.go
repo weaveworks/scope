@@ -18,17 +18,18 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tylerb/graceful"
-	"github.com/weaveworks/go-checkpoint"
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/weave/common"
 
 	billing "github.com/weaveworks/billing-client"
 	"github.com/weaveworks/common/middleware"
 	"github.com/weaveworks/common/network"
+	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/app/multitenant"
 	"github.com/weaveworks/scope/common/weave"
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/render/detailed"
+	"github.com/weaveworks/weave/common"
 )
 
 const (
@@ -216,6 +217,7 @@ func appMain(flags appFlags) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 	runtime.SetBlockProfileRate(flags.blockProfileRate)
+	detailed.SetMetricsGraphURL(flags.metricsGraphURL)
 
 	defer log.Info("app exiting")
 	rand.Seed(time.Now().UnixNano())

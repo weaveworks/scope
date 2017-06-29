@@ -44,19 +44,20 @@ type Column struct {
 
 // NodeSummary is summary information about a child for a Node.
 type NodeSummary struct {
-	ID         string               `json:"id"`
-	Label      string               `json:"label"`
-	LabelMinor string               `json:"labelMinor"`
-	Rank       string               `json:"rank"`
-	Shape      string               `json:"shape,omitempty"`
-	Stack      bool                 `json:"stack,omitempty"`
-	Linkable   bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
-	Pseudo     bool                 `json:"pseudo,omitempty"`
-	Metadata   []report.MetadataRow `json:"metadata,omitempty"`
-	Parents    []Parent             `json:"parents,omitempty"`
-	Metrics    []report.MetricRow   `json:"metrics,omitempty"`
-	Tables     []report.Table       `json:"tables,omitempty"`
-	Adjacency  report.IDList        `json:"adjacency,omitempty"`
+	ID          string               `json:"id"`
+	Label       string               `json:"label"`
+	LabelMinor  string               `json:"labelMinor"`
+	Rank        string               `json:"rank"`
+	Shape       string               `json:"shape,omitempty"`
+	Stack       bool                 `json:"stack,omitempty"`
+	Linkable    bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
+	Pseudo      bool                 `json:"pseudo,omitempty"`
+	Metadata    []report.MetadataRow `json:"metadata,omitempty"`
+	Parents     []Parent             `json:"parents,omitempty"`
+	Metrics     []report.MetricRow   `json:"metrics,omitempty"`
+	Tables      []report.Table       `json:"tables,omitempty"`
+	Adjacency   report.IDList        `json:"adjacency,omitempty"`
+	MetricLinks []MetricLink         `json:"metric_links,omitempty"`
 }
 
 var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
@@ -106,7 +107,8 @@ func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
 	if renderer, ok := renderers[n.Topology]; ok {
 		// Skip (and don't fall through to fallback) if renderer maps to nil
 		if renderer != nil {
-			return renderer(baseNodeSummary(r, n), n)
+			summary, b := renderer(baseNodeSummary(r, n), n)
+			return RenderMetricLinks(summary, n), b
 		}
 	} else if _, ok := r.Topology(n.Topology); ok {
 		summary := baseNodeSummary(r, n)
@@ -133,14 +135,15 @@ func (n NodeSummary) SummarizeMetrics() NodeSummary {
 func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 	t, _ := r.Topology(n.Topology)
 	return NodeSummary{
-		ID:        n.ID,
-		Shape:     t.GetShape(),
-		Linkable:  true,
-		Metadata:  NodeMetadata(r, n),
-		Metrics:   NodeMetrics(r, n),
-		Parents:   Parents(r, n),
-		Tables:    NodeTables(r, n),
-		Adjacency: n.Adjacency,
+		ID:          n.ID,
+		Shape:       t.GetShape(),
+		Linkable:    true,
+		Metadata:    NodeMetadata(r, n),
+		Metrics:     NodeMetrics(r, n),
+		MetricLinks: NodeMetricLinks(r, n),
+		Parents:     Parents(r, n),
+		Tables:      NodeTables(r, n),
+		Adjacency:   n.Adjacency,
 	}
 }
 

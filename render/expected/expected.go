@@ -9,7 +9,6 @@ import (
 	"github.com/weaveworks/scope/test/fixture"
 )
 
-// Exported for testing.
 var (
 	circle   = "circle"
 	square   = "square"

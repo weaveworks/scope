@@ -13,11 +13,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/weaveworks/go-checkpoint"
-	"github.com/weaveworks/weave/common"
 
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/common/sanitize"
+	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/common/xfer"
@@ -33,6 +32,7 @@ import (
 	"github.com/weaveworks/scope/probe/plugins"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/weave/common"
 )
 
 const (
