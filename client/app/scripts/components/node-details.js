@@ -165,6 +165,14 @@ class NodeDetails extends React.Component {
       }
     };
 
+    // collect by metric id (id => link)
+    const metricLinks = (details.metric_links || [])
+      .reduce((agg, link) => Object.assign(agg, {[link.id]: link}), {});
+
+    // collect links with no corresponding metric
+    const unattachedLinks = Object.assign({}, metricLinks);
+    (details.metrics || []).forEach(metric => delete unattachedLinks[metric.id]);
+
     return (
       <div className="node-details">
         {tools}
@@ -190,9 +198,13 @@ class NodeDetails extends React.Component {
         </div>}
 
         <div className="node-details-content">
-          {details.metrics && <div className="node-details-content-section">
+          {Object.keys(metricLinks).length > 0 && <div className="node-details-content-section">
             <div className="node-details-content-section-header">Status</div>
-            <NodeDetailsHealth metrics={details.metrics} />
+            <NodeDetailsHealth
+              metrics={details.metrics}
+              metricLinks={metricLinks}
+              unattachedLinks={unattachedLinks}
+              />
           </div>}
           {details.metadata && <div className="node-details-content-section">
             <div className="node-details-content-section-header">Info</div>

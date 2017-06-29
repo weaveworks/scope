@@ -931,12 +931,31 @@
         color: $text-secondary-color;
         text-transform: uppercase;
         font-size: 80%;
+
+        .fa {
+          margin-left: 0.5em;
+        }
       }
 
-      &-value {
-        color: $text-secondary-color;
-        font-size: 150%;
-        padding-bottom: 0.5em;
+      &-placeholder {
+        font-size: 200%;
+        opacity: 0.2;
+        margin-bottom: 0.2em;
+      }
+    }
+
+    &-link-item {
+      @extend .btn-opacity;
+      cursor: pointer;
+      opacity: $link-opacity-default;
+      width: 33%;
+
+      .label {
+        text-transform: uppercase;
+      }
+
+      .node-details-health-item {
+        width: auto;
       }
     }
   }

@@ -2,7 +2,8 @@ import React from 'react';
 
 import ShowMore from '../show-more';
 import NodeDetailsHealthOverflow from './node-details-health-overflow';
-import NodeDetailsHealthItem from './node-details-health-item';
+import NodeDetailsHealthLinkItem from './node-details-health-link-item';
+import CloudFeature from '../cloud-feature';
 
 export default class NodeDetailsHealth extends React.Component {
 
@@ -21,6 +22,9 @@ export default class NodeDetailsHealth extends React.Component {
 
   render() {
     const metrics = this.props.metrics || [];
+    const metricLinks = this.props.metricLinks || {};
+    const unattachedLinks = this.props.unattachedLinks || {};
+    const hasUnattached = Object.keys(unattachedLinks).length > 0;
     const primeCutoff = metrics.length > 3 && !this.state.expanded ? 2 : metrics.length;
     const primeMetrics = metrics.slice(0, primeCutoff);
     const overflowMetrics = metrics.slice(primeCutoff);
@@ -32,7 +36,12 @@ export default class NodeDetailsHealth extends React.Component {
     return (
       <div className="node-details-health" style={{flexWrap, justifyContent}}>
         <div className="node-details-health-wrapper">
-          {primeMetrics.map(item => <NodeDetailsHealthItem key={item.id} {...item} />)}
+          {primeMetrics.map(item => <CloudFeature alwaysShow key={item.id}>
+            <NodeDetailsHealthLinkItem
+              {...item}
+              links={metricLinks}
+            />
+          </CloudFeature>)}
           {showOverflow && <NodeDetailsHealthOverflow
             items={overflowMetrics}
             handleClick={this.handleClickMore}
@@ -41,6 +50,16 @@ export default class NodeDetailsHealth extends React.Component {
         <ShowMore
           handleClick={this.handleClickMore} collection={this.props.metrics}
           expanded={this.state.expanded} notShown={notShown} hideNumber />
+
+        {hasUnattached && <div className="node-details-health-wrapper">
+          {Object.keys(unattachedLinks).map(id => <CloudFeature alwaysShow key={id}>
+            <NodeDetailsHealthLinkItem
+              withoutGraph
+              {...unattachedLinks[id]}
+              links={unattachedLinks}
+              />
+          </CloudFeature>)}
+        </div>}
       </div>
     );
   }
