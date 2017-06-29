@@ -240,18 +240,21 @@ Allowable parameters for the launcher URL:
 
 The URL is: http://localhost:4040.
 
-<!-- uncomment once https://github.com/weaveworks/scope/issues/2258 is fixed
 ## <a name="ose"></a>Installing Scope on OpenShift
 
 To install Weave Scope on OpenShift, you first need to login as `system:admin` user with the following command:
 
     oc login -u system:admin
 
-Next, create a dedicated project for Weave Scope then apply policy permissions that allow Weave Scope to access Kubernetes API:
+Next, create a dedicated project for Weave Scope then apply policy changes needed to run Weave Scope:
 
     oc new-project weave-scope
-    oc adm policy add-scc-to-user privileged system:serviceaccount:weave-scope:default
-    oc adm policy add-cluster-role-to-user cluster-admin system:serviceaccount:weave-scope:default
+    # Scope probe pods need full access to Kubernetes API via 'weave-scope' service account
+    oc adm policy add-cluster-role-to-user cluster-admin -z weave-scope
+    # Scope probe pods also need to run as priviliaged containers, so grant 'priviliged' Security Context Constrains (SCC) for 'weave-scop' service account
+    oc adm policy add-scc-to-user privileged -z weave-scope
+    # Scope app has an init daemon that has to run as UID 0, so grant 'anyuid' SCC for 'default' service account
+    oc adm policy add-scc-to-user anyuid -z default
 
 The installation method for Scope on OpenShift is very similar to the one described above for Kubernetes, but instead of `kubectl apply -n kube-system ...` you need to use
 `oc apply ...` and install it into the namespace of the `weave-scope` project you have just created, and not the `kube-system` namesapce, i.e.:
@@ -265,7 +268,6 @@ And if you are to deploy Scope in standalone mode run:
     oc apply -f 'https://cloud.weave.works/k8s/scope.yaml'
 
 To access standalone Scope app from the browser, please refer to Kubernetes instructions above.
--->
 
 ## <a name="ecs"></a>Installing Scope on Amazon ECS
 
