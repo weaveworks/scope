@@ -1821,30 +1821,6 @@
 			"notests": true
 		},
 		{
-			"importpath": "k8s.io/kubernetes/pkg",
-			"repository": "https://github.com/kubernetes/kubernetes",
-			"vcs": "",
-			"revision": "8eb19c78890876e1e655aa1aeb0d4c267d2c2632",
-			"branch": "master",
-			"path": "/pkg"
-		},
-		{
-			"importpath": "k8s.io/kubernetes/third_party/forked/reflect",
-			"repository": "https://github.com/kubernetes/kubernetes",
-			"vcs": "",
-			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
-			"branch": "master",
-			"path": "/third_party/forked/reflect"
-		},
-		{
-			"importpath": "k8s.io/kubernetes/third_party/golang/template",
-			"repository": "https://github.com/kubernetes/kubernetes",
-			"vcs": "",
-			"revision": "47acbd62ecf7e3d15bdde0fce48cde9610666a69",
-			"branch": "master",
-			"path": "/third_party/golang/template"
-		},
-		{
 			"importpath": "speter.net/go/exp/math/dec/inf",
 			"repository": "https://code.google.com/p/go-decimal-inf.exp",
 			"vcs": "",
