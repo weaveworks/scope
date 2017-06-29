@@ -296,7 +296,6 @@
     }
   }
 
-  // blu
   &-status {
     display: flex;
     align-items: center;
@@ -1505,18 +1504,25 @@
 }
 
 .time-control {
-  display: flex;
-  align-items: center;
+  // display: flex;
+  // align-items: center;
   position: absolute;
   right: 36px;
 
   &-icon {
+    display: inline-block;
     margin-right: 15px;
 
     .fa {
       color: $text-secondary-color;
       font-size: 125%;
     }
+  }
+
+  &-info {
+    @extend .blinkable;
+    display: block;
+    text-align: right;
   }
 }
 
