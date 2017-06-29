@@ -2,13 +2,14 @@ package detailed
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/url"
 	"strings"
 	"text/template"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
+
+	"github.com/ugorji/go/codec"
 )
 
 // MetricLink describes a link referencing a metric.
@@ -148,12 +149,13 @@ func queryParamsAsJSON(query string) (string, error) {
 	}
 	params := &queryParams{[]cell{{[]string{query}}}}
 
-	bs, err := json.Marshal(params)
-	if err != nil {
+	buf := &bytes.Buffer{}
+	encoder := codec.NewEncoder(buf, &codec.JsonHandle{})
+	if err := encoder.Encode(params); err != nil {
 		return "", err
 	}
 
-	return string(bs), nil
+	return buf.String(), nil
 }
 
 // prepareTemplate initializes unnamed text templates.
