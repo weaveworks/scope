@@ -66,7 +66,7 @@ func SetMetricsGraphURL(url string) {
 	metricsGraphURL = url
 }
 
-// NodeLinks returns the links of a node. The links are collected
+// NodeMetricLinks returns the links of a node. The links are collected
 // by a predefined set but filtered depending on whether a query
 // is configured or not for the particular topology.
 func NodeMetricLinks(_ report.Report, n report.Node) []MetricLink {
@@ -89,7 +89,7 @@ func NodeMetricLinks(_ report.Report, n report.Node) []MetricLink {
 	return links
 }
 
-// RenderLinks executes the templated links by supplying the node summary as data.
+// RenderMetricLinks executes the templated links by supplying the node summary as data.
 // It returns the modified summary.
 func RenderMetricLinks(summary NodeSummary, n report.Node) NodeSummary {
 	queries := topologyQueries[n.Topology]
