@@ -123,6 +123,13 @@ func MapEndpoint2Process(n report.Node, local report.Networks) report.Nodes {
 		return report.Nodes{}
 	}
 
+	if len(n.Adjacency) > 1 {
+		// We cannot be sure that the pid is associated with all the
+		// connections. It is better to drop such an endpoint than
+		// risk rendering bogus connections.
+		return report.Nodes{}
+	}
+
 	id := report.MakeProcessNodeID(report.ExtractHostID(n), pid)
 	node := NewDerivedNode(id, n).WithTopology(report.Process)
 	node.Latest = node.Latest.Set(process.PID, timestamp, pid)
