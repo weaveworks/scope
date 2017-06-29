@@ -29,8 +29,8 @@ export default class NodeDetailsHealthLinkItem extends React.Component {
   }
 
   render() {
-    const {links, withoutGraph, ...props} = this.props;
-    const href = this.buildHref(links[props.id] && links[props.id].url);
+    const {links, withoutGraph, id, ...props} = this.props;
+    const href = this.buildHref(links[id] && links[id].url);
 
     if (!href) return <NodeDetailsHealthItem {...props} />;
 
