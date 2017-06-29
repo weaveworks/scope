@@ -181,20 +181,21 @@ class App extends React.Component {
 
         {showingDetails && <Details />}
 
-        <CloudFeature>
-          <TimeTravel />
-        </CloudFeature>
-
         <div className="header">
-          <div className="logo">
-            {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
-              <Logo />
-            </svg>}
+          <CloudFeature>
+            <TimeTravel />
+          </CloudFeature>
+          <div className="selectors">
+            <div className="logo">
+              {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
+                <Logo />
+              </svg>}
+            </div>
+            <Search />
+            <Topologies />
+            <ViewModeSelector />
+            <TimeControl />
           </div>
-          <Search />
-          <Topologies />
-          <ViewModeSelector />
-          <TimeControl />
         </div>
 
         <Nodes />

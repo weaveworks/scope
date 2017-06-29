@@ -168,17 +168,20 @@
 }
 
 .header {
-  display: flex;
-  margin-top: 15px;
+  margin-top: 38px;
   pointer-events: none;
-  position: relative;
   width: 100%;
-  z-index: 20;
 
-  .logo {
-    margin: -10px 0 0 64px;
-    height: 64px;
-    width: 250px;
+  .selectors {
+    display: flex;
+    position: relative;
+    z-index: 20;
+
+    .logo {
+      margin: -16px 0 0 64px;
+      height: 64px;
+      width: 250px;
+    }
   }
 }
 
@@ -225,9 +228,8 @@
 .time-travel {
   align-items: center;
   display: flex;
-  margin-bottom: -15px;
   position: relative;
-  padding: 10px 20px 0;
+  padding: 0 30px 7px;
   width: 100%;
   z-index: 2001;
 
@@ -249,13 +251,15 @@
 
       .link {
         display: inline-block;
+        pointer-events: all;
         margin-top: 1px;
       }
     }
   }
 
   &-slider-wrapper {
-    margin: 0 50px 20px 18px;
+    margin: 0 50px 20px 0;
+    pointer-events: all;
     flex-grow: 1;
 
     .rc-slider-rail { background-color: $text-tertiary-color; }
@@ -268,6 +272,7 @@
       display: block;
       margin: 8px;
       font-size: 0.625rem;
+      pointer-events: all;
       text-align: center;
       text-transform: uppercase;
       word-spacing: -1px;
@@ -283,6 +288,7 @@
       border: 1px solid #ccc;
       border-radius: 4px;
       padding: 2px 8px;
+      pointer-events: all;
       margin: 4px 8px 25px;
 
       input {
@@ -295,63 +301,11 @@
       }
     }
   }
-
-  &-status {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-
-    .time-travel-jump-loader {
-      font-size: 1rem;
-    }
-
-    .time-travel-timestamp-info, .pause-text {
-      font-size: 115%;
-      margin-right: 5px;
-    }
-
-    .button { margin-left: 0.5em; }
-
-    .time-travel-timestamp:not(.current) {
-      & > * { @extend .blinkable; }
-      font-weight: bold;
-    }
-  }
-
-  &-slider {
-    width: 355px;
-
-    .slider-tip {
-      display: inline-block;
-      font-size: 0.8125rem;
-      font-style: italic;
-      padding: 5px 10px;
-    }
-
-    .options {
-      display: flex;
-      padding: 2px 0 10px;
-
-      .column {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        padding: 0 7px;
-
-        a { padding: 0 3px; }
-      }
-    }
-
-    .rc-slider {
-      margin: 0 10px 8px;
-      width: auto;
-    }
-  }
 }
 
 
 .topologies {
-  margin: 8px 4px;
+  margin: 0 4px;
   display: flex;
 
   .topologies-item {
@@ -1425,7 +1379,7 @@
 
 .topology-option, .metric-selector, .network-selector, .view-mode-selector, .time-control {
   color: $text-secondary-color;
-  margin: 6px 0;
+  margin-bottom: 6px;
 
   &:last-child {
     margin-bottom: 0;
@@ -1469,10 +1423,11 @@
   }
 }
 
-.setup-nav-button { display: none; }
+.metric-selector {
+  margin-top: 6px;
+}
 
 .view-mode-selector, .time-control {
-  margin-top: 8px;
   margin-left: 20px;
   min-width: 161px;
 
@@ -1610,7 +1565,7 @@
 
   &-wrapper {
     flex: 0 1 20%;
-    margin: 8px;
+    margin: 0 8px;
     text-align: right;
   }
 
