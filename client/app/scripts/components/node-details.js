@@ -151,7 +151,7 @@ class NodeDetails extends React.Component {
   }
 
   renderDetails() {
-    const { details, nodeControlStatus, nodeMatches = makeMap() } = this.props;
+    const { details, nodeControlStatus, nodeMatches = makeMap(), topologyId } = this.props;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
     const {error, pending} = nodeControlStatus ? nodeControlStatus.toJS() : {};
@@ -204,6 +204,7 @@ class NodeDetails extends React.Component {
               metrics={details.metrics}
               metricLinks={metricLinks}
               unattachedLinks={unattachedLinks}
+              topologyId={topologyId}
               />
           </div>}
           {details.metadata && <div className="node-details-content-section">
