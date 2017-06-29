@@ -231,10 +231,34 @@
   width: 100%;
   z-index: 2001;
 
+  &-markers {
+    position: relative;
+
+    &-tick {
+      text-align: center;
+      position: absolute;
+
+      .vertical-tick {
+        border: 1px solid $text-tertiary-color;
+        border-radius: 1px;
+        display: block;
+        margin: auto;
+        height: 14px;
+        width: 0;
+      }
+
+      .link {
+        display: inline-block;
+        margin-top: 1px;
+      }
+    }
+  }
+
   &-slider-wrapper {
+    margin: 0 50px 20px 18px;
     flex-grow: 1;
-    margin-right: 50px;
-    margin-bottom: 20px;
+
+    .rc-slider-rail { background-color: $text-tertiary-color; }
   }
 
   &-jump-controls {

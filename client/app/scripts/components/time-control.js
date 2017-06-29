@@ -41,11 +41,13 @@ class TimeControl extends React.Component {
   }
 
   handleTravelClick() {
-    trackMixpanelEvent('scope.time.travel.click', {
-      layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
-      parentTopologyId: this.props.currentTopology.get('parentId'),
-    });
+    if (this.props.currentTopology) {
+      trackMixpanelEvent('scope.time.travel.click', {
+        layout: this.props.topologyViewMode,
+        topologyId: this.props.currentTopology.get('id'),
+        parentTopologyId: this.props.currentTopology.get('parentId'),
+      });
+    }
     this.props.clickTimeTravel();
   }
 
