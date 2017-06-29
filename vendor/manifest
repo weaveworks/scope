@@ -892,8 +892,8 @@
 		{
 			"importpath": "github.com/golang/protobuf/proto",
 			"repository": "https://github.com/golang/protobuf",
-			"vcs": "",
-			"revision": "5baca1b63153b1a82014546382edbdd302b138b6",
+			"vcs": "git",
+			"revision": "5a0f697c9ed9d68fef0116532c6e05cfeae00e55",
 			"branch": "master",
 			"path": "/proto"
 		},
@@ -904,6 +904,15 @@
 			"revision": "69b215d01a5606c843240eab4937eab3acee6530",
 			"branch": "master",
 			"path": "/protoc-gen-go/descriptor",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/golang/protobuf/ptypes",
+			"repository": "https://github.com/golang/protobuf",
+			"vcs": "git",
+			"revision": "5a0f697c9ed9d68fef0116532c6e05cfeae00e55",
+			"branch": "master",
+			"path": "/ptypes",
 			"notests": true
 		},
 		{
@@ -1439,7 +1448,7 @@
 			"importpath": "github.com/weaveworks/common",
 			"repository": "https://github.com/weaveworks/common",
 			"vcs": "git",
-			"revision": "2faced4ddea5ec3b1ff8e88ba552714e3088cf41",
+			"revision": "493a1f760f47ed3b50afd5baabb36589d96017b8",
 			"branch": "master",
 			"notests": true
 		},
@@ -1560,7 +1569,7 @@
 			"importpath": "golang.org/x/net/http2",
 			"repository": "https://go.googlesource.com/net",
 			"vcs": "git",
-			"revision": "dd2d9a67c97da0afa00d5726e28086007a0acce5",
+			"revision": "59a0b19b5533c7977ddeb86b017bf507ed407b12",
 			"branch": "master",
 			"path": "http2",
 			"notests": true
@@ -1703,10 +1712,19 @@
 			"notests": true
 		},
 		{
+			"importpath": "google.golang.org/genproto/googleapis/rpc/status",
+			"repository": "https://github.com/google/go-genproto",
+			"vcs": "git",
+			"revision": "aa2eb687b4d3e17154372564ad8d6bf11c3cf21f",
+			"branch": "master",
+			"path": "/googleapis/rpc/status",
+			"notests": true
+		},
+		{
 			"importpath": "google.golang.org/grpc",
 			"repository": "https://github.com/grpc/grpc-go",
 			"vcs": "git",
-			"revision": "34384f34de585705f1a6783a158d2ec8af29f618",
+			"revision": "06c984861f3044e61f84671f9fe660da0fdf4997",
 			"branch": "master",
 			"notests": true
 		},

@@ -2,7 +2,10 @@ package middleware
 
 import (
 	"net/http"
+	"net/url"
 	"regexp"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 // PathRewrite supports regex matching and replace on Request URIs
@@ -21,7 +24,14 @@ type pathRewrite struct {
 func (p pathRewrite) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.RequestURI = p.regexp.ReplaceAllString(r.RequestURI, p.replacement)
-		r.URL.Path = p.regexp.ReplaceAllString(r.URL.Path, p.replacement)
+		r.URL.RawPath = p.regexp.ReplaceAllString(r.URL.EscapedPath(), p.replacement)
+		path, err := url.PathUnescape(r.URL.RawPath)
+		if err != nil {
+			log.Errorf("Got invalid url-encoded path %v after applying path rewrite %v: %v", r.URL.RawPath, p, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		r.URL.Path = path
 		next.ServeHTTP(w, r)
 	})
 }

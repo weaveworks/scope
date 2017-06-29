@@ -20,6 +20,7 @@ import (
 
 	"github.com/weaveworks-experiments/loki/pkg/client"
 	"github.com/weaveworks/common/httpgrpc"
+	httpgrpc_server "github.com/weaveworks/common/httpgrpc/server"
 	"github.com/weaveworks/common/middleware"
 	"github.com/weaveworks/common/signals"
 )
@@ -149,7 +150,7 @@ func (s *Server) Run() {
 
 	// Setup gRPC server
 	// for HTTP over gRPC, ensure we don't double-count the middleware
-	httpgrpc.RegisterHTTPServer(s.GRPC, httpgrpc.NewServer(s.HTTP))
+	httpgrpc.RegisterHTTPServer(s.GRPC, httpgrpc_server.NewServer(s.HTTP))
 	go s.GRPC.Serve(s.grpcListener)
 	defer s.GRPC.GracefulStop()
 
@@ -165,7 +166,7 @@ func (s *Server) Stop() {
 // Shutdown the server, gracefully.  Should be defered after New().
 func (s *Server) Shutdown() {
 	ctx, cancel := context.WithTimeout(context.Background(), s.cfg.ServerGracefulShutdownTimeout)
-	defer cancel() // releases resources if httpServer.Churdown completes before timeout elapses
+	defer cancel() // releases resources if httpServer.Shutdown completes before timeout elapses
 
 	s.httpServer.Shutdown(ctx)
 	s.GRPC.Stop()
