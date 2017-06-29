@@ -537,6 +537,11 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_NODE_DETAILS: {
+      // Freeze node details data updates after the first load when paused.
+      if (state.getIn(['nodeDetails', action.details.id, 'details']) && state.get('pausedAt')) {
+        return state;
+      }
+
       state = state.set('errorUrl', null);
 
       // disregard if node is not selected anymore
@@ -565,6 +570,11 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_NODES_DELTA: {
+      // Freeze nodes updates after the first load when paused.
+      if (state.get('nodesLoaded') && state.get('pausedAt')) {
+        return state;
+      }
+
       log('RECEIVE_NODES_DELTA',
         'remove', size(action.delta.remove),
         'update', size(action.delta.update),
@@ -628,6 +638,11 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_TOPOLOGIES: {
+      // Freeze topologies updates after the first load if paused.
+      if (state.get('topologiesLoaded') && state.get('pausedAt')) {
+        return state;
+      }
+
       state = state.set('errorUrl', null);
       state = state.update('topologyUrlsById', topologyUrlsById => topologyUrlsById.clear());
       state = processTopologies(state, action.topologies);
