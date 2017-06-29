@@ -213,7 +213,7 @@ func (c *client) WalkDeployments(f func(Deployment) error) error {
 	if c.deploymentStore == nil {
 		return nil
 	}
-	for _, m := range c.replicaSetStore.List() {
+	for _, m := range c.deploymentStore.List() {
 		d := m.(*apiv1beta1.Deployment)
 		if err := f(NewDeployment(d)); err != nil {
 			return err
