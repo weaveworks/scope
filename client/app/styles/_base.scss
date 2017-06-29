@@ -229,9 +229,17 @@
   align-items: center;
   display: flex;
   position: relative;
-  padding: 0 30px 7px;
-  width: 100%;
+  margin: 0 30px 0 15px;
   z-index: 2001;
+
+  transition: height .15s $base-ease;
+  overflow: hidden;
+  height: 0;
+
+  &.visible {
+    height: 50px;
+    margin-bottom: 7px;
+  }
 
   &-markers {
     position: relative;
@@ -258,7 +266,7 @@
   }
 
   &-slider-wrapper {
-    margin: 0 50px 20px 0;
+    margin: 0 50px 20px 10px;
     pointer-events: all;
     flex-grow: 1;
 

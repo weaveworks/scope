@@ -1,6 +1,7 @@
 import React from 'react';
 import Slider from 'rc-slider';
 import moment from 'moment';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce, map } from 'lodash';
 
@@ -17,6 +18,14 @@ import {
 } from '../constants/timer';
 
 
+const getTimestampStates = (timestamp) => {
+  timestamp = timestamp || moment();
+  return {
+    sliderValue: moment(timestamp).valueOf(),
+    inputValue: moment(timestamp).utc().format(),
+  };
+};
+
 const ONE_HOUR_MS = moment.duration(1, 'hour');
 const FIVE_MINUTES_MS = moment.duration(5, 'minutes');
 
@@ -29,14 +38,12 @@ class TimeTravel extends React.Component {
       // we should instead get some meaningful 'beginning of time' from
       // the backend and make the slider show whole active history.
       sliderMinValue: moment().subtract(6, 'months').valueOf(),
-      sliderValue: props.pausedAt && props.pausedAt.valueOf(),
-      inputValue: props.pausedAt && moment(props.pausedAt).utc().format(),
+      ...getTimestampStates(props.pausedAt),
     };
 
-    this.handleTimestampInputChange = this.handleTimestampInputChange.bind(this);
-    this.handleTimestampClick = this.handleTimestampClick.bind(this);
+    this.handleInputChange = this.handleInputChange.bind(this);
     this.handleSliderChange = this.handleSliderChange.bind(this);
-    this.jumpInTime = this.jumpInTime.bind(this);
+    this.handleJumpClick = this.handleJumpClick.bind(this);
     this.renderMarks = this.renderMarks.bind(this);
     this.renderMark = this.renderMark.bind(this);
 
@@ -52,10 +59,7 @@ class TimeTravel extends React.Component {
   }
 
   componentWillReceiveProps(props) {
-    this.setState({
-      sliderValue: props.pausedAt && props.pausedAt.valueOf(),
-      inputValue: props.pausedAt && moment(props.pausedAt).utc().format(),
-    });
+    this.setState(getTimestampStates(props.pausedAt));
   }
 
   componentWillUnmount() {
@@ -63,42 +67,45 @@ class TimeTravel extends React.Component {
     this.props.clickResumeUpdate();
   }
 
-  handleSliderChange(value) {
-    const timestamp = moment(value).utc();
-
-    this.setState({
-      inputValue: timestamp.format(),
-      sliderValue: value,
-    });
-
+  handleSliderChange(timestamp) {
     this.props.timeTravelStartTransition();
+    this.setState(getTimestampStates(timestamp));
     this.debouncedUpdateTimestamp(timestamp);
     this.debouncedTrackSliderChange();
   }
 
-  handleTimestampClick() {
-    trackMixpanelEvent('scope.time.timestamp.click', {
-      layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
-      parentTopologyId: this.props.currentTopology.get('parentId'),
-    });
+  handleInputChange(ev) {
+    let timestamp = moment(ev.target.value);
+    this.setState({ inputValue: ev.target.value });
+
+    if (timestamp.isValid()) {
+      timestamp = Math.max(timestamp, this.state.sliderMinValue);
+      timestamp = Math.min(timestamp, moment().valueOf());
+
+      this.props.timeTravelStartTransition();
+      this.setState(getTimestampStates(timestamp));
+      this.updateTimestamp(timestamp);
+
+      trackMixpanelEvent('scope.time.timestamp.edit', {
+        layout: this.props.topologyViewMode,
+        topologyId: this.props.currentTopology.get('id'),
+        parentTopologyId: this.props.currentTopology.get('parentId'),
+      });
+    }
   }
 
-  handleTimestampInputChange(ev) {
-    this.setState({ inputValue: ev.target.value });
+  handleJumpClick(millisecondsDelta) {
+    let timestamp = this.state.sliderValue + millisecondsDelta;
+    timestamp = Math.max(timestamp, this.state.sliderMinValue);
+    timestamp = Math.min(timestamp, moment().valueOf());
+
+    this.props.timeTravelStartTransition();
+    this.setState(getTimestampStates(timestamp));
+    this.debouncedUpdateTimestamp(timestamp);
   }
 
   updateTimestamp(timestamp) {
     this.props.jumpToTime(moment(timestamp));
-  }
-
-  jumpInTime(millisecondsDelta) {
-    let timestamp = this.state.sliderValue - millisecondsDelta;
-    timestamp = Math.min(timestamp, this.state.sliderMinValue);
-    timestamp = Math.max(timestamp, moment().valueOf());
-
-    this.props.timeTravelStartTransition();
-    this.debouncedUpdateTimestamp(timestamp);
   }
 
   trackSliderChange() {
@@ -151,14 +158,13 @@ class TimeTravel extends React.Component {
   }
 
   render() {
-    // Don't render the time travel control if it's not explicitly enabled for this instance.
-    if (!this.props.showingTimeTravel) return null;
-
     const { sliderValue, sliderMinValue, inputValue } = this.state;
     const sliderMaxValue = moment().valueOf();
 
+    const className = classNames('time-travel', { visible: this.props.showingTimeTravel });
+
     return (
-      <div className="time-travel">
+      <div className={className}>
         <div className="time-travel-slider-wrapper">
           {this.renderMarks()}
           <Slider
@@ -169,19 +175,19 @@ class TimeTravel extends React.Component {
           />
         </div>
         <div className="time-travel-jump-controls">
-          <a className="button jump" onClick={() => this.jumpInTime(-ONE_HOUR_MS)}>
+          <a className="button jump" onClick={() => this.handleJumpClick(-ONE_HOUR_MS)}>
             <span className="fa fa-fast-backward" /> 1 hour
           </a>
-          <a className="button jump" onClick={() => this.jumpInTime(-FIVE_MINUTES_MS)}>
+          <a className="button jump" onClick={() => this.handleJumpClick(-FIVE_MINUTES_MS)}>
             <span className="fa fa-step-backward" /> 5 mins
           </a>
           <span className="time-travel-jump-controls-timestamp">
-            <input value={inputValue} onChange={this.handleTimestampInputChange} /> UTC
+            <input value={inputValue} onChange={this.handleInputChange} /> UTC
           </span>
-          <a className="button jump" onClick={() => this.jumpInTime(+FIVE_MINUTES_MS)}>
+          <a className="button jump" onClick={() => this.handleJumpClick(+FIVE_MINUTES_MS)}>
             <span className="fa fa-step-forward" /> 5 mins
           </a>
-          <a className="button jump" onClick={() => this.jumpInTime(+ONE_HOUR_MS)}>
+          <a className="button jump" onClick={() => this.handleJumpClick(+ONE_HOUR_MS)}>
             <span className="fa fa-fast-forward" /> 1 hour
           </a>
         </div>
