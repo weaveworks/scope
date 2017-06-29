@@ -23,7 +23,6 @@ var (
 	getLabelForTopology = map[string]func(report.Node) string{
 		report.Container:      getRenderableContainerName,
 		report.Pod:            kubernetesParentLabel,
-		report.ReplicaSet:     kubernetesParentLabel,
 		report.Deployment:     kubernetesParentLabel,
 		report.DaemonSet:      kubernetesParentLabel,
 		report.Service:        kubernetesParentLabel,

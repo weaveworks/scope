@@ -18,7 +18,7 @@ const (
 var UnmanagedIDPrefix = MakePseudoNodeID(UnmanagedID)
 
 func renderKubernetesTopologies(rpt report.Report) bool {
-	return len(rpt.Pod.Nodes)+len(rpt.Service.Nodes)+len(rpt.Deployment.Nodes)+len(rpt.ReplicaSet.Nodes)+len(rpt.DaemonSet.Nodes) >= 1
+	return len(rpt.Pod.Nodes)+len(rpt.Service.Nodes)+len(rpt.Deployment.Nodes)+len(rpt.DaemonSet.Nodes) >= 1
 }
 
 func isPauseContainer(n report.Node) bool {
@@ -44,16 +44,20 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 			return (!ok || state != kubernetes.StateDeleted)
 		},
 		MakeReduce(
-			renderParents(
-				report.Container, []string{report.Pod}, NoParentsPseudo, UnmanagedID, nil,
-				MakeFilter(
-					ComposeFilterFuncs(
-						IsRunning,
-						Complement(isPauseContainer),
+			MakeMap(
+				PropagateSingleMetrics(report.Container),
+				MakeMap(
+					Map2Parent([]string{report.Pod}, NoParentsPseudo, UnmanagedID, nil),
+					MakeFilter(
+						ComposeFilterFuncs(
+							IsRunning,
+							Complement(isPauseContainer),
+						),
+						ContainerWithImageNameRenderer,
 					),
-					ContainerWithImageNameRenderer,
 				),
 			),
+			selectPodsWithDeployments{},
 			ConnectionJoin(SelectPod, MapPod2IP),
 		),
 	),
@@ -68,33 +72,15 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	),
 )
 
-// ReplicaSetRenderer is a Renderer which produces a renderable kubernetes replica sets
-// graph by merging the pods graph and the replica sets topology.
-var ReplicaSetRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	renderParents(
-		report.Pod, []string{report.ReplicaSet}, NoParentsDrop, "", nil,
-		PodRenderer,
-	),
-)
-
 // KubeControllerRenderer is a Renderer which combines all the 'controller' topologies.
-// We first map pods to daemonsets and replica sets, then to deployments since replica sets
-// can map to those (the rest are passed through unchanged).
 // Pods with no controller are mapped to 'Unmanaged'
 // We can't simply combine the rendered graphs of the high level objects as they would never
 // have connections to each other.
 var KubeControllerRenderer = ConditionalRenderer(renderKubernetesTopologies,
-	MakeFilter(
-		// Filter out any remaining unmatched replica sets
-		Complement(IsTopology(report.ReplicaSet)),
-		renderParents(
-			report.ReplicaSet, []string{report.Deployment}, NoParentsKeep, "", mapPodCounts,
-			renderParents(
-				report.Pod, []string{report.ReplicaSet, report.DaemonSet},
-				NoParentsPseudo, UnmanagedID, nil,
-				PodRenderer,
-			),
-		),
+	renderParents(
+		report.Pod, []string{report.Deployment, report.DaemonSet},
+		NoParentsPseudo, UnmanagedID, makePodsChildren,
+		PodRenderer,
 	),
 )
 
@@ -120,12 +106,53 @@ func renderParents(childTopology string, parentTopologies []string, noParentsAct
 	)...)
 }
 
-func mapPodCounts(parent, original report.Node) report.Node {
-	// When mapping ReplicaSets to Deployments, we want to propagate the Pods counter
-	if count, ok := original.Counters.Lookup(report.Pod); ok {
-		parent.Counters = parent.Counters.Add(report.Pod, count)
+// Renderer to return modified Pod nodes to elide replica sets and point directly
+// to deployments where applicable.
+type selectPodsWithDeployments struct{}
+
+func (s selectPodsWithDeployments) Render(rpt report.Report, dct Decorator) report.Nodes {
+	result := report.Nodes{}
+	// For each pod, we check for any replica sets, and merge any deployments they point to
+	// into a replacement Parents value.
+	for podID, pod := range rpt.Pod.Nodes {
+		if replicaSetIDs, ok := pod.Parents.Lookup(report.ReplicaSet); ok {
+			newParents := pod.Parents.Delete(report.ReplicaSet)
+			for _, replicaSetID := range replicaSetIDs {
+				if replicaSet, ok := rpt.ReplicaSet.Nodes[replicaSetID]; ok {
+					if deploymentIDs, ok := replicaSet.Parents.Lookup(report.Deployment); ok {
+						newParents = newParents.Add(report.Deployment, deploymentIDs)
+					}
+				}
+			}
+			pod = pod.WithParents(newParents)
+		}
+		result[podID] = pod
 	}
-	return parent
+	return result
+}
+
+func (s selectPodsWithDeployments) Stats(rpt report.Report, _ Decorator) Stats {
+	return Stats{}
+}
+
+// When mapping from pods to deployments, complete the two-way relation by making the
+// mapped-from pod a child of the mapped-to deployment, and remove any replica set children.
+// This is needed because pods were originally mapped to deployments via an intermediate replica set
+// which we need to remove.
+func makePodsChildren(parent, original report.Node) report.Node {
+	children := parent.Children
+	// Gather all the replica sets...
+	replicaSetIDs := []string{}
+	children.ForEach(func(n report.Node) {
+		if n.Topology == report.ReplicaSet {
+			replicaSetIDs = append(replicaSetIDs, n.ID)
+		}
+	})
+	// ...and delete them.
+	children = children.Delete(replicaSetIDs...)
+	// Then add in the mapped-from pod.
+	children = children.Add(original)
+	return parent.WithChildren(children)
 }
 
 // MapPod2IP maps pod nodes to their IP address.  This allows pods to
