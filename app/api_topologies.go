@@ -194,17 +194,6 @@ func MakeRegistry() *Registry {
 		},
 	}
 
-	k8sControllersTypeFilter := APITopologyOptionGroup{
-		ID:         "grouptype",
-		Default:    "",
-		SelectType: "union",
-		NoneLabel:  "All Types",
-		Options: []APITopologyOption{
-			{Value: report.Deployment, Label: "Deployments", filter: render.IsTopology(report.Deployment), filterPseudo: false},
-			{Value: report.DaemonSet, Label: "Daemonsets", filter: render.IsTopology(report.DaemonSet), filterPseudo: false},
-		},
-	}
-
 	// Topology option labels should tell the current state. The first item must
 	// be the verb to get to that state
 	registry.Add(
@@ -258,7 +247,7 @@ func MakeRegistry() *Registry {
 			parent:      podsID,
 			renderer:    render.FilterUnconnectedPseudo(render.KubeControllerRenderer),
 			Name:        "controllers",
-			Options:     []APITopologyOptionGroup{unmanagedFilter, k8sControllersTypeFilter},
+			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
