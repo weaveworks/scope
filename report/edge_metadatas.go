@@ -15,12 +15,11 @@ type EdgeMetadatas struct {
 	psMap ps.Map
 }
 
-// EmptyEdgeMetadatas is the set of empty EdgeMetadatas.
-var EmptyEdgeMetadatas = EdgeMetadatas{ps.NewMap()}
+var emptyEdgeMetadatas = EdgeMetadatas{ps.NewMap()}
 
 // MakeEdgeMetadatas returns EmptyEdgeMetadatas
 func MakeEdgeMetadatas() EdgeMetadatas {
-	return EmptyEdgeMetadatas
+	return emptyEdgeMetadatas
 }
 
 // Copy is a noop
@@ -31,7 +30,7 @@ func (c EdgeMetadatas) Copy() EdgeMetadatas {
 // Add value to the counter 'key'
 func (c EdgeMetadatas) Add(key string, value EdgeMetadata) EdgeMetadatas {
 	if c.psMap == nil {
-		c = EmptyEdgeMetadatas
+		c = emptyEdgeMetadatas
 	}
 	if existingValue, ok := c.psMap.Lookup(key); ok {
 		value = value.Merge(existingValue.(EdgeMetadata))

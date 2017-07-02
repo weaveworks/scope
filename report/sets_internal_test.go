@@ -7,12 +7,12 @@ import (
 )
 
 func TestSets(t *testing.T) {
-	sets := EmptySets.Add("foo", MakeStringSet("bar"))
+	sets := MakeSets().Add("foo", MakeStringSet("bar"))
 	if v, _ := sets.Lookup("foo"); !reflect.DeepEqual(v, MakeStringSet("bar")) {
 		t.Fatal(v)
 	}
 
-	sets = sets.Merge(EmptySets.Add("foo", MakeStringSet("baz")))
+	sets = sets.Merge(MakeSets().Add("foo", MakeStringSet("baz")))
 	if v, _ := sets.Lookup("foo"); !reflect.DeepEqual(v, MakeStringSet("bar", "baz")) {
 		t.Fatal(v)
 	}

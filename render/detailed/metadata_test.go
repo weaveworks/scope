@@ -23,7 +23,7 @@ func TestNodeMetadata(t *testing.T) {
 				docker.ContainerID:            fixture.ClientContainerID,
 				docker.LabelPrefix + "label1": "label1value",
 				docker.ContainerStateHuman:    docker.StateRunning,
-			}).WithTopology(report.Container).WithSets(report.EmptySets.
+			}).WithTopology(report.Container).WithSets(report.MakeSets().
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
 			want: []report.MetadataRow{

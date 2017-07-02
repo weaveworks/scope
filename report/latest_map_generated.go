@@ -30,12 +30,11 @@ func (e *stringLatestEntry) Equal(e2 *stringLatestEntry) bool {
 // StringLatestMap holds latest string instances.
 type StringLatestMap struct{ ps.Map }
 
-// EmptyStringLatestMap is an empty StringLatestMap. Start with this.
-var EmptyStringLatestMap = StringLatestMap{ps.NewMap()}
+var emptyStringLatestMap = StringLatestMap{ps.NewMap()}
 
 // MakeStringLatestMap makes an empty StringLatestMap.
 func MakeStringLatestMap() StringLatestMap {
-	return EmptyStringLatestMap
+	return emptyStringLatestMap
 }
 
 // Copy is a noop, as StringLatestMaps are immutable.
@@ -170,12 +169,11 @@ func (e *nodeControlDataLatestEntry) Equal(e2 *nodeControlDataLatestEntry) bool 
 // NodeControlDataLatestMap holds latest NodeControlData instances.
 type NodeControlDataLatestMap struct{ ps.Map }
 
-// EmptyNodeControlDataLatestMap is an empty NodeControlDataLatestMap. Start with this.
-var EmptyNodeControlDataLatestMap = NodeControlDataLatestMap{ps.NewMap()}
+var emptyNodeControlDataLatestMap = NodeControlDataLatestMap{ps.NewMap()}
 
 // MakeNodeControlDataLatestMap makes an empty NodeControlDataLatestMap.
 func MakeNodeControlDataLatestMap() NodeControlDataLatestMap {
-	return EmptyNodeControlDataLatestMap
+	return emptyNodeControlDataLatestMap
 }
 
 // Copy is a noop, as NodeControlDataLatestMaps are immutable.

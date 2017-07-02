@@ -133,7 +133,7 @@ func (r *Reporter) Report() (report.Report, error) {
 			Uptime:                uptime.String(),
 			ScopeVersion:          r.version,
 		}).
-			WithSets(report.EmptySets.
+			WithSets(report.MakeSets().
 				Add(LocalNetworks, report.MakeStringSet(localCIDRs...)),
 			).
 			WithMetrics(metrics).

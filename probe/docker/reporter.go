@@ -218,7 +218,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	// namespaces & deal with containers in the host net namespace.  This
 	// is recursive to deal with people who decide to be clever.
 	{
-		hostNetworkInfo := report.EmptySets
+		hostNetworkInfo := report.MakeSets()
 		if hostIPs, err := getLocalIPs(); err == nil {
 			hostIPsWithScopes := addScopeToIPs(r.hostID, hostIPs)
 			hostNetworkInfo = hostNetworkInfo.
@@ -230,7 +230,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 		networkInfo = func(prefix string) (ips report.Sets, isInHostNamespace bool) {
 			container, ok := r.registry.GetContainerByPrefix(prefix)
 			if !ok {
-				return report.EmptySets, false
+				return report.MakeSets(), false
 			}
 
 			networkMode, ok := container.NetworkMode()

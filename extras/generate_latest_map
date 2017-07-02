@@ -35,7 +35,7 @@ function generate_latest_map() {
     local lowercase_data_type="${data_type,}"
     local entry_type="${lowercase_data_type}LatestEntry"
     local latest_map_type="${uppercase_data_type}LatestMap"
-    local empty_latest_map_variable="Empty${latest_map_type}"
+    local empty_latest_map_variable="empty${latest_map_type}"
     local make_function="Make${latest_map_type}"
 
     # shellcheck disable=SC2016
@@ -63,7 +63,6 @@ function generate_latest_map() {
     // ${latest_map_type} holds latest ${data_type} instances.
     type ${latest_map_type} struct { ps.Map }
 
-    // ${empty_latest_map_variable} is an empty ${latest_map_type}. Start with this.
     var ${empty_latest_map_variable} = ${latest_map_type}{ps.NewMap()}
 
     // ${make_function} makes an empty ${latest_map_type}.

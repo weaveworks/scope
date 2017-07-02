@@ -86,7 +86,7 @@ func TestContainer(t *testing.T) {
 		).WithMetrics(report.Metrics{
 			"docker_cpu_total_usage": report.MakeMetric(nil),
 			"docker_memory_usage":    report.MakeSingletonMetric(now, 12345).WithMax(45678),
-		}).WithParents(report.EmptySets.
+		}).WithParents(report.MakeSets().
 			Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID("baz"))),
 		)
 
@@ -102,7 +102,7 @@ func TestContainer(t *testing.T) {
 	}
 
 	{
-		want := report.EmptySets.
+		want := report.MakeSets().
 			Add("docker_container_ports", report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp")).
 			Add("docker_container_networks", nil).
 			Add("docker_container_ips", report.MakeStringSet("1.2.3.4")).

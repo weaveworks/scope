@@ -365,7 +365,7 @@ func MapContainerImage2Name(n report.Node, _ report.Networks) report.Nodes {
 	n.ID = report.MakeContainerImageNodeID(imageNameWithoutVersion)
 
 	if imageID, ok := report.ParseContainerImageNodeID(n.ID); ok {
-		n.Sets = n.Sets.Add(docker.ImageID, report.EmptyStringSet.Add(imageID))
+		n.Sets = n.Sets.Add(docker.ImageID, report.MakeStringSet().Add(imageID))
 	}
 
 	return report.Nodes{n.ID: n}

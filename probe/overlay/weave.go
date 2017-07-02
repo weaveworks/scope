@@ -472,7 +472,7 @@ func (w *Weave) addCurrentPeerInfo(latests map[string]string, node report.Node) 
 		latests[WeavePluginDriver] = "weave"
 	}
 	node = node.AddPrefixMulticolumnTable(WeaveConnectionsMulticolumnTablePrefix, getConnectionsTable(w.statusCache.Router))
-	node = node.WithParents(report.EmptySets.Add(report.Host, report.MakeStringSet(w.hostID)))
+	node = node.WithParents(report.MakeSets().Add(report.Host, report.MakeStringSet(w.hostID)))
 
 	return latests, node
 }

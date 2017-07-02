@@ -22,7 +22,7 @@ func TestParents(t *testing.T) {
 		{
 			name: "Node accidentally tagged with itself",
 			node: render.HostRenderer.Render(fixture.Report, nil)[fixture.ClientHostNodeID].WithParents(
-				report.EmptySets.Add(report.Host, report.MakeStringSet(fixture.ClientHostNodeID)),
+				report.MakeSets().Add(report.Host, report.MakeStringSet(fixture.ClientHostNodeID)),
 			),
 			want: nil,
 		},

@@ -11,7 +11,7 @@ import (
 )
 
 func TestEdgeMetadatasAdd(t *testing.T) {
-	have := EmptyEdgeMetadatas.
+	have := MakeEdgeMetadatas().
 		Add("foo",
 			EdgeMetadata{
 				EgressPacketCount: newu64(1),
@@ -41,12 +41,12 @@ func TestEdgeMetadatasAddNil(t *testing.T) {
 }
 
 func TestEdgeMetadatasDeepEquals(t *testing.T) {
-	want := EmptyEdgeMetadatas.
+	want := MakeEdgeMetadatas().
 		Add("foo",
 			EdgeMetadata{
 				EgressPacketCount: newu64(3),
 			})
-	have := EmptyEdgeMetadatas.
+	have := MakeEdgeMetadatas().
 		Add("foo",
 			EdgeMetadata{
 				EgressPacketCount: newu64(3),
@@ -66,27 +66,27 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 			want: EdgeMetadatas{},
 		},
 		"Empty a": {
-			a: EmptyEdgeMetadatas,
-			b: EmptyEdgeMetadatas.
+			a: MakeEdgeMetadatas(),
+			b: MakeEdgeMetadatas().
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 					EdgeMetadata{
 						EgressPacketCount: newu64(1),
 					}),
-			want: EmptyEdgeMetadatas.
+			want: MakeEdgeMetadatas().
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 					EdgeMetadata{
 						EgressPacketCount: newu64(1),
 					}),
 		},
 		"Empty b": {
-			a: EmptyEdgeMetadatas.
+			a: MakeEdgeMetadatas().
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 					EdgeMetadata{
 						EgressPacketCount: newu64(12),
 						EgressByteCount:   newu64(999),
 					}),
-			b: EmptyEdgeMetadatas,
-			want: EmptyEdgeMetadatas.
+			b: MakeEdgeMetadatas(),
+			want: MakeEdgeMetadatas().
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 					EdgeMetadata{
 						EgressPacketCount: newu64(12),
@@ -94,19 +94,19 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 					}),
 		},
 		"Disjoint a & b": {
-			a: EmptyEdgeMetadatas.
+			a: MakeEdgeMetadatas().
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 					EdgeMetadata{
 						EgressPacketCount: newu64(12),
 						EgressByteCount:   newu64(500),
 					}),
-			b: EmptyEdgeMetadatas.
+			b: MakeEdgeMetadatas().
 				Add("hostQ|:192.168.1.1:12345|:192.168.1.2:80",
 					EdgeMetadata{
 						EgressPacketCount: newu64(1),
 						EgressByteCount:   newu64(2),
 					}),
-			want: EmptyEdgeMetadatas.
+			want: MakeEdgeMetadatas().
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 					EdgeMetadata{
 						EgressPacketCount: newu64(12),
@@ -119,20 +119,20 @@ func TestEdgeMetadatasMerge(t *testing.T) {
 					}),
 		},
 		"Overlapping a & b": {
-			a: EmptyEdgeMetadatas.
+			a: MakeEdgeMetadatas().
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 					EdgeMetadata{
 						EgressPacketCount: newu64(12),
 						EgressByteCount:   newu64(1000),
 					}),
-			b: EmptyEdgeMetadatas.
+			b: MakeEdgeMetadatas().
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 					EdgeMetadata{
 						EgressPacketCount: newu64(1),
 						IngressByteCount:  newu64(123),
 						EgressByteCount:   newu64(2),
 					}),
-			want: EmptyEdgeMetadatas.
+			want: MakeEdgeMetadatas().
 				Add("hostA|:192.168.1.1:12345|:192.168.1.2:80",
 					EdgeMetadata{
 						EgressPacketCount: newu64(13),
@@ -168,7 +168,7 @@ func TestEdgeMetadataFlatten(t *testing.T) {
 	// Test an EdgeMetadatas flatten to the correct value (should
 	// just sum)
 	{
-		have := EmptyEdgeMetadatas.
+		have := MakeEdgeMetadatas().
 			Add("foo", EdgeMetadata{
 				EgressPacketCount: newu64(1),
 			}).
@@ -206,7 +206,7 @@ func TestEdgeMetadataReversed(t *testing.T) {
 }
 
 func TestEdgeMetadatasEncoding(t *testing.T) {
-	want := EmptyEdgeMetadatas.
+	want := MakeEdgeMetadatas().
 		Add("foo", EdgeMetadata{
 			EgressPacketCount: newu64(1),
 		}).
@@ -223,7 +223,7 @@ func TestEdgeMetadatasEncoding(t *testing.T) {
 			encoder := codec.NewEncoder(buf, h)
 			want.CodecEncodeSelf(encoder)
 			decoder := codec.NewDecoder(buf, h)
-			have := EmptyEdgeMetadatas
+			have := MakeEdgeMetadatas()
 			have.CodecDecodeSelf(decoder)
 			if !reflect.DeepEqual(want, have) {
 				t.Error(test.Diff(want, have))
@@ -245,7 +245,7 @@ func TestEdgeMetadatasEncodingNil(t *testing.T) {
 			encoder := codec.NewEncoder(buf, h)
 			want.CodecEncodeSelf(encoder)
 			decoder := codec.NewDecoder(buf, h)
-			have := EmptyEdgeMetadatas
+			have := MakeEdgeMetadatas()
 			have.CodecDecodeSelf(decoder)
 			if !reflect.DeepEqual(want, have) {
 				t.Error(test.Diff(want, have))

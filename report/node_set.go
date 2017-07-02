@@ -17,12 +17,11 @@ type NodeSet struct {
 	psMap ps.Map
 }
 
-// EmptyNodeSet is the empty set of nodes.
-var EmptyNodeSet = NodeSet{ps.NewMap()}
+var emptyNodeSet = NodeSet{ps.NewMap()}
 
 // MakeNodeSet makes a new NodeSet with the given nodes.
 func MakeNodeSet(nodes ...Node) NodeSet {
-	return EmptyNodeSet.Add(nodes...)
+	return emptyNodeSet.Add(nodes...)
 }
 
 // Add adds the nodes to the NodeSet. Add is the only valid way to grow a
@@ -49,7 +48,7 @@ func (n NodeSet) Delete(ids ...string) NodeSet {
 		result = result.Delete(id)
 	}
 	if result.Size() == 0 {
-		return EmptyNodeSet
+		return emptyNodeSet
 	}
 	return NodeSet{result}
 }

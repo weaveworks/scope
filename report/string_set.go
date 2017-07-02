@@ -8,8 +8,7 @@ import (
 // method to add strings.
 type StringSet []string
 
-// EmptyStringSet is an empty string set.
-var EmptyStringSet StringSet
+var emptyStringSet StringSet
 
 // MakeStringSet makes a new StringSet with the given strings.
 func MakeStringSet(strs ...string) StringSet {
@@ -37,7 +36,7 @@ func (s StringSet) Contains(str string) bool {
 
 // Intersection returns the intersections of a and b
 func (s StringSet) Intersection(b StringSet) StringSet {
-	result, i, j := EmptyStringSet, 0, 0
+	result, i, j := emptyStringSet, 0, 0
 	for i < len(s) && j < len(b) {
 		if s[i] == b[j] {
 			result = result.Add(s[i])
