@@ -27,6 +27,9 @@ func MakeNodeSet(nodes ...Node) NodeSet {
 // Add adds the nodes to the NodeSet. Add is the only valid way to grow a
 // NodeSet. Add returns the NodeSet to enable chaining.
 func (n NodeSet) Add(nodes ...Node) NodeSet {
+	if len(nodes) == 0 {
+		return n
+	}
 	result := n.psMap
 	if result == nil {
 		result = ps.NewMap()

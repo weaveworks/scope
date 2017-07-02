@@ -7,11 +7,17 @@ var emptyIDList = IDList(MakeStringSet())
 
 // MakeIDList makes a new IDList.
 func MakeIDList(ids ...string) IDList {
+	if len(ids) == 0 {
+		return emptyIDList
+	}
 	return IDList(MakeStringSet(ids...))
 }
 
 // Add is the only correct way to add ids to an IDList.
 func (a IDList) Add(ids ...string) IDList {
+	if len(ids) == 0 {
+		return a
+	}
 	return IDList(StringSet(a).Add(ids...))
 }
 
