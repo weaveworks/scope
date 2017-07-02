@@ -56,11 +56,11 @@ type NodeControls struct {
 	Controls  StringSet
 }
 
+var emptyNodeControls = NodeControls{Controls: MakeStringSet()}
+
 // MakeNodeControls makes a new NodeControls
 func MakeNodeControls() NodeControls {
-	return NodeControls{
-		Controls: MakeStringSet(),
-	}
+	return emptyNodeControls
 }
 
 // Copy is a noop, as NodeControls is immutable
