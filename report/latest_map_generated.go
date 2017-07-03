@@ -92,14 +92,6 @@ func (m StringLatestMap) Set(key string, timestamp time.Time, value string) Stri
 	return StringLatestMap{m.Map.Set(key, &stringLatestEntry{Timestamp: timestamp, Value: value})}
 }
 
-// Delete the value for the given key.
-func (m StringLatestMap) Delete(key string) StringLatestMap {
-	if m.Map == nil {
-		return m
-	}
-	return StringLatestMap{m.Map.Delete(key)}
-}
-
 // ForEach executes fn on each key value pair in the map.
 func (m StringLatestMap) ForEach(fn func(k string, timestamp time.Time, v string)) {
 	if m.Map != nil {
@@ -229,14 +221,6 @@ func (m NodeControlDataLatestMap) Set(key string, timestamp time.Time, value Nod
 		m.Map = ps.NewMap()
 	}
 	return NodeControlDataLatestMap{m.Map.Set(key, &nodeControlDataLatestEntry{Timestamp: timestamp, Value: value})}
-}
-
-// Delete the value for the given key.
-func (m NodeControlDataLatestMap) Delete(key string) NodeControlDataLatestMap {
-	if m.Map == nil {
-		return m
-	}
-	return NodeControlDataLatestMap{m.Map.Delete(key)}
 }
 
 // ForEach executes fn on each key value pair in the map.

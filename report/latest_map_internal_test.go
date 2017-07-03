@@ -70,25 +70,6 @@ func TestLatestMapDeepEquals(t *testing.T) {
 	}
 }
 
-func TestLatestMapDelete(t *testing.T) {
-	now := time.Now()
-	want := MakeStringLatestMap()
-	have := MakeStringLatestMap().
-		Set("foo", now, "Baz").
-		Delete("foo")
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf(test.Diff(want, have))
-	}
-}
-
-func TestLatestMapDeleteNil(t *testing.T) {
-	want := StringLatestMap{}
-	have := StringLatestMap{}.Delete("foo")
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf(test.Diff(want, have))
-	}
-}
-
 func nilStringLatestMap() StringLatestMap {
 	m := MakeStringLatestMap()
 	m.Map = nil

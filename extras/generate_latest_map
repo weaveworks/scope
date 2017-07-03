@@ -125,14 +125,6 @@ function generate_latest_map() {
         return ${latest_map_type}{m.Map.Set(key, &${entry_type}{Timestamp: timestamp, Value: value})}
     }
 
-    // Delete the value for the given key.
-    func (m ${latest_map_type}) Delete(key string) ${latest_map_type} {
-        if m.Map == nil {
-	        return m
-        }
-        return ${latest_map_type}{m.Map.Delete(key)}
-    }
-
     // ForEach executes fn on each key value pair in the map.
     func (m ${latest_map_type}) ForEach(fn func(k string, timestamp time.Time, v ${data_type})) {
         if m.Map != nil {
