@@ -243,7 +243,7 @@ export function getTopologies(state, dispatch, initialPoll = false) {
   doRequest({
     url,
     success: (res) => {
-      if (continuePolling) {
+      if (continuePolling && !state.get('pausedAt')) {
         dispatch(receiveTopologies(res));
         topologyTimer = setTimeout(() => {
           getTopologies(state, dispatch);
@@ -254,7 +254,7 @@ export function getTopologies(state, dispatch, initialPoll = false) {
       log(`Error in topology request: ${req.responseText}`);
       dispatch(receiveError(url));
       // Only retry in stand-alone mode
-      if (continuePolling) {
+      if (continuePolling && !state.get('pausedAt')) {
         topologyTimer = setTimeout(() => {
           getTopologies(state, dispatch);
         }, TOPOLOGY_REFRESH_INTERVAL);

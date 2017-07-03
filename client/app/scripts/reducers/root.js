@@ -652,11 +652,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_TOPOLOGIES: {
-      // Freeze topologies updates after the first load if paused.
-      if (state.get('topologiesLoaded') && state.get('pausedAt')) {
-        return state;
-      }
-
       state = state.set('errorUrl', null);
       state = state.update('topologyUrlsById', topologyUrlsById => topologyUrlsById.clear());
       state = processTopologies(state, action.topologies);

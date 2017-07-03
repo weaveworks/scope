@@ -232,13 +232,13 @@
   margin: 0 30px 0 15px;
   z-index: 2001;
 
-  transition: height .15s $base-ease;
+  transition: all .15s $base-ease;
   overflow: hidden;
   height: 0;
 
   &.visible {
     height: 50px;
-    margin-bottom: 7px;
+    margin-bottom: 15px;
   }
 
   &-markers {
@@ -252,8 +252,8 @@
         border: 1px solid $text-tertiary-color;
         border-radius: 1px;
         display: block;
-        margin: auto;
-        height: 14px;
+        margin: 1px auto 2px;
+        height: 12px;
         width: 0;
       }
 
@@ -1467,14 +1467,15 @@
 }
 
 .time-control {
-  // display: flex;
-  // align-items: center;
-  position: absolute;
-  right: 36px;
+  &-controls {
+    align-items: center;
+    display: flex;
+  }
 
-  &-icon {
+  &-spinner {
     display: inline-block;
-    margin-right: 15px;
+    margin-left: 12px;
+    margin-top: 3px;
 
     .fa {
       color: $text-secondary-color;
@@ -1485,7 +1486,7 @@
   &-info {
     @extend .blinkable;
     display: block;
-    text-align: right;
+    margin-top: 5px;
   }
 }
 

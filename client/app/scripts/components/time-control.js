@@ -60,30 +60,32 @@ class TimeControl extends React.Component {
 
     return (
       <div className="time-control">
-        <div className="time-control-icon">
-          {timeTravelTransitioning && <span className="fa fa-circle-o-notch fa-spin" />}
-        </div>
-        <div className="time-control-wrapper">
-          <span
-            className={className(isRunningNow)}
-            onClick={this.handleNowClick}>
-            {isRunningNow && <span className="fa fa-play" />}
-            <span className="label">{isRunningNow ? 'Live' : 'Sync'}</span>
-          </span>
-          <span
-            className={className(isPausedNow)}
-            onClick={!isTimeTravelling && this.handlePauseClick}
-            disabled={isTimeTravelling}
-            title="Pause updates (freezes the nodes in their current layout)">
-            {isPausedNow && <span className="fa fa-pause" />}
-            <span className="label">{isPausedNow ? 'Paused' : 'Pause'}</span>
-          </span>
-          <span
-            className={className(isTimeTravelling)}
-            onClick={this.handleTravelClick}>
-            {isTimeTravelling && <span className="fa fa-clock-o" />}
-            <span className="label">Time Travel</span>
-          </span>
+        <div className="time-control-controls">
+          <div className="time-control-wrapper">
+            <span
+              className={className(isRunningNow)}
+              onClick={this.handleNowClick}>
+              {isRunningNow && <span className="fa fa-play" />}
+              <span className="label">Live</span>
+            </span>
+            <span
+              className={className(isPausedNow)}
+              onClick={!isTimeTravelling && this.handlePauseClick}
+              disabled={isTimeTravelling}
+              title="Pause updates (freezes the nodes in their current layout)">
+              {isPausedNow && <span className="fa fa-pause" />}
+              <span className="label">{isPausedNow ? 'Paused' : 'Pause'}</span>
+            </span>
+            <span
+              className={className(isTimeTravelling)}
+              onClick={this.handleTravelClick}>
+              {isTimeTravelling && <span className="fa fa-clock-o" />}
+              <span className="label">Time Travel</span>
+            </span>
+          </div>
+          <div className="time-control-spinner">
+            {timeTravelTransitioning && <span className="fa fa-circle-o-notch fa-spin" />}
+          </div>
         </div>
         <span className="time-control-info">
           {isPausedNow && `Live updates paused ${moment(pausedAt).fromNow()}`}
