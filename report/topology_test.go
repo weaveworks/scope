@@ -45,27 +45,6 @@ func TestStringSetAdd(t *testing.T) {
 	}
 }
 
-func TestStringSetRemove(t *testing.T) {
-	for _, testcase := range []struct {
-		input report.StringSet
-		strs  []string
-		want  report.StringSet
-	}{
-		{input: report.StringSet(nil), strs: []string{}, want: report.StringSet(nil)},
-		{input: report.MakeStringSet(), strs: []string{}, want: report.MakeStringSet()},
-		{input: report.MakeStringSet("a"), strs: []string{}, want: report.MakeStringSet("a")},
-		{input: report.MakeStringSet(), strs: []string{"a"}, want: report.MakeStringSet()},
-		{input: report.MakeStringSet("a"), strs: []string{"a"}, want: report.StringSet{}},
-		{input: report.MakeStringSet("b"), strs: []string{"a", "b"}, want: report.StringSet{}},
-		{input: report.MakeStringSet("a"), strs: []string{"c", "b"}, want: report.MakeStringSet("a")},
-		{input: report.MakeStringSet("a", "c"), strs: []string{"b", "b", "b"}, want: report.MakeStringSet("a", "c")},
-	} {
-		if want, have := testcase.want, testcase.input.Remove(testcase.strs...); !reflect.DeepEqual(want, have) {
-			t.Errorf("%v - %v: want %#v, have %#v", testcase.input, testcase.strs, want, have)
-		}
-	}
-}
-
 func TestStringSetMerge(t *testing.T) {
 	for _, testcase := range []struct {
 		input report.StringSet

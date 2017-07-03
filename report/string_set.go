@@ -67,21 +67,6 @@ func (s StringSet) Add(strs ...string) StringSet {
 	return s
 }
 
-// Remove removes the strings from the StringSet. Remove is the only valid way
-// to shrink a StringSet. Remove returns the StringSet to enable chaining.
-func (s StringSet) Remove(strs ...string) StringSet {
-	for _, str := range strs {
-		i := sort.Search(len(s), func(i int) bool { return s[i] >= str })
-		if i >= len(s) || s[i] != str {
-			// The list does not have the element.
-			continue
-		}
-		// has the element, remove it.
-		s = append(s[:i], s[i+1:]...)
-	}
-	return s
-}
-
 // Merge combines the two StringSets and returns a new result.
 func (s StringSet) Merge(other StringSet) StringSet {
 	switch {

@@ -21,11 +21,6 @@ func (a IDList) Add(ids ...string) IDList {
 	return IDList(StringSet(a).Add(ids...))
 }
 
-// Remove is the only correct way to remove IDs from an IDList.
-func (a IDList) Remove(ids ...string) IDList {
-	return IDList(StringSet(a).Remove(ids...))
-}
-
 // Copy returns a copy of the IDList.
 func (a IDList) Copy() IDList {
 	return IDList(StringSet(a).Copy())
