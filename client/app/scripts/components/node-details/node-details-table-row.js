@@ -1,8 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import groupBy from 'lodash/groupBy';
-import forEach from 'lodash/forEach';
-import mapValues from 'lodash/mapValues';
+import { groupBy, mapValues } from 'lodash';
 import { intersperse } from '../../utils/array-utils';
 
 
@@ -11,7 +9,7 @@ import NodeDetailsTableNodeMetric from './node-details-table-node-metric';
 import { formatDataType } from '../../utils/string-utils';
 
 function getValuesForNode(node) {
-  const values = {};
+  let values = {};
   ['metrics', 'metadata'].forEach((collection) => {
     if (node[collection]) {
       node[collection].forEach((field) => {
@@ -32,9 +30,10 @@ function getValuesForNode(node) {
       relatives,
     }));
 
-    forEach(relativesByTopologyId, (columnData, topologyId) => {
-      values[topologyId] = columnData;
-    });
+    values = {
+      ...values,
+      ...relativesByTopologyId,
+    };
   }
 
   return values;
