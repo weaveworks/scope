@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/kubernetes/pkg/labels"
+	"k8s.io/apimachinery/pkg/labels"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/weaveworks/common/mtime"

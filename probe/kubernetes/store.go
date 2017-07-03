@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"sync"
 
-	"k8s.io/kubernetes/pkg/client/cache"
+	"k8s.io/client-go/tools/cache"
 )
 
 // Event type is an enum of ADD, UPDATE and DELETE

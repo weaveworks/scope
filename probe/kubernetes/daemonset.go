@@ -3,9 +3,9 @@ package kubernetes
 import (
 	"fmt"
 
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	"k8s.io/kubernetes/pkg/apis/extensions"
-	"k8s.io/kubernetes/pkg/labels"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	apiv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
 	"github.com/weaveworks/scope/report"
 )
@@ -23,12 +23,12 @@ type DaemonSet interface {
 }
 
 type daemonSet struct {
-	*extensions.DaemonSet
+	*apiv1beta1.DaemonSet
 	Meta
 }
 
 // NewDaemonSet creates a new daemonset
-func NewDaemonSet(d *extensions.DaemonSet) DaemonSet {
+func NewDaemonSet(d *apiv1beta1.DaemonSet) DaemonSet {
 	return &daemonSet{
 		DaemonSet: d,
 		Meta:      meta{d.ObjectMeta},
@@ -36,7 +36,7 @@ func NewDaemonSet(d *extensions.DaemonSet) DaemonSet {
 }
 
 func (d *daemonSet) Selector() (labels.Selector, error) {
-	selector, err := unversioned.LabelSelectorAsSelector(d.Spec.Selector)
+	selector, err := metav1.LabelSelectorAsSelector(d.Spec.Selector)
 	if err != nil {
 		return nil, err
 	}

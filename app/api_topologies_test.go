@@ -9,7 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ugorji/go/codec"
-	"k8s.io/kubernetes/pkg/api"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	apiv1 "k8s.io/client-go/pkg/api/v1"
 
 	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/app"
@@ -205,21 +206,21 @@ func TestAPITopologyAddsKubernetes(t *testing.T) {
 	// Enable the kubernetes topologies
 	rpt := report.MakeReport()
 	rpt.Pod = report.MakeTopology()
-	rpt.Pod.Nodes[fixture.ClientPodNodeID] = kubernetes.NewPod(&api.Pod{
-		ObjectMeta: api.ObjectMeta{
+	rpt.Pod.Nodes[fixture.ClientPodNodeID] = kubernetes.NewPod(&apiv1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "pong-a",
 			Namespace: "ping",
 			Labels:    map[string]string{"ponger": "true"},
 		},
-		Status: api.PodStatus{
+		Status: apiv1.PodStatus{
 			HostIP: "1.2.3.4",
-			ContainerStatuses: []api.ContainerStatus{
+			ContainerStatuses: []apiv1.ContainerStatus{
 				{ContainerID: "container1"},
 				{ContainerID: "container2"},
 			},
 		},
-		Spec: api.PodSpec{
-			SecurityContext: &api.PodSecurityContext{},
+		Spec: apiv1.PodSpec{
+			SecurityContext: &apiv1.PodSecurityContext{},
 		},
 	}).GetNode("")
 	buf := &bytes.Buffer{}

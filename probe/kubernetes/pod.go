@@ -2,7 +2,8 @@ package kubernetes
 
 import (
 	"github.com/weaveworks/scope/report"
-	"k8s.io/kubernetes/pkg/api"
+
+	apiv1 "k8s.io/client-go/pkg/api/v1"
 )
 
 // These constants are keys used in node metadata
@@ -22,14 +23,14 @@ type Pod interface {
 }
 
 type pod struct {
-	*api.Pod
+	*apiv1.Pod
 	Meta
 	parents report.Sets
-	Node    *api.Node
+	Node    *apiv1.Node
 }
 
 // NewPod creates a new Pod
-func NewPod(p *api.Pod) Pod {
+func NewPod(p *apiv1.Pod) Pod {
 	return &pod{
 		Pod:     p,
 		Meta:    meta{p.ObjectMeta},
@@ -64,7 +65,7 @@ func (p *pod) GetNode(probeID string) report.Node {
 		report.ControlProbeID: probeID,
 	}
 
-	if sc := p.Pod.Spec.SecurityContext; sc != nil && sc.HostNetwork {
+	if p.Pod.Spec.HostNetwork {
 		latests[IsInHostNetwork] = "true"
 	}
 

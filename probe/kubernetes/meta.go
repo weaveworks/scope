@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"time"
 
-	"k8s.io/kubernetes/pkg/api"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/weaveworks/scope/report"
 )
@@ -27,7 +27,7 @@ type Meta interface {
 }
 
 type meta struct {
-	ObjectMeta api.ObjectMeta
+	ObjectMeta metav1.ObjectMeta
 }
 
 func (m meta) UID() string {
