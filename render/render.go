@@ -110,9 +110,7 @@ func (m *Map) Render(rpt report.Report, dct Decorator) report.Nodes {
 	for outNodeID, inAdjacency := range adjacencies {
 		outAdjacency := report.MakeIDList()
 		for _, inAdjacent := range inAdjacency {
-			for _, outAdjacent := range mapped[inAdjacent] {
-				outAdjacency = outAdjacency.Add(outAdjacent)
-			}
+			outAdjacency = outAdjacency.Merge(mapped[inAdjacent])
 		}
 		outNode := output[outNodeID]
 		outNode.Adjacency = outAdjacency
