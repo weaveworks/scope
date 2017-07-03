@@ -1,7 +1,6 @@
 /* Intervals in ms */
 export const API_REFRESH_INTERVAL = 30000;
 export const TOPOLOGY_REFRESH_INTERVAL = 5000;
-export const NODES_DELTA_BUFFER_FEED_INTERVAL = 1000;
 
 export const TOPOLOGY_LOADER_DELAY = 100;
 

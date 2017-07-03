@@ -51,7 +51,7 @@ export function getSerializedTimeTravelTimestamp(state) {
   // The timestamp parameter will be used only if it's in the past.
   if (!isPausedSelector(state)) return null;
 
-  return state.get('pausedAt').toISOString();
+  return state.get('pausedAt').utc().toISOString();
 }
 
 export function buildUrlQuery(params = makeMap(), state) {
@@ -243,7 +243,7 @@ export function getTopologies(state, dispatch, initialPoll = false) {
   doRequest({
     url,
     success: (res) => {
-      if (continuePolling && !state.get('pausedAt')) {
+      if (continuePolling) {
         dispatch(receiveTopologies(res));
         topologyTimer = setTimeout(() => {
           getTopologies(state, dispatch);
@@ -254,7 +254,7 @@ export function getTopologies(state, dispatch, initialPoll = false) {
       log(`Error in topology request: ${req.responseText}`);
       dispatch(receiveError(url));
       // Only retry in stand-alone mode
-      if (continuePolling && !state.get('pausedAt')) {
+      if (continuePolling) {
         topologyTimer = setTimeout(() => {
           getTopologies(state, dispatch);
         }, TOPOLOGY_REFRESH_INTERVAL);

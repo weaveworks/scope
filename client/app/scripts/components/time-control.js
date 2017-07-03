@@ -28,7 +28,6 @@ class TimeControl extends React.Component {
       layout: this.props.topologyViewMode,
       topologyId: currentTopology && currentTopology.get('id'),
       parentTopologyId: currentTopology && currentTopology.get('parentId'),
-      nodesDeltaBufferSize: this.props.updateCount,
     });
     this.props.clickResumeUpdate();
   }

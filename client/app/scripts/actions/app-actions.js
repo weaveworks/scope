@@ -30,8 +30,6 @@ import {
   resourceViewAvailableSelector,
 } from '../selectors/topology';
 
-import { NODES_DELTA_BUFFER_SIZE_LIMIT } from '../constants/limits';
-import { NODES_DELTA_BUFFER_FEED_INTERVAL } from '../constants/timer';
 import {
   GRAPH_VIEW_MODE,
   TABLE_VIEW_MODE,
@@ -41,8 +39,6 @@ import {
 
 const log = debug('scope:app-actions');
 
-// TODO: This shouldn't be exposed here as a global variable.
-let nodesDeltaBufferUpdateTimer = null;
 
 export function showHelp() {
   return { type: ActionTypes.SHOW_HELP };
@@ -74,11 +70,6 @@ export function sortOrderChanged(sortedBy, sortedDesc) {
     });
     updateRoute(getState);
   };
-}
-
-function resetNodesDeltaBuffer() {
-  clearInterval(nodesDeltaBufferUpdateTimer);
-  return { type: ActionTypes.CLEAR_NODES_DELTA_BUFFER };
 }
 
 
@@ -217,7 +208,6 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     });
     updateRoute(getState);
     // update all request workers with new options
-    dispatch(resetNodesDeltaBuffer());
     const state = getState();
     getTopologies(state, dispatch);
     updateWebsocketChannel(state, dispatch);
@@ -376,8 +366,6 @@ function updateTopology(dispatch, getState) {
     getResourceViewNodesSnapshot(state, dispatch);
   }
   updateRoute(getState);
-  // update all request workers with new options
-  dispatch(resetNodesDeltaBuffer());
   // NOTE: This is currently not needed for our static resource
   // view, but we'll need it here later and it's simpler to just
   // keep it than to redo the nodes delta updating logic.
@@ -560,23 +548,11 @@ export function receiveNodesDelta(delta) {
     setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
     const state = getState();
-    const movingInTime = state.get('timeTravelTransitioning');
     const hasChanges = delta.add || delta.update || delta.remove;
 
-    // When moving in time, we will consider the transition complete
-    // only when the first batch of nodes delta has been received. We
-    // do that because we want to keep the previous state blurred instead
-    // of transitioning over an empty state like when switching topologies.
-    if (state.get('timeTravelTransitioning')) {
-      dispatch({ type: ActionTypes.FINISH_TIME_TRAVEL_TRANSITION });
-    }
-
-    if (hasChanges || movingInTime) {
+    if (hasChanges) {
       if (isPausedSelector(state)) {
-        if (state.get('nodesDeltaBuffer').size >= NODES_DELTA_BUFFER_SIZE_LIMIT) {
-          dispatch({ type: ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER });
-        }
-        dispatch({ type: ActionTypes.BUFFER_NODES_DELTA, delta });
+        // dispatch({ type: ActionTypes.BUFFER_NODES_DELTA, delta });
       } else {
         dispatch({
           type: ActionTypes.RECEIVE_NODES_DELTA,
@@ -587,35 +563,16 @@ export function receiveNodesDelta(delta) {
   };
 }
 
-function updateFromNodesDeltaBuffer(dispatch, state) {
-  const isPaused = isPausedSelector(state);
-  const isBufferEmpty = state.get('nodesDeltaBuffer').isEmpty();
-
-  if (isPaused || isBufferEmpty) {
-    dispatch(resetNodesDeltaBuffer());
-  } else {
-    dispatch(receiveNodesDelta(state.get('nodesDeltaBuffer').first()));
-    dispatch({ type: ActionTypes.POP_NODES_DELTA_BUFFER });
-  }
-}
-
 export function clickResumeUpdate() {
-  return (dispatch, getState) => {
+  return (dispatch) => {
     dispatch({
       type: ActionTypes.RESUME_TIME_FROM_NOW
     });
-    // Periodically merge buffered nodes deltas until the buffer is emptied.
-    nodesDeltaBufferUpdateTimer = setInterval(
-      () => updateFromNodesDeltaBuffer(dispatch, getState()),
-      NODES_DELTA_BUFFER_FEED_INTERVAL,
-    );
   };
 }
 
 export function clickTimeTravel() {
   return (dispatch) => {
-    stopPolling();
-    teardownWebsockets();
     dispatch({
       type: ActionTypes.START_TIME_TRAVEL
     });

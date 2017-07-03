@@ -20,7 +20,6 @@ import {
   isResourceViewModeSelector,
 } from '../selectors/topology';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
-import { consolidateNodesDeltas } from '../utils/nodes-delta-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
@@ -58,7 +57,6 @@ export const initialState = makeMap({
   mouseOverNodeId: null,
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
-  nodesDeltaBuffer: makeList(),
   nodesLoaded: false,
   // nodes cache, infrequently updated, used for search & resource view
   nodesByTopology: makeMap(), // topologyId -> nodes
@@ -401,29 +399,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     //
-    // nodes delta buffer
-    //
-
-    case ActionTypes.CLEAR_NODES_DELTA_BUFFER: {
-      return state.update('nodesDeltaBuffer', buffer => buffer.clear());
-    }
-
-    case ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER: {
-      const firstDelta = state.getIn(['nodesDeltaBuffer', 0]);
-      const secondDelta = state.getIn(['nodesDeltaBuffer', 1]);
-      const deltaUnion = consolidateNodesDeltas(firstDelta, secondDelta);
-      return state.update('nodesDeltaBuffer', buffer => buffer.shift().set(0, deltaUnion));
-    }
-
-    case ActionTypes.POP_NODES_DELTA_BUFFER: {
-      return state.update('nodesDeltaBuffer', buffer => buffer.shift());
-    }
-
-    case ActionTypes.BUFFER_NODES_DELTA: {
-      return state.update('nodesDeltaBuffer', buffer => buffer.push(action.delta));
-    }
-
-    //
     // networks
     //
 
@@ -597,7 +572,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_NODES_DELTA: {
-      // Freeze nodes updates after the first load when paused.
+      // Ignore periodic nodes updates after the first load when paused.
       if (state.get('nodesLoaded') && state.get('pausedAt')) {
         return state;
       }
