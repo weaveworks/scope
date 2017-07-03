@@ -76,9 +76,9 @@ func TestNodeSetAdd(t *testing.T) {
 			want:  report.NodeSet{},
 		},
 		{
-			input: report.EmptyNodeSet,
+			input: report.MakeNodeSet(),
 			nodes: []report.Node{},
-			want:  report.EmptyNodeSet,
+			want:  report.MakeNodeSet(),
 		},
 		{
 			input: report.MakeNodeSet(report.MakeNode("a")),
@@ -86,7 +86,7 @@ func TestNodeSetAdd(t *testing.T) {
 			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},
 		{
-			input: report.EmptyNodeSet,
+			input: report.MakeNodeSet(),
 			nodes: []report.Node{report.MakeNode("a")},
 			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},
@@ -146,7 +146,7 @@ func TestNodeSetAdd(t *testing.T) {
 }
 
 func BenchmarkNodeSetAdd(b *testing.B) {
-	n := report.EmptyNodeSet
+	n := report.MakeNodeSet()
 	for i := 0; i < 600; i++ {
 		n = n.Add(
 			report.MakeNodeWith(fmt.Sprint(i), map[string]string{
@@ -181,9 +181,9 @@ func TestNodeSetDelete(t *testing.T) {
 			want:  report.NodeSet{},
 		},
 		{
-			input: report.EmptyNodeSet,
+			input: report.MakeNodeSet(),
 			nodes: []string{},
-			want:  report.EmptyNodeSet,
+			want:  report.MakeNodeSet(),
 		},
 		{
 			input: report.MakeNodeSet(report.MakeNode("a")),
@@ -191,19 +191,19 @@ func TestNodeSetDelete(t *testing.T) {
 			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},
 		{
-			input: report.EmptyNodeSet,
+			input: report.MakeNodeSet(),
 			nodes: []string{"a"},
-			want:  report.EmptyNodeSet,
+			want:  report.MakeNodeSet(),
 		},
 		{
 			input: report.MakeNodeSet(report.MakeNode("a")),
 			nodes: []string{"a"},
-			want:  report.EmptyNodeSet,
+			want:  report.MakeNodeSet(),
 		},
 		{
 			input: report.MakeNodeSet(report.MakeNode("b")),
 			nodes: []string{"a", "b"},
-			want:  report.EmptyNodeSet,
+			want:  report.MakeNodeSet(),
 		},
 		{
 			input: report.MakeNodeSet(report.MakeNode("a")),
@@ -233,14 +233,14 @@ func TestNodeSetMerge(t *testing.T) {
 		want  report.NodeSet
 	}{
 		{input: report.NodeSet{}, other: report.NodeSet{}, want: report.NodeSet{}},
-		{input: report.EmptyNodeSet, other: report.EmptyNodeSet, want: report.EmptyNodeSet},
+		{input: report.MakeNodeSet(), other: report.MakeNodeSet(), want: report.MakeNodeSet()},
 		{
 			input: report.MakeNodeSet(report.MakeNode("a")),
-			other: report.EmptyNodeSet,
+			other: report.MakeNodeSet(),
 			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},
 		{
-			input: report.EmptyNodeSet,
+			input: report.MakeNodeSet(),
 			other: report.MakeNodeSet(report.MakeNode("a")),
 			want:  report.MakeNodeSet(report.MakeNode("a")),
 		},

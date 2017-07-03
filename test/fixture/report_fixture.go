@@ -199,7 +199,7 @@ var (
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
 				}).
-					WithTopology(report.Process).WithParents(report.EmptySets.
+					WithTopology(report.Process).WithParents(report.MakeSets().
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("container", report.MakeStringSet(ClientContainerNodeID)),
 				).WithMetrics(report.Metrics{
@@ -212,7 +212,7 @@ var (
 					docker.ContainerID: ClientContainerID,
 					report.HostNodeID:  ClientHostNodeID,
 				}).
-					WithTopology(report.Process).WithParents(report.EmptySets.
+					WithTopology(report.Process).WithParents(report.MakeSets().
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("container", report.MakeStringSet(ClientContainerNodeID)),
 				),
@@ -222,7 +222,7 @@ var (
 					docker.ContainerID: ServerContainerID,
 					report.HostNodeID:  ServerHostNodeID,
 				}).
-					WithTopology(report.Process).WithParents(report.EmptySets.
+					WithTopology(report.Process).WithParents(report.MakeSets().
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
 					Add("container", report.MakeStringSet(ServerContainerNodeID)),
 				),
@@ -231,7 +231,7 @@ var (
 					process.Name:      NonContainerName,
 					report.HostNodeID: ServerHostNodeID,
 				}).
-					WithTopology(report.Process).WithParents(report.EmptySets.
+					WithTopology(report.Process).WithParents(report.MakeSets().
 					Add("host", report.MakeStringSet(ServerHostNodeID)),
 				),
 			},
@@ -254,7 +254,7 @@ var (
 						docker.ContainerState:                        docker.StateRunning,
 						docker.ContainerStateHuman:                   docker.StateRunning,
 					}).
-					WithTopology(report.Container).WithParents(report.EmptySets.
+					WithTopology(report.Container).WithParents(report.MakeSets().
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("container_image", report.MakeStringSet(ClientContainerImageNodeID)).
 					Add("pod", report.MakeStringSet(ClientPodNodeID)),
@@ -279,7 +279,7 @@ var (
 						docker.LabelPrefix + TestLabelKey2:                        ApplicationLabelValue2,
 						kubernetes.Namespace:                                      KubernetesNamespace,
 					}).
-					WithTopology(report.Container).WithParents(report.EmptySets.
+					WithTopology(report.Container).WithParents(report.MakeSets().
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
 					Add("container_image", report.MakeStringSet(ServerContainerImageNodeID)).
 					Add("pod", report.MakeStringSet(ServerPodNodeID)),
@@ -298,7 +298,7 @@ var (
 					docker.ImageName:  ClientContainerImageName,
 					report.HostNodeID: ClientHostNodeID,
 				}).
-					WithParents(report.EmptySets.
+					WithParents(report.MakeSets().
 						Add("host", report.MakeStringSet(ClientHostNodeID)),
 					).WithTopology(report.ContainerImage),
 				ServerContainerImageNodeID: report.MakeNodeWith(ServerContainerImageNodeID, map[string]string{
@@ -308,7 +308,7 @@ var (
 					docker.LabelPrefix + "foo1": "bar1",
 					docker.LabelPrefix + "foo2": "bar2",
 				}).
-					WithParents(report.EmptySets.
+					WithParents(report.MakeSets().
 						Add("host", report.MakeStringSet(ServerHostNodeID)),
 					).WithTopology(report.ContainerImage),
 			},
@@ -323,7 +323,7 @@ var (
 						"os":              "Linux",
 						report.HostNodeID: ClientHostNodeID,
 					}).
-					WithTopology(report.Host).WithSets(report.EmptySets.
+					WithTopology(report.Host).WithSets(report.MakeSets().
 					Add(host.LocalNetworks, report.MakeStringSet("10.10.10.0/24")),
 				).WithMetrics(report.Metrics{
 					host.CPUUsage:    ClientHostCPUMetric,
@@ -337,7 +337,7 @@ var (
 						"os":              "Linux",
 						report.HostNodeID: ServerHostNodeID,
 					}).
-					WithTopology(report.Host).WithSets(report.EmptySets.
+					WithTopology(report.Host).WithSets(report.MakeSets().
 					Add(host.LocalNetworks, report.MakeStringSet("10.10.10.0/24")),
 				).WithMetrics(report.Metrics{
 					host.CPUUsage:    ServerHostCPUMetric,
@@ -356,7 +356,7 @@ var (
 						kubernetes.Namespace: KubernetesNamespace,
 						report.HostNodeID:    ClientHostNodeID,
 					}).
-					WithTopology(report.Pod).WithParents(report.EmptySets.
+					WithTopology(report.Pod).WithParents(report.MakeSets().
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
 					Add("service", report.MakeStringSet(ServiceNodeID)),
 				),
@@ -367,7 +367,7 @@ var (
 						kubernetes.State:     "running",
 						report.HostNodeID:    ServerHostNodeID,
 					}).
-					WithTopology(report.Pod).WithParents(report.EmptySets.
+					WithTopology(report.Pod).WithParents(report.MakeSets().
 					Add("host", report.MakeStringSet(ServerHostNodeID)).
 					Add("service", report.MakeStringSet(ServiceNodeID)),
 				),

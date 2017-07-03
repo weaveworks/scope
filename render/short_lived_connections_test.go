@@ -79,7 +79,7 @@ var (
 					docker.ContainerName: container1Name,
 					report.HostNodeID:    serverHostNodeID,
 				}).
-					WithSets(report.EmptySets.
+					WithSets(report.MakeSets().
 						Add(docker.ContainerIPs, report.MakeStringSet(container1IP)).
 						Add(docker.ContainerIPsWithScopes, report.MakeStringSet(report.MakeAddressNodeID("", container1IP))).
 						Add(docker.ContainerPorts, report.MakeStringSet(fmt.Sprintf("%s:%s->%s/tcp", serverIP, serverPort, serverPort))),
@@ -89,7 +89,7 @@ var (
 					docker.ContainerName: container2Name,
 					report.HostNodeID:    serverHostNodeID,
 				}).
-					WithSets(report.EmptySets.
+					WithSets(report.MakeSets().
 						Add(docker.ContainerIPs, report.MakeStringSet(container2IP)).
 						Add(docker.ContainerIPsWithScopes, report.MakeStringSet(report.MakeAddressNodeID("", container2IP))),
 					).WithTopology(report.Container),
@@ -98,7 +98,7 @@ var (
 					docker.ContainerName: pauseContainerName,
 					report.HostNodeID:    serverHostNodeID,
 				}).
-					WithSets(report.EmptySets.
+					WithSets(report.MakeSets().
 						Add(docker.ContainerIPs, report.MakeStringSet(pauseContainerIP)).
 						Add(docker.ContainerIPsWithScopes, report.MakeStringSet(report.MakeAddressNodeID("", pauseContainerIP))),
 					).WithTopology(report.Container).WithLatest(report.DoesNotMakeConnections, mtime.Now(), ""),
@@ -109,7 +109,7 @@ var (
 				serverHostNodeID: report.MakeNodeWith(serverHostNodeID, map[string]string{
 					report.HostNodeID: serverHostNodeID,
 				}).
-					WithSets(report.EmptySets.
+					WithSets(report.MakeSets().
 						Add(host.LocalNetworks, report.MakeStringSet("192.168.0.0/16")),
 					).WithTopology(report.Host),
 			},

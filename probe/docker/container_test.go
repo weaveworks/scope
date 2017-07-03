@@ -86,23 +86,25 @@ func TestContainer(t *testing.T) {
 		).WithMetrics(report.Metrics{
 			"docker_cpu_total_usage": report.MakeMetric(nil),
 			"docker_memory_usage":    report.MakeSingletonMetric(now, 12345).WithMax(45678),
-		}).WithParents(report.EmptySets.
+		}).WithParents(report.MakeSets().
 			Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID("baz"))),
 		)
 
 		test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 			node := c.GetNode()
-			node.Latest.ForEach(func(k string, _ time.Time, v string) {
-				if v == "0" || v == "" {
-					node.Latest = node.Latest.Delete(k)
+			latest := report.MakeStringLatestMap()
+			node.Latest.ForEach(func(k string, t time.Time, v string) {
+				if v != "0" && v != "" {
+					latest = latest.Set(k, t, v)
 				}
 			})
+			node.Latest = latest
 			return node
 		})
 	}
 
 	{
-		want := report.EmptySets.
+		want := report.MakeSets().
 			Add("docker_container_ports", report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp")).
 			Add("docker_container_networks", nil).
 			Add("docker_container_ips", report.MakeStringSet("1.2.3.4")).

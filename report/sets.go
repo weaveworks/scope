@@ -14,11 +14,11 @@ type Sets struct {
 }
 
 // EmptySets is an empty Sets.  Starts with this.
-var EmptySets = Sets{ps.NewMap()}
+var emptySets = Sets{ps.NewMap()}
 
 // MakeSets returns EmptySets
 func MakeSets() Sets {
-	return EmptySets
+	return emptySets
 }
 
 // Keys returns the keys for this set
@@ -32,7 +32,7 @@ func (s Sets) Keys() []string {
 // Add the given value to the Sets.
 func (s Sets) Add(key string, value StringSet) Sets {
 	if s.psMap == nil {
-		s = EmptySets
+		s = emptySets
 	}
 	if existingValue, ok := s.psMap.Lookup(key); ok {
 		value = value.Merge(existingValue.(StringSet))
@@ -45,22 +45,24 @@ func (s Sets) Add(key string, value StringSet) Sets {
 // Delete the given set from the Sets.
 func (s Sets) Delete(key string) Sets {
 	if s.psMap == nil {
-		return EmptySets
+		return emptySets
 	}
-	return Sets{
-		psMap: s.psMap.Delete(key),
+	psMap := s.psMap.Delete(key)
+	if psMap.IsNil() {
+		return emptySets
 	}
+	return Sets{psMap: psMap}
 }
 
 // Lookup returns the sets stored under key.
 func (s Sets) Lookup(key string) (StringSet, bool) {
 	if s.psMap == nil {
-		return EmptyStringSet, false
+		return MakeStringSet(), false
 	}
 	if value, ok := s.psMap.Lookup(key); ok {
 		return value.(StringSet), true
 	}
-	return EmptyStringSet, false
+	return MakeStringSet(), false
 }
 
 // Size returns the number of elements

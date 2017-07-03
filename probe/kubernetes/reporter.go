@@ -197,9 +197,9 @@ func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
 			n = n.WithLatest(report.DoesNotMakeConnections, mtime.Now(), "")
 		}
 
-		rpt.Container.Nodes[id] = n.WithParents(report.EmptySets.Add(
+		rpt.Container.Nodes[id] = n.WithParents(report.MakeSets().Add(
 			report.Pod,
-			report.EmptyStringSet.Add(report.MakePodNodeID(uid)),
+			report.MakeStringSet().Add(report.MakePodNodeID(uid)),
 		))
 	}
 	return rpt, nil
@@ -266,12 +266,12 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 //        connections for which we don't have a robust solution
 //        (see https://github.com/weaveworks/scope/issues/1491)
 func (r *Reporter) hostTopology(services []Service) report.Topology {
-	localNetworks := report.EmptyStringSet
+	localNetworks := report.MakeStringSet()
 	for _, service := range services {
 		localNetworks = localNetworks.Add(service.ClusterIP() + "/32")
 	}
 	node := report.MakeNode(report.MakeHostNodeID(r.hostID))
-	node = node.WithSets(report.EmptySets.
+	node = node.WithSets(report.MakeSets().
 		Add(host.LocalNetworks, localNetworks))
 	return report.MakeTopology().AddNode(node)
 }

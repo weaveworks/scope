@@ -14,10 +14,10 @@ type Networks struct{ *critbitgo.Net }
 // as being host-scoped.
 //
 // TODO this design is broken, make it consistent with probe networks.
-var LocalNetworks = NewNetworks()
+var LocalNetworks = MakeNetworks()
 
-// NewNetworks creates a datastructure representing a set of networks.
-func NewNetworks() Networks {
+// MakeNetworks creates a datastructure representing a set of networks.
+func MakeNetworks() Networks {
 	return Networks{critbitgo.NewNet()}
 }
 

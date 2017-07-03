@@ -12,20 +12,20 @@ func TestSetsMerge(t *testing.T) {
 		a, b report.Sets
 		want map[string][]string
 	}{
-		{report.EmptySets, report.EmptySets, map[string][]string{}},
+		{report.MakeSets(), report.MakeSets(), map[string][]string{}},
 		{
-			report.EmptySets,
-			report.EmptySets.Add("a", report.MakeStringSet("b")),
+			report.MakeSets(),
+			report.MakeSets().Add("a", report.MakeStringSet("b")),
 			map[string][]string{"a": {"b"}},
 		},
 		{
-			report.EmptySets,
-			report.EmptySets.Add("a", report.MakeStringSet("b", "c")),
+			report.MakeSets(),
+			report.MakeSets().Add("a", report.MakeStringSet("b", "c")),
 			map[string][]string{"a": {"b", "c"}},
 		},
 		{
-			report.EmptySets.Add("a", report.MakeStringSet("1")).Add("b", report.MakeStringSet("2")),
-			report.EmptySets.Add("c", report.MakeStringSet("3")).Add("b", report.MakeStringSet("3")),
+			report.MakeSets().Add("a", report.MakeStringSet("1")).Add("b", report.MakeStringSet("2")),
+			report.MakeSets().Add("c", report.MakeStringSet("3")).Add("b", report.MakeStringSet("3")),
 			map[string][]string{"a": {"1"}, "b": {"2", "3"}, "c": {"3"}},
 		},
 	} {

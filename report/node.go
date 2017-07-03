@@ -28,15 +28,15 @@ type Node struct {
 func MakeNode(id string) Node {
 	return Node{
 		ID:             id,
-		Counters:       EmptyCounters,
-		Sets:           EmptySets,
-		Adjacency:      EmptyIDList,
-		Edges:          EmptyEdgeMetadatas,
+		Counters:       MakeCounters(),
+		Sets:           MakeSets(),
+		Adjacency:      MakeIDList(),
+		Edges:          MakeEdgeMetadatas(),
 		Controls:       MakeNodeControls(),
-		LatestControls: EmptyNodeControlDataLatestMap,
-		Latest:         EmptyStringLatestMap,
+		LatestControls: MakeNodeControlDataLatestMap(),
+		Latest:         MakeStringLatestMap(),
 		Metrics:        Metrics{},
-		Parents:        EmptySets,
+		Parents:        MakeSets(),
 	}
 }
 
@@ -170,7 +170,7 @@ func (n Node) WithParents(parents Sets) Node {
 
 // PruneParents returns a fresh copy of n, without any parents.
 func (n Node) PruneParents() Node {
-	n.Parents = EmptySets
+	n.Parents = MakeSets()
 	return n
 }
 

@@ -14,12 +14,11 @@ type Counters struct {
 	psMap ps.Map
 }
 
-// EmptyCounters is the set of empty counters.
-var EmptyCounters = Counters{ps.NewMap()}
+var emptyCounters = Counters{ps.NewMap()}
 
 // MakeCounters returns EmptyCounters
 func MakeCounters() Counters {
-	return EmptyCounters
+	return emptyCounters
 }
 
 // Copy is a noop
@@ -30,7 +29,7 @@ func (c Counters) Copy() Counters {
 // Add value to the counter 'key'
 func (c Counters) Add(key string, value int) Counters {
 	if c.psMap == nil {
-		c = EmptyCounters
+		c = emptyCounters
 	}
 	if existingValue, ok := c.psMap.Lookup(key); ok {
 		value += existingValue.(int)

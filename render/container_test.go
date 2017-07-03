@@ -45,7 +45,7 @@ type testcase struct {
 }
 
 func testMap(t *testing.T, f render.MapFunc, input testcase) {
-	localNetworks := report.NewNetworks()
+	localNetworks := report.MakeNetworks()
 	if err := localNetworks.AddCIDR("1.2.3.0/16"); err != nil {
 		t.Fatalf(err.Error())
 	}
