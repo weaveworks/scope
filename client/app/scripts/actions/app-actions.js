@@ -559,12 +559,7 @@ export function receiveNodesDelta(delta) {
     //
     setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
-    // TODO: This way of getting the Scope state is a bit hacky, so try to replace
-    // it with something better. The problem is that all the actions that are called
-    // from the components wrapped in <CloudFeature /> have a global Service state
-    // returned by getState(). Since method is called from both contexts, getState()
-    // will sometimes return Scope state subtree and sometimes the whole Service state.
-    const state = getState().scope || getState();
+    const state = getState();
     const movingInTime = state.get('timeTravelTransitioning');
     const hasChanges = delta.add || delta.update || delta.remove;
 
@@ -609,11 +604,9 @@ export function clickResumeUpdate() {
     dispatch({
       type: ActionTypes.RESUME_TIME_FROM_NOW
     });
-    // TODO: Find a better way to do this (see the comment above).
-    const state = getState().scope || getState();
     // Periodically merge buffered nodes deltas until the buffer is emptied.
     nodesDeltaBufferUpdateTimer = setInterval(
-      () => updateFromNodesDeltaBuffer(dispatch, state),
+      () => updateFromNodesDeltaBuffer(dispatch, getState()),
       NODES_DELTA_BUFFER_FEED_INTERVAL,
     );
   };
@@ -643,18 +636,17 @@ export function timeTravelStartTransition() {
 }
 
 export function jumpToTime(timestamp) {
-  return (dispatch, getServiceState) => {
+  return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.JUMP_TO_TIME,
       timestamp,
     });
-    const scopeState = getServiceState().scope;
-    getNodes(scopeState, dispatch);
-    // updateWebsocketChannel(scopeState, dispatch);
+    getNodes(getState(), dispatch);
+    // updateWebsocketChannel(getState(), dispatch);
     // dispatch(resetNodesDeltaBuffer());
-    getTopologies(scopeState, dispatch);
-    if (isResourceViewModeSelector(scopeState)) {
-      getResourceViewNodesSnapshot(scopeState, dispatch);
+    getTopologies(getState(), dispatch);
+    if (isResourceViewModeSelector(getState())) {
+      getResourceViewNodesSnapshot(getState(), dispatch);
     }
   };
 }
@@ -668,9 +660,7 @@ export function receiveNodesForTopology(nodes, topologyId) {
 }
 
 export function receiveTopologies(topologies) {
-  return (dispatch, getGlobalState) => {
-    // NOTE: Fortunately, this will go when Time Travel is out of <CloudFeature />.
-    const getState = () => getGlobalState().scope || getGlobalState();
+  return (dispatch, getState) => {
     const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
