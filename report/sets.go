@@ -47,9 +47,11 @@ func (s Sets) Delete(key string) Sets {
 	if s.psMap == nil {
 		return emptySets
 	}
-	return Sets{
-		psMap: s.psMap.Delete(key),
+	psMap := s.psMap.Delete(key)
+	if psMap.IsNil() {
+		return emptySets
 	}
+	return Sets{psMap: psMap}
 }
 
 // Lookup returns the sets stored under key.
