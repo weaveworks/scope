@@ -79,7 +79,7 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 var KubeControllerRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	renderParents(
 		report.Pod, []string{report.Deployment, report.DaemonSet},
-		NoParentsPseudo, UnmanagedID, makePodsChildren,
+		NoParentsPseudo, UnmanagedID, nil,
 		PodRenderer,
 	),
 )
@@ -133,26 +133,6 @@ func (s selectPodsWithDeployments) Render(rpt report.Report, dct Decorator) repo
 
 func (s selectPodsWithDeployments) Stats(rpt report.Report, _ Decorator) Stats {
 	return Stats{}
-}
-
-// When mapping from pods to deployments, complete the two-way relation by making the
-// mapped-from pod a child of the mapped-to deployment, and remove any replica set children.
-// This is needed because pods were originally mapped to deployments via an intermediate replica set
-// which we need to remove.
-func makePodsChildren(parent, original report.Node) report.Node {
-	children := parent.Children
-	// Gather all the replica sets...
-	replicaSetIDs := []string{}
-	children.ForEach(func(n report.Node) {
-		if n.Topology == report.ReplicaSet {
-			replicaSetIDs = append(replicaSetIDs, n.ID)
-		}
-	})
-	// ...and delete them.
-	children = children.Delete(replicaSetIDs...)
-	// Then add in the mapped-from pod.
-	children = children.Add(original)
-	return parent.WithChildren(children)
 }
 
 // MapPod2IP maps pod nodes to their IP address.  This allows pods to
