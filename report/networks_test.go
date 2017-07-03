@@ -8,7 +8,7 @@ import (
 )
 
 func TestContains(t *testing.T) {
-	networks := report.NewNetworks()
+	networks := report.MakeNetworks()
 	for _, cidr := range []string{"10.0.0.1/8", "192.168.1.1/24"} {
 		if err := networks.AddCIDR(cidr); err != nil {
 			panic(err)

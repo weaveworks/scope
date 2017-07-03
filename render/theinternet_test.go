@@ -29,7 +29,7 @@ func TestReportLocalNetworks(t *testing.T) {
 			},
 		},
 	})
-	want := report.NewNetworks()
+	want := report.MakeNetworks()
 	for _, cidr := range []string{"10.0.0.1/8", "192.168.1.1/24", "10.32.0.1/12"} {
 		if err := want.AddCIDR(cidr); err != nil {
 			panic(err)

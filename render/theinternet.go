@@ -67,7 +67,7 @@ func isKnownService(hostname string) bool {
 // used to determine which nodes in the report are "remote", i.e. outside of
 // our infrastructure.
 func LocalNetworks(r report.Report) report.Networks {
-	networks := report.NewNetworks()
+	networks := report.MakeNetworks()
 
 	for _, topology := range []report.Topology{r.Host, r.Overlay} {
 		for _, md := range topology.Nodes {
