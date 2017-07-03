@@ -67,8 +67,9 @@ list_containers() {
 
 list_connections() {
     local host=$1
+    local between=${2:-containers}
     echo "Listing connections on ${host}:"
-    curl -s "http://${host}:4040/api/topology/containers?system=show" | jq -r '.nodes[] | select(has("adjacency")) | { "from_name": .label, "from_id": .id, "to": .adjacency[]} | .from_id + " (" + .from_name+ ") -> " + .to'
+    curl -s "http://${host}:4040/api/topology/${between}?system=show" | jq -r '.nodes[] | select(has("adjacency")) | { "from_name": .label, "from_id": .id, "to": .adjacency[]} | .from_id + " (" + .from_name+ ") -> " + .to'
     echo
 }
 

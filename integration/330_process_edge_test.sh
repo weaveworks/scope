@@ -19,5 +19,7 @@ wait_for processes "$HOST1" 60 "nginx: worker process" nc
 has processes "$HOST1" "nginx: worker process"
 has processes "$HOST1" nc
 has_connection processes "$HOST1" nc "nginx: worker process"
+# Print connections in case of test failure
+list_connections "$HOST1" processes
 
 scope_end_suite

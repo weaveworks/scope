@@ -23,6 +23,8 @@ check() {
     has processes "$1" "nginx: worker process"
     has processes "$1" nc
     has_connection processes "$1" nc "nginx: worker process"
+    # Print connections in case of test failure
+    list_connections "$1" processes
 }
 
 check "$HOST1"
