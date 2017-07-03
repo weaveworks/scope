@@ -14,6 +14,7 @@ import {
   deletePipe,
   stopPolling,
   teardownWebsockets,
+  getNodes,
 } from '../utils/web-api-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
@@ -404,28 +405,6 @@ export function clickTopology(topologyId) {
   };
 }
 
-export function timeTravelStartTransition() {
-  return {
-    type: ActionTypes.TIME_TRAVEL_START_TRANSITION,
-  };
-}
-
-export function jumpToTime(timestamp) {
-  return (dispatch, getServiceState) => {
-    dispatch({
-      type: ActionTypes.JUMP_TO_TIME,
-      timestamp,
-    });
-    const scopeState = getServiceState().scope;
-    updateWebsocketChannel(scopeState, dispatch);
-    dispatch(resetNodesDeltaBuffer());
-    getTopologies(getServiceState().scope, dispatch);
-    if (isResourceViewModeSelector(scopeState)) {
-      getResourceViewNodesSnapshot(scopeState, dispatch);
-    }
-  };
-}
-
 export function cacheZoomState(zoomState) {
   return {
     type: ActionTypes.CACHE_ZOOM_STATE,
@@ -641,8 +620,42 @@ export function clickResumeUpdate() {
 }
 
 export function clickTimeTravel() {
+  return (dispatch) => {
+    stopPolling();
+    teardownWebsockets();
+    dispatch({
+      type: ActionTypes.START_TIME_TRAVEL
+    });
+  };
+}
+
+export function receiveNodes(nodes) {
   return {
-    type: ActionTypes.START_TIME_TRAVEL
+    type: ActionTypes.RECEIVE_NODES,
+    nodes,
+  };
+}
+
+export function timeTravelStartTransition() {
+  return {
+    type: ActionTypes.TIME_TRAVEL_START_TRANSITION,
+  };
+}
+
+export function jumpToTime(timestamp) {
+  return (dispatch, getServiceState) => {
+    dispatch({
+      type: ActionTypes.JUMP_TO_TIME,
+      timestamp,
+    });
+    const scopeState = getServiceState().scope;
+    getNodes(scopeState, dispatch);
+    // updateWebsocketChannel(scopeState, dispatch);
+    // dispatch(resetNodesDeltaBuffer());
+    getTopologies(scopeState, dispatch);
+    if (isResourceViewModeSelector(scopeState)) {
+      getResourceViewNodesSnapshot(scopeState, dispatch);
+    }
   };
 }
 

@@ -180,6 +180,33 @@ function clearNodes(state) {
     .set('nodesLoaded', false);
 }
 
+// TODO: These state changes should probably be calculated from selectors.
+function updateStateFromNodes(state) {
+  // Apply pinned searches, filters nodes that dont match.
+  state = applyPinnedSearches(state);
+
+  // In case node or edge disappears before mouseleave event.
+  const nodesIds = state.get('nodes').keySeq();
+  if (!nodesIds.contains(state.get('mouseOverNodeId'))) {
+    state = state.set('mouseOverNodeId', null);
+  }
+  if (!nodesIds.some(nodeId => includes(state.get('mouseOverEdgeId'), nodeId))) {
+    state = state.set('mouseOverEdgeId', null);
+  }
+
+  // Update the nodes cache only if we're not in the resource view mode, as we
+  // intentionally want to keep it static before we figure how to keep it up-to-date.
+  if (!isResourceViewModeSelector(state)) {
+    const nodesForCurrentTopologyKey = ['nodesByTopology', state.get('currentTopologyId')];
+    state = state.setIn(nodesForCurrentTopologyKey, state.get('nodes'));
+  }
+
+  // Clear the error.
+  state = state.set('errorUrl', null);
+
+  return state;
+}
+
 export function rootReducer(state = initialState, action) {
   if (!action.type) {
     error('Payload missing a type!', action);
@@ -580,17 +607,8 @@ export function rootReducer(state = initialState, action) {
         'update', size(action.delta.update),
         'add', size(action.delta.add));
 
-      state = state.set('errorUrl', null);
-
       // nodes that no longer exist
       each(action.delta.remove, (nodeId) => {
-        // in case node disappears before mouseleave event
-        if (state.get('mouseOverNodeId') === nodeId) {
-          state = state.set('mouseOverNodeId', null);
-        }
-        if (state.hasIn(['nodes', nodeId]) && includes(state.get('mouseOverEdgeId'), nodeId)) {
-          state = state.set('mouseOverEdgeId', null);
-        }
         state = state.deleteIn(['nodes', nodeId]);
       });
 
@@ -609,17 +627,13 @@ export function rootReducer(state = initialState, action) {
         state = state.setIn(['nodes', node.id], fromJS(node));
       });
 
-      // apply pinned searches, filters nodes that dont match
-      state = applyPinnedSearches(state);
+      return updateStateFromNodes(state);
+    }
 
-      // Update the nodes cache only if we're not in the resource view mode, as we
-      // intentionally want to keep it static before we figure how to keep it up-to-date.
-      if (!isResourceViewModeSelector(state)) {
-        const nodesForCurrentTopologyKey = ['nodesByTopology', state.get('currentTopologyId')];
-        state = state.setIn(nodesForCurrentTopologyKey, state.get('nodes'));
-      }
-
-      return state;
+    case ActionTypes.RECEIVE_NODES: {
+      state = state.set('timeTravelTransitioning', false);
+      state = state.set('nodes', fromJS(action.nodes));
+      return updateStateFromNodes(state);
     }
 
     case ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY: {

@@ -37,13 +37,14 @@ class TimeTravel extends React.Component {
       // TODO: Showing a three months of history is quite arbitrary;
       // we should instead get some meaningful 'beginning of time' from
       // the backend and make the slider show whole active history.
-      sliderMinValue: moment().subtract(6, 'months').valueOf(),
+      sliderMinValue: moment().subtract(15, 'months').valueOf(),
       ...getTimestampStates(props.pausedAt),
     };
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleSliderChange = this.handleSliderChange.bind(this);
     this.handleJumpClick = this.handleJumpClick.bind(this);
+    this.debouncedJumpTo = this.debouncedJumpTo.bind(this);
     this.renderMarks = this.renderMarks.bind(this);
     this.renderMark = this.renderMark.bind(this);
 
@@ -68,9 +69,7 @@ class TimeTravel extends React.Component {
   }
 
   handleSliderChange(timestamp) {
-    this.props.timeTravelStartTransition();
-    this.setState(getTimestampStates(timestamp));
-    this.debouncedUpdateTimestamp(timestamp);
+    this.debouncedJumpTo(timestamp);
     this.debouncedTrackSliderChange();
   }
 
@@ -81,10 +80,7 @@ class TimeTravel extends React.Component {
     if (timestamp.isValid()) {
       timestamp = Math.max(timestamp, this.state.sliderMinValue);
       timestamp = Math.min(timestamp, moment().valueOf());
-
-      this.props.timeTravelStartTransition();
-      this.setState(getTimestampStates(timestamp));
-      this.updateTimestamp(timestamp);
+      this.debouncedJumpTo(timestamp);
 
       trackMixpanelEvent('scope.time.timestamp.edit', {
         layout: this.props.topologyViewMode,
@@ -98,14 +94,17 @@ class TimeTravel extends React.Component {
     let timestamp = this.state.sliderValue + millisecondsDelta;
     timestamp = Math.max(timestamp, this.state.sliderMinValue);
     timestamp = Math.min(timestamp, moment().valueOf());
-
-    this.props.timeTravelStartTransition();
-    this.setState(getTimestampStates(timestamp));
-    this.debouncedUpdateTimestamp(timestamp);
+    this.debouncedJumpTo(timestamp);
   }
 
   updateTimestamp(timestamp) {
     this.props.jumpToTime(moment(timestamp));
+  }
+
+  debouncedJumpTo(timestamp) {
+    this.props.timeTravelStartTransition();
+    this.setState(getTimestampStates(timestamp));
+    this.debouncedUpdateTimestamp(timestamp);
   }
 
   trackSliderChange() {
@@ -119,14 +118,16 @@ class TimeTravel extends React.Component {
   renderMark({ timestampValue, label }) {
     const sliderMaxValue = moment().valueOf();
     const pos = (sliderMaxValue - timestampValue) / (sliderMaxValue - this.state.sliderMinValue);
-    const style = { marginLeft: `calc(${(1 - pos) * 100}% - 50px)`, width: '100px' };
+    if (label !== 'Now' && pos < 0.05) return null;
+
+    const style = { marginLeft: `calc(${(1 - pos) * 100}% - 32px)`, width: '64px' };
     return (
       <div
         style={style}
         className="time-travel-markers-tick"
         key={timestampValue}>
         <span className="vertical-tick" />
-        <a className="link" onClick={() => this.updateTimestamp(timestampValue)}>{label}</a>
+        <a className="link" onClick={() => this.debouncedJumpTo(timestampValue)}>{label}</a>
       </div>
     );
   }

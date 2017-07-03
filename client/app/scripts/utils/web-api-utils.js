@@ -7,7 +7,7 @@ import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveEr
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
   receiveControlNodeRemoved, receiveControlPipe, receiveControlPipeStatus,
   receiveControlSuccess, receiveTopologies, receiveNotFound,
-  receiveNodesForTopology } from '../actions/app-actions';
+  receiveNodesForTopology, receiveNodes } from '../actions/app-actions';
 
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
@@ -195,6 +195,23 @@ function getNodesForTopologies(state, dispatch, topologyIds, topologyOptions = m
     })
     .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
     Promise.resolve());
+}
+
+export function getNodes(state, dispatch) {
+  const topologyUrl = getCurrentTopologyUrl(state);
+  const topologyOptions = activeTopologyOptionsSelector(state);
+  const optionsQuery = buildUrlQuery(topologyOptions, state);
+  const url = `${getApiPath()}${topologyUrl}?${optionsQuery}`;
+  doRequest({
+    url,
+    success: (res) => {
+      dispatch(receiveNodes(res.nodes));
+    },
+    error: (req) => {
+      log(`Error in nodes request: ${req.responseText}`);
+      dispatch(receiveError(url));
+    }
+  });
 }
 
 /**
