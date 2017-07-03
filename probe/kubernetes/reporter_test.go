@@ -264,7 +264,7 @@ func TestTagger(t *testing.T) {
 	}
 
 	have, ok := rpt.Container.Nodes["container1"].Parents.Lookup(report.Pod)
-	want := report.MakeStringSet().Add(report.MakePodNodeID("123456"))
+	want := report.MakeStringSet(report.MakePodNodeID("123456"))
 	if !ok || !reflect.DeepEqual(have, want) {
 		t.Errorf("Expected container to have pod parent %v %v", have, want)
 	}
