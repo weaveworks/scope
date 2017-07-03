@@ -197,14 +197,12 @@ class TimeTravel extends React.Component {
   }
 }
 
-function mapStateToProps({ scope, root }, { params }) {
-  const cloudInstance = root.instances[params.orgId] || {};
-  const featureFlags = cloudInstance.featureFlags || [];
+function mapStateToProps(state) {
   return {
-    showingTimeTravel: featureFlags.includes('time-travel') && scope.get('showingTimeTravel'),
-    topologyViewMode: scope.get('topologyViewMode'),
-    currentTopology: scope.get('currentTopology'),
-    pausedAt: scope.get('pausedAt'),
+    showingTimeTravel: state.get('showingTimeTravel'),
+    topologyViewMode: state.get('topologyViewMode'),
+    currentTopology: state.get('currentTopology'),
+    pausedAt: state.get('pausedAt'),
   };
 }
 

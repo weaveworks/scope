@@ -175,7 +175,9 @@
   .selectors {
     display: flex;
     position: relative;
-    z-index: 20;
+    > * { z-index: 20; }
+
+    .time-control { z-index: 2001; }
 
     .logo {
       margin: -16px 0 0 64px;
@@ -1467,14 +1469,18 @@
 }
 
 .time-control {
+  position: absolute;
+  right: 36px;
+
   &-controls {
     align-items: center;
+    justify-content: flex-end;
     display: flex;
   }
 
   &-spinner {
     display: inline-block;
-    margin-left: 12px;
+    margin-right: 15px;
     margin-top: 3px;
 
     .fa {
@@ -1487,6 +1493,8 @@
     @extend .blinkable;
     display: block;
     margin-top: 5px;
+    text-align: right;
+    pointer-events: all;
   }
 }
 

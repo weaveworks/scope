@@ -12,7 +12,6 @@ import Search from './search';
 import Status from './status';
 import Topologies from './topologies';
 import TopologyOptions from './topology-options';
-import CloudFeature from './cloud-feature';
 import Overlay from './overlay';
 import { getApiDetails } from '../utils/web-api-utils';
 import {
@@ -182,10 +181,7 @@ class App extends React.Component {
         {showingDetails && <Details />}
 
         <div className="header">
-          <CloudFeature>
-            <TimeTravel />
-          </CloudFeature>
-
+          <TimeTravel />
           <div className="selectors">
             <div className="logo">
               {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
