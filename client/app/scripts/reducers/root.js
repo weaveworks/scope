@@ -364,6 +364,7 @@ export function rootReducer(state = initialState, action) {
     //
 
     case ActionTypes.RESUME_TIME_FROM_NOW: {
+      state = state.set('timeTravelTransitioning', true);
       state = state.set('showingTimeTravel', false);
       return state.set('pausedAt', null);
     }
@@ -582,7 +583,7 @@ export function rootReducer(state = initialState, action) {
         'update', size(action.delta.update),
         'add', size(action.delta.add));
 
-      // nodes that no longer exist
+      // remove nodes that no longer exist
       each(action.delta.remove, (nodeId) => {
         state = state.deleteIn(['nodes', nodeId]);
       });

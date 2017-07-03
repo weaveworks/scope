@@ -233,8 +233,6 @@ export function getResourceViewNodesSnapshot(state, dispatch) {
 }
 
 export function getTopologies(state, dispatch, initialPoll = false) {
-  // TODO: Remove this once TimeTravel is out of the feature flag.
-  state = state.scope || state;
   // Used to resume polling when navigating between pages in Weave Cloud.
   continuePolling = initialPoll === true ? true : continuePolling;
   clearTimeout(topologyTimer);

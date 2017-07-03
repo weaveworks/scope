@@ -548,12 +548,18 @@ export function receiveNodesDelta(delta) {
     setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
     const state = getState();
-    const hasChanges = delta.add || delta.update || delta.remove;
 
-    if (hasChanges) {
-      if (isPausedSelector(state)) {
-        // dispatch({ type: ActionTypes.BUFFER_NODES_DELTA, delta });
-      } else {
+    if (!isPausedSelector(state)) {
+      // When moving in time, we will consider the transition complete
+      // only when the first batch of nodes delta has been received. We
+      // do that because we want to keep the previous state blurred instead
+      // of transitioning over an empty state like when switching topologies.
+      if (state.get('timeTravelTransitioning')) {
+        dispatch({ type: ActionTypes.FINISH_TIME_TRAVEL_TRANSITION });
+      }
+
+      const hasChanges = delta.add || delta.update || delta.remove;
+      if (hasChanges) {
         dispatch({
           type: ActionTypes.RECEIVE_NODES_DELTA,
           delta
@@ -599,8 +605,6 @@ export function jumpToTime(timestamp) {
       timestamp,
     });
     getNodes(getState(), dispatch);
-    // updateWebsocketChannel(getState(), dispatch);
-    // dispatch(resetNodesDeltaBuffer());
     getTopologies(getState(), dispatch);
     if (isResourceViewModeSelector(getState())) {
       getResourceViewNodesSnapshot(getState(), dispatch);

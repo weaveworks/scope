@@ -20,35 +20,30 @@ class TimeControl extends React.Component {
     this.handleNowClick = this.handleNowClick.bind(this);
     this.handlePauseClick = this.handlePauseClick.bind(this);
     this.handleTravelClick = this.handleTravelClick.bind(this);
+    this.getTrackingMetadata = this.getTrackingMetadata.bind(this);
   }
 
-  handleNowClick() {
+  getTrackingMetadata() {
     const { currentTopology } = this.props;
-    trackMixpanelEvent('scope.time.resume.click', {
+    return {
       layout: this.props.topologyViewMode,
       topologyId: currentTopology && currentTopology.get('id'),
       parentTopologyId: currentTopology && currentTopology.get('parentId'),
-    });
+    };
+  }
+
+  handleNowClick() {
+    trackMixpanelEvent('scope.time.resume.click', this.getTrackingMetadata());
     this.props.clickResumeUpdate();
   }
 
   handlePauseClick() {
-    const { currentTopology } = this.props;
-    trackMixpanelEvent('scope.time.pause.click', {
-      layout: this.props.topologyViewMode,
-      topologyId: currentTopology && currentTopology.get('id'),
-      parentTopologyId: currentTopology && currentTopology.get('parentId'),
-    });
+    trackMixpanelEvent('scope.time.pause.click', this.getTrackingMetadata());
     this.props.clickPauseUpdate();
   }
 
   handleTravelClick() {
-    const { currentTopology } = this.props;
-    trackMixpanelEvent('scope.time.travel.click', {
-      layout: this.props.topologyViewMode,
-      topologyId: currentTopology && currentTopology.get('id'),
-      parentTopologyId: currentTopology && currentTopology.get('parentId'),
-    });
+    trackMixpanelEvent('scope.time.travel.click', this.getTrackingMetadata());
     this.props.clickTimeTravel();
   }
 
@@ -95,6 +90,10 @@ class TimeControl extends React.Component {
           title={moment(pausedAt).utc().toISOString()}>
           Paused {moment(pausedAt).fromNow()}
         </span>}
+        {isRunningNow && timeTravelTransitioning && <span
+          className="time-control-info">
+          Resuming the live state
+        </span>}
       </div>
     );
   }
@@ -102,7 +101,6 @@ class TimeControl extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    update: state.get('topologyViewMode'),
     topologyViewMode: state.get('topologyViewMode'),
     currentTopology: state.get('currentTopology'),
     showingTimeTravel: state.get('showingTimeTravel'),
