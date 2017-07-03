@@ -37,7 +37,7 @@ class TimeTravel extends React.Component {
       // TODO: Showing a three months of history is quite arbitrary;
       // we should instead get some meaningful 'beginning of time' from
       // the backend and make the slider show whole active history.
-      sliderMinValue: moment().subtract(15, 'months').valueOf(),
+      sliderMinValue: moment().subtract(6, 'months').valueOf(),
       ...getTimestampStates(props.pausedAt),
     };
 

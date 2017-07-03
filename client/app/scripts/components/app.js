@@ -1,5 +1,6 @@
 import debug from 'debug';
 import React from 'react';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
@@ -166,12 +167,15 @@ class App extends React.Component {
   }
 
   render() {
-    const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails, showingHelp,
-      showingNetworkSelector, showingTroubleshootingMenu, timeTravelTransitioning } = this.props;
+    const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails,
+      showingHelp, showingNetworkSelector, showingTroubleshootingMenu,
+      timeTravelTransitioning, showingTimeTravel } = this.props;
+
+    const className = classNames('scope-app', { 'time-travel-open': showingTimeTravel });
     const isIframe = window !== window.top;
 
     return (
-      <div className="scope-app" ref={this.saveAppRef}>
+      <div className={className} ref={this.saveAppRef}>
         {showingDebugToolbar() && <DebugToolbar />}
 
         {showingHelp && <HelpPanel />}
@@ -224,6 +228,7 @@ function mapStateToProps(state) {
     searchQuery: state.get('searchQuery'),
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
+    showingTimeTravel: state.get('showingTimeTravel'),
     showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,

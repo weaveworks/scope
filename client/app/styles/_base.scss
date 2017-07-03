@@ -64,7 +64,12 @@
   pointer-events: none;
   z-index: 2000;
 
-  &.faded { opacity: 0.5; }
+  &.faded {
+    // NOTE: Not sure if we should block the pointer events here..
+    pointer-events: all;
+    cursor: wait;
+    opacity: 0.5;
+  }
 }
 
 .overlay-wrapper {
@@ -164,6 +169,12 @@
     padding-top: 8px;
     margin-bottom: 12px;
     font-weight: 400;
+  }
+
+  &.time-travel-open {
+    .details-wrapper {
+      margin-top: 50px;
+    }
   }
 }
 
@@ -660,9 +671,9 @@
     display: flex;
     z-index: 1024;
     right: $details-window-padding-left;
-    top: 24px;
+    top: 100px;
     bottom: 48px;
-    transition: transform 0.33333s cubic-bezier(0,0,0.21,1);
+    transition: transform 0.33333s cubic-bezier(0,0,0.21,1), margin-top .15s $base-ease;
   }
 }
 
@@ -1947,6 +1958,9 @@
 //
 
 .nodes-grid {
+  // TODO: Use relative positioning here.
+  position: absolute;
+  top: 0;
 
   tr {
     border-radius: 6px;
