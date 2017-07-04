@@ -12,7 +12,7 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
-// MetricLink describes a link referencing a metric.
+// MetricLink describes a URL referencing a metric.
 type MetricLink struct {
 	// References the metric id
 	ID       string `json:"id,omitempty"`
@@ -37,22 +37,27 @@ var (
 	// Prometheus queries for topologies
 	topologyQueries = map[string]map[string]*template.Template{
 		report.Pod: {
+			// Metric names provided by cAdvisor in kubelet
 			docker.MemoryUsage:   prepareTemplate(`sum(container_memory_usage_bytes{pod_name="{{.Label}}"})`),
 			docker.CPUTotalUsage: prepareTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name="{{.Label}}"}[1m]))`),
 		},
 		report.ReplicaSet: {
-			docker.MemoryUsage:   prepareTemplate(`sum(container_memory_usage_bytes{pod_name=~"{{.Label}}-.+"})`),
-			docker.CPUTotalUsage: prepareTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name=~"{{.Label}}-.+"}[1m]))`),
+			// Metric names provided by cAdvisor in kubelet
+			docker.MemoryUsage:   prepareTemplate(`sum(container_memory_usage_bytes{pod_name=~"{{.Label}}-[^-]+-[^-]"})`),
+			docker.CPUTotalUsage: prepareTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name=~"{{.Label}}-[^-]+-[^-]"}[1m]))`),
 		},
 		report.Deployment: {
-			docker.MemoryUsage:   prepareTemplate(`sum(container_memory_usage_bytes{pod_name=~"{{.Label}}-[0-9]+-[^-]+"})`),
-			docker.CPUTotalUsage: prepareTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name=~"{{.Label}}-[0-9]+-[^-]+"}[1m]))`),
+			// Metric names provided by cAdvisor in kubelet
+			docker.MemoryUsage:   prepareTemplate(`sum(container_memory_usage_bytes{pod_name=~"{{.Label}}-[^-]+-[^-]+"})`),
+			docker.CPUTotalUsage: prepareTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name=~"{{.Label}}-[^-]+-[^-]+"}[1m]))`),
 		},
 		report.DaemonSet: {
+			// Metric names defined as recording rule. Filters by `monitor=""` for cortex-only data.
 			docker.MemoryUsage:   prepareTemplate(`namespace_name:container_memory_usage_bytes:sum{name="{{.Label}}",monitor=""}`),
 			docker.CPUTotalUsage: prepareTemplate(`namespace_name:container_cpu_usage_seconds_total:sum_rate{name="{{.Label}}"}`),
 		},
 		report.Service: {
+			// Metric names defined as recording rule. Filters by `monitor=""` for cortex-only data.
 			docker.MemoryUsage:   prepareTemplate(`namespace_name:container_memory_usage_bytes:sum{name="{{.Label}}",monitor=""}`),
 			docker.CPUTotalUsage: prepareTemplate(`namespace_name:container_cpu_usage_seconds_total:sum_rate{name="{{.Label}}"}`),
 		},

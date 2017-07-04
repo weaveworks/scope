@@ -29,7 +29,6 @@ export default class NodeDetailsHealth extends React.Component {
       topologyId,
     } = this.props;
 
-    const hasUnattached = Object.keys(unattachedLinks).length > 0;
     const primeCutoff = metrics.length > 3 && !this.state.expanded ? 2 : metrics.length;
     const primeMetrics = metrics.slice(0, primeCutoff);
     const overflowMetrics = metrics.slice(primeCutoff);
@@ -57,7 +56,7 @@ export default class NodeDetailsHealth extends React.Component {
           handleClick={this.handleClickMore} collection={this.props.metrics}
           expanded={this.state.expanded} notShown={notShown} hideNumber />
 
-        {hasUnattached && <div className="node-details-health-wrapper">
+        <div className="node-details-health-wrapper">
           {Object.keys(unattachedLinks).map(id => <CloudFeature alwaysShow key={id}>
             <NodeDetailsHealthLinkItem
               withoutGraph
@@ -66,7 +65,7 @@ export default class NodeDetailsHealth extends React.Component {
               topologyId={topologyId}
               />
           </CloudFeature>)}
-        </div>}
+        </div>
       </div>
     );
   }

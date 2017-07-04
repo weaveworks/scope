@@ -198,7 +198,7 @@ class NodeDetails extends React.Component {
         </div>}
 
         <div className="node-details-content">
-          {Object.keys(metricLinks).length > 0 && <div className="node-details-content-section">
+          {((details.metrics || []).length + Object.keys(unattachedLinks).length > 0) && <div className="node-details-content-section">
             <div className="node-details-content-section-header">Status</div>
             <NodeDetailsHealth
               metrics={details.metrics}
