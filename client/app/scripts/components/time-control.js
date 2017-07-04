@@ -48,11 +48,13 @@ class TimeControl extends React.Component {
   }
 
   render() {
-    const { showingTimeTravel, pausedAt, timeTravelTransitioning } = this.props;
+    const { showingTimeTravel, pausedAt, timeTravelTransitioning, topologiesLoaded } = this.props;
 
     const isPausedNow = pausedAt && !showingTimeTravel;
     const isTimeTravelling = showingTimeTravel;
     const isRunningNow = !pausedAt;
+
+    if (!topologiesLoaded) return null;
 
     return (
       <div className="time-control">
@@ -85,10 +87,10 @@ class TimeControl extends React.Component {
             </CloudFeature>
           </div>
         </div>
-        {isPausedNow && <span
+        {(isPausedNow || isTimeTravelling) && <span
           className="time-control-info"
           title={moment(pausedAt).utc().toISOString()}>
-          Paused {moment(pausedAt).fromNow()}
+          Showing state from {moment(pausedAt).fromNow()}
         </span>}
         {isRunningNow && timeTravelTransitioning && <span
           className="time-control-info">
@@ -102,6 +104,7 @@ class TimeControl extends React.Component {
 function mapStateToProps(state) {
   return {
     topologyViewMode: state.get('topologyViewMode'),
+    topologiesLoaded: state.get('topologiesLoaded'),
     currentTopology: state.get('currentTopology'),
     showingTimeTravel: state.get('showingTimeTravel'),
     timeTravelTransitioning: state.get('timeTravelTransitioning'),

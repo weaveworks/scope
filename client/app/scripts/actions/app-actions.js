@@ -14,7 +14,7 @@ import {
   deletePipe,
   stopPolling,
   teardownWebsockets,
-  getNodes,
+  getNodesOnce,
 } from '../utils/web-api-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
@@ -39,6 +39,15 @@ import {
 
 const log = debug('scope:app-actions');
 
+
+function getNodes(getState, dispatch, justUnpaused = false) {
+  if (isPausedSelector(getState())) {
+    getNodesOnce(getState, dispatch);
+  } else {
+    updateWebsocketChannel(getState, dispatch, justUnpaused);
+  }
+  getNodeDetails(getState, dispatch);
+}
 
 export function showHelp() {
   return { type: ActionTypes.SHOW_HELP };
@@ -208,10 +217,8 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     });
     updateRoute(getState);
     // update all request workers with new options
-    const state = getState();
-    getTopologies(state, dispatch);
-    updateWebsocketChannel(state, dispatch);
-    getNodeDetails(state, dispatch);
+    getTopologies(getState, dispatch);
+    getNodes(getState, dispatch);
   };
 }
 
@@ -335,7 +342,7 @@ export function clickNode(nodeId, label, origin) {
       nodeId
     });
     updateRoute(getState);
-    getNodeDetails(getState(), dispatch);
+    getNodeDetails(getState, dispatch);
   };
 }
 
@@ -355,7 +362,7 @@ export function clickRelative(nodeId, topologyId, label, origin) {
       topologyId
     });
     updateRoute(getState);
-    getNodeDetails(getState(), dispatch);
+    getNodeDetails(getState, dispatch);
   };
 }
 
@@ -369,7 +376,7 @@ function updateTopology(dispatch, getState) {
   // NOTE: This is currently not needed for our static resource
   // view, but we'll need it here later and it's simpler to just
   // keep it than to redo the nodes delta updating logic.
-  updateWebsocketChannel(state, dispatch);
+  getNodes(getState, dispatch);
 }
 
 export function clickShowTopologyForNode(topologyId, nodeId) {
@@ -570,18 +577,24 @@ export function receiveNodesDelta(delta) {
 }
 
 export function clickResumeUpdate() {
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.RESUME_TIME_FROM_NOW
     });
+    // After unpausing, all of the following calls will re-activate polling.
+    getTopologies(getState, dispatch);
+    getNodes(getState, dispatch, true);
   };
 }
 
 export function clickTimeTravel() {
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.START_TIME_TRAVEL
     });
+    if (!getState().get('nodesLoaded')) {
+      getNodes(getState, dispatch);
+    }
   };
 }
 
@@ -604,8 +617,8 @@ export function jumpToTime(timestamp) {
       type: ActionTypes.JUMP_TO_TIME,
       timestamp,
     });
-    getNodes(getState(), dispatch);
-    getTopologies(getState(), dispatch);
+    getTopologies(getState, dispatch);
+    getNodes(getState, dispatch);
     if (isResourceViewModeSelector(getState())) {
       getResourceViewNodesSnapshot(getState(), dispatch);
     }
@@ -627,10 +640,9 @@ export function receiveTopologies(topologies) {
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies
     });
-    const state = getState();
-    updateWebsocketChannel(state, dispatch);
-    getNodeDetails(state, dispatch);
+    getNodes(getState, dispatch);
     // Populate search matches on first load
+    const state = getState();
     if (firstLoad && state.get('searchQuery')) {
       dispatch(focusSearch());
     }
@@ -732,7 +744,7 @@ export function setContrastMode(enabled) {
 
 export function getTopologiesWithInitialPoll() {
   return (dispatch, getState) => {
-    getTopologies(getState(), dispatch, true);
+    getTopologies(getState, dispatch, true);
   };
 }
 
@@ -743,13 +755,12 @@ export function route(urlState) {
       type: ActionTypes.ROUTE_TOPOLOGY
     });
     // update all request workers with new options
-    const state = getState();
-    getTopologies(state, dispatch);
-    updateWebsocketChannel(state, dispatch);
-    getNodeDetails(state, dispatch);
+    getTopologies(getState, dispatch);
+    getNodes(getState, dispatch);
     // If we are landing on the resource view page, we need to fetch not only all the
     // nodes for the current topology, but also the nodes of all the topologies that make
     // the layers in the resource view.
+    const state = getState();
     if (isResourceViewModeSelector(state)) {
       getResourceViewNodesSnapshot(state, dispatch);
     }
