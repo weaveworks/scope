@@ -26,15 +26,6 @@ func isPauseContainer(n report.Node) bool {
 	return ok && kubernetes.IsPauseImageName(image)
 }
 
-type noParentsActionEnum int
-
-// Constants for specifying noParentsAction in Map2Parent
-const (
-	NoParentsPseudo noParentsActionEnum = iota
-	NoParentsDrop
-	NoParentsKeep
-)
-
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
 var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
@@ -47,7 +38,7 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 			MakeMap(
 				PropagateSingleMetrics(report.Container),
 				MakeMap(
-					Map2Parent([]string{report.Pod}, NoParentsPseudo, UnmanagedID, nil),
+					Map2Parent([]string{report.Pod}, UnmanagedID),
 					MakeFilter(
 						ComposeFilterFuncs(
 							IsRunning,
@@ -67,7 +58,7 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // graph by merging the pods graph and the services topology.
 var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	renderParents(
-		report.Pod, []string{report.Service}, NoParentsDrop, "", nil,
+		report.Pod, []string{report.Service}, "",
 		PodRenderer,
 	),
 )
@@ -78,18 +69,15 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // have connections to each other.
 var KubeControllerRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	renderParents(
-		report.Pod, []string{report.Deployment, report.DaemonSet},
-		NoParentsPseudo, UnmanagedID, makePodsChildren,
+		report.Pod, []string{report.Deployment, report.DaemonSet}, UnmanagedID,
 		PodRenderer,
 	),
 )
 
 // renderParents produces a 'standard' renderer for mapping from some child topology to some parent topologies,
 // by taking a child renderer, mapping to parents, propagating single metrics, and joining with full parent topology.
-// Most options are as per Map2Parent.
-func renderParents(childTopology string, parentTopologies []string, noParentsAction noParentsActionEnum,
-	noParentsPseudoID string, modifyMappedNode func(parent, original report.Node) report.Node,
-	childRenderer Renderer) Renderer {
+// Other options are as per Map2Parent.
+func renderParents(childTopology string, parentTopologies []string, noParentsPseudoID string, childRenderer Renderer) Renderer {
 	selectors := make([]Renderer, len(parentTopologies))
 	for i, topology := range parentTopologies {
 		selectors[i] = TopologySelector(topology)
@@ -99,7 +87,7 @@ func renderParents(childTopology string, parentTopologies []string, noParentsAct
 		MakeMap(
 			PropagateSingleMetrics(childTopology),
 			MakeMap(
-				Map2Parent(parentTopologies, noParentsAction, noParentsPseudoID, modifyMappedNode),
+				Map2Parent(parentTopologies, noParentsPseudoID),
 				childRenderer,
 			),
 		),
@@ -135,26 +123,6 @@ func (s selectPodsWithDeployments) Stats(rpt report.Report, _ Decorator) Stats {
 	return Stats{}
 }
 
-// When mapping from pods to deployments, complete the two-way relation by making the
-// mapped-from pod a child of the mapped-to deployment, and remove any replica set children.
-// This is needed because pods were originally mapped to deployments via an intermediate replica set
-// which we need to remove.
-func makePodsChildren(parent, original report.Node) report.Node {
-	children := parent.Children
-	// Gather all the replica sets...
-	replicaSetIDs := []string{}
-	children.ForEach(func(n report.Node) {
-		if n.Topology == report.ReplicaSet {
-			replicaSetIDs = append(replicaSetIDs, n.ID)
-		}
-	})
-	// ...and delete them.
-	children = children.Delete(replicaSetIDs...)
-	// Then add in the mapped-from pod.
-	children = children.Add(original)
-	return parent.WithChildren(children)
-}
-
 // MapPod2IP maps pod nodes to their IP address.  This allows pods to
 // be joined directly with the endpoint topology.
 func MapPod2IP(m report.Node) []string {
@@ -176,21 +144,13 @@ func MapPod2IP(m report.Node) []string {
 func Map2Parent(
 	// The topology IDs to look for parents in
 	topologies []string,
-	// Choose what to do in the case of nodes with no parents. One of:
-	//     NoParentsPseudo: Map them to a common pseudo node id with prefix noParentsPseudoID
-	//     NoParentsDrop: Map them to no node.
-	//     NoParentsKeep: Map them to themselves, preserving them in the new graph.
-	noParentsAction noParentsActionEnum,
-	// The ID prefix of the pseudo node to use for nodes without any parents in the group
-	// if noParentsAction == Pseudo, eg. UnmanagedID
+	// Either the ID prefix of the pseudo node to use for nodes without
+	// any parents in the group, eg. UnmanagedID, or "" to drop nodes without any parents.
 	noParentsPseudoID string,
-	// Optional (can be nil) function to modify any parent nodes,
-	// eg. to copy over details from the original node.
-	modifyMappedNode func(parent, original report.Node) report.Node,
 ) MapFunc {
 	return func(n report.Node, _ report.Networks) report.Nodes {
-		// Uncontained becomes Unmanaged/whatever if noParentsAction == Pseudo
-		if noParentsAction == NoParentsPseudo && strings.HasPrefix(n.ID, UncontainedIDPrefix) {
+		// Uncontained becomes Unmanaged/whatever if noParentsPseudoID is set
+		if noParentsPseudoID != "" && strings.HasPrefix(n.ID, UncontainedIDPrefix) {
 			id := MakePseudoNodeID(noParentsPseudoID, report.ExtractHostID(n))
 			node := NewDerivedPseudoNode(id, n)
 			return report.Nodes{id: node}
@@ -208,27 +168,16 @@ func Map2Parent(
 				for _, id := range groupIDs {
 					node := NewDerivedNode(id, n).WithTopology(topology)
 					node.Counters = node.Counters.Add(n.Topology, 1)
-					if modifyMappedNode != nil {
-						node = modifyMappedNode(node, n)
-					}
 					result[id] = node
 				}
 			}
 		}
 
-		if len(result) == 0 {
-			switch noParentsAction {
-			case NoParentsPseudo:
-				// Map to pseudo node
-				id := MakePseudoNodeID(UnmanagedID, report.ExtractHostID(n))
-				node := NewDerivedPseudoNode(id, n)
-				result[id] = node
-			case NoParentsKeep:
-				// Pass n to output unmodified
-				result[n.ID] = n
-			case NoParentsDrop:
-				// Do nothing, we will return an empty result
-			}
+		if len(result) == 0 && noParentsPseudoID != "" {
+			// Map to pseudo node
+			id := MakePseudoNodeID(UnmanagedID, report.ExtractHostID(n))
+			node := NewDerivedPseudoNode(id, n)
+			result[id] = node
 		}
 
 		return result

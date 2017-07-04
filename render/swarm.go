@@ -7,7 +7,7 @@ import (
 // SwarmServiceRenderer is a Renderer for Docker Swarm services
 var SwarmServiceRenderer = ConditionalRenderer(renderSwarmTopologies,
 	renderParents(
-		report.Container, []string{report.SwarmService}, NoParentsPseudo, UnmanagedID, nil,
+		report.Container, []string{report.SwarmService}, UnmanagedID,
 		MakeFilter(
 			IsRunning,
 			ContainerWithImageNameRenderer,
