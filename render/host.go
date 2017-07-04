@@ -36,9 +36,9 @@ var HostRenderer = MakeReduce(
 // (including other pseudo nodes), it will drop the node.
 //
 // Otherwise, this function will produce a node with the correct ID
-// format for a container, but without any Major or Minor labels.
-// It does not have enough info to do that, and the resulting graph
-// must be merged with a container graph to get that info.
+// format for a host, but without any Major or Minor labels.  It does
+// not have enough info to do that, and the resulting graph must be
+// merged with a host graph to get that info.
 func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 	// Don't propagate all pseudo nodes - we do this in MapEndpoint2Host
 	if n.Topology == Pseudo {
