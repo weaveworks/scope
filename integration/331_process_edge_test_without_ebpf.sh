@@ -21,6 +21,6 @@ has processes "$HOST1" nc
 has_connection processes "$HOST1" nc "nginx: worker process"
 # Print connections and report in case of test failure
 list_connections "$HOST1" processes
-echo "Report: $(curl -s "http://${1}:4040/api/report")"
+echo "Report: $(curl -s "http://${HOST1}:4040/api/report")"
 
 scope_end_suite
