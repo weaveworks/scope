@@ -175,16 +175,6 @@ func (t rowsByID) Len() int           { return len(t) }
 func (t rowsByID) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 func (t rowsByID) Less(i, j int) bool { return t[i].ID < t[j].ID }
 
-// Copy returns a copy of the Row.
-func (r Row) Copy() Row {
-	entriesCopy := make(map[string]string, len(r.Entries))
-	for key, value := range r.Entries {
-		entriesCopy[key] = value
-	}
-	r.Entries = entriesCopy
-	return r
-}
-
 // Table is the type for a table in the UI.
 type Table struct {
 	ID              string   `json:"id"`
@@ -200,24 +190,6 @@ type tablesByID []Table
 func (t tablesByID) Len() int           { return len(t) }
 func (t tablesByID) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 func (t tablesByID) Less(i, j int) bool { return t[i].ID < t[j].ID }
-
-// Copy returns a copy of the Table.
-func (t Table) Copy() Table {
-	result := Table{
-		ID:      t.ID,
-		Label:   t.Label,
-		Type:    t.Type,
-		Columns: make([]Column, 0, len(t.Columns)),
-		Rows:    make([]Row, 0, len(t.Rows)),
-	}
-	for _, column := range t.Columns {
-		result.Columns = append(result.Columns, column)
-	}
-	for _, row := range t.Rows {
-		result.Rows = append(result.Rows, row)
-	}
-	return result
-}
 
 // TableTemplate describes how to render a table for the UI.
 type TableTemplate struct {

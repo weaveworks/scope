@@ -37,11 +37,6 @@ func MakeStringLatestMap() StringLatestMap {
 	return emptyStringLatestMap
 }
 
-// Copy is a noop, as StringLatestMaps are immutable.
-func (m StringLatestMap) Copy() StringLatestMap {
-	return m
-}
-
 // Size returns the number of elements.
 func (m StringLatestMap) Size() int {
 	if m.Map == nil {
@@ -166,11 +161,6 @@ var emptyNodeControlDataLatestMap = NodeControlDataLatestMap{ps.NewMap()}
 // MakeNodeControlDataLatestMap makes an empty NodeControlDataLatestMap.
 func MakeNodeControlDataLatestMap() NodeControlDataLatestMap {
 	return emptyNodeControlDataLatestMap
-}
-
-// Copy is a noop, as NodeControlDataLatestMaps are immutable.
-func (m NodeControlDataLatestMap) Copy() NodeControlDataLatestMap {
-	return m
 }
 
 // Size returns the number of elements.

@@ -102,11 +102,6 @@ func (s Sets) Merge(other Sets) Sets {
 	return Sets{result}
 }
 
-// Copy is a noop
-func (s Sets) Copy() Sets {
-	return s
-}
-
 func (s Sets) String() string {
 	return mapToString(s.psMap)
 }
