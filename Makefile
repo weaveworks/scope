@@ -146,45 +146,45 @@ client/build/index.html: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTOD
 	mkdir -p client/build
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build \
-		$(SCOPE_UI_BUILD_IMAGE) npm run build
+		$(SCOPE_UI_BUILD_IMAGE) yarn run build
 
 client/build-external/index.html: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	mkdir -p client/build
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build-external:/home/weave/build-external \
-		$(SCOPE_UI_BUILD_IMAGE) npm run build-external
+		$(SCOPE_UI_BUILD_IMAGE) yarn run build-external
 
 client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
-		$(SCOPE_UI_BUILD_IMAGE) npm test
+		$(SCOPE_UI_BUILD_IMAGE) yarn test
 
 client-lint: $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/test:/home/weave/test \
-		$(SCOPE_UI_BUILD_IMAGE) npm run lint
+		$(SCOPE_UI_BUILD_IMAGE) yarn run lint
 
 client-start: $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host -v $(shell pwd)/client/app:/home/weave/app \
 		-v $(shell pwd)/client/build:/home/weave/build -e WEBPACK_SERVER_HOST \
-		$(SCOPE_UI_BUILD_IMAGE) npm start
+		$(SCOPE_UI_BUILD_IMAGE) yarn start
 
 tmp/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	$(sudo) docker run $(RUN_FLAGS) \
 	-v $(shell pwd)/client/app:/home/weave/app \
 	-v $(shell pwd)/tmp:/home/weave/tmp \
 	$(SCOPE_UI_BUILD_IMAGE) \
-	npm run bundle
+	yarn run bundle
 
 else
 
 client/build/index.html:
 	test "true" = "$(SCOPE_SKIP_UI_ASSETS)" && mkdir -p client/build || \
-		{ cd client && npm run build; }
+		{ cd client && yarn run build; }
 
 client/build-external/index.html:
 	test "true" = "$(SCOPE_SKIP_UI_ASSETS)" && mkdir -p client/build-external || \
-		{ cd client && npm run build-external; }
+		{ cd client && yarn run build-external; }
 
 endif
 

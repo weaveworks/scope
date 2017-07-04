@@ -100,8 +100,8 @@
     "build": "webpack --config webpack.production.config.js",
     "build-external": "EXTERNAL=true webpack --config webpack.production.config.js",
     "copy-pkg-files": "cp package.json build-pkg/ && cp -R app/styles build-pkg/",
-    "build-pkg": "mkdir -p build-pkg && node node_modules/.bin/babel app/scripts --ignore __tests__ --out-dir build-pkg && npm run copy-pkg-files",
-    "bundle": "npm run build-pkg && npm pack ./build-pkg && mv weave-scope-$npm_package_version.tgz ./tmp/weave-scope.tgz",
+    "build-pkg": "mkdir -p build-pkg && node node_modules/.bin/babel app/scripts --ignore __tests__ --out-dir build-pkg && yarn run copy-pkg-files",
+    "bundle": "yarn run build-pkg && yarn pack ./build-pkg && mv weave-scope-$npm_package_version.tgz ./tmp/weave-scope.tgz",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest",
@@ -109,7 +109,7 @@
     "lint": "eslint app server.js",
     "clean": "rm build/app.js",
     "noprobe": "../scope stop && ../scope launch --no-probe --app.window 8760h",
-    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d"
+    "loadreport": "yarn run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d"
   },
   "jest": {
     "transform": {
