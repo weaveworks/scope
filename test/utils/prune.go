@@ -25,6 +25,6 @@ func PruneNode(node report.Node) report.Node {
 	return report.MakeNode(
 		node.ID).
 		WithTopology(node.Topology).
-		WithAdjacent(node.Adjacency.Copy()...).
+		WithAdjacent(node.Adjacency...).
 		WithChildren(prunedChildren)
 }

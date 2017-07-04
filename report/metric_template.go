@@ -34,11 +34,6 @@ func (t MetricTemplate) MetricRows(n Node) []MetricRow {
 	return []MetricRow{row}
 }
 
-// Copy returns a value-copy of the metric template
-func (t MetricTemplate) Copy() MetricTemplate {
-	return t
-}
-
 // MetricTemplates is a mergeable set of metric templates
 type MetricTemplates map[string]MetricTemplate
 
@@ -59,7 +54,7 @@ func (e MetricTemplates) Copy() MetricTemplates {
 	}
 	result := MetricTemplates{}
 	for k, v := range e {
-		result[k] = v.Copy()
+		result[k] = v
 	}
 	return result
 }
