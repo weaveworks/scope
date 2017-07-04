@@ -434,7 +434,7 @@ export function doLayout(immNodes, immEdges, opts) {
   const cachedLayout = options.cachedLayout || cache.cachedLayout;
   const nodeCache = options.nodeCache || cache.nodeCache;
   const edgeCache = options.edgeCache || cache.edgeCache;
-  const useCache = false && !options.forceRelayout && cachedLayout && nodeCache && edgeCache;
+  const useCache = !options.forceRelayout && cachedLayout && nodeCache && edgeCache;
   let layout;
 
   layoutRuns += 1;

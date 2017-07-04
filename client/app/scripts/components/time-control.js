@@ -89,7 +89,7 @@ class TimeControl extends React.Component {
         </div>
         {(isPausedNow || isTimeTravelling) && <span
           className="time-control-info"
-          title={moment(pausedAt).utc().toISOString()}>
+          title={moment(pausedAt).toISOString()}>
           Showing state from {moment(pausedAt).fromNow()}
         </span>}
         {isRunningNow && timeTravelTransitioning && <span

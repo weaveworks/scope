@@ -51,7 +51,7 @@ export function getSerializedTimeTravelTimestamp(state) {
   // The timestamp parameter will be used only if it's in the past.
   if (!isPausedSelector(state)) return null;
 
-  return state.get('pausedAt').utc().toISOString();
+  return state.get('pausedAt').toISOString();
 }
 
 export function buildUrlQuery(params = makeMap(), state) {
