@@ -547,21 +547,17 @@ export function receiveNodeDetails(details) {
 
 export function receiveNodesDelta(delta) {
   return (dispatch, getState) => {
-    //
-    // allow css-animation to run smoothly by scheduling it to run on the
-    // next tick after any potentially expensive canvas re-draws have been
-    // completed.
-    //
-    setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
+    if (!isPausedSelector(getState())) {
+      // Allow css-animation to run smoothly by scheduling it to run on the
+      // next tick after any potentially expensive canvas re-draws have been
+      // completed.
+      setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
-    const state = getState();
-
-    if (!isPausedSelector(state)) {
       // When moving in time, we will consider the transition complete
       // only when the first batch of nodes delta has been received. We
       // do that because we want to keep the previous state blurred instead
       // of transitioning over an empty state like when switching topologies.
-      if (state.get('timeTravelTransitioning')) {
+      if (getState().get('timeTravelTransitioning')) {
         dispatch({ type: ActionTypes.FINISH_TIME_TRAVEL_TRANSITION });
       }
 

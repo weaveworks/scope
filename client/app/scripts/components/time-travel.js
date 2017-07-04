@@ -44,9 +44,9 @@ class TimeTravel extends React.Component {
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleSliderChange = this.handleSliderChange.bind(this);
     this.handleJumpClick = this.handleJumpClick.bind(this);
-    this.debouncedJumpTo = this.debouncedJumpTo.bind(this);
     this.renderMarks = this.renderMarks.bind(this);
     this.renderMark = this.renderMark.bind(this);
+    this.travelTo = this.travelTo.bind(this);
 
     this.debouncedUpdateTimestamp = debounce(
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
@@ -69,7 +69,7 @@ class TimeTravel extends React.Component {
   }
 
   handleSliderChange(timestamp) {
-    this.debouncedJumpTo(timestamp);
+    this.travelTo(timestamp, true);
     this.debouncedTrackSliderChange();
   }
 
@@ -80,7 +80,7 @@ class TimeTravel extends React.Component {
     if (timestamp.isValid()) {
       timestamp = Math.max(timestamp, this.state.sliderMinValue);
       timestamp = Math.min(timestamp, moment().valueOf());
-      this.debouncedJumpTo(timestamp);
+      this.travelTo(timestamp, true);
 
       trackMixpanelEvent('scope.time.timestamp.edit', {
         layout: this.props.topologyViewMode,
@@ -94,17 +94,22 @@ class TimeTravel extends React.Component {
     let timestamp = this.state.sliderValue + millisecondsDelta;
     timestamp = Math.max(timestamp, this.state.sliderMinValue);
     timestamp = Math.min(timestamp, moment().valueOf());
-    this.debouncedJumpTo(timestamp);
+    this.travelTo(timestamp, true);
   }
 
   updateTimestamp(timestamp) {
     this.props.jumpToTime(moment(timestamp));
   }
 
-  debouncedJumpTo(timestamp) {
+  travelTo(timestamp, debounced = false) {
     this.props.timeTravelStartTransition();
     this.setState(getTimestampStates(timestamp));
-    this.debouncedUpdateTimestamp(timestamp);
+    if (debounced) {
+      this.debouncedUpdateTimestamp(timestamp);
+    } else {
+      this.debouncedUpdateTimestamp.cancel();
+      this.updateTimestamp(timestamp);
+    }
   }
 
   trackSliderChange() {
@@ -127,7 +132,7 @@ class TimeTravel extends React.Component {
         className="time-travel-markers-tick"
         key={timestampValue}>
         <span className="vertical-tick" />
-        <a className="link" onClick={() => this.debouncedJumpTo(timestampValue)}>{label}</a>
+        <a className="link" onClick={() => this.travelTo(timestampValue)}>{label}</a>
       </div>
     );
   }

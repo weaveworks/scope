@@ -148,7 +148,7 @@ export function isNodesDisplayEmpty(state) {
     return !pinnedMetricSelector(state) || shownResourceTopologyIdsSelector(state).isEmpty();
   }
   // Otherwise (in graph and table view), we only look at the nodes content.
-  return state.get('nodesLoaded') && shownNodesSelector(state).isEmpty();
+  return shownNodesSelector(state).isEmpty();
 }
 
 export function getAdjacentNodes(state, originNodeId) {

@@ -609,6 +609,7 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.RECEIVE_NODES: {
       state = state.set('timeTravelTransitioning', false);
       state = state.set('nodes', fromJS(action.nodes));
+      state = state.set('nodesLoaded', true);
       return updateStateFromNodes(state);
     }
 
@@ -731,8 +732,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.SHUTDOWN: {
-      state = clearNodes(state);
-      return state.set('nodesLoaded', false);
+      return clearNodes(state);
     }
 
     case ActionTypes.REQUEST_SERVICE_IMAGES: {
