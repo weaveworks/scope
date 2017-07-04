@@ -8,7 +8,7 @@ import { debounce, map } from 'lodash';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
   jumpToTime,
-  clickResumeUpdate,
+  resumeTime,
   timeTravelStartTransition,
 } from '../actions/app-actions';
 
@@ -65,7 +65,7 @@ class TimeTravel extends React.Component {
 
   componentWillUnmount() {
     clearInterval(this.timer);
-    this.props.clickResumeUpdate();
+    this.props.resumeTime();
   }
 
   handleSliderChange(timestamp) {
@@ -123,6 +123,8 @@ class TimeTravel extends React.Component {
   renderMark({ timestampValue, label }) {
     const sliderMaxValue = moment().valueOf();
     const pos = (sliderMaxValue - timestampValue) / (sliderMaxValue - this.state.sliderMinValue);
+
+    // Ignore the month marks that are very close to 'Now'
     if (label !== 'Now' && pos < 0.05) return null;
 
     const style = { marginLeft: `calc(${(1 - pos) * 100}% - 32px)`, width: '64px' };
@@ -147,6 +149,7 @@ class TimeTravel extends React.Component {
     do {
       timestamp = moment().utc().subtract(monthsBack, 'months').startOf('month');
       if (timestamp.valueOf() >= sliderMinValue) {
+        // Months are broken by the year tag, e.g. November, December, 2016, February, etc...
         let label = timestamp.format('MMMM');
         if (label === 'January') {
           label = timestamp.format('YYYY');
@@ -215,7 +218,7 @@ export default connect(
   mapStateToProps,
   {
     jumpToTime,
-    clickResumeUpdate,
+    resumeTime,
     timeTravelStartTransition,
   }
 )(TimeTravel);

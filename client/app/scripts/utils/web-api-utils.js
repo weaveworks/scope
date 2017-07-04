@@ -197,7 +197,7 @@ function getNodesForTopologies(state, dispatch, topologyIds, topologyOptions = m
     Promise.resolve());
 }
 
-export function getNodesOnce(getState, dispatch) {
+function getNodesOnce(getState, dispatch) {
   const state = getState();
   const topologyUrl = getCurrentTopologyUrl(state);
   const topologyOptions = activeTopologyOptionsSelector(state);
@@ -263,7 +263,7 @@ export function getTopologies(getState, dispatch, initialPoll = false) {
   });
 }
 
-export function updateWebsocketChannel(getState, dispatch, justUnpaused = false) {
+function updateWebsocketChannel(getState, dispatch, forceRequest) {
   const topologyUrl = getCurrentTopologyUrl(getState());
   const topologyOptions = activeTopologyOptionsSelector(getState());
   const websocketUrl = buildWebsocketUrl(topologyUrl, topologyOptions, getState());
@@ -271,7 +271,7 @@ export function updateWebsocketChannel(getState, dispatch, justUnpaused = false)
   const isNewUrl = websocketUrl !== currentUrl;
   // `topologyUrl` can be undefined initially, so only create a socket if it is truthy
   // and no socket exists, or if we get a new url.
-  if (topologyUrl && (!socket || isNewUrl || justUnpaused)) {
+  if (topologyUrl && (!socket || isNewUrl || forceRequest)) {
     createWebsocket(websocketUrl, getState, dispatch);
     currentUrl = websocketUrl;
   }
@@ -316,6 +316,15 @@ export function getNodeDetails(getState, dispatch) {
   } else if (obj) {
     log('No details or url found for ', obj);
   }
+}
+
+export function getNodes(getState, dispatch, forceRequest = false) {
+  if (isPausedSelector(getState())) {
+    getNodesOnce(getState, dispatch);
+  } else {
+    updateWebsocketChannel(getState, dispatch, forceRequest);
+  }
+  getNodeDetails(getState, dispatch);
 }
 
 export function getApiDetails(dispatch) {

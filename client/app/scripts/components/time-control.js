@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import CloudFeature from './cloud-feature';
 import TimeTravelButton from './time-travel-button';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
-import { clickPauseUpdate, clickResumeUpdate, clickTimeTravel } from '../actions/app-actions';
+import { pauseTimeAtNow, resumeTime, clickTimeTravel } from '../actions/app-actions';
 
 
 const className = isSelected => (
@@ -34,12 +34,12 @@ class TimeControl extends React.Component {
 
   handleNowClick() {
     trackMixpanelEvent('scope.time.resume.click', this.getTrackingMetadata());
-    this.props.clickResumeUpdate();
+    this.props.resumeTime();
   }
 
   handlePauseClick() {
     trackMixpanelEvent('scope.time.pause.click', this.getTrackingMetadata());
-    this.props.clickPauseUpdate();
+    this.props.pauseTimeAtNow();
   }
 
   handleTravelClick() {
@@ -115,8 +115,8 @@ function mapStateToProps(state) {
 export default connect(
   mapStateToProps,
   {
-    clickPauseUpdate,
-    clickResumeUpdate,
+    resumeTime,
+    pauseTimeAtNow,
     clickTimeTravel,
   }
 )(TimeControl);

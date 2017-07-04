@@ -8,13 +8,12 @@ import {
   doControlRequest,
   getAllNodes,
   getResourceViewNodesSnapshot,
-  updateWebsocketChannel,
   getNodeDetails,
   getTopologies,
   deletePipe,
   stopPolling,
   teardownWebsockets,
-  getNodesOnce,
+  getNodes,
 } from '../utils/web-api-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
@@ -39,15 +38,6 @@ import {
 
 const log = debug('scope:app-actions');
 
-
-function getNodes(getState, dispatch, justUnpaused = false) {
-  if (isPausedSelector(getState())) {
-    getNodesOnce(getState, dispatch);
-  } else {
-    updateWebsocketChannel(getState, dispatch, justUnpaused);
-  }
-  getNodeDetails(getState, dispatch);
-}
 
 export function showHelp() {
   return { type: ActionTypes.SHOW_HELP };
@@ -346,7 +336,7 @@ export function clickNode(nodeId, label, origin) {
   };
 }
 
-export function clickPauseUpdate() {
+export function pauseTimeAtNow() {
   return {
     type: ActionTypes.PAUSE_TIME_AT_NOW
   };
@@ -572,10 +562,10 @@ export function receiveNodesDelta(delta) {
   };
 }
 
-export function clickResumeUpdate() {
+export function resumeTime() {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.RESUME_TIME_FROM_NOW
+      type: ActionTypes.RESUME_TIME
     });
     // After unpausing, all of the following calls will re-activate polling.
     getTopologies(getState, dispatch);

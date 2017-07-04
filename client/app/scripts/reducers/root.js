@@ -363,7 +363,7 @@ export function rootReducer(state = initialState, action) {
     // time control
     //
 
-    case ActionTypes.RESUME_TIME_FROM_NOW: {
+    case ActionTypes.RESUME_TIME: {
       state = state.set('timeTravelTransitioning', true);
       state = state.set('showingTimeTravel', false);
       return state.set('pausedAt', null);

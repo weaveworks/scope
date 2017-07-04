@@ -2,6 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 
+// TODO: Move this back into TimeTravelControls once we move away from CloudFeature.
 class TimeTravelButton extends React.Component {
   render() {
     const { className, onClick, isTimeTravelling, hasTimeTravel } = this.props;
