@@ -300,8 +300,8 @@ export function rootReducer(state = initialState, action) {
           {
             id: action.nodeId,
             label: action.label,
+            topologyId: action.topologyId || state.get('currentTopologyId'),
             origin,
-            topologyId: state.get('currentTopologyId')
           }
         );
         state = state.set('selectedNodeId', action.nodeId);

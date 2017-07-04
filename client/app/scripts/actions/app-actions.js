@@ -323,13 +323,14 @@ export function setResourceView() {
   };
 }
 
-export function clickNode(nodeId, label, origin) {
+export function clickNode(nodeId, label, origin, topologyId = null) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.CLICK_NODE,
       origin,
       label,
-      nodeId
+      nodeId,
+      topologyId,
     });
     updateRoute(getState);
     getNodeDetails(getState, dispatch);

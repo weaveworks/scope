@@ -1125,12 +1125,13 @@
 
 .node-resources {
   &-metric-box {
+    cursor: pointer;
     fill: rgba(150, 150, 150, 0.4);
 
     &-info {
       background-color: rgba(white, 0.6);
       border-radius: 2px;
-      cursor: default;
+      cursor: inherit;
       padding: 5px;
 
       .wrapper {

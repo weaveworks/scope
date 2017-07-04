@@ -19,9 +19,11 @@ class NodesResourcesLayer extends React.Component {
         <g className="node-resources-metric-boxes">
           {layoutNodes.toIndexedSeq().map(node => (
             <NodeResourcesMetricBox
+              id={node.get('id')}
               key={node.get('id')}
               color={node.get('color')}
               label={node.get('label')}
+              topologyId={topologyId}
               metricSummary={node.get('metricSummary')}
               width={node.get('width')}
               height={node.get('height')}

@@ -2,7 +2,10 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import NodeResourcesMetricBoxInfo from './node-resources-metric-box-info';
+import { clickNode } from '../../actions/app-actions';
+import { trackMixpanelEvent } from '../../utils/tracking-utils';
 import { applyTransform } from '../../utils/transform-utils';
+import { RESOURCE_VIEW_MODE } from '../../constants/naming';
 import {
   RESOURCES_LAYER_TITLE_WIDTH,
   RESOURCES_LABEL_MIN_SIZE,
@@ -48,10 +51,31 @@ class NodeResourcesMetricBox extends React.Component {
     super(props, context);
 
     this.state = transformedDimensions(props);
+
+    this.handleClick = this.handleClick.bind(this);
+    this.saveNodeRef = this.saveNodeRef.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
     this.setState(transformedDimensions(nextProps));
+  }
+
+  handleClick(ev) {
+    ev.stopPropagation();
+    trackMixpanelEvent('scope.node.click', {
+      layout: RESOURCE_VIEW_MODE,
+      topologyId: this.props.topologyId,
+    });
+    this.props.clickNode(
+      this.props.id,
+      this.props.label,
+      this.nodeRef.getBoundingClientRect(),
+      this.props.topologyId
+    );
+  }
+
+  saveNodeRef(ref) {
+    this.nodeRef = ref;
   }
 
   defaultRectProps(relativeHeight = 1) {
@@ -69,9 +93,10 @@ class NodeResourcesMetricBox extends React.Component {
   }
 
   render() {
-    const { x, y, width } = this.state;
-    const { label, color, metricSummary } = this.props;
+    const { x, y, width, height } = this.state;
+    const { id, selectedNodeId, label, color, metricSummary } = this.props;
     const { showCapacity, relativeConsumption, type } = metricSummary.toJS();
+    const isSelected = (id === selectedNodeId);
 
     const showInfo = width >= RESOURCES_LABEL_MIN_SIZE;
     const showNode = width >= 1; // hide the thin nodes
@@ -85,7 +110,7 @@ class NodeResourcesMetricBox extends React.Component {
       metricSummary.get('humanizedAbsoluteConsumption');
 
     return (
-      <g className="node-resources-metric-box">
+      <g className="node-resources-metric-box" onClick={this.handleClick} ref={this.saveNodeRef}>
         <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
         {showCapacity && <rect className="frame" {...this.defaultRectProps()} />}
         <rect className="bar" fill={color} {...this.defaultRectProps(relativeConsumption)} />
@@ -96,6 +121,8 @@ class NodeResourcesMetricBox extends React.Component {
           x={x + RESOURCES_LABEL_PADDING}
           y={y + RESOURCES_LABEL_PADDING}
         />}
+        {isSelected && <rect
+          x={x} y={y} width={width} height={height} fill="#aad2ff" fillOpacity={0.5} />}
       </g>
     );
   }
@@ -104,8 +131,11 @@ class NodeResourcesMetricBox extends React.Component {
 function mapStateToProps(state) {
   return {
     contrastMode: state.get('contrastMode'),
+    selectedNodeId: state.get('selectedNodeId'),
     viewportWidth: state.getIn(['viewport', 'width']),
   };
 }
-
-export default connect(mapStateToProps)(NodeResourcesMetricBox);
+export default connect(
+  mapStateToProps,
+  { clickNode }
+)(NodeResourcesMetricBox);
