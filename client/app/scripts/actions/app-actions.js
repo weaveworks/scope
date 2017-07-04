@@ -580,6 +580,9 @@ export function clickResumeUpdate() {
     // After unpausing, all of the following calls will re-activate polling.
     getTopologies(getState, dispatch);
     getNodes(getState, dispatch, true);
+    if (isResourceViewModeSelector(getState())) {
+      getResourceViewNodesSnapshot(getState(), dispatch);
+    }
   };
 }
 
@@ -590,6 +593,9 @@ export function clickTimeTravel() {
     });
     if (!getState().get('nodesLoaded')) {
       getNodes(getState, dispatch);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
     }
   };
 }
