@@ -199,7 +199,7 @@ func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
 
 		rpt.Container.Nodes[id] = n.WithParents(report.MakeSets().Add(
 			report.Pod,
-			report.MakeStringSet().Add(report.MakePodNodeID(uid)),
+			report.MakeStringSet(report.MakePodNodeID(uid)),
 		))
 	}
 	return rpt, nil
