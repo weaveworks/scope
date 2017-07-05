@@ -135,7 +135,6 @@ var nodeSummaryGroupSpecs = []struct {
 		topologyID: report.Pod,
 		NodeSummaryGroup: NodeSummaryGroup{
 			Label: "Pods",
-
 			Columns: []Column{
 				{ID: kubernetes.State, Label: "State"},
 				{ID: report.Container, Label: "# Containers", Datatype: "number"},
@@ -155,7 +154,8 @@ var nodeSummaryGroupSpecs = []struct {
 	{
 		topologyID: report.Container,
 		NodeSummaryGroup: NodeSummaryGroup{
-			Label: "Containers", Columns: []Column{
+			Label: "Containers",
+			Columns: []Column{
 				{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
 				{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
 			},
@@ -164,7 +164,8 @@ var nodeSummaryGroupSpecs = []struct {
 	{
 		topologyID: report.Process,
 		NodeSummaryGroup: NodeSummaryGroup{
-			Label: "Processes", Columns: []Column{
+			Label: "Processes",
+			Columns: []Column{
 				{ID: process.PID, Label: "PID", Datatype: "number"},
 				{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
 				{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
@@ -174,11 +175,8 @@ var nodeSummaryGroupSpecs = []struct {
 	{
 		topologyID: report.ContainerImage,
 		NodeSummaryGroup: NodeSummaryGroup{
-			TopologyID: "containers-by-image",
-			Label:      "Container Images",
-			Columns: []Column{
-				{ID: report.Container, Label: "# Containers", DefaultSort: true, Datatype: "number"},
-			},
+			Label:   "Container Images",
+			Columns: []Column{},
 		},
 	},
 }

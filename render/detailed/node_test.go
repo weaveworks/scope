@@ -132,10 +132,8 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			{
 				Label:      "Container Images",
 				TopologyID: "containers-by-image",
-				Columns: []detailed.Column{
-					{ID: report.Container, Label: "# Containers", DefaultSort: true, Datatype: "number"},
-				},
-				Nodes: []detailed.NodeSummary{containerImageNodeSummary},
+				Columns:    []detailed.Column{},
+				Nodes:      []detailed.NodeSummary{containerImageNodeSummary},
 			},
 		},
 		Connections: []detailed.ConnectionsSummary{
