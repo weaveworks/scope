@@ -1,3 +1,13 @@
+## Release 1.5.1
+
+Bugfix patch release
+
+Bug fixes:
+- initial connections have wrong polarity
+	[#2644](https://github.com/weaveworks/scope/issues/2644)
+- connection to dead process associated with different process
+	[#2638](https://github.com/weaveworks/scope/pull/2638)
+
 ## Release 1.5.0
 
 Highlights:
