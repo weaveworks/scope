@@ -103,11 +103,6 @@ func (n NodeSet) ForEach(f func(Node)) {
 	}
 }
 
-// Copy is a noop
-func (n NodeSet) Copy() NodeSet {
-	return n
-}
-
 func (n NodeSet) String() string {
 	buf := bytes.NewBufferString("{")
 	for _, key := range mapKeys(n.psMap) {

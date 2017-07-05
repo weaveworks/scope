@@ -21,11 +21,6 @@ func (a IDList) Add(ids ...string) IDList {
 	return IDList(StringSet(a).Add(ids...))
 }
 
-// Copy returns a copy of the IDList.
-func (a IDList) Copy() IDList {
-	return IDList(StringSet(a).Copy())
-}
-
 // Merge all elements from a and b into a new list
 func (a IDList) Merge(b IDList) IDList {
 	return IDList(StringSet(a).Merge(StringSet(b)))

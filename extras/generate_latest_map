@@ -70,11 +70,6 @@ function generate_latest_map() {
         return ${empty_latest_map_variable}
     }
 
-    // Copy is a noop, as ${latest_map_type}s are immutable.
-    func (m ${latest_map_type}) Copy() ${latest_map_type} {
-        return m
-    }
-
     // Size returns the number of elements.
     func (m ${latest_map_type}) Size() int {
         if m.Map == nil {

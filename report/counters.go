@@ -21,11 +21,6 @@ func MakeCounters() Counters {
 	return emptyCounters
 }
 
-// Copy is a noop
-func (c Counters) Copy() Counters {
-	return c
-}
-
 // Add value to the counter 'key'
 func (c Counters) Add(key string, value int) Counters {
 	if c.psMap == nil {

@@ -22,11 +22,6 @@ func MakeEdgeMetadatas() EdgeMetadatas {
 	return emptyEdgeMetadatas
 }
 
-// Copy is a noop
-func (c EdgeMetadatas) Copy() EdgeMetadatas {
-	return c
-}
-
 // Add value to the counter 'key'
 func (c EdgeMetadatas) Add(key string, value EdgeMetadata) EdgeMetadatas {
 	if c.psMap == nil {

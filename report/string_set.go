@@ -97,13 +97,3 @@ func (s StringSet) Merge(other StringSet) StringSet {
 		}
 	}
 }
-
-// Copy returns a value copy of the StringSet.
-func (s StringSet) Copy() StringSet {
-	if s == nil {
-		return s
-	}
-	result := make(StringSet, len(s))
-	copy(result, s)
-	return result
-}

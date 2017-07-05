@@ -28,11 +28,6 @@ type MetadataTemplate struct {
 	From     string  `json:"from,omitempty"` // Defines how to get the value from a report node
 }
 
-// Copy returns a value-copy of the template
-func (t MetadataTemplate) Copy() MetadataTemplate {
-	return t
-}
-
 // MetadataRows returns the rows for a node
 func (t MetadataTemplate) MetadataRows(n Node) []MetadataRow {
 	from := fromDefault
@@ -90,11 +85,6 @@ type MetadataRow struct {
 	Truncate int     `json:"truncate,omitempty"`
 }
 
-// Copy returns a value copy of a metadata row.
-func (m MetadataRow) Copy() MetadataRow {
-	return m
-}
-
 // MetadataTemplates is a mergeable set of metadata templates
 type MetadataTemplates map[string]MetadataTemplate
 
@@ -115,7 +105,7 @@ func (e MetadataTemplates) Copy() MetadataTemplates {
 	}
 	result := MetadataTemplates{}
 	for k, v := range e {
-		result[k] = v.Copy()
+		result[k] = v
 	}
 	return result
 }

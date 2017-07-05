@@ -63,11 +63,6 @@ func MakeNodeControls() NodeControls {
 	return emptyNodeControls
 }
 
-// Copy is a noop, as NodeControls is immutable
-func (nc NodeControls) Copy() NodeControls {
-	return nc
-}
-
 // Merge returns the newest of the two NodeControls; it does not take the union
 // of the valid Controls.
 func (nc NodeControls) Merge(other NodeControls) NodeControls {
