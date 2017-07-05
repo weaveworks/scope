@@ -125,7 +125,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 **Docker Compose Format Version 1:**
 
     scope:
-      image: weaveworks/scope:1.5.0
+      image: weaveworks/scope:1.5.1
       net: "host"
       pid: "host"
       privileged: true
@@ -141,7 +141,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
     version: '2'
     services:
       scope:
-        image: weaveworks/scope:1.5.0
+        image: weaveworks/scope:1.5.1
         network_mode: "host"
         pid: "host"
         privileged: true
@@ -165,7 +165,7 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
 **Docker Compose Format Version 1:**
 
     probe:
-      image: weaveworks/scope:1.5.0
+      image: weaveworks/scope:1.5.1
       net: "host"
       pid: "host"
       privileged: true
@@ -182,7 +182,7 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
     version: '2'
     services:
       probe:
-        image: weaveworks/scope:1.5.0
+        image: weaveworks/scope:1.5.1
         network_mode: "host"
         pid: "host"
         privileged: true
