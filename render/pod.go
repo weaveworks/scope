@@ -175,7 +175,7 @@ func Map2Parent(
 
 		if len(result) == 0 && noParentsPseudoID != "" {
 			// Map to pseudo node
-			id := MakePseudoNodeID(UnmanagedID, report.ExtractHostID(n))
+			id := MakePseudoNodeID(noParentsPseudoID, report.ExtractHostID(n))
 			node := NewDerivedPseudoNode(id, n)
 			result[id] = node
 		}
