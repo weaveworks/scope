@@ -26,3 +26,16 @@ export function moveElement(array, from, to) {
   }
   return insertElement(removeElement(array, from), to, array[from]);
 }
+
+export function intersperse(items, value) {
+  //
+  // intersperse([1, 2, 3], 'a') => [1, 'a', 2, 'a', 3]
+  //
+  // Useful for when you wanna do: [<MyReactListItem />, <MyReactListItem />].join(' ')
+  // But you can't because React Components aren't strings.
+  //
+  // intersperse([<MyReactListItem />, <MyReactListItem />], ' ')
+  // Will get you there!
+  //
+  return [].concat(...items.map(e => [value, e])).slice(1);
+}
