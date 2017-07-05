@@ -47,7 +47,7 @@ export const CANVAS_MARGINS = {
 export const NODE_DETAILS_TABLE_CW = {
   XS: '32px',
   // 6 chars wide with our current font choices, (pids can be 6, ports only 5).
-  S: '54px',
+  S: '56px',
   M: '70px',
   L: '85px',
   XL: '120px',
