@@ -132,7 +132,7 @@ class NodeDetailsTable extends React.Component {
     super(props, context);
 
     this.state = {
-      limit: props.limit || NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
+      limit: props.limit,
       sortedDesc: this.props.sortedDesc,
       sortedBy: this.props.sortedBy
     };
@@ -155,7 +155,7 @@ class NodeDetailsTable extends React.Component {
   }
 
   handleLimitClick() {
-    const limit = this.state.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
+    const limit = this.state.limit ? 0 : this.props.limit;
     this.setState({ limit });
   }
 
@@ -226,11 +226,16 @@ class NodeDetailsTable extends React.Component {
       }
     }
 
-    const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
-    const expanded = this.state.limit === 0;
-    const notShown = nodes.length - this.state.limit;
+    // If we are 1 over the limit, we still show the row. We never display
+    // "+1" but only "+2" and up.
+    const limit = this.state.limit > 0 && nodes.length === this.state.limit + 1
+      ? nodes.length
+      : this.state.limit;
+    const limited = nodes && limit > 0 && nodes.length > limit;
+    const expanded = limit === 0;
+    const notShown = nodes.length - limit;
     if (nodes && limited) {
-      nodes = nodes.slice(0, this.state.limit);
+      nodes = nodes.slice(0, limit);
     }
 
     const className = classNames('node-details-table-wrapper-wrapper', this.props.className);
@@ -287,6 +292,7 @@ class NodeDetailsTable extends React.Component {
 
 NodeDetailsTable.defaultProps = {
   nodeIdKey: 'id',  // key to identify a node in a row (used for topology links)
+  limit: NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
   onSortChange: () => {},
   sortedDesc: null,
   sortedBy: null,
