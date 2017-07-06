@@ -328,11 +328,6 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
-    case ActionTypes.FINISH_TIME_TRAVEL_TRANSITION: {
-      state = state.set('timeTravelTransitioning', false);
-      return clearNodes(state);
-    }
-
     case ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE: {
       state = state.update('nodeDetails',
         nodeDetails => nodeDetails.filter((v, k) => k === action.nodeId));
@@ -375,6 +370,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.START_TIME_TRAVEL: {
+      state = state.set('timeTravelTransitioning', false);
       state = state.set('showingTimeTravel', true);
       return state.set('pausedAt', moment().utc());
     }
@@ -385,6 +381,11 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.TIME_TRAVEL_START_TRANSITION: {
       return state.set('timeTravelTransitioning', true);
+    }
+
+    case ActionTypes.FINISH_TIME_TRAVEL_TRANSITION: {
+      state = state.set('timeTravelTransitioning', false);
+      return clearNodes(state);
     }
 
     //

@@ -576,7 +576,7 @@ export function resumeTime() {
   };
 }
 
-export function clickTimeTravel() {
+export function startTimeTravel() {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.START_TIME_TRAVEL

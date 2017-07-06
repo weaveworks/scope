@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import CloudFeature from './cloud-feature';
 import TimeTravelButton from './time-travel-button';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
-import { pauseTimeAtNow, resumeTime, clickTimeTravel } from '../actions/app-actions';
+import { pauseTimeAtNow, resumeTime, startTimeTravel } from '../actions/app-actions';
 
 
 const className = isSelected => (
@@ -23,12 +23,13 @@ class TimeControl extends React.Component {
     this.getTrackingMetadata = this.getTrackingMetadata.bind(this);
   }
 
-  getTrackingMetadata() {
+  getTrackingMetadata(data = {}) {
     const { currentTopology } = this.props;
     return {
       layout: this.props.topologyViewMode,
       topologyId: currentTopology && currentTopology.get('id'),
       parentTopologyId: currentTopology && currentTopology.get('parentId'),
+      ...data
     };
   }
 
@@ -43,8 +44,13 @@ class TimeControl extends React.Component {
   }
 
   handleTravelClick() {
-    trackMixpanelEvent('scope.time.travel.click', this.getTrackingMetadata());
-    this.props.clickTimeTravel();
+    if (!this.props.showingTimeTravel) {
+      trackMixpanelEvent('scope.time.travel.click', this.getTrackingMetadata({ open: true }));
+      this.props.startTimeTravel();
+    } else {
+      trackMixpanelEvent('scope.time.travel.click', this.getTrackingMetadata({ open: false }));
+      this.props.resumeTime();
+    }
   }
 
   render() {
@@ -117,6 +123,6 @@ export default connect(
   {
     resumeTime,
     pauseTimeAtNow,
-    clickTimeTravel,
+    startTimeTravel,
   }
 )(TimeControl);
