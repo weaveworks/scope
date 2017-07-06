@@ -8,12 +8,12 @@ import {
   doControlRequest,
   getAllNodes,
   getResourceViewNodesSnapshot,
-  updateWebsocketChannel,
   getNodeDetails,
   getTopologies,
   deletePipe,
   stopPolling,
   teardownWebsockets,
+  getNodes,
 } from '../utils/web-api-utils';
 import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
@@ -29,8 +29,6 @@ import {
   resourceViewAvailableSelector,
 } from '../selectors/topology';
 
-import { NODES_DELTA_BUFFER_SIZE_LIMIT } from '../constants/limits';
-import { NODES_DELTA_BUFFER_FEED_INTERVAL } from '../constants/timer';
 import {
   GRAPH_VIEW_MODE,
   TABLE_VIEW_MODE,
@@ -40,8 +38,6 @@ import {
 
 const log = debug('scope:app-actions');
 
-// TODO: This shouldn't be exposed here as a global variable.
-let nodesDeltaBufferUpdateTimer = null;
 
 export function showHelp() {
   return { type: ActionTypes.SHOW_HELP };
@@ -73,11 +69,6 @@ export function sortOrderChanged(sortedBy, sortedDesc) {
     });
     updateRoute(getState);
   };
-}
-
-function resetNodesDeltaBuffer() {
-  clearInterval(nodesDeltaBufferUpdateTimer);
-  return { type: ActionTypes.CLEAR_NODES_DELTA_BUFFER };
 }
 
 
@@ -216,11 +207,8 @@ export function changeTopologyOption(option, value, topologyId, addOrRemove) {
     });
     updateRoute(getState);
     // update all request workers with new options
-    dispatch(resetNodesDeltaBuffer());
-    const state = getState();
-    getTopologies(state, dispatch);
-    updateWebsocketChannel(state, dispatch);
-    getNodeDetails(state, dispatch);
+    getTopologies(getState, dispatch);
+    getNodes(getState, dispatch);
   };
 }
 
@@ -344,13 +332,13 @@ export function clickNode(nodeId, label, origin) {
       nodeId
     });
     updateRoute(getState);
-    getNodeDetails(getState(), dispatch);
+    getNodeDetails(getState, dispatch);
   };
 }
 
-export function clickPauseUpdate() {
+export function pauseTimeAtNow() {
   return {
-    type: ActionTypes.CLICK_PAUSE_UPDATE
+    type: ActionTypes.PAUSE_TIME_AT_NOW
   };
 }
 
@@ -364,7 +352,7 @@ export function clickRelative(nodeId, topologyId, label, origin) {
       topologyId
     });
     updateRoute(getState);
-    getNodeDetails(getState(), dispatch);
+    getNodeDetails(getState, dispatch);
   };
 }
 
@@ -375,12 +363,10 @@ function updateTopology(dispatch, getState) {
     getResourceViewNodesSnapshot(state, dispatch);
   }
   updateRoute(getState);
-  // update all request workers with new options
-  dispatch(resetNodesDeltaBuffer());
   // NOTE: This is currently not needed for our static resource
   // view, but we'll need it here later and it's simpler to just
   // keep it than to redo the nodes delta updating logic.
-  updateWebsocketChannel(state, dispatch);
+  getNodes(getState, dispatch);
 }
 
 export function clickShowTopologyForNode(topologyId, nodeId) {
@@ -401,28 +387,6 @@ export function clickTopology(topologyId) {
       topologyId
     });
     updateTopology(dispatch, getState);
-  };
-}
-
-export function timeTravelStartTransition() {
-  return {
-    type: ActionTypes.TIME_TRAVEL_START_TRANSITION,
-  };
-}
-
-export function timeTravelJumpToPast(millisecondsInPast) {
-  return (dispatch, getServiceState) => {
-    dispatch({
-      type: ActionTypes.TIME_TRAVEL_MILLISECONDS_IN_PAST,
-      millisecondsInPast,
-    });
-    const scopeState = getServiceState().scope;
-    updateWebsocketChannel(scopeState, dispatch);
-    dispatch(resetNodesDeltaBuffer());
-    getTopologies(getServiceState().scope, dispatch);
-    if (isResourceViewModeSelector(scopeState)) {
-      getResourceViewNodesSnapshot(scopeState, dispatch);
-    }
   };
 }
 
@@ -573,29 +537,22 @@ export function receiveNodeDetails(details) {
 
 export function receiveNodesDelta(delta) {
   return (dispatch, getState) => {
-    //
-    // allow css-animation to run smoothly by scheduling it to run on the
-    // next tick after any potentially expensive canvas re-draws have been
-    // completed.
-    //
-    setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
+    if (!isPausedSelector(getState())) {
+      // Allow css-animation to run smoothly by scheduling it to run on the
+      // next tick after any potentially expensive canvas re-draws have been
+      // completed.
+      setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
-    // TODO: This way of getting the Scope state is a bit hacky, so try to replace
-    // it with something better. The problem is that all the actions that are called
-    // from the components wrapped in <CloudFeature /> have a global Service state
-    // returned by getState(). Since method is called from both contexts, getState()
-    // will sometimes return Scope state subtree and sometimes the whole Service state.
-    const state = getState().scope || getState();
-    const movingInTime = state.get('timeTravelTransitioning');
-    const hasChanges = delta.add || delta.update || delta.remove;
+      // When moving in time, we will consider the transition complete
+      // only when the first batch of nodes delta has been received. We
+      // do that because we want to keep the previous state blurred instead
+      // of transitioning over an empty state like when switching topologies.
+      if (getState().get('timeTravelTransitioning')) {
+        dispatch({ type: ActionTypes.FINISH_TIME_TRAVEL_TRANSITION });
+      }
 
-    if (hasChanges || movingInTime) {
-      if (isPausedSelector(state)) {
-        if (state.get('nodesDeltaBuffer').size >= NODES_DELTA_BUFFER_SIZE_LIMIT) {
-          dispatch({ type: ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER });
-        }
-        dispatch({ type: ActionTypes.BUFFER_NODES_DELTA, delta });
-      } else {
+      const hasChanges = delta.add || delta.update || delta.remove;
+      if (hasChanges) {
         dispatch({
           type: ActionTypes.RECEIVE_NODES_DELTA,
           delta
@@ -605,30 +562,58 @@ export function receiveNodesDelta(delta) {
   };
 }
 
-function updateFromNodesDeltaBuffer(dispatch, state) {
-  const isPaused = isPausedSelector(state);
-  const isBufferEmpty = state.get('nodesDeltaBuffer').isEmpty();
-
-  if (isPaused || isBufferEmpty) {
-    dispatch(resetNodesDeltaBuffer());
-  } else {
-    dispatch(receiveNodesDelta(state.get('nodesDeltaBuffer').first()));
-    dispatch({ type: ActionTypes.POP_NODES_DELTA_BUFFER });
-  }
-}
-
-export function clickResumeUpdate() {
+export function resumeTime() {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_RESUME_UPDATE
+      type: ActionTypes.RESUME_TIME
     });
-    // TODO: Find a better way to do this (see the comment above).
-    const state = getState().scope || getState();
-    // Periodically merge buffered nodes deltas until the buffer is emptied.
-    nodesDeltaBufferUpdateTimer = setInterval(
-      () => updateFromNodesDeltaBuffer(dispatch, state),
-      NODES_DELTA_BUFFER_FEED_INTERVAL,
-    );
+    // After unpausing, all of the following calls will re-activate polling.
+    getTopologies(getState, dispatch);
+    getNodes(getState, dispatch, true);
+    if (isResourceViewModeSelector(getState())) {
+      getResourceViewNodesSnapshot(getState(), dispatch);
+    }
+  };
+}
+
+export function startTimeTravel() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.START_TIME_TRAVEL
+    });
+    if (!getState().get('nodesLoaded')) {
+      getNodes(getState, dispatch);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
+    }
+  };
+}
+
+export function receiveNodes(nodes) {
+  return {
+    type: ActionTypes.RECEIVE_NODES,
+    nodes,
+  };
+}
+
+export function timeTravelStartTransition() {
+  return {
+    type: ActionTypes.TIME_TRAVEL_START_TRANSITION,
+  };
+}
+
+export function jumpToTime(timestamp) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.JUMP_TO_TIME,
+      timestamp,
+    });
+    getTopologies(getState, dispatch);
+    getNodes(getState, dispatch);
+    if (isResourceViewModeSelector(getState())) {
+      getResourceViewNodesSnapshot(getState(), dispatch);
+    }
   };
 }
 
@@ -641,18 +626,15 @@ export function receiveNodesForTopology(nodes, topologyId) {
 }
 
 export function receiveTopologies(topologies) {
-  return (dispatch, getGlobalState) => {
-    // NOTE: Fortunately, this will go when Time Travel is out of <CloudFeature />.
-    const getState = () => getGlobalState().scope || getGlobalState();
+  return (dispatch, getState) => {
     const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies
     });
-    const state = getState();
-    updateWebsocketChannel(state, dispatch);
-    getNodeDetails(state, dispatch);
+    getNodes(getState, dispatch);
     // Populate search matches on first load
+    const state = getState();
     if (firstLoad && state.get('searchQuery')) {
       dispatch(focusSearch());
     }
@@ -754,7 +736,7 @@ export function setContrastMode(enabled) {
 
 export function getTopologiesWithInitialPoll() {
   return (dispatch, getState) => {
-    getTopologies(getState(), dispatch, true);
+    getTopologies(getState, dispatch, true);
   };
 }
 
@@ -765,13 +747,12 @@ export function route(urlState) {
       type: ActionTypes.ROUTE_TOPOLOGY
     });
     // update all request workers with new options
-    const state = getState();
-    getTopologies(state, dispatch);
-    updateWebsocketChannel(state, dispatch);
-    getNodeDetails(state, dispatch);
+    getTopologies(getState, dispatch);
+    getNodes(getState, dispatch);
     // If we are landing on the resource view page, we need to fetch not only all the
     // nodes for the current topology, but also the nodes of all the topologies that make
     // the layers in the resource view.
+    const state = getState();
     if (isResourceViewModeSelector(state)) {
       getResourceViewNodesSnapshot(state, dispatch);
     }

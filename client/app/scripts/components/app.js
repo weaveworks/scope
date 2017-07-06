@@ -1,5 +1,6 @@
 import debug from 'debug';
 import React from 'react';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
@@ -12,7 +13,6 @@ import Search from './search';
 import Status from './status';
 import Topologies from './topologies';
 import TopologyOptions from './topology-options';
-import CloudFeature from './cloud-feature';
 import Overlay from './overlay';
 import { getApiDetails } from '../utils/web-api-utils';
 import {
@@ -33,6 +33,7 @@ import {
 import Details from './details';
 import Nodes from './nodes';
 import TimeTravel from './time-travel';
+import TimeControl from './time-control';
 import ViewModeSelector from './view-mode-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
@@ -166,12 +167,15 @@ class App extends React.Component {
   }
 
   render() {
-    const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails, showingHelp,
-      showingNetworkSelector, showingTroubleshootingMenu, timeTravelTransitioning } = this.props;
+    const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails,
+      showingHelp, showingNetworkSelector, showingTroubleshootingMenu,
+      timeTravelTransitioning, showingTimeTravel } = this.props;
+
+    const className = classNames('scope-app', { 'time-travel-open': showingTimeTravel });
     const isIframe = window !== window.top;
 
     return (
-      <div className="scope-app" ref={this.saveAppRef}>
+      <div className={className} ref={this.saveAppRef}>
         {showingDebugToolbar() && <DebugToolbar />}
 
         {showingHelp && <HelpPanel />}
@@ -181,21 +185,21 @@ class App extends React.Component {
         {showingDetails && <Details />}
 
         <div className="header">
-          <div className="logo">
-            {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
-              <Logo />
-            </svg>}
+          <TimeTravel />
+          <div className="selectors">
+            <div className="logo">
+              {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
+                <Logo />
+              </svg>}
+            </div>
+            <Search />
+            <Topologies />
+            <ViewModeSelector />
+            <TimeControl />
           </div>
-          <Search />
-          <Topologies />
-          <ViewModeSelector />
         </div>
 
         <Nodes />
-
-        <CloudFeature>
-          {!isResourceViewMode && <TimeTravel />}
-        </CloudFeature>
 
         <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
           {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
@@ -224,6 +228,7 @@ function mapStateToProps(state) {
     searchQuery: state.get('searchQuery'),
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
+    showingTimeTravel: state.get('showingTimeTravel'),
     showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,

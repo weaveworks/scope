@@ -1,4 +1,4 @@
-import MockDate from 'mockdate';
+import moment from 'moment';
 import { Map as makeMap, OrderedMap as makeOrderedMap } from 'immutable';
 
 import { buildUrlQuery, basePath, getApiPath, getWebsocketUrl } from '../web-api-utils';
@@ -26,20 +26,11 @@ describe('WebApiUtils', () => {
   describe('buildUrlQuery', () => {
     let state = makeMap();
 
-    beforeEach(() => {
-      MockDate.set(1434319925275);
-    });
-
-    afterEach(() => {
-      MockDate.reset();
-    });
-
     it('should handle empty options', () => {
       expect(buildUrlQuery(makeOrderedMap([]), state)).toBe('');
     });
 
     it('should combine multiple options', () => {
-      state = state.set('timeTravelMillisecondsInPast', 0);
       expect(buildUrlQuery(makeOrderedMap([
         ['foo', 2],
         ['bar', 4]
@@ -47,7 +38,7 @@ describe('WebApiUtils', () => {
     });
 
     it('should combine multiple options with a timestamp', () => {
-      state = state.set('timeTravelMillisecondsInPast', 60 * 60 * 1000); // 1h in the past
+      state = state.set('pausedAt', moment('2015-06-14T21:12:05.275Z'));
       expect(buildUrlQuery(makeOrderedMap([
         ['foo', 2],
         ['bar', 4]

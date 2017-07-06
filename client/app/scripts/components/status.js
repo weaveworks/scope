@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { isNowSelector } from '../selectors/time-travel';
+import { isPausedSelector } from '../selectors/time-travel';
 
 
 class Status extends React.Component {
@@ -47,7 +47,7 @@ function mapStateToProps(state) {
   return {
     errorUrl: state.get('errorUrl'),
     filteredNodeCount: state.get('nodes').filter(node => node.get('filtered')).size,
-    showingCurrentState: isNowSelector(state),
+    showingCurrentState: !isPausedSelector(state),
     topologiesLoaded: state.get('topologiesLoaded'),
     topology: state.get('currentTopology'),
     websocketClosed: state.get('websocketClosed'),

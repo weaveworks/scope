@@ -1,89 +1,52 @@
 import React from 'react';
-import moment from 'moment';
 import Slider from 'rc-slider';
+import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
-import { debounce } from 'lodash';
+import { debounce, map } from 'lodash';
 
-import TimeTravelTimestamp from './time-travel-timestamp';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
-  timeTravelJumpToPast,
+  jumpToTime,
+  resumeTime,
   timeTravelStartTransition,
-  clickResumeUpdate,
 } from '../actions/app-actions';
 
 import {
-  TIMELINE_SLIDER_UPDATE_INTERVAL,
+  TIMELINE_TICK_INTERVAL,
   TIMELINE_DEBOUNCE_INTERVAL,
 } from '../constants/timer';
 
 
-const sliderRanges = {
-  last15Minutes: {
-    label: 'Last 15 minutes',
-    getStart: () => moment().utc().subtract(15, 'minutes'),
-  },
-  last1Hour: {
-    label: 'Last 1 hour',
-    getStart: () => moment().utc().subtract(1, 'hour'),
-  },
-  last6Hours: {
-    label: 'Last 6 hours',
-    getStart: () => moment().utc().subtract(6, 'hours'),
-  },
-  last24Hours: {
-    label: 'Last 24 hours',
-    getStart: () => moment().utc().subtract(24, 'hours'),
-  },
-  last7Days: {
-    label: 'Last 7 days',
-    getStart: () => moment().utc().subtract(7, 'days'),
-  },
-  last30Days: {
-    label: 'Last 30 days',
-    getStart: () => moment().utc().subtract(30, 'days'),
-  },
-  last90Days: {
-    label: 'Last 90 days',
-    getStart: () => moment().utc().subtract(90, 'days'),
-  },
-  last1Year: {
-    label: 'Last 1 year',
-    getStart: () => moment().subtract(1, 'year'),
-  },
-  todaySoFar: {
-    label: 'Today so far',
-    getStart: () => moment().utc().startOf('day'),
-  },
-  thisWeekSoFar: {
-    label: 'This week so far',
-    getStart: () => moment().utc().startOf('week'),
-  },
-  thisMonthSoFar: {
-    label: 'This month so far',
-    getStart: () => moment().utc().startOf('month'),
-  },
-  thisYearSoFar: {
-    label: 'This year so far',
-    getStart: () => moment().utc().startOf('year'),
-  },
+const getTimestampStates = (timestamp) => {
+  timestamp = timestamp || moment();
+  return {
+    sliderValue: moment(timestamp).valueOf(),
+    inputValue: moment(timestamp).utc().format(),
+  };
 };
+
+const ONE_HOUR_MS = moment.duration(1, 'hour');
+const FIVE_MINUTES_MS = moment.duration(5, 'minutes');
 
 class TimeTravel extends React.Component {
   constructor(props, context) {
     super(props, context);
 
     this.state = {
-      showSliderPanel: false,
-      millisecondsInPast: 0,
-      rangeOptionSelected: sliderRanges.last1Hour,
+      // TODO: Showing a three months of history is quite arbitrary;
+      // we should instead get some meaningful 'beginning of time' from
+      // the backend and make the slider show whole active history.
+      sliderMinValue: moment().subtract(6, 'months').valueOf(),
+      ...getTimestampStates(props.pausedAt),
     };
 
-    this.renderRangeOption = this.renderRangeOption.bind(this);
-    this.handleTimestampClick = this.handleTimestampClick.bind(this);
-    this.handleJumpToNowClick = this.handleJumpToNowClick.bind(this);
+    this.handleInputChange = this.handleInputChange.bind(this);
     this.handleSliderChange = this.handleSliderChange.bind(this);
+    this.handleJumpClick = this.handleJumpClick.bind(this);
+    this.renderMarks = this.renderMarks.bind(this);
+    this.renderMark = this.renderMark.bind(this);
+    this.travelTo = this.travelTo.bind(this);
 
     this.debouncedUpdateTimestamp = debounce(
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
@@ -93,84 +56,60 @@ class TimeTravel extends React.Component {
 
   componentDidMount() {
     // Force periodic re-renders to update the slider position as time goes by.
-    this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_SLIDER_UPDATE_INTERVAL);
+    this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_TICK_INTERVAL);
+  }
+
+  componentWillReceiveProps(props) {
+    this.setState(getTimestampStates(props.pausedAt));
   }
 
   componentWillUnmount() {
     clearInterval(this.timer);
-    this.updateTimestamp();
+    this.props.resumeTime();
   }
 
-  handleSliderChange(sliderValue) {
-    let millisecondsInPast = this.getRangeMilliseconds() - sliderValue;
-
-    // If the slider value is less than 1s away from the right-end (current time),
-    // assume we meant the current time - this is important for the '... so far'
-    // ranges where the range of values changes over time.
-    if (millisecondsInPast < 1000) {
-      millisecondsInPast = 0;
-    }
-
-    this.setState({ millisecondsInPast });
-    this.props.timeTravelStartTransition();
-    this.debouncedUpdateTimestamp(millisecondsInPast);
-
+  handleSliderChange(timestamp) {
+    this.travelTo(timestamp, true);
     this.debouncedTrackSliderChange();
   }
 
-  handleRangeOptionClick(rangeOption) {
-    this.setState({ rangeOptionSelected: rangeOption });
+  handleInputChange(ev) {
+    let timestamp = moment(ev.target.value);
+    this.setState({ inputValue: ev.target.value });
 
-    const rangeMilliseconds = this.getRangeMilliseconds(rangeOption);
-    if (this.state.millisecondsInPast > rangeMilliseconds) {
-      this.setState({ millisecondsInPast: rangeMilliseconds });
-      this.updateTimestamp(rangeMilliseconds);
-      this.props.timeTravelStartTransition();
+    if (timestamp.isValid()) {
+      timestamp = Math.max(timestamp, this.state.sliderMinValue);
+      timestamp = Math.min(timestamp, moment().valueOf());
+      this.travelTo(timestamp, true);
+
+      trackMixpanelEvent('scope.time.timestamp.edit', {
+        layout: this.props.topologyViewMode,
+        topologyId: this.props.currentTopology.get('id'),
+        parentTopologyId: this.props.currentTopology.get('parentId'),
+      });
     }
-
-    trackMixpanelEvent('scope.time.range.select', {
-      layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
-      parentTopologyId: this.props.currentTopology.get('parentId'),
-      label: rangeOption.label,
-    });
   }
 
-  handleJumpToNowClick() {
-    this.setState({
-      showSliderPanel: false,
-      millisecondsInPast: 0,
-      rangeOptionSelected: sliderRanges.last1Hour,
-    });
-    this.updateTimestamp();
+  handleJumpClick(millisecondsDelta) {
+    let timestamp = this.state.sliderValue + millisecondsDelta;
+    timestamp = Math.max(timestamp, this.state.sliderMinValue);
+    timestamp = Math.min(timestamp, moment().valueOf());
+    this.travelTo(timestamp, true);
+  }
+
+  updateTimestamp(timestamp) {
+    this.props.jumpToTime(moment(timestamp));
+  }
+
+  travelTo(timestamp, debounced = false) {
     this.props.timeTravelStartTransition();
-
-    trackMixpanelEvent('scope.time.now.click', {
-      layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
-      parentTopologyId: this.props.currentTopology.get('parentId'),
-    });
-  }
-
-  handleTimestampClick() {
-    const showSliderPanel = !this.state.showSliderPanel;
-    this.setState({ showSliderPanel });
-
-    trackMixpanelEvent('scope.time.timestamp.click', {
-      layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
-      parentTopologyId: this.props.currentTopology.get('parentId'),
-      showSliderPanel,
-    });
-  }
-
-  updateTimestamp(millisecondsInPast = 0) {
-    this.props.timeTravelJumpToPast(millisecondsInPast);
-    this.props.clickResumeUpdate();
-  }
-
-  getRangeMilliseconds(rangeOption = this.state.rangeOptionSelected) {
-    return moment().diff(rangeOption.getStart());
+    this.setState(getTimestampStates(timestamp));
+    if (debounced) {
+      this.debouncedUpdateTimestamp(timestamp);
+    } else {
+      this.debouncedUpdateTimestamp.cancel();
+      this.updateTimestamp(timestamp);
+    }
   }
 
   trackSliderChange() {
@@ -181,106 +120,105 @@ class TimeTravel extends React.Component {
     });
   }
 
-  renderRangeOption(rangeOption) {
-    const handleClick = () => { this.handleRangeOptionClick(rangeOption); };
-    const selected = (this.state.rangeOptionSelected.label === rangeOption.label);
-    const className = classNames('option', { selected });
+  renderMark({ timestampValue, label }) {
+    const sliderMaxValue = moment().valueOf();
+    const pos = (sliderMaxValue - timestampValue) / (sliderMaxValue - this.state.sliderMinValue);
 
+    // Ignore the month marks that are very close to 'Now'
+    if (label !== 'Now' && pos < 0.05) return null;
+
+    const style = { marginLeft: `calc(${(1 - pos) * 100}% - 32px)`, width: '64px' };
     return (
-      <a key={rangeOption.label} className={className} onClick={handleClick}>
-        {rangeOption.label}
-      </a>
+      <div
+        style={style}
+        className="time-travel-markers-tick"
+        key={timestampValue}>
+        <span className="vertical-tick" />
+        <a className="link" onClick={() => this.travelTo(timestampValue)}>{label}</a>
+      </div>
     );
   }
 
-  renderJumpToNowButton() {
-    return (
-      <a className="button jump-to-now" title="Jump to now" onClick={this.handleJumpToNowClick}>
-        <span className="fa fa-step-forward" />
-      </a>
-    );
-  }
+  renderMarks() {
+    const { sliderMinValue } = this.state;
+    const sliderMaxValue = moment().valueOf();
+    const ticks = [{ timestampValue: sliderMaxValue, label: 'Now' }];
+    let monthsBack = 0;
+    let timestamp;
 
-  renderTimeSlider() {
-    const { millisecondsInPast } = this.state;
-    const rangeMilliseconds = this.getRangeMilliseconds();
+    do {
+      timestamp = moment().utc().subtract(monthsBack, 'months').startOf('month');
+      if (timestamp.valueOf() >= sliderMinValue) {
+        // Months are broken by the year tag, e.g. November, December, 2016, February, etc...
+        let label = timestamp.format('MMMM');
+        if (label === 'January') {
+          label = timestamp.format('YYYY');
+        }
+        ticks.push({ timestampValue: timestamp.valueOf(), label });
+      }
+      monthsBack += 1;
+    } while (timestamp.valueOf() >= sliderMinValue);
 
     return (
-      <Slider
-        onChange={this.handleSliderChange}
-        value={rangeMilliseconds - millisecondsInPast}
-        max={rangeMilliseconds}
-      />
+      <div className="time-travel-markers">
+        {map(ticks, tick => this.renderMark(tick))}
+      </div>
     );
   }
 
   render() {
-    const { timeTravelTransitioning, hasTimeTravel } = this.props;
-    const { showSliderPanel, millisecondsInPast, rangeOptionSelected } = this.state;
-    const lowerCaseLabel = rangeOptionSelected.label.toLowerCase();
-    const isCurrent = (millisecondsInPast === 0);
+    const { sliderValue, sliderMinValue, inputValue } = this.state;
+    const sliderMaxValue = moment().valueOf();
 
-    // Don't render the time travel control if it's not explicitly enabled for this instance.
-    if (!hasTimeTravel) return null;
+    const className = classNames('time-travel', { visible: this.props.showingTimeTravel });
 
     return (
-      <div className="time-travel">
-        {showSliderPanel && <div className="time-travel-slider">
-          <div className="options">
-            <div className="column">
-              {this.renderRangeOption(sliderRanges.last15Minutes)}
-              {this.renderRangeOption(sliderRanges.last1Hour)}
-              {this.renderRangeOption(sliderRanges.last6Hours)}
-              {this.renderRangeOption(sliderRanges.last24Hours)}
-            </div>
-            <div className="column">
-              {this.renderRangeOption(sliderRanges.last7Days)}
-              {this.renderRangeOption(sliderRanges.last30Days)}
-              {this.renderRangeOption(sliderRanges.last90Days)}
-              {this.renderRangeOption(sliderRanges.last1Year)}
-            </div>
-            <div className="column">
-              {this.renderRangeOption(sliderRanges.todaySoFar)}
-              {this.renderRangeOption(sliderRanges.thisWeekSoFar)}
-              {this.renderRangeOption(sliderRanges.thisMonthSoFar)}
-              {this.renderRangeOption(sliderRanges.thisYearSoFar)}
-            </div>
-          </div>
-          <span className="slider-tip">Move the slider to explore {lowerCaseLabel}</span>
-          {this.renderTimeSlider()}
-        </div>}
-        <div className="time-travel-status">
-          {timeTravelTransitioning && <div className="time-travel-jump-loader">
-            <span className="fa fa-circle-o-notch fa-spin" />
-          </div>}
-          <TimeTravelTimestamp
-            onClick={this.handleTimestampClick}
-            millisecondsInPast={millisecondsInPast}
-            selected={showSliderPanel}
+      <div className={className}>
+        <div className="time-travel-slider-wrapper">
+          {this.renderMarks()}
+          <Slider
+            onChange={this.handleSliderChange}
+            value={sliderValue}
+            min={sliderMinValue}
+            max={sliderMaxValue}
           />
-          {!isCurrent && this.renderJumpToNowButton()}
+        </div>
+        <div className="time-travel-jump-controls">
+          <a className="button jump" onClick={() => this.handleJumpClick(-ONE_HOUR_MS)}>
+            <span className="fa fa-fast-backward" /> 1 hour
+          </a>
+          <a className="button jump" onClick={() => this.handleJumpClick(-FIVE_MINUTES_MS)}>
+            <span className="fa fa-step-backward" /> 5 mins
+          </a>
+          <span className="time-travel-jump-controls-timestamp">
+            <input value={inputValue} onChange={this.handleInputChange} /> UTC
+          </span>
+          <a className="button jump" onClick={() => this.handleJumpClick(+FIVE_MINUTES_MS)}>
+            <span className="fa fa-step-forward" /> 5 mins
+          </a>
+          <a className="button jump" onClick={() => this.handleJumpClick(+ONE_HOUR_MS)}>
+            <span className="fa fa-fast-forward" /> 1 hour
+          </a>
         </div>
       </div>
     );
   }
 }
 
-function mapStateToProps({ scope, root }, { params }) {
-  const cloudInstance = root.instances[params.orgId] || {};
-  const featureFlags = cloudInstance.featureFlags || [];
+function mapStateToProps(state) {
   return {
-    hasTimeTravel: featureFlags.includes('time-travel'),
-    timeTravelTransitioning: scope.get('timeTravelTransitioning'),
-    topologyViewMode: scope.get('topologyViewMode'),
-    currentTopology: scope.get('currentTopology'),
+    showingTimeTravel: state.get('showingTimeTravel'),
+    topologyViewMode: state.get('topologyViewMode'),
+    currentTopology: state.get('currentTopology'),
+    pausedAt: state.get('pausedAt'),
   };
 }
 
 export default connect(
   mapStateToProps,
   {
-    timeTravelJumpToPast,
+    jumpToTime,
+    resumeTime,
     timeTravelStartTransition,
-    clickResumeUpdate,
   }
 )(TimeTravel);

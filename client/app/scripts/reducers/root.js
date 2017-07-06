@@ -20,7 +20,6 @@ import {
   isResourceViewModeSelector,
 } from '../selectors/topology';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
-import { consolidateNodesDeltas } from '../utils/nodes-delta-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
@@ -58,12 +57,12 @@ export const initialState = makeMap({
   mouseOverNodeId: null,
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
-  nodesDeltaBuffer: makeList(),
   nodesLoaded: false,
   // nodes cache, infrequently updated, used for search & resource view
   nodesByTopology: makeMap(), // topologyId -> nodes
   // class of metric, e.g. 'cpu', rather than 'host_cpu' or 'process_cpu'.
   // allows us to keep the same metric "type" selected when the topology changes.
+  pausedAt: null,
   pinnedMetricType: null,
   pinnedNetwork: null,
   plugins: makeList(),
@@ -74,16 +73,15 @@ export const initialState = makeMap({
   selectedNetwork: null,
   selectedNodeId: null,
   showingHelp: false,
+  showingTimeTravel: false,
   showingTroubleshootingMenu: false,
   showingNetworks: false,
   timeTravelTransitioning: false,
-  timeTravelMillisecondsInPast: 0,
   topologies: makeList(),
   topologiesLoaded: false,
   topologyOptions: makeOrderedMap(), // topologyId -> options
   topologyUrlsById: makeOrderedMap(), // topologyId -> topologyUrl
   topologyViewMode: GRAPH_VIEW_MODE,
-  updatePausedAt: null,
   version: '...',
   versionUpdate: null,
   viewport: makeMap(),
@@ -174,14 +172,37 @@ function closeAllNodeDetails(state) {
   return state;
 }
 
-function resumeUpdate(state) {
-  return state.set('updatePausedAt', null);
-}
-
 function clearNodes(state) {
   return state
     .update('nodes', nodes => nodes.clear())
     .set('nodesLoaded', false);
+}
+
+// TODO: These state changes should probably be calculated from selectors.
+function updateStateFromNodes(state) {
+  // Apply pinned searches, filters nodes that dont match.
+  state = applyPinnedSearches(state);
+
+  // In case node or edge disappears before mouseleave event.
+  const nodesIds = state.get('nodes').keySeq();
+  if (!nodesIds.contains(state.get('mouseOverNodeId'))) {
+    state = state.set('mouseOverNodeId', null);
+  }
+  if (!nodesIds.some(nodeId => includes(state.get('mouseOverEdgeId'), nodeId))) {
+    state = state.set('mouseOverEdgeId', null);
+  }
+
+  // Update the nodes cache only if we're not in the resource view mode, as we
+  // intentionally want to keep it static before we figure how to keep it up-to-date.
+  if (!isResourceViewModeSelector(state)) {
+    const nodesForCurrentTopologyKey = ['nodesByTopology', state.get('currentTopologyId')];
+    state = state.setIn(nodesForCurrentTopologyKey, state.get('nodes'));
+  }
+
+  // Clear the error.
+  state = state.set('errorUrl', null);
+
+  return state;
 }
 
 export function rootReducer(state = initialState, action) {
@@ -195,7 +216,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CHANGE_TOPOLOGY_OPTION: {
-      state = resumeUpdate(state);
       // set option on parent topology
       const topology = findTopologyById(state.get('topologies'), action.topologyId);
       if (topology) {
@@ -289,11 +309,6 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
-    case ActionTypes.CLICK_PAUSE_UPDATE: {
-      const millisecondsInPast = state.get('timeTravelMillisecondsInPast');
-      return state.set('updatePausedAt', moment().utc().subtract(millisecondsInPast));
-    }
-
     case ActionTypes.CLICK_RELATIVE: {
       if (state.hasIn(['nodeDetails', action.nodeId])) {
         // bring to front
@@ -313,13 +328,7 @@ export function rootReducer(state = initialState, action) {
       return state;
     }
 
-    case ActionTypes.CLICK_RESUME_UPDATE: {
-      return resumeUpdate(state);
-    }
-
     case ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE: {
-      state = resumeUpdate(state);
-
       state = state.update('nodeDetails',
         nodeDetails => nodeDetails.filter((v, k) => k === action.nodeId));
       state = state.update('controlPipes', controlPipes => controlPipes.clear());
@@ -334,7 +343,6 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_TOPOLOGY: {
-      state = resumeUpdate(state);
       state = closeAllNodeDetails(state);
 
       const currentTopologyId = state.get('currentTopologyId');
@@ -347,15 +355,37 @@ export function rootReducer(state = initialState, action) {
     }
 
     //
-    // time travel
+    // time control
     //
+
+    case ActionTypes.RESUME_TIME: {
+      state = state.set('timeTravelTransitioning', true);
+      state = state.set('showingTimeTravel', false);
+      return state.set('pausedAt', null);
+    }
+
+    case ActionTypes.PAUSE_TIME_AT_NOW: {
+      state = state.set('showingTimeTravel', false);
+      return state.set('pausedAt', moment().utc());
+    }
+
+    case ActionTypes.START_TIME_TRAVEL: {
+      state = state.set('timeTravelTransitioning', false);
+      state = state.set('showingTimeTravel', true);
+      return state.set('pausedAt', moment().utc());
+    }
+
+    case ActionTypes.JUMP_TO_TIME: {
+      return state.set('pausedAt', action.timestamp);
+    }
 
     case ActionTypes.TIME_TRAVEL_START_TRANSITION: {
       return state.set('timeTravelTransitioning', true);
     }
 
-    case ActionTypes.TIME_TRAVEL_MILLISECONDS_IN_PAST: {
-      return state.set('timeTravelMillisecondsInPast', action.millisecondsInPast);
+    case ActionTypes.FINISH_TIME_TRAVEL_TRANSITION: {
+      state = state.set('timeTravelTransitioning', false);
+      return clearNodes(state);
     }
 
     //
@@ -368,29 +398,6 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.CLOSE_WEBSOCKET: {
       return state.set('websocketClosed', true);
-    }
-
-    //
-    // nodes delta buffer
-    //
-
-    case ActionTypes.CLEAR_NODES_DELTA_BUFFER: {
-      return state.update('nodesDeltaBuffer', buffer => buffer.clear());
-    }
-
-    case ActionTypes.CONSOLIDATE_NODES_DELTA_BUFFER: {
-      const firstDelta = state.getIn(['nodesDeltaBuffer', 0]);
-      const secondDelta = state.getIn(['nodesDeltaBuffer', 1]);
-      const deltaUnion = consolidateNodesDeltas(firstDelta, secondDelta);
-      return state.update('nodesDeltaBuffer', buffer => buffer.shift().set(0, deltaUnion));
-    }
-
-    case ActionTypes.POP_NODES_DELTA_BUFFER: {
-      return state.update('nodesDeltaBuffer', buffer => buffer.shift());
-    }
-
-    case ActionTypes.BUFFER_NODES_DELTA: {
-      return state.update('nodesDeltaBuffer', buffer => buffer.push(action.delta));
     }
 
     //
@@ -534,6 +541,11 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_NODE_DETAILS: {
+      // Freeze node details data updates after the first load when paused.
+      if (state.getIn(['nodeDetails', action.details.id, 'details']) && state.get('pausedAt')) {
+        return state;
+      }
+
       state = state.set('errorUrl', null);
 
       // disregard if node is not selected anymore
@@ -562,31 +574,18 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_NODES_DELTA: {
+      // Ignore periodic nodes updates after the first load when paused.
+      if (state.get('nodesLoaded') && state.get('pausedAt')) {
+        return state;
+      }
+
       log('RECEIVE_NODES_DELTA',
         'remove', size(action.delta.remove),
         'update', size(action.delta.update),
         'add', size(action.delta.add));
 
-      state = state.set('errorUrl', null);
-
-      // When moving in time, we will consider the transition complete
-      // only when the first batch of nodes delta has been received. We
-      // do that because we want to keep the previous state blurred instead
-      // of transitioning over an empty state like when switching topologies.
-      if (state.get('timeTravelTransitioning')) {
-        state = state.set('timeTravelTransitioning', false);
-        state = clearNodes(state);
-      }
-
-      // nodes that no longer exist
+      // remove nodes that no longer exist
       each(action.delta.remove, (nodeId) => {
-        // in case node disappears before mouseleave event
-        if (state.get('mouseOverNodeId') === nodeId) {
-          state = state.set('mouseOverNodeId', null);
-        }
-        if (state.hasIn(['nodes', nodeId]) && includes(state.get('mouseOverEdgeId'), nodeId)) {
-          state = state.set('mouseOverEdgeId', null);
-        }
         state = state.deleteIn(['nodes', nodeId]);
       });
 
@@ -605,17 +604,14 @@ export function rootReducer(state = initialState, action) {
         state = state.setIn(['nodes', node.id], fromJS(node));
       });
 
-      // apply pinned searches, filters nodes that dont match
-      state = applyPinnedSearches(state);
+      return updateStateFromNodes(state);
+    }
 
-      // Update the nodes cache only if we're not in the resource view mode, as we
-      // intentionally want to keep it static before we figure how to keep it up-to-date.
-      if (!isResourceViewModeSelector(state)) {
-        const nodesForCurrentTopologyKey = ['nodesByTopology', state.get('currentTopologyId')];
-        state = state.setIn(nodesForCurrentTopologyKey, state.get('nodes'));
-      }
-
-      return state;
+    case ActionTypes.RECEIVE_NODES: {
+      state = state.set('timeTravelTransitioning', false);
+      state = state.set('nodes', fromJS(action.nodes));
+      state = state.set('nodesLoaded', true);
+      return updateStateFromNodes(state);
     }
 
     case ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY: {
@@ -737,8 +733,7 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.SHUTDOWN: {
-      state = clearNodes(state);
-      return state.set('nodesLoaded', false);
+      return clearNodes(state);
     }
 
     case ActionTypes.REQUEST_SERVICE_IMAGES: {

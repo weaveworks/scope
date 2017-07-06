@@ -3,15 +3,7 @@ import { createSelector } from 'reselect';
 
 export const isPausedSelector = createSelector(
   [
-    state => state.get('updatePausedAt')
+    state => state.get('pausedAt')
   ],
-  updatePausedAt => updatePausedAt !== null
-);
-
-export const isNowSelector = createSelector(
-  [
-    state => state.get('timeTravelMillisecondsInPast')
-  ],
-  // true for values 0, undefined, null, etc...
-  timeTravelMillisecondsInPast => !(timeTravelMillisecondsInPast > 0)
+  pausedAt => !!pausedAt
 );

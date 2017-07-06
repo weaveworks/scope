@@ -64,7 +64,12 @@
   pointer-events: none;
   z-index: 2000;
 
-  &.faded { opacity: 0.5; }
+  &.faded {
+    // NOTE: Not sure if we should block the pointer events here..
+    pointer-events: all;
+    cursor: wait;
+    opacity: 0.5;
+  }
 }
 
 .overlay-wrapper {
@@ -165,22 +170,31 @@
     margin-bottom: 12px;
     font-weight: 400;
   }
+
+  &.time-travel-open {
+    .details-wrapper {
+      margin-top: 65px;
+    }
+  }
 }
 
 .header {
+  margin-top: 38px;
   pointer-events: none;
-
-  position: absolute;
-  top: 32px;
   width: 100%;
-  height: 80px;
-  z-index: 20;
-  display: flex;
 
-  .logo {
-    margin: -10px 0 0 64px;
-    height: 64px;
-    width: 250px;
+  .selectors {
+    display: flex;
+    position: relative;
+    > * { z-index: 20; }
+
+    .time-control { z-index: 2001; }
+
+    .logo {
+      margin: -16px 0 0 64px;
+      height: 64px;
+      width: 250px;
+    }
   }
 }
 
@@ -225,67 +239,94 @@
 }
 
 .time-travel {
-  @extend .overlay-wrapper;
-  display: block;
-  right: 530px;
+  align-items: center;
+  display: flex;
+  position: relative;
+  margin: 0 30px 0 15px;
   z-index: 2001;
 
-  &-status {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
+  transition: all .15s $base-ease;
+  overflow: hidden;
+  height: 0;
 
-    .time-travel-jump-loader {
-      font-size: 1rem;
-    }
+  &.visible {
+    height: 50px;
+    margin-bottom: 15px;
+  }
 
-    .time-travel-timestamp-info, .pause-text {
-      font-size: 115%;
-      margin-right: 5px;
-    }
+  &-markers {
+    position: relative;
 
-    .button { margin-left: 0.5em; }
+    &-tick {
+      text-align: center;
+      position: absolute;
 
-    .time-travel-timestamp:not(.current) {
-      & > * { @extend .blinkable; }
-      font-weight: bold;
+      .vertical-tick {
+        border: 1px solid $text-tertiary-color;
+        border-radius: 1px;
+        display: block;
+        margin: 1px auto 2px;
+        height: 12px;
+        width: 0;
+      }
+
+      .link {
+        display: inline-block;
+        pointer-events: all;
+        margin-top: 1px;
+      }
     }
   }
 
-  &-slider {
-    width: 355px;
+  &-slider-wrapper {
+    margin: 0 50px 20px 10px;
+    pointer-events: all;
+    flex-grow: 1;
 
-    .slider-tip {
-      display: inline-block;
-      font-size: 0.8125rem;
-      font-style: italic;
-      padding: 5px 10px;
-    }
+    .rc-slider-rail { background-color: $text-tertiary-color; }
+  }
 
-    .options {
-      display: flex;
-      padding: 2px 0 10px;
+  &-jump-controls {
+    display: flex;
 
-      .column {
-        display: flex;
-        flex-direction: column;
-        flex-grow: 1;
-        padding: 0 7px;
+    .button.jump {
+      display: block;
+      margin: 8px;
+      font-size: 0.625rem;
+      pointer-events: all;
+      text-align: center;
+      text-transform: uppercase;
+      word-spacing: -1px;
 
-        a { padding: 0 3px; }
+      .fa {
+        display: block;
+        font-size: 150%;
+        margin-bottom: 3px;
       }
     }
 
-    .rc-slider {
-      margin: 0 10px 8px;
-      width: auto;
+    &-timestamp {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 2px 8px;
+      pointer-events: all;
+      margin: 4px 8px 25px;
+
+      input {
+        border: 0;
+        background-color: transparent;
+        font-family: $mono-font;
+        font-size: 0.875rem;
+        margin-right: 2px;
+        outline: 0;
+      }
     }
   }
 }
 
 
 .topologies {
-  margin: 8px 4px;
+  margin: 0 4px;
   display: flex;
 
   .topologies-item {
@@ -630,9 +671,9 @@
     display: flex;
     z-index: 1024;
     right: $details-window-padding-left;
-    top: 24px;
+    top: 100px;
     bottom: 48px;
-    transition: transform 0.33333s cubic-bezier(0,0,0.21,1);
+    transition: transform 0.33333s cubic-bezier(0,0,0.21,1), margin-top .15s $base-ease;
   }
 }
 
@@ -1357,9 +1398,9 @@
   }
 }
 
-.topology-option, .metric-selector, .network-selector, .view-mode-selector {
+.topology-option, .metric-selector, .network-selector, .view-mode-selector, .time-control {
   color: $text-secondary-color;
-  margin: 6px 0;
+  margin-bottom: 6px;
 
   &:last-child {
     margin-bottom: 0;
@@ -1403,8 +1444,11 @@
   }
 }
 
-.view-mode-selector {
-  margin-top: 8px;
+.metric-selector {
+  margin-top: 6px;
+}
+
+.view-mode-selector, .time-control {
   margin-left: 20px;
   min-width: 161px;
 
@@ -1435,6 +1479,36 @@
   }
 }
 
+.time-control {
+  position: absolute;
+  right: 36px;
+
+  &-controls {
+    align-items: center;
+    justify-content: flex-end;
+    display: flex;
+  }
+
+  &-spinner {
+    display: inline-block;
+    margin-right: 15px;
+    margin-top: 3px;
+
+    .fa {
+      color: $text-secondary-color;
+      font-size: 125%;
+    }
+  }
+
+  &-info {
+    @extend .blinkable;
+    display: block;
+    margin-top: 5px;
+    text-align: right;
+    pointer-events: all;
+  }
+}
+
 .topology-option {
   &-action {
     &-selected {
@@ -1443,7 +1517,7 @@
   }
 }
 
-.view-mode-selector-wrapper {
+.view-mode-selector-wrapper, .time-control-wrapper {
   .label { margin-left: 4px; }
   .fa {
     margin-left: 0;
@@ -1519,7 +1593,7 @@
 
   &-wrapper {
     flex: 0 1 20%;
-    margin: 8px;
+    margin: 0 8px;
     text-align: right;
   }
 
@@ -1884,6 +1958,9 @@
 //
 
 .nodes-grid {
+  // TODO: Would be good to have relative positioning here.
+  position: absolute;
+  top: 0;
 
   tr {
     border-radius: 6px;

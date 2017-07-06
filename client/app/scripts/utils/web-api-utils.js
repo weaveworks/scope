@@ -1,5 +1,4 @@
 import debug from 'debug';
-import moment from 'moment';
 import reqwest from 'reqwest';
 import { defaults } from 'lodash';
 import { Map as makeMap, List } from 'immutable';
@@ -8,12 +7,12 @@ import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveEr
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
   receiveControlNodeRemoved, receiveControlPipe, receiveControlPipeStatus,
   receiveControlSuccess, receiveTopologies, receiveNotFound,
-  receiveNodesForTopology } from '../actions/app-actions';
+  receiveNodesForTopology, receiveNodes } from '../actions/app-actions';
 
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
-import { isNowSelector } from '../selectors/time-travel';
+import { isPausedSelector } from '../selectors/time-travel';
 
 import { API_REFRESH_INTERVAL, TOPOLOGY_REFRESH_INTERVAL } from '../constants/timer';
 
@@ -50,10 +49,9 @@ let continuePolling = true;
 
 export function getSerializedTimeTravelTimestamp(state) {
   // The timestamp parameter will be used only if it's in the past.
-  if (isNowSelector(state)) return null;
+  if (!isPausedSelector(state)) return null;
 
-  const millisecondsInPast = state.get('timeTravelMillisecondsInPast');
-  return moment().utc().subtract(millisecondsInPast).toISOString();
+  return state.get('pausedAt').toISOString();
 }
 
 export function buildUrlQuery(params = makeMap(), state) {
@@ -114,7 +112,7 @@ function buildWebsocketUrl(topologyUrl, topologyOptions = makeMap(), state) {
   return `${getWebsocketUrl()}${topologyUrl}/ws?${optionsQuery}`;
 }
 
-function createWebsocket(websocketUrl, dispatch) {
+function createWebsocket(websocketUrl, getState, dispatch) {
   if (socket) {
     socket.onclose = null;
     socket.onerror = null;
@@ -140,9 +138,9 @@ function createWebsocket(websocketUrl, dispatch) {
     socket = null;
     dispatch(closeWebsocket());
 
-    if (continuePolling) {
+    if (continuePolling && !isPausedSelector(getState())) {
       reconnectTimer = setTimeout(() => {
-        createWebsocket(websocketUrl, dispatch);
+        createWebsocket(websocketUrl, getState, dispatch);
       }, reconnectTimerInterval);
     }
   };
@@ -199,6 +197,24 @@ function getNodesForTopologies(state, dispatch, topologyIds, topologyOptions = m
     Promise.resolve());
 }
 
+function getNodesOnce(getState, dispatch) {
+  const state = getState();
+  const topologyUrl = getCurrentTopologyUrl(state);
+  const topologyOptions = activeTopologyOptionsSelector(state);
+  const optionsQuery = buildUrlQuery(topologyOptions, state);
+  const url = `${getApiPath()}${topologyUrl}?${optionsQuery}`;
+  doRequest({
+    url,
+    success: (res) => {
+      dispatch(receiveNodes(res.nodes));
+    },
+    error: (req) => {
+      log(`Error in nodes request: ${req.responseText}`);
+      dispatch(receiveError(url));
+    }
+  });
+}
+
 /**
  * Gets nodes for all topologies (for search).
  */
@@ -217,21 +233,20 @@ export function getResourceViewNodesSnapshot(state, dispatch) {
   getNodesForTopologies(state, dispatch, topologyIds);
 }
 
-export function getTopologies(state, dispatch, initialPoll = false) {
-  // TODO: Remove this once TimeTravel is out of the feature flag.
-  state = state.scope || state;
+// NOTE: getState is called every time to make sure the up-to-date state is used.
+export function getTopologies(getState, dispatch, initialPoll = false) {
   // Used to resume polling when navigating between pages in Weave Cloud.
   continuePolling = initialPoll === true ? true : continuePolling;
   clearTimeout(topologyTimer);
-  const optionsQuery = buildUrlQuery(activeTopologyOptionsSelector(state), state);
+  const optionsQuery = buildUrlQuery(activeTopologyOptionsSelector(getState()), getState());
   const url = `${getApiPath()}/api/topology?${optionsQuery}`;
   doRequest({
     url,
     success: (res) => {
-      if (continuePolling) {
+      if (continuePolling && !isPausedSelector(getState())) {
         dispatch(receiveTopologies(res));
         topologyTimer = setTimeout(() => {
-          getTopologies(state, dispatch);
+          getTopologies(getState, dispatch);
         }, TOPOLOGY_REFRESH_INTERVAL);
       }
     },
@@ -239,30 +254,31 @@ export function getTopologies(state, dispatch, initialPoll = false) {
       log(`Error in topology request: ${req.responseText}`);
       dispatch(receiveError(url));
       // Only retry in stand-alone mode
-      if (continuePolling) {
+      if (continuePolling && !isPausedSelector(getState())) {
         topologyTimer = setTimeout(() => {
-          getTopologies(state, dispatch);
+          getTopologies(getState, dispatch);
         }, TOPOLOGY_REFRESH_INTERVAL);
       }
     }
   });
 }
 
-export function updateWebsocketChannel(state, dispatch) {
-  const topologyUrl = getCurrentTopologyUrl(state);
-  const topologyOptions = activeTopologyOptionsSelector(state);
-  const websocketUrl = buildWebsocketUrl(topologyUrl, topologyOptions, state);
+function updateWebsocketChannel(getState, dispatch, forceRequest) {
+  const topologyUrl = getCurrentTopologyUrl(getState());
+  const topologyOptions = activeTopologyOptionsSelector(getState());
+  const websocketUrl = buildWebsocketUrl(topologyUrl, topologyOptions, getState());
   // Only recreate websocket if url changed or if forced (weave cloud instance reload);
   const isNewUrl = websocketUrl !== currentUrl;
   // `topologyUrl` can be undefined initially, so only create a socket if it is truthy
   // and no socket exists, or if we get a new url.
-  if (topologyUrl && (!socket || isNewUrl)) {
-    createWebsocket(websocketUrl, dispatch);
+  if (topologyUrl && (!socket || isNewUrl || forceRequest)) {
+    createWebsocket(websocketUrl, getState, dispatch);
     currentUrl = websocketUrl;
   }
 }
 
-export function getNodeDetails(state, dispatch) {
+export function getNodeDetails(getState, dispatch) {
+  const state = getState();
   const nodeMap = state.get('nodeDetails');
   const topologyUrlsById = state.get('topologyUrlsById');
   const currentTopologyId = state.get('currentTopologyId');
@@ -300,6 +316,15 @@ export function getNodeDetails(state, dispatch) {
   } else if (obj) {
     log('No details or url found for ', obj);
   }
+}
+
+export function getNodes(getState, dispatch, forceRequest = false) {
+  if (isPausedSelector(getState())) {
+    getNodesOnce(getState, dispatch);
+  } else {
+    updateWebsocketChannel(getState, dispatch, forceRequest);
+  }
+  getNodeDetails(getState, dispatch);
 }
 
 export function getApiDetails(dispatch) {
