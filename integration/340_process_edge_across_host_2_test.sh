@@ -8,8 +8,8 @@ start_suite "Test long connections (procspy) between processes on different host
 weave_on "$HOST1" launch "$HOST1" "$HOST2"
 weave_on "$HOST2" launch "$HOST1" "$HOST2"
 
-scope_on "$HOST1" launch --probe.conntrack=false
-scope_on "$HOST2" launch --probe.conntrack=false
+scope_on "$HOST1" launch --probe.ebpf.connections=false --probe.conntrack=false
+scope_on "$HOST2" launch --probe.ebpf.connections=false --probe.conntrack=false
 
 server_on "$HOST1"
 weave_proxy_on "$HOST2" run -dti --name client alpine /bin/sh -c "while true; do \
