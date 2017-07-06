@@ -6,6 +6,7 @@ import { NODE_BASE_SIZE, EDGE_WAYPOINTS_CAP } from '../constants/styles';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
 import { featureIsEnabledAny } from '../utils/feature-utils';
 import { buildTopologyCacheId, updateNodeDegrees } from '../utils/topology-utils';
+import { minEuclideanDistanceBetweenPoints } from '../utils/math-utils';
 import { uniformSelect } from '../utils/array-utils';
 
 const log = debug('scope:nodes-layout');
@@ -17,6 +18,7 @@ export const DEFAULT_MARGINS = { top: 0, left: 0 };
 const NODE_SIZE_FACTOR = 1.5 * NODE_BASE_SIZE;
 const NODE_SEPARATION_FACTOR = 1 * NODE_BASE_SIZE;
 const RANK_SEPARATION_FACTOR = 2 * NODE_BASE_SIZE;
+const NODE_CENTERS_SEPARATION_FACTOR = NODE_SIZE_FACTOR + NODE_SEPARATION_FACTOR;
 let layoutRuns = 0;
 let layoutRunsTrivial = 0;
 
@@ -62,159 +64,6 @@ function correctedEdgePath(waypoints, source, target) {
   }
 
   return waypoints;
-}
-
-/**
- * Layout engine runner
- * After the layout engine run nodes and edges have x-y-coordinates. Engine is
- * not run if the number of nodes is bigger than `MAX_NODES`.
- * @param  {Object} graph dagre graph instance
- * @param  {Map} imNodes new node set
- * @param  {Map} imEdges new edge set
- * @return {Object}         Layout with nodes, edges, dimensions
- */
-function runLayoutEngine(graph, imNodes, imEdges) {
-  let nodes = imNodes;
-  let edges = imEdges;
-
-  const ranksep = RANK_SEPARATION_FACTOR;
-  const nodesep = NODE_SEPARATION_FACTOR;
-  const nodeWidth = NODE_SIZE_FACTOR;
-  const nodeHeight = NODE_SIZE_FACTOR;
-
-  // configure node margins
-  graph.setGraph({
-    nodesep,
-    ranksep
-  });
-
-  // add nodes to the graph if not already there
-  nodes.forEach((node) => {
-    const gNodeId = graphNodeId(node.get('id'));
-    if (!graph.hasNode(gNodeId)) {
-      graph.setNode(gNodeId, {
-        width: nodeWidth,
-        height: nodeHeight
-      });
-    }
-  });
-
-  // remove nodes that are no longer there or are 0-degree nodes
-  graph.nodes().forEach((gNodeId) => {
-    const nodeId = fromGraphNodeId(gNodeId);
-    if (!nodes.has(nodeId) || nodes.get(nodeId).get('degree') === 0) {
-      graph.removeNode(gNodeId);
-    }
-  });
-
-  // add edges to the graph if not already there
-  edges.forEach((edge) => {
-    const s = graphNodeId(edge.get('source'));
-    const t = graphNodeId(edge.get('target'));
-    if (!graph.hasEdge(s, t)) {
-      const virtualNodes = s === t ? 1 : 0;
-      graph.setEdge(s, t, {id: edge.get('id'), minlen: virtualNodes});
-    }
-  });
-
-  // remove edges that are no longer there
-  graph.edges().forEach((edgeObj) => {
-    const edge = [fromGraphNodeId(edgeObj.v), fromGraphNodeId(edgeObj.w)];
-    const edgeId = edge.join(EDGE_ID_SEPARATOR);
-    if (!edges.has(edgeId)) {
-      graph.removeEdge(edgeObj.v, edgeObj.w);
-    }
-  });
-
-  dagre.layout(graph, { debugTiming: false });
-  const layout = graph.graph();
-
-  // apply coordinates to nodes and edges
-
-  graph.nodes().forEach((gNodeId) => {
-    const graphNode = graph.node(gNodeId);
-    const nodeId = fromGraphNodeId(gNodeId);
-    nodes = nodes.setIn([nodeId, 'x'], graphNode.x);
-    nodes = nodes.setIn([nodeId, 'y'], graphNode.y);
-  });
-
-  graph.edges().forEach((graphEdge) => {
-    const graphEdgeMeta = graph.edge(graphEdge);
-    const edge = edges.get(graphEdgeMeta.id);
-
-    const source = nodes.get(fromGraphNodeId(edge.get('source')));
-    const target = nodes.get(fromGraphNodeId(edge.get('target')));
-    const waypoints = correctedEdgePath(fromJS(graphEdgeMeta.points), source, target);
-
-    edges = edges.setIn([graphEdgeMeta.id, 'points'], waypoints);
-  });
-
-  // return object with the width and height of layout
-  return {
-    graphWidth: layout.width,
-    graphHeight: layout.height,
-    width: layout.width,
-    height: layout.height,
-    nodes,
-    edges
-  };
-}
-
-/**
- * Adds `points` array to edge based on location of source and target
- * @param {Map} edge           new edge
- * @param {Map} nodeCache      all nodes
- * @returns {Map}              modified edge
- */
-function setSimpleEdgePoints(edge, nodeCache) {
-  const source = nodeCache.get(edge.get('source'));
-  const target = nodeCache.get(edge.get('target'));
-  return edge.set('points', fromJS([
-    {x: source.get('x'), y: source.get('y')},
-    {x: target.get('x'), y: target.get('y')}
-  ]));
-}
-
-/**
- * Layout nodes that have rank that already exists.
- * Relies on only nodes being added that have a connection to an existing node
- * while having a rank of an existing node. They will be laid out in the same
- * line as the latter, with a direct connection between the existing and the new node.
- * @param  {object} layout    Layout with nodes and edges
- * @param  {Map} nodeCache    previous nodes
- * @param  {object} opts      Options
- * @return {object}           new layout object
- */
-export function doLayoutNewNodesOfExistingRank(layout, nodeCache) {
-  const result = Object.assign({}, layout);
-  const nodesep = NODE_SEPARATION_FACTOR;
-  const nodeWidth = NODE_SIZE_FACTOR;
-
-  // determine new nodes
-  const oldNodes = ImmSet.fromKeys(nodeCache);
-  const newNodes = ImmSet.fromKeys(layout.nodes.filter(n => n.get('degree') > 0))
-    .subtract(oldNodes);
-  result.nodes = layout.nodes.map((n) => {
-    if (newNodes.contains(n.get('id'))) {
-      const nodesSameRank = nodeCache.filter(nn => nn.get('rank') === n.get('rank'));
-      if (nodesSameRank.size > 0) {
-        const y = nodesSameRank.first().get('y');
-        const x = nodesSameRank.maxBy(nn => nn.get('x')).get('x') + nodesep + nodeWidth;
-        return n.merge({ x, y });
-      }
-      return n;
-    }
-    return n;
-  });
-
-  result.edges = layout.edges.map((edge) => {
-    if (!edge.has('points')) {
-      return setSimpleEdgePoints(edge, layout.nodes);
-    }
-    return edge;
-  });
-
-  return result;
 }
 
 /**
@@ -295,6 +144,163 @@ function layoutSingleNodes(layout, opts) {
     result.height = Math.max(layout.height, singleY + (nodeHeight / 2) + ranksep);
     result.nodes = nodes;
   }
+
+  return result;
+}
+
+/**
+ * Layout engine runner
+ * After the layout engine run nodes and edges have x-y-coordinates. Engine is
+ * not run if the number of nodes is bigger than `MAX_NODES`.
+ * @param  {Object} graph dagre graph instance
+ * @param  {Map} imNodes new node set
+ * @param  {Map} imEdges new edge set
+ * @param  {Object} opts Options with nodes layout
+ * @return {Object}         Layout with nodes, edges, dimensions
+ */
+function runLayoutEngine(graph, imNodes, imEdges, opts) {
+  let nodes = imNodes;
+  let edges = imEdges;
+
+  const ranksep = RANK_SEPARATION_FACTOR;
+  const nodesep = NODE_SEPARATION_FACTOR;
+  const nodeWidth = NODE_SIZE_FACTOR;
+  const nodeHeight = NODE_SIZE_FACTOR;
+
+  // configure node margins
+  graph.setGraph({
+    nodesep,
+    ranksep
+  });
+
+  // add nodes to the graph if not already there
+  nodes.forEach((node) => {
+    const gNodeId = graphNodeId(node.get('id'));
+    if (!graph.hasNode(gNodeId)) {
+      graph.setNode(gNodeId, {
+        width: nodeWidth,
+        height: nodeHeight
+      });
+    }
+  });
+
+  // remove nodes that are no longer there or are 0-degree nodes
+  graph.nodes().forEach((gNodeId) => {
+    const nodeId = fromGraphNodeId(gNodeId);
+    if (!nodes.has(nodeId) || nodes.get(nodeId).get('degree') === 0) {
+      graph.removeNode(gNodeId);
+    }
+  });
+
+  // add edges to the graph if not already there
+  edges.forEach((edge) => {
+    const s = graphNodeId(edge.get('source'));
+    const t = graphNodeId(edge.get('target'));
+    if (!graph.hasEdge(s, t)) {
+      const virtualNodes = s === t ? 1 : 0;
+      graph.setEdge(s, t, {id: edge.get('id'), minlen: virtualNodes});
+    }
+  });
+
+  // remove edges that are no longer there
+  graph.edges().forEach((edgeObj) => {
+    const edge = [fromGraphNodeId(edgeObj.v), fromGraphNodeId(edgeObj.w)];
+    const edgeId = edge.join(EDGE_ID_SEPARATOR);
+    if (!edges.has(edgeId)) {
+      graph.removeEdge(edgeObj.v, edgeObj.w);
+    }
+  });
+
+  dagre.layout(graph, { debugTiming: false });
+
+  // apply coordinates to nodes and edges
+  graph.nodes().forEach((gNodeId) => {
+    const graphNode = graph.node(gNodeId);
+    const nodeId = fromGraphNodeId(gNodeId);
+    nodes = nodes.setIn([nodeId, 'x'], graphNode.x);
+    nodes = nodes.setIn([nodeId, 'y'], graphNode.y);
+  });
+  graph.edges().forEach((graphEdge) => {
+    const graphEdgeMeta = graph.edge(graphEdge);
+    const edge = edges.get(graphEdgeMeta.id);
+
+    const source = nodes.get(fromGraphNodeId(edge.get('source')));
+    const target = nodes.get(fromGraphNodeId(edge.get('target')));
+    const waypoints = correctedEdgePath(fromJS(graphEdgeMeta.points), source, target);
+
+    edges = edges.setIn([graphEdgeMeta.id, 'points'], waypoints);
+  });
+
+  const { width, height } = graph.graph();
+  let layout = {
+    graphWidth: width,
+    graphHeight: height,
+    width,
+    height,
+    nodes,
+    edges
+  };
+
+  // layout the single nodes
+  layout = layoutSingleNodes(layout, opts);
+
+  // return object with the width and height of layout
+  return layout;
+}
+
+/**
+ * Adds `points` array to edge based on location of source and target
+ * @param {Map} edge           new edge
+ * @param {Map} nodeCache      all nodes
+ * @returns {Map}              modified edge
+ */
+function setSimpleEdgePoints(edge, nodeCache) {
+  const source = nodeCache.get(edge.get('source'));
+  const target = nodeCache.get(edge.get('target'));
+  return edge.set('points', fromJS([
+    {x: source.get('x'), y: source.get('y')},
+    {x: target.get('x'), y: target.get('y')}
+  ]));
+}
+
+/**
+ * Layout nodes that have rank that already exists.
+ * Relies on only nodes being added that have a connection to an existing node
+ * while having a rank of an existing node. They will be laid out in the same
+ * line as the latter, with a direct connection between the existing and the new node.
+ * @param  {object} layout    Layout with nodes and edges
+ * @param  {Map} nodeCache    previous nodes
+ * @param  {object} opts      Options
+ * @return {object}           new layout object
+ */
+export function doLayoutNewNodesOfExistingRank(layout, nodeCache) {
+  const result = Object.assign({}, layout);
+  const nodesep = NODE_SEPARATION_FACTOR;
+  const nodeWidth = NODE_SIZE_FACTOR;
+
+  // determine new nodes
+  const oldNodes = ImmSet.fromKeys(nodeCache);
+  const newNodes = ImmSet.fromKeys(layout.nodes.filter(n => n.get('degree') > 0))
+    .subtract(oldNodes);
+  result.nodes = layout.nodes.map((n) => {
+    if (newNodes.contains(n.get('id'))) {
+      const nodesSameRank = nodeCache.filter(nn => nn.get('rank') === n.get('rank'));
+      if (nodesSameRank.size > 0) {
+        const y = nodesSameRank.first().get('y');
+        const x = nodesSameRank.maxBy(nn => nn.get('x')).get('x') + nodesep + nodeWidth;
+        return n.merge({ x, y });
+      }
+      return n;
+    }
+    return n;
+  });
+
+  result.edges = layout.edges.map((edge) => {
+    if (!edge.has('points')) {
+      return setSimpleEdgePoints(edge, layout.nodes);
+    }
+    return edge;
+  });
 
   return result;
 }
@@ -408,6 +414,7 @@ function copyLayoutProperties(layout, nodeCache, edgeCache) {
   return result;
 }
 
+
 /**
  * Layout of nodes and edges
  * If a previous layout was given and not too much changed, the previous layout
@@ -435,47 +442,48 @@ export function doLayout(immNodes, immEdges, opts) {
   const nodeCache = options.nodeCache || cache.nodeCache;
   const edgeCache = options.edgeCache || cache.edgeCache;
   const useCache = !options.forceRelayout && cachedLayout && nodeCache && edgeCache;
+  const nodesWithDegrees = updateNodeDegrees(immNodes, immEdges);
   let layout;
 
   layoutRuns += 1;
   if (useCache && !hasUnseenNodes(immNodes, nodeCache)) {
     layoutRunsTrivial += 1;
+    // trivial case: no new nodes have been added
     log('skip layout, trivial adjustment', layoutRunsTrivial, layoutRuns);
     layout = cloneLayout(cachedLayout, immNodes, immEdges);
-    // copy old properties, works also if nodes get re-added
     layout = copyLayoutProperties(layout, nodeCache, edgeCache);
-  } else {
-    const nodesWithDegrees = updateNodeDegrees(immNodes, immEdges);
-    if (useCache
-      && featureIsEnabledAny('layout-dance', 'layout-dance-single')
-      && hasNewSingleNode(nodesWithDegrees, nodeCache)) {
-      // special case: new nodes are 0-degree nodes, no need for layout run,
-      // they will be laid out further below
-      log('skip layout, only 0-degree node(s) added');
-      layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
-      layout = copyLayoutProperties(layout, nodeCache, edgeCache);
-    } else if (useCache
-      && featureIsEnabledAny('layout-dance', 'layout-dance-rank')
-      && hasNewNodesOfExistingRank(nodesWithDegrees, immEdges, nodeCache)) {
-      // special case: few new nodes were added, no need for layout run,
-      // they will inserted according to ranks
-      log('skip layout, used rank-based insertion');
-      layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
-      layout = copyLayoutProperties(layout, nodeCache, edgeCache);
-      layout = doLayoutNewNodesOfExistingRank(layout, nodeCache);
-    } else {
-      const graph = cache.graph;
-      layout = runLayoutEngine(graph, nodesWithDegrees, immEdges);
-      if (!layout) {
-        return layout;
-      }
-    }
-
+  } else if (useCache
+    && featureIsEnabledAny('layout-dance', 'layout-dance-single')
+    && hasNewSingleNode(nodesWithDegrees, nodeCache)) {
+    // special case: new nodes are 0-degree nodes, no need for layout run,
+    // they will be laid out further below
+    log('skip layout, only 0-degree node(s) added');
+    layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
+    layout = copyLayoutProperties(layout, nodeCache, edgeCache);
     layout = layoutSingleNodes(layout, opts);
+  } else if (useCache
+    && featureIsEnabledAny('layout-dance', 'layout-dance-rank')
+    && hasNewNodesOfExistingRank(nodesWithDegrees, immEdges, nodeCache)) {
+    // special case: few new nodes were added, no need for layout run,
+    // they will inserted according to ranks
+    log('skip layout, used rank-based insertion');
+    layout = cloneLayout(cachedLayout, nodesWithDegrees, immEdges);
+    layout = copyLayoutProperties(layout, nodeCache, edgeCache);
+    layout = doLayoutNewNodesOfExistingRank(layout, nodeCache);
+    layout = layoutSingleNodes(layout, opts);
+  } else {
+    // default case: the new layout is too different and refreshing is required
+    layout = runLayoutEngine(cache.graph, nodesWithDegrees, immEdges, opts);
   }
 
-  // cache results
+
   if (layout) {
+    // Last line of defense - re-render everything if two nodes are too close to one another.
+    if (minEuclideanDistanceBetweenPoints(layout.nodes) < NODE_CENTERS_SEPARATION_FACTOR) {
+      layout = runLayoutEngine(cache.graph, nodesWithDegrees, immEdges, opts);
+    }
+
+    // cache results
     cache.cachedLayout = layout;
     cache.nodeCache = cache.nodeCache.merge(layout.nodes);
     cache.edgeCache = cache.edgeCache.merge(layout.edges);
