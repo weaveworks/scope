@@ -3,8 +3,9 @@
 ## Getting Started (using local node)
 
 - You need at least Node.js 6.9.0 and a running `weavescope` container
-- Setup: `npm install`
-- Develop: `BACKEND_HOST=<dockerhost-ip> npm start` and then open `http://localhost:4042/`
+- Get Yarn: `npm install -g yarn`
+- Setup: `yarn install`
+- Develop: `BACKEND_HOST=<dockerhost-ip> yarn start` and then open `http://localhost:4042/`
 
 This will start a webpack-dev-server that serves the UI and proxies API requests to the container.
 
@@ -17,13 +18,13 @@ This will start a webpack-dev-server that serves the UI from the UI build contai
 
 ## Test Production Bundles Locally
 
-- Build: `npm run build`, output will be in `build/`
-- Serve files from `build/`: `BACKEND_HOST=<dockerhost-ip> npm run start-production` and then open `http://localhost:4042/`
+- Build: `yarn run build`, output will be in `build/`
+- Serve files from `build/`: `BACKEND_HOST=<dockerhost-ip> yarn run start-production` and then open `http://localhost:4042/`
 
 ## Coding
 
 This directory has a `.eslintrc`, make sure your editor supports linter hints.
-To run a linter, you also run `npm run lint`.
+To run a linter, you also run `yarn run lint`.
 
 ## Logging
 
@@ -45,5 +46,5 @@ debug('Store log message');
 Got a blank screen when loading `http://localhost:4042`?
 
 Make sure you are accessing the right machine:
-If you're running `npm start` on a virtual machine with IP 10.0.0.8, you need to point your browser to `http://10.0.0.8:4042`.
+If you're running `yarn start` on a virtual machine with IP 10.0.0.8, you need to point your browser to `http://10.0.0.8:4042`.
 Also, you may need to manually configure the virtual machine to expose ports 4041 (webpack-dev-server) and 4042 (express proxy).
