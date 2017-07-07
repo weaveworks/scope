@@ -407,4 +407,35 @@ describe('NodesLayout', () => {
     expect(nodes.n6.x).toBeGreaterThan(nodes.n3.x);
     expect(nodes.n6.y).toEqual(nodes.n3.y);
   });
+
+  it('rerenders the nodes completely after the coordinates have been messed up', () => {
+    // Take an initial setting
+    let result = NodesLayout.doLayout(
+      nodeSets.rank4.nodes,
+      nodeSets.rank4.edges,
+    );
+
+    // Cache the result layout
+    options.cachedLayout = result;
+    options.nodeCache = options.nodeCache.merge(result.nodes);
+    options.edgeCache = options.edgeCache.merge(result.edge);
+
+    // Shrink the coordinates of all the notes 2x to make them closer to one another
+    options.nodeCache = options.nodeCache.update(cache => cache.map(node => node.merge({
+      x: node.get('x') / 2,
+      y: node.get('y') / 2,
+    })));
+
+    // Rerun the initial layout to get a trivial diff and skip all the advanced layouting logic.
+    result = NodesLayout.doLayout(
+      nodeSets.rank4.nodes,
+      nodeSets.rank4.edges,
+      options
+    );
+
+    // The layout should have updated by running into our last 'integration testing' criterion
+    coords = getNodeCoordinates(options.nodeCache);
+    resultCoords = getNodeCoordinates(result.nodes);
+    expect(resultCoords).not.toEqual(coords);
+  });
 });
