@@ -33,8 +33,6 @@ type eventTracker interface {
 	stop()
 }
 
-var ebpfTracker *EbpfTracker
-
 // EbpfTracker contains the sets of open and closed TCP connections.
 // Closed connections are kept in the `closedConnections` slice for one iteration of `walkConnections`.
 type EbpfTracker struct {
@@ -86,54 +84,52 @@ func newEbpfTracker() (eventTracker, error) {
 		return nil, fmt.Errorf("kernel not supported: %v", err)
 	}
 
-	t, err := tracer.NewTracer(tcpEventCbV4, tcpEventCbV6, lostCb)
+	tracker := &EbpfTracker{
+		openConnections: map[string]ebpfConnection{},
+	}
+
+	tracer, err := tracer.NewTracer(tracker.tcpEventCbV4, tracker.tcpEventCbV6, tracker.lostCb)
 	if err != nil {
 		return nil, err
 	}
 
-	tracker := &EbpfTracker{
-		openConnections: map[string]ebpfConnection{},
-		tracer:          t,
-	}
-
-	ebpfTracker = tracker
-
-	t.Start()
+	tracker.tracer = tracer
+	tracer.Start()
 
 	return tracker, nil
 }
 
 var lastTimestampV4 uint64
 
-func tcpEventCbV4(e tracer.TcpV4) {
+func (t *EbpfTracker) tcpEventCbV4(e tracer.TcpV4) {
 	if lastTimestampV4 > e.Timestamp {
 		// A kernel bug can cause the timestamps to be wrong (e.g. on Ubuntu with Linux 4.4.0-47.68)
 		// Upgrading the kernel will fix the problem. For further info see:
 		// https://github.com/iovisor/bcc/issues/790#issuecomment-263704235
 		// https://github.com/weaveworks/scope/issues/2334
 		log.Errorf("tcp tracer received event with timestamp %v even though the last timestamp was %v. Stopping the eBPF tracker.", e.Timestamp, lastTimestampV4)
-		ebpfTracker.dead = true
-		ebpfTracker.stop()
+		t.dead = true
+		t.stop()
 	}
 
 	lastTimestampV4 = e.Timestamp
 
 	if e.Type == tracer.EventFdInstall {
-		ebpfTracker.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
+		t.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
 	} else {
 		tuple := fourTuple{e.SAddr.String(), e.DAddr.String(), e.SPort, e.DPort}
-		ebpfTracker.handleConnection(e.Type, tuple, int(e.Pid), strconv.Itoa(int(e.NetNS)))
+		t.handleConnection(e.Type, tuple, int(e.Pid), strconv.Itoa(int(e.NetNS)))
 	}
 }
 
-func tcpEventCbV6(e tracer.TcpV6) {
+func (t *EbpfTracker) tcpEventCbV6(e tracer.TcpV6) {
 	// TODO: IPv6 not supported in Scope
 }
 
-func lostCb(count uint64) {
+func (t *EbpfTracker) lostCb(count uint64) {
 	log.Errorf("tcp tracer lost %d events. Stopping the eBPF tracker", count)
-	ebpfTracker.dead = true
-	ebpfTracker.stop()
+	t.dead = true
+	t.stop()
 }
 
 func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns string, ok bool) {
