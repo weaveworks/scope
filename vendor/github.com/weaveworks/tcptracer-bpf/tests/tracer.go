@@ -67,6 +67,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	t.Start()
+
 	for _, p := range strings.Split(watchFdInstallPids, ",") {
 		if p == "" {
 			continue

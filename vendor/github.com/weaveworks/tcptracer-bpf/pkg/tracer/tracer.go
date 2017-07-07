@@ -101,15 +101,17 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6), lostCb func(l
 		}
 	}()
 
-	perfMapIPV4.PollStart()
-	perfMapIPV6.PollStart()
-
 	return &Tracer{
 		m:           m,
 		perfMapIPV4: perfMapIPV4,
 		perfMapIPV6: perfMapIPV6,
 		stopChan:    stopChan,
 	}, nil
+}
+
+func (t *Tracer) Start() {
+	t.perfMapIPV4.PollStart()
+	t.perfMapIPV6.PollStart()
 }
 
 func (t *Tracer) AddFdInstallWatcher(pid uint32) (err error) {

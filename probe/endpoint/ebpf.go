@@ -97,6 +97,9 @@ func newEbpfTracker() (eventTracker, error) {
 	}
 
 	ebpfTracker = tracker
+
+	t.Start()
+
 	return tracker, nil
 }
 
