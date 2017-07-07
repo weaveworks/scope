@@ -6,6 +6,9 @@ import { canvasMarginsSelector, canvasWidthSelector, canvasHeightSelector } from
 import { activeLayoutCachedZoomSelector } from '../zooming';
 import { graphNodesSelector } from './graph';
 
+// Nodes in the layout are always kept between 1px and 200px big.
+const MAX_SCALE = 200 / NODE_BASE_SIZE;
+const MIN_SCALE = 3 / NODE_BASE_SIZE;
 
 const graphBoundingRectangleSelector = createSelector(
   [
@@ -23,15 +26,6 @@ const graphBoundingRectangleSelector = createSelector(
   }
 );
 
-// Max scale limit will always be such that a node covers 1/5 of the viewport.
-const maxScaleSelector = createSelector(
-  [
-    canvasWidthSelector,
-    canvasHeightSelector,
-  ],
-  (width, height) => Math.min(width, height) / NODE_BASE_SIZE / 5
-);
-
 // Compute the default zoom settings for the given graph.
 export const graphDefaultZoomSelector = createSelector(
   [
@@ -39,9 +33,8 @@ export const graphDefaultZoomSelector = createSelector(
     canvasMarginsSelector,
     canvasWidthSelector,
     canvasHeightSelector,
-    maxScaleSelector,
   ],
-  (boundingRectangle, canvasMargins, width, height, maxScale) => {
+  (boundingRectangle, canvasMargins, width, height) => {
     if (!boundingRectangle) return makeMap();
 
     const { xMin, xMax, yMin, yMax } = boundingRectangle.toJS();
@@ -50,7 +43,7 @@ export const graphDefaultZoomSelector = createSelector(
 
     // Initial zoom is such that the graph covers 90% of either the viewport,
     // or one half of maximal zoom constraint, whichever is smaller.
-    const scale = Math.min(xFactor, yFactor, maxScale / 2) * 0.9;
+    const scale = Math.min(xFactor, yFactor, MAX_SCALE / 2) * 0.9;
 
     // This translation puts the graph in the center of the viewport, respecting the margins.
     const translateX = ((width - ((xMax + xMin) * scale)) / 2) + canvasMargins.left;
@@ -65,19 +58,10 @@ export const graphDefaultZoomSelector = createSelector(
   }
 );
 
+// NOTE: This constant is made into a selector to fit
+// props requirements for <ZoomableCanvas /> component.
 export const graphZoomLimitsSelector = createSelector(
-  [
-    graphDefaultZoomSelector,
-    maxScaleSelector,
-  ],
-  (defaultZoom, maxScale) => {
-    if (defaultZoom.isEmpty()) return makeMap();
-
-    // We always allow zooming out exactly 5x compared to the initial zoom.
-    const minScale = defaultZoom.get('scaleX') / 5;
-
-    return makeMap({ minScale, maxScale });
-  }
+  [], () => makeMap({ minScale: MIN_SCALE, maxScale: MAX_SCALE })
 );
 
 export const graphZoomStateSelector = createSelector(
