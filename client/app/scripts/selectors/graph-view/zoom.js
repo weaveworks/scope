@@ -8,7 +8,7 @@ import { graphNodesSelector } from './graph';
 
 // Nodes in the layout are always kept between 1px and 200px big.
 const MAX_SCALE = 200 / NODE_BASE_SIZE;
-const MIN_SCALE = 1 / NODE_BASE_SIZE;
+const MIN_SCALE = 3 / NODE_BASE_SIZE;
 
 const graphBoundingRectangleSelector = createSelector(
   [
