@@ -4,6 +4,7 @@ import { fromJS, Map as makeMap, Set as ImmSet } from 'immutable';
 
 import { NODE_BASE_SIZE, EDGE_WAYPOINTS_CAP } from '../constants/styles';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
+import { trackMixpanelEvent } from '../utils/tracking-utils';
 import { featureIsEnabledAny } from '../utils/feature-utils';
 import { buildTopologyCacheId, updateNodeDegrees } from '../utils/topology-utils';
 import { minEuclideanDistanceBetweenPoints } from '../utils/math-utils';
@@ -481,6 +482,7 @@ export function doLayout(immNodes, immEdges, opts) {
     // Last line of defense - re-render everything if two nodes are too close to one another.
     if (minEuclideanDistanceBetweenPoints(layout.nodes) < NODE_CENTERS_SEPARATION_FACTOR) {
       layout = runLayoutEngine(cache.graph, nodesWithDegrees, immEdges, opts);
+      trackMixpanelEvent('scope.layout.graph.overlap');
     }
 
     // cache results
