@@ -180,6 +180,10 @@ func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
 	if !ok {
 		return
 	}
+
+	t.Lock()
+	defer t.Unlock()
+
 	t.openConnections[tuple] = ebpfConnection{
 		incoming:         true,
 		tuple:            tuple,
