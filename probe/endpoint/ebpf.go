@@ -172,6 +172,9 @@ func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns string, ok bool) {
 }
 
 func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
+	if !process.IsProcInAccept("/proc", strconv.Itoa(pid)) {
+		t.tracer.RemoveFdInstallWatcher(uint32(pid))
+	}
 	tuple, netns, ok := tupleFromPidFd(pid, fd)
 	log.Debugf("EbpfTracker: got fd-install event: pid=%d fd=%d -> tuple=%s netns=%s ok=%v", pid, fd, tuple, netns, ok)
 	if !ok {
@@ -182,9 +185,6 @@ func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
 		tuple:            tuple,
 		pid:              pid,
 		networkNamespace: netns,
-	}
-	if !process.IsProcInAccept("/proc", strconv.Itoa(pid)) {
-		t.tracer.RemoveFdInstallWatcher(uint32(pid))
 	}
 }
 
