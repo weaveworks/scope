@@ -114,6 +114,21 @@ func (t *connectionTracker) performFlowWalk(rpt *report.Report) map[string]fourT
 	return seenTuples
 }
 
+func (t *connectionTracker) existingFlows() map[string]fourTuple {
+	seenTuples := map[string]fourTuple{}
+	if err := IsConntrackSupported(t.conf.ProcRoot); t.conf.UseConntrack && err != nil {
+		log.Warnf("Not using conntrack: not supported by the kernel: %s", err)
+	} else if existingFlows, err := existingConnections([]string{"--any-nat"}); err != nil {
+		log.Errorf("conntrack existingConnections error: %v", err)
+	} else {
+		for _, f := range existingFlows {
+			tuple := flowToTuple(f)
+			seenTuples[tuple.key()] = tuple
+		}
+	}
+	return seenTuples
+}
+
 func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID string, seenTuples map[string]fourTuple) error {
 	conns, err := t.conf.Scanner.Connections()
 	if err != nil {
@@ -147,18 +162,9 @@ func (t *connectionTracker) getInitialState() {
 	processCache.Tick()
 
 	scanner := procspy.NewSyncConnectionScanner(processCache, t.conf.SpyProcs)
-	seenTuples := map[string]fourTuple{}
-	// Consult the flowWalker to get the initial state
-	if err := IsConntrackSupported(t.conf.ProcRoot); t.conf.UseConntrack && err != nil {
-		log.Warnf("Not using conntrack: not supported by the kernel: %s", err)
-	} else if existingFlows, err := existingConnections([]string{"--any-nat"}); err != nil {
-		log.Errorf("conntrack existingConnections error: %v", err)
-	} else {
-		for _, f := range existingFlows {
-			tuple := flowToTuple(f)
-			seenTuples[tuple.key()] = tuple
-		}
-	}
+
+	// Consult conntrack to get the initial state
+	seenTuples := t.existingFlows()
 
 	conns, err := scanner.Connections()
 	if err != nil {
