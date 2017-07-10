@@ -40,6 +40,7 @@ type EbpfTracker struct {
 	tracer                   *tracer.Tracer
 	readyToHandleConnections bool
 	dead                     bool
+	lastTimestampV4          uint64
 
 	openConnections   map[string]ebpfConnection
 	closedConnections []ebpfConnection
@@ -99,20 +100,18 @@ func newEbpfTracker() (eventTracker, error) {
 	return tracker, nil
 }
 
-var lastTimestampV4 uint64
-
 func (t *EbpfTracker) tcpEventCbV4(e tracer.TcpV4) {
-	if lastTimestampV4 > e.Timestamp {
+	if t.lastTimestampV4 > e.Timestamp {
 		// A kernel bug can cause the timestamps to be wrong (e.g. on Ubuntu with Linux 4.4.0-47.68)
 		// Upgrading the kernel will fix the problem. For further info see:
 		// https://github.com/iovisor/bcc/issues/790#issuecomment-263704235
 		// https://github.com/weaveworks/scope/issues/2334
-		log.Errorf("tcp tracer received event with timestamp %v even though the last timestamp was %v. Stopping the eBPF tracker.", e.Timestamp, lastTimestampV4)
+		log.Errorf("tcp tracer received event with timestamp %v even though the last timestamp was %v. Stopping the eBPF tracker.", e.Timestamp, t.lastTimestampV4)
 		t.dead = true
 		t.stop()
 	}
 
-	lastTimestampV4 = e.Timestamp
+	t.lastTimestampV4 = e.Timestamp
 
 	if e.Type == tracer.EventFdInstall {
 		t.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
