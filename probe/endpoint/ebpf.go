@@ -246,15 +246,19 @@ func (t *EbpfTracker) walkConnections(f func(ebpfConnection)) {
 }
 
 func (t *EbpfTracker) feedInitialConnections(conns procspy.ConnIter, seenTuples map[string]fourTuple, processesWaitingInAccept []int, hostNodeID string) {
-	t.readyToHandleConnections = true
+	t.Lock()
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
-		if incoming {
-			t.handleConnection(tracer.EventAccept, tuple, int(conn.Proc.PID), namespaceID)
-		} else {
-			t.handleConnection(tracer.EventConnect, tuple, int(conn.Proc.PID), namespaceID)
+		t.openConnections[tuple] = ebpfConnection{
+			incoming:         incoming,
+			tuple:            tuple,
+			pid:              int(conn.Proc.PID),
+			networkNamespace: namespaceID,
 		}
 	}
+	t.readyToHandleConnections = true
+	t.Unlock()
+
 	for _, p := range processesWaitingInAccept {
 		t.tracer.AddFdInstallWatcher(uint32(p))
 		log.Debugf("EbpfTracker: install fd-install watcher: pid=%d", p)
