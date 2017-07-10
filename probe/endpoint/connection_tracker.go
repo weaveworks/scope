@@ -91,16 +91,18 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 		t.useProcfs()
 	}
 
-	// seenTuples contains information about connections seen by conntrack and it will be passed to the /proc parser
-	seenTuples := map[string]fourTuple{}
-	t.performFlowWalk(rpt, seenTuples)
+	// seenTuples contains information about connections seen by
+	// conntrack
+	seenTuples := t.performFlowWalk(rpt)
+
 	if t.conf.WalkProc && t.conf.Scanner != nil {
 		t.performWalkProc(rpt, hostNodeID, seenTuples)
 	}
 }
 
-func (t *connectionTracker) performFlowWalk(rpt *report.Report, seenTuples map[string]fourTuple) {
-	// Consult the flowWalker for short-lived connections
+// performFlowWalk consults the flowWalker for short-lived connections
+func (t *connectionTracker) performFlowWalk(rpt *report.Report) map[string]fourTuple {
+	seenTuples := map[string]fourTuple{}
 	extraNodeInfo := map[string]string{
 		Conntracked: "true",
 	}
@@ -109,6 +111,7 @@ func (t *connectionTracker) performFlowWalk(rpt *report.Report, seenTuples map[s
 		seenTuples[tuple.key()] = tuple
 		t.addConnection(rpt, tuple, "", extraNodeInfo, extraNodeInfo)
 	})
+	return seenTuples
 }
 
 func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID string, seenTuples map[string]fourTuple) error {
