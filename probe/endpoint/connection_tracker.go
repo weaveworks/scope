@@ -27,7 +27,7 @@ type connectionTrackerConfig struct {
 type connectionTracker struct {
 	conf            connectionTrackerConfig
 	flowWalker      flowWalker // Interface
-	ebpfTracker     eventTracker
+	ebpfTracker     *EbpfTracker
 	reverseResolver *reverseResolver
 }
 

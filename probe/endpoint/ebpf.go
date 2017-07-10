@@ -24,15 +24,6 @@ type ebpfConnection struct {
 	pid              int
 }
 
-type eventTracker interface {
-	handleConnection(ev tracer.EventType, tuple fourTuple, pid int, networkNamespace string)
-	walkConnections(f func(ebpfConnection))
-	feedInitialConnections(ci procspy.ConnIter, seenTuples map[string]fourTuple, processesWaitingInAccept []int, hostNodeID string)
-	isReadyToHandleConnections() bool
-	isDead() bool
-	stop()
-}
-
 // EbpfTracker contains the sets of open and closed TCP connections.
 // Closed connections are kept in the `closedConnections` slice for one iteration of `walkConnections`.
 type EbpfTracker struct {
@@ -80,7 +71,7 @@ func isKernelSupported() error {
 	return nil
 }
 
-func newEbpfTracker() (eventTracker, error) {
+func newEbpfTracker() (*EbpfTracker, error) {
 	if err := isKernelSupported(); err != nil {
 		return nil, fmt.Errorf("kernel not supported: %v", err)
 	}
