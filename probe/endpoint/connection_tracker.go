@@ -116,7 +116,9 @@ func (t *connectionTracker) performFlowWalk(rpt *report.Report) map[string]fourT
 
 func (t *connectionTracker) existingFlows() map[string]fourTuple {
 	seenTuples := map[string]fourTuple{}
-	if err := IsConntrackSupported(t.conf.ProcRoot); t.conf.UseConntrack && err != nil {
+	if !t.conf.UseConntrack {
+		// log.Warnf("Not using conntrack: disabled")
+	} else if err := IsConntrackSupported(t.conf.ProcRoot); err != nil {
 		log.Warnf("Not using conntrack: not supported by the kernel: %s", err)
 	} else if existingFlows, err := existingConnections([]string{"--any-nat"}); err != nil {
 		log.Errorf("conntrack existingConnections error: %v", err)
