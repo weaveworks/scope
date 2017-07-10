@@ -177,13 +177,12 @@ func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
 	if !ok {
 		return
 	}
-	conn := ebpfConnection{
+	t.openConnections[tuple] = ebpfConnection{
 		incoming:         true,
 		tuple:            tuple,
 		pid:              pid,
 		networkNamespace: netns,
 	}
-	t.openConnections[tuple] = conn
 	if !process.IsProcInAccept("/proc", strconv.Itoa(pid)) {
 		t.tracer.RemoveFdInstallWatcher(uint32(pid))
 	}
@@ -202,21 +201,19 @@ func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid
 
 	switch ev {
 	case tracer.EventConnect:
-		conn := ebpfConnection{
+		t.openConnections[tuple] = ebpfConnection{
 			incoming:         false,
 			tuple:            tuple,
 			pid:              pid,
 			networkNamespace: networkNamespace,
 		}
-		t.openConnections[tuple] = conn
 	case tracer.EventAccept:
-		conn := ebpfConnection{
+		t.openConnections[tuple] = ebpfConnection{
 			incoming:         true,
 			tuple:            tuple,
 			pid:              pid,
 			networkNamespace: networkNamespace,
 		}
-		t.openConnections[tuple] = conn
 	case tracer.EventClose:
 		if deadConn, ok := t.openConnections[tuple]; ok {
 			delete(t.openConnections, tuple)
