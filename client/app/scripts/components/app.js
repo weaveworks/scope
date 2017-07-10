@@ -4,7 +4,6 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
-import Logo from './logo';
 import Footer from './footer';
 import Sidebar from './sidebar';
 import HelpPanel from './help-panel';
@@ -172,7 +171,6 @@ class App extends React.Component {
       timeTravelTransitioning, showingTimeTravel } = this.props;
 
     const className = classNames('scope-app', { 'time-travel-open': showingTimeTravel });
-    const isIframe = window !== window.top;
 
     return (
       <div className={className} ref={this.saveAppRef}>
@@ -187,12 +185,6 @@ class App extends React.Component {
         <div className="header">
           <TimeTravel />
           <div className="selectors">
-            <div className="logo">
-              {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
-                <Logo />
-              </svg>}
-            </div>
-            <Search />
             <Topologies />
             <ViewModeSelector />
             <TimeControl />
@@ -205,6 +197,7 @@ class App extends React.Component {
           {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
           {!isResourceViewMode && <Status />}
           {!isResourceViewMode && <TopologyOptions />}
+          {!isResourceViewMode && <Search />}
         </Sidebar>
 
         <Footer />

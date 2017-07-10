@@ -109,10 +109,12 @@ class TopologyOptions extends React.Component {
 
   render() {
     const { options } = this.props;
+
+    if (!options) return null;
+
     return (
       <div className="topology-options">
-        {options && options.toIndexedSeq().map(
-          option => this.renderOption(option))}
+        {options.toIndexedSeq().map(option => this.renderOption(option))}
       </div>
     );
   }

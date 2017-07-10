@@ -9,6 +9,9 @@
     url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.ttf");
 }
 
+// TODO: Remove this when the CONFIGURE button is removed from Scope in Weave Cloud.
+.setup-nav-button { display: none; }
+
 .browsehappy {
   margin: 0.2em 0;
   background: #ccc;
@@ -179,7 +182,7 @@
 }
 
 .header {
-  margin-top: 38px;
+  margin-top: 15px;
   pointer-events: none;
   width: 100%;
 
@@ -209,6 +212,11 @@
 .footer {
   @extend .overlay-wrapper;
   right: 43px;
+
+  .logo {
+    margin-right: 8px;
+    margin-bottom: -6px;
+  }
 
   &-status {
     margin-right: 1em;
@@ -326,11 +334,12 @@
 
 
 .topologies {
-  margin: 0 4px;
+  position: absolute;
   display: flex;
+  left: 25px;
 
   .topologies-item {
-    margin: 0px 8px;
+    margin-right: 16px;
 
     &-label {
       font-size: .8rem;
@@ -1379,7 +1388,8 @@
 
 .status {
   text-transform: uppercase;
-  padding: 2px 12px;
+  padding: 2px;
+  margin: 8px 0;
   border-radius: $border-radius;
   color: $text-secondary-color;
   display: inline-block;
@@ -1448,8 +1458,12 @@
   margin-top: 6px;
 }
 
+.view-mode-selector {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .view-mode-selector, .time-control {
-  margin-left: 20px;
   min-width: 161px;
 
   &-wrapper {
@@ -1481,6 +1495,7 @@
 
 .time-control {
   position: absolute;
+  margin-left: 20px;
   right: 36px;
 
   &-controls {
@@ -1569,17 +1584,22 @@
 .sidebar {
   position: fixed;
   bottom: 11px;
-  left: 11px;
+  left: 25px;
   padding: 5px;
   font-size: .7rem;
   border-radius: 8px;
   border: 1px solid transparent;
   pointer-events: none;
+
+  .topology-options {
+    margin-bottom: 15px;
+  }
 }
 
 .sidebar-gridmode {
   background-color: #e9e9f1;
   border-color: $background-darker-color;
+  padding: 5px 10px;
   opacity: 0.9;
 }
 
@@ -1588,13 +1608,11 @@
 
   display: inline-block;
   position: relative;
-  width: 10em;
+  width: 150px;
   transition: width 0.3s 0s $base-ease;
 
   &-wrapper {
-    flex: 0 1 20%;
-    margin: 0 8px;
-    text-align: right;
+    margin-bottom: 20px;
   }
 
   &-disabled {
@@ -1695,7 +1713,7 @@
   &-focused,
   &-filled,
   &-pinned {
-    width: 100%;
+    width: 550px;
   }
 
   &-matched &-input {
