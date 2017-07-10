@@ -98,7 +98,6 @@ func (t *EbpfTracker) tcpEventCbV4(e tracer.TcpV4) {
 		// https://github.com/iovisor/bcc/issues/790#issuecomment-263704235
 		// https://github.com/weaveworks/scope/issues/2334
 		log.Errorf("tcp tracer received event with timestamp %v even though the last timestamp was %v. Stopping the eBPF tracker.", e.Timestamp, t.lastTimestampV4)
-		t.dead = true
 		t.stop()
 	}
 
@@ -118,7 +117,6 @@ func (t *EbpfTracker) tcpEventCbV6(e tracer.TcpV6) {
 
 func (t *EbpfTracker) lostCb(count uint64) {
 	log.Errorf("tcp tracer lost %d events. Stopping the eBPF tracker", count)
-	t.dead = true
 	t.stop()
 }
 
@@ -270,12 +268,17 @@ func (t *EbpfTracker) isReadyToHandleConnections() bool {
 }
 
 func (t *EbpfTracker) isDead() bool {
+	t.Lock()
+	defer t.Unlock()
 	return t.dead
 }
 
 func (t *EbpfTracker) stop() {
-	if t.tracer != nil {
+	t.Lock()
+	alreadyDead := t.dead
+	t.dead = true
+	t.Unlock()
+	if !alreadyDead && t.tracer != nil {
 		t.tracer.Stop()
 	}
-	t.dead = true
 }
