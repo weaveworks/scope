@@ -33,7 +33,7 @@ type EbpfTracker struct {
 	dead                     bool
 	lastTimestampV4          uint64
 
-	openConnections   map[string]ebpfConnection
+	openConnections   map[fourTuple]ebpfConnection
 	closedConnections []ebpfConnection
 }
 
@@ -77,7 +77,7 @@ func newEbpfTracker() (*EbpfTracker, error) {
 	}
 
 	tracker := &EbpfTracker{
-		openConnections: map[string]ebpfConnection{},
+		openConnections: map[fourTuple]ebpfConnection{},
 	}
 
 	tracer, err := tracer.NewTracer(tracker.tcpEventCbV4, tracker.tcpEventCbV6, tracker.lostCb)
@@ -183,7 +183,7 @@ func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
 		pid:              pid,
 		networkNamespace: netns,
 	}
-	t.openConnections[tuple.String()] = conn
+	t.openConnections[tuple] = conn
 	if !process.IsProcInAccept("/proc", strconv.Itoa(pid)) {
 		t.tracer.RemoveFdInstallWatcher(uint32(pid))
 	}
@@ -208,7 +208,7 @@ func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid
 			pid:              pid,
 			networkNamespace: networkNamespace,
 		}
-		t.openConnections[tuple.String()] = conn
+		t.openConnections[tuple] = conn
 	case tracer.EventAccept:
 		conn := ebpfConnection{
 			incoming:         true,
@@ -216,13 +216,13 @@ func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid
 			pid:              pid,
 			networkNamespace: networkNamespace,
 		}
-		t.openConnections[tuple.String()] = conn
+		t.openConnections[tuple] = conn
 	case tracer.EventClose:
-		if deadConn, ok := t.openConnections[tuple.String()]; ok {
-			delete(t.openConnections, tuple.String())
+		if deadConn, ok := t.openConnections[tuple]; ok {
+			delete(t.openConnections, tuple)
 			t.closedConnections = append(t.closedConnections, deadConn)
 		} else {
-			log.Debugf("EbpfTracker: unmatched close event: %s pid=%d netns=%s", tuple.String(), pid, networkNamespace)
+			log.Debugf("EbpfTracker: unmatched close event: %s pid=%d netns=%s", tuple, pid, networkNamespace)
 		}
 	default:
 		log.Debugf("EbpfTracker: unknown event: %s (%d)", ev, ev)
