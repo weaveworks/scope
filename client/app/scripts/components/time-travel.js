@@ -1,10 +1,11 @@
 import React from 'react';
-import Slider from 'rc-slider';
+// import Slider from 'rc-slider';
 import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce, map } from 'lodash';
 
+import TimeTravelTimeline from './time-travel-timeline';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
   jumpToTime,
@@ -26,8 +27,8 @@ const getTimestampStates = (timestamp) => {
   };
 };
 
-const ONE_HOUR_MS = moment.duration(1, 'hour');
-const FIVE_MINUTES_MS = moment.duration(5, 'minutes');
+// const ONE_HOUR_MS = moment.duration(1, 'hour');
+// const FIVE_MINUTES_MS = moment.duration(5, 'minutes');
 
 class TimeTravel extends React.Component {
   constructor(props, context) {
@@ -167,38 +168,17 @@ class TimeTravel extends React.Component {
   }
 
   render() {
-    const { sliderValue, sliderMinValue, inputValue } = this.state;
-    const sliderMaxValue = moment().valueOf();
+    const { inputValue } = this.state;
+    // const { sliderValue, sliderMinValue, inputValue } = this.state;
+    // const sliderMaxValue = moment().valueOf();
 
     const className = classNames('time-travel', { visible: this.props.showingTimeTravel });
 
     return (
       <div className={className}>
-        <div className="time-travel-slider-wrapper">
-          {this.renderMarks()}
-          <Slider
-            onChange={this.handleSliderChange}
-            value={sliderValue}
-            min={sliderMinValue}
-            max={sliderMaxValue}
-          />
-        </div>
-        <div className="time-travel-jump-controls">
-          <a className="button jump" onClick={() => this.handleJumpClick(-ONE_HOUR_MS)}>
-            <span className="fa fa-fast-backward" /> 1 hour
-          </a>
-          <a className="button jump" onClick={() => this.handleJumpClick(-FIVE_MINUTES_MS)}>
-            <span className="fa fa-step-backward" /> 5 mins
-          </a>
-          <span className="time-travel-jump-controls-timestamp">
-            <input value={inputValue} onChange={this.handleInputChange} /> UTC
-          </span>
-          <a className="button jump" onClick={() => this.handleJumpClick(+FIVE_MINUTES_MS)}>
-            <span className="fa fa-step-forward" /> 5 mins
-          </a>
-          <a className="button jump" onClick={() => this.handleJumpClick(+ONE_HOUR_MS)}>
-            <span className="fa fa-fast-forward" /> 1 hour
-          </a>
+        <TimeTravelTimeline />
+        <div className="time-travel-jump-controls-timestamp">
+          <input value={inputValue} onChange={this.handleInputChange} /> UTC
         </div>
       </div>
     );

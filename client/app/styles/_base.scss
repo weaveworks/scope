@@ -9,6 +9,9 @@
     url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.ttf");
 }
 
+// TODO: Remove this line once the configure button stops being added to Scope.
+.setup-nav-button { display: none; }
+
 .browsehappy {
   margin: 0.2em 0;
   background: #ccc;
@@ -179,7 +182,7 @@
 }
 
 .header {
-  margin-top: 38px;
+  margin-top: 15px;
   pointer-events: none;
   width: 100%;
 
@@ -249,9 +252,16 @@
   overflow: hidden;
   height: 0;
 
+  #time-travel-timeline {
+    background-color: rgba(255, 255, 255, 0.85);
+    box-shadow: inset 0 0 7px #aaa;
+    pointer-events: all;
+  }
+
   &.visible {
-    height: 50px;
+    height: 60px;
     margin-bottom: 15px;
+    margin-top: -5px;
   }
 
   &-markers {
