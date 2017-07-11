@@ -37,29 +37,70 @@ var (
 	// Prometheus queries for topologies
 	topologyQueries = map[string]map[string]*template.Template{
 		report.Pod: {
-			// Metric names provided by cAdvisor in kubelet
-			docker.MemoryUsage:   prepareTemplate(`sum(container_memory_usage_bytes{pod_name="{{.Label}}"})`),
-			docker.CPUTotalUsage: prepareTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name="{{.Label}}"}[1m]))`),
-		},
-		report.ReplicaSet: {
-			// Metric names provided by cAdvisor in kubelet
-			docker.MemoryUsage:   prepareTemplate(`sum(container_memory_usage_bytes{pod_name=~"{{.Label}}-[^-]+-[^-]"})`),
-			docker.CPUTotalUsage: prepareTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name=~"{{.Label}}-[^-]+-[^-]"}[1m]))`),
+			// `container_memory_usage_bytes` is provided by cAdvisor in Kubelets.
+			docker.MemoryUsage:   parsedTemplate(`sum(container_memory_usage_bytes{pod_name="{{.Label}}"})`),
+			// `container_cpu_usage_seconds_total` is provided by cAdvisor in Kubelets.
+			docker.CPUTotalUsage: parsedTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name="{{.Label}}"}[1m]))`),
 		},
 		report.Deployment: {
-			// Metric names provided by cAdvisor in kubelet
-			docker.MemoryUsage:   prepareTemplate(`sum(container_memory_usage_bytes{pod_name=~"{{.Label}}-[^-]+-[^-]+"})`),
-			docker.CPUTotalUsage: prepareTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name=~"{{.Label}}-[^-]+-[^-]+"}[1m]))`),
+			// `container_memory_usage_bytes` is provided by cAdvisor in Kubelets.
+			docker.MemoryUsage:   parsedTemplate(`sum(container_memory_usage_bytes{pod_name=~"{{.Label}}-[^-]+-[^-]+"})`),
+			// `container_cpu_usage_seconds_total` is provided by cAdvisor in Kubelets.
+			docker.CPUTotalUsage: parsedTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name=~"{{.Label}}-[^-]+-[^-]+"}[1m]))`),
 		},
 		report.DaemonSet: {
-			// Metric names defined as recording rule. Filters by `monitor=""` for cortex-only data.
-			docker.MemoryUsage:   prepareTemplate(`namespace_name:container_memory_usage_bytes:sum{name="{{.Label}}",monitor=""}`),
-			docker.CPUTotalUsage: prepareTemplate(`namespace_name:container_cpu_usage_seconds_total:sum_rate{name="{{.Label}}"}`),
+			/*
+			A recording rule defines `namespace_name:container_memory_usage_bytes:sum`:
+
+			    namespace_name:container_memory_usage_bytes:sum =
+			       sum by (namespace, name) (
+				  sum(container_memory_usage_bytes{image!=""}) by (pod_name, namespace)
+				* on (pod_name) group_left(name)
+				  k8s_pod_labels{job="monitoring/kube-api-exporter"}
+			       )
+
+			Additionally, we filter by `monitor=""` for cortex-only data.
+			 */
+
+			docker.MemoryUsage:   parsedTemplate(`namespace_name:container_memory_usage_bytes:sum{name="{{.Label}}",monitor=""}`),
+			/*
+			A recording rule defines `namespace_name:container_cpu_usage_seconds_total:sum_rate`:
+
+			    namespace_name:container_cpu_usage_seconds_total:sum_rate =
+			       sum by (namespace, name) (
+				  sum(rate(container_cpu_usage_seconds_total{image!=""}[5m])) by (pod_name, namespace)
+				* on (pod_name) group_left(name)
+				  k8s_pod_labels{job="monitoring/kube-api-exporter"}
+			       )
+			 */
+			docker.CPUTotalUsage: parsedTemplate(`namespace_name:container_cpu_usage_seconds_total:sum_rate{name="{{.Label}}"}`),
 		},
 		report.Service: {
-			// Metric names defined as recording rule. Filters by `monitor=""` for cortex-only data.
-			docker.MemoryUsage:   prepareTemplate(`namespace_name:container_memory_usage_bytes:sum{name="{{.Label}}",monitor=""}`),
-			docker.CPUTotalUsage: prepareTemplate(`namespace_name:container_cpu_usage_seconds_total:sum_rate{name="{{.Label}}"}`),
+			/*
+			A recording rule defines `namespace_name:container_memory_usage_bytes:sum`:
+
+			    namespace_name:container_memory_usage_bytes:sum =
+			       sum by (namespace, name) (
+				  sum(container_memory_usage_bytes{image!=""}) by (pod_name, namespace)
+				* on (pod_name) group_left(name)
+				  k8s_pod_labels{job="monitoring/kube-api-exporter"}
+			       )
+
+			Additionally, we filter by `monitor=""` for cortex-only data.
+			 */
+			docker.MemoryUsage:   parsedTemplate(`namespace_name:container_memory_usage_bytes:sum{name="{{.Label}}",monitor=""}`),
+
+			/*
+			A recording rule defines `namespace_name:container_cpu_usage_seconds_total:sum_rate`:
+
+			    namespace_name:container_cpu_usage_seconds_total:sum_rate =
+			       sum by (namespace, name) (
+				  sum(rate(container_cpu_usage_seconds_total{image!=""}[5m])) by (pod_name, namespace)
+				* on (pod_name) group_left(name)
+				  k8s_pod_labels{job="monitoring/kube-api-exporter"}
+			       )
+			 */
+			docker.CPUTotalUsage: parsedTemplate(`namespace_name:container_cpu_usage_seconds_total:sum_rate{name="{{.Label}}"}`),
 		},
 	}
 )
@@ -163,8 +204,8 @@ func queryParamsAsJSON(query string) (string, error) {
 	return buf.String(), nil
 }
 
-// prepareTemplate initializes unnamed text templates.
-func prepareTemplate(query string) *template.Template {
+// parsedTemplate initializes unnamed text templates.
+func parsedTemplate(query string) *template.Template {
 	tpl, err := template.New("").Parse(query)
 	if err != nil {
 		panic(err)
