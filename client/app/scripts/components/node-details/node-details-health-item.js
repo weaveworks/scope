@@ -10,12 +10,11 @@ function NodeDetailsHealthItem(props) {
       {props.samples && <div className="node-details-health-item-sparkline">
         <Sparkline
           data={props.samples} max={props.max} format={props.format}
-          first={props.first} last={props.last} />
+          first={props.first} last={props.last} strokeWidth={props.strokeWidth}
+          strokeColor={props.strokeColor} />
       </div>}
-      {!props.samples && <div className="node-details-health-item-placeholder"><span className="fa fa-circle-thin" /></div>}
-      <div className="node-details-health-item-label">
+      <div className="node-details-health-item-label" style={{ color: props.labelColor }}>
         {props.label}
-        {props.icon && <span className={`fa ${props.icon}`} />}
       </div>
     </div>
   );
