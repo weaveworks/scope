@@ -3,13 +3,13 @@
 # shellcheck disable=SC1091
 . ./config.sh
 
-start_suite "Test long connections between processes on different hosts"
+start_suite "Test long connections (procspy) between processes on different hosts"
 
 weave_on "$HOST1" launch "$HOST1" "$HOST2"
 weave_on "$HOST2" launch "$HOST1" "$HOST2"
 
-scope_on "$HOST1" launch
-scope_on "$HOST2" launch
+scope_on "$HOST1" launch --probe.ebpf.connections=false
+scope_on "$HOST2" launch --probe.ebpf.connections=false
 
 server_on "$HOST1"
 weave_proxy_on "$HOST2" run -dti --name client alpine /bin/sh -c "while true; do \
