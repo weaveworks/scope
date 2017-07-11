@@ -24,15 +24,6 @@ type ebpfConnection struct {
 	pid              int
 }
 
-type eventTracker interface {
-	handleConnection(ev tracer.EventType, tuple fourTuple, pid int, networkNamespace string)
-	walkConnections(f func(ebpfConnection))
-	feedInitialConnections(ci procspy.ConnIter, seenTuples map[string]fourTuple, processesWaitingInAccept []int, hostNodeID string)
-	isReadyToHandleConnections() bool
-	isDead() bool
-	stop()
-}
-
 // EbpfTracker contains the sets of open and closed TCP connections.
 // Closed connections are kept in the `closedConnections` slice for one iteration of `walkConnections`.
 type EbpfTracker struct {
@@ -40,8 +31,9 @@ type EbpfTracker struct {
 	tracer                   *tracer.Tracer
 	readyToHandleConnections bool
 	dead                     bool
+	lastTimestampV4          uint64
 
-	openConnections   map[string]ebpfConnection
+	openConnections   map[fourTuple]ebpfConnection
 	closedConnections []ebpfConnection
 }
 
@@ -79,13 +71,13 @@ func isKernelSupported() error {
 	return nil
 }
 
-func newEbpfTracker() (eventTracker, error) {
+func newEbpfTracker() (*EbpfTracker, error) {
 	if err := isKernelSupported(); err != nil {
 		return nil, fmt.Errorf("kernel not supported: %v", err)
 	}
 
 	tracker := &EbpfTracker{
-		openConnections: map[string]ebpfConnection{},
+		openConnections: map[fourTuple]ebpfConnection{},
 	}
 
 	tracer, err := tracer.NewTracer(tracker.tcpEventCbV4, tracker.tcpEventCbV6, tracker.lostCb)
@@ -99,20 +91,17 @@ func newEbpfTracker() (eventTracker, error) {
 	return tracker, nil
 }
 
-var lastTimestampV4 uint64
-
 func (t *EbpfTracker) tcpEventCbV4(e tracer.TcpV4) {
-	if lastTimestampV4 > e.Timestamp {
+	if t.lastTimestampV4 > e.Timestamp {
 		// A kernel bug can cause the timestamps to be wrong (e.g. on Ubuntu with Linux 4.4.0-47.68)
 		// Upgrading the kernel will fix the problem. For further info see:
 		// https://github.com/iovisor/bcc/issues/790#issuecomment-263704235
 		// https://github.com/weaveworks/scope/issues/2334
-		log.Errorf("tcp tracer received event with timestamp %v even though the last timestamp was %v. Stopping the eBPF tracker.", e.Timestamp, lastTimestampV4)
-		t.dead = true
+		log.Errorf("tcp tracer received event with timestamp %v even though the last timestamp was %v. Stopping the eBPF tracker.", e.Timestamp, t.lastTimestampV4)
 		t.stop()
 	}
 
-	lastTimestampV4 = e.Timestamp
+	t.lastTimestampV4 = e.Timestamp
 
 	if e.Type == tracer.EventFdInstall {
 		t.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
@@ -128,7 +117,6 @@ func (t *EbpfTracker) tcpEventCbV6(e tracer.TcpV6) {
 
 func (t *EbpfTracker) lostCb(count uint64) {
 	log.Errorf("tcp tracer lost %d events. Stopping the eBPF tracker", count)
-	t.dead = true
 	t.stop()
 }
 
@@ -182,20 +170,23 @@ func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns string, ok bool) {
 }
 
 func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
+	if !process.IsProcInAccept("/proc", strconv.Itoa(pid)) {
+		t.tracer.RemoveFdInstallWatcher(uint32(pid))
+	}
 	tuple, netns, ok := tupleFromPidFd(pid, fd)
 	log.Debugf("EbpfTracker: got fd-install event: pid=%d fd=%d -> tuple=%s netns=%s ok=%v", pid, fd, tuple, netns, ok)
 	if !ok {
 		return
 	}
-	conn := ebpfConnection{
+
+	t.Lock()
+	defer t.Unlock()
+
+	t.openConnections[tuple] = ebpfConnection{
 		incoming:         true,
 		tuple:            tuple,
 		pid:              pid,
 		networkNamespace: netns,
-	}
-	t.openConnections[tuple.String()] = conn
-	if !process.IsProcInAccept("/proc", strconv.Itoa(pid)) {
-		t.tracer.RemoveFdInstallWatcher(uint32(pid))
 	}
 }
 
@@ -212,27 +203,25 @@ func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid
 
 	switch ev {
 	case tracer.EventConnect:
-		conn := ebpfConnection{
+		t.openConnections[tuple] = ebpfConnection{
 			incoming:         false,
 			tuple:            tuple,
 			pid:              pid,
 			networkNamespace: networkNamespace,
 		}
-		t.openConnections[tuple.String()] = conn
 	case tracer.EventAccept:
-		conn := ebpfConnection{
+		t.openConnections[tuple] = ebpfConnection{
 			incoming:         true,
 			tuple:            tuple,
 			pid:              pid,
 			networkNamespace: networkNamespace,
 		}
-		t.openConnections[tuple.String()] = conn
 	case tracer.EventClose:
-		if deadConn, ok := t.openConnections[tuple.String()]; ok {
-			delete(t.openConnections, tuple.String())
+		if deadConn, ok := t.openConnections[tuple]; ok {
+			delete(t.openConnections, tuple)
 			t.closedConnections = append(t.closedConnections, deadConn)
 		} else {
-			log.Debugf("EbpfTracker: unmatched close event: %s pid=%d netns=%s", tuple.String(), pid, networkNamespace)
+			log.Debugf("EbpfTracker: unmatched close event: %s pid=%d netns=%s", tuple, pid, networkNamespace)
 		}
 	default:
 		log.Debugf("EbpfTracker: unknown event: %s (%d)", ev, ev)
@@ -255,15 +244,19 @@ func (t *EbpfTracker) walkConnections(f func(ebpfConnection)) {
 }
 
 func (t *EbpfTracker) feedInitialConnections(conns procspy.ConnIter, seenTuples map[string]fourTuple, processesWaitingInAccept []int, hostNodeID string) {
-	t.readyToHandleConnections = true
+	t.Lock()
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
-		if incoming {
-			t.handleConnection(tracer.EventAccept, tuple, int(conn.Proc.PID), namespaceID)
-		} else {
-			t.handleConnection(tracer.EventConnect, tuple, int(conn.Proc.PID), namespaceID)
+		t.openConnections[tuple] = ebpfConnection{
+			incoming:         incoming,
+			tuple:            tuple,
+			pid:              int(conn.Proc.PID),
+			networkNamespace: namespaceID,
 		}
 	}
+	t.readyToHandleConnections = true
+	t.Unlock()
+
 	for _, p := range processesWaitingInAccept {
 		t.tracer.AddFdInstallWatcher(uint32(p))
 		log.Debugf("EbpfTracker: install fd-install watcher: pid=%d", p)
@@ -275,12 +268,17 @@ func (t *EbpfTracker) isReadyToHandleConnections() bool {
 }
 
 func (t *EbpfTracker) isDead() bool {
+	t.Lock()
+	defer t.Unlock()
 	return t.dead
 }
 
 func (t *EbpfTracker) stop() {
-	if t.tracer != nil {
+	t.Lock()
+	alreadyDead := t.dead
+	t.dead = true
+	t.Unlock()
+	if !alreadyDead && t.tracer != nil {
 		t.tracer.Stop()
 	}
-	t.dead = true
 }
