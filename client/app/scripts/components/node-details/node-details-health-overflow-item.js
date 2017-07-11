@@ -6,7 +6,7 @@ function NodeDetailsHealthOverflowItem(props) {
   return (
     <div className="node-details-health-overflow-item">
       <div className="node-details-health-overflow-item-value">
-        {formatMetric(props.value, props)}
+        {props.value !== undefined && formatMetric(props.value, props)}
       </div>
       <div className="node-details-health-overflow-item-label truncate">{props.label}</div>
     </div>

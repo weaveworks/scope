@@ -25,8 +25,8 @@ export default class NodeDetailsHealth extends React.Component {
     const {
       metrics = makeList(),
       metricLinks = makeMap(),
-      unattachedLinks = makeMap(),
       topologyId,
+      nodeColor,
     } = this.props;
 
     const primeCutoff = metrics.length > 3 && !this.state.expanded ? 2 : metrics.length;
@@ -45,6 +45,7 @@ export default class NodeDetailsHealth extends React.Component {
               {...item}
               links={metricLinks}
               topologyId={topologyId}
+              nodeColor={nodeColor}
             />
           </CloudFeature>)}
           {showOverflow && <NodeDetailsHealthOverflow
@@ -55,17 +56,6 @@ export default class NodeDetailsHealth extends React.Component {
         <ShowMore
           handleClick={this.handleClickMore} collection={this.props.metrics}
           expanded={this.state.expanded} notShown={notShown} hideNumber />
-
-        <div className="node-details-health-wrapper">
-          {Object.keys(unattachedLinks).map(id => <CloudFeature alwaysShow key={id}>
-            <NodeDetailsHealthLinkItem
-              withoutGraph
-              {...unattachedLinks[id]}
-              links={unattachedLinks}
-              topologyId={topologyId}
-              />
-          </CloudFeature>)}
-        </div>
       </div>
     );
   }

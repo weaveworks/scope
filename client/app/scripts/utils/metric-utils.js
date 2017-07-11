@@ -52,7 +52,9 @@ export function getMetricValue(metric) {
 
 
 export function getMetricColor(metric) {
-  const metricId = metric && metric.get('id');
+  const metricId = typeof metric === 'string'
+    ? metric
+    : metric && metric.get('id');
   if (/mem/.test(metricId)) {
     return 'steelBlue';
   } else if (/cpu/.test(metricId)) {

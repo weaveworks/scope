@@ -54,6 +54,28 @@ class NodeDetails extends React.Component {
     resetDocumentTitle();
   }
 
+  static collectMetrics(details) {
+    const metrics = details.metrics || [];
+
+    // collect by metric id (id => link)
+    const metricLinks = (details.metric_links || [])
+      .reduce((agg, link) => Object.assign(agg, {[link.id]: link}), {});
+
+    const availableMetrics = metrics.reduce(
+      (agg, m) => Object.assign(agg, {[m.id]: true}),
+      {}
+    );
+
+    // append links with no metrics as fake metrics
+    (details.metric_links || []).forEach((link) => {
+      if (availableMetrics[link.id] === undefined) {
+        metrics.push({id: link.id, label: link.label});
+      }
+    });
+
+    return { metrics, metricLinks };
+  }
+
   renderTools() {
     const showSwitchTopology = this.props.nodeId !== this.props.selectedNodeId;
     const topologyTitle = `View ${this.props.label} in ${this.props.topologyId}`;
@@ -165,13 +187,7 @@ class NodeDetails extends React.Component {
       }
     };
 
-    // collect by metric id (id => link)
-    const metricLinks = (details.metric_links || [])
-      .reduce((agg, link) => Object.assign(agg, {[link.id]: link}), {});
-
-    // collect links with no corresponding metric
-    const unattachedLinks = Object.assign({}, metricLinks);
-    (details.metrics || []).forEach(metric => delete unattachedLinks[metric.id]);
+    const { metrics, metricLinks } = NodeDetails.collectMetrics(details);
 
     return (
       <div className="node-details">
@@ -198,13 +214,13 @@ class NodeDetails extends React.Component {
         </div>}
 
         <div className="node-details-content">
-          {((details.metrics || []).length + Object.keys(unattachedLinks).length > 0) && <div className="node-details-content-section">
+          {metrics.length > 0 && <div className="node-details-content-section">
             <div className="node-details-content-section-header">Status</div>
             <NodeDetailsHealth
-              metrics={details.metrics}
+              metrics={metrics}
               metricLinks={metricLinks}
-              unattachedLinks={unattachedLinks}
               topologyId={topologyId}
+              nodeColor={nodeColor}
               />
           </div>}
           {details.metadata && <div className="node-details-content-section">

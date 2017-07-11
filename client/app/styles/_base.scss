@@ -926,11 +926,14 @@
     &-item {
       padding: 8px 16px;
       width: 33%;
+      display: flex;
+      flex-direction: column;
 
       &-label {
         color: $text-secondary-color;
         text-transform: uppercase;
         font-size: 80%;
+        margin-top: auto;
 
         .fa {
           margin-left: 0.5em;
