@@ -276,7 +276,11 @@ describe('RootReducer', () => {
       name: 'Topo2',
       stats: {
         node_count: 0
-      }
+      },
+      sub_topologies: [{
+        url: '/topo2-sub',
+        name: 'topo 2 sub'
+      }]
     }]
   };
 
@@ -292,10 +296,13 @@ describe('RootReducer', () => {
       hide_if_empty: true,
       url: '/topo2',
       name: 'Topo2',
-      stats: {
-        node_count: 0,
-        filtered_nodes: 0
-      }
+      stats: { node_count: 0, filtered_nodes: 0 },
+      sub_topologies: [{
+        url: '/topo2-sub',
+        name: 'topo 2 sub',
+        hide_if_empty: true,
+        stats: { node_count: 0, filtered_nodes: 0 },
+      }]
     }]
   };
 
@@ -588,13 +595,23 @@ describe('RootReducer', () => {
 
   it('keeps hidden topology visible if selected', () => {
     let nextState = initialState;
+    nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopology2Action);
     nextState = reducer(nextState, ReceiveTopologiesHiddenAction);
     expect(nextState.get('currentTopologyId')).toEqual('topo2');
     expect(nextState.get('topologies').toJS().length).toEqual(2);
   });
 
-  it('keeps hidden topology hidden if not selected', () => {
+  it('keeps hidden topology visible if sub_topology selected', () => {
+    let nextState = initialState;
+    nextState = reducer(nextState, ReceiveTopologiesAction);
+    nextState = reducer(nextState, { type: ActionTypes.CLICK_TOPOLOGY, topologyId: 'topo2-sub' });
+    nextState = reducer(nextState, ReceiveTopologiesHiddenAction);
+    expect(nextState.get('currentTopologyId')).toEqual('topo2-sub');
+    expect(nextState.get('topologies').toJS().length).toEqual(2);
+  });
+
+  it('hides hidden topology if not selected', () => {
     let nextState = initialState;
     nextState = reducer(nextState, ClickTopologyAction);
     nextState = reducer(nextState, ReceiveTopologiesHiddenAction);

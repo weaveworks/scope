@@ -1,5 +1,5 @@
 import { endsWith } from 'lodash';
-import { Set as makeSet, List as makeList } from 'immutable';
+import { Set as makeSet, List as makeList, Map as makeMap } from 'immutable';
 
 import { isPausedSelector } from '../selectors/time-travel';
 import { isResourceViewModeSelector } from '../selectors/topology';
@@ -126,9 +126,11 @@ export function setTopologyUrlsById(topologyUrlsById, topologies) {
   return urlMap;
 }
 
-export function filterHiddenTopologies(topologies, currentTopologyId) {
+export function filterHiddenTopologies(topologies, currentTopology) {
+  currentTopology = currentTopology || makeMap();
   return topologies.filter(t => (!t.hide_if_empty || t.stats.node_count > 0 ||
-                               t.stats.filtered_nodes > 0 || t.id === currentTopologyId));
+                               t.stats.filtered_nodes > 0 || t.id === currentTopology.get('id') ||
+                               t.id === currentTopology.get('parentId')));
 }
 
 export function getCurrentTopologyOptions(state) {
