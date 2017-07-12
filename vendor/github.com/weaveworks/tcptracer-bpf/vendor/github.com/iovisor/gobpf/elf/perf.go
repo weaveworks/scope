@@ -238,6 +238,8 @@ func (pm *PerfMap) PollStart() {
 	}()
 }
 
+// PollStop stops the goroutine that polls the perf event map. Make
+// sure to close the receiverChan only *after* calling PollStop.
 func (pm *PerfMap) PollStop() {
 	pm.pollStop <- true
 }

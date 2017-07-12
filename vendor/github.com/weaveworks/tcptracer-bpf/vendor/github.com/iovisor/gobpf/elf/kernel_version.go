@@ -27,7 +27,10 @@ import (
 
 var versionRegex = regexp.MustCompile(`^(\d+)\.(\d+).(\d+).*$`)
 
-func kernelVersionFromReleaseString(releaseString string) (uint32, error) {
+// KernelVersionFromReleaseString converts a release string with format
+// 4.4.2[-1] to a kernel version number in LINUX_VERSION_CODE format.
+// That is, for kernel "a.b.c", the version number will be (a<<16 + b<<8 + c)
+func KernelVersionFromReleaseString(releaseString string) (uint32, error) {
 	versionParts := versionRegex.FindStringSubmatch(releaseString)
 	if len(versionParts) != 4 {
 		return 0, fmt.Errorf("got invalid release version %q (expected format '4.3.2-1')", releaseString)
@@ -56,7 +59,7 @@ func currentVersionUname() (uint32, error) {
 		return 0, err
 	}
 	releaseString := strings.Trim(utsnameStr(buf.Release[:]), "\x00")
-	return kernelVersionFromReleaseString(releaseString)
+	return KernelVersionFromReleaseString(releaseString)
 }
 
 func currentVersionUbuntu() (uint32, error) {
@@ -69,7 +72,7 @@ func currentVersionUbuntu() (uint32, error) {
 	if err != nil {
 		return 0, err
 	}
-	return kernelVersionFromReleaseString(releaseString)
+	return KernelVersionFromReleaseString(releaseString)
 }
 
 var debianVersionRegex = regexp.MustCompile(`.* SMP Debian (\d+\.\d+.\d+-\d+) .*`)
@@ -83,10 +86,12 @@ func currentVersionDebian() (uint32, error) {
 	if len(match) != 2 {
 		return 0, fmt.Errorf("failed to get kernel version from /proc/version: %s", procVersion)
 	}
-	return kernelVersionFromReleaseString(match[1])
+	return KernelVersionFromReleaseString(match[1])
 }
 
-func currentVersion() (uint32, error) {
+// CurrentKernelVersion returns the current kernel version in
+// LINUX_VERSION_CODE format (see KernelVersionFromReleaseString())
+func CurrentKernelVersion() (uint32, error) {
 	// We need extra checks for Debian and Ubuntu as they modify
 	// the kernel version patch number for compatibilty with
 	// out-of-tree modules. Linux perf tools do the same for Ubuntu
