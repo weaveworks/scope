@@ -103,20 +103,21 @@ var primaryAPITopology = map[string]string{
 }
 
 // MakeNodeSummary summarizes a node, if possible.
-func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
+func MakeNodeSummary(r report.Report, n report.Node, metricsGraphURL string) (NodeSummary, bool) {
+	metricLinks := metricsGraphURL != ""
 	if renderer, ok := renderers[n.Topology]; ok {
 		// Skip (and don't fall through to fallback) if renderer maps to nil
 		if renderer != nil {
-			summary, b := renderer(baseNodeSummary(r, n), n)
-			return RenderMetricLinks(summary, n), b
+			summary, b := renderer(baseNodeSummary(r, n, metricLinks), n)
+			return RenderMetricLinks(summary, n, metricsGraphURL), b
 		}
 	} else if _, ok := r.Topology(n.Topology); ok {
-		summary := baseNodeSummary(r, n)
+		summary := baseNodeSummary(r, n, metricLinks)
 		summary.Label = n.ID // This is unlikely to look very good, but is a reasonable fallback
 		return summary, true
 	}
 	if strings.HasPrefix(n.Topology, "group:") {
-		return groupNodeSummary(baseNodeSummary(r, n), r, n)
+		return groupNodeSummary(baseNodeSummary(r, n, metricLinks), r, n)
 	}
 	return NodeSummary{}, false
 }
@@ -132,19 +133,22 @@ func (n NodeSummary) SummarizeMetrics() NodeSummary {
 	return n
 }
 
-func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
+func baseNodeSummary(r report.Report, n report.Node, metricLinks bool) NodeSummary {
 	t, _ := r.Topology(n.Topology)
-	return NodeSummary{
-		ID:          n.ID,
-		Shape:       t.GetShape(),
-		Linkable:    true,
-		Metadata:    NodeMetadata(r, n),
-		Metrics:     NodeMetrics(r, n),
-		MetricLinks: NodeMetricLinks(r, n),
-		Parents:     Parents(r, n),
-		Tables:      NodeTables(r, n),
-		Adjacency:   n.Adjacency,
+	ns := NodeSummary{
+		ID:        n.ID,
+		Shape:     t.GetShape(),
+		Linkable:  true,
+		Metadata:  NodeMetadata(r, n),
+		Metrics:   NodeMetrics(r, n),
+		Parents:   Parents(r, n),
+		Tables:    NodeTables(r, n),
+		Adjacency: n.Adjacency,
 	}
+	if metricLinks {
+		ns.MetricLinks = NodeMetricLinks(r, n)
+	}
+	return ns
 }
 
 func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
@@ -373,11 +377,11 @@ func (s nodeSummariesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
 type NodeSummaries map[string]NodeSummary
 
 // Summaries converts RenderableNodes into a set of NodeSummaries
-func Summaries(r report.Report, rns report.Nodes) NodeSummaries {
+func Summaries(r report.Report, rns report.Nodes, metricsGraphURL string) NodeSummaries {
 
 	result := NodeSummaries{}
 	for id, node := range rns {
-		if summary, ok := MakeNodeSummary(r, node); ok {
+		if summary, ok := MakeNodeSummary(r, node, metricsGraphURL); ok {
 			for i, m := range summary.Metrics {
 				summary.Metrics[i] = m.Summary()
 			}

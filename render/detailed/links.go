@@ -15,7 +15,7 @@ import (
 // MetricLink describes a URL referencing a metric.
 type MetricLink struct {
 	// References the metric id
-	ID       string `json:"id,omitempty"`
+	ID       string `json:"id"`
 	Label    string `json:"label"`
 	URL      string `json:"url"`
 	Priority int    `json:"priority"`
@@ -25,9 +25,6 @@ type MetricLink struct {
 const urlQueryVarName = ":query"
 
 var (
-	// As configured by the user
-	metricsGraphURL = ""
-
 	// Available metric links
 	linkTemplates = []MetricLink{
 		{ID: docker.CPUTotalUsage, Label: "CPU", Priority: 1},
@@ -105,22 +102,10 @@ var (
 	}
 )
 
-// SetMetricsGraphURL sets the URL we deduce our eventual metric link from.
-// Supports placeholders such as `:orgID` and `:query`. An empty url disables
-// this feature. If the `:query` part is missing, a JSON version will be
-// appended, see `queryParamsAsJSON()` for more info.
-func SetMetricsGraphURL(url string) {
-	metricsGraphURL = url
-}
-
 // NodeMetricLinks returns the links of a node. The links are collected
 // by a predefined set but filtered depending on whether a query
 // is configured or not for the particular topology.
 func NodeMetricLinks(_ report.Report, n report.Node) []MetricLink {
-	if metricsGraphURL == "" {
-		return nil
-	}
-
 	queries := topologyQueries[n.Topology]
 	if len(queries) == 0 {
 		return nil
@@ -137,8 +122,10 @@ func NodeMetricLinks(_ report.Report, n report.Node) []MetricLink {
 }
 
 // RenderMetricLinks executes the templated links by supplying the node summary as data.
+// `metricsGraphURL` supports placeholders such as `:orgID` and `:query`. If the `:query`
+// part is missing, a JSON version will be appended, see `queryParamsAsJSON()` for more info.
 // It returns the modified summary.
-func RenderMetricLinks(summary NodeSummary, n report.Node) NodeSummary {
+func RenderMetricLinks(summary NodeSummary, n report.Node, metricsGraphURL string) NodeSummary {
 	queries := topologyQueries[n.Topology]
 	if len(queries) == 0 || len(summary.MetricLinks) == 0 {
 		return summary
@@ -157,7 +144,7 @@ func RenderMetricLinks(summary NodeSummary, n report.Node) NodeSummary {
 			continue
 		}
 
-		link.URL = buildURL(bs.String())
+		link.URL = buildURL(bs.String(), metricsGraphURL)
 		links = append(links, link)
 	}
 	summary.MetricLinks = links
@@ -167,7 +154,7 @@ func RenderMetricLinks(summary NodeSummary, n report.Node) NodeSummary {
 
 // buildURL puts together the URL by looking at the configured
 // `metricsGraphURL`.
-func buildURL(query string) string {
+func buildURL(query, metricsGraphURL string) string {
 	if strings.Contains(metricsGraphURL, urlQueryVarName) {
 		return strings.Replace(metricsGraphURL, urlQueryVarName, url.PathEscape(query), -1)
 	}
