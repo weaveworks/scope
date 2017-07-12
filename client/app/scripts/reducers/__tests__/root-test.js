@@ -280,6 +280,25 @@ describe('RootReducer', () => {
     }]
   };
 
+  const ReceiveTopologiesHiddenAction = {
+    type: ActionTypes.RECEIVE_TOPOLOGIES,
+    topologies: [{
+      url: '/topo1',
+      name: 'Topo1',
+      stats: {
+        node_count: 1
+      }
+    }, {
+      hide_if_empty: true,
+      url: '/topo2',
+      name: 'Topo2',
+      stats: {
+        node_count: 0,
+        filtered_nodes: 0
+      }
+    }]
+  };
+
   const RouteAction = {
     type: ActionTypes.ROUTE_TOPOLOGY,
     state: {}
@@ -565,6 +584,21 @@ describe('RootReducer', () => {
 
     nextState = reducer(nextState, ClickTopologyAction);
     expect(isTopologyNodeCountZero(nextState)).toBeFalsy();
+  });
+
+  it('keeps hidden topology visible if selected', () => {
+    let nextState = initialState;
+    nextState = reducer(nextState, ClickTopology2Action);
+    nextState = reducer(nextState, ReceiveTopologiesHiddenAction);
+    expect(nextState.get('currentTopologyId')).toEqual('topo2');
+    expect(nextState.get('topologies').toJS().length).toEqual(2);
+  });
+
+  it('keeps hidden topology hidden if not selected', () => {
+    let nextState = initialState;
+    nextState = reducer(nextState, ClickTopologyAction);
+    nextState = reducer(nextState, ReceiveTopologiesHiddenAction);
+    expect(nextState.get('topologies').toJS().length).toEqual(1);
   });
 
   // selection of relatives

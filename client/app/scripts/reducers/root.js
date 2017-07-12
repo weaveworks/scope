@@ -110,17 +110,17 @@ function calcSelectType(topology) {
 // adds ID field to topology (based on last part of URL path) and save urls in
 // map for easy lookup
 function processTopologies(state, nextTopologies) {
+  // add IDs to topology objects in-place
+  const topologiesWithId = updateTopologyIds(nextTopologies);
   // filter out hidden topos
-  const visibleTopologies = filterHiddenTopologies(nextTopologies);
+  const visibleTopologies = filterHiddenTopologies(topologiesWithId, state.get('currentTopologyId'));
   // set `selectType` field for topology and sub_topologies options (recursive).
   const topologiesWithSelectType = visibleTopologies.map(calcSelectType);
-  // add IDs to topology objects in-place
-  const topologiesWithId = updateTopologyIds(topologiesWithSelectType);
   // cache URLs by ID
   state = state.set('topologyUrlsById',
-    setTopologyUrlsById(state.get('topologyUrlsById'), topologiesWithId));
+    setTopologyUrlsById(state.get('topologyUrlsById'), topologiesWithSelectType));
 
-  const topologiesWithFullnames = addTopologyFullname(topologiesWithId);
+  const topologiesWithFullnames = addTopologyFullname(topologiesWithSelectType);
   const immNextTopologies = fromJS(topologiesWithFullnames).sortBy(topologySorter);
   return state.set('topologies', immNextTopologies);
 }
