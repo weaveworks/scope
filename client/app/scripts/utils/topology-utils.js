@@ -126,9 +126,9 @@ export function setTopologyUrlsById(topologyUrlsById, topologies) {
   return urlMap;
 }
 
-export function filterHiddenTopologies(topologies) {
+export function filterHiddenTopologies(topologies, currentTopologyId) {
   return topologies.filter(t => (!t.hide_if_empty || t.stats.node_count > 0 ||
-                               t.stats.filtered_nodes > 0));
+                               t.stats.filtered_nodes > 0 || t.id === currentTopologyId));
 }
 
 export function getCurrentTopologyOptions(state) {
