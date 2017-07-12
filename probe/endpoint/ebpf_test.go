@@ -210,11 +210,11 @@ func TestInvalidTimeStampDead(t *testing.T) {
 		openConnections: map[fourTuple]ebpfConnection{},
 	}
 	event.Timestamp = 0
-	mockEbpfTracker.tcpEventCbV4(event)
+	mockEbpfTracker.TCPEventV4(event)
 	event2 := event
 	event2.SPort = 1
 	event2.Timestamp = 2
-	mockEbpfTracker.tcpEventCbV4(event2)
+	mockEbpfTracker.TCPEventV4(event2)
 	mockEbpfTracker.walkConnections(func(e ebpfConnection) {
 		cnt++
 	})
@@ -226,7 +226,7 @@ func TestInvalidTimeStampDead(t *testing.T) {
 	}
 	cnt = 0
 	event.Timestamp = 1
-	mockEbpfTracker.tcpEventCbV4(event)
+	mockEbpfTracker.TCPEventV4(event)
 	mockEbpfTracker.walkConnections(func(e ebpfConnection) {
 		cnt++
 	})

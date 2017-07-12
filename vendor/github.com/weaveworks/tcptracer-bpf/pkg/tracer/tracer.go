@@ -31,7 +31,7 @@ func TracerAsset() ([]byte, error) {
 	return buf, nil
 }
 
-func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6), lostCb func(lost uint64)) (*Tracer, error) {
+func NewTracer(cb Callback) (*Tracer, error) {
 	buf, err := Asset("tcptracer-ebpf.o")
 	if err != nil {
 		return nil, fmt.Errorf("couldn't find asset: %s", err)
@@ -81,9 +81,9 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6), lostCb func(l
 			case <-stopChan:
 				return
 			case data := <-channelV4:
-				tcpEventCbV4(tcpV4ToGo(&data))
+				cb.TCPEventV4(tcpV4ToGo(&data))
 			case lost := <-lostChanV4:
-				lostCb(lost)
+				cb.LostV4(lost)
 			}
 		}
 	}()
@@ -94,9 +94,9 @@ func NewTracer(tcpEventCbV4 func(TcpV4), tcpEventCbV6 func(TcpV6), lostCb func(l
 			case <-stopChan:
 				return
 			case data := <-channelV6:
-				tcpEventCbV6(tcpV6ToGo(&data))
+				cb.TCPEventV6(tcpV6ToGo(&data))
 			case lost := <-lostChanV6:
-				lostCb(lost)
+				cb.LostV6(lost)
 			}
 		}
 	}()

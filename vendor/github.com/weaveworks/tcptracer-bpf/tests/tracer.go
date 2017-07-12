@@ -12,10 +12,13 @@ import (
 )
 
 var watchFdInstallPids string
-var lastTimestampV4 uint64
-var lastTimestampV6 uint64
 
-func tcpEventCbV4(e tracer.TcpV4) {
+type tcpEventTracer struct {
+	lastTimestampV4 uint64
+	lastTimestampV6 uint64
+}
+
+func (t *tcpEventTracer) TCPEventV4(e tracer.TcpV4) {
 	if e.Type == tracer.EventFdInstall {
 		fmt.Printf("%v cpu#%d %s %v %s %v\n",
 			e.Timestamp, e.CPU, e.Type, e.Pid, e.Comm, e.Fd)
@@ -24,27 +27,32 @@ func tcpEventCbV4(e tracer.TcpV4) {
 			e.Timestamp, e.CPU, e.Type, e.Pid, e.Comm, e.SAddr, e.SPort, e.DAddr, e.DPort, e.NetNS)
 	}
 
-	if lastTimestampV4 > e.Timestamp {
+	if t.lastTimestampV4 > e.Timestamp {
 		fmt.Printf("ERROR: late event!\n")
 		os.Exit(1)
 	}
 
-	lastTimestampV4 = e.Timestamp
+	t.lastTimestampV4 = e.Timestamp
 }
 
-func tcpEventCbV6(e tracer.TcpV6) {
+func (t *tcpEventTracer) TCPEventV6(e tracer.TcpV6) {
 	fmt.Printf("%v cpu#%d %s %v %s %v:%v %v:%v %v\n",
 		e.Timestamp, e.CPU, e.Type, e.Pid, e.Comm, e.SAddr, e.SPort, e.DAddr, e.DPort, e.NetNS)
 
-	if lastTimestampV6 > e.Timestamp {
+	if t.lastTimestampV6 > e.Timestamp {
 		fmt.Printf("ERROR: late event!\n")
 		os.Exit(1)
 	}
 
-	lastTimestampV6 = e.Timestamp
+	t.lastTimestampV6 = e.Timestamp
 }
 
-func lostCb(count uint64) {
+func (t *tcpEventTracer) LostV4(count uint64) {
+	fmt.Printf("ERROR: lost %d events!\n", count)
+	os.Exit(1)
+}
+
+func (t *tcpEventTracer) LostV6(count uint64) {
 	fmt.Printf("ERROR: lost %d events!\n", count)
 	os.Exit(1)
 }
@@ -61,7 +69,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	t, err := tracer.NewTracer(tcpEventCbV4, tcpEventCbV6, lostCb)
+	t, err := tracer.NewTracer(&tcpEventTracer{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)

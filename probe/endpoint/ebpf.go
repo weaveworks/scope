@@ -80,7 +80,7 @@ func newEbpfTracker() (*EbpfTracker, error) {
 		openConnections: map[fourTuple]ebpfConnection{},
 	}
 
-	tracer, err := tracer.NewTracer(tracker.tcpEventCbV4, tracker.tcpEventCbV6, tracker.lostCb)
+	tracer, err := tracer.NewTracer(tracker)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,8 @@ func newEbpfTracker() (*EbpfTracker, error) {
 	return tracker, nil
 }
 
-func (t *EbpfTracker) tcpEventCbV4(e tracer.TcpV4) {
+// TCPEventV4 handles IPv4 TCP events from the eBPF tracer
+func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 	if t.lastTimestampV4 > e.Timestamp {
 		// A kernel bug can cause the timestamps to be wrong (e.g. on Ubuntu with Linux 4.4.0-47.68)
 		// Upgrading the kernel will fix the problem. For further info see:
@@ -111,13 +112,22 @@ func (t *EbpfTracker) tcpEventCbV4(e tracer.TcpV4) {
 	}
 }
 
-func (t *EbpfTracker) tcpEventCbV6(e tracer.TcpV6) {
+// TCPEventV6 handles IPv6 TCP events from the eBPF tracer. This is
+// currently a no-op.
+func (t *EbpfTracker) TCPEventV6(e tracer.TcpV6) {
 	// TODO: IPv6 not supported in Scope
 }
 
-func (t *EbpfTracker) lostCb(count uint64) {
+// LostV4 handles IPv4 TCP event misses from the eBPF tracer.
+func (t *EbpfTracker) LostV4(count uint64) {
 	log.Errorf("tcp tracer lost %d events. Stopping the eBPF tracker", count)
 	t.stop()
+}
+
+// LostV6 handles IPv4 TCP event misses from the eBPF tracer. This is
+// currently a no-op.
+func (t *EbpfTracker) LostV6(count uint64) {
+	// TODO: IPv6 not supported in Scope
 }
 
 func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns string, ok bool) {

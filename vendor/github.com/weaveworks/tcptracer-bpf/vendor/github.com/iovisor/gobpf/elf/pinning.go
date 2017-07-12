@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"unsafe"
 
-	"github.com/iovisor/gobpf/bpffs"
+	"github.com/iovisor/gobpf/pkg/bpffs"
 )
 
 /*
