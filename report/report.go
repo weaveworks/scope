@@ -20,6 +20,8 @@ const (
 	Deployment     = "deployment"
 	ReplicaSet     = "replica_set"
 	DaemonSet      = "daemon_set"
+	StatefulSet    = "stateful_set"
+	CronJob        = "cron_job"
 	ContainerImage = "container_image"
 	Host           = "host"
 	Overlay        = "overlay"
@@ -82,6 +84,16 @@ type Report struct {
 	// Metadata includes things like DaemonSet id, name etc. Edges are not
 	// present.
 	DaemonSet Topology
+
+	// StatefulSet nodes represent all Kubernetes Stateful Sets running on hosts running probes.
+	// Metadata includes things like Stateful Set id, name, etc. Edges are not
+	// present.
+	StatefulSet Topology
+
+	// CronJob nodes represent all Kubernetes Cron Jobs running on hosts running probes.
+	// Metadata includes things like Cron Job id, name, etc. Edges are not
+	// present.
+	CronJob Topology
 
 	// ContainerImages nodes represent all Docker containers images on
 	// hosts running probes. Metadata includes things like image id, name etc.
@@ -177,6 +189,14 @@ func MakeReport() Report {
 			WithShape(Pentagon).
 			WithLabel("daemonset", "daemonsets"),
 
+		StatefulSet: MakeTopology().
+			WithShape(Triangle).
+			WithLabel("stateful set", "stateful sets"),
+
+		CronJob: MakeTopology().
+			WithShape(Triangle).
+			WithLabel("cron job", "cron jobs"),
+
 		Overlay: MakeTopology().
 			WithShape(Circle).
 			WithLabel("peer", "peers"),
@@ -212,6 +232,8 @@ func (r *Report) TopologyMap() map[string]*Topology {
 		Deployment:     &r.Deployment,
 		ReplicaSet:     &r.ReplicaSet,
 		DaemonSet:      &r.DaemonSet,
+		StatefulSet:    &r.StatefulSet,
+		CronJob:        &r.CronJob,
 		Host:           &r.Host,
 		Overlay:        &r.Overlay,
 		ECSTask:        &r.ECSTask,
@@ -275,6 +297,8 @@ func (r *Report) WalkPairedTopologies(o *Report, f func(*Topology, *Topology)) {
 	f(&r.Deployment, &o.Deployment)
 	f(&r.ReplicaSet, &o.ReplicaSet)
 	f(&r.DaemonSet, &o.DaemonSet)
+	f(&r.StatefulSet, &o.StatefulSet)
+	f(&r.CronJob, &o.CronJob)
 	f(&r.Host, &o.Host)
 	f(&r.Overlay, &o.Overlay)
 	f(&r.ECSTask, &o.ECSTask)

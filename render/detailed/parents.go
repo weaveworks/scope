@@ -25,6 +25,8 @@ var (
 		report.Pod:            kubernetesParentLabel,
 		report.Deployment:     kubernetesParentLabel,
 		report.DaemonSet:      kubernetesParentLabel,
+		report.StatefulSet:    kubernetesParentLabel,
+		report.CronJob:        kubernetesParentLabel,
 		report.Service:        kubernetesParentLabel,
 		report.ECSTask:        latestLookup(awsecs.TaskFamily),
 		report.ECSService:     ecsServiceParentLabel,
