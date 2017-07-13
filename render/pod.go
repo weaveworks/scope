@@ -49,7 +49,7 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 				),
 			),
 			selectPodsWithDeployments{},
-			ConnectionJoin(SelectPod, MapPod2IP),
+			ConnectionJoin(MapPod2IP, SelectPod),
 		),
 	),
 )

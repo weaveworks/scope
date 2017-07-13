@@ -39,7 +39,7 @@ var ContainerRenderer = MakeFilter(
 
 		// This mapper brings in connections by joining with container
 		// IPs.
-		ConnectionJoin(SelectContainer, MapContainer2IP),
+		ConnectionJoin(MapContainer2IP, SelectContainer),
 
 		SelectContainer,
 	),
@@ -53,7 +53,7 @@ const originalNodeTopology = "original_node_topology"
 // ConnectionJoin joins the given renderer with connections from the
 // endpoints topology, using the toIPs function to extract IPs from
 // the nodes.
-func ConnectionJoin(r Renderer, toIPs func(report.Node) []string) Renderer {
+func ConnectionJoin(toIPs func(report.Node) []string, r Renderer) Renderer {
 	nodeToIP := func(n report.Node, _ report.Networks) report.Nodes {
 		result := report.Nodes{}
 		for _, ip := range toIPs(n) {
