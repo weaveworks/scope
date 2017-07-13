@@ -36,12 +36,7 @@ var ContainerRenderer = MakeFilter(
 			MapProcess2Container,
 			ColorConnectedProcessRenderer,
 		),
-
-		// This mapper brings in connections by joining with container
-		// IPs.
 		ConnectionJoin(MapContainer2IP, SelectContainer),
-
-		SelectContainer,
 	),
 )
 
@@ -68,12 +63,15 @@ func ConnectionJoin(toIPs func(report.Node) []string, r Renderer) Renderer {
 		return result
 	}
 
-	return MakeMap(
-		ipToNode,
-		MakeReduce(
-			MakeMap(nodeToIP, r),
-			mapEndpoint2IP,
+	return MakeReduce(
+		MakeMap(
+			ipToNode,
+			MakeReduce(
+				MakeMap(nodeToIP, r),
+				mapEndpoint2IP,
+			),
 		),
+		r,
 	)
 }
 
