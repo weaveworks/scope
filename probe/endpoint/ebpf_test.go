@@ -9,6 +9,15 @@ import (
 	"github.com/weaveworks/tcptracer-bpf/pkg/tracer"
 )
 
+func newMockEbpfTracker() *EbpfTracker {
+	return &EbpfTracker{
+		ready: true,
+		dead:  false,
+
+		openConnections: map[fourTuple]ebpfConnection{},
+	}
+}
+
 func TestHandleConnection(t *testing.T) {
 	var (
 		ServerPid  uint32 = 42
@@ -92,13 +101,7 @@ func TestHandleConnection(t *testing.T) {
 		}
 	)
 
-	mockEbpfTracker := &EbpfTracker{
-		readyToHandleConnections: true,
-		dead: false,
-
-		openConnections:   map[fourTuple]ebpfConnection{},
-		closedConnections: []ebpfConnection{},
-	}
+	mockEbpfTracker := newMockEbpfTracker()
 
 	tuple := fourTuple{IPv4ConnectEvent.SAddr.String(), IPv4ConnectEvent.DAddr.String(), uint16(IPv4ConnectEvent.SPort), uint16(IPv4ConnectEvent.DPort)}
 	mockEbpfTracker.handleConnection(IPv4ConnectEvent.Type, tuple, int(IPv4ConnectEvent.Pid), strconv.FormatUint(uint64(IPv4ConnectEvent.NetNS), 10))
@@ -114,13 +117,7 @@ func TestHandleConnection(t *testing.T) {
 			mockEbpfTracker.openConnections[tuple])
 	}
 
-	mockEbpfTracker = &EbpfTracker{
-		readyToHandleConnections: true,
-		dead: false,
-
-		openConnections:   map[fourTuple]ebpfConnection{},
-		closedConnections: []ebpfConnection{},
-	}
+	mockEbpfTracker = newMockEbpfTracker()
 
 	tuple = fourTuple{IPv4AcceptEvent.SAddr.String(), IPv4AcceptEvent.DAddr.String(), uint16(IPv4AcceptEvent.SPort), uint16(IPv4AcceptEvent.DPort)}
 	mockEbpfTracker.handleConnection(IPv4AcceptEvent.Type, tuple, int(IPv4AcceptEvent.Pid), strconv.FormatUint(uint64(IPv4AcceptEvent.NetNS), 10))
@@ -155,26 +152,20 @@ func TestWalkConnections(t *testing.T) {
 			toPort:   0,
 		}
 	)
-	mockEbpfTracker := &EbpfTracker{
-		readyToHandleConnections: true,
-		dead: false,
-		openConnections: map[fourTuple]ebpfConnection{
-			activeTuple: {
-				tuple:            activeTuple,
-				networkNamespace: "12345",
-				incoming:         true,
-				pid:              0,
-			},
-		},
-		closedConnections: []ebpfConnection{
-			{
-				tuple:            inactiveTuple,
-				networkNamespace: "12345",
-				incoming:         false,
-				pid:              0,
-			},
-		},
+	mockEbpfTracker := newMockEbpfTracker()
+	mockEbpfTracker.openConnections[activeTuple] = ebpfConnection{
+		tuple:            activeTuple,
+		networkNamespace: "12345",
+		incoming:         true,
+		pid:              0,
 	}
+	mockEbpfTracker.closedConnections = append(mockEbpfTracker.closedConnections,
+		ebpfConnection{
+			tuple:            inactiveTuple,
+			networkNamespace: "12345",
+			incoming:         false,
+			pid:              0,
+		})
 	mockEbpfTracker.walkConnections(func(e ebpfConnection) {
 		cnt++
 	})
@@ -204,11 +195,7 @@ func TestInvalidTimeStampDead(t *testing.T) {
 			NetNS: NetNS,
 		}
 	)
-	mockEbpfTracker := &EbpfTracker{
-		readyToHandleConnections: true,
-		dead:            false,
-		openConnections: map[fourTuple]ebpfConnection{},
-	}
+	mockEbpfTracker := newMockEbpfTracker()
 	event.Timestamp = 0
 	mockEbpfTracker.TCPEventV4(event)
 	event2 := event

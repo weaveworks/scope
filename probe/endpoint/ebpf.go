@@ -28,13 +28,14 @@ type ebpfConnection struct {
 // Closed connections are kept in the `closedConnections` slice for one iteration of `walkConnections`.
 type EbpfTracker struct {
 	sync.Mutex
-	tracer                   *tracer.Tracer
-	readyToHandleConnections bool
-	dead                     bool
-	lastTimestampV4          uint64
+	tracer          *tracer.Tracer
+	ready           bool
+	dead            bool
+	lastTimestampV4 uint64
 
 	openConnections   map[fourTuple]ebpfConnection
 	closedConnections []ebpfConnection
+	closedDuringInit  map[fourTuple]struct{}
 }
 
 var releaseRegex = regexp.MustCompile(`^(\d+)\.(\d+).*$`)
@@ -77,7 +78,8 @@ func newEbpfTracker() (*EbpfTracker, error) {
 	}
 
 	tracker := &EbpfTracker{
-		openConnections: map[fourTuple]ebpfConnection{},
+		openConnections:  map[fourTuple]ebpfConnection{},
+		closedDuringInit: map[fourTuple]struct{}{},
 	}
 
 	tracer, err := tracer.NewTracer(tracker)
@@ -204,10 +206,6 @@ func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid
 	t.Lock()
 	defer t.Unlock()
 
-	if !t.isReadyToHandleConnections() {
-		return
-	}
-
 	log.Debugf("handleConnection(%v, [%v:%v --> %v:%v], pid=%v, netNS=%v)",
 		ev, tuple.fromAddr, tuple.fromPort, tuple.toAddr, tuple.toPort, pid, networkNamespace)
 
@@ -227,6 +225,9 @@ func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid
 			networkNamespace: networkNamespace,
 		}
 	case tracer.EventClose:
+		if !t.ready {
+			t.closedDuringInit[tuple] = struct{}{}
+		}
 		if deadConn, ok := t.openConnections[tuple]; ok {
 			delete(t.openConnections, tuple)
 			t.closedConnections = append(t.closedConnections, deadConn)
@@ -257,24 +258,25 @@ func (t *EbpfTracker) feedInitialConnections(conns procspy.ConnIter, seenTuples 
 	t.Lock()
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
-		t.openConnections[tuple] = ebpfConnection{
-			incoming:         incoming,
-			tuple:            tuple,
-			pid:              int(conn.Proc.PID),
-			networkNamespace: namespaceID,
+		if _, ok := t.closedDuringInit[tuple]; !ok {
+			if _, ok := t.openConnections[tuple]; !ok {
+				t.openConnections[tuple] = ebpfConnection{
+					incoming:         incoming,
+					tuple:            tuple,
+					pid:              int(conn.Proc.PID),
+					networkNamespace: namespaceID,
+				}
+			}
 		}
 	}
-	t.readyToHandleConnections = true
+	t.closedDuringInit = nil
+	t.ready = true
 	t.Unlock()
 
 	for _, p := range processesWaitingInAccept {
 		t.tracer.AddFdInstallWatcher(uint32(p))
 		log.Debugf("EbpfTracker: install fd-install watcher: pid=%d", p)
 	}
-}
-
-func (t *EbpfTracker) isReadyToHandleConnections() bool {
-	return t.readyToHandleConnections
 }
 
 func (t *EbpfTracker) isDead() bool {
