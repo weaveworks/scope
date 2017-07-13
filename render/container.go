@@ -2,7 +2,6 @@ package render
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
@@ -74,17 +73,15 @@ func ConnectionJoin(toIPs func(report.Node) []string, r Renderer) Renderer {
 }
 
 func ipToNode(n report.Node, _ report.Networks) report.Nodes {
+	// propagate non-IP nodes
+	if n.Topology != IP {
+		return report.Nodes{n.ID: n}
+	}
 	// If an IP is shared between multiple nodes, we can't reliably
 	// attribute an connection based on its IP
 	if count, _ := n.Counters.Lookup(IP); count > 1 {
 		return report.Nodes{}
 	}
-
-	// Propagate the internet and service pseudo nodes
-	if strings.HasSuffix(n.ID, TheInternetID) || strings.HasPrefix(n.ID, ServiceNodeIDPrefix) {
-		return report.Nodes{n.ID: n}
-	}
-
 	// If this node is not of the original type, exclude it.  This
 	// excludes all the nodes we've dragged in from endpoint that we
 	// failed to join to a node.
