@@ -51,7 +51,7 @@ func ConnectionJoin(toIPs func(report.Node) []string, r Renderer) Renderer {
 	nodeToIP := func(n report.Node, _ report.Networks) report.Nodes {
 		result := report.Nodes{}
 		for _, ip := range toIPs(n) {
-			result[ip] = NewDerivedNode(ip, n).
+			result[ip] = report.MakeNode(ip).
 				WithTopology(IP).
 				WithLatests(map[string]string{
 					originalNodeID: n.ID,
