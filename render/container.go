@@ -43,7 +43,6 @@ var ContainerRenderer = MakeFilter(
 var mapEndpoint2IP = MakeMap(endpoint2IP, SelectEndpoint)
 
 const originalNodeID = "original_node_id"
-const originalNodeTopology = "original_node_topology"
 
 // ConnectionJoin joins the given renderer with connections from the
 // endpoints topology, using the toIPs function to extract IPs from
@@ -55,8 +54,7 @@ func ConnectionJoin(toIPs func(report.Node) []string, r Renderer) Renderer {
 			result[ip] = NewDerivedNode(ip, n).
 				WithTopology(IP).
 				WithLatests(map[string]string{
-					originalNodeID:       n.ID,
-					originalNodeTopology: n.Topology,
+					originalNodeID: n.ID,
 				}).
 				WithCounters(map[string]int{IP: 1})
 		}
@@ -94,15 +92,8 @@ func ipToNode(n report.Node, _ report.Networks) report.Nodes {
 	if !ok {
 		return report.Nodes{}
 	}
-	topology, ok := n.Latest.Lookup(originalNodeTopology)
-	if !ok {
-		return report.Nodes{}
-	}
 
-	return report.Nodes{
-		id: NewDerivedNode(id, n).
-			WithTopology(topology),
-	}
+	return report.Nodes{id: NewDerivedNode(id, n)}
 }
 
 // endpoint2IP maps endpoint nodes to their IP address, for joining
