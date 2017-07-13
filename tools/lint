@@ -113,7 +113,7 @@ lint_sh() {
     local filename="$1"
     local lint_result=0
 
-    if ! diff -u <(shfmt -i 4 "${filename}") "${filename}"; then
+    if ! diff -u "${filename}" <(shfmt -i 4 "${filename}"); then
         lint_result=1
         echo "${filename}: run shfmt -i 4 -w ${filename}"
     fi
@@ -153,6 +153,21 @@ lint_md() {
     return $lint_result
 }
 
+lint_py() {
+    local filename="$1"
+    local lint_result=0
+
+    if yapf --diff "${filename}" | grep -qE '^[+-]'; then
+        lint_result=1
+        echo "${filename}: run yapf --in-place ${filename}"
+    else
+        # Only run flake8 if yapf passes, since they pick up a lot of similar issues
+        flake8 "${filename}" || lint_result=1
+    fi
+
+    return $lint_result
+}
+
 lint() {
     filename="$1"
     ext="${filename##*\.}"
@@ -179,6 +194,7 @@ lint() {
         sh) lint_sh "${filename}" || lint_result=1 ;;
         tf) lint_tf "${filename}" || lint_result=1 ;;
         md) lint_md "${filename}" || lint_result=1 ;;
+        py) lint_py "${filename}" || lint_result=1 ;;
     esac
 
     spell_check "${filename}" || lint_result=1

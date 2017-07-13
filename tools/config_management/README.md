@@ -113,6 +113,28 @@ N.B.: `--ssh-extra-args` is used to provide:
 * `StrictHostKeyChecking=no`: as VMs come and go, the same IP can be used by a different machine, so checking the host's SSH key may fail. Note that this introduces a risk of a man-in-the-middle attack.
 * `UserKnownHostsFile=/dev/null`: if you previously connected a VM with the same IP but a different public key, and added it to `~/.ssh/known_hosts`, SSH may still fail to connect, hence we use `/dev/null` instead of `~/.ssh/known_hosts`.
 
+
+### Docker installation role
+
+Various ways to install Docker are provided:
+
+- `docker-from-docker-ce-repo`
+- `docker-from-docker-repo`
+- `docker-from-get.docker.com`
+- `docker-from-tarball`
+
+each producing a slightly different outcome, which can be useful for testing various setup scenarios.
+
+The `docker-install` role selects one of the above ways to install Docker based on the `docker_install_role` variable.
+The default value for this variable is configured in `group_vars/all`.
+You can however override it with whichever role you would want to run by passing the name of the role as a key-value pair in `extra-vars`, e.g.:
+
+```
+ansible-playbook <playbook>.yml \
+    --extra-vars "docker_install_role=docker-from-docker-ce-repo"
+```
+
+
 ## Resources
 
 * [https://www.vagrantup.com/docs/provisioning/ansible.html](https://www.vagrantup.com/docs/provisioning/ansible.html)

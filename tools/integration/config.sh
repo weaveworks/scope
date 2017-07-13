@@ -115,11 +115,8 @@ rm_containers() {
 start_suite() {
     for host in $HOSTS; do
         [ -z "$DEBUG" ] || echo "Cleaning up on $host: removing all containers and resetting weave"
-        PLUGIN_ID=$(docker_on "$host" ps -aq --filter=name=weaveplugin)
-        PLUGIN_FILTER="cat"
-        [ -n "$PLUGIN_ID" ] && PLUGIN_FILTER="grep -v $PLUGIN_ID"
         # shellcheck disable=SC2046
-        rm_containers "$host" $(docker_on "$host" ps -aq 2>/dev/null | $PLUGIN_FILTER)
+        rm_containers "$host" $(docker_on "$host" ps -aq 2>/dev/null)
         run_on "$host" "docker network ls | grep -q ' weave ' && docker network rm weave" || true
         weave_on "$host" reset 2>/dev/null
     done
