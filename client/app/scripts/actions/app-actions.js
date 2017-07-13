@@ -551,7 +551,7 @@ export function receiveNodesDelta(delta) {
         dispatch({ type: ActionTypes.FINISH_TIME_TRAVEL_TRANSITION });
       }
 
-      const hasChanges = delta.add || delta.update || delta.remove;
+      const hasChanges = delta.add || delta.update || delta.remove || delta.reset;
       if (hasChanges) {
         dispatch({
           type: ActionTypes.RECEIVE_NODES_DELTA,

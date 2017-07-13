@@ -582,7 +582,12 @@ export function rootReducer(state = initialState, action) {
       log('RECEIVE_NODES_DELTA',
         'remove', size(action.delta.remove),
         'update', size(action.delta.update),
-        'add', size(action.delta.add));
+        'add', size(action.delta.add),
+        'reset', action.delta.reset);
+
+      if (action.delta.reset) {
+        state = state.set('nodes', makeMap());
+      }
 
       // remove nodes that no longer exist
       each(action.delta.remove, (nodeId) => {
