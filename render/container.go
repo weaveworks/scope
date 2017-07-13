@@ -2,7 +2,6 @@ package render
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
@@ -36,19 +35,13 @@ var ContainerRenderer = MakeFilter(
 			MapProcess2Container,
 			ColorConnectedProcessRenderer,
 		),
-
-		// This mapper brings in connections by joining with container
-		// IPs.
 		ConnectionJoin(MapContainer2IP, SelectContainer),
-
-		SelectContainer,
 	),
 )
 
 var mapEndpoint2IP = MakeMap(endpoint2IP, SelectEndpoint)
 
 const originalNodeID = "original_node_id"
-const originalNodeTopology = "original_node_topology"
 
 // ConnectionJoin joins the given renderer with connections from the
 // endpoints topology, using the toIPs function to extract IPs from
@@ -57,38 +50,38 @@ func ConnectionJoin(toIPs func(report.Node) []string, r Renderer) Renderer {
 	nodeToIP := func(n report.Node, _ report.Networks) report.Nodes {
 		result := report.Nodes{}
 		for _, ip := range toIPs(n) {
-			result[ip] = NewDerivedNode(ip, n).
+			result[ip] = report.MakeNode(ip).
 				WithTopology(IP).
 				WithLatests(map[string]string{
-					originalNodeID:       n.ID,
-					originalNodeTopology: n.Topology,
+					originalNodeID: n.ID,
 				}).
 				WithCounters(map[string]int{IP: 1})
 		}
 		return result
 	}
 
-	return MakeMap(
-		ipToNode,
-		MakeReduce(
-			MakeMap(nodeToIP, r),
-			mapEndpoint2IP,
+	return MakeReduce(
+		MakeMap(
+			ipToNode,
+			MakeReduce(
+				MakeMap(nodeToIP, r),
+				mapEndpoint2IP,
+			),
 		),
+		r,
 	)
 }
 
 func ipToNode(n report.Node, _ report.Networks) report.Nodes {
+	// propagate non-IP nodes
+	if n.Topology != IP {
+		return report.Nodes{n.ID: n}
+	}
 	// If an IP is shared between multiple nodes, we can't reliably
 	// attribute an connection based on its IP
 	if count, _ := n.Counters.Lookup(IP); count > 1 {
 		return report.Nodes{}
 	}
-
-	// Propagate the internet and service pseudo nodes
-	if strings.HasSuffix(n.ID, TheInternetID) || strings.HasPrefix(n.ID, ServiceNodeIDPrefix) {
-		return report.Nodes{n.ID: n}
-	}
-
 	// If this node is not of the original type, exclude it.  This
 	// excludes all the nodes we've dragged in from endpoint that we
 	// failed to join to a node.
@@ -96,15 +89,8 @@ func ipToNode(n report.Node, _ report.Networks) report.Nodes {
 	if !ok {
 		return report.Nodes{}
 	}
-	topology, ok := n.Latest.Lookup(originalNodeTopology)
-	if !ok {
-		return report.Nodes{}
-	}
 
-	return report.Nodes{
-		id: NewDerivedNode(id, n).
-			WithTopology(topology),
-	}
+	return report.Nodes{id: NewDerivedNode(id, n)}
 }
 
 // endpoint2IP maps endpoint nodes to their IP address, for joining
