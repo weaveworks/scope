@@ -48,7 +48,7 @@ usage() {
 		Launch options:
 	EOF
     # shellcheck disable=SC2086
-    docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope "$SCOPE_IMAGE" -h >&2
+    docker run --rm --entrypoint=/home/weave/scope "$SCOPE_IMAGE" -h >&2
 }
 
 usage_and_die() {
@@ -234,8 +234,7 @@ case "$COMMAND" in
 
     version)
         # shellcheck disable=SC2086
-        docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
-               "$SCOPE_IMAGE" --mode=version
+        docker run --rm --entrypoint=/home/weave/scope "$SCOPE_IMAGE" --mode=version
         ;;
 
     -h | help | -help | --help)
