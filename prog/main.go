@@ -120,6 +120,7 @@ type probeFlags struct {
 	dockerBridge   string
 
 	kubernetesEnabled      bool
+	kubernetesNodeName     string
 	kubernetesClientConfig kubernetes.ClientConfig
 	kubernetesKubeletPort  uint
 
@@ -314,6 +315,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.probe.kubernetesClientConfig.Token, kubernetesTokenFlag, "", "Bearer token for authentication to the API server")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.User, "probe.kubernetes.user", "", "The name of the kubeconfig user to use")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.Username, "probe.kubernetes.username", "", "Username for basic authentication to the API server")
+	flag.StringVar(&flags.probe.kubernetesNodeName, "probe.kubernetes.node-name", "", "Name of this node, for filtering pods")
 	flag.UintVar(&flags.probe.kubernetesKubeletPort, "probe.kubernetes.kubelet-port", 10255, "Node-local TCP port for contacting kubelet")
 
 	// AWS ECS

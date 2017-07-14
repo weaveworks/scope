@@ -194,7 +194,7 @@ func TestReporter(t *testing.T) {
 	pod2ID := report.MakePodNodeID(pod2UID)
 	serviceID := report.MakeServiceNodeID(serviceUID)
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", "foo", nil, hr, 0).Report()
+	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", "foo", nil, hr, "", 0).Report()
 
 	// Reporter should have added the following pods
 	for _, pod := range []struct {
@@ -255,7 +255,7 @@ func TestTagger(t *testing.T) {
 	}))
 
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil, hr, 0).Tag(rpt)
+	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil, hr, "", 0).Tag(rpt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
@@ -284,7 +284,7 @@ func TestReporterGetLogs(t *testing.T) {
 	client := newMockClient()
 	pipes := mockPipeClient{}
 	hr := controls.NewDefaultHandlerRegistry()
-	reporter := kubernetes.NewReporter(client, pipes, "", "", nil, hr, 0)
+	reporter := kubernetes.NewReporter(client, pipes, "", "", nil, hr, "", 0)
 
 	// Should error on invalid IDs
 	{
