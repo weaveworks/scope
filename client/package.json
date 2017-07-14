@@ -1,6 +1,6 @@
 {
   "name": "weave-scope",
-  "version": "1.5.1",
+  "version": "0.0.0",
   "description": "SPA JS app for Weave Scope visualising the application network.",
   "repository": "weaveworks/scope",
   "license": "Apache-2.0",
