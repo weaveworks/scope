@@ -113,7 +113,7 @@ function processTopologies(state, nextTopologies) {
   // add IDs to topology objects in-place
   const topologiesWithId = updateTopologyIds(nextTopologies);
   // filter out hidden topos
-  const visibleTopologies = filterHiddenTopologies(topologiesWithId, state.get('currentTopologyId'));
+  const visibleTopologies = filterHiddenTopologies(topologiesWithId, state.get('currentTopology'));
   // set `selectType` field for topology and sub_topologies options (recursive).
   const topologiesWithSelectType = visibleTopologies.map(calcSelectType);
   // cache URLs by ID
