@@ -78,6 +78,30 @@ var (
 
 	DaemonSetMetricTemplates = PodMetricTemplates
 
+	StatefulSetMetadataTemplates = report.MetadataTemplates{
+		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: "number", Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
+		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+	}
+
+	StatefulSetMetricTemplates = PodMetricTemplates
+
+	CronJobMetadataTemplates = report.MetadataTemplates{
+		NodeType:      {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Namespace:     {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Created:       {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
+		Schedule:      {ID: Schedule, Label: "Schedule", From: report.FromLatest, Priority: 4},
+		LastScheduled: {ID: LastScheduled, Label: "Last Scheduled", From: report.FromLatest, Datatype: "datetime", Priority: 5},
+		Suspended:     {ID: Suspended, Label: "Suspended", From: report.FromLatest, Priority: 6},
+		ActiveJobs:    {ID: ActiveJobs, Label: "# Jobs", From: report.FromLatest, Datatype: "number", Priority: 7},
+		report.Pod:    {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 8},
+	}
+
+	CronJobMetricTemplates = PodMetricTemplates
+
 	TableTemplates = report.TableTemplates{
 		LabelPrefix: {
 			ID:     LabelPrefix,
@@ -222,6 +246,14 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
+	statefulSetTopology, statefulSets, err := r.statefulSetTopology()
+	if err != nil {
+		return result, err
+	}
+	cronJobTopology, cronJobs, err := r.cronJobTopology()
+	if err != nil {
+		return result, err
+	}
 	deploymentTopology, deployments, err := r.deploymentTopology(r.probeID)
 	if err != nil {
 		return result, err
@@ -230,7 +262,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	podTopology, err := r.podTopology(services, replicaSets, daemonSets)
+	podTopology, err := r.podTopology(services, replicaSets, daemonSets, statefulSets, cronJobs)
 	if err != nil {
 		return result, err
 	}
@@ -238,6 +270,8 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.Service = result.Service.Merge(serviceTopology)
 	result.Host = result.Host.Merge(hostTopology)
 	result.DaemonSet = result.DaemonSet.Merge(daemonSetTopology)
+	result.StatefulSet = result.StatefulSet.Merge(statefulSetTopology)
+	result.CronJob = result.CronJob.Merge(cronJobTopology)
 	result.Deployment = result.Deployment.Merge(deploymentTopology)
 	result.ReplicaSet = result.ReplicaSet.Merge(replicaSetTopology)
 	return result, nil
@@ -310,6 +344,34 @@ func (r *Reporter) daemonSetTopology() (report.Topology, []DaemonSet, error) {
 	return result, daemonSets, err
 }
 
+func (r *Reporter) statefulSetTopology() (report.Topology, []StatefulSet, error) {
+	statefulSets := []StatefulSet{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(StatefulSetMetadataTemplates).
+		WithMetricTemplates(StatefulSetMetricTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkStatefulSets(func(s StatefulSet) error {
+		result = result.AddNode(s.GetNode())
+		statefulSets = append(statefulSets, s)
+		return nil
+	})
+	return result, statefulSets, err
+}
+
+func (r *Reporter) cronJobTopology() (report.Topology, []CronJob, error) {
+	cronJobs := []CronJob{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(CronJobMetadataTemplates).
+		WithMetricTemplates(CronJobMetricTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkCronJobs(func(c CronJob) error {
+		result = result.AddNode(c.GetNode())
+		cronJobs = append(cronJobs, c)
+		return nil
+	})
+	return result, cronJobs, err
+}
+
 func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) (report.Topology, []ReplicaSet, error) {
 	var (
 		result = report.MakeTopology().
@@ -373,7 +435,7 @@ func match(namespace string, selector labels.Selector, topology, id string) func
 	}
 }
 
-func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet, daemonSets []DaemonSet) (report.Topology, error) {
+func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet, daemonSets []DaemonSet, statefulSets []StatefulSet, cronJobs []CronJob) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
@@ -424,6 +486,32 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet, dae
 			report.DaemonSet,
 			report.MakeDaemonSetNodeID(daemonSet.UID()),
 		))
+	}
+	for _, statefulSet := range statefulSets {
+		selector, err := statefulSet.Selector()
+		if err != nil {
+			return pods, err
+		}
+		selectors = append(selectors, match(
+			statefulSet.Namespace(),
+			selector,
+			report.StatefulSet,
+			report.MakeStatefulSetNodeID(statefulSet.UID()),
+		))
+	}
+	for _, cronJob := range cronJobs {
+		cronJobSelectors, err := cronJob.Selectors()
+		if err != nil {
+			return pods, err
+		}
+		for _, selector := range cronJobSelectors {
+			selectors = append(selectors, match(
+				cronJob.Namespace(),
+				selector,
+				report.CronJob,
+				report.MakeCronJobNodeID(cronJob.UID()),
+			))
+		}
 	}
 
 	var localPodUIDs map[string]struct{}

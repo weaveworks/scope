@@ -13,7 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/kubernetes"
 	apiv1 "k8s.io/client-go/pkg/api/v1"
-	apiv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	apiappsv1beta1 "k8s.io/client-go/pkg/apis/apps/v1beta1"
+	apibatchv1 "k8s.io/client-go/pkg/apis/batch/v1"
+	apibatchv2alpha1 "k8s.io/client-go/pkg/apis/batch/v2alpha1"
+	apiextensionsv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
@@ -28,6 +31,8 @@ type Client interface {
 	WalkDeployments(f func(Deployment) error) error
 	WalkReplicaSets(f func(ReplicaSet) error) error
 	WalkDaemonSets(f func(DaemonSet) error) error
+	WalkStatefulSets(f func(StatefulSet) error) error
+	WalkCronJobs(f func(CronJob) error) error
 	WalkReplicationControllers(f func(ReplicationController) error) error
 	WalkNodes(f func(*apiv1.Node) error) error
 
@@ -48,6 +53,9 @@ type client struct {
 	deploymentStore            cache.Store
 	replicaSetStore            cache.Store
 	daemonSetStore             cache.Store
+	statefulSetStore           cache.Store
+	jobStore                   cache.Store
+	cronJobStore               cache.Store
 	replicationControllerStore cache.Store
 	nodeStore                  cache.Store
 
@@ -157,9 +165,21 @@ func NewClient(config ClientConfig) (Client, error) {
 	if _, err := c.Extensions().Deployments(metav1.NamespaceAll).List(metav1.ListOptions{}); err != nil {
 		log.Infof("Deployments, ReplicaSets and DaemonSets are not supported by this Kubernetes version: %v", err)
 	} else {
-		result.deploymentStore = result.setupStore(c.ExtensionsV1beta1Client.RESTClient(), "deployments", &apiv1beta1.Deployment{}, nil)
-		result.replicaSetStore = result.setupStore(c.ExtensionsV1beta1Client.RESTClient(), "replicasets", &apiv1beta1.ReplicaSet{}, nil)
-		result.daemonSetStore = result.setupStore(c.ExtensionsV1beta1Client.RESTClient(), "daemonsets", &apiv1beta1.DaemonSet{}, nil)
+		result.deploymentStore = result.setupStore(c.ExtensionsV1beta1Client.RESTClient(), "deployments", &apiextensionsv1beta1.Deployment{}, nil)
+		result.replicaSetStore = result.setupStore(c.ExtensionsV1beta1Client.RESTClient(), "replicasets", &apiextensionsv1beta1.ReplicaSet{}, nil)
+		result.daemonSetStore = result.setupStore(c.ExtensionsV1beta1Client.RESTClient(), "daemonsets", &apiextensionsv1beta1.DaemonSet{}, nil)
+	}
+	// CronJobs and StatefulSets were introduced later. Easiest to use the same technique.
+	if _, err := c.BatchV2alpha1().CronJobs(metav1.NamespaceAll).List(metav1.ListOptions{}); err != nil {
+		log.Infof("CronJobs are not supported by this Kubernetes version: %v", err)
+	} else {
+		result.jobStore = result.setupStore(c.BatchV1Client.RESTClient(), "jobs", &apibatchv1.Job{}, nil)
+		result.cronJobStore = result.setupStore(c.BatchV2alpha1Client.RESTClient(), "cronjobs", &apibatchv2alpha1.CronJob{}, nil)
+	}
+	if _, err := c.Apps().StatefulSets(metav1.NamespaceAll).List(metav1.ListOptions{}); err != nil {
+		log.Infof("StatefulSets are not supported by this Kubernetes version: %v", err)
+	} else {
+		result.statefulSetStore = result.setupStore(c.AppsV1beta1Client.RESTClient(), "statefulsets", &apiappsv1beta1.StatefulSet{}, nil)
 	}
 
 	return result, nil
@@ -214,7 +234,7 @@ func (c *client) WalkDeployments(f func(Deployment) error) error {
 		return nil
 	}
 	for _, m := range c.deploymentStore.List() {
-		d := m.(*apiv1beta1.Deployment)
+		d := m.(*apiextensionsv1beta1.Deployment)
 		if err := f(NewDeployment(d)); err != nil {
 			return err
 		}
@@ -228,7 +248,7 @@ func (c *client) WalkReplicaSets(f func(ReplicaSet) error) error {
 		return nil
 	}
 	for _, m := range c.replicaSetStore.List() {
-		rs := m.(*apiv1beta1.ReplicaSet)
+		rs := m.(*apiextensionsv1beta1.ReplicaSet)
 		if err := f(NewReplicaSet(rs)); err != nil {
 			return err
 		}
@@ -254,8 +274,41 @@ func (c *client) WalkDaemonSets(f func(DaemonSet) error) error {
 		return nil
 	}
 	for _, m := range c.daemonSetStore.List() {
-		ds := m.(*apiv1beta1.DaemonSet)
+		ds := m.(*apiextensionsv1beta1.DaemonSet)
 		if err := f(NewDaemonSet(ds)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// WalkStatefulSets calls f for each statefulset
+func (c *client) WalkStatefulSets(f func(StatefulSet) error) error {
+	if c.statefulSetStore == nil {
+		return nil
+	}
+	for _, m := range c.statefulSetStore.List() {
+		s := m.(*apiappsv1beta1.StatefulSet)
+		if err := f(NewStatefulSet(s)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// WalkCronJobs calls f for each cronjob
+func (c *client) WalkCronJobs(f func(CronJob) error) error {
+	if c.cronJobStore == nil {
+		return nil
+	}
+	jobs := []*apibatchv1.Job{}
+	for _, m := range c.jobStore.List() {
+		j := m.(*apibatchv1.Job)
+		jobs = append(jobs, j)
+	}
+	for _, m := range c.cronJobStore.List() {
+		cj := m.(*apibatchv2alpha1.CronJob)
+		if err := f(NewCronJob(cj, jobs)); err != nil {
 			return err
 		}
 	}
@@ -288,18 +341,18 @@ func (c *client) DeletePod(namespaceID, podID string) error {
 }
 
 func (c *client) ScaleUp(resource, namespaceID, id string) error {
-	return c.modifyScale(resource, namespaceID, id, func(scale *apiv1beta1.Scale) {
+	return c.modifyScale(resource, namespaceID, id, func(scale *apiextensionsv1beta1.Scale) {
 		scale.Spec.Replicas++
 	})
 }
 
 func (c *client) ScaleDown(resource, namespaceID, id string) error {
-	return c.modifyScale(resource, namespaceID, id, func(scale *apiv1beta1.Scale) {
+	return c.modifyScale(resource, namespaceID, id, func(scale *apiextensionsv1beta1.Scale) {
 		scale.Spec.Replicas--
 	})
 }
 
-func (c *client) modifyScale(resource, namespace, id string, f func(*apiv1beta1.Scale)) error {
+func (c *client) modifyScale(resource, namespace, id string, f func(*apiextensionsv1beta1.Scale)) error {
 	scaler := c.client.Extensions().Scales(namespace)
 	scale, err := scaler.Get(resource, id)
 	if err != nil {
