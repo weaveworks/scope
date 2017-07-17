@@ -15,6 +15,8 @@ const (
 	MockContainerMAC       = "d6:f2:5a:12:36:a8"
 	MockContainerIP        = "10.0.0.123"
 	MockHostname           = "hostname.weave.local"
+	MockProxyAddress       = "unix:///foo/bar/weave.sock"
+	MockDriverName         = "weave_mock"
 )
 
 // MockClient is a mock version of weave.Client
@@ -53,6 +55,12 @@ func (MockClient) Status() (weave.Status, error) {
 			}{
 				{Size: 0, IsKnownPeer: false},
 			},
+		},
+		Proxy: &weave.Proxy{
+			Addresses: []string{MockProxyAddress},
+		},
+		Plugin: &weave.Plugin{
+			DriverName: MockDriverName,
 		},
 	}, nil
 }

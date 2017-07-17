@@ -25,6 +25,8 @@ const (
 	mockContainerIP          = "10.0.0.123"
 	mockContainerIPWithScope = ";10.0.0.123"
 	mockHostname             = "hostname.weave.local"
+	mockProxyAddress         = "unix:///foo/bar/weave.sock"
+	mockDriverName           = "weave_mock"
 )
 
 var (
@@ -41,8 +43,16 @@ var (
 				"Hostname": "%s.",
 				"Tombstone": 0
 			}]
-		}
-	}`, mockWeavePeerName, mockWeavePeerNickName, mockContainerID, mockHostname)
+		},
+                "Proxy": {
+                        "Addresses": [
+                                "%s"
+                        ]
+                },
+                "Plugin": {
+                        "DriverName": "%s"
+                }
+	}`, mockWeavePeerName, mockWeavePeerNickName, mockContainerID, mockHostname, mockProxyAddress, mockDriverName)
 	mockIP = net.ParseIP("1.2.3.4")
 )
 
@@ -83,6 +93,12 @@ func TestStatus(t *testing.T) {
 					Tombstone:   0,
 				},
 			},
+		},
+		Proxy: &weave.Proxy{
+			Addresses: []string{mockProxyAddress},
+		},
+		Plugin: &weave.Plugin{
+			DriverName: mockDriverName,
 		},
 	}
 	if !reflect.DeepEqual(status, want) {
