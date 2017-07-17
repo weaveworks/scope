@@ -41,7 +41,7 @@ class Footer extends React.Component {
     const forceRelayoutTitle = 'Force re-layout (might reduce edge crossings, '
       + 'but may shift nodes around)';
     const versionUpdateTitle = versionUpdate
-      ? `New version available: ${versionUpdate.version}. Click to download`
+      ? `New version available: ${versionUpdate.get('version')} Click to download`
       : '';
 
     return (
@@ -50,9 +50,9 @@ class Footer extends React.Component {
           {versionUpdate && <a
             className="footer-versionupdate"
             title={versionUpdateTitle}
-            href={versionUpdate.downloadUrl}
+            href={versionUpdate.get('downloadUrl')}
             target="_blank" rel="noopener noreferrer">
-            Update available: {versionUpdate.version}
+            Update available: {versionUpdate.get('version')}
           </a>}
           <span className="footer-label">Version</span>
           {version}
