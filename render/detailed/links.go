@@ -54,40 +54,13 @@ var (
 			// `container_cpu_usage_seconds_total` is provided by cAdvisor in Kubelets.
 			docker.CPUTotalUsage: parsedTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name=~"^{{.Label}}-[^-]+$"}[1m]))`),
 		},
-
-		/*
-			NB: requirements for the Service yaml are
-			- The `spec.selector` needs to select on `name`
-			- The `metadata.name` needs to be the same value as `spec.selector.name`
-		*/
 		report.Service: {
-			/*
-				A recording rule defines `namespace_name:container_memory_usage_bytes:sum`:
-
-				    namespace_name:container_memory_usage_bytes:sum =
-				       sum by (namespace, name) (
-					  sum(container_memory_usage_bytes{image!=""}) by (pod_name, namespace)
-					* on (pod_name) group_left(name)
-					  k8s_pod_labels{job="monitoring/kube-api-exporter"}
-				       )
-
-				Additionally, we filter by `monitor=""` for cortex-only data.
-			*/
-			docker.MemoryUsage: parsedTemplate(`namespace_name:container_memory_usage_bytes:sum{name="{{.Label}}",monitor=""}`),
-
-			/*
-				A recording rule defines `namespace_name:container_cpu_usage_seconds_total:sum_rate`:
-
-				    namespace_name:container_cpu_usage_seconds_total:sum_rate =
-				       sum by (namespace, name) (
-					  sum(rate(container_cpu_usage_seconds_total{image!=""}[5m])) by (pod_name, namespace)
-					* on (pod_name) group_left(name)
-					  k8s_pod_labels{job="monitoring/kube-api-exporter"}
-				       )
-
-				Additionally, we filter by `monitor=""` for cortex-only data.
-			*/
-			docker.CPUTotalUsage: parsedTemplate(`namespace_name:container_cpu_usage_seconds_total:sum_rate{name="{{.Label}},monitor=""}`),
+			// These recording rules must be defined in the prometheus config.
+			// NB: Pods need to be labeled and selected by their respective Service name, meaning:
+			// - The Service's `spec.selector` needs to select on `name`
+			// - The Service's `metadata.name` needs to be the same value as `spec.selector.name`
+			docker.MemoryUsage: parsedTemplate(`namespace_label_name:container_memory_usage_bytes:sum{label_name="{{.Label}}"}`),
+			docker.CPUTotalUsage: parsedTemplate(`namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{.Label}}}`),
 		},
 	}
 )
