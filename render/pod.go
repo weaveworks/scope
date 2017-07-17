@@ -18,7 +18,21 @@ const (
 var UnmanagedIDPrefix = MakePseudoNodeID(UnmanagedID)
 
 func renderKubernetesTopologies(rpt report.Report) bool {
-	return len(rpt.Pod.Nodes)+len(rpt.Service.Nodes)+len(rpt.Deployment.Nodes)+len(rpt.DaemonSet.Nodes) >= 1
+	// Render if any k8s topology has any nodes
+	topologies := []*report.Topology{
+		&rpt.Pod,
+		&rpt.Service,
+		&rpt.Deployment,
+		&rpt.DaemonSet,
+		&rpt.StatefulSet,
+		&rpt.CronJob,
+	}
+	for _, t := range topologies {
+		if len(t.Nodes) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func isPauseContainer(n report.Node) bool {
@@ -68,7 +82,7 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // have connections to each other.
 var KubeControllerRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	renderParents(
-		report.Pod, []string{report.Deployment, report.DaemonSet}, UnmanagedID,
+		report.Pod, []string{report.Deployment, report.DaemonSet, report.StatefulSet, report.CronJob}, UnmanagedID,
 		PodRenderer,
 	),
 )
