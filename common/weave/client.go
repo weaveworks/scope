@@ -34,6 +34,8 @@ type Status struct {
 	Router  Router
 	DNS     *DNS
 	IPAM    *IPAM
+	Proxy   *Proxy
+	Plugin  *Plugin
 }
 
 // Router describes the status of the Weave Router
@@ -93,6 +95,16 @@ type IPAM struct {
 		IsKnownPeer bool
 	}
 	PendingAllocates []string
+}
+
+// Proxy describes the status of Weave Proxy
+type Proxy struct {
+	Addresses []string
+}
+
+// Plugin describes the status of the Weave Plugin
+type Plugin struct {
+	DriverName string
 }
 
 var weavePsMatch = regexp.MustCompile(`^([0-9a-f]{12}) ((?:[0-9a-f][0-9a-f]\:){5}(?:[0-9a-f][0-9a-f]))(.*)$`)

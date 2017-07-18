@@ -1,7 +1,6 @@
 package overlay_test
 
 import (
-	"sync"
 	"testing"
 	"time"
 
@@ -12,8 +11,6 @@ import (
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
 	"github.com/weaveworks/scope/test/weave"
-
-	docker_client "github.com/fsouza/go-dockerclient"
 )
 
 const (
@@ -21,54 +18,7 @@ const (
 	mockContainerIPWithScope = ";" + weave.MockContainerIP
 )
 
-type mockDockerClient struct {
-	sync.RWMutex
-	containers map[string]*docker_client.Container
-}
-
-func (m *mockDockerClient) InspectContainer(id string) (*docker_client.Container, error) {
-	m.RLock()
-	defer m.RUnlock()
-	c, ok := m.containers[id]
-	if !ok {
-		return nil, &docker_client.NoSuchContainer{}
-	}
-	return c, nil
-}
-
-func (m *mockDockerClient) CreateExec(docker_client.CreateExecOptions) (*docker_client.Exec, error) {
-	return &docker_client.Exec{ID: "id"}, nil
-}
-
-func (m *mockDockerClient) StartExec(_ string, options docker_client.StartExecOptions) error {
-	options.OutputStream.Write([]byte("exec_output"))
-	return nil
-}
-
-var mockWeaveContainers = map[string]*docker_client.Container{
-	"weaveproxy": {
-		ID: "foo",
-		State: docker_client.State{
-			Running: true,
-		},
-	},
-
-	"weaveplugin": {
-		ID: "bar",
-		State: docker_client.State{
-			Running: true,
-		},
-	},
-}
-
 func runTest(t *testing.T, f func(*overlay.Weave)) {
-	// Place and restore docker client
-	origNewDockerClientStub := overlay.NewDockerClientStub
-	overlay.NewDockerClientStub = func() (overlay.DockerClient, error) {
-		return &mockDockerClient{containers: mockWeaveContainers}, nil
-	}
-	defer func() { overlay.NewDockerClientStub = origNewDockerClientStub }()
-
 	w, err := overlay.NewWeave(mockHostID, weave.MockClient{})
 	if err != nil {
 		t.Fatal(err)
@@ -152,13 +102,15 @@ func TestOverlayTopology(t *testing.T) {
 		if have, ok := node.Latest.Lookup(overlay.WeaveProxyStatus); !ok || have != "running" {
 			t.Errorf("Expected weave proxy status %q, got %q", "running", have)
 		}
-		// The weave proxy address should equal what Exec writes to stdout
-		if have, ok := node.Latest.Lookup(overlay.WeaveProxyAddress); !ok || have != "exec_output" {
-			t.Errorf("Expected weave proxy address %q, got %q", "exec_output", have)
+		if have, ok := node.Latest.Lookup(overlay.WeaveProxyAddress); !ok || have != weave.MockProxyAddress {
+			t.Errorf("Expected weave proxy address %q, got %q", weave.MockProxyAddress, have)
 		}
 		// The weave plugin container is running
 		if have, ok := node.Latest.Lookup(overlay.WeavePluginStatus); !ok || have != "running" {
 			t.Errorf("Expected weave plugin status %q, got %q", "running", have)
+		}
+		if have, ok := node.Latest.Lookup(overlay.WeavePluginDriver); !ok || have != weave.MockDriverName {
+			t.Errorf("Expected weave proxy address %q, got %q", weave.MockDriverName, have)
 		}
 		// The mock data indicates ranges are owned by unreachable peers
 		if have, ok := node.Latest.Lookup(overlay.WeaveIPAMStatus); !ok || have != "all ranges owned by unreachable peers" {
