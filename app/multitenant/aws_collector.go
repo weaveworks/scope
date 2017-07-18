@@ -355,6 +355,19 @@ func calculateReportKey(rowKey, colKey string) (string, error) {
 	return fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey), nil
 }
 
+func withBackoff(f func() error) error {
+	retries := 0
+	backoff := 50 * time.Millisecond
+	err := f()
+	for err != nil && retries <= 5 {
+		time.Sleep(backoff)
+		err = f()
+		retries += 1
+		backoff *= 2
+	}
+	return err
+}
+
 func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) error {
 	userid, err := c.userIDer(ctx)
 	if err != nil {
@@ -368,7 +381,12 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return err
 	}
 
-	reportSize, err := c.s3.StoreReportBytes(ctx, reportKey, buf)
+	var reportSize int
+	err = withBackoff(func() error {
+		var err error
+		reportSize, err = c.s3.StoreReportBytes(ctx, reportKey, buf)
+		return err
+	})
 	if err != nil {
 		return err
 	}
@@ -391,24 +409,27 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 
 	var resp *dynamodb.PutItemOutput
 	err = instrument.TimeRequestHistogram(ctx, "DynamoDB.PutItem", dynamoRequestDuration, func(_ context.Context) error {
-		var err error
-		resp, err = c.db.PutItem(&dynamodb.PutItemInput{
-			TableName: aws.String(c.tableName),
-			Item: map[string]*dynamodb.AttributeValue{
-				hourField: {
-					S: aws.String(rowKey),
+		return withBackoff(func() error {
+			var err error
+			resp, err = c.db.PutItem(&dynamodb.PutItemInput{
+				TableName: aws.String(c.tableName),
+				Item: map[string]*dynamodb.AttributeValue{
+					hourField: {
+						S: aws.String(rowKey),
+					},
+					tsField: {
+						N: aws.String(colKey),
+					},
+					reportField: {
+						S: aws.String(reportKey),
+					},
 				},
-				tsField: {
-					N: aws.String(colKey),
-				},
-				reportField: {
-					S: aws.String(reportKey),
-				},
-			},
-			ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
+				ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
+			})
+			return err
 		})
-		return err
 	})
+
 	if resp.ConsumedCapacity != nil {
 		dynamoConsumedCapacity.WithLabelValues("PutItem").
 			Add(float64(*resp.ConsumedCapacity.CapacityUnits))
