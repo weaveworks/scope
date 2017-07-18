@@ -344,13 +344,14 @@ func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) (NodeSum
 }
 
 func pluralize(counters report.Counters, key, singular, plural string) string {
-	if c, ok := counters.Lookup(key); ok {
-		if c == 1 {
-			return fmt.Sprintf("%d %s", c, singular)
-		}
-		return fmt.Sprintf("%d %s", c, plural)
+	c, ok := counters.Lookup(key)
+	if !ok {
+		c = 0
 	}
-	return ""
+	if c == 1 {
+		return fmt.Sprintf("%d %s", c, singular)
+	}
+	return fmt.Sprintf("%d %s", c, plural)
 }
 
 type nodeSummariesByID []NodeSummary
