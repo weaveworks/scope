@@ -289,6 +289,11 @@
 
       &.dragging { @extend .grabbing; }
 
+      .available-range {
+        fill: #888;
+        fill-opacity: 0.1;
+      }
+
       .timestamp-label {
         padding: 3px;
       }
@@ -328,9 +333,9 @@
       content: '';
       position: relative;
       display: block;
-      margin: -15px auto 3px;
+      margin: -12px auto 3px;
       background-color: #ccc;
-      height: 13px;
+      height: 9px;
       width: 1px;
       left: 1px
     }

@@ -15,6 +15,7 @@ import {
 } from '../actions/app-actions';
 
 import {
+  TIMELINE_TICK_INTERVAL,
   TIMELINE_DEBOUNCE_INTERVAL,
 } from '../constants/timer';
 
@@ -71,10 +72,15 @@ class TimeTravelTimeline extends React.Component {
       .on('end', this.dragEnded)
       .on('drag', this.dragged);
     this.zoom = zoom().on('zoom', this.zoomed);
+
     this.setZoomTriggers(true);
+
+    // Force periodic re-renders to update the slider position as time goes by.
+    this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_TICK_INTERVAL);
   }
 
   componentWillUnmount() {
+    clearInterval(this.timer);
     this.setZoomTriggers(false);
   }
 
@@ -112,8 +118,8 @@ class TimeTravelTimeline extends React.Component {
 
   dragged() {
     const { focusedTimestamp, timelineRange } = this.state;
-    const mv = timelineRange.as('seconds') / R;
-    const newTimestamp = moment(focusedTimestamp).subtract(d3Event.dx * mv, 'seconds');
+    const mv = timelineRange.asMilliseconds() / R;
+    const newTimestamp = moment(focusedTimestamp).subtract(d3Event.dx * mv);
     // console.log('DRAG', newTimestamp.toDate());
     this.jumpTo(newTimestamp);
   }
@@ -123,19 +129,20 @@ class TimeTravelTimeline extends React.Component {
   }
 
   jumpTo(timestamp) {
+    timestamp = timestamp > moment() ? moment() : timestamp;
     this.setState({ focusedTimestamp: timestamp });
     this.props.onUpdateTimestamp(timestamp);
   }
 
   jumpForward() {
-    const d = this.state.timelineRange.asMilliseconds() / 3;
-    const timestamp = moment(this.state.focusedTimestamp).add(d);
+    const d = this.state.timelineRange.asMilliseconds() / 4 / R;
+    const timestamp = moment(this.state.focusedTimestamp).add(d * this.width);
     this.jumpTo(timestamp);
   }
 
   jumpBackward() {
-    const d = this.state.timelineRange.asMilliseconds() / 3;
-    const timestamp = moment(this.state.focusedTimestamp).subtract(d);
+    const d = this.state.timelineRange.asMilliseconds() / 4 / R;
+    const timestamp = moment(this.state.focusedTimestamp).subtract(d * this.width);
     this.jumpTo(timestamp);
   }
 
@@ -152,9 +159,16 @@ class TimeTravelTimeline extends React.Component {
       .range([-R, R]);
     const ticks = timeScale.ticks(150);
 
+    const nowX = timeScale(moment());
+
     // ${10 * Math.log(timelineRange.as('seconds') / C)}
     return (
       <g id="axis">
+        <rect
+          className="available-range"
+          transform={`translate(${nowX}, 0)`}
+          x={-R} y={-30} width={R} height={60} />
+        <line x1={-R} x2={R} stroke="#ddd" strokeWidth="1" />
         <g className="ticks">
           {fromJS(ticks).map(date => (
             <foreignObject
@@ -170,7 +184,6 @@ class TimeTravelTimeline extends React.Component {
             </foreignObject>
           ))}
         </g>
-        <line x1={-R} x2={R} stroke="#ddd" strokeWidth="1" />
       </g>
     );
   }
