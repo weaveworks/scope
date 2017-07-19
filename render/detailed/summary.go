@@ -44,20 +44,19 @@ type Column struct {
 
 // NodeSummary is summary information about a child for a Node.
 type NodeSummary struct {
-	ID          string               `json:"id"`
-	Label       string               `json:"label"`
-	LabelMinor  string               `json:"labelMinor"`
-	Rank        string               `json:"rank"`
-	Shape       string               `json:"shape,omitempty"`
-	Stack       bool                 `json:"stack,omitempty"`
-	Linkable    bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
-	Pseudo      bool                 `json:"pseudo,omitempty"`
-	Metadata    []report.MetadataRow `json:"metadata,omitempty"`
-	Parents     []Parent             `json:"parents,omitempty"`
-	Metrics     []report.MetricRow   `json:"metrics,omitempty"`
-	Tables      []report.Table       `json:"tables,omitempty"`
-	Adjacency   report.IDList        `json:"adjacency,omitempty"`
-	MetricLinks []MetricLink         `json:"metric_links,omitempty"`
+	ID         string               `json:"id"`
+	Label      string               `json:"label"`
+	LabelMinor string               `json:"labelMinor"`
+	Rank       string               `json:"rank"`
+	Shape      string               `json:"shape,omitempty"`
+	Stack      bool                 `json:"stack,omitempty"`
+	Linkable   bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
+	Pseudo     bool                 `json:"pseudo,omitempty"`
+	Metadata   []report.MetadataRow `json:"metadata,omitempty"`
+	Parents    []Parent             `json:"parents,omitempty"`
+	Metrics    []report.MetricRow   `json:"metrics,omitempty"`
+	Tables     []report.Table       `json:"tables,omitempty"`
+	Adjacency  report.IDList        `json:"adjacency,omitempty"`
 }
 
 var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
@@ -104,20 +103,20 @@ var primaryAPITopology = map[string]string{
 
 // MakeNodeSummary summarizes a node, if possible.
 func MakeNodeSummary(r report.Report, n report.Node, metricsGraphURL string) (NodeSummary, bool) {
-	metricLinks := metricsGraphURL != ""
 	if renderer, ok := renderers[n.Topology]; ok {
 		// Skip (and don't fall through to fallback) if renderer maps to nil
 		if renderer != nil {
-			summary, b := renderer(baseNodeSummary(r, n, metricLinks), n)
-			return RenderMetricLinks(summary, n, metricsGraphURL), b
+			summary, b := renderer(baseNodeSummary(r, n), n)
+			return RenderMetricURLs(summary, n, metricsGraphURL), b
 		}
 	} else if _, ok := r.Topology(n.Topology); ok {
-		summary := baseNodeSummary(r, n, metricLinks)
+		summary := baseNodeSummary(r, n)
 		summary.Label = n.ID // This is unlikely to look very good, but is a reasonable fallback
 		return summary, true
 	}
 	if strings.HasPrefix(n.Topology, "group:") {
-		return groupNodeSummary(baseNodeSummary(r, n, metricLinks), r, n)
+		summary, b := groupNodeSummary(baseNodeSummary(r, n), r, n)
+		return RenderMetricURLs(summary, n, metricsGraphURL), b
 	}
 	return NodeSummary{}, false
 }
@@ -133,7 +132,7 @@ func (n NodeSummary) SummarizeMetrics() NodeSummary {
 	return n
 }
 
-func baseNodeSummary(r report.Report, n report.Node, metricLinks bool) NodeSummary {
+func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 	t, _ := r.Topology(n.Topology)
 	ns := NodeSummary{
 		ID:        n.ID,
@@ -145,9 +144,7 @@ func baseNodeSummary(r report.Report, n report.Node, metricLinks bool) NodeSumma
 		Tables:    NodeTables(r, n),
 		Adjacency: n.Adjacency,
 	}
-	if metricLinks {
-		ns.MetricLinks = NodeMetricLinks(r, n)
-	}
+
 	return ns
 }
 

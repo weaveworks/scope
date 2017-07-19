@@ -23,6 +23,7 @@ function getColumns(nodes) {
     .toList()
     .flatMap((n) => {
       const metrics = (n.get('metrics') || makeList())
+        .filter(m => !m.get('valueEmpty'))
         .map(m => makeMap({ id: m.get('id'), label: m.get('label'), dataType: 'number' }));
       return metrics;
     })

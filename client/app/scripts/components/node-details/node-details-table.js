@@ -109,7 +109,7 @@ function getSortedNodes(nodes, sortedByHeader, sortedDesc) {
   const getValue = getValueForSortedBy(sortedByHeader);
   const withAndWithoutValues = groupBy(nodes, (n) => {
     const v = getValue(n);
-    return v !== null && v !== undefined ? 'withValues' : 'withoutValues';
+    return !n.valueEmpty && v !== null && v !== undefined ? 'withValues' : 'withoutValues';
   });
   const withValues = sortNodes(withAndWithoutValues.withValues, getValue, sortedDesc);
   const withoutValues = sortNodes(withAndWithoutValues.withoutValues, getValue, sortedDesc);

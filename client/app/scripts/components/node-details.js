@@ -54,28 +54,6 @@ class NodeDetails extends React.Component {
     resetDocumentTitle();
   }
 
-  static collectMetrics(details) {
-    const metrics = details.metrics || [];
-
-    // collect by metric id (id => link)
-    const metricLinks = (details.metric_links || [])
-      .reduce((agg, link) => Object.assign(agg, {[link.id]: link}), {});
-
-    const availableMetrics = metrics.reduce(
-      (agg, m) => Object.assign(agg, {[m.id]: true}),
-      {}
-    );
-
-    // append links with no metrics as fake metrics
-    (details.metric_links || []).forEach((link) => {
-      if (availableMetrics[link.id] === undefined) {
-        metrics.push({id: link.id, label: link.label});
-      }
-    });
-
-    return { metrics, metricLinks };
-  }
-
   renderTools() {
     const showSwitchTopology = this.props.nodeId !== this.props.selectedNodeId;
     const topologyTitle = `View ${this.props.label} in ${this.props.topologyId}`;
@@ -187,8 +165,6 @@ class NodeDetails extends React.Component {
       }
     };
 
-    const { metrics, metricLinks } = NodeDetails.collectMetrics(details);
-
     return (
       <div className="node-details">
         {tools}
@@ -214,11 +190,10 @@ class NodeDetails extends React.Component {
         </div>}
 
         <div className="node-details-content">
-          {metrics.length > 0 && <div className="node-details-content-section">
+          {details.metrics && <div className="node-details-content-section">
             <div className="node-details-content-section-header">Status</div>
             <NodeDetailsHealth
-              metrics={metrics}
-              metricLinks={metricLinks}
+              metrics={details.metrics}
               topologyId={topologyId}
               nodeColor={nodeColor}
               />

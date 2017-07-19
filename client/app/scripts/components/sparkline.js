@@ -7,7 +7,11 @@ import { line, curveLinear } from 'd3-shape';
 import { scaleLinear } from 'd3-scale';
 
 import { formatMetricSvg } from '../utils/string-utils';
+import { brightenColor, darkenColor } from '../utils/color-utils';
 
+
+const HOVER_RADIUS_MULTIPLY = 1.5;
+const HOVER_STROKE_MULTIPLY = 5;
 
 export default class Sparkline extends React.Component {
   constructor(props, context) {
@@ -20,19 +24,19 @@ export default class Sparkline extends React.Component {
       .y(d => this.y(d.value));
   }
 
+  initRanges() {
+    // adjust scales and leave some room for the circle on the right, upper, and lower edge
+    const padding = 2 + Math.ceil(this.props.circleRadius * HOVER_RADIUS_MULTIPLY);
+    this.x.range([2, this.props.width - padding]);
+    this.y.range([this.props.height - padding, padding]);
+    this.line.curve(this.props.curve);
+  }
+
   getGraphData() {
     // data is of shape [{date, value}, ...] and is sorted by date (ASC)
     let data = this.props.data;
 
-    // Do nothing if no data or data w/o date are passed in.
-    if (data === undefined || data.length === 0 || data[0].date === undefined) {
-      return <div />;
-    }
-
-    // adjust scales
-    this.x.range([2, this.props.width - 2]);
-    this.y.range([this.props.height - 2, 2]);
-    this.line.curve(this.props.curve);
+    this.initRanges();
 
     // Convert dates into D3 dates
     data = data.map(d => ({
@@ -70,30 +74,66 @@ export default class Sparkline extends React.Component {
     return {title, lastX, lastY, data};
   }
 
+  getEmptyGraphData() {
+    this.initRanges();
+    const first = new Date(0);
+    const last = new Date(15);
+    this.x.domain([first, last]);
+    this.y.domain([0, 1]);
+
+    return {
+      title: '',
+      lastX: this.x(last),
+      lastY: this.y(0),
+      data: [
+        {date: first, value: 0},
+        {date: last, value: 0},
+      ],
+    };
+  }
+
   render() {
-    // Do nothing if no data or data w/o date are passed in.
+    let strokeColor = this.props.strokeColor;
+    let strokeWidth = this.props.strokeWidth;
+    let radius = this.props.circleRadius;
+    let fillOpacity = 0.6;
+    let circleColor;
+    let graph = {};
+
     if (!this.props.data || this.props.data.length === 0 || this.props.data[0].date === undefined) {
-      return <div />;
+      // no data means just a dead line w/o circle
+      graph = this.getEmptyGraphData();
+      strokeColor = brightenColor(strokeColor);
+      radius = 0;
+    } else {
+      graph = this.getGraphData();
+
+      if (this.props.hovered) {
+        strokeColor = this.props.hoverColor;
+        circleColor = strokeColor;
+        strokeWidth *= HOVER_STROKE_MULTIPLY;
+        radius *= HOVER_RADIUS_MULTIPLY;
+        fillOpacity = 1;
+      } else {
+        circleColor = darkenColor(strokeColor);
+      }
     }
 
-    const {lastX, lastY, title, data} = this.getGraphData();
-
     return (
-      <div title={title}>
+      <div title={graph.title}>
         <svg width={this.props.width} height={this.props.height}>
           <path
-            className="sparkline" fill="none" stroke={this.props.strokeColor}
-            strokeWidth={this.props.strokeWidth} d={this.line(data)}
+            className="sparkline" fill="none" stroke={strokeColor}
+            strokeWidth={strokeWidth} d={this.line(graph.data)}
           />
           <circle
-            className="sparkcircle" cx={lastX} cy={lastY} fill="#46466a"
-            fillOpacity="0.6" stroke="none" r={this.props.circleDiameter}
+            className="sparkcircle" cx={graph.lastX} cy={graph.lastY} fill={circleColor}
+            fillOpacity={fillOpacity} stroke="none" r={radius}
           />
         </svg>
       </div>
     );
   }
-
 }
 
 Sparkline.propTypes = {
@@ -104,8 +144,10 @@ Sparkline.defaultProps = {
   width: 80,
   height: 24,
   strokeColor: '#7d7da8',
-  strokeWidth: '0.5px',
+  strokeWidth: 0.5,
+  hoverColor: '#7d7da8',
   curve: curveLinear,
-  circleDiameter: 1.75,
+  circleRadius: 1.75,
+  hovered: false,
   data: [],
 };

@@ -10,54 +10,82 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	sampleReport      = report.Report{}
-	samplePodNode     = report.MakeNode("noo").WithTopology(report.Pod)
-	sampleUnknownNode = report.MakeNode("???").WithTopology("foo")
+const (
+	sampleMetricsGraphURL = "/prom/:orgID/notebook/new"
 )
 
-func TestNodeMetricLinks_UnknownTopology(t *testing.T) {
-	links := detailed.NodeMetricLinks(sampleReport, sampleUnknownNode)
-	assert.Nil(t, links)
-}
-
-func TestNodeMetricLinks(t *testing.T) {
-	expected := []detailed.MetricLink{
-		{ID: docker.CPUTotalUsage, Label: "CPU", Priority: 1, URL: ""},
-		{ID: docker.MemoryUsage, Label: "Memory", Priority: 2, URL: ""},
+var (
+	sampleUnknownNode = report.MakeNode("???").WithTopology("foo")
+	samplePodNode     = report.MakeNode("noo").WithTopology(report.Pod)
+	sampleMetrics     = []report.MetricRow{
+		{ID: docker.MemoryUsage},
+		{ID: docker.CPUTotalUsage},
 	}
+)
 
-	links := detailed.NodeMetricLinks(sampleReport, samplePodNode)
-	assert.Equal(t, expected, links)
+func TestRenderMetricURLs_Disabled(t *testing.T) {
+	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
+	result := detailed.RenderMetricURLs(s, samplePodNode, "")
+
+	assert.Empty(t, result.Metrics[0].URL)
+	assert.Empty(t, result.Metrics[1].URL)
 }
 
-func TestRenderMetricLinks_UnknownTopology(t *testing.T) {
-	summary := detailed.NodeSummary{}
+func TestRenderMetricURLs_UnknownTopology(t *testing.T) {
+	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
+	result := detailed.RenderMetricURLs(s, sampleUnknownNode, sampleMetricsGraphURL)
 
-	result := detailed.RenderMetricLinks(summary, sampleUnknownNode, "")
-	assert.Equal(t, summary, result)
+	assert.Empty(t, result.Metrics[0].URL)
+	assert.Empty(t, result.Metrics[1].URL)
 }
 
-func TestRenderMetricLinks_Pod(t *testing.T) {
-	summary := detailed.NodeSummary{Label: "woo", MetricLinks: detailed.NodeMetricLinks(sampleReport, samplePodNode)}
+func TestRenderMetricURLs(t *testing.T) {
+	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
+	result := detailed.RenderMetricURLs(s, samplePodNode, sampleMetricsGraphURL)
 
-	result := detailed.RenderMetricLinks(summary, samplePodNode, "/prom/:orgID/notebook/new")
-	assert.Equal(t,
-		"/prom/:orgID/notebook/new/%7B%22cells%22:%5B%7B%22queries%22:%5B%22sum%28rate%28container_cpu_usage_seconds_total%7Bpod_name=%5C%22woo%5C%22%7D%5B1m%5D%29%29%22%5D%7D%5D%7D",
-		result.MetricLinks[0].URL)
-	assert.Equal(t,
-		"/prom/:orgID/notebook/new/%7B%22cells%22:%5B%7B%22queries%22:%5B%22sum%28container_memory_usage_bytes%7Bpod_name=%5C%22woo%5C%22%7D%29%22%5D%7D%5D%7D",
-		result.MetricLinks[1].URL)
+	u := "/prom/:orgID/notebook/new/%7B%22cells%22%3A%5B%7B%22queries%22%3A%5B%22sum%28container_memory_usage_bytes%7Bpod_name%3D%5C%22foo%5C%22%7D%29%22%5D%7D%5D%7D"
+	assert.Equal(t, u, result.Metrics[0].URL)
+	u = "/prom/:orgID/notebook/new/%7B%22cells%22%3A%5B%7B%22queries%22%3A%5B%22sum%28rate%28container_cpu_usage_seconds_total%7Bpod_name%3D%5C%22foo%5C%22%7D%5B1m%5D%29%29%22%5D%7D%5D%7D"
+	assert.Equal(t, u, result.Metrics[1].URL)
 }
 
-func TestRenderMetricLinks_QueryReplacement(t *testing.T) {
-	summary := detailed.NodeSummary{Label: "boo", MetricLinks: detailed.NodeMetricLinks(sampleReport, samplePodNode)}
+func TestRenderMetricURLs_EmptyMetrics(t *testing.T) {
+	result := detailed.RenderMetricURLs(detailed.NodeSummary{}, samplePodNode, sampleMetricsGraphURL)
 
-	result := detailed.RenderMetricLinks(summary, samplePodNode, "/foo/:orgID/bar?q=:query")
-	assert.Equal(t,
-		"/foo/:orgID/bar?q=sum%28rate%28container_cpu_usage_seconds_total%7Bpod_name=%22boo%22%7D%5B1m%5D%29%29",
-		result.MetricLinks[0].URL)
-	assert.Equal(t,
-		"/foo/:orgID/bar?q=sum%28container_memory_usage_bytes%7Bpod_name=%22boo%22%7D%29",
-		result.MetricLinks[1].URL)
+	m := result.Metrics[0]
+	assert.Equal(t, docker.CPUTotalUsage, m.ID)
+	assert.Equal(t, "CPU", m.Label)
+	assert.NotEmpty(t, m.URL)
+	assert.True(t, m.ValueEmpty)
+	assert.Equal(t, float64(1), m.Priority)
+
+	m = result.Metrics[1]
+	assert.NotEmpty(t, m.URL)
+	assert.True(t, m.ValueEmpty)
+	assert.Equal(t, float64(2), m.Priority)
+}
+
+func TestRenderMetricURLs_CombinedEmptyMetrics(t *testing.T) {
+	s := detailed.NodeSummary{
+		Label:   "foo",
+		Metrics: []report.MetricRow{{ID: docker.MemoryUsage, Priority: 1}},
+	}
+	result := detailed.RenderMetricURLs(s, samplePodNode, sampleMetricsGraphURL)
+
+	assert.NotEmpty(t, result.Metrics[0].URL)
+	assert.False(t, result.Metrics[0].ValueEmpty)
+
+	assert.NotEmpty(t, result.Metrics[1].URL)
+	assert.True(t, result.Metrics[1].ValueEmpty)
+	assert.Equal(t, float64(2), result.Metrics[1].Priority) // first empty metric starts at non-empty prio + 1
+}
+
+func TestRenderMetricURLs_QueryReplacement(t *testing.T) {
+	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
+	result := detailed.RenderMetricURLs(s, samplePodNode, "http://example.test/?q=:query")
+
+	u := "http://example.test/?q=sum%28container_memory_usage_bytes%7Bpod_name%3D%22foo%22%7D%29"
+	assert.Equal(t, u, result.Metrics[0].URL)
+	u = "http://example.test/?q=sum%28rate%28container_cpu_usage_seconds_total%7Bpod_name%3D%22foo%22%7D%5B1m%5D%29%29"
+	assert.Equal(t, u, result.Metrics[1].URL)
 }

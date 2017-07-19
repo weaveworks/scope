@@ -13,14 +13,13 @@ class CloudFeature extends React.Component {
     if (process.env.WEAVE_CLOUD) {
       return React.cloneElement(React.Children.only(this.props.children), {
         params: this.context.router.params,
-        router: this.context.router,
-        isCloud: true
+        router: this.context.router
       });
     }
 
     // also show if not in weave cloud?
     if (this.props.alwaysShow) {
-      return React.cloneElement(React.Children.only(this.props.children), {isCloud: false});
+      return React.cloneElement(React.Children.only(this.props.children));
     }
 
     return null;

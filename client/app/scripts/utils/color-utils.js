@@ -82,3 +82,13 @@ export function brightenColor(c) {
   }
   return color.toString();
 }
+
+export function darkenColor(c) {
+  let color = hsl(c);
+  if (hsl.l < 0.5) {
+    color = color.darker(0.5);
+  } else {
+    color = color.darker(0.8);
+  }
+  return color.toString();
+}
