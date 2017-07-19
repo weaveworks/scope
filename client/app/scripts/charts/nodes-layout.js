@@ -487,7 +487,7 @@ export function doLayout(immNodes, immEdges, opts) {
 
     // cache results
     cache.cachedLayout = layout;
-    cache.nodeCache = cache.nodeCache.merge(layout.nodes);
+    cache.nodeCache = cache.nodeCache.merge(layout.nodes.map(n => fromJS({ x: n.get('x'), y: n.get('y') })));
     cache.edgeCache = cache.edgeCache.merge(layout.edges);
   }
 
