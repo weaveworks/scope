@@ -1,14 +1,12 @@
 import React from 'react';
 import moment from 'moment';
 import classNames from 'classnames';
-import { debounce } from 'lodash';
+import { debounce, map } from 'lodash';
 import { connect } from 'react-redux';
 import { fromJS } from 'immutable';
 import { zoom } from 'd3-zoom';
 import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
-import { timeFormat } from 'd3-time-format';
-import { timeMinute, timeHour, timeDay, timeMonth, timeYear } from 'd3-time';
 import { event as d3Event, select } from 'd3-selection';
 import {
   jumpToTime,
@@ -19,25 +17,17 @@ import {
   TIMELINE_DEBOUNCE_INTERVAL,
 } from '../constants/timer';
 
-const formatSecond = timeFormat(':%S');
-const formatMinute = timeFormat('%H:%M');
-const formatHour = timeFormat('%H:00');
-const formatDay = timeFormat('%b %d');
-const formatMonth = timeFormat('%b');
-const formatYear = timeFormat('%Y');
 
-function multiFormat(date) {
-  date = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(),
-    date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
-  if (timeMinute(date) < date) return formatSecond(date);
-  if (timeHour(date) < date) return formatMinute(date);
-  if (timeDay(date) < date) return formatHour(date);
-  if (timeMonth(date) < date) return formatDay(date);
-  if (timeYear(date) < date) return formatMonth(date);
-  return formatYear(date);
+function timestampShortLabel(timestamp) {
+  if (moment(timestamp).startOf('minute').isBefore(timestamp)) return timestamp.format(':ss');
+  if (moment(timestamp).startOf('hour').isBefore(timestamp)) return timestamp.format('HH:mm');
+  if (moment(timestamp).startOf('day').isBefore(timestamp)) return timestamp.format('HH:00');
+  if (moment(timestamp).startOf('month').isBefore(timestamp)) return timestamp.format('MMM DD');
+  if (moment(timestamp).startOf('year').isBefore(timestamp)) return timestamp.format('MMM');
+  return timestamp.format('YYYY');
 }
 
-const R = 10000;
+const R = 2000;
 const C = 1000000;
 
 class TimeTravelTimeline extends React.Component {
@@ -45,6 +35,7 @@ class TimeTravelTimeline extends React.Component {
     super(props, context);
 
     this.state = {
+      timestampNow: moment(),
       focusedTimestamp: moment(),
       timelineRange: moment.duration(C, 'seconds'),
       isDragging: false,
@@ -71,12 +62,16 @@ class TimeTravelTimeline extends React.Component {
       .on('start', this.dragStarted)
       .on('end', this.dragEnded)
       .on('drag', this.dragged);
-    this.zoom = zoom().on('zoom', this.zoomed);
+    this.zoom = zoom()
+      .scaleExtent([0.002, 8000])
+      .on('zoom', this.zoomed);
 
     this.setZoomTriggers(true);
 
     // Force periodic re-renders to update the slider position as time goes by.
-    this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_TICK_INTERVAL);
+    this.timer = setInterval(() => {
+      this.setState({ timestampNow: moment().startOf('second') });
+    }, TIMELINE_TICK_INTERVAL);
   }
 
   componentWillUnmount() {
@@ -129,9 +124,10 @@ class TimeTravelTimeline extends React.Component {
   }
 
   jumpTo(timestamp) {
-    timestamp = timestamp > moment() ? moment() : timestamp;
-    this.setState({ focusedTimestamp: timestamp });
-    this.props.onUpdateTimestamp(timestamp);
+    const { timestampNow } = this.state;
+    const focusedTimestamp = timestamp > timestampNow ? timestampNow : timestamp;
+    this.props.onUpdateTimestamp(focusedTimestamp);
+    this.setState({ focusedTimestamp });
   }
 
   jumpForward() {
@@ -151,15 +147,17 @@ class TimeTravelTimeline extends React.Component {
   }
 
   renderAxis() {
-    const { timelineRange, focusedTimestamp } = this.state;
-    const startDate = moment(focusedTimestamp).subtract(timelineRange);
-    const endDate = moment(focusedTimestamp).add(timelineRange);
+    const { timelineRange, focusedTimestamp, timestampNow } = this.state;
+    const rTimestamp = moment(focusedTimestamp).startOf('second').utc();
+    const startDate = moment(rTimestamp).subtract(timelineRange);
+    const endDate = moment(rTimestamp).add(timelineRange);
     const timeScale = scaleUtc()
       .domain([startDate, endDate])
       .range([-R, R]);
-    const ticks = timeScale.ticks(150);
 
-    const nowX = timeScale(moment());
+    const ticks = map(timeScale.ticks(30), t => moment(t).utc());
+
+    const nowX = Math.min(timeScale(timestampNow), R);
 
     // ${10 * Math.log(timelineRange.as('seconds') / C)}
     return (
@@ -167,19 +165,19 @@ class TimeTravelTimeline extends React.Component {
         <rect
           className="available-range"
           transform={`translate(${nowX}, 0)`}
-          x={-R} y={-30} width={R} height={60} />
+          x={-2 * R} y={-30} width={2 * R} height={60} />
         <line x1={-R} x2={R} stroke="#ddd" strokeWidth="1" />
         <g className="ticks">
-          {fromJS(ticks).map(date => (
+          {fromJS(ticks).map(timestamp => (
             <foreignObject
-              transform={`translate(${timeScale(date) - 25}, 0)`}
-              key={moment(date).format()}
+              transform={`translate(${timeScale(timestamp) - 50}, 0)`}
+              key={timestamp.format()}
               style={{ textAlign: 'center' }}
-              width="50" height="20">
+              width="100" height="20">
               <a
                 className="timestamp-label"
-                onClick={() => this.jumpTo(moment(date))}>
-                {multiFormat(date)}
+                onClick={() => this.jumpTo(timestamp)}>
+                {timestampShortLabel(timestamp)}
               </a>
             </foreignObject>
           ))}
