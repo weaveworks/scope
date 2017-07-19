@@ -182,7 +182,7 @@
 }
 
 .header {
-  margin-top: 15px;
+  padding: 15px 10px 0;
   pointer-events: none;
   width: 100%;
 
@@ -242,24 +242,43 @@
 }
 
 .time-travel {
-  align-items: center;
-  display: flex;
+  // align-items: center;
+  // display: flex;
   position: relative;
-  margin: 0 30px 0 15px;
+  margin-bottom: 15px;
   z-index: 2001;
 
   transition: all .15s $base-ease;
   overflow: hidden;
   height: 0;
 
-  #time-travel-timeline {
-    background-color: rgba(255, 255, 255, 0.85);
-    box-shadow: inset 0 0 7px #aaa;
-    pointer-events: all;
+  .time-travel-timeline {
+    align-items: center;
+    display: flex;
+    height: 60px;
+
+    svg {
+      background-color: rgba(255, 255, 255, 0.85);
+      box-shadow: inset 0 0 7px #aaa;
+      pointer-events: all;
+      margin: 0 7px;
+    }
+
+    &:after {
+      content: '';
+      position: absolute;
+      display: block;
+      left: 50%;
+      top: 0;
+      border: 1px solid white;
+      background-color: red;
+      height: 60px;
+      width: 3px;
+    }
   }
 
   &.visible {
-    height: 60px;
+    height: 100px;
     margin-bottom: 15px;
     margin-top: -5px;
   }
@@ -296,42 +315,82 @@
     .rc-slider-rail { background-color: $text-tertiary-color; }
   }
 
-  &-jump-controls {
-    display: flex;
+  &-timestamp {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 8px;
+    pointer-events: all;
+    margin: 4px auto 25px;
+    width: 225px;
 
-    .button.jump {
-      display: block;
-      margin: 8px;
-      font-size: 0.625rem;
-      pointer-events: all;
-      text-align: center;
-      text-transform: uppercase;
-      word-spacing: -1px;
-
-      .fa {
-        display: block;
-        font-size: 150%;
-        margin-bottom: 3px;
-      }
+    input {
+      border: 0;
+      background-color: transparent;
+      font-family: $mono-font;
+      font-size: 0.875rem;
+      margin-right: 2px;
+      outline: 0;
     }
 
-    &-timestamp {
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      padding: 2px 8px;
-      pointer-events: all;
-      margin: 4px 8px 25px;
-
-      input {
-        border: 0;
-        background-color: transparent;
-        font-family: $mono-font;
-        font-size: 0.875rem;
-        margin-right: 2px;
-        outline: 0;
-      }
-    }
+    // &:before, &:after {
+    //   content: '';
+    //   position: absolute;
+    //   display: block;
+    //   margin: 0 100px;
+    // }
+    //
+    // &:before {
+    //   top: 0;
+    //   border: 1px solid white;
+    //   background-color: red;
+    //   height: 69px;
+    //   width: 3px;
+    // }
+    //
+    // &:after {
+    //   border: 1px solid #ccc;
+    //   top: 70px;
+    //   height: 20px;
+    //   width: 1px;
+    // }
   }
+
+  // &-jump-controls {
+  //   display: flex;
+  //
+  //   .button.jump {
+  //     display: block;
+  //     margin: 8px;
+  //     font-size: 0.625rem;
+  //     pointer-events: all;
+  //     text-align: center;
+  //     text-transform: uppercase;
+  //     word-spacing: -1px;
+  //
+  //     .fa {
+  //       display: block;
+  //       font-size: 150%;
+  //       margin-bottom: 3px;
+  //     }
+  //   }
+  //
+  //   &-timestamp {
+  //     border: 1px solid #ccc;
+  //     border-radius: 4px;
+  //     padding: 2px 8px;
+  //     pointer-events: all;
+  //     margin: 4px 8px 25px;
+  //
+  //     input {
+  //       border: 0;
+  //       background-color: transparent;
+  //       font-family: $mono-font;
+  //       font-size: 0.875rem;
+  //       margin-right: 2px;
+  //       outline: 0;
+  //     }
+  //   }
+  // }
 }
 
 
@@ -1493,7 +1552,7 @@
 
 .time-control {
   position: absolute;
-  right: 36px;
+  right: 20px;
 
   &-controls {
     align-items: center;

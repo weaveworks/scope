@@ -199,6 +199,8 @@ class ZoomableCanvas extends React.Component {
         translateY: d3Event.transform.y,
       });
 
+      console.log(updatedState);
+
       this.setState(updatedState);
       this.debouncedCacheZoom();
     }

@@ -177,7 +177,7 @@ class TimeTravel extends React.Component {
     return (
       <div className={className}>
         <TimeTravelTimeline />
-        <div className="time-travel-jump-controls-timestamp">
+        <div className="time-travel-timestamp">
           <input value={inputValue} onChange={this.handleInputChange} /> UTC
         </div>
       </div>
