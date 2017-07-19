@@ -11,6 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	apiv1 "k8s.io/client-go/pkg/api/v1"
 	apiappsv1beta1 "k8s.io/client-go/pkg/apis/apps/v1beta1"
@@ -301,10 +302,11 @@ func (c *client) WalkCronJobs(f func(CronJob) error) error {
 	if c.cronJobStore == nil {
 		return nil
 	}
-	jobs := []*apibatchv1.Job{}
+	// We index jobs by id to make lookup for each cronjob more efficient
+	jobs := map[types.UID]*apibatchv1.Job{}
 	for _, m := range c.jobStore.List() {
 		j := m.(*apibatchv1.Job)
-		jobs = append(jobs, j)
+		jobs[j.UID] = j
 	}
 	for _, m := range c.cronJobStore.List() {
 		cj := m.(*apibatchv2alpha1.CronJob)
