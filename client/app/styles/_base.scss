@@ -46,6 +46,19 @@
   transition-delay: .5s;
 }
 
+// From https://stackoverflow.com/a/18294634
+.grabbable {
+    cursor: move; /* fallback if grab cursor is unsupported */
+    cursor: grab;
+    cursor: -moz-grab;
+    cursor: -webkit-grab;
+}
+.grabbing {
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+}
+
 .shadow-2 {
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16), 0 3px 10px rgba(0, 0, 0, 0.23);
 }
@@ -258,10 +271,17 @@
     height: 60px;
 
     svg {
+      @extend .grabbable;
       background-color: rgba(255, 255, 255, 0.85);
       box-shadow: inset 0 0 7px #aaa;
       pointer-events: all;
       margin: 0 7px;
+
+      &.dragging { @extend .grabbing; }
+
+      .timestamp-label {
+        padding: 3px;
+      }
     }
 
     &:after {

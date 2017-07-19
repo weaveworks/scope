@@ -1,5 +1,6 @@
 import React from 'react';
 import moment from 'moment';
+import classNames from 'classnames';
 import { debounce } from 'lodash';
 import { connect } from 'react-redux';
 import { fromJS } from 'immutable';
@@ -45,11 +46,14 @@ class TimeTravelTimeline extends React.Component {
     this.state = {
       focusedTimestamp: moment(),
       timelineRange: moment.duration(C, 'seconds'),
+      isDragging: false,
     };
 
     this.width = 2000;
 
     this.saveSvgRef = this.saveSvgRef.bind(this);
+    this.dragStarted = this.dragStarted.bind(this);
+    this.dragEnded = this.dragEnded.bind(this);
     this.dragged = this.dragged.bind(this);
     this.zoomed = this.zoomed.bind(this);
     this.jumpTo = this.jumpTo.bind(this);
@@ -60,7 +64,10 @@ class TimeTravelTimeline extends React.Component {
 
   componentDidMount() {
     this.svg = select('svg#time-travel-timeline');
-    this.drag = drag().on('drag', this.dragged);
+    this.drag = drag()
+      .on('start', this.dragStarted)
+      .on('end', this.dragEnded)
+      .on('drag', this.dragged);
     this.zoom = zoom().on('zoom', this.zoomed);
     this.setZoomTriggers(true);
   }
@@ -97,6 +104,10 @@ class TimeTravelTimeline extends React.Component {
     this.setState({ timelineRange });
   }
 
+  dragStarted() {
+    this.setState({ isDragging: true });
+  }
+
   dragged() {
     const { focusedTimestamp, timelineRange } = this.state;
     const mv = timelineRange.as('seconds') / R;
@@ -104,7 +115,10 @@ class TimeTravelTimeline extends React.Component {
     // console.log('DRAG', newTimestamp.toDate());
     this.setState({ focusedTimestamp: newTimestamp });
     this.props.onUpdateTimestamp(newTimestamp);
-    // this.debouncedUpdateTimestamp(this.getDisplayedTimeScale().invert(-d3Event.transform.x));
+  }
+
+  dragEnded() {
+    this.setState({ isDragging: false });
   }
 
   jumpTo(timestamp) {
@@ -149,15 +163,16 @@ class TimeTravelTimeline extends React.Component {
   }
 
   render() {
-    console.log(this.state.focusedTimestamp.toDate());
+    const className = classNames({ dragging: this.state.isDragging });
     return (
       <div className="time-travel-timeline">
         <a className="button jump-backward" onClick={this.jumpBackward}>
           <span className="fa fa-chevron-left" />
         </a>
         <svg
-          viewBox={`${-this.width / 2} -30 ${this.width} 60`}
+          className={className}
           id="time-travel-timeline"
+          viewBox={`${-this.width / 2} -30 ${this.width} 60`}
           width="100%" height="100%"
           ref={this.saveSvgRef}>
           <g className="view">
