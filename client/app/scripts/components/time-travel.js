@@ -81,7 +81,7 @@ class TimeTravel extends React.Component {
     if (timestamp.isValid()) {
       timestamp = Math.max(timestamp, this.state.sliderMinValue);
       timestamp = Math.min(timestamp, moment().valueOf());
-      this.travelTo(timestamp, true);
+      this.travelTo(timestamp);
 
       trackMixpanelEvent('scope.time.timestamp.edit', {
         layout: this.props.topologyViewMode,
@@ -176,7 +176,7 @@ class TimeTravel extends React.Component {
 
     return (
       <div className={className}>
-        <TimeTravelTimeline />
+        <TimeTravelTimeline onUpdateTimestamp={this.handleSliderChange} />
         <div className="time-travel-timestamp">
           <input value={inputValue} onChange={this.handleInputChange} /> UTC
         </div>

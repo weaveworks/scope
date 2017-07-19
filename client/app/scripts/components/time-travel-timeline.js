@@ -5,7 +5,6 @@ import { connect } from 'react-redux';
 import { fromJS } from 'immutable';
 import { zoom } from 'd3-zoom';
 import { drag } from 'd3-drag';
-// import { zoom, zoomIdentity } from 'd3-zoom';
 import { scaleUtc } from 'd3-scale';
 import { timeFormat } from 'd3-time-format';
 import { timeMinute, timeHour, timeDay, timeMonth, timeYear } from 'd3-time';
@@ -18,13 +17,11 @@ import {
   TIMELINE_DEBOUNCE_INTERVAL,
 } from '../constants/timer';
 
-// import { transformToString } from '../utils/transform-utils';
-
 const formatSecond = timeFormat(':%S');
-const formatMinute = timeFormat('%I:%M');
-const formatHour = timeFormat('%I %p');
+const formatMinute = timeFormat('%H:%M');
+const formatHour = timeFormat('%H:00');
 const formatDay = timeFormat('%b %d');
-const formatMonth = timeFormat('%B');
+const formatMonth = timeFormat('%b');
 const formatYear = timeFormat('%Y');
 
 function multiFormat(date) {
@@ -38,12 +35,8 @@ function multiFormat(date) {
   return formatYear(date);
 }
 
-// const timeScale = scaleUtc().clamp(false)
-//   .domain([new Date(1990, 1), new Date(2020, 1)])
-//   .range([0, 10000]);
-
-// const EARLIEST_TIMESTAMP = moment(new Date(2000, 0));
 const R = 10000;
+const C = 1000000;
 
 class TimeTravelTimeline extends React.Component {
   constructor(props, context) {
@@ -51,17 +44,14 @@ class TimeTravelTimeline extends React.Component {
 
     this.state = {
       focusedTimestamp: moment(),
-      timelineRange: moment.duration(1000000, 'seconds'),
+      timelineRange: moment.duration(C, 'seconds'),
     };
 
     this.width = 2000;
 
-    // this.getDisplayedTimeScale = this.getDisplayedTimeScale.bind(this);
     this.saveSvgRef = this.saveSvgRef.bind(this);
     this.dragged = this.dragged.bind(this);
     this.zoomed = this.zoomed.bind(this);
-
-    // this.zoomToDate
 
     this.debouncedUpdateTimestamp = debounce(
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
@@ -69,27 +59,19 @@ class TimeTravelTimeline extends React.Component {
 
   componentDidMount() {
     this.svg = select('svg#time-travel-timeline');
-    // const w = 1200;
-    // const h = 60;
-    this.drag = drag()
-      .on('drag', this.dragged);
-    this.zoom = zoom()
-      // .translateExtent([[0, 0], [w, h]])
-      // .extent([[-M, -30], [M, 30]])
-      .on('zoom', this.zoomed);
-    // this.svg.style('transform-origin', '50% 50% 0');
-    // console.log(this.svg.getBoundingClientRect());
-
+    this.drag = drag().on('drag', this.dragged);
+    this.zoom = zoom().on('zoom', this.zoomed);
     this.setZoomTriggers(true);
-    // this.updateZoomLimits(this.props);
-    // this.restoreZoomState(this.props);
   }
 
   componentWillUnmount() {
     this.setZoomTriggers(false);
   }
 
-  componentWillReceiveProps() {
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.pausedAt) {
+      this.setState({ focusedTimestamp: nextProps.pausedAt });
+    }
     this.width = this.svgRef.getBoundingClientRect().width;
   }
 
@@ -108,39 +90,20 @@ class TimeTravelTimeline extends React.Component {
     }
   }
 
-  // getTimeScale() {
-  //   const { scaleX, translateX } = this.state;
-  //   const S = 4000 / scaleX;
-  //   const p = this.props.pausedAt ? moment(this.props.pausedAt) : moment();
-  //   const x = p.add(translateX / S, 'hours');
-  //   const k = S / scaleX;
-  //   // console.log(x, k);
-  //   // const x = moment(p).subtract(this.state.translateX, 'seconds');
-  //   // // console.log('L', p, x);
-  //   // // const pausedAt = this.props.pausedAt || moment();
-  //   // const k = 1000 / this.state.scaleX;
-  //   // return scaleUtc()
-  //   //   .domain([x.subtract(k, 'seconds').toDate(), x.add(k, 'seconds').toDate()])
-  //   //   .range([0, 2000]);
-  //   return scaleUtc()
-  //     .domain([x.subtract(k, 'hours').toDate(), x.add(k, 'hours').toDate()])
-  //     .range([-2000 / scaleX, 2000 / scaleX]);
-  // }
-
   zoomed() {
-    const timelineRange = moment.duration(1000000 / d3Event.transform.k, 'seconds');
-    console.log('ZOOM', timelineRange.toJSON());
+    const timelineRange = moment.duration(C / d3Event.transform.k, 'seconds');
+    // console.log('ZOOM', timelineRange.toJSON());
     this.setState({ timelineRange });
-
-    // this.debouncedUpdateTimestamp(this.getDisplayedTimeScale().invert(-d3Event.transform.x));
   }
 
   dragged() {
     const { focusedTimestamp, timelineRange } = this.state;
     const mv = timelineRange.as('seconds') / R;
     const newTimestamp = moment(focusedTimestamp).subtract(d3Event.dx * mv, 'seconds');
-    console.log('DRAG', newTimestamp.toDate());
+    // console.log('DRAG', newTimestamp.toDate());
     this.setState({ focusedTimestamp: newTimestamp });
+    this.props.onUpdateTimestamp(newTimestamp);
+    // this.debouncedUpdateTimestamp(this.getDisplayedTimeScale().invert(-d3Event.transform.x));
   }
 
   saveSvgRef(ref) {
@@ -149,30 +112,14 @@ class TimeTravelTimeline extends React.Component {
 
   renderAxis() {
     const { timelineRange, focusedTimestamp } = this.state;
-    // const pausedAt = this.props.pausedAt ? moment(this.props.pausedAt) : moment();
-    // const timeScale = this.getDisplayedTimeScale();
-    //
-    // const startDate = this.getDisplayedTimeScale()
-    //   .invert(-this.state.translateX - (1000 * this.state.scaleX));
-    // const endDate = this.getDisplayedTimeScale()
-    //   .invert(-this.state.translateX + (1000 * this.state.scaleX));
-    // const ticks = this.getDisplayedTimeScale().domain([startDate, endDate]).ticks(10);
-    // console.log(startDate, -this.state.translateX - (1000 * this.state.scaleX));
-    // console.log(endDate, -this.state.translateX + (1000 * this.state.scaleX));
-    // console.log(ticks);
-
-    // const timeScale = this.getTimeScale();
-    // const cd = pausedAt.subtract((translateX / scaleX) * (30 / 10000), 'years');
-    // console.log(cd.toDate());
     const startDate = moment(focusedTimestamp).subtract(timelineRange);
     const endDate = moment(focusedTimestamp).add(timelineRange);
     const timeScale = scaleUtc()
       .domain([startDate, endDate])
       .range([-R, R]);
-    const ticks = timeScale.ticks(100);
-    // console.log(startDate.toDate(), endDate.toDate(), timelineRange.toJSON());
+    const ticks = timeScale.ticks(150);
 
-    // <line x1="-1000"x2="1000" stroke="#ddd" strokeWidth="1" />
+    // ${10 * Math.log(timelineRange.as('seconds') / C)}
     return (
       <g id="axis">
         <g className="ticks">
@@ -186,11 +133,13 @@ class TimeTravelTimeline extends React.Component {
             </foreignObject>
           ))}
         </g>
+        <line x1={-R} x2={R} stroke="#ddd" strokeWidth="1" />
       </g>
     );
   }
 
   render() {
+    console.log(this.state.focusedTimestamp.toDate());
     return (
       <div className="time-travel-timeline">
         <a className="button jump-backward" onClick={this.jumpBackward}>
