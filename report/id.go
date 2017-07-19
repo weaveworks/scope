@@ -131,6 +131,18 @@ var (
 	// ParseDaemonSetNodeID parses a daemon set node ID
 	ParseDaemonSetNodeID = parseSingleComponentID("daemonset")
 
+	// MakeStatefulSetNodeID produces a replica set node ID from its composite parts.
+	MakeStatefulSetNodeID = makeSingleComponentID("statefulset")
+
+	// ParseStatefulSetNodeID parses a daemon set node ID
+	ParseStatefulSetNodeID = parseSingleComponentID("statefulset")
+
+	// MakeCronJobNodeID produces a replica set node ID from its composite parts.
+	MakeCronJobNodeID = makeSingleComponentID("cronjob")
+
+	// ParseCronJobNodeID parses a daemon set node ID
+	ParseCronJobNodeID = parseSingleComponentID("cronjob")
+
 	// MakeECSTaskNodeID produces a replica set node ID from its composite parts.
 	MakeECSTaskNodeID = makeSingleComponentID("ecs_task")
 

@@ -46,9 +46,14 @@ func (d *deployment) Selector() (labels.Selector, error) {
 }
 
 func (d *deployment) GetNode(probeID string) report.Node {
+	// Spec.Replicas can be omitted, and the pointer will be nil. It defaults to 1.
+	desiredReplicas := 1
+	if d.Spec.Replicas != nil {
+		desiredReplicas = int(*d.Spec.Replicas)
+	}
 	return d.MetaNode(report.MakeDeploymentNodeID(d.UID())).WithLatests(map[string]string{
 		ObservedGeneration:    fmt.Sprint(d.Status.ObservedGeneration),
-		DesiredReplicas:       fmt.Sprint(d.Spec.Replicas),
+		DesiredReplicas:       fmt.Sprint(desiredReplicas),
 		Replicas:              fmt.Sprint(d.Status.Replicas),
 		UpdatedReplicas:       fmt.Sprint(d.Status.UpdatedReplicas),
 		AvailableReplicas:     fmt.Sprint(d.Status.AvailableReplicas),

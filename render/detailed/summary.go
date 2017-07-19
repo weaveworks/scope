@@ -68,6 +68,8 @@ var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
 	report.Service:        podGroupNodeSummary,
 	report.Deployment:     podGroupNodeSummary,
 	report.DaemonSet:      podGroupNodeSummary,
+	report.StatefulSet:    podGroupNodeSummary,
+	report.CronJob:        podGroupNodeSummary,
 	report.ECSTask:        ecsTaskNodeSummary,
 	report.ECSService:     ecsServiceNodeSummary,
 	report.SwarmService:   swarmServiceNodeSummary,
@@ -90,6 +92,8 @@ var primaryAPITopology = map[string]string{
 	report.Pod:            "pods",
 	report.Deployment:     "kube-controllers",
 	report.DaemonSet:      "kube-controllers",
+	report.StatefulSet:    "kube-controllers",
+	report.CronJob:        "kube-controllers",
 	report.Service:        "services",
 	report.ECSTask:        "ecs-tasks",
 	report.ECSService:     "ecs-services",
@@ -256,8 +260,10 @@ func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 }
 
 var podGroupNodeTypeName = map[string]string{
-	report.Deployment: "Deployment",
-	report.DaemonSet:  "Daemon Set",
+	report.Deployment:  "Deployment",
+	report.DaemonSet:   "Daemon Set",
+	report.StatefulSet: "Stateful Set",
+	report.CronJob:     "Cron Job",
 }
 
 func podGroupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
