@@ -52,6 +52,7 @@ class TimeTravelTimeline extends React.Component {
     this.saveSvgRef = this.saveSvgRef.bind(this);
     this.dragged = this.dragged.bind(this);
     this.zoomed = this.zoomed.bind(this);
+    this.jumpTo = this.jumpTo.bind(this);
 
     this.debouncedUpdateTimestamp = debounce(
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
@@ -106,6 +107,11 @@ class TimeTravelTimeline extends React.Component {
     // this.debouncedUpdateTimestamp(this.getDisplayedTimeScale().invert(-d3Event.transform.x));
   }
 
+  jumpTo(timestamp) {
+    this.setState({ focusedTimestamp: timestamp });
+    this.props.onUpdateTimestamp(timestamp);
+  }
+
   saveSvgRef(ref) {
     this.svgRef = ref;
   }
@@ -129,7 +135,11 @@ class TimeTravelTimeline extends React.Component {
               key={moment(date).format()}
               style={{ textAlign: 'center' }}
               width="50" height="20">
-              <span>{multiFormat(date)}</span>
+              <a
+                className="timestamp-label"
+                onClick={() => this.jumpTo(moment(date))}>
+                {multiFormat(date)}
+              </a>
             </foreignObject>
           ))}
         </g>
