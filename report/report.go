@@ -178,7 +178,7 @@ func MakeReport() Report {
 			WithLabel("service", "services"),
 
 		Deployment: MakeTopology().
-			WithShape(Octagon).
+			WithShape(Heptagon).
 			WithLabel("deployment", "deployments"),
 
 		ReplicaSet: MakeTopology().
@@ -190,7 +190,7 @@ func MakeReport() Report {
 			WithLabel("daemonset", "daemonsets"),
 
 		StatefulSet: MakeTopology().
-			WithShape(Triangle).
+			WithShape(Octagon).
 			WithLabel("stateful set", "stateful sets"),
 
 		CronJob: MakeTopology().
