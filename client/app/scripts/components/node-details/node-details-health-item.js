@@ -6,13 +6,14 @@ import { formatMetric } from '../../utils/string-utils';
 function NodeDetailsHealthItem(props) {
   return (
     <div className="node-details-health-item">
-      {props.value !== undefined && <div className="node-details-health-item-value">{formatMetric(props.value, props)}</div>}
-      {props.samples && <div className="node-details-health-item-sparkline">
+      {!props.valueEmpty && <div className="node-details-health-item-value">{formatMetric(props.value, props)}</div>}
+      <div className="node-details-health-item-sparkline">
         <Sparkline
           data={props.samples} max={props.max} format={props.format}
-          first={props.first} last={props.last} strokeWidth={props.strokeWidth}
-          strokeColor={props.strokeColor} />
-      </div>}
+          first={props.first} last={props.last} hoverColor={props.metricColor}
+          hovered={props.samples && props.hovered}
+        />
+      </div>
       <div className="node-details-health-item-label" style={{ color: props.labelColor }}>
         {props.label}
       </div>

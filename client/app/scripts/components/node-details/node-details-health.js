@@ -1,10 +1,9 @@
 import React from 'react';
-import { Map as makeMap, List as makeList } from 'immutable';
+import { List as makeList } from 'immutable';
 
 import ShowMore from '../show-more';
 import NodeDetailsHealthOverflow from './node-details-health-overflow';
 import NodeDetailsHealthLinkItem from './node-details-health-link-item';
-import CloudFeature from '../cloud-feature';
 
 export default class NodeDetailsHealth extends React.Component {
 
@@ -24,7 +23,6 @@ export default class NodeDetailsHealth extends React.Component {
   render() {
     const {
       metrics = makeList(),
-      metricLinks = makeMap(),
       topologyId,
       nodeColor,
     } = this.props;
@@ -40,14 +38,12 @@ export default class NodeDetailsHealth extends React.Component {
     return (
       <div className="node-details-health" style={{flexWrap, justifyContent}}>
         <div className="node-details-health-wrapper">
-          {primeMetrics.map(item => <CloudFeature alwaysShow key={item.id}>
-            <NodeDetailsHealthLinkItem
-              {...item}
-              links={metricLinks}
-              topologyId={topologyId}
-              nodeColor={nodeColor}
-            />
-          </CloudFeature>)}
+          {primeMetrics.map(item => <NodeDetailsHealthLinkItem
+            {...item}
+            key={item.id}
+            topologyId={topologyId}
+            nodeColor={nodeColor}
+          />)}
           {showOverflow && <NodeDetailsHealthOverflow
             items={overflowMetrics}
             handleClick={this.handleClickMore}
