@@ -265,6 +265,16 @@
   overflow: hidden;
   height: 0;
 
+  &.visible {
+    height: 100px;
+    margin-bottom: 15px;
+    margin-top: -5px;
+  }
+
+  .button {
+    pointer-events: all;
+  }
+
   .time-travel-timeline {
     align-items: center;
     display: flex;
@@ -297,50 +307,12 @@
     }
   }
 
-  &.visible {
-    height: 100px;
-    margin-bottom: 15px;
-    margin-top: -5px;
-  }
-
-  &-markers {
-    position: relative;
-
-    &-tick {
-      text-align: center;
-      position: absolute;
-
-      .vertical-tick {
-        border: 1px solid $text-tertiary-color;
-        border-radius: 1px;
-        display: block;
-        margin: 1px auto 2px;
-        height: 12px;
-        width: 0;
-      }
-
-      .link {
-        display: inline-block;
-        pointer-events: all;
-        margin-top: 1px;
-      }
-    }
-  }
-
-  &-slider-wrapper {
-    margin: 0 50px 20px 10px;
-    pointer-events: all;
-    flex-grow: 1;
-
-    .rc-slider-rail { background-color: $text-tertiary-color; }
-  }
-
   &-timestamp {
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 2px 8px;
     pointer-events: all;
-    margin: 4px auto 25px;
+    margin: 8px auto 25px;
     width: 225px;
 
     input {
@@ -352,65 +324,17 @@
       outline: 0;
     }
 
-    // &:before, &:after {
-    //   content: '';
-    //   position: absolute;
-    //   display: block;
-    //   margin: 0 100px;
-    // }
-    //
-    // &:before {
-    //   top: 0;
-    //   border: 1px solid white;
-    //   background-color: red;
-    //   height: 69px;
-    //   width: 3px;
-    // }
-    //
-    // &:after {
-    //   border: 1px solid #ccc;
-    //   top: 70px;
-    //   height: 20px;
-    //   width: 1px;
-    // }
+    &:before {
+      content: '';
+      position: relative;
+      display: block;
+      margin: -15px auto 3px;
+      background-color: #ccc;
+      height: 13px;
+      width: 1px;
+      left: 1px
+    }
   }
-
-  // &-jump-controls {
-  //   display: flex;
-  //
-  //   .button.jump {
-  //     display: block;
-  //     margin: 8px;
-  //     font-size: 0.625rem;
-  //     pointer-events: all;
-  //     text-align: center;
-  //     text-transform: uppercase;
-  //     word-spacing: -1px;
-  //
-  //     .fa {
-  //       display: block;
-  //       font-size: 150%;
-  //       margin-bottom: 3px;
-  //     }
-  //   }
-  //
-  //   &-timestamp {
-  //     border: 1px solid #ccc;
-  //     border-radius: 4px;
-  //     padding: 2px 8px;
-  //     pointer-events: all;
-  //     margin: 4px 8px 25px;
-  //
-  //     input {
-  //       border: 0;
-  //       background-color: transparent;
-  //       font-family: $mono-font;
-  //       font-size: 0.875rem;
-  //       margin-right: 2px;
-  //       outline: 0;
-  //     }
-  //   }
-  // }
 }
 
 

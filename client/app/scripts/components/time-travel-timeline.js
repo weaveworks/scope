@@ -57,6 +57,8 @@ class TimeTravelTimeline extends React.Component {
     this.dragged = this.dragged.bind(this);
     this.zoomed = this.zoomed.bind(this);
     this.jumpTo = this.jumpTo.bind(this);
+    this.jumpForward = this.jumpForward.bind(this);
+    this.jumpBackward = this.jumpBackward.bind(this);
 
     this.debouncedUpdateTimestamp = debounce(
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
@@ -113,8 +115,7 @@ class TimeTravelTimeline extends React.Component {
     const mv = timelineRange.as('seconds') / R;
     const newTimestamp = moment(focusedTimestamp).subtract(d3Event.dx * mv, 'seconds');
     // console.log('DRAG', newTimestamp.toDate());
-    this.setState({ focusedTimestamp: newTimestamp });
-    this.props.onUpdateTimestamp(newTimestamp);
+    this.jumpTo(newTimestamp);
   }
 
   dragEnded() {
@@ -124,6 +125,18 @@ class TimeTravelTimeline extends React.Component {
   jumpTo(timestamp) {
     this.setState({ focusedTimestamp: timestamp });
     this.props.onUpdateTimestamp(timestamp);
+  }
+
+  jumpForward() {
+    const d = this.state.timelineRange.asMilliseconds() / 3;
+    const timestamp = moment(this.state.focusedTimestamp).add(d);
+    this.jumpTo(timestamp);
+  }
+
+  jumpBackward() {
+    const d = this.state.timelineRange.asMilliseconds() / 3;
+    const timestamp = moment(this.state.focusedTimestamp).subtract(d);
+    this.jumpTo(timestamp);
   }
 
   saveSvgRef(ref) {
@@ -179,7 +192,7 @@ class TimeTravelTimeline extends React.Component {
             {this.renderAxis()}
           </g>
         </svg>
-        <a className="button jump-forward" onClick={this.jumpBackward}>
+        <a className="button jump-forward" onClick={this.jumpForward}>
           <span className="fa fa-chevron-right" />
         </a>
       </div>
