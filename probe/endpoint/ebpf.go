@@ -3,8 +3,11 @@ package endpoint
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -30,8 +33,20 @@ type EbpfTracker struct {
 	sync.Mutex
 	tracer          *tracer.Tracer
 	ready           bool
+	stopping        bool
 	dead            bool
 	lastTimestampV4 uint64
+
+	// debugBPF specifies if EbpfTracker must be started in debug mode. This
+	// allows to easily debug issues like:
+	// https://github.com/weaveworks/scope/issues/2650
+	//
+	// Scope could be started this way:
+	//   $ sudo WEAVESCOPE_DOCKER_ARGS="-e SCOPE_DEBUG_BPF=1" ./scope launch
+	//
+	// Then, EbpfTracker could be tricked into restarting with:
+	//   $ echo stop | sudo tee /proc/$(pidof scope-probe)/root/var/run/scope/debug-bpf
+	debugBPF bool
 
 	openConnections   map[fourTuple]ebpfConnection
 	closedConnections []ebpfConnection
@@ -77,24 +92,35 @@ func newEbpfTracker() (*EbpfTracker, error) {
 		return nil, fmt.Errorf("kernel not supported: %v", err)
 	}
 
-	tracker := &EbpfTracker{
-		openConnections:  map[fourTuple]ebpfConnection{},
-		closedDuringInit: map[fourTuple]struct{}{},
+	var debugBPF bool
+	if os.Getenv("SCOPE_DEBUG_BPF") != "" {
+		log.Infof("ebpf tracker started in debug mode")
+		debugBPF = true
 	}
 
-	tracer, err := tracer.NewTracer(tracker)
-	if err != nil {
+	tracker := &EbpfTracker{
+		debugBPF: debugBPF,
+	}
+	if err := tracker.restart(); err != nil {
 		return nil, err
 	}
-
-	tracker.tracer = tracer
-	tracer.Start()
 
 	return tracker, nil
 }
 
 // TCPEventV4 handles IPv4 TCP events from the eBPF tracer
 func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
+	if t.debugBPF {
+		debugBPFFile := "/var/run/scope/debug-bpf"
+		b, err := ioutil.ReadFile("/var/run/scope/debug-bpf")
+		if err == nil && strings.TrimSpace(string(b[:])) == "stop" {
+			os.Remove(debugBPFFile)
+			log.Warnf("ebpf tracker stopped as requested by user")
+			t.stop()
+			return
+		}
+	}
+
 	if t.lastTimestampV4 > e.Timestamp {
 		// A kernel bug can cause the timestamps to be wrong (e.g. on Ubuntu with Linux 4.4.0-47.68)
 		// Upgrading the kernel will fix the problem. For further info see:
@@ -102,6 +128,7 @@ func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 		// https://github.com/weaveworks/scope/issues/2334
 		log.Errorf("tcp tracer received event with timestamp %v even though the last timestamp was %v. Stopping the eBPF tracker.", e.Timestamp, t.lastTimestampV4)
 		t.stop()
+		return
 	}
 
 	t.lastTimestampV4 = e.Timestamp
@@ -287,10 +314,45 @@ func (t *EbpfTracker) isDead() bool {
 
 func (t *EbpfTracker) stop() {
 	t.Lock()
-	alreadyDead := t.dead
-	t.dead = true
+	alreadyDead := t.dead || t.stopping
+	t.stopping = true
 	t.Unlock()
-	if !alreadyDead && t.tracer != nil {
-		t.tracer.Stop()
+
+	// Do not call tracer.Stop() in this thread, otherwise tracer.Stop() will
+	// deadlock waiting for this thread to pick up the next event.
+	go func() {
+		if !alreadyDead && t.tracer != nil {
+			t.tracer.Stop()
+			t.tracer = nil
+		}
+
+		// Only advertise the tracer as dead after the tracer is fully stopped so that
+		// restart() is not called in parallel in another thread.
+		t.Lock()
+		t.stopping = false
+		t.dead = true
+		t.Unlock()
+	}()
+}
+
+func (t *EbpfTracker) restart() error {
+	t.Lock()
+	defer t.Unlock()
+
+	t.dead = false
+	t.ready = false
+
+	t.openConnections = map[fourTuple]ebpfConnection{}
+	t.closedDuringInit = map[fourTuple]struct{}{}
+	t.closedConnections = []ebpfConnection{}
+
+	tracer, err := tracer.NewTracer(t)
+	if err != nil {
+		return err
 	}
+
+	t.tracer = tracer
+	tracer.Start()
+
+	return nil
 }
