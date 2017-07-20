@@ -10,6 +10,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/bluele/gcache"
@@ -355,17 +356,45 @@ func calculateReportKey(rowKey, colKey string) (string, error) {
 	return fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey), nil
 }
 
-func withBackoff(f func() error) error {
-	retries := 0
-	backoff := 50 * time.Millisecond
-	err := f()
-	for err != nil && retries <= 5 {
-		time.Sleep(backoff)
-		err = f()
-		retries++
-		backoff *= 2
+func (c *awsCollector) putItemInDynamo(rowKey, colKey, reportKey string) (*dynamodb.PutItemOutput, error) {
+	// Back off on ProvisionedThroughputExceededException
+	const (
+		maxRetries            = 5
+		throuputExceededError = "ProvisionedThroughputExceededException"
+	)
+	var (
+		resp    *dynamodb.PutItemOutput
+		err     error
+		retries = 0
+		backoff = 50 * time.Millisecond
+	)
+	for {
+		resp, err = c.db.PutItem(&dynamodb.PutItemInput{
+			TableName: aws.String(c.tableName),
+			Item: map[string]*dynamodb.AttributeValue{
+				hourField: {
+					S: aws.String(rowKey),
+				},
+				tsField: {
+					N: aws.String(colKey),
+				},
+				reportField: {
+					S: aws.String(reportKey),
+				},
+			},
+			ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
+		})
+		if err != nil && retries < maxRetries {
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == throuputExceededError {
+				time.Sleep(backoff)
+				retries++
+				backoff *= 2
+				continue
+			}
+		}
+		break
 	}
-	return err
+	return resp, err
 }
 
 func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) error {
@@ -381,12 +410,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return err
 	}
 
-	var reportSize int
-	err = withBackoff(func() error {
-		var err error
-		reportSize, err = c.s3.StoreReportBytes(ctx, reportKey, buf)
-		return err
-	})
+	reportSize, err := c.s3.StoreReportBytes(ctx, reportKey, buf)
 	if err != nil {
 		return err
 	}
@@ -409,25 +433,9 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 
 	var resp *dynamodb.PutItemOutput
 	err = instrument.TimeRequestHistogram(ctx, "DynamoDB.PutItem", dynamoRequestDuration, func(_ context.Context) error {
-		return withBackoff(func() error {
-			var err error
-			resp, err = c.db.PutItem(&dynamodb.PutItemInput{
-				TableName: aws.String(c.tableName),
-				Item: map[string]*dynamodb.AttributeValue{
-					hourField: {
-						S: aws.String(rowKey),
-					},
-					tsField: {
-						N: aws.String(colKey),
-					},
-					reportField: {
-						S: aws.String(reportKey),
-					},
-				},
-				ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
-			})
-			return err
-		})
+		var err error
+		resp, err = c.putItemInDynamo(rowKey, colKey, reportKey)
+		return err
 	})
 
 	if resp.ConsumedCapacity != nil {
