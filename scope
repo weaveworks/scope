@@ -47,9 +47,7 @@ usage() {
 
 		Launch options:
 	EOF
-    # shellcheck disable=SC2086
-    docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
-        $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" -h >&2
+    docker run --rm --entrypoint=/home/weave/scope "$SCOPE_IMAGE" -h >&2
 }
 
 usage_and_die() {
@@ -165,26 +163,23 @@ create_plugins_dir() {
     # is not shared from OS X and does not belong to the system."
     # In any case, creating /var/run/scope/plugins on Mac OS would not work, as domain
     # sockets do not cross VM boundaries. We need this directory to exits on the VM.
-    # shellcheck disable=SC2086
     docker run $USERNS_HOST --rm --entrypoint=/bin/sh \
         -v /var/run:/var/run \
         "$SCOPE_IMAGE" -c "mkdir -p /var/run/scope/plugins"
 }
 
 docker_args() {
-    # shellcheck disable=SC2086
     echo --privileged $USERNS_HOST --net=host --pid=host \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v /var/run/scope/plugins:/var/run/scope/plugins \
         -v /sys/kernel/debug:/sys/kernel/debug \
-        -e CHECKPOINT_DISABLE \
-        $WEAVESCOPE_DOCKER_ARGS
+        -e CHECKPOINT_DISABLE
 }
 
 launch_command() {
-    # shellcheck disable=SC2046
+    # shellcheck disable=SC2046,SC2086
     echo docker run -d --name="$SCOPE_CONTAINER_NAME" $(docker_args) \
-        "$SCOPE_IMAGE" --probe.docker=true
+        $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" --probe.docker=true
 }
 
 launch_docker4mac_app_command() {
@@ -235,9 +230,7 @@ case "$COMMAND" in
         ;;
 
     version)
-        # shellcheck disable=SC2086
-        docker run --rm -e CHECKPOINT_DISABLE --entrypoint=/home/weave/scope \
-            $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" --mode=version
+        docker run --rm --entrypoint=/home/weave/scope "$SCOPE_IMAGE" --mode=version
         ;;
 
     -h | help | -help | --help)
@@ -279,7 +272,6 @@ case "$COMMAND" in
             if check_listen_address_arg; then
                 echo "Weave Scope is reachable at the address specified with --app.http.address" >&2
             else
-                # shellcheck disable=SC2086
                 IP_ADDRS=$(docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$IP_ADDR_CMD")
                 # shellcheck disable=SC2086
                 print_app_endpoints $IP_ADDRS
