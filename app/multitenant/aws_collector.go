@@ -362,7 +362,7 @@ func withBackoff(f func() error) error {
 	for err != nil && retries <= 5 {
 		time.Sleep(backoff)
 		err = f()
-		retries += 1
+		retries++
 		backoff *= 2
 	}
 	return err
