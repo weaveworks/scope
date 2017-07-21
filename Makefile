@@ -144,15 +144,19 @@ ifeq ($(BUILD_IN_CONTAINER),true)
 
 client/build/index.html: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	mkdir -p client/build
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
-		-v $(shell pwd)/client/build:/home/weave/build \
-		$(SCOPE_UI_BUILD_IMAGE) yarn run build
+	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
+		$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
+			-v $(shell pwd)/client/build:/home/weave/build \
+			$(SCOPE_UI_BUILD_IMAGE) yarn run build; \
+	fi
 
 client/build-external/index.html: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
-	mkdir -p client/build
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
-		-v $(shell pwd)/client/build-external:/home/weave/build-external \
-		$(SCOPE_UI_BUILD_IMAGE) yarn run build-external
+	mkdir -p client/build-external
+	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
+		$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
+			-v $(shell pwd)/client/build-external:/home/weave/build-external \
+			$(SCOPE_UI_BUILD_IMAGE) yarn run build-external; \
+	fi
 
 client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
@@ -179,12 +183,12 @@ tmp/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
 else
 
 client/build/index.html:
-	test "true" = "$(SCOPE_SKIP_UI_ASSETS)" && mkdir -p client/build || \
-		{ cd client && yarn run build; }
+	mkdir -p client/build
+	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then cd client && yarn run build; fi
 
 client/build-external/index.html:
-	test "true" = "$(SCOPE_SKIP_UI_ASSETS)" && mkdir -p client/build-external || \
-		{ cd client && yarn run build-external; }
+	mkdir -p client/build-external
+	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then cd client && yarn run build-external; fi
 
 endif
 
