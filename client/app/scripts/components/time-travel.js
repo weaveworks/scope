@@ -70,8 +70,10 @@ class TimeTravel extends React.Component {
   }
 
   handleSliderChange(timestamp) {
-    this.travelTo(timestamp, true);
-    this.debouncedTrackSliderChange();
+    if (!timestamp.isSame(this.props.pausedAt)) {
+      this.travelTo(timestamp, true);
+      this.debouncedTrackSliderChange();
+    }
   }
 
   handleInputChange(ev) {

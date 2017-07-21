@@ -43,6 +43,32 @@ const fixedDurations = [
   moment.duration(1, 'year'),
 ];
 
+const yFunc = (scale, start) => {
+  const end = start * 1.4;
+  if (scale < start) return 0;
+  if (scale > end) return 1;
+  return (Math.log(scale) - Math.log(start)) / (Math.log(end) - Math.log(start));
+};
+
+const getShift = (period, scale) => {
+  const yearShift = 1;
+  const monthShift = yFunc(scale, 0.0052);
+  const dayShift = yFunc(scale, 0.067);
+  const minuteShift = yFunc(scale, 1.9);
+  const secondShift = yFunc(scale, 2500);
+  // console.log(scale, yearShift, monthShift, dayShift, minuteShift, secondShift);
+  let result = 0;
+  switch (period) {
+    case 'year': result = yearShift + monthShift + dayShift + minuteShift + secondShift; break;
+    case 'month': result = monthShift + dayShift + minuteShift + secondShift; break;
+    case 'day': result = dayShift + minuteShift + secondShift; break;
+    case 'minute': result = minuteShift + secondShift; break;
+    case 'second': result = secondShift; break;
+    default: result = 0; break;
+  }
+  return result;
+};
+
 const R = 2000;
 const C = 1000000;
 
@@ -55,6 +81,7 @@ class TimeTravelTimeline extends React.Component {
       focusedTimestamp: moment(),
       timelineRange: moment.duration(C, 'seconds'),
       isDragging: false,
+      scaleX: 1,
     };
 
     this.width = 2000;
@@ -120,7 +147,7 @@ class TimeTravelTimeline extends React.Component {
   zoomed() {
     const timelineRange = moment.duration(C / d3Event.transform.k, 'seconds');
     // console.log('ZOOM', timelineRange.toJSON());
-    this.setState({ timelineRange });
+    this.setState({ timelineRange, scaleX: d3Event.transform.k });
   }
 
   dragStarted() {
@@ -172,7 +199,7 @@ class TimeTravelTimeline extends React.Component {
       .range([-R, R]);
   }
 
-  renderPeriodBar(period, prevPeriod, periodFormat, yShift, [startIndex, endIndex]) {
+  renderPeriodBar(period, prevPeriod, periodFormat, [startIndex, endIndex]) {
     const timeScale = this.getTimeScale();
     const startDate = moment(timeScale.invert(-R));
     const endDate = moment(timeScale.invert(R));
@@ -188,6 +215,8 @@ class TimeTravelTimeline extends React.Component {
       }
     }
 
+    const behind = (period === 'day') ? 2 : 0;
+
     // console.log(duration.asSeconds());
     if (!duration) return null;
 
@@ -199,7 +228,7 @@ class TimeTravelTimeline extends React.Component {
         ts.push(t);
       }
       t = moment(t).add(duration);
-      if (prevPeriod !== period && t >= turningPoint) {
+      if (prevPeriod !== period && t >= moment(turningPoint).subtract(behind, period)) {
         t = turningPoint;
         turningPoint = moment(turningPoint).add(1, prevPeriod);
       }
@@ -207,8 +236,11 @@ class TimeTravelTimeline extends React.Component {
 
     // console.log(ts);
 
+    const p = getShift(period, this.state.scaleX);
+    const shift = 60 * (1 - (p * 0.2));
+    const opacity = Math.min(p * p, 1);
     return (
-      <g className={period} transform={`translate(0, ${yShift})`}>
+      <g className={period} transform={`translate(0, ${shift})`} style={{ opacity }}>
         {fromJS(ts).map(timestamp => (
           <g transform={`translate(${timeScale(timestamp)}, 0)`} key={timestamp.format()}>
             <line y2="75" stroke="#ddd" strokeWidth="1" />
@@ -234,12 +266,12 @@ class TimeTravelTimeline extends React.Component {
           className="available-range"
           transform={`translate(${nowX}, 0)`}
           x={-2 * R} y={0} width={2 * R} height={70} />
-        <g className="ticks" transform="translate(0, -1)">
-          {this.renderPeriodBar('year', 'year', 'YYYY', 0, [12, 12])}
-          {this.renderPeriodBar('month', 'year', 'MMMM', 13, [10, 11])}
-          {this.renderPeriodBar('day', 'month', 'Do', 26, [8, 9])}
-          {this.renderPeriodBar('minute', 'day', 'HH:mm', 39, [2, 7])}
-          {this.renderPeriodBar('second', 'minute', 's [secs]', 52, [0, 1])}
+        <g className="ticks">
+          {this.renderPeriodBar('year', 'year', 'YYYY', [12, 12])}
+          {this.renderPeriodBar('month', 'year', 'MMMM', [10, 11])}
+          {this.renderPeriodBar('day', 'month', 'Do', [8, 9])}
+          {this.renderPeriodBar('minute', 'day', 'HH:mm', [2, 7])}
+          {this.renderPeriodBar('second', 'minute', 's [secs]', [0, 1])}
         </g>
       </g>
     );
