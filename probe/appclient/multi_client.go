@@ -166,13 +166,21 @@ func (c *multiClient) Stop() {
 // reader, and recreate new readers for each publisher. Note that it will
 // publish to one endpoint for each unique ID. Failed publishes don't count.
 func (c *multiClient) Publish(r io.Reader) error {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+
+	if len(c.clients) <= 1 { // optimisation
+		for _, c := range c.clients {
+			return c.Publish(r)
+		}
+		return nil
+	}
+
 	buf, err := ioutil.ReadAll(r)
 	if err != nil {
 		return err
 	}
 
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
 	errs := []string{}
 	for _, c := range c.clients {
 		if err := c.Publish(bytes.NewReader(buf)); err != nil {
