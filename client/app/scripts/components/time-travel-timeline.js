@@ -17,18 +17,23 @@ import {
   TIMELINE_DEBOUNCE_INTERVAL,
 } from '../constants/timer';
 
-
-const fixedDurations = [
+const MINUTE_INTERVALS = [
   moment.duration(1, 'minute'),
   moment.duration(5, 'minutes'),
   moment.duration(15, 'minutes'),
   moment.duration(1, 'hour'),
   moment.duration(3, 'hours'),
   moment.duration(6, 'hours'),
+];
+const DAY_INTERVALS = [
   moment.duration(1, 'day'),
   moment.duration(1, 'week'),
+];
+const MONTH_INTERVALS = [
   moment.duration(1, 'month'),
   moment.duration(3, 'months'),
+];
+const YEAR_INTERVALS = [
   moment.duration(1, 'year'),
 ];
 
@@ -56,8 +61,12 @@ const getShift = (period, scale) => {
   return result;
 };
 
-const R = 2000;
-const C = 1000000;
+function scaleDuration(duration, scale) {
+  return moment.duration(duration.asMilliseconds() * scale);
+}
+
+const WIDTH = 5000;
+const C = 2000000;
 const MIN_TICK_SPACING = 40;
 const MIN_ZOOM = 0.002;
 const MAX_ZOOM = 1000;
@@ -150,14 +159,14 @@ class TimeTravelTimeline extends React.Component {
     // const newTimestamp = moment(focusedTimestamp).subtract(d3Event.dx * mv);
     // this.jumpTo(newTimestamp);
 
-    let scaleX = this.state.scaleX * Math.pow(1.02, -d3Event.dy);
+    let scaleX = this.state.scaleX * Math.pow(1.00, (d3Event.dx === 0 ? -d3Event.dy : 0));
     scaleX = Math.max(Math.min(scaleX, MAX_ZOOM), MIN_ZOOM);
     const timelineRange = moment.duration(C / scaleX, 'seconds');
     this.setState({ timelineRange, scaleX });
 
     const { focusedTimestamp } = this.state;
-    const mv = timelineRange.asMilliseconds() / R;
-    const newTimestamp = moment(focusedTimestamp).subtract(d3Event.dx * mv);
+    const dragDuration = scaleDuration(timelineRange, -d3Event.dx / WIDTH);
+    const newTimestamp = moment(focusedTimestamp).add(dragDuration);
     this.jumpTo(newTimestamp);
   }
 
@@ -173,14 +182,16 @@ class TimeTravelTimeline extends React.Component {
   }
 
   jumpForward() {
-    const d = this.state.timelineRange.asMilliseconds() / 4 / R;
-    const timestamp = moment(this.state.focusedTimestamp).add(d * this.width);
+    const { focusedTimestamp, timelineRange } = this.state;
+    const duration = scaleDuration(timelineRange, this.width / WIDTH / 2);
+    const timestamp = moment(focusedTimestamp).add(duration);
     this.jumpTo(timestamp);
   }
 
   jumpBackward() {
-    const d = this.state.timelineRange.asMilliseconds() / 4 / R;
-    const timestamp = moment(this.state.focusedTimestamp).subtract(d * this.width);
+    const { focusedTimestamp, timelineRange } = this.state;
+    const duration = scaleDuration(timelineRange, this.width / WIDTH / 2);
+    const timestamp = moment(focusedTimestamp).subtract(duration);
     this.jumpTo(timestamp);
   }
 
@@ -190,41 +201,43 @@ class TimeTravelTimeline extends React.Component {
 
   getTimeScale() {
     const { timelineRange, focusedTimestamp } = this.state;
-    const rTimestamp = moment(focusedTimestamp).startOf('second').utc();
-    const startDate = moment(rTimestamp).subtract(timelineRange);
-    const endDate = moment(rTimestamp).add(timelineRange);
+    const timelineHalfRange = scaleDuration(timelineRange, 0.5);
+    const roundedTimestamp = moment(focusedTimestamp).startOf('second').utc();
+    const startDate = moment(roundedTimestamp).subtract(timelineHalfRange);
+    const endDate = moment(roundedTimestamp).add(timelineHalfRange);
     return scaleUtc()
       .domain([startDate, endDate])
-      .range([-R, R]);
+      .range([-WIDTH / 2, WIDTH / 2]);
   }
 
-  renderPeriodBar(period, prevPeriod, periodFormat, [startIndex, endIndex]) {
+  timestampTransform(timestamp) {
     const timeScale = this.getTimeScale();
-    const startDate = moment(timeScale.invert(-R));
-    const endDate = moment(timeScale.invert(R));
-    const numSeconds = endDate.diff(startDate, 'seconds', true);
-    // console.log(numSeconds);
-    const ts = [];
+    return `translate(${timeScale(timestamp)}, 0)`;
+  }
+
+  renderPeriodBar(period, prevPeriod, periodFormat, durations) {
+    const { timelineRange } = this.state;
+    const timeScale = this.getTimeScale();
 
     let duration = null;
-    for (let i = startIndex; i <= endIndex; i += 1) {
-      if (numSeconds / fixedDurations[i].asSeconds() < 50) {
-        duration = fixedDurations[i];
+    for (let i = 0; i < durations.length; i += 1) {
+      if (timelineRange < scaleDuration(durations[i], 65)) {
+        duration = durations[i];
         break;
       }
     }
 
-    // const behind = (period === 'day') ? 2 : 0;
-
-    // console.log(duration.asSeconds());
     if (!duration) return null;
 
+    const startDate = moment(timeScale.invert(-WIDTH / 2));
     let t = moment(startDate).startOf(prevPeriod);
     let turningPoint = moment(t).add(1, prevPeriod);
+    const ts = [];
+
     do {
       const p = timeScale(t);
       if (p > -this.width && p < this.width) {
-        if (p - timeScale(ts[ts.length - 1]) < MIN_TICK_SPACING) {
+        while (ts.length > 0 && p - timeScale(ts[ts.length - 1]) < MIN_TICK_SPACING) {
           ts.pop();
         }
         ts.push(t);
@@ -236,15 +249,13 @@ class TimeTravelTimeline extends React.Component {
       }
     } while (timeScale(t) < this.width);
 
-    // console.log(ts);
-
     const p = getShift(period, this.state.scaleX);
     const shift = 2 + (55 * (1 - (p * 0.25)));
     const opacity = Math.min(p * p, 1);
     return (
       <g className={period} transform={`translate(0, ${shift})`} style={{ opacity }}>
         {fromJS(ts).map(timestamp => (
-          <g transform={`translate(${timeScale(timestamp)}, 0)`} key={timestamp.format()}>
+          <g transform={this.timestampTransform(timestamp)} key={timestamp.format()}>
             <line y2="75" stroke="#ddd" strokeWidth="1" />
             <foreignObject width="100" height="20">
               <a className="timestamp-label" onClick={() => this.jumpTo(timestamp)}>
@@ -257,21 +268,26 @@ class TimeTravelTimeline extends React.Component {
     );
   }
 
-  renderAxis() {
-    const timeScale = this.getTimeScale();
-    const nowX = Math.min(timeScale(this.state.timestampNow), R);
+  renderAvailableRange() {
+    const { timestampNow } = this.state;
+    return (
+      <rect
+        className="available-range"
+        transform={this.timestampTransform(timestampNow)}
+        x={-this.width} width={this.width} height={70}
+      />
+    );
+  }
 
+  renderAxis() {
     return (
       <g id="axis">
-        <rect
-          className="available-range"
-          transform={`translate(${nowX}, 0)`}
-          x={-2 * R} y={0} width={2 * R} height={70} />
+        {this.renderAvailableRange()}
         <g className="ticks">
-          {this.renderPeriodBar('year', 'year', 'YYYY', [10, 10])}
-          {this.renderPeriodBar('month', 'year', 'MMMM', [8, 9])}
-          {this.renderPeriodBar('day', 'month', 'Do', [6, 7])}
-          {this.renderPeriodBar('minute', 'day', 'HH:mm', [0, 5])}
+          {this.renderPeriodBar('year', 'year', 'YYYY', YEAR_INTERVALS)}
+          {this.renderPeriodBar('month', 'year', 'MMMM', MONTH_INTERVALS)}
+          {this.renderPeriodBar('day', 'month', 'Do', DAY_INTERVALS)}
+          {this.renderPeriodBar('minute', 'day', 'HH:mm', MINUTE_INTERVALS)}
         </g>
       </g>
     );
@@ -284,13 +300,8 @@ class TimeTravelTimeline extends React.Component {
         <a className="button jump-backward" onClick={this.jumpBackward}>
           <span className="fa fa-chevron-left" />
         </a>
-        <svg
-          className={className}
-          id="time-travel-timeline"
-          viewBox={`${-this.width / 2} 0 ${this.width} 70`}
-          width="100%" height="100%"
-          ref={this.saveSvgRef}>
-          <g className="view">
+        <svg className={className} id="time-travel-timeline" ref={this.saveSvgRef}>
+          <g className="view" transform={`translate(${this.width / 2}, 0)`}>
             {this.renderAxis()}
           </g>
         </svg>
