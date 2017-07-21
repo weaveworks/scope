@@ -1,6 +1,7 @@
 import dagre from 'dagre';
 import debug from 'debug';
 import { fromJS, Map as makeMap, Set as ImmSet } from 'immutable';
+import pick from 'lodash/pick';
 
 import { NODE_BASE_SIZE, EDGE_WAYPOINTS_CAP } from '../constants/styles';
 import { EDGE_ID_SEPARATOR } from '../constants/naming';
@@ -487,7 +488,10 @@ export function doLayout(immNodes, immEdges, opts) {
 
     // cache results
     cache.cachedLayout = layout;
-    cache.nodeCache = cache.nodeCache.merge(layout.nodes);
+    // only cache layout-related properties
+    // NB: These properties must be immutable wrt a given node because properties of updated nodes
+    // will be overwritten with the cached values, see copyLayoutProperties()
+    cache.nodeCache = cache.nodeCache.merge(layout.nodes.map(n => fromJS(pick(n.toJS(), ['x', 'y', 'rank']))));
     cache.edgeCache = cache.edgeCache.merge(layout.edges);
   }
 
