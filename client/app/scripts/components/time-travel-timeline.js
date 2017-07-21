@@ -1,7 +1,7 @@
 import React from 'react';
 import moment from 'moment';
 import classNames from 'classnames';
-import { debounce, map } from 'lodash';
+import { debounce } from 'lodash';
 import { connect } from 'react-redux';
 import { fromJS } from 'immutable';
 import { zoom } from 'd3-zoom';
@@ -18,14 +18,30 @@ import {
 } from '../constants/timer';
 
 
-function timestampShortLabel(timestamp) {
-  if (moment(timestamp).startOf('minute').isBefore(timestamp)) return timestamp.format(':ss');
-  if (moment(timestamp).startOf('hour').isBefore(timestamp)) return timestamp.format('HH:mm');
-  if (moment(timestamp).startOf('day').isBefore(timestamp)) return timestamp.format('HH:00');
-  if (moment(timestamp).startOf('month').isBefore(timestamp)) return timestamp.format('MMM DD');
-  if (moment(timestamp).startOf('year').isBefore(timestamp)) return timestamp.format('MMM');
-  return timestamp.format('YYYY');
-}
+// function timestampShortLabel(timestamp) {
+//   if (moment(timestamp).startOf('minute').isBefore(timestamp)) return timestamp.format(':ss');
+//   if (moment(timestamp).startOf('hour').isBefore(timestamp)) return timestamp.format('HH:mm');
+//   if (moment(timestamp).startOf('day').isBefore(timestamp)) return timestamp.format('HH:00');
+//   if (moment(timestamp).startOf('month').isBefore(timestamp)) return timestamp.format('MMM DD');
+//   if (moment(timestamp).startOf('year').isBefore(timestamp)) return timestamp.format('MMM');
+//   return timestamp.format('YYYY');
+// }
+
+const fixedDurations = [
+  moment.duration(5, 'seconds'),
+  moment.duration(15, 'seconds'),
+  moment.duration(1, 'minute'),
+  moment.duration(5, 'minutes'),
+  moment.duration(15, 'minutes'),
+  moment.duration(1, 'hour'),
+  moment.duration(3, 'hours'),
+  moment.duration(6, 'hours'),
+  moment.duration(1, 'day'),
+  moment.duration(1, 'week'),
+  moment.duration(1, 'month'),
+  moment.duration(3, 'months'),
+  moment.duration(1, 'year'),
+];
 
 const R = 2000;
 const C = 1000000;
@@ -63,7 +79,7 @@ class TimeTravelTimeline extends React.Component {
       .on('end', this.dragEnded)
       .on('drag', this.dragged);
     this.zoom = zoom()
-      .scaleExtent([0.002, 8000])
+      .scaleExtent([0.003, 8000])
       .on('zoom', this.zoomed);
 
     this.setZoomTriggers(true);
@@ -146,44 +162,112 @@ class TimeTravelTimeline extends React.Component {
     this.svgRef = ref;
   }
 
-  renderAxis() {
-    const { timelineRange, focusedTimestamp, timestampNow } = this.state;
+  getTimeScale() {
+    const { timelineRange, focusedTimestamp } = this.state;
     const rTimestamp = moment(focusedTimestamp).startOf('second').utc();
     const startDate = moment(rTimestamp).subtract(timelineRange);
     const endDate = moment(rTimestamp).add(timelineRange);
-    const timeScale = scaleUtc()
+    return scaleUtc()
       .domain([startDate, endDate])
       .range([-R, R]);
+  }
 
-    const ticks = map(timeScale.ticks(30), t => moment(t).utc());
+  renderPeriodBar(period, prevPeriod, periodFormat, yShift, [startIndex, endIndex]) {
+    const timeScale = this.getTimeScale();
+    const startDate = moment(timeScale.invert(-R));
+    const endDate = moment(timeScale.invert(R));
+    const numSeconds = endDate.diff(startDate, 'seconds', true);
+    // console.log(numSeconds);
+    const ts = [];
 
-    const nowX = Math.min(timeScale(timestampNow), R);
+    let duration = null;
+    for (let i = startIndex; i <= endIndex; i += 1) {
+      if (numSeconds / fixedDurations[i].asSeconds() < 50) {
+        duration = fixedDurations[i];
+        break;
+      }
+    }
 
-    // ${10 * Math.log(timelineRange.as('seconds') / C)}
+    // console.log(duration.asSeconds());
+    if (!duration) return null;
+
+    let t = moment(startDate).startOf(prevPeriod);
+    let turningPoint = moment(t).add(1, prevPeriod);
+    do {
+      const p = timeScale(t);
+      if (p > -this.width && p < this.width) {
+        ts.push(t);
+      }
+      t = moment(t).add(duration);
+      if (prevPeriod !== period && t >= turningPoint) {
+        t = turningPoint;
+        turningPoint = moment(turningPoint).add(1, prevPeriod);
+      }
+    } while (timeScale(t) < this.width);
+
+    // console.log(ts);
+
+    return (
+      <g className={period} transform={`translate(0, ${yShift})`}>
+        {fromJS(ts).map(timestamp => (
+          <g transform={`translate(${timeScale(timestamp)}, 0)`} key={timestamp.format()}>
+            <line y2="75" stroke="#ddd" strokeWidth="1" />
+            <foreignObject width="100" height="20">
+              <a className="timestamp-label" onClick={() => this.jumpTo(timestamp)}>
+                {timestamp.format(periodFormat)}
+              </a>
+            </foreignObject>
+          </g>
+        ))}
+      </g>
+    );
+  }
+
+  renderAxis() {
+    const timeScale = this.getTimeScale();
+    // const ticks = map(timeScale.ticks(30), t => moment(t).utc());
+    const nowX = Math.min(timeScale(this.state.timestampNow), R);
+
     return (
       <g id="axis">
         <rect
           className="available-range"
           transform={`translate(${nowX}, 0)`}
-          x={-2 * R} y={-30} width={2 * R} height={60} />
-        <line x1={-R} x2={R} stroke="#ddd" strokeWidth="1" />
-        <g className="ticks">
-          {fromJS(ticks).map(timestamp => (
-            <foreignObject
-              transform={`translate(${timeScale(timestamp) - 50}, 0)`}
-              key={timestamp.format()}
-              style={{ textAlign: 'center' }}
-              width="100" height="20">
-              <a
-                className="timestamp-label"
-                onClick={() => this.jumpTo(timestamp)}>
-                {timestampShortLabel(timestamp)}
-              </a>
-            </foreignObject>
-          ))}
+          x={-2 * R} y={0} width={2 * R} height={70} />
+        <g className="ticks" transform="translate(0, -1)">
+          {this.renderPeriodBar('year', 'year', 'YYYY', 0, [12, 12])}
+          {this.renderPeriodBar('month', 'year', 'MMMM', 13, [10, 11])}
+          {this.renderPeriodBar('day', 'month', 'Do', 26, [8, 9])}
+          {this.renderPeriodBar('minute', 'day', 'HH:mm', 39, [2, 7])}
+          {this.renderPeriodBar('second', 'minute', 's [secs]', 52, [0, 1])}
         </g>
       </g>
     );
+
+    // ${10 * Math.log(timelineRange.as('seconds') / C)}
+    // <line x1={-R} x2={R} stroke="#ddd" strokeWidth="1" />
+    // return (
+    //   <g id="axis">
+    //     <rect
+    //       className="available-range"
+    //       transform={`translate(${nowX}, 0)`}
+    //       x={-2 * R} y={-30} width={2 * R} height={60} />
+    //     <g className="ticks">
+    //       {fromJS(ticks).map(timestamp => (
+    //         <foreignObject
+    //           transform={`translate(${timeScale(timestamp)}, 0)`}
+    //           key={timestamp.format()}
+    //           width="100" height="20">
+    //           <a
+    //             className="timestamp-label"
+    //             onClick={() => this.jumpTo(timestamp)}>
+    //             {timestampShortLabel(timestamp)}
+    //           </a>
+    //         </foreignObject>
+    //       ))}
+    //     </g>
+    //   </g>
+    // );
   }
 
   render() {
@@ -196,7 +280,7 @@ class TimeTravelTimeline extends React.Component {
         <svg
           className={className}
           id="time-travel-timeline"
-          viewBox={`${-this.width / 2} -30 ${this.width} 60`}
+          viewBox={`${-this.width / 2} 0 ${this.width} 70`}
           width="100%" height="100%"
           ref={this.saveSvgRef}>
           <g className="view">

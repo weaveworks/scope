@@ -266,7 +266,7 @@
   height: 0;
 
   &.visible {
-    height: 100px;
+    height: 105px;
     margin-bottom: 15px;
     margin-top: -5px;
   }
@@ -279,7 +279,7 @@
   .time-travel-timeline {
     align-items: center;
     display: flex;
-    height: 60px;
+    height: 70px;
 
     svg {
       @extend .grabbable;
@@ -307,8 +307,9 @@
       left: 50%;
       top: 0;
       border: 1px solid white;
+      border-top: 0;
       background-color: red;
-      height: 60px;
+      height: 70px;
       width: 3px;
     }
   }
