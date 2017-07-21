@@ -59,6 +59,8 @@ const getShift = (period, scale) => {
 const R = 2000;
 const C = 1000000;
 const MIN_TICK_SPACING = 40;
+const MIN_ZOOM = 0.002;
+const MAX_ZOOM = 1000;
 
 class TimeTravelTimeline extends React.Component {
   constructor(props, context) {
@@ -94,7 +96,7 @@ class TimeTravelTimeline extends React.Component {
       .on('end', this.dragEnded)
       .on('drag', this.dragged);
     this.zoom = zoom()
-      .scaleExtent([0.002, 1000])
+      .scaleExtent([MIN_ZOOM, MAX_ZOOM])
       .on('zoom', this.zoomed);
 
     this.setZoomTriggers(true);
@@ -133,9 +135,9 @@ class TimeTravelTimeline extends React.Component {
   }
 
   zoomed() {
-    const timelineRange = moment.duration(C / d3Event.transform.k, 'seconds');
-    // console.log('ZOOM', timelineRange.toJSON());
-    this.setState({ timelineRange, scaleX: d3Event.transform.k });
+    const scaleX = d3Event.transform.k;
+    const timelineRange = moment.duration(C / scaleX, 'seconds');
+    this.setState({ timelineRange, scaleX });
   }
 
   dragStarted() {
@@ -143,10 +145,19 @@ class TimeTravelTimeline extends React.Component {
   }
 
   dragged() {
-    const { focusedTimestamp, timelineRange } = this.state;
+    // const { focusedTimestamp, timelineRange } = this.state;
+    // const mv = timelineRange.asMilliseconds() / R;
+    // const newTimestamp = moment(focusedTimestamp).subtract(d3Event.dx * mv);
+    // this.jumpTo(newTimestamp);
+
+    let scaleX = this.state.scaleX * Math.pow(1.02, -d3Event.dy);
+    scaleX = Math.max(Math.min(scaleX, MAX_ZOOM), MIN_ZOOM);
+    const timelineRange = moment.duration(C / scaleX, 'seconds');
+    this.setState({ timelineRange, scaleX });
+
+    const { focusedTimestamp } = this.state;
     const mv = timelineRange.asMilliseconds() / R;
     const newTimestamp = moment(focusedTimestamp).subtract(d3Event.dx * mv);
-    // console.log('DRAG', newTimestamp.toDate());
     this.jumpTo(newTimestamp);
   }
 
