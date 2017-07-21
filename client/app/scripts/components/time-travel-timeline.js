@@ -4,7 +4,6 @@ import classNames from 'classnames';
 import { debounce } from 'lodash';
 import { connect } from 'react-redux';
 import { fromJS } from 'immutable';
-import { zoom } from 'd3-zoom';
 import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
@@ -49,7 +48,7 @@ const getShift = (period, scale) => {
   const monthShift = yFunc(scale, 0.0052);
   const dayShift = yFunc(scale, 0.067);
   const minuteShift = yFunc(scale, 1.9);
-  console.log(scale, yearShift, monthShift, dayShift, minuteShift);
+  // console.log(scale, yearShift, monthShift, dayShift, minuteShift);
   let result = 0;
   switch (period) {
     case 'year': result = yearShift + monthShift + dayShift + minuteShift; break;
@@ -86,13 +85,14 @@ class TimeTravelTimeline extends React.Component {
     this.width = 2000;
 
     this.saveSvgRef = this.saveSvgRef.bind(this);
-    this.dragStarted = this.dragStarted.bind(this);
-    this.dragEnded = this.dragEnded.bind(this);
-    this.dragged = this.dragged.bind(this);
-    this.zoomed = this.zoomed.bind(this);
     this.jumpTo = this.jumpTo.bind(this);
     this.jumpForward = this.jumpForward.bind(this);
     this.jumpBackward = this.jumpBackward.bind(this);
+
+    this.handlePanning = this.handlePanning.bind(this);
+    this.handlePanStart = this.handlePanStart.bind(this);
+    this.handlePanEnd = this.handlePanEnd.bind(this);
+    this.handleZoom = this.handleZoom.bind(this);
 
     this.debouncedUpdateTimestamp = debounce(
       this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
@@ -101,14 +101,10 @@ class TimeTravelTimeline extends React.Component {
   componentDidMount() {
     this.svg = select('svg#time-travel-timeline');
     this.drag = drag()
-      .on('start', this.dragStarted)
-      .on('end', this.dragEnded)
-      .on('drag', this.dragged);
-    this.zoom = zoom()
-      .scaleExtent([MIN_ZOOM, MAX_ZOOM])
-      .on('zoom', this.zoomed);
-
-    this.setZoomTriggers(true);
+      .on('start', this.handlePanStart)
+      .on('end', this.handlePanEnd)
+      .on('drag', this.handlePanning);
+    this.svg.call(this.drag);
 
     // Force periodic re-renders to update the slider position as time goes by.
     this.timer = setInterval(() => {
@@ -118,7 +114,6 @@ class TimeTravelTimeline extends React.Component {
 
   componentWillUnmount() {
     clearInterval(this.timer);
-    this.setZoomTriggers(false);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -132,46 +127,31 @@ class TimeTravelTimeline extends React.Component {
     this.props.jumpToTime(moment(timestamp));
   }
 
-  setZoomTriggers(zoomingEnabled) {
-    if (zoomingEnabled) {
-      this.svg.call(this.drag);
-      // use d3-zoom defaults but exclude double clicks
-      this.svg.call(this.zoom)
-        .on('dblclick.zoom', null);
-    } else {
-      this.svg.on('.zoom', null);
-    }
-  }
-
-  zoomed() {
-    const scaleX = d3Event.transform.k;
+  handleZoom(e) {
+    let scaleX = this.state.scaleX * Math.pow(1.002, -e.deltaY);
+    scaleX = Math.min(Math.max(scaleX, MIN_ZOOM), MAX_ZOOM);
     const timelineRange = moment.duration(C / scaleX, 'seconds');
     this.setState({ timelineRange, scaleX });
   }
 
-  dragStarted() {
-    this.setState({ isDragging: true });
-  }
+  handlePanning() {
+    // let scaleX = this.state.scaleX * Math.pow(1.00, (d3Event.dx === 0 ? -d3Event.dy : 0));
+    // scaleX = Math.max(Math.min(scaleX, MAX_ZOOM), MIN_ZOOM);
+    // const timelineRange = moment.duration(C / scaleX, 'seconds');
+    // this.setState({ timelineRange, scaleX });
 
-  dragged() {
-    // const { focusedTimestamp, timelineRange } = this.state;
-    // const mv = timelineRange.asMilliseconds() / R;
-    // const newTimestamp = moment(focusedTimestamp).subtract(d3Event.dx * mv);
-    // this.jumpTo(newTimestamp);
-
-    let scaleX = this.state.scaleX * Math.pow(1.00, (d3Event.dx === 0 ? -d3Event.dy : 0));
-    scaleX = Math.max(Math.min(scaleX, MAX_ZOOM), MIN_ZOOM);
-    const timelineRange = moment.duration(C / scaleX, 'seconds');
-    this.setState({ timelineRange, scaleX });
-
-    const { focusedTimestamp } = this.state;
+    const { focusedTimestamp, timelineRange } = this.state;
     const dragDuration = scaleDuration(timelineRange, -d3Event.dx / WIDTH);
     const newTimestamp = moment(focusedTimestamp).add(dragDuration);
     this.jumpTo(newTimestamp);
   }
 
-  dragEnded() {
-    this.setState({ isDragging: false });
+  handlePanStart() {
+    this.setState({ isPanning: true });
+  }
+
+  handlePanEnd() {
+    this.setState({ isPanning: false });
   }
 
   jumpTo(timestamp) {
@@ -294,13 +274,13 @@ class TimeTravelTimeline extends React.Component {
   }
 
   render() {
-    const className = classNames({ dragging: this.state.isDragging });
+    const className = classNames({ dragging: this.state.isPanning });
     return (
       <div className="time-travel-timeline">
         <a className="button jump-backward" onClick={this.jumpBackward}>
           <span className="fa fa-chevron-left" />
         </a>
-        <svg className={className} id="time-travel-timeline" ref={this.saveSvgRef}>
+        <svg id="time-travel-timeline" className={className} ref={this.saveSvgRef} onWheel={this.handleZoom}>
           <g className="view" transform={`translate(${this.width / 2}, 0)`}>
             {this.renderAxis()}
           </g>
