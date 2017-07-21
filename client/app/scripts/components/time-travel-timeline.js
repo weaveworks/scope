@@ -58,6 +58,7 @@ const getShift = (period, scale) => {
 
 const R = 2000;
 const C = 1000000;
+const MIN_TICK_SPACING = 40;
 
 class TimeTravelTimeline extends React.Component {
   constructor(props, context) {
@@ -93,7 +94,7 @@ class TimeTravelTimeline extends React.Component {
       .on('end', this.dragEnded)
       .on('drag', this.dragged);
     this.zoom = zoom()
-      .scaleExtent([0.003, 1000])
+      .scaleExtent([0.002, 1000])
       .on('zoom', this.zoomed);
 
     this.setZoomTriggers(true);
@@ -202,7 +203,7 @@ class TimeTravelTimeline extends React.Component {
       }
     }
 
-    const behind = (period === 'day') ? 2 : 0;
+    // const behind = (period === 'day') ? 2 : 0;
 
     // console.log(duration.asSeconds());
     if (!duration) return null;
@@ -212,10 +213,13 @@ class TimeTravelTimeline extends React.Component {
     do {
       const p = timeScale(t);
       if (p > -this.width && p < this.width) {
+        if (p - timeScale(ts[ts.length - 1]) < MIN_TICK_SPACING) {
+          ts.pop();
+        }
         ts.push(t);
       }
       t = moment(t).add(duration);
-      if (prevPeriod !== period && t >= moment(turningPoint).subtract(behind, period)) {
+      if (prevPeriod !== period && t >= turningPoint) {
         t = turningPoint;
         turningPoint = moment(turningPoint).add(1, prevPeriod);
       }
@@ -224,7 +228,7 @@ class TimeTravelTimeline extends React.Component {
     // console.log(ts);
 
     const p = getShift(period, this.state.scaleX);
-    const shift = 60 * (1 - (p * 0.25));
+    const shift = 2 + (55 * (1 - (p * 0.25)));
     const opacity = Math.min(p * p, 1);
     return (
       <g className={period} transform={`translate(0, ${shift})`} style={{ opacity }}>
