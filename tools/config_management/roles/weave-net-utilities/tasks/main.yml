@@ -45,3 +45,12 @@
     - alpine
     - aanand/docker-dnsutils
     - weaveworks/hello-world
+
+- name: docker pull docker-py which is used by tests
+  docker_image:
+    name: joffrey/docker-py
+    tag: '{{ item }}'
+    state: present
+  with_items:
+    - '1.8.1'
+    - '1.9.0-rc2'
