@@ -3,6 +3,7 @@ import React from 'react';
 import CloudLink from '../cloud-link';
 import { formatMetric } from '../../utils/string-utils';
 import { trackMixpanelEvent } from '../../utils/tracking-utils';
+import { TABLE_VIEW_MODE } from '../../constants/naming';
 
 class NodeDetailsTableNodeMetricLink extends React.Component {
   constructor(props) {
@@ -12,7 +13,10 @@ class NodeDetailsTableNodeMetricLink extends React.Component {
   }
 
   onClick() {
-    trackMixpanelEvent('scope.node.metric.click', { topologyId: this.props.topologyId });
+    trackMixpanelEvent('scope.node.metric.click', {
+      layout: TABLE_VIEW_MODE,
+      topologyId: this.props.topologyId,
+    });
   }
 
   static dismissEvent(ev) {
