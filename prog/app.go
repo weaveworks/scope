@@ -28,6 +28,7 @@ import (
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/weave/common"
 )
 
@@ -51,7 +52,7 @@ func init() {
 }
 
 // Router creates the mux for all the various app components.
-func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter, externalUI bool, capabilities map[string]bool, metricsGraphURL string) http.Handler {
+func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter, externalUI bool, capabilities map[string]bool) http.Handler {
 	router := mux.NewRouter().SkipClean(true)
 
 	// We pull in the http.DefaultServeMux to get the pprof routes
@@ -61,7 +62,7 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	app.RegisterReportPostHandler(collector, router)
 	app.RegisterControlRoutes(router, controlRouter)
 	app.RegisterPipeRoutes(router, pipeRouter)
-	app.RegisterTopologyRoutes(router, collector, capabilities, metricsGraphURL)
+	app.RegisterTopologyRoutes(router, collector, capabilities)
 
 	uiHandler := http.FileServer(GetFS(externalUI))
 	router.PathPrefix("/ui").Name("static").Handler(
@@ -216,6 +217,7 @@ func appMain(flags appFlags) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 	runtime.SetBlockProfileRate(flags.blockProfileRate)
+	detailed.SetMetricsGraphURL(flags.metricsGraphURL)
 
 	defer log.Info("app exiting")
 	rand.Seed(time.Now().UnixNano())
@@ -297,7 +299,7 @@ func appMain(flags appFlags) {
 	capabilities := map[string]bool{
 		xfer.HistoricReportsCapability: collector.HasHistoricReports(),
 	}
-	handler := router(collector, controlRouter, pipeRouter, flags.externalUI, capabilities, flags.metricsGraphURL)
+	handler := router(collector, controlRouter, pipeRouter, flags.externalUI, capabilities)
 	if flags.logHTTP {
 		handler = middleware.Log{
 			LogRequestHeaders: flags.logHTTPHeaders,

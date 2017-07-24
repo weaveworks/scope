@@ -102,12 +102,12 @@ var primaryAPITopology = map[string]string{
 }
 
 // MakeNodeSummary summarizes a node, if possible.
-func MakeNodeSummary(r report.Report, n report.Node, metricsGraphURL string) (NodeSummary, bool) {
+func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
 	if renderer, ok := renderers[n.Topology]; ok {
 		// Skip (and don't fall through to fallback) if renderer maps to nil
 		if renderer != nil {
 			summary, b := renderer(baseNodeSummary(r, n), n)
-			return RenderMetricURLs(summary, n, metricsGraphURL), b
+			return RenderMetricURLs(summary, n), b
 		}
 	} else if _, ok := r.Topology(n.Topology); ok {
 		summary := baseNodeSummary(r, n)
@@ -116,7 +116,7 @@ func MakeNodeSummary(r report.Report, n report.Node, metricsGraphURL string) (No
 	}
 	if strings.HasPrefix(n.Topology, "group:") {
 		summary, b := groupNodeSummary(baseNodeSummary(r, n), r, n)
-		return RenderMetricURLs(summary, n, metricsGraphURL), b
+		return RenderMetricURLs(summary, n), b
 	}
 	return NodeSummary{}, false
 }
@@ -134,7 +134,7 @@ func (n NodeSummary) SummarizeMetrics() NodeSummary {
 
 func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 	t, _ := r.Topology(n.Topology)
-	ns := NodeSummary{
+	return NodeSummary{
 		ID:        n.ID,
 		Shape:     t.GetShape(),
 		Linkable:  true,
@@ -144,8 +144,6 @@ func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 		Tables:    NodeTables(r, n),
 		Adjacency: n.Adjacency,
 	}
-
-	return ns
 }
 
 func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
@@ -374,11 +372,11 @@ func (s nodeSummariesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
 type NodeSummaries map[string]NodeSummary
 
 // Summaries converts RenderableNodes into a set of NodeSummaries
-func Summaries(r report.Report, rns report.Nodes, metricsGraphURL string) NodeSummaries {
+func Summaries(r report.Report, rns report.Nodes) NodeSummaries {
 
 	result := NodeSummaries{}
 	for id, node := range rns {
-		if summary, ok := MakeNodeSummary(r, node, metricsGraphURL); ok {
+		if summary, ok := MakeNodeSummary(r, node); ok {
 			for i, m := range summary.Metrics {
 				summary.Metrics[i] = m.Summary()
 			}

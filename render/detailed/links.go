@@ -16,6 +16,9 @@ import (
 const urlQueryVarName = ":query"
 
 var (
+	// As configured by the user
+	metricsGraphURL = ""
+
 	// Metadata for shown queries
 	shownQueries = []struct {
 		ID    string
@@ -94,9 +97,17 @@ var (
 	}
 )
 
+// SetMetricsGraphURL sets the URL we deduce our eventual metric link from.
+// Supports placeholders such as `:orgID` and `:query`. An empty url disables
+// this feature. If the `:query` part is missing, a JSON version will be
+// appended, see `queryParamsAsJSON()` for more info.
+func SetMetricsGraphURL(url string) {
+	metricsGraphURL = url
+}
+
 // RenderMetricURLs sets respective URLs for metrics in a node summary. Missing metrics
 // where we have a query for will be appended as an empty metric (no values or samples).
-func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string) NodeSummary {
+func RenderMetricURLs(summary NodeSummary, n report.Node) NodeSummary {
 	if metricsGraphURL == "" {
 		return summary
 	}
@@ -127,7 +138,7 @@ func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string
 		}
 
 		ms = append(ms, metric)
-		ms[len(ms)-1].URL = buildURL(bs.String(), metricsGraphURL)
+		ms[len(ms)-1].URL = buildURL(bs.String())
 		found[metric.ID] = struct{}{}
 	}
 
@@ -151,7 +162,7 @@ func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string
 		ms = append(ms, report.MetricRow{
 			ID:         metadata.ID,
 			Label:      metadata.Label,
-			URL:        buildURL(bs.String(), metricsGraphURL),
+			URL:        buildURL(bs.String()),
 			Metric:     &report.Metric{},
 			Priority:   maxprio,
 			ValueEmpty: true,
@@ -164,7 +175,7 @@ func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string
 }
 
 // buildURL puts together the URL by looking at the configured `metricsGraphURL`.
-func buildURL(query, metricsGraphURL string) string {
+func buildURL(query string) string {
 	if strings.Contains(metricsGraphURL, urlQueryVarName) {
 		return strings.Replace(metricsGraphURL, urlQueryVarName, url.QueryEscape(query), -1)
 	}

@@ -25,23 +25,27 @@ var (
 
 func TestRenderMetricURLs_Disabled(t *testing.T) {
 	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
-	result := detailed.RenderMetricURLs(s, samplePodNode, "")
+	result := detailed.RenderMetricURLs(s, samplePodNode)
 
 	assert.Empty(t, result.Metrics[0].URL)
 	assert.Empty(t, result.Metrics[1].URL)
 }
 
 func TestRenderMetricURLs_UnknownTopology(t *testing.T) {
+	detailed.SetMetricsGraphURL(sampleMetricsGraphURL)
+	defer detailed.SetMetricsGraphURL("")
 	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
-	result := detailed.RenderMetricURLs(s, sampleUnknownNode, sampleMetricsGraphURL)
+	result := detailed.RenderMetricURLs(s, sampleUnknownNode)
 
 	assert.Empty(t, result.Metrics[0].URL)
 	assert.Empty(t, result.Metrics[1].URL)
 }
 
 func TestRenderMetricURLs(t *testing.T) {
+	detailed.SetMetricsGraphURL(sampleMetricsGraphURL)
+	defer detailed.SetMetricsGraphURL("")
 	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
-	result := detailed.RenderMetricURLs(s, samplePodNode, sampleMetricsGraphURL)
+	result := detailed.RenderMetricURLs(s, samplePodNode)
 
 	u := "/prom/:orgID/notebook/new/%7B%22cells%22%3A%5B%7B%22queries%22%3A%5B%22sum%28container_memory_usage_bytes%7Bpod_name%3D%5C%22foo%5C%22%7D%29%22%5D%7D%5D%7D"
 	assert.Equal(t, u, result.Metrics[0].URL)
@@ -50,7 +54,9 @@ func TestRenderMetricURLs(t *testing.T) {
 }
 
 func TestRenderMetricURLs_EmptyMetrics(t *testing.T) {
-	result := detailed.RenderMetricURLs(detailed.NodeSummary{}, samplePodNode, sampleMetricsGraphURL)
+	detailed.SetMetricsGraphURL(sampleMetricsGraphURL)
+	defer detailed.SetMetricsGraphURL("")
+	result := detailed.RenderMetricURLs(detailed.NodeSummary{}, samplePodNode)
 
 	m := result.Metrics[0]
 	assert.Equal(t, docker.CPUTotalUsage, m.ID)
@@ -66,11 +72,13 @@ func TestRenderMetricURLs_EmptyMetrics(t *testing.T) {
 }
 
 func TestRenderMetricURLs_CombinedEmptyMetrics(t *testing.T) {
+	detailed.SetMetricsGraphURL(sampleMetricsGraphURL)
+	defer detailed.SetMetricsGraphURL("")
 	s := detailed.NodeSummary{
 		Label:   "foo",
 		Metrics: []report.MetricRow{{ID: docker.MemoryUsage, Priority: 1}},
 	}
-	result := detailed.RenderMetricURLs(s, samplePodNode, sampleMetricsGraphURL)
+	result := detailed.RenderMetricURLs(s, samplePodNode)
 
 	assert.NotEmpty(t, result.Metrics[0].URL)
 	assert.False(t, result.Metrics[0].ValueEmpty)
@@ -81,8 +89,10 @@ func TestRenderMetricURLs_CombinedEmptyMetrics(t *testing.T) {
 }
 
 func TestRenderMetricURLs_QueryReplacement(t *testing.T) {
+	detailed.SetMetricsGraphURL("http://example.test/?q=:query")
+	defer detailed.SetMetricsGraphURL("")
 	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
-	result := detailed.RenderMetricURLs(s, samplePodNode, "http://example.test/?q=:query")
+	result := detailed.RenderMetricURLs(s, samplePodNode)
 
 	u := "http://example.test/?q=sum%28container_memory_usage_bytes%7Bpod_name%3D%22foo%22%7D%29"
 	assert.Equal(t, u, result.Metrics[0].URL)
