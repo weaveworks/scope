@@ -53,7 +53,7 @@ type mockPublisher struct {
 	have chan report.Report
 }
 
-func (m mockPublisher) Publish(in io.Reader) error {
+func (m mockPublisher) Publish(in io.Reader, shortcut bool) error {
 	var r report.Report
 	if reader, err := gzip.NewReader(in); err != nil {
 		return err

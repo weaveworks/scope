@@ -30,7 +30,7 @@ type AppClient interface {
 	ControlConnection()
 	PipeConnection(string, xfer.Pipe)
 	PipeClose(string) error
-	Publish(r io.Reader) error
+	Publish(io.Reader, bool) error
 	Target() url.URL
 	ReTarget(url.URL)
 	Stop()
@@ -311,13 +311,25 @@ func (c *appClient) startPublishing() {
 }
 
 // Publish implements Publisher
-func (c *appClient) Publish(r io.Reader) error {
+func (c *appClient) Publish(r io.Reader, shortcut bool) error {
 	// Lazily start the background publishing loop.
 	c.publishLoop.Do(c.startPublishing)
+	// enqueue report
 	select {
 	case c.readers <- r:
 	default:
 		log.Errorf("Dropping report to %s", c.hostname)
+		if shortcut {
+			return nil
+		}
+		// drop an old report to make way for new one
+		c.mtx.Lock()
+		defer c.mtx.Unlock()
+		select {
+		case <-c.readers:
+		default:
+		}
+		c.readers <- r
 	}
 	return nil
 }

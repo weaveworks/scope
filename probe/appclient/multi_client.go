@@ -40,7 +40,7 @@ type clientTuple struct {
 // Publisher is something which can send a stream of data somewhere, probably
 // to a remote collector.
 type Publisher interface {
-	Publish(io.Reader) error
+	Publish(io.Reader, bool) error
 	Stop()
 }
 
@@ -51,7 +51,7 @@ type MultiAppClient interface {
 	PipeConnection(appID, pipeID string, pipe xfer.Pipe) error
 	PipeClose(appID, pipeID string) error
 	Stop()
-	Publish(io.Reader) error
+	Publish(io.Reader, bool) error
 }
 
 // NewMultiAppClient creates a new MultiAppClient.
@@ -165,13 +165,13 @@ func (c *multiClient) Stop() {
 // underlying publishers sequentially. To do that, it needs to drain the
 // reader, and recreate new readers for each publisher. Note that it will
 // publish to one endpoint for each unique ID. Failed publishes don't count.
-func (c *multiClient) Publish(r io.Reader) error {
+func (c *multiClient) Publish(r io.Reader, shortcut bool) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	if len(c.clients) <= 1 { // optimisation
 		for _, c := range c.clients {
-			return c.Publish(r)
+			return c.Publish(r, shortcut)
 		}
 		return nil
 	}
@@ -183,7 +183,7 @@ func (c *multiClient) Publish(r io.Reader) error {
 
 	errs := []string{}
 	for _, c := range c.clients {
-		if err := c.Publish(bytes.NewReader(buf)); err != nil {
+		if err := c.Publish(bytes.NewReader(buf), shortcut); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
