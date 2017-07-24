@@ -288,7 +288,7 @@ func setupFlags(flags *flags) {
 
 	// Proc & endpoint
 	flag.BoolVar(&flags.probe.useConntrack, "probe.conntrack", true, "also use conntrack to track connections")
-	flag.IntVar(&flags.probe.conntrackBufferSize, "probe.conntrack.buffersize", 208*1024, "conntrack buffer size")
+	flag.IntVar(&flags.probe.conntrackBufferSize, "probe.conntrack.buffersize", 4096*1024, "conntrack buffer size")
 	flag.BoolVar(&flags.probe.spyProcs, "probe.proc.spy", true, "associate endpoints with processes (needs root)")
 	flag.StringVar(&flags.probe.procRoot, "probe.proc.root", "/proc", "location of the proc filesystem")
 	flag.BoolVar(&flags.probe.procEnabled, "probe.processes", true, "produce process topology & include procspied connections")
