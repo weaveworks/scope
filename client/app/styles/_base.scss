@@ -299,6 +299,11 @@
 
       .timestamp-label {
         padding: 3px;
+
+        &[disabled] {
+          color: #aaa;
+          cursor: inherit;
+        }
       }
     }
 

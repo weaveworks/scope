@@ -1,9 +1,8 @@
 import React from 'react';
 import moment from 'moment';
 import classNames from 'classnames';
-import { debounce, clamp } from 'lodash';
+import { debounce, map, clamp, find, last } from 'lodash';
 import { connect } from 'react-redux';
-import { fromJS } from 'immutable';
 import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
@@ -16,55 +15,62 @@ import {
   TIMELINE_DEBOUNCE_INTERVAL,
 } from '../constants/timer';
 
-const MINUTE_INTERVALS = [
-  moment.duration(1, 'minute'),
-  moment.duration(5, 'minutes'),
-  moment.duration(15, 'minutes'),
-  moment.duration(1, 'hour'),
-  moment.duration(3, 'hours'),
-  moment.duration(6, 'hours'),
-];
-const DAY_INTERVALS = [
-  moment.duration(1, 'day'),
-  moment.duration(1, 'week'),
-];
-const MONTH_INTERVALS = [
-  moment.duration(1, 'month'),
-  moment.duration(3, 'months'),
-];
-const YEAR_INTERVALS = [
-  moment.duration(1, 'year'),
-];
+
+const TICK_ROWS = {
+  minute: {
+    format: 'HH:mm',
+    intervals: [
+      moment.duration(1, 'minute'),
+      moment.duration(5, 'minutes'),
+      moment.duration(15, 'minutes'),
+      moment.duration(1, 'hour'),
+      moment.duration(3, 'hours'),
+      moment.duration(6, 'hours'),
+    ],
+  },
+  day: {
+    format: 'Do',
+    intervals: [
+      moment.duration(1, 'day'),
+      moment.duration(1, 'week'),
+    ],
+  },
+  month: {
+    format: 'MMMM',
+    intervals: [
+      moment.duration(1, 'month'),
+      moment.duration(3, 'months'),
+    ],
+  },
+  year: {
+    format: 'YYYY',
+    intervals: [
+      moment.duration(1, 'year'),
+    ],
+  },
+};
+
+const FADE_OUT_FACTOR = 1.4;
+const MIN_TICK_SPACING_PX = 70;
+const MAX_TICK_SPACING_PX = 415;
+const MIN_DURATION_PER_PX = moment.duration(250, 'milliseconds');
+const INIT_DURATION_PER_PX = moment.duration(1, 'minute');
+const MAX_DURATION_PER_PX = moment.duration(3, 'days');
 
 function scaleDuration(duration, scale) {
   return moment.duration(duration.asMilliseconds() * scale);
 }
 
-function isShorterThan(duration1, duration2) {
-  return duration1.asMilliseconds() < duration2.asMilliseconds();
-}
-
-function isLongerThan(duration1, duration2) {
-  return duration1.asMilliseconds() > duration2.asMilliseconds();
-}
-
-const WIDTH = 5000;
-const FADE_OUT_FACTOR = 1.4;
-const MIN_TICK_SPACING = 70;
-const MAX_TICK_SPACING = 415;
-const MIN_DURATION = moment.duration(250, 'milliseconds');
-const MAX_DURATION = moment.duration(3, 'days');
-
-const yFunc = (currentDuration, fadedInDuration) => {
+function yFunc(currentDuration, fadedInDuration) {
   const durationLog = d => Math.log(d.asMilliseconds());
   const fadedOutDuration = scaleDuration(fadedInDuration, FADE_OUT_FACTOR);
   const transitionFactor = durationLog(fadedOutDuration) - durationLog(currentDuration);
   const transitionLength = durationLog(fadedOutDuration) - durationLog(fadedInDuration);
   return clamp(transitionFactor / transitionLength, 0, 1);
-};
+}
 
-const getShift = (period, duration) => {
-  const durationMultiplier = 1 / MAX_TICK_SPACING;
+function getFadeInFactor(period, duration) {
+  const durationMultiplier = 1 / MAX_TICK_SPACING_PX;
   const minuteShift = yFunc(duration, scaleDuration(moment.duration(1, 'day'), durationMultiplier));
   const dayShift = yFunc(duration, scaleDuration(moment.duration(1, 'month'), durationMultiplier));
   const monthShift = yFunc(duration, scaleDuration(moment.duration(1, 'year'), durationMultiplier));
@@ -79,7 +85,8 @@ const getShift = (period, duration) => {
     default: result = 0; break;
   }
   return result;
-};
+}
+
 
 class TimeTravelTimeline extends React.Component {
   constructor(props, context) {
@@ -88,21 +95,21 @@ class TimeTravelTimeline extends React.Component {
     this.state = {
       timestampNow: moment(),
       focusedTimestamp: moment(),
-      durationPerPixel: moment.duration(1, 'minute'),
+      durationPerPixel: INIT_DURATION_PER_PX,
+      boundingRect: { width: 0, height: 0 },
       isDragging: false,
     };
-
-    this.width = 0;
-    this.height = 0;
 
     this.saveSvgRef = this.saveSvgRef.bind(this);
     this.jumpTo = this.jumpTo.bind(this);
     this.jumpForward = this.jumpForward.bind(this);
     this.jumpBackward = this.jumpBackward.bind(this);
 
-    this.handlePanning = this.handlePanning.bind(this);
+    this.findOptimalDuration = this.findOptimalDuration.bind(this);
+
     this.handlePanStart = this.handlePanStart.bind(this);
     this.handlePanEnd = this.handlePanEnd.bind(this);
+    this.handlePan = this.handlePan.bind(this);
     this.handleZoom = this.handleZoom.bind(this);
 
     this.debouncedUpdateTimestamp = debounce(
@@ -110,11 +117,11 @@ class TimeTravelTimeline extends React.Component {
   }
 
   componentDidMount() {
-    this.svg = select('svg#time-travel-timeline');
+    this.svg = select('.time-travel-timeline svg');
     this.drag = drag()
       .on('start', this.handlePanStart)
       .on('end', this.handlePanEnd)
-      .on('drag', this.handlePanning);
+      .on('drag', this.handlePan);
     this.svg.call(this.drag);
 
     // Force periodic re-renders to update the slider position as time goes by.
@@ -131,8 +138,7 @@ class TimeTravelTimeline extends React.Component {
     if (nextProps.pausedAt) {
       this.setState({ focusedTimestamp: nextProps.pausedAt });
     }
-    this.width = this.svgRef.getBoundingClientRect().width;
-    this.height = this.svgRef.getBoundingClientRect().height;
+    this.setState({ boundingRect: this.svgRef.getBoundingClientRect() });
   }
 
   updateTimestamp(timestamp) {
@@ -147,7 +153,7 @@ class TimeTravelTimeline extends React.Component {
     this.setState({ isPanning: false });
   }
 
-  handlePanning() {
+  handlePan() {
     const { focusedTimestamp, durationPerPixel } = this.state;
     const dragDuration = scaleDuration(durationPerPixel, d3Event.dx);
     const newTimestamp = moment(focusedTimestamp).subtract(dragDuration);
@@ -157,8 +163,8 @@ class TimeTravelTimeline extends React.Component {
   handleZoom(e) {
     const scale = Math.pow(1.0015, e.deltaY);
     let durationPerPixel = scaleDuration(this.state.durationPerPixel, scale);
-    if (isLongerThan(durationPerPixel, MAX_DURATION)) durationPerPixel = MAX_DURATION;
-    if (isShorterThan(durationPerPixel, MIN_DURATION)) durationPerPixel = MIN_DURATION;
+    if (durationPerPixel > MAX_DURATION_PER_PX) durationPerPixel = MAX_DURATION_PER_PX;
+    if (durationPerPixel < MIN_DURATION_PER_PX) durationPerPixel = MIN_DURATION_PER_PX;
     this.setState({ durationPerPixel });
   }
 
@@ -170,15 +176,15 @@ class TimeTravelTimeline extends React.Component {
   }
 
   jumpForward() {
-    const { focusedTimestamp, durationPerPixel } = this.state;
-    const duration = scaleDuration(durationPerPixel, this.width / 4);
+    const { focusedTimestamp, durationPerPixel, boundingRect } = this.state;
+    const duration = scaleDuration(durationPerPixel, boundingRect.width / 4);
     const timestamp = moment(focusedTimestamp).add(duration);
     this.jumpTo(timestamp);
   }
 
   jumpBackward() {
-    const { focusedTimestamp, durationPerPixel } = this.state;
-    const duration = scaleDuration(durationPerPixel, this.width / 4);
+    const { focusedTimestamp, durationPerPixel, boundingRect } = this.state;
+    const duration = scaleDuration(durationPerPixel, boundingRect.width / 4);
     const timestamp = moment(focusedTimestamp).subtract(duration);
     this.jumpTo(timestamp);
   }
@@ -189,81 +195,107 @@ class TimeTravelTimeline extends React.Component {
 
   getTimeScale() {
     const { durationPerPixel, focusedTimestamp } = this.state;
-    const timelineHalfRange = scaleDuration(durationPerPixel, 0.5);
     const roundedTimestamp = moment(focusedTimestamp).startOf('second').utc();
-    const startDate = moment(roundedTimestamp).subtract(timelineHalfRange);
-    const endDate = moment(roundedTimestamp).add(timelineHalfRange);
+    const startDate = moment(roundedTimestamp).subtract(durationPerPixel);
+    const endDate = moment(roundedTimestamp).add(durationPerPixel);
     return scaleUtc()
       .domain([startDate, endDate])
-      .range([-0.5, 0.5]);
+      .range([-1, 1]);
   }
 
-  timestampTransform(timestamp) {
-    const timeScale = this.getTimeScale();
-    return `translate(${timeScale(timestamp)}, 0)`;
-  }
-
-  renderPeriodBar(period, prevPeriod, periodFormat, durations) {
+  findOptimalDuration(durations) {
     const { durationPerPixel } = this.state;
-    const timeScale = this.getTimeScale();
+    const minimalDuration = scaleDuration(durationPerPixel, MIN_TICK_SPACING_PX);
+    return find(durations, d => d > minimalDuration);
+  }
 
-    let duration = null;
-    for (let i = 0; i < durations.length; i += 1) {
-      if (scaleDuration(durationPerPixel, MIN_TICK_SPACING) < durations[i]) {
-        duration = durations[i];
-        break;
-      }
-    }
+  renderTimestampTick({ timestamp, position, isBehind }, periodFormat, opacity) {
+    const { timestampNow } = this.state;
+    const disabled = timestamp.isAfter(timestampNow) || opacity < 0.2;
+    const handleClick = () => this.jumpTo(timestamp);
 
-    if (!duration) return null;
-
-    const startDate = moment(timeScale.invert(-WIDTH / 2));
-    let t = moment(startDate).startOf(prevPeriod);
-    let turningPoint = moment(t).add(1, prevPeriod);
-    const ts = [];
-
-    do {
-      const p = timeScale(t);
-      if (p > -this.width && p < this.width) {
-        while (ts.length > 0 && p - timeScale(ts[ts.length - 1]) < 0.85 * MIN_TICK_SPACING) {
-          ts.pop();
-        }
-        ts.push(t);
-      }
-      t = moment(t).add(duration);
-      if (prevPeriod !== period && t >= turningPoint) {
-        t = turningPoint;
-        turningPoint = moment(turningPoint).add(1, prevPeriod);
-      }
-    } while (timeScale(t) < this.width);
-
-    const p = getShift(period, this.state.durationPerPixel);
-    const shift = 2 + (55 * (1 - (p * 0.25)));
-    const opacity = Math.min(p * p, 1);
     return (
-      <g className={period} transform={`translate(0, ${shift})`} style={{ opacity }}>
-        {fromJS(ts).map(timestamp => (
-          <g transform={this.timestampTransform(timestamp)} key={timestamp.format()}>
-            <line y2="75" stroke="#ddd" strokeWidth="1" />
-            <foreignObject width="100" height="20">
-              <a className="timestamp-label" onClick={() => this.jumpTo(timestamp)}>
-                {timestamp.format(periodFormat)}
-              </a>
-            </foreignObject>
-          </g>
-        ))}
+      <g transform={`translate(${position}, 0)`} key={timestamp.format()}>
+        {!isBehind && <line y2="75" stroke="#ddd" strokeWidth="1" />}
+        <foreignObject width="100" height="20">
+          <a className="timestamp-label" disabled={disabled} onClick={!disabled && handleClick}>
+            {isBehind && '←'}
+            {timestamp.utc().format(periodFormat)}
+          </a>
+        </foreignObject>
       </g>
     );
   }
 
-  renderAvailableRange() {
+  getTicks(period, parentPeriod, duration) {
+    parentPeriod = parentPeriod || period;
+    const startPosition = -this.state.boundingRect.width / 2;
+    const endPosition = this.state.boundingRect.width / 2;
+
+    if (!duration) return [];
+
     const timeScale = this.getTimeScale();
-    const nowShift = Math.min(timeScale(this.state.timestampNow), WIDTH / 2);
+    const startDate = moment(timeScale.invert(startPosition));
+    const endDate = moment(timeScale.invert(endPosition));
+    const ticks = [];
+
+    let timestamp = moment(startDate).startOf(parentPeriod);
+    let turningPoint = moment(timestamp).add(1, parentPeriod);
+
+    while (timestamp.isBefore(startDate)) {
+      timestamp = moment(timestamp).add(duration);
+    }
+
+    ticks.push({
+      timestamp: moment(timestamp).subtract(duration),
+      position: startPosition,
+      isBehind: true,
+    });
+
+    do {
+      const position = timeScale(timestamp);
+
+      while (ticks.length > 0 && position - last(ticks).position < 0.85 * MIN_TICK_SPACING_PX) {
+        ticks.pop();
+      }
+      ticks.push({ timestamp, position });
+
+      timestamp = moment(timestamp).add(duration);
+      if (parentPeriod && timestamp >= turningPoint) {
+        timestamp = turningPoint;
+        turningPoint = moment(turningPoint).add(1, parentPeriod);
+      }
+    } while (timestamp.isBefore(endDate));
+
+    return ticks;
+  }
+
+  renderPeriodBar(period, parentPeriod) {
+    const duration = this.findOptimalDuration(TICK_ROWS[period].intervals);
+    const ticks = this.getTicks(period, parentPeriod, duration);
+
+    const periodFormat = TICK_ROWS[period].format;
+    const p = getFadeInFactor(period, this.state.durationPerPixel);
+    const verticalPosition = 60 - (p * 15);
+    const opacity = Math.min(p, 1);
+
+    return (
+      <g className={period} transform={`translate(0, ${verticalPosition})`} style={{ opacity }}>
+        {map(ticks, tick => this.renderTimestampTick(tick, periodFormat, opacity))}
+      </g>
+    );
+  }
+
+  renderDisabledShadow() {
+    const timeScale = this.getTimeScale();
+    const nowShift = timeScale(this.state.timestampNow);
+    const { width, height } = this.state.boundingRect;
+
     return (
       <rect
         className="available-range"
         transform={`translate(${nowShift}, 0)`}
-        x={-WIDTH} width={WIDTH} height={this.height}
+        width={width} height={height}
       />
     );
   }
@@ -271,12 +303,12 @@ class TimeTravelTimeline extends React.Component {
   renderAxis() {
     return (
       <g id="axis">
-        {this.renderAvailableRange()}
+        {this.renderDisabledShadow()}
         <g className="ticks">
-          {this.renderPeriodBar('year', 'year', 'YYYY', YEAR_INTERVALS)}
-          {this.renderPeriodBar('month', 'year', 'MMMM', MONTH_INTERVALS)}
-          {this.renderPeriodBar('day', 'month', 'Do', DAY_INTERVALS)}
-          {this.renderPeriodBar('minute', 'day', 'HH:mm', MINUTE_INTERVALS)}
+          {this.renderPeriodBar('year')}
+          {this.renderPeriodBar('month', 'year')}
+          {this.renderPeriodBar('day', 'month')}
+          {this.renderPeriodBar('minute', 'day')}
         </g>
       </g>
     );
@@ -284,13 +316,15 @@ class TimeTravelTimeline extends React.Component {
 
   render() {
     const className = classNames({ dragging: this.state.isPanning });
+    const halfWidth = this.state.boundingRect.width / 2;
+
     return (
       <div className="time-travel-timeline">
         <a className="button jump-backward" onClick={this.jumpBackward}>
           <span className="fa fa-chevron-left" />
         </a>
-        <svg id="time-travel-timeline" className={className} ref={this.saveSvgRef} onWheel={this.handleZoom}>
-          <g className="view" transform={`translate(${this.width / 2}, 0)`}>
+        <svg className={className} ref={this.saveSvgRef} onWheel={this.handleZoom}>
+          <g className="view" transform={`translate(${halfWidth}, 0)`}>
             {this.renderAxis()}
           </g>
         </svg>
