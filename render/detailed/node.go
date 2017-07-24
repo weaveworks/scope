@@ -80,15 +80,15 @@ func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
 
 // MakeNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
-func MakeNode(topologyID string, r report.Report, ns report.Nodes, n report.Node, metricsGraphURL string) Node {
-	summary, _ := MakeNodeSummary(r, n, metricsGraphURL)
+func MakeNode(topologyID string, r report.Report, ns report.Nodes, n report.Node) Node {
+	summary, _ := MakeNodeSummary(r, n)
 	return Node{
 		NodeSummary: summary,
 		Controls:    controls(r, n),
-		Children:    children(r, n, metricsGraphURL),
+		Children:    children(r, n),
 		Connections: []ConnectionsSummary{
-			incomingConnectionsSummary(topologyID, r, n, ns, metricsGraphURL),
-			outgoingConnectionsSummary(topologyID, r, n, ns, metricsGraphURL),
+			incomingConnectionsSummary(topologyID, r, n, ns),
+			outgoingConnectionsSummary(topologyID, r, n, ns),
 		},
 	}
 }
@@ -181,13 +181,13 @@ var nodeSummaryGroupSpecs = []struct {
 	},
 }
 
-func children(r report.Report, n report.Node, metricsGraphURL string) []NodeSummaryGroup {
+func children(r report.Report, n report.Node) []NodeSummaryGroup {
 	summaries := map[string][]NodeSummary{}
 	n.Children.ForEach(func(child report.Node) {
 		if child.ID == n.ID {
 			return
 		}
-		summary, ok := MakeNodeSummary(r, child, metricsGraphURL)
+		summary, ok := MakeNodeSummary(r, child)
 		if !ok {
 			return
 		}

@@ -18,7 +18,7 @@ import (
 )
 
 func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
-	s, ok := detailed.MakeNodeSummary(fixture.Report, r.Render(fixture.Report, nil)[id], "")
+	s, ok := detailed.MakeNodeSummary(fixture.Report, r.Render(fixture.Report, nil)[id])
 	if !ok {
 		t.Fatalf("Expected node %s to be summarizable, but wasn't", id)
 	}
@@ -32,7 +32,7 @@ func connectionID(nodeID string, addr string) string {
 func TestMakeDetailedHostNode(t *testing.T) {
 	renderableNodes := render.HostRenderer.Render(fixture.Report, nil)
 	renderableNode := renderableNodes[fixture.ClientHostNodeID]
-	have := detailed.MakeNode("hosts", fixture.Report, renderableNodes, renderableNode, "")
+	have := detailed.MakeNode("hosts", fixture.Report, renderableNodes, renderableNode)
 
 	containerImageNodeSummary := child(t, render.ContainerImageRenderer, expected.ClientContainerImageNodeID)
 	containerNodeSummary := child(t, render.ContainerRenderer, fixture.ClientContainerNodeID)
@@ -183,7 +183,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
 	}
-	have := detailed.MakeNode("containers", fixture.Report, renderableNodes, renderableNode, "")
+	have := detailed.MakeNode("containers", fixture.Report, renderableNodes, renderableNode)
 
 	serverProcessNodeSummary := child(t, render.ProcessRenderer, fixture.ServerProcessNodeID)
 	serverProcessNodeSummary.Linkable = true
@@ -313,7 +313,7 @@ func TestMakeDetailedPodNode(t *testing.T) {
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
 	}
-	have := detailed.MakeNode("pods", fixture.Report, renderableNodes, renderableNode, "")
+	have := detailed.MakeNode("pods", fixture.Report, renderableNodes, renderableNode)
 
 	containerNodeSummary := child(t, render.ContainerWithImageNameRenderer, fixture.ServerContainerNodeID)
 	serverProcessNodeSummary := child(t, render.ProcessRenderer, fixture.ServerProcessNodeID)

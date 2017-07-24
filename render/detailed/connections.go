@@ -121,13 +121,13 @@ func internetAddr(node report.Node, ep report.Node) (string, bool) {
 	return addr, true
 }
 
-func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal bool, metricsGraphURL string) []Connection {
+func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal bool) []Connection {
 	output := []Connection{}
 	for row, count := range c.counts {
 		// Use MakeNodeSummary to render the id and label of this node
 		// TODO(paulbellamy): Would be cleaner if we hade just a
 		// MakeNodeID(ns[row.remoteNodeID]). As we don't need the whole summary.
-		summary, _ := MakeNodeSummary(r, ns[row.remoteNodeID], metricsGraphURL)
+		summary, _ := MakeNodeSummary(r, ns[row.remoteNodeID])
 		connection := Connection{
 			ID:         fmt.Sprintf("%s-%s-%s-%s", row.remoteNodeID, row.remoteAddr, row.localAddr, row.port),
 			NodeID:     summary.ID,
@@ -162,7 +162,7 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 	return output
 }
 
-func incomingConnectionsSummary(topologyID string, r report.Report, n report.Node, ns report.Nodes, metricsGraphURL string) ConnectionsSummary {
+func incomingConnectionsSummary(topologyID string, r report.Report, n report.Node, ns report.Nodes) ConnectionsSummary {
 	localEndpointIDs, localEndpointIDCopies := endpointChildIDsAndCopyMapOf(n)
 	counts := newConnectionCounters()
 
@@ -188,11 +188,11 @@ func incomingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		TopologyID:  topologyID,
 		Label:       "Inbound",
 		Columns:     columnHeaders,
-		Connections: counts.rows(r, ns, isInternetNode(n), metricsGraphURL),
+		Connections: counts.rows(r, ns, isInternetNode(n)),
 	}
 }
 
-func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Node, ns report.Nodes, metricsGraphURL string) ConnectionsSummary {
+func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Node, ns report.Nodes) ConnectionsSummary {
 	localEndpoints := endpointChildrenOf(n)
 	counts := newConnectionCounters()
 
@@ -220,7 +220,7 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		TopologyID:  topologyID,
 		Label:       "Outbound",
 		Columns:     columnHeaders,
-		Connections: counts.rows(r, ns, isInternetNode(n), metricsGraphURL),
+		Connections: counts.rows(r, ns, isInternetNode(n)),
 	}
 }
 

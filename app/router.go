@@ -91,7 +91,7 @@ func gzipHandler(h http.HandlerFunc) http.HandlerFunc {
 }
 
 // RegisterTopologyRoutes registers the various topology routes with a http mux.
-func RegisterTopologyRoutes(router *mux.Router, r Reporter, capabilities map[string]bool, metricsGraphURL string) {
+func RegisterTopologyRoutes(router *mux.Router, r Reporter, capabilities map[string]bool) {
 	get := router.Methods("GET").Subrouter()
 	get.HandleFunc("/api",
 		gzipHandler(requestContextDecorator(apiHandler(r, capabilities))))
@@ -99,15 +99,15 @@ func RegisterTopologyRoutes(router *mux.Router, r Reporter, capabilities map[str
 		gzipHandler(requestContextDecorator(topologyRegistry.makeTopologyList(r))))
 	get.
 		HandleFunc("/api/topology/{topology}",
-			gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, metricsGraphURL, handleTopology)))).
+			gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, handleTopology)))).
 		Name("api_topology_topology")
 	get.
 		HandleFunc("/api/topology/{topology}/ws",
-			requestContextDecorator(captureReporter(r, metricsGraphURL, handleWebsocket))). // NB not gzip!
+			requestContextDecorator(captureReporter(r, handleWebsocket))). // NB not gzip!
 		Name("api_topology_topology_ws")
 	get.
 		MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).HandlerFunc(
-		gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, metricsGraphURL, handleNode)))).
+		gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, handleNode)))).
 		Name("api_topology_topology_id")
 	get.HandleFunc("/api/report",
 		gzipHandler(requestContextDecorator(makeRawReportHandler(r))))

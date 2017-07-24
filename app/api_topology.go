@@ -29,14 +29,14 @@ type APINode struct {
 }
 
 // Full topology.
-func handleTopology(ctx context.Context, renderer render.Renderer, decorator render.Decorator, report report.Report, metricsGraphURL string, w http.ResponseWriter, r *http.Request) {
+func handleTopology(ctx context.Context, renderer render.Renderer, decorator render.Decorator, report report.Report, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(report, renderer.Render(report, decorator), metricsGraphURL),
+		Nodes: detailed.Summaries(report, renderer.Render(report, decorator)),
 	})
 }
 
 // Individual nodes.
-func handleNode(ctx context.Context, renderer render.Renderer, decorator render.Decorator, report report.Report, metricsGraphURL string, w http.ResponseWriter, r *http.Request) {
+func handleNode(ctx context.Context, renderer render.Renderer, decorator render.Decorator, report report.Report, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars             = mux.Vars(r)
 		topologyID       = vars["topology"]
@@ -49,14 +49,13 @@ func handleNode(ctx context.Context, renderer render.Renderer, decorator render.
 		http.NotFound(w, r)
 		return
 	}
-	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, report, rendered, node, metricsGraphURL)})
+	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, report, rendered, node)})
 }
 
 // Websocket for the full topology.
 func handleWebsocket(
 	ctx context.Context,
 	rep Reporter,
-	metricsGraphURL string,
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -124,7 +123,7 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(report, renderer.Render(report, decorator), metricsGraphURL)
+		newTopo := detailed.Summaries(report, renderer.Render(report, decorator))
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
