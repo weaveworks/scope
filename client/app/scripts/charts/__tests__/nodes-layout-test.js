@@ -131,6 +131,18 @@ describe('NodesLayout', () => {
       edges: fromJS({
         [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
       })
+    },
+    layoutProps: {
+      nodes: fromJS({
+        n1: {id: 'n1', label: 'lold', labelMinor: 'lmold', rank: 'rold'},
+      }),
+      edges: fromJS({})
+    },
+    layoutProps2: {
+      nodes: fromJS({
+        n1: {id: 'n1', label: 'lnew', labelMinor: 'lmnew', rank: 'rnew', x: 111, y: 109},
+      }),
+      edges: fromJS({})
     }
   };
 
@@ -437,5 +449,30 @@ describe('NodesLayout', () => {
     coords = getNodeCoordinates(options.nodeCache);
     resultCoords = getNodeCoordinates(result.nodes);
     expect(resultCoords).not.toEqual(coords);
+  });
+
+  it('only caches layout-related properties', () => {
+    // populate cache by doing a full layout run, this stores layout values in cache
+    const first = NodesLayout.doLayout(
+      nodeSets.layoutProps.nodes,
+      nodeSets.layoutProps.edges,
+      { noCache: true }
+    );
+
+    // now pass updated nodes with modified values
+    const second = NodesLayout.doLayout(
+      nodeSets.layoutProps2.nodes,
+      nodeSets.layoutProps2.edges,
+      {}
+    );
+
+    // new labels should not be overwritten by cache
+    nodes = second.nodes.toJS();
+    expect(nodes.n1.label).toEqual('lnew');
+    expect(nodes.n1.labelMinor).toEqual('lmnew');
+    // but layout values should be preferred from cache
+    expect(nodes.n1.rank).toEqual('rold');
+    expect(nodes.n1.x).toEqual(first.nodes.getIn(['n1', 'x']));
+    expect(nodes.n1.y).toEqual(first.nodes.getIn(['n1', 'y']));
   });
 });

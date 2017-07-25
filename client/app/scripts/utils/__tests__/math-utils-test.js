@@ -32,8 +32,8 @@ describe('MathUtils', () => {
     const entryF = { pointF: { x: 30, y: 0 } };
 
     it('it should return the minimal distance between any two points in the collection', () => {
-      expect(f(fromJS({}))).toBe(0);
-      expect(f(fromJS({...entryA}))).toBe(0);
+      expect(f(fromJS({}))).toBe(Infinity);
+      expect(f(fromJS({...entryA}))).toBe(Infinity);
       expect(f(fromJS({...entryA, ...entryB}))).toBe(30);
       expect(f(fromJS({...entryA, ...entryC}))).toBe(40);
       expect(f(fromJS({...entryB, ...entryC}))).toBe(50);
