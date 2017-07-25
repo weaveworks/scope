@@ -1,21 +1,19 @@
 import React from 'react';
 import moment from 'moment';
 import classNames from 'classnames';
-import { debounce, map, clamp, find, last } from 'lodash';
+import { map, clamp, find, last } from 'lodash';
 import { connect } from 'react-redux';
 import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
 
-import { nowInSecondsPrecision } from '../utils/time-utils';
 import {
-  jumpToTime,
-} from '../actions/app-actions';
+  nowInSecondsPrecision,
+  clampToNowInSecondsPrecision,
+  scaleDuration,
+} from '../utils/time-utils';
 
-import {
-  TIMELINE_TICK_INTERVAL,
-  TIMELINE_DEBOUNCE_INTERVAL,
-} from '../constants/timer';
+import { TIMELINE_TICK_INTERVAL } from '../constants/timer';
 
 
 const TICK_ROWS = {
@@ -52,17 +50,14 @@ const TICK_ROWS = {
   },
 };
 
-const FADE_OUT_FACTOR = 1.4;
-const ZOOM_SENSITIVITY = 1.0015;
-const MIN_TICK_SPACING_PX = 80;
-const MAX_TICK_SPACING_PX = 415;
 const MIN_DURATION_PER_PX = moment.duration(250, 'milliseconds');
 const INIT_DURATION_PER_PX = moment.duration(1, 'minute');
 const MAX_DURATION_PER_PX = moment.duration(3, 'days');
+const MIN_TICK_SPACING_PX = 80;
+const MAX_TICK_SPACING_PX = 415;
+const ZOOM_SENSITIVITY = 1.0015;
+const FADE_OUT_FACTOR = 1.4;
 
-function scaleDuration(duration, scale) {
-  return moment.duration(duration.asMilliseconds() * scale);
-}
 
 function yFunc(currentDuration, fadedInDuration) {
   const durationLog = d => Math.log(d.asMilliseconds());
@@ -104,18 +99,17 @@ class TimeTravelTimeline extends React.Component {
     };
 
     this.saveSvgRef = this.saveSvgRef.bind(this);
-    this.jumpTo = this.jumpTo.bind(this);
+    this.jumpRelativePixels = this.jumpRelativePixels.bind(this);
     this.jumpForward = this.jumpForward.bind(this);
     this.jumpBackward = this.jumpBackward.bind(this);
+    this.jumpTo = this.jumpTo.bind(this);
 
     this.findOptimalDuration = this.findOptimalDuration.bind(this);
 
+    this.handleZoom = this.handleZoom.bind(this);
     this.handlePanStart = this.handlePanStart.bind(this);
     this.handlePanEnd = this.handlePanEnd.bind(this);
     this.handlePan = this.handlePan.bind(this);
-    this.handleZoom = this.handleZoom.bind(this);
-
-    this.debouncedJumpTo = debounce(this.jumpTo.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
   }
 
   componentDidMount() {
@@ -152,14 +146,16 @@ class TimeTravelTimeline extends React.Component {
   }
 
   handlePanEnd() {
+    this.props.onTimelinePanEnd(this.state.focusedTimestamp);
     this.setState({ isPanning: false });
   }
 
   handlePan() {
-    const { focusedTimestamp, durationPerPixel } = this.state;
-    const dragDuration = scaleDuration(durationPerPixel, d3Event.dx);
-    const newTimestamp = moment(focusedTimestamp).subtract(dragDuration);
-    this.jumpTo(newTimestamp);
+    const dragDuration = scaleDuration(this.state.durationPerPixel, -d3Event.dx);
+    const timestamp = moment(this.state.focusedTimestamp).add(dragDuration);
+    const focusedTimestamp = clampToNowInSecondsPrecision(timestamp);
+    this.props.onTimelinePan(focusedTimestamp);
+    this.setState({ focusedTimestamp });
   }
 
   handleZoom(e) {
@@ -171,25 +167,23 @@ class TimeTravelTimeline extends React.Component {
   }
 
   jumpTo(timestamp) {
-    const { timestampNow } = this.state;
-    const focusedTimestamp = timestamp > timestampNow ? timestampNow : timestamp;
-    this.props.onTimelinePan(focusedTimestamp);
+    const focusedTimestamp = clampToNowInSecondsPrecision(timestamp);
+    this.props.onInstantJump(focusedTimestamp);
     this.setState({ focusedTimestamp });
-    this.debouncedJumpTo.cancel();
+  }
+
+  jumpRelativePixels(pixels) {
+    const duration = scaleDuration(this.state.durationPerPixel, pixels);
+    const timestamp = moment(this.state.focusedTimestamp).add(duration);
+    this.jumpTo(timestamp);
   }
 
   jumpForward() {
-    const { focusedTimestamp, durationPerPixel, boundingRect } = this.state;
-    const duration = scaleDuration(durationPerPixel, boundingRect.width / 4);
-    const newTimestamp = moment(focusedTimestamp).add(duration);
-    this.jumpTo(newTimestamp);
+    this.jumpRelativePixels(this.state.boundingRect.width / 4);
   }
 
   jumpBackward() {
-    const { focusedTimestamp, durationPerPixel, boundingRect } = this.state;
-    const duration = scaleDuration(durationPerPixel, boundingRect.width / 4);
-    const newTimestamp = moment(focusedTimestamp).subtract(duration);
-    this.jumpTo(newTimestamp);
+    this.jumpRelativePixels(-this.state.boundingRect.width / 4);
   }
 
   getTimeScale() {
@@ -325,7 +319,7 @@ class TimeTravelTimeline extends React.Component {
   }
 
   render() {
-    const className = classNames({ dragging: this.state.isPanning });
+    const className = classNames({ panning: this.state.isPanning });
     const halfWidth = this.state.boundingRect.width / 2;
 
     return (
@@ -354,10 +348,4 @@ function mapStateToProps(state) {
   };
 }
 
-
-export default connect(
-  mapStateToProps,
-  {
-    jumpToTime,
-  }
-)(TimeTravelTimeline);
+export default connect(mapStateToProps)(TimeTravelTimeline);

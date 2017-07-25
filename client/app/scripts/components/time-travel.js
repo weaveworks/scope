@@ -3,19 +3,18 @@ import React from 'react';
 import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
-import { debounce, map } from 'lodash';
+import { debounce } from 'lodash';
 
 import TimeTravelTimeline from './time-travel-timeline';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { clampToNowInSecondsPrecision } from '../utils/time-utils';
 import {
   jumpToTime,
   resumeTime,
   timeTravelStartTransition,
 } from '../actions/app-actions';
 
-import {
-  TIMELINE_DEBOUNCE_INTERVAL,
-} from '../constants/timer';
+import { TIMELINE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
 const getTimestampStates = (timestamp) => {
@@ -33,13 +32,16 @@ class TimeTravel extends React.Component {
 
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleTimelinePan = this.handleTimelinePan.bind(this);
-    this.handleJumpClick = this.handleJumpClick.bind(this);
-    this.travelTo = this.travelTo.bind(this);
+    this.handleTimelinePanEnd = this.handleTimelinePanEnd.bind(this);
+    this.handleInstantJump = this.handleInstantJump.bind(this);
 
+    this.trackTimestampEdit = this.trackTimestampEdit.bind(this);
+    this.trackTimelineClick = this.trackTimelineClick.bind(this);
+    this.trackTimelinePan = this.trackTimelinePan.bind(this);
+
+    this.instantUpdateTimestamp = this.instantUpdateTimestamp.bind(this);
     this.debouncedUpdateTimestamp = debounce(
-      this.updateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
-    this.debouncedTrackSliderChange = debounce(
-      this.trackSliderChange.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
+      this.instantUpdateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
   }
 
   componentWillReceiveProps(props) {
@@ -51,53 +53,59 @@ class TimeTravel extends React.Component {
     this.props.resumeTime();
   }
 
-  handleSliderChange(timestamp) {
-    if (!timestamp.isSame(this.props.pausedAt)) {
-      this.travelTo(timestamp, true);
-      this.debouncedTrackSliderChange();
-    }
-  }
-
   handleInputChange(ev) {
-    let timestamp = moment(ev.target.value);
+    const timestamp = moment(ev.target.value);
     this.setState({ inputValue: ev.target.value });
 
     if (timestamp.isValid()) {
-      timestamp = Math.min(timestamp, moment().valueOf());
-      this.travelTo(timestamp);
-
-      trackMixpanelEvent('scope.time.timestamp.edit', {
-        layout: this.props.topologyViewMode,
-        topologyId: this.props.currentTopology.get('id'),
-        parentTopologyId: this.props.currentTopology.get('parentId'),
-      });
+      const clampedTimestamp = clampToNowInSecondsPrecision(timestamp);
+      this.instantUpdateTimestamp(clampedTimestamp, this.trackTimestampEdit);
     }
   }
 
-  // TODO: Redo
-  handleJumpClick(millisecondsDelta) {
-    let timestamp = this.state.sliderValue + millisecondsDelta;
-    timestamp = Math.min(timestamp, moment().valueOf());
-    this.travelTo(timestamp, true);
-  }
-
-  updateTimestamp(timestamp) {
-    this.props.jumpToTime(moment(timestamp));
-  }
-
-  travelTo(timestamp, debounced = false) {
-    this.props.timeTravelStartTransition();
+  handleTimelinePan(timestamp) {
     this.setState(getTimestampStates(timestamp));
-    if (debounced) {
-      this.debouncedUpdateTimestamp(timestamp);
-    } else {
+    this.debouncedUpdateTimestamp(timestamp);
+  }
+
+  handleTimelinePanEnd(timestamp) {
+    this.instantUpdateTimestamp(timestamp, this.trackTimelinePan);
+  }
+
+  handleInstantJump(timestamp) {
+    this.instantUpdateTimestamp(timestamp, this.trackTimelineClick);
+  }
+
+  instantUpdateTimestamp(timestamp, callback) {
+    if (!timestamp.isSame(this.props.pausedAt)) {
       this.debouncedUpdateTimestamp.cancel();
-      this.updateTimestamp(timestamp);
+      this.setState(getTimestampStates(timestamp));
+      this.props.timeTravelStartTransition();
+      this.props.jumpToTime(moment(timestamp));
+
+      // Used for tracking.
+      if (callback) callback();
     }
   }
 
-  trackSliderChange() {
-    trackMixpanelEvent('scope.time.slider.change', {
+  trackTimestampEdit() {
+    trackMixpanelEvent('scope.time.timestamp.edit', {
+      layout: this.props.topologyViewMode,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+    });
+  }
+
+  trackTimelineClick() {
+    trackMixpanelEvent('scope.time.timeline.click', {
+      layout: this.props.topologyViewMode,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+    });
+  }
+
+  trackTimelinePan() {
+    trackMixpanelEvent('scope.time.timeline.pan', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
@@ -109,7 +117,8 @@ class TimeTravel extends React.Component {
       <div className={classNames('time-travel', { visible: this.props.showingTimeTravel })}>
         <TimeTravelTimeline
           onTimelinePan={this.handleTimelinePan}
-          onJumpClick={this.handleJumpClick}
+          onTimelinePanEnd={this.handleTimelinePanEnd}
+          onInstantJump={this.handleInstantJump}
         />
         <div className="time-travel-timestamp">
           <input

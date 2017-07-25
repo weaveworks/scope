@@ -255,8 +255,6 @@
 }
 
 .time-travel {
-  // align-items: center;
-  // display: flex;
   position: relative;
   margin-bottom: 15px;
   z-index: 2001;
@@ -290,7 +288,7 @@
       width: 100%;
       height: 100%;
 
-      &.dragging { @extend .grabbing; }
+      &.panning { @extend .grabbing; }
 
       .available-range {
         fill: #888;
@@ -318,6 +316,7 @@
       background-color: red;
       height: 70px;
       width: 3px;
+      margin-left: -1px;
     }
   }
 
@@ -346,7 +345,6 @@
       background-color: #ccc;
       height: 9px;
       width: 1px;
-      left: 1px
     }
   }
 }
