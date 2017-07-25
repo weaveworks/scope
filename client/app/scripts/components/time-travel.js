@@ -1,5 +1,4 @@
 import React from 'react';
-// import Slider from 'rc-slider';
 import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
@@ -49,7 +48,7 @@ class TimeTravel extends React.Component {
   }
 
   componentWillUnmount() {
-    // TODO: Causing bug?
+    // TODO: Get rid of this somehow. See: https://github.com/weaveworks/service-ui/issues/814
     this.props.resumeTime();
   }
 
