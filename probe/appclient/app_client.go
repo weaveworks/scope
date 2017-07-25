@@ -318,7 +318,7 @@ func (c *appClient) Publish(r io.Reader, shortcut bool) error {
 	select {
 	case c.readers <- r:
 	default:
-		log.Errorf("Dropping report to %s", c.hostname)
+		log.Warnf("Dropping report to %s", c.hostname)
 		if shortcut {
 			return nil
 		}
