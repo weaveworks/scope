@@ -102,7 +102,7 @@ class ZoomableCanvas extends React.Component {
     const transform = forwardTransform ? '' : transformToString(this.state);
 
     return (
-      <g className="zoomable-canvas">
+      <div className="zoomable-canvas">
         <svg id="canvas" width="100%" height="100%" onClick={this.props.onClick}>
           <Logo transform="translate(24,24) scale(0.25)" />
           <g className="zoom-content" transform={transform}>
@@ -115,7 +115,7 @@ class ZoomableCanvas extends React.Component {
           maxScale={this.state.maxScale}
           scale={this.state.scaleX}
         />}
-      </g>
+      </div>
     );
   }
 
