@@ -93,10 +93,10 @@ class NodeResourcesMetricBox extends React.Component {
   }
 
   render() {
-    const { x, y, width, height } = this.state;
+    const { x, y, width } = this.state;
     const { id, selectedNodeId, label, color, metricSummary } = this.props;
     const { showCapacity, relativeConsumption, type } = metricSummary.toJS();
-    const isSelected = (id === selectedNodeId);
+    const opacity = (selectedNodeId && selectedNodeId !== id) ? 0.35 : 1;
 
     const showInfo = width >= RESOURCES_LABEL_MIN_SIZE;
     const showNode = width >= 1; // hide the thin nodes
@@ -110,7 +110,9 @@ class NodeResourcesMetricBox extends React.Component {
       metricSummary.get('humanizedAbsoluteConsumption');
 
     return (
-      <g className="node-resources-metric-box" onClick={this.handleClick} ref={this.saveNodeRef}>
+      <g
+        className="node-resources-metric-box" style={{ opacity }}
+        onClick={this.handleClick} ref={this.saveNodeRef}>
         <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
         {showCapacity && <rect className="frame" {...this.defaultRectProps()} />}
         <rect className="bar" fill={color} {...this.defaultRectProps(relativeConsumption)} />
@@ -121,8 +123,6 @@ class NodeResourcesMetricBox extends React.Component {
           x={x + RESOURCES_LABEL_PADDING}
           y={y + RESOURCES_LABEL_PADDING}
         />}
-        {isSelected && <rect
-          x={x} y={y} width={width} height={height} fill="#aad2ff" fillOpacity={0.5} />}
       </g>
     );
   }

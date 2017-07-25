@@ -1125,6 +1125,7 @@
 
 .node-resources {
   &-metric-box {
+    @extend .palable;
     cursor: pointer;
     fill: rgba(150, 150, 150, 0.4);
 
