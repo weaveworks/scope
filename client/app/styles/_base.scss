@@ -321,19 +321,20 @@
   }
 
   &-timestamp {
+    background-color: $background-lighter-color;
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 2px 8px;
     pointer-events: all;
     margin: 8px auto 25px;
-    width: 225px;
+    opacity: 0.8;
+    width: 215px;
 
     input {
       border: 0;
       background-color: transparent;
-      font-family: $mono-font;
-      font-size: 0.875rem;
-      margin-right: 2px;
+      font-size: 1rem;
+      width: 167px;
       outline: 0;
     }
 
