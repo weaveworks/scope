@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	httpClientTimeout = 4 * time.Second
+	httpClientTimeout = 12 * time.Second // a bit less than default app.window
 	initialBackoff    = 1 * time.Second
 	maxBackoff        = 60 * time.Second
 )
