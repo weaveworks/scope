@@ -366,12 +366,13 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.PAUSE_TIME_AT_NOW: {
       state = state.set('showingTimeTravel', false);
+      state = state.set('timeTravelTransitioning', false);
       return state.set('pausedAt', nowInSecondsPrecision());
     }
 
     case ActionTypes.START_TIME_TRAVEL: {
-      state = state.set('timeTravelTransitioning', false);
       state = state.set('showingTimeTravel', true);
+      state = state.set('timeTravelTransitioning', false);
       return state.set('pausedAt', nowInSecondsPrecision());
     }
 

@@ -338,8 +338,16 @@ export function clickNode(nodeId, label, origin, topologyId = null) {
 }
 
 export function pauseTimeAtNow() {
-  return {
-    type: ActionTypes.PAUSE_TIME_AT_NOW
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.PAUSE_TIME_AT_NOW
+    });
+    if (!getState().get('nodesLoaded')) {
+      getNodes(getState, dispatch);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
+    }
   };
 }
 
