@@ -7,6 +7,7 @@ import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
 
+import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
   nowInSecondsPrecision,
   clampToNowInSecondsPrecision,
@@ -143,6 +144,7 @@ class TimeTravelTimeline extends React.Component {
     let durationPerPixel = scaleDuration(this.state.durationPerPixel, scale);
     if (durationPerPixel > MAX_DURATION_PER_PX) durationPerPixel = MAX_DURATION_PER_PX;
     if (durationPerPixel < MIN_DURATION_PER_PX) durationPerPixel = MIN_DURATION_PER_PX;
+    trackMixpanelEvent('scope.time.timeline.zoom', { scale });
     this.setState({ durationPerPixel });
   }
 
