@@ -28,14 +28,12 @@ function euclideanDistance(pointA, pointB) {
 // This could be solved in O(N log N) (see https://en.wikipedia.org/wiki/Closest_pair_of_points_problem),
 // but this brute-force O(N^2) should be good enough for a reasonable number of nodes.
 export function minEuclideanDistanceBetweenPoints(points) {
-  let minDistance = 0;
-  let foundPair = false;
+  let minDistance = Infinity;
   points.forEach((pointA, idA) => {
     points.forEach((pointB, idB) => {
       const distance = euclideanDistance(pointA, pointB);
-      if (idA !== idB && (distance < minDistance || !foundPair)) {
+      if (idA !== idB && distance < minDistance) {
         minDistance = distance;
-        foundPair = true;
       }
     });
   });
