@@ -8,9 +8,22 @@ import {
   resourcesZoomLimitsSelector,
   resourcesZoomStateSelector,
 } from '../selectors/resource-view/zoom';
+import { clickBackground } from '../actions/app-actions';
 
 
 class NodesResources extends React.Component {
+  constructor(props, context) {
+    super(props, context);
+
+    this.handleMouseClick = this.handleMouseClick.bind(this);
+  }
+
+  handleMouseClick() {
+    if (this.props.selectedNodeId) {
+      this.props.clickBackground();
+    }
+  }
+
   renderLayers(transform) {
     return this.props.layersTopologyIds.map((topologyId, index) => (
       <NodesResourcesLayer
@@ -26,6 +39,7 @@ class NodesResources extends React.Component {
     return (
       <div className="nodes-resources">
         <ZoomableCanvas
+          onClick={this.handleMouseClick}
           bounded forwardTransform fixVertical
           zoomLimitsSelector={resourcesZoomLimitsSelector}
           zoomStateSelector={resourcesZoomStateSelector}>
@@ -38,10 +52,12 @@ class NodesResources extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    selectedNodeId: state.get('selectedNodeId'),
     layersTopologyIds: layersTopologyIdsSelector(state),
   };
 }
 
 export default connect(
-  mapStateToProps
+  mapStateToProps,
+  { clickBackground }
 )(NodesResources);
