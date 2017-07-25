@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/rpc"
 	"net/url"
@@ -215,7 +216,16 @@ func (c *appClient) doWithBackoff(msg string, f func() (bool, error)) {
 			backoff = initialBackoff
 			continue
 		}
-
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			// The timeout period itself serves as a backoff that
+			// prevents thrashing. Hence there is no need to introduce
+			// further delays. Moreover, any delays between publishing
+			// reports that exceed the app.window (defaults to 15s)
+			// cause the UI to display no data, which is debilitating.
+			log.Errorf("Error doing %s for %s: %v", msg, c.hostname, err)
+			backoff = initialBackoff
+			continue
+		}
 		log.Errorf("Error doing %s for %s, backing off %s: %v", msg, c.hostname, backoff, err)
 		select {
 		case <-time.After(backoff):
