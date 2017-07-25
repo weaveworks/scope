@@ -87,7 +87,7 @@ var (
 			// - The Service's `spec.selector` needs to select on `name`
 			// - The Service's `metadata.name` needs to be the same value as `spec.selector.name`
 			docker.MemoryUsage:   parsedTemplate(`namespace_label_name:container_memory_usage_bytes:sum{label_name="{{.Label}}"}`),
-			docker.CPUTotalUsage: parsedTemplate(`namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{.Label}}}`),
+			docker.CPUTotalUsage: parsedTemplate(`namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{.Label}}"}`),
 		},
 	}
 	k8sControllers = map[string]struct{}{
