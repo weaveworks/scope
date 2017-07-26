@@ -48,6 +48,6 @@ func (d *daemonSet) GetNode() report.Node {
 		DesiredReplicas:      fmt.Sprint(d.Status.DesiredNumberScheduled),
 		Replicas:             fmt.Sprint(d.Status.CurrentNumberScheduled),
 		MisscheduledReplicas: fmt.Sprint(d.Status.NumberMisscheduled),
-		NodeType:             "Daemon Set",
+		NodeType:             "DaemonSet",
 	})
 }

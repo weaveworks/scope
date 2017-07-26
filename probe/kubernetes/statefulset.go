@@ -44,7 +44,7 @@ func (s *statefulSet) GetNode() report.Node {
 		desiredReplicas = int(*s.Spec.Replicas)
 	}
 	latests := map[string]string{
-		NodeType:        "Stateful Set",
+		NodeType:        "StatefulSet",
 		DesiredReplicas: fmt.Sprint(desiredReplicas),
 		Replicas:        fmt.Sprint(s.Status.Replicas),
 	}
