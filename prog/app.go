@@ -91,7 +91,8 @@ func awsConfigFromURL(url *url.URL) (*aws.Config, error) {
 	return config, nil
 }
 
-func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname, memcachedHostname string, memcachedTimeout time.Duration, memcachedService string, memcachedExpiration time.Duration, memcachedCompressionLevel int, window time.Duration, createTables bool) (app.Collector, error) {
+func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname string,
+	memcacheConfig multitenant.MemcacheConfig, window time.Duration, createTables bool) (app.Collector, error) {
 	if collectorURL == "local" {
 		return app.NewCollector(window), nil
 	}
@@ -121,17 +122,8 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 		tableName := strings.TrimPrefix(parsed.Path, "/")
 		s3Store := multitenant.NewS3Client(s3Config, bucketName)
 		var memcacheClient *multitenant.MemcacheClient
-		if memcachedHostname != "" {
-			memcacheClient = multitenant.NewMemcacheClient(
-				multitenant.MemcacheConfig{
-					Host:             memcachedHostname,
-					Timeout:          memcachedTimeout,
-					Expiration:       memcachedExpiration,
-					UpdateInterval:   memcacheUpdateInterval,
-					Service:          memcachedService,
-					CompressionLevel: memcachedCompressionLevel,
-				},
-			)
+		if memcacheConfig.Host != "" {
+			memcacheClient = multitenant.NewMemcacheClient(memcacheConfig)
 		}
 		awsCollector, err := multitenant.NewAWSCollector(
 			multitenant.AWSCollectorConfig{
@@ -238,8 +230,15 @@ func appMain(flags appFlags) {
 	}
 
 	collector, err := collectorFactory(
-		userIDer, flags.collectorURL, flags.s3URL, flags.natsHostname, flags.memcachedHostname,
-		flags.memcachedTimeout, flags.memcachedService, flags.memcachedExpiration, flags.memcachedCompressionLevel,
+		userIDer, flags.collectorURL, flags.s3URL, flags.natsHostname,
+		multitenant.MemcacheConfig{
+			Host:             flags.memcachedHostname,
+			Timeout:          flags.memcachedTimeout,
+			Expiration:       flags.memcachedExpiration,
+			UpdateInterval:   memcacheUpdateInterval,
+			Service:          flags.memcachedService,
+			CompressionLevel: flags.memcachedCompressionLevel,
+		},
 		flags.window, flags.awsCreateTables)
 	if err != nil {
 		log.Fatalf("Error creating collector: %v", err)
