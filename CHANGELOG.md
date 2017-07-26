@@ -1,3 +1,174 @@
+
+## Release 1.6.0
+
+Highlights:
+- New Kubernetes Controllers view
+- Add Kubernetes Stateful Sets and Cron Jobs
+- Various small improvements and performance work
+
+New features and enhancements:
+- kubernetes: Add StatefulSets and CronJobs
+	[#2724](https://github.com/weaveworks/scope/pull/2724)
+- Make Resource view nodes clickable
+	[#2679](https://github.com/weaveworks/scope/pull/2679)
+- Keep topology nav visible if selected
+	[#2709](https://github.com/weaveworks/scope/pull/2709)
+- Show multiple relatives in the nodes-grid view
+	[#2648](https://github.com/weaveworks/scope/pull/2648)
+- Remove type filter in controllers view
+	[#2670](https://github.com/weaveworks/scope/pull/2670)
+- Remove replica sets
+	[#2661](https://github.com/weaveworks/scope/pull/2661)
+- add k8s combined view
+	[#2552](https://github.com/weaveworks/scope/pull/2552)
+- Gather Weave Net plugin and proxy info from report
+	[#2719](https://github.com/weaveworks/scope/pull/2719)
+
+
+Performance improvements:
+- optimisation: don't copy report stream unnecessarily
+	[#2736](https://github.com/weaveworks/scope/pull/2736)
+- new full reports are more important than old and shortcut reports
+	[#2743](https://github.com/weaveworks/scope/pull/2743)
+- increase default conntrack buffer size
+	[#2739](https://github.com/weaveworks/scope/pull/2739)
+- Use Kubernetes node name to filter pods if possible
+	[#2556](https://github.com/weaveworks/scope/pull/2556)
+- refactor: remove unnecessary and dead Copy()
+	[#2675](https://github.com/weaveworks/scope/pull/2675)
+- performance: only color connected once
+	[#2635](https://github.com/weaveworks/scope/pull/2635)
+- fast network membership check
+	[#2625](https://github.com/weaveworks/scope/pull/2625)
+- memoize isKnownServices for improved performance
+	[#2617](https://github.com/weaveworks/scope/pull/2617)
+- faster matching of known services
+	[#2613](https://github.com/weaveworks/scope/pull/2613)
+
+Bug fixes and minor improvements:
+- k8s: Use 'DaemonSet', 'StatefulSet' etc instead of 'Daemon Set', 'Stateful Set'
+	[#2757](https://github.com/weaveworks/scope/pull/2757)
+- maximize report publishing timeout
+	[#2756](https://github.com/weaveworks/scope/pull/2756)
+- do not back off on timeouts when sending reports
+	[#2746](https://github.com/weaveworks/scope/pull/2746)
+- Fix Pods number in graph not updating (minor label)
+	[#2728](https://github.com/weaveworks/scope/pull/2728)
+- defend against nils
+	[#2734](https://github.com/weaveworks/scope/pull/2734)
+- Fix New Version notification not showing
+	[#2720](https://github.com/weaveworks/scope/pull/2720)
+- render: In minor labels, display '0 things' instead of blank if zero things present
+	[#2726](https://github.com/weaveworks/scope/pull/2726)
+- Reset nodes in frontend when scope-app restarted
+	[#2713](https://github.com/weaveworks/scope/pull/2713)
+- Keep topo nav visible if subnav selected
+	[#2710](https://github.com/weaveworks/scope/pull/2710)
+- don't miss, or fail to forget, initial connections
+	[#2704](https://github.com/weaveworks/scope/pull/2704)
+- bump tcptracer-bpf version
+	[#2705](https://github.com/weaveworks/scope/pull/2705)
+- fix ebpf init race segfault
+	[#2695](https://github.com/weaveworks/scope/pull/2695)
+- Make graph layout zoom limits constant
+	[#2678](https://github.com/weaveworks/scope/pull/2678)
+- Last line of defense against overlapping nodes in graph layout
+	[#2688](https://github.com/weaveworks/scope/pull/2688)
+- Fix `yarn pack` ignoring directory cli flag
+	[#2694](https://github.com/weaveworks/scope/pull/2694)
+- Show table overflow only if limit exceeded by 2+
+	[#2683](https://github.com/weaveworks/scope/pull/2683)
+- render/pod: Fix a typo in Map2Parent where UnmanagedID will always be used for noParentsPseudoID
+	[#2685](https://github.com/weaveworks/scope/pull/2685)
+- don't show container count in host detail panel image list
+	[#2682](https://github.com/weaveworks/scope/pull/2682)
+- correct determination of a host's container images
+	[#2680](https://github.com/weaveworks/scope/pull/2680)
+- Prevents 6 digit pids from being truncated in details panel/table mode
+	[#2666](https://github.com/weaveworks/scope/pull/2666)
+- correct polarity of initial connections
+	[#2645](https://github.com/weaveworks/scope/pull/2645)
+- ensure connections from /proc/net/tcp{,6} get the right pid
+	[#2639](https://github.com/weaveworks/scope/pull/2639)
+- Avoid race conditions in DNSSnooper's cached domains
+	[#2637](https://github.com/weaveworks/scope/pull/2637)
+- Fix issues with union types
+	[#2633](https://github.com/weaveworks/scope/pull/2633)
+- Fix typo in site/plugins.md
+	[#2624](https://github.com/weaveworks/scope/pull/2624)
+- correct `nodeSummaryGroupSpec`
+	[#2631](https://github.com/weaveworks/scope/pull/2631)
+- Ignore ipv6
+	[#2622](https://github.com/weaveworks/scope/pull/2622)
+- Fix the table sorting order bug for numerical values
+	[#2587](https://github.com/weaveworks/scope/pull/2587)
+- Fix zoom for `npm start`
+	[#2605](https://github.com/weaveworks/scope/pull/2605)
+- fix error when docker DAEMON is running with user namespace enabled.
+	[#2582](https://github.com/weaveworks/scope/pull/2582)
+- Do not read tcp6 files if TCP version 6 isn't supported
+	[#2604](https://github.com/weaveworks/scope/pull/2604)
+- Elide token-only credentials in cli arguments
+	[#2593](https://github.com/weaveworks/scope/pull/2593)
+- do not filter endpoints by procspied/ebpf in renderers
+	[#2652](https://github.com/weaveworks/scope/pull/2652)
+
+Internal improvements and cleanup:
+- Pass build tags to unit tests
+	[#2618](https://github.com/weaveworks/scope/pull/2618)
+- Allows to skip client build when doing make prog/scope
+	[#2732](https://github.com/weaveworks/scope/pull/2732)
+- only pass WEAVESCOPE_DOCKER_ARGS to actual probe/app start
+	[#2715](https://github.com/weaveworks/scope/pull/2715)
+- Set package.json version to 0.0.0
+	[#2692](https://github.com/weaveworks/scope/pull/2692)
+- simplify connection join
+	[#2714](https://github.com/weaveworks/scope/pull/2714)
+- EbpfTracker refactoring / cleanup
+	[#2699](https://github.com/weaveworks/scope/pull/2699)
+- Yarn prefixes version with `v` when packing
+	[#2691](https://github.com/weaveworks/scope/pull/2691)
+- don't use eBPF in a couple of tests
+	[#2690](https://github.com/weaveworks/scope/pull/2690)
+- Update README/Makefile/package.json to use yarn
+	[#2676](https://github.com/weaveworks/scope/pull/2676)
+- render/pod: Remove unused options and incorrect code
+	[#2673](https://github.com/weaveworks/scope/pull/2673)
+- Use new k8s go client
+	[#2659](https://github.com/weaveworks/scope/pull/2659)
+- Update github.com/weaveworks/common & dependencies (needs go1.8)
+	[#2570](https://github.com/weaveworks/scope/pull/2570)
+- Publish updated OpenShift instructions (close #2485)
+	[#2657](https://github.com/weaveworks/scope/pull/2657)
+- make integration tests pass with latest Weave Net release (2.0)
+	[#2641](https://github.com/weaveworks/scope/pull/2641)
+- Improved rendering order of nodes/edges in Graph View
+	[#2623](https://github.com/weaveworks/scope/pull/2623)
+- refactor: extract a couple of heavily used constants
+	[#2632](https://github.com/weaveworks/scope/pull/2632)
+- Use latest go1.8.3
+	[#2626](https://github.com/weaveworks/scope/pull/2626)
+- Use Go 1.8
+	[#2621](https://github.com/weaveworks/scope/pull/2621)
+- Use 127.0.0.1 instead of localhost, more
+	[#2554](https://github.com/weaveworks/scope/pull/2554)
+- Moved highlighted nodes/edges info to selectors
+	[#2584](https://github.com/weaveworks/scope/pull/2584)
+- rationalise report set usage
+	[#2671](https://github.com/weaveworks/scope/pull/2671)
+- ignore endpoints with >1 adjacency in process rendering
+	[#2668](https://github.com/weaveworks/scope/pull/2668)
+- Honor DOCKER_* env variables in probe and app
+	[#2649](https://github.com/weaveworks/scope/pull/2649)
+
+Weave Cloud related changes:
+- Back off when writing to Dynamo and S3
+	[#2723](https://github.com/weaveworks/scope/pull/2723)
+- Time travel redesign
+	[#2651](https://github.com/weaveworks/scope/pull/2651)
+- Make API calls with time travel timestamp
+	[#2600](https://github.com/weaveworks/scope/pull/2600)
+
 ## Release 1.5.1
 
 Bugfix patch release
