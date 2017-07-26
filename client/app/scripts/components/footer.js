@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+import Logo from './logo';
 import Plugins from './plugins';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
@@ -46,6 +47,12 @@ class Footer extends React.Component {
 
     return (
       <div className="footer">
+        <span className="logo">
+          <svg width="110px" viewBox="0 0 1089 217">
+            <Logo />
+          </svg>
+        </span>
+
         <div className="footer-status">
           {versionUpdate && <a
             className="footer-versionupdate"
