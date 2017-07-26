@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	httpClientTimeout = 4 * time.Second
+	httpClientTimeout = 12 * time.Second // a bit less than default app.window
 	initialBackoff    = 1 * time.Second
 	maxBackoff        = 60 * time.Second
 )
@@ -328,7 +328,7 @@ func (c *appClient) Publish(r io.Reader, shortcut bool) error {
 	select {
 	case c.readers <- r:
 	default:
-		log.Errorf("Dropping report to %s", c.hostname)
+		log.Warnf("Dropping report to %s", c.hostname)
 		if shortcut {
 			return nil
 		}
