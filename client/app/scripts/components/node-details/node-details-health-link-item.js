@@ -37,7 +37,6 @@ export default class NodeDetailsHealthLinkItem extends React.Component {
   render() {
     const { id, nodeColor, url, ...props } = this.props;
 
-    const labelColor = this.state.hovered && !props.samples ? nodeColor : undefined;
     const metricColor = getMetricColor(id);
 
     return (
@@ -53,7 +52,7 @@ export default class NodeDetailsHealthLinkItem extends React.Component {
           {...props}
           hovered={this.state.hovered}
           metricColor={metricColor}
-          labelColor={labelColor} />
+          labelColor={this.state.hovered && nodeColor} />
       </CloudLink>
     );
   }
