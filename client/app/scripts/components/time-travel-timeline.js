@@ -62,7 +62,7 @@ const TICK_SETTINGS_PER_PERIOD = {
 const MIN_DURATION_PER_PX = moment.duration(250, 'milliseconds');
 const INIT_DURATION_PER_PX = moment.duration(1, 'minute');
 const MAX_DURATION_PER_PX = moment.duration(3, 'days');
-const MIN_TICK_SPACING_PX = 80;
+const MIN_TICK_SPACING_PX = 70;
 const MAX_TICK_SPACING_PX = 415;
 const ZOOM_SENSITIVITY = 1.0015;
 const FADE_OUT_FACTOR = 1.4;
@@ -269,16 +269,16 @@ class TimeTravelTimeline extends React.Component {
 
   renderTimestampTick({ timestamp, position, isBehind }, periodFormat, opacity) {
     // Ticks are disabled if they are in the future or if they are too transparent.
-    const disabled = timestamp.isAfter(this.state.timestampNow) || opacity < 0.2;
+    const disabled = timestamp.isAfter(this.state.timestampNow) || opacity < 0.4;
     const handleClick = () => this.jumpTo(timestamp);
 
     return (
       <g transform={`translate(${position}, 0)`} key={timestamp.format()}>
         {!isBehind && <line y2="75" stroke="#ddd" strokeWidth="1" />}
-        <title>Jump to {timestamp.utc().format()}</title>
+        {!disabled && <title>Jump to {timestamp.utc().format()}</title>}
         <foreignObject width="100" height="20">
           <a className="timestamp-label" disabled={disabled} onClick={!disabled && handleClick}>
-            {isBehind && '←'}{timestamp.utc().format(periodFormat)}
+            {timestamp.utc().format(periodFormat)}
           </a>
         </foreignObject>
       </g>
@@ -290,8 +290,11 @@ class TimeTravelTimeline extends React.Component {
     const ticks = this.getTicksForPeriod(period, focusedTimestamp);
 
     const verticalShift = this.getVerticalShiftForPeriod(period);
-    const transform = `translate(0, ${60 - (verticalShift * 15)})`;
-    const opacity = clamp(verticalShift, 0, 1);
+    const transform = `translate(0, ${62 - (verticalShift * 15)})`;
+
+    // Ticks quickly fade in from the bottom and then slowly
+    // start fading out as they are being pushed to the top.
+    const opacity = verticalShift > 1 ? (6 - verticalShift) / 5 : verticalShift;
 
     return (
       <g className={period} transform={transform} style={{ opacity }}>
