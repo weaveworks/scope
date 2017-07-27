@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"strconv"
+
 	"github.com/weaveworks/scope/report"
 
 	apiv1 "k8s.io/client-go/pkg/api/v1"
@@ -10,6 +12,7 @@ import (
 const (
 	State           = "kubernetes_state"
 	IsInHostNetwork = "kubernetes_is_in_host_network"
+	RestartCount    = "kubernetes_restart_count"
 
 	StateDeleted = "deleted"
 )
@@ -20,6 +23,7 @@ type Pod interface {
 	AddParent(topology, id string)
 	NodeName() string
 	GetNode(probeID string) report.Node
+	RestartCount() uint
 }
 
 type pod struct {
@@ -58,11 +62,20 @@ func (p *pod) NodeName() string {
 	return p.Spec.NodeName
 }
 
+func (p *pod) RestartCount() uint {
+	count := uint(0)
+	for _, cs := range p.Status.ContainerStatuses {
+		count += uint(cs.RestartCount)
+	}
+	return count
+}
+
 func (p *pod) GetNode(probeID string) report.Node {
 	latests := map[string]string{
 		State: p.State(),
 		IP:    p.Status.PodIP,
 		report.ControlProbeID: probeID,
+		RestartCount:          strconv.FormatUint(uint64(p.RestartCount()), 10),
 	}
 
 	if p.Pod.Spec.HostNetwork {
