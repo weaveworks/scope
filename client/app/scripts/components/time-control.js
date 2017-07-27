@@ -8,6 +8,8 @@ import TimeTravelButton from './time-travel-button';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import { pauseTimeAtNow, resumeTime, startTimeTravel } from '../actions/app-actions';
 
+import { TIMELINE_TICK_INTERVAL } from '../constants/timer';
+
 
 const className = isSelected => (
   classNames('time-control-action', { 'time-control-action-selected': isSelected })
@@ -21,6 +23,15 @@ class TimeControl extends React.Component {
     this.handlePauseClick = this.handlePauseClick.bind(this);
     this.handleTravelClick = this.handleTravelClick.bind(this);
     this.getTrackingMetadata = this.getTrackingMetadata.bind(this);
+  }
+
+  componentDidMount() {
+    // Force periodic for the paused info.
+    this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_TICK_INTERVAL);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
   }
 
   getTrackingMetadata(data = {}) {

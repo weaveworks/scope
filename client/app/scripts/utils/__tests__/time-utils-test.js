@@ -1,5 +1,5 @@
 import expect from 'expect';
-import timer from '../timer-utils';
+import { timer } from '../time-utils';
 
 describe('timer', () => {
   it('records how long a function takes to execute', () => {

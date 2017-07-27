@@ -1,6 +1,5 @@
 /* eslint-disable import/no-webpack-loader-syntax, import/no-unresolved */
 import debug from 'debug';
-import moment from 'moment';
 import { size, each, includes, isEqual } from 'lodash';
 import {
   fromJS,
@@ -20,6 +19,7 @@ import {
   isResourceViewModeSelector,
 } from '../selectors/topology';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
+import { nowInSecondsPrecision } from '../utils/time-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
@@ -366,13 +366,14 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.PAUSE_TIME_AT_NOW: {
       state = state.set('showingTimeTravel', false);
-      return state.set('pausedAt', moment().utc());
+      state = state.set('timeTravelTransitioning', false);
+      return state.set('pausedAt', nowInSecondsPrecision());
     }
 
     case ActionTypes.START_TIME_TRAVEL: {
-      state = state.set('timeTravelTransitioning', false);
       state = state.set('showingTimeTravel', true);
-      return state.set('pausedAt', moment().utc());
+      state = state.set('timeTravelTransitioning', false);
+      return state.set('pausedAt', nowInSecondsPrecision());
     }
 
     case ActionTypes.JUMP_TO_TIME: {
