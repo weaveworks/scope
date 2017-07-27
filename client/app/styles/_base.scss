@@ -306,18 +306,28 @@
       }
     }
 
-    &:after {
+    &:before, &:after {
       content: '';
       position: absolute;
       display: block;
       left: 50%;
-      top: 0;
       border: 1px solid white;
       border-top: 0;
+      border-bottom: 0;
       background-color: red;
-      height: 70px;
-      width: 3px;
       margin-left: -1px;
+      width: 3px;
+    }
+
+    &:before {
+      top: 0;
+      height: 70px;
+    }
+
+    &:after {
+      top: 70px;
+      height: 9px;
+      opacity: 0.15;
     }
   }
 
@@ -337,16 +347,6 @@
       font-size: 1rem;
       width: 167px;
       outline: 0;
-    }
-
-    &:before {
-      content: '';
-      position: relative;
-      display: block;
-      margin: -12px auto 3px;
-      background-color: #ccc;
-      height: 9px;
-      width: 1px;
     }
   }
 }
