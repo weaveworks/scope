@@ -141,13 +141,15 @@ class TimeTravelTimeline extends React.Component {
     this.setState({ focusedTimestamp });
   }
 
-  handleZoom(e) {
-    const scale = Math.pow(ZOOM_SENSITIVITY, e.deltaY);
+  handleZoom(ev) {
+    const scale = Math.pow(ZOOM_SENSITIVITY, ev.deltaY);
     let durationPerPixel = scaleDuration(this.state.durationPerPixel, scale);
     if (durationPerPixel > MAX_DURATION_PER_PX) durationPerPixel = MAX_DURATION_PER_PX;
     if (durationPerPixel < MIN_DURATION_PER_PX) durationPerPixel = MIN_DURATION_PER_PX;
+
     trackMixpanelEvent('scope.time.timeline.zoom', { scale });
     this.setState({ durationPerPixel });
+    ev.preventDefault();
   }
 
   jumpTo(timestamp) {
