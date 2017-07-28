@@ -9,8 +9,8 @@
     url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.ttf");
 }
 
-// TODO: Remove this line once the configure button stops being added to Scope.
-.setup-nav-button { display: none; }
+// TODO: Remove this line once Service UI CONFIGURE button stops being added to Scope.
+.scope-wrapper .setup-nav-button { display: none; }
 
 .browsehappy {
   margin: 0.2em 0;
