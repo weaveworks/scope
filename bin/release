@@ -165,9 +165,7 @@ publish() {
     cd "$PWD"/"$RELEASE_DIR"
 
     if [ "$RELEASE_TYPE" = 'PRERELEASE' ]; then
-        echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
         push_images
-        echo "** Docker images tagged and pushed"
 
         echo "== Publishing pre-release on GitHub"
 
@@ -197,9 +195,7 @@ publish() {
         fi
         echo '** Sanity checks OK for publishing tag' "$LATEST_TAG" as "$DOCKERHUB_USER/scope:$VERSION"
 
-        echo "== Tagging and pushing images on docker hub as user $DOCKERHUB_USER"
         push_images
-        echo "** Docker images tagged and pushed"
 
         echo "== Publishing release on GitHub"
 
@@ -237,6 +233,7 @@ publish() {
 }
 
 push_images() {
+    echo "== Tagging and pushing images on docker hub and quay.io as user $DOCKERHUB_USER"
     for IMAGE in "scope" "cloud-agent"; do
         $SUDO docker tag "$DOCKERHUB_USER/$IMAGE" "$DOCKERHUB_USER/$IMAGE:$VERSION"
         $SUDO docker push "$DOCKERHUB_USER/$IMAGE:$VERSION"
@@ -245,6 +242,7 @@ push_images() {
         $SUDO docker tag "$DOCKERHUB_USER/$IMAGE:$VERSION" "quay.io/$DOCKERHUB_USER/$IMAGE:$VERSION"
         $SUDO docker push "quay.io/$DOCKERHUB_USER/$IMAGE:$VERSION"
     done
+    echo "** Docker images tagged and pushed"
 }
 
 usage() {
