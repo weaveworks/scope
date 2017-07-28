@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"net/url"
 	"strings"
-	"text/template"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
@@ -47,47 +46,47 @@ var (
 	// Metrics
 	// - `container_cpu_usage_seconds_total` --> cAdvisor in Kubelets.
 	// - `container_memory_usage_bytes` --> cAdvisor in Kubelets.
-	topologyQueries = map[string]map[string]*template.Template{
+	topologyQueries = map[string]map[string]string{
 		// Containers
 
 		report.Container: {
-			docker.MemoryUsage:   parsedTemplate(`sum(container_memory_usage_bytes{container_name="{{.Label}}"})`),
-			docker.CPUTotalUsage: parsedTemplate(`sum(rate(container_cpu_usage_seconds_total{container_name="{{.Label}}"}[1m]))`),
+			docker.MemoryUsage:   `sum(container_memory_usage_bytes{container_name="{{label}}"})`,
+			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{container_name="{{label}}"}[1m]))`,
 		},
 		report.ContainerImage: {
-			docker.MemoryUsage:   parsedTemplate(`sum(container_memory_usage_bytes{image="{{.Label}}"})`),
-			docker.CPUTotalUsage: parsedTemplate(`sum(rate(container_cpu_usage_seconds_total{image="{{.Label}}"}[1m]))`),
+			docker.MemoryUsage:   `sum(container_memory_usage_bytes{image="{{label}}"})`,
+			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{image="{{label}}"}[1m]))`,
 		},
 		"group:container:docker_container_hostname": {
-			docker.MemoryUsage:   parsedTemplate(`sum(container_memory_usage_bytes{pod_name="{{.Label}}"})`),
-			docker.CPUTotalUsage: parsedTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name="{{.Label}}"}[1m]))`),
+			docker.MemoryUsage:   `sum(container_memory_usage_bytes{pod_name="{{label}}"})`,
+			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{pod_name="{{label}}"}[1m]))`,
 		},
 
 		// Kubernetes topologies
 
 		report.Pod: {
-			docker.MemoryUsage:   parsedTemplate(`sum(container_memory_usage_bytes{pod_name="{{.Label}}"})`),
-			docker.CPUTotalUsage: parsedTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name="{{.Label}}"}[1m]))`),
-			"receive_bytes":      parsedTemplate(`sum(rate(container_network_receive_bytes_total{pod_name="{{.Label}}"}[5m]))`),
-			"transmit_bytes":     parsedTemplate(`sum(rate(container_network_transmit_bytes_total{pod_name="{{.Label}}"}[5m]))`),
+			docker.MemoryUsage:   `sum(container_memory_usage_bytes{pod_name="{{label}}"})`,
+			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{pod_name="{{label}}"}[1m]))`,
+			"receive_bytes":      `sum(rate(container_network_receive_bytes_total{pod_name="{{label}}"}[5m]))`,
+			"transmit_bytes":     `sum(rate(container_network_transmit_bytes_total{pod_name="{{label}}"}[5m]))`,
 		},
 		// Pod naming:
 		// https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label
 		"__k8s_controllers": {
-			docker.MemoryUsage:   parsedTemplate(`sum(container_memory_usage_bytes{pod_name=~"^{{.Label}}-[^-]+-[^-]+$"})`),
-			docker.CPUTotalUsage: parsedTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name=~"^{{.Label}}-[^-]+-[^-]+$"}[1m]))`),
+			docker.MemoryUsage:   `sum(container_memory_usage_bytes{pod_name=~"^{{label}}-[^-]+-[^-]+$"})`,
+			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{pod_name=~"^{{label}}-[^-]+-[^-]+$"}[1m]))`,
 		},
 		report.DaemonSet: {
-			docker.MemoryUsage:   parsedTemplate(`sum(container_memory_usage_bytes{pod_name=~"^{{.Label}}-[^-]+$"})`),
-			docker.CPUTotalUsage: parsedTemplate(`sum(rate(container_cpu_usage_seconds_total{pod_name=~"^{{.Label}}-[^-]+$"}[1m]))`),
+			docker.MemoryUsage:   `sum(container_memory_usage_bytes{pod_name=~"^{{label}}-[^-]+$"})`,
+			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{pod_name=~"^{{label}}-[^-]+$"}[1m]))`,
 		},
 		report.Service: {
 			// These recording rules must be defined in the prometheus config.
 			// NB: Pods need to be labeled and selected by their respective Service name, meaning:
 			// - The Service's `spec.selector` needs to select on `name`
 			// - The Service's `metadata.name` needs to be the same value as `spec.selector.name`
-			docker.MemoryUsage:   parsedTemplate(`namespace_label_name:container_memory_usage_bytes:sum{label_name="{{.Label}}"}`),
-			docker.CPUTotalUsage: parsedTemplate(`namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{.Label}}"}`),
+			docker.MemoryUsage:   `namespace_label_name:container_memory_usage_bytes:sum{label_name="{{label}}"}`,
+			docker.CPUTotalUsage: `namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{label}}"}`,
 		},
 	}
 	k8sControllers = map[string]struct{}{
@@ -112,13 +111,7 @@ func RenderMetricURLs(summary NodeSummary, n report.Node) NodeSummary {
 		return summary
 	}
 
-	queries := getTopologyQueries(n.Topology)
-	if len(queries) == 0 {
-		return summary
-	}
-
 	var maxprio float64
-	var bs bytes.Buffer
 	var ms []report.MetricRow
 	found := make(map[string]struct{})
 
@@ -127,18 +120,14 @@ func RenderMetricURLs(summary NodeSummary, n report.Node) NodeSummary {
 		if metric.Priority > maxprio {
 			maxprio = metric.Priority
 		}
-		tpl := queries[metric.ID]
-		if tpl == nil {
-			continue
-		}
 
-		bs.Reset()
-		if err := tpl.Execute(&bs, summary); err != nil {
-			continue
-		}
+		query := metricQuery(summary, n, metric.ID)
 
 		ms = append(ms, metric)
-		ms[len(ms)-1].URL = buildURL(bs.String())
+		if query != "" {
+			ms[len(ms)-1].URL = metricURL(query)
+		}
+
 		found[metric.ID] = struct{}{}
 	}
 
@@ -148,13 +137,8 @@ func RenderMetricURLs(summary NodeSummary, n report.Node) NodeSummary {
 			continue
 		}
 
-		tpl := queries[metadata.ID]
-		if tpl == nil {
-			continue
-		}
-
-		bs.Reset()
-		if err := tpl.Execute(&bs, summary); err != nil {
+		query := metricQuery(summary, n, metadata.ID)
+		if query == "" {
 			continue
 		}
 
@@ -162,7 +146,7 @@ func RenderMetricURLs(summary NodeSummary, n report.Node) NodeSummary {
 		ms = append(ms, report.MetricRow{
 			ID:         metadata.ID,
 			Label:      metadata.Label,
-			URL:        buildURL(bs.String()),
+			URL:        metricURL(query),
 			Metric:     &report.Metric{},
 			Priority:   maxprio,
 			ValueEmpty: true,
@@ -174,8 +158,22 @@ func RenderMetricURLs(summary NodeSummary, n report.Node) NodeSummary {
 	return summary
 }
 
-// buildURL puts together the URL by looking at the configured `metricsGraphURL`.
-func buildURL(query string) string {
+// metricQuery returns the query for the given node and metric.
+func metricQuery(summary NodeSummary, n report.Node, metricID string) string {
+	t := n.Topology
+	if _, ok := k8sControllers[n.Topology]; ok {
+		t = "__k8s_controllers"
+	}
+	queries := topologyQueries[t]
+	if len(queries) == 0 {
+		return ""
+	}
+
+	return strings.Replace(queries[metricID], "{{label}}", summary.Label, -1)
+}
+
+// metricURL builds the URL by embedding it into the configured `metricsGraphURL`.
+func metricURL(query string) string {
 	if strings.Contains(metricsGraphURL, urlQueryVarName) {
 		return strings.Replace(metricsGraphURL, urlQueryVarName, url.QueryEscape(query), -1)
 	}
@@ -192,8 +190,7 @@ func buildURL(query string) string {
 	return metricsGraphURL + url.QueryEscape(params)
 }
 
-// queryParamsAsJSON packs the query into a JSON of the
-// format `{"cells":[{"queries":[$query]}]}`.
+// queryParamsAsJSON packs the query into a JSON of the format `{"cells":[{"queries":[$query]}]}`.
 func queryParamsAsJSON(query string) (string, error) {
 	type cell struct {
 		Queries []string `json:"queries"`
@@ -210,21 +207,4 @@ func queryParamsAsJSON(query string) (string, error) {
 	}
 
 	return buf.String(), nil
-}
-
-// parsedTemplate initializes unnamed text templates.
-func parsedTemplate(query string) *template.Template {
-	tpl, err := template.New("").Parse(query)
-	if err != nil {
-		panic(err)
-	}
-
-	return tpl
-}
-
-func getTopologyQueries(t string) map[string]*template.Template {
-	if _, ok := k8sControllers[t]; ok {
-		t = "__k8s_controllers"
-	}
-	return topologyQueries[t]
 }
