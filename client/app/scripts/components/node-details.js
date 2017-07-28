@@ -202,7 +202,6 @@ class NodeDetails extends React.Component {
             <NodeDetailsHealth
               metrics={details.metrics}
               topologyId={topologyId}
-              nodeColor={nodeColor}
               />
           </div>}
           {details.metadata && <div className="node-details-content-section">

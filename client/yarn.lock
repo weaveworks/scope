@@ -2499,7 +2499,7 @@ fill-range@^2.1.0:
     repeat-element "^1.1.2"
     repeat-string "^1.5.2"
 
-filter-invalid-dom-props@^2.0.0:
+filter-invalid-dom-props@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/filter-invalid-dom-props/-/filter-invalid-dom-props-2.0.0.tgz#527f1494cb3c4f282a73c43804153eb80c42dc2c"
   dependencies:

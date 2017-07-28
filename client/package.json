@@ -23,7 +23,7 @@
     "dagre": "0.7.4",
     "debug": "2.6.6",
     "filesize": "3.5.9",
-    "filter-invalid-dom-props": "^2.0.0",
+    "filter-invalid-dom-props": "2.0.0",
     "font-awesome": "4.7.0",
     "immutable": "3.8.1",
     "lcp": "1.1.0",

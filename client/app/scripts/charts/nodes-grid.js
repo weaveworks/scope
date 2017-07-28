@@ -88,10 +88,6 @@ class NodesGrid extends React.Component {
   }
 
   onClickRow(ev, node) {
-    // TODO: do this better
-    if (ev.target.className === 'node-details-table-node-link') {
-      return;
-    }
     trackMixpanelEvent('scope.node.click', {
       layout: TABLE_VIEW_MODE,
       topologyId: this.props.currentTopology.get('id'),

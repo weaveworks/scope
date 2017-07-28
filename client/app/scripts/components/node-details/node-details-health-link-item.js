@@ -4,7 +4,6 @@ import NodeDetailsHealthItem from './node-details-health-item';
 import CloudLink from '../cloud-link';
 import { getMetricColor } from '../../utils/metric-utils';
 import { trackMixpanelEvent } from '../../utils/tracking-utils';
-import { GRAPH_VIEW_MODE } from '../../constants/naming';
 
 export default class NodeDetailsHealthLinkItem extends React.Component {
 
@@ -28,15 +27,11 @@ export default class NodeDetailsHealthLinkItem extends React.Component {
   }
 
   onClick() {
-    trackMixpanelEvent('scope.node.metric.click', {
-      layout: GRAPH_VIEW_MODE,
-      topologyId: this.props.topologyId,
-    });
+    trackMixpanelEvent('scope.node.metric.click', { topologyId: this.props.topologyId });
   }
 
   render() {
-    const { id, nodeColor, url, ...props } = this.props;
-
+    const { id, url, ...props } = this.props;
     const metricColor = getMetricColor(id);
 
     return (
@@ -52,7 +47,7 @@ export default class NodeDetailsHealthLinkItem extends React.Component {
           {...props}
           hovered={this.state.hovered}
           metricColor={metricColor}
-          labelColor={this.state.hovered && nodeColor} />
+        />
       </CloudLink>
     );
   }
