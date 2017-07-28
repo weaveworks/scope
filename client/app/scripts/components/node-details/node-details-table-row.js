@@ -89,6 +89,19 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null, t
   });
 }
 
+/**
+ * Table row children may react to onClick events but the row
+ * itself does detect a click by looking at onMouseUp. To stop
+ * the bubbling of clicks on child elements we need to dismiss
+ * the onMouseUp event.
+ */
+export const dismissRowClickProps = {
+  onMouseUp: (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+};
+
 export default class NodeDetailsTableRow extends React.Component {
   constructor(props, context) {
     super(props, context);

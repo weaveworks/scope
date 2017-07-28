@@ -24,7 +24,6 @@ export default class NodeDetailsHealth extends React.Component {
     const {
       metrics = makeList(),
       topologyId,
-      nodeColor,
     } = this.props;
 
     const primeCutoff = metrics.length > 3 && !this.state.expanded ? 2 : metrics.length;
@@ -42,7 +41,6 @@ export default class NodeDetailsHealth extends React.Component {
             {...item}
             key={item.id}
             topologyId={topologyId}
-            nodeColor={nodeColor}
           />)}
           {showOverflow && <NodeDetailsHealthOverflow
             items={overflowMetrics}

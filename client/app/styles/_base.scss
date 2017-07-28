@@ -956,7 +956,7 @@ a {
     }
 
     &-link-item {
-      @extend .palable;
+      @extend .btn-opacity;
       cursor: pointer;
       opacity: $link-opacity-default;
       width: 33%;
