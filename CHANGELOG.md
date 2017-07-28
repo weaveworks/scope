@@ -1,4 +1,9 @@
 
+## Release 1.6.1
+
+This is a re-release of 1.6.0. The official build for 1.6.0 inadvertently
+included outdated versions of some components, which introduced security issues.
+
 ## Release 1.6.0
 
 Highlights:
