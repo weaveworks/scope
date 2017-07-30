@@ -122,32 +122,6 @@ has_connection_by_id() {
     assert "curl -s http://$host:4040/api/topology/${view}?system=show |  jq -r '.nodes[\"$from_id\"].adjacency | contains([\"$to_id\"])'" true
 }
 
-# this checks if ebpf is true on all endpoints on a given host
-endpoints_have_ebpf() {
-    local host="$1"
-    local timeout="${2:-60}"
-    local number_of_endpoints=-1
-    local have_ebpf=-1
-    local report
-
-    for i in $(seq "$timeout"); do
-        report=$(curl -s "http://${host}:4040/api/report")
-        number_of_endpoints=$(echo "${report}" | jq -r '.Endpoint.nodes | length')
-        have_ebpf=$(echo "${report}" | jq -r '.Endpoint.nodes[].latest.eBPF | select(.value != null) | contains({"value": "true"})' | wc -l)
-        if [[ "$number_of_endpoints" -gt 0 && "$have_ebpf" -gt 0 && "$number_of_endpoints" -eq "$have_ebpf" ]]; then
-            echo "Found ${number_of_endpoints} endpoints with ebpf enabled"
-            assert "echo '$have_ebpf'" "$number_of_endpoints"
-            return
-        fi
-        sleep 1
-    done
-
-    echo "Only ${have_ebpf} endpoints of ${number_of_endpoints} have ebpf enabled, should be equal"
-    echo "Example of one endpoint:"
-    echo "${report}" | jq -r '[.Endpoint.nodes[]][0]'
-    assert "echo '$have_ebpf" "$number_of_endpoints"
-}
-
 has_connection() {
     local view="$1"
     local host="$2"

@@ -20,6 +20,5 @@ list_containers "$HOST1"
 list_connections "$HOST1"
 
 has_connection containers "$HOST1" client nginx
-endpoints_have_ebpf "$HOST1"
 
 scope_end_suite

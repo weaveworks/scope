@@ -34,6 +34,4 @@ list_connections "$HOST1"
 
 has_connection containers "$HOST1" client server
 
-endpoints_have_ebpf "$HOST1"
-
 scope_end_suite

@@ -25,8 +25,6 @@ scope_on "$HOST1" launch --probe.ebpf.connections=false
 #
 # has_connection_by_id containers "$HOST1" "in-theinternet" "$(node_id containers "$HOST1" nginx)"
 #
-# endpoints_have_ebpf "$HOST1"
-#
 # kill %do_connections
 
 scope_end_suite
