@@ -11,9 +11,6 @@ import (
 
 // Node metadata keys.
 const (
-	Conntracked     = "conntracked"
-	EBPF            = "eBPF"
-	Procspied       = "procspied"
 	ReverseDNSNames = "reverse_dns_names"
 	SnoopedDNSNames = "snooped_dns_names"
 )

@@ -103,13 +103,10 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 // performFlowWalk consults the flowWalker for short-lived connections
 func (t *connectionTracker) performFlowWalk(rpt *report.Report) map[string]fourTuple {
 	seenTuples := map[string]fourTuple{}
-	extraNodeInfo := map[string]string{
-		Conntracked: "true",
-	}
 	t.flowWalker.walkFlows(func(f flow, alive bool) {
 		tuple := flowToTuple(f)
 		seenTuples[tuple.key()] = tuple
-		t.addConnection(rpt, tuple, "", extraNodeInfo, extraNodeInfo)
+		t.addConnection(rpt, tuple, "", nil, nil)
 	})
 	return seenTuples
 }
@@ -138,13 +135,12 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 	}
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
-		var (
-			toNodeInfo   = map[string]string{Procspied: "true"}
-			fromNodeInfo = map[string]string{Procspied: "true"}
-		)
+		var toNodeInfo, fromNodeInfo map[string]string
 		if conn.Proc.PID > 0 {
-			fromNodeInfo[process.PID] = strconv.FormatUint(uint64(conn.Proc.PID), 10)
-			fromNodeInfo[report.HostNodeID] = hostNodeID
+			fromNodeInfo = map[string]string{
+				process.PID:       strconv.FormatUint(uint64(conn.Proc.PID), 10),
+				report.HostNodeID: hostNodeID,
+			}
 		}
 		if incoming {
 			tuple.reverse()
@@ -186,23 +182,19 @@ func (t *connectionTracker) getInitialState() {
 
 func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID string) error {
 	t.ebpfTracker.walkConnections(func(e ebpfConnection) {
-		fromNodeInfo := map[string]string{
-			EBPF: "true",
-		}
-		toNodeInfo := map[string]string{
-			EBPF: "true",
-		}
+		var toNodeInfo, fromNodeInfo map[string]string
 		if e.pid > 0 {
-			fromNodeInfo[process.PID] = strconv.Itoa(e.pid)
-			fromNodeInfo[report.HostNodeID] = hostNodeID
+			fromNodeInfo = map[string]string{
+				process.PID:       strconv.Itoa(e.pid),
+				report.HostNodeID: hostNodeID,
+			}
 		}
-
+		tuple := e.tuple
 		if e.incoming {
-			t.addConnection(rpt, reverse(e.tuple), e.networkNamespace, toNodeInfo, fromNodeInfo)
-		} else {
-			t.addConnection(rpt, e.tuple, e.networkNamespace, fromNodeInfo, toNodeInfo)
+			tuple = reverse(tuple)
+			toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
 		}
-
+		t.addConnection(rpt, tuple, e.networkNamespace, fromNodeInfo, toNodeInfo)
 	})
 	return nil
 }
