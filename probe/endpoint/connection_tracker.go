@@ -106,7 +106,7 @@ func (t *connectionTracker) performFlowWalk(rpt *report.Report) map[string]fourT
 	t.flowWalker.walkFlows(func(f flow, alive bool) {
 		tuple := flowToTuple(f)
 		seenTuples[tuple.key()] = tuple
-		t.addConnection(rpt, tuple, "", nil, nil)
+		t.addConnection(rpt, false, tuple, "", nil, nil)
 	})
 	return seenTuples
 }
@@ -142,11 +142,7 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 				report.HostNodeID: hostNodeID,
 			}
 		}
-		if incoming {
-			tuple.reverse()
-			toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
-		}
-		t.addConnection(rpt, tuple, namespaceID, fromNodeInfo, toNodeInfo)
+		t.addConnection(rpt, incoming, tuple, namespaceID, fromNodeInfo, toNodeInfo)
 	}
 	return nil
 }
@@ -189,17 +185,16 @@ func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID stri
 				report.HostNodeID: hostNodeID,
 			}
 		}
-		tuple := e.tuple
-		if e.incoming {
-			tuple = reverse(tuple)
-			toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
-		}
-		t.addConnection(rpt, tuple, e.networkNamespace, fromNodeInfo, toNodeInfo)
+		t.addConnection(rpt, e.incoming, e.tuple, e.networkNamespace, fromNodeInfo, toNodeInfo)
 	})
 	return nil
 }
 
-func (t *connectionTracker) addConnection(rpt *report.Report, ft fourTuple, namespaceID string, extraFromNode, extraToNode map[string]string) {
+func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft fourTuple, namespaceID string, extraFromNode, extraToNode map[string]string) {
+	if incoming {
+		ft = reverse(ft)
+		extraFromNode, extraToNode = extraToNode, extraFromNode
+	}
 	var (
 		fromNode = t.makeEndpointNode(namespaceID, ft.fromAddr, ft.fromPort, extraFromNode)
 		toNode   = t.makeEndpointNode(namespaceID, ft.toAddr, ft.toPort, extraToNode)
