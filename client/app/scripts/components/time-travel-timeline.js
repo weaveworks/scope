@@ -1,7 +1,7 @@
 import React from 'react';
 import moment from 'moment';
 import classNames from 'classnames';
-import { map, clamp, find, last } from 'lodash';
+import { map, clamp, find, last, debounce } from 'lodash';
 import { connect } from 'react-redux';
 import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
@@ -18,7 +18,7 @@ import {
 } from '../utils/time-utils';
 
 import { NODES_SPRING_FAST_ANIMATION_CONFIG } from '../constants/animation';
-import { TIMELINE_TICK_INTERVAL } from '../constants/timer';
+import { TIMELINE_TICK_INTERVAL, ZOOM_TRACK_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
 const TICK_SETTINGS_PER_PERIOD = {
@@ -110,6 +110,7 @@ class TimeTravelTimeline extends React.Component {
     this.handlePan = this.handlePan.bind(this);
 
     this.saveSvgRef = this.saveSvgRef.bind(this);
+    this.debouncedTrackZoom = debounce(this.trackZoom.bind(this), ZOOM_TRACK_DEBOUNCE_INTERVAL);
   }
 
   componentDidMount() {
@@ -143,6 +144,12 @@ class TimeTravelTimeline extends React.Component {
     this.svgRef = ref;
   }
 
+  trackZoom() {
+    trackMixpanelEvent('scope.time.timeline.zoom', {
+      durationPerPixelInMilliseconds: this.state.durationPerPixel.asMilliseconds()
+    });
+  }
+
   handlePanStart() {
     this.setState({ isPanning: true });
   }
@@ -166,8 +173,8 @@ class TimeTravelTimeline extends React.Component {
     if (durationPerPixel > MAX_DURATION_PER_PX) durationPerPixel = MAX_DURATION_PER_PX;
     if (durationPerPixel < MIN_DURATION_PER_PX) durationPerPixel = MIN_DURATION_PER_PX;
 
-    trackMixpanelEvent('scope.time.timeline.zoom', { scale });
     this.setState({ durationPerPixel });
+    this.debouncedTrackZoom();
     ev.preventDefault();
   }
 
