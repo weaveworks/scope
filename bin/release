@@ -88,7 +88,7 @@ build() {
     ## Inject the version numbers and build the distributables
     ## (library versions?)
     sed -i.tmp "s/SCRIPT_VERSION=\"[^\"]*\"/SCRIPT_VERSION=\"$VERSION\"/" ./scope
-    make SUDO="$SUDO" SCOPE_VERSION="$VERSION" DOCKERHUB_USER="$DOCKERHUB_USER"
+    make SUDO="$SUDO" SCOPE_VERSION="$VERSION" DOCKERHUB_USER="$DOCKERHUB_USER" realclean all
 
     if make tests SUDO="$SUDO"; then
         echo -e '\u2713 Tests pass'
