@@ -574,14 +574,16 @@ export function receiveNodesDelta(delta) {
 
 export function resumeTime() {
   return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.RESUME_TIME
-    });
-    // After unpausing, all of the following calls will re-activate polling.
-    getTopologies(getState, dispatch);
-    getNodes(getState, dispatch, true);
-    if (isResourceViewModeSelector(getState())) {
-      getResourceViewNodesSnapshot(getState(), dispatch);
+    if (isPausedSelector(getState())) {
+      dispatch({
+        type: ActionTypes.RESUME_TIME
+      });
+      // After unpausing, all of the following calls will re-activate polling.
+      getTopologies(getState, dispatch);
+      getNodes(getState, dispatch, true);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
     }
   };
 }
