@@ -295,7 +295,7 @@ func appMain(flags appFlags) {
 	}
 
 	capabilities := map[string]bool{
-		xfer.ReportPersistenceCapability: flags.s3URL != "local",
+		xfer.HistoricReportsCapability: collector.HasHistoricReports(),
 	}
 	handler := router(collector, controlRouter, pipeRouter, flags.externalUI, capabilities)
 	if flags.logHTTP {

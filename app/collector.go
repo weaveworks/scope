@@ -29,6 +29,7 @@ const reportQuantisationInterval = 3 * time.Second
 // interface for parts of the app, and several experimental components.
 type Reporter interface {
 	Report(context.Context, time.Time) (report.Report, error)
+	HasHistoricReports() bool
 	WaitOn(context.Context, chan struct{})
 	UnWait(context.Context, chan struct{})
 }
@@ -139,6 +140,12 @@ func (c *collector) Report(_ context.Context, timestamp time.Time) (report.Repor
 	return rpt, nil
 }
 
+// HasHistoricReports indicates whether the collector contains reports
+// older than now-app.window.
+func (c *collector) HasHistoricReports() bool {
+	return false
+}
+
 // remove reports older than the app.window
 func (c *collector) clean() {
 	var (
@@ -193,6 +200,12 @@ type StaticCollector report.Report
 // Reporter.
 func (c StaticCollector) Report(context.Context, time.Time) (report.Report, error) {
 	return report.Report(c), nil
+}
+
+// HasHistoricReports indicates whether the collector contains reports
+// older than now-app.window.
+func (c StaticCollector) HasHistoricReports() bool {
+	return false
 }
 
 // Add adds a report to the collector's internal state. It implements Adder.
