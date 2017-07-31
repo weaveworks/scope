@@ -7,7 +7,6 @@ import (
 	"github.com/weaveworks/common/mtime"
 
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -51,24 +50,16 @@ var (
 	rpt = report.Report{
 		Endpoint: report.Topology{
 			Nodes: report.Nodes{
-				randomEndpointNodeID: report.MakeNodeWith(randomEndpointNodeID, map[string]string{
-					endpoint.Conntracked: "true",
-				}).
-					WithAdjacent(serverEndpointNodeID).WithTopology(report.Endpoint),
+				randomEndpointNodeID: report.MakeNode(randomEndpointNodeID).
+					WithTopology(report.Endpoint).WithAdjacent(serverEndpointNodeID),
 
-				serverEndpointNodeID: report.MakeNodeWith(serverEndpointNodeID, map[string]string{
-					endpoint.Conntracked: "true",
-				}).
+				serverEndpointNodeID: report.MakeNode(serverEndpointNodeID).
 					WithTopology(report.Endpoint),
 
-				container1EndpointNodeID: report.MakeNodeWith(container1EndpointNodeID, map[string]string{
-					endpoint.Conntracked: "true",
-				}).
-					WithAdjacent(duplicatedEndpointNodeID).WithTopology(report.Endpoint),
+				container1EndpointNodeID: report.MakeNode(container1EndpointNodeID).
+					WithTopology(report.Endpoint).WithAdjacent(duplicatedEndpointNodeID),
 
-				duplicatedEndpointNodeID: report.MakeNodeWith(duplicatedEndpointNodeID, map[string]string{
-					endpoint.Conntracked: "true",
-				}).
+				duplicatedEndpointNodeID: report.MakeNode(duplicatedEndpointNodeID).
 					WithTopology(report.Endpoint),
 			},
 		},

@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
@@ -128,67 +127,53 @@ var (
 				// care to test into the fixture. Just be sure to include the bits
 				// that the mapping funcs extract :)
 				Client54001NodeID: report.MakeNode(Client54001NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					process.PID:        Client1PID,
-					report.HostNodeID:  ClientHostNodeID,
-					endpoint.Procspied: True,
+					process.PID:       Client1PID,
+					report.HostNodeID: ClientHostNodeID,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(10),
 					EgressByteCount:   newu64(100),
 				}),
 
 				Client54002NodeID: report.MakeNode(Client54002NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					process.PID:        Client2PID,
-					report.HostNodeID:  ClientHostNodeID,
-					endpoint.Procspied: True,
+					process.PID:       Client2PID,
+					report.HostNodeID: ClientHostNodeID,
 				}).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(20),
 					EgressByteCount:   newu64(200),
 				}),
 
 				Server80NodeID: report.MakeNode(Server80NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					process.PID:        ServerPID,
-					report.HostNodeID:  ServerHostNodeID,
-					endpoint.Procspied: True,
+					process.PID:       ServerPID,
+					report.HostNodeID: ServerHostNodeID,
 				}),
 
 				NonContainerNodeID: report.MakeNode(NonContainerNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					process.PID:        NonContainerPID,
-					report.HostNodeID:  ServerHostNodeID,
-					endpoint.Procspied: True,
+					process.PID:       NonContainerPID,
+					report.HostNodeID: ServerHostNodeID,
 				}).WithAdjacent(GoogleEndpointNodeID),
 
 				// Probe pseudo nodes
-				UnknownClient1NodeID: report.MakeNode(UnknownClient1NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Procspied: True,
-				}).WithEdge(Server80NodeID, report.EdgeMetadata{
+				UnknownClient1NodeID: report.MakeNode(UnknownClient1NodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(30),
 					EgressByteCount:   newu64(300),
 				}),
 
-				UnknownClient2NodeID: report.MakeNode(UnknownClient2NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Procspied: True,
-				}).WithEdge(Server80NodeID, report.EdgeMetadata{
+				UnknownClient2NodeID: report.MakeNode(UnknownClient2NodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(40),
 					EgressByteCount:   newu64(400),
 				}),
 
-				UnknownClient3NodeID: report.MakeNode(UnknownClient3NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Procspied: True,
-				}).WithEdge(Server80NodeID, report.EdgeMetadata{
+				UnknownClient3NodeID: report.MakeNode(UnknownClient3NodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(50),
 					EgressByteCount:   newu64(500),
 				}),
 
-				RandomClientNodeID: report.MakeNode(RandomClientNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Procspied: True,
-				}).WithEdge(Server80NodeID, report.EdgeMetadata{
+				RandomClientNodeID: report.MakeNode(RandomClientNodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
 					EgressPacketCount: newu64(60),
 					EgressByteCount:   newu64(600),
 				}),
 
-				GoogleEndpointNodeID: report.MakeNode(GoogleEndpointNodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
-					endpoint.Procspied: True,
-				}),
+				GoogleEndpointNodeID: report.MakeNode(GoogleEndpointNodeID).WithTopology(report.Endpoint),
 			},
 		},
 		Process: report.Topology{

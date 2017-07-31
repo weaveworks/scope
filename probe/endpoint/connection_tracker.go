@@ -91,27 +91,17 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 		t.useProcfs()
 	}
 
-	// seenTuples contains information about connections seen by
-	// conntrack
-	seenTuples := t.performFlowWalk(rpt)
+	// consult the flowWalker for short-lived (conntracked) connections
+	seenTuples := map[string]fourTuple{}
+	t.flowWalker.walkFlows(func(f flow, alive bool) {
+		tuple := flowToTuple(f)
+		seenTuples[tuple.key()] = tuple
+		t.addConnection(rpt, false, tuple, "", nil, nil)
+	})
 
 	if t.conf.WalkProc && t.conf.Scanner != nil {
 		t.performWalkProc(rpt, hostNodeID, seenTuples)
 	}
-}
-
-// performFlowWalk consults the flowWalker for short-lived connections
-func (t *connectionTracker) performFlowWalk(rpt *report.Report) map[string]fourTuple {
-	seenTuples := map[string]fourTuple{}
-	extraNodeInfo := map[string]string{
-		Conntracked: "true",
-	}
-	t.flowWalker.walkFlows(func(f flow, alive bool) {
-		tuple := flowToTuple(f)
-		seenTuples[tuple.key()] = tuple
-		t.addConnection(rpt, tuple, "", extraNodeInfo, extraNodeInfo)
-	})
-	return seenTuples
 }
 
 func (t *connectionTracker) existingFlows() map[string]fourTuple {
@@ -138,19 +128,14 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 	}
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
-		var (
-			toNodeInfo   = map[string]string{Procspied: "true"}
-			fromNodeInfo = map[string]string{Procspied: "true"}
-		)
+		var toNodeInfo, fromNodeInfo map[string]string
 		if conn.Proc.PID > 0 {
-			fromNodeInfo[process.PID] = strconv.FormatUint(uint64(conn.Proc.PID), 10)
-			fromNodeInfo[report.HostNodeID] = hostNodeID
+			fromNodeInfo = map[string]string{
+				process.PID:       strconv.FormatUint(uint64(conn.Proc.PID), 10),
+				report.HostNodeID: hostNodeID,
+			}
 		}
-		if incoming {
-			tuple.reverse()
-			toNodeInfo, fromNodeInfo = fromNodeInfo, toNodeInfo
-		}
-		t.addConnection(rpt, tuple, namespaceID, fromNodeInfo, toNodeInfo)
+		t.addConnection(rpt, incoming, tuple, namespaceID, fromNodeInfo, toNodeInfo)
 	}
 	return nil
 }
@@ -186,28 +171,23 @@ func (t *connectionTracker) getInitialState() {
 
 func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID string) error {
 	t.ebpfTracker.walkConnections(func(e ebpfConnection) {
-		fromNodeInfo := map[string]string{
-			EBPF: "true",
-		}
-		toNodeInfo := map[string]string{
-			EBPF: "true",
-		}
+		var toNodeInfo, fromNodeInfo map[string]string
 		if e.pid > 0 {
-			fromNodeInfo[process.PID] = strconv.Itoa(e.pid)
-			fromNodeInfo[report.HostNodeID] = hostNodeID
+			fromNodeInfo = map[string]string{
+				process.PID:       strconv.Itoa(e.pid),
+				report.HostNodeID: hostNodeID,
+			}
 		}
-
-		if e.incoming {
-			t.addConnection(rpt, reverse(e.tuple), e.networkNamespace, toNodeInfo, fromNodeInfo)
-		} else {
-			t.addConnection(rpt, e.tuple, e.networkNamespace, fromNodeInfo, toNodeInfo)
-		}
-
+		t.addConnection(rpt, e.incoming, e.tuple, e.networkNamespace, fromNodeInfo, toNodeInfo)
 	})
 	return nil
 }
 
-func (t *connectionTracker) addConnection(rpt *report.Report, ft fourTuple, namespaceID string, extraFromNode, extraToNode map[string]string) {
+func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft fourTuple, namespaceID string, extraFromNode, extraToNode map[string]string) {
+	if incoming {
+		ft = reverse(ft)
+		extraFromNode, extraToNode = extraToNode, extraFromNode
+	}
 	var (
 		fromNode = t.makeEndpointNode(namespaceID, ft.fromAddr, ft.fromPort, extraFromNode)
 		toNode   = t.makeEndpointNode(namespaceID, ft.toAddr, ft.toPort, extraToNode)
