@@ -251,7 +251,7 @@ Next, create a dedicated project for Weave Scope then apply policy changes neede
     oc new-project weave-scope
     # Scope probe pods need full access to Kubernetes API via 'weave-scope' service account
     oc adm policy add-cluster-role-to-user cluster-admin -z weave-scope
-    # Scope probe pods also need to run as priviliaged containers, so grant 'priviliged' Security Context Constrains (SCC) for 'weave-scop' service account
+    # Scope probe pods also need to run as priviliaged containers, so grant 'priviliged' Security Context Constrains (SCC) for 'weave-scope' service account
     oc adm policy add-scc-to-user privileged -z weave-scope
     # Scope app has an init daemon that has to run as UID 0, so grant 'anyuid' SCC for 'default' service account
     oc adm policy add-scc-to-user anyuid -z default
