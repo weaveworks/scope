@@ -340,6 +340,10 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 	return c.merger.Merge(reports).Upgrade(), nil
 }
 
+func (c *awsCollector) HasHistoricReports() bool {
+	return true
+}
+
 // calculateDynamoKeys generates the row & column keys for Dynamo.
 func calculateDynamoKeys(userid string, now time.Time) (string, string) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(now.UnixNano()/time.Hour.Nanoseconds(), 10))
