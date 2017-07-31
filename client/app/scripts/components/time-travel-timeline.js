@@ -292,11 +292,11 @@ class TimeTravelTimeline extends React.Component {
     const ticks = this.getTicksForPeriod(period, focusedTimestamp);
 
     const verticalShift = this.getVerticalShiftForPeriod(period);
-    const transform = `translate(0, ${62 - (verticalShift * 15)})`;
+    const transform = `translate(0, ${49 - (verticalShift * 16)})`;
 
     // Ticks quickly fade in from the bottom and then slowly
     // start fading out as they are being pushed to the top.
-    const opacity = verticalShift > 1 ? (6 - verticalShift) / 5 : verticalShift;
+    const opacity = verticalShift > 1 ? (5 - verticalShift) / 4 : verticalShift;
 
     return (
       <g className={period} transform={transform} style={{ opacity }}>
