@@ -145,9 +145,10 @@ class TimeTravelTimeline extends React.Component {
   }
 
   trackZoom() {
-    trackMixpanelEvent('scope.time.timeline.zoom', {
-      durationPerPixelInMilliseconds: this.state.durationPerPixel.asMilliseconds()
-    });
+    const periods = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds'];
+    const duration = scaleDuration(this.state.durationPerPixel, MAX_TICK_SPACING_PX);
+    const zoomedPeriod = find(periods, period => Math.floor(duration.get(period)) && period);
+    trackMixpanelEvent('scope.time.timeline.zoom', { zoomedPeriod });
   }
 
   handlePanStart() {
@@ -301,7 +302,7 @@ class TimeTravelTimeline extends React.Component {
     const periodFormat = TICK_SETTINGS_PER_PERIOD[period].format;
     const ticks = this.getTicksForPeriod(period, timelineTransform);
 
-    const ticksRow = MAX_TICK_ROWS - this.getVerticalShiftForPeriod(period);
+    const ticksRow = MAX_TICK_ROWS - this.getVerticalShiftForPeriod(period, timelineTransform);
     const transform = `translate(0, ${ticksRow * TICKS_ROW_SPACING})`;
 
     // Ticks quickly fade in from the bottom and then slowly start
