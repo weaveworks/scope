@@ -288,10 +288,14 @@ export function getNodeDetails(getState, dispatch) {
   if (obj && topologyUrlsById.has(obj.topologyId)) {
     const topologyUrl = topologyUrlsById.get(obj.topologyId);
     let urlComponents = [getApiPath(), topologyUrl, '/', encodeURIComponent(obj.id)];
-    if (currentTopologyId === obj.topologyId) {
-      // Only forward filters for nodes in the current topology
-      const optionsQuery = buildUrlQuery(activeTopologyOptionsSelector(state), state);
-      urlComponents = urlComponents.concat(['?', optionsQuery]);
+
+    // Only forward filters for nodes in the current topology.
+    const topologyOptions = currentTopologyId === obj.topologyId
+      ? activeTopologyOptionsSelector(state) : makeMap();
+
+    const query = buildUrlQuery(topologyOptions, state);
+    if (query) {
+      urlComponents = urlComponents.concat(['?', query]);
     }
     const url = urlComponents.join('');
 
