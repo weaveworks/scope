@@ -1,13 +1,14 @@
 import React from 'react';
 import moment from 'moment';
 import classNames from 'classnames';
-import { map, clamp, find, last } from 'lodash';
+import { map, clamp, find, last, debounce } from 'lodash';
 import { connect } from 'react-redux';
 import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
 import { Motion, spring } from 'react-motion';
 
+import { defaultWheelDelta } from '../utils/zoom-utils';
 import { linearGradientValue } from '../utils/math-utils';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
@@ -17,7 +18,7 @@ import {
 } from '../utils/time-utils';
 
 import { NODES_SPRING_FAST_ANIMATION_CONFIG } from '../constants/animation';
-import { TIMELINE_TICK_INTERVAL } from '../constants/timer';
+import { TIMELINE_TICK_INTERVAL, ZOOM_TRACK_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
 const TICK_SETTINGS_PER_PERIOD = {
@@ -65,10 +66,25 @@ const INIT_DURATION_PER_PX = moment.duration(1, 'minute');
 const MAX_DURATION_PER_PX = moment.duration(3, 'days');
 const MIN_TICK_SPACING_PX = 70;
 const MAX_TICK_SPACING_PX = 415;
-const ZOOM_SENSITIVITY = 1.0015;
+const ZOOM_SENSITIVITY = 2;
 const FADE_OUT_FACTOR = 1.4;
 const TICKS_ROW_SPACING = 16;
 const MAX_TICK_ROWS = 3;
+
+
+function getTimeScale({ focusedTimestamp, durationPerPixel }) {
+  const roundedTimestamp = moment(focusedTimestamp).utc().startOf('second');
+  const startDate = moment(roundedTimestamp).subtract(durationPerPixel);
+  const endDate = moment(roundedTimestamp).add(durationPerPixel);
+  return scaleUtc()
+    .domain([startDate, endDate])
+    .range([-1, 1]);
+}
+
+function findOptimalDurationFit(durations, { durationPerPixel }) {
+  const minimalDuration = scaleDuration(durationPerPixel, 1.1 * MIN_TICK_SPACING_PX);
+  return find(durations, d => d >= minimalDuration);
+}
 
 
 class TimeTravelTimeline extends React.Component {
@@ -94,6 +110,7 @@ class TimeTravelTimeline extends React.Component {
     this.handlePan = this.handlePan.bind(this);
 
     this.saveSvgRef = this.saveSvgRef.bind(this);
+    this.debouncedTrackZoom = debounce(this.trackZoom.bind(this), ZOOM_TRACK_DEBOUNCE_INTERVAL);
   }
 
   componentDidMount() {
@@ -127,6 +144,13 @@ class TimeTravelTimeline extends React.Component {
     this.svgRef = ref;
   }
 
+  trackZoom() {
+    const periods = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds'];
+    const duration = scaleDuration(this.state.durationPerPixel, MAX_TICK_SPACING_PX);
+    const zoomedPeriod = find(periods, period => Math.floor(duration.get(period)) && period);
+    trackMixpanelEvent('scope.time.timeline.zoom', { zoomedPeriod });
+  }
+
   handlePanStart() {
     this.setState({ isPanning: true });
   }
@@ -145,13 +169,13 @@ class TimeTravelTimeline extends React.Component {
   }
 
   handleZoom(ev) {
-    const scale = Math.pow(ZOOM_SENSITIVITY, ev.deltaY);
+    const scale = Math.pow(ZOOM_SENSITIVITY, defaultWheelDelta(ev));
     let durationPerPixel = scaleDuration(this.state.durationPerPixel, scale);
     if (durationPerPixel > MAX_DURATION_PER_PX) durationPerPixel = MAX_DURATION_PER_PX;
     if (durationPerPixel < MIN_DURATION_PER_PX) durationPerPixel = MIN_DURATION_PER_PX;
 
-    trackMixpanelEvent('scope.time.timeline.zoom', { scale });
     this.setState({ durationPerPixel });
+    this.debouncedTrackZoom();
     ev.preventDefault();
   }
 
@@ -175,24 +199,8 @@ class TimeTravelTimeline extends React.Component {
     this.jumpRelativePixels(-this.state.boundingRect.width / 4);
   }
 
-  findOptimalDuration(durations) {
-    const { durationPerPixel } = this.state;
-    const minimalDuration = scaleDuration(durationPerPixel, 1.1 * MIN_TICK_SPACING_PX);
-    return find(durations, d => d >= minimalDuration);
-  }
-
-  getTimeScale(focusedTimestamp) {
-    const roundedTimestamp = moment(focusedTimestamp).utc().startOf('second');
-    const startDate = moment(roundedTimestamp).subtract(this.state.durationPerPixel);
-    const endDate = moment(roundedTimestamp).add(this.state.durationPerPixel);
-    return scaleUtc()
-      .domain([startDate, endDate])
-      .range([-1, 1]);
-  }
-
-  getVerticalShiftForPeriod(period) {
+  getVerticalShiftForPeriod(period, { durationPerPixel }) {
     const { childPeriod, parentPeriod } = TICK_SETTINGS_PER_PERIOD[period];
-    const currentDuration = this.state.durationPerPixel;
 
     let shift = 1;
     if (parentPeriod) {
@@ -202,28 +210,28 @@ class TimeTravelTimeline extends React.Component {
       const fadedOutDuration = scaleDuration(fadedInDuration, FADE_OUT_FACTOR);
 
       const durationLog = d => Math.log(d.asMilliseconds());
-      const transitionFactor = durationLog(fadedOutDuration) - durationLog(currentDuration);
+      const transitionFactor = durationLog(fadedOutDuration) - durationLog(durationPerPixel);
       const transitionLength = durationLog(fadedOutDuration) - durationLog(fadedInDuration);
 
       shift = clamp(transitionFactor / transitionLength, 0, 1);
     }
 
     if (childPeriod) {
-      shift += this.getVerticalShiftForPeriod(childPeriod, currentDuration);
+      shift += this.getVerticalShiftForPeriod(childPeriod, { durationPerPixel });
     }
 
     return shift;
   }
 
-  getTicksForPeriod(period, focusedTimestamp) {
+  getTicksForPeriod(period, timelineTransform) {
     // First find the optimal duration between the ticks - if no satisfactory
     // duration could be found, don't render any ticks for the given period.
     const { parentPeriod, intervals } = TICK_SETTINGS_PER_PERIOD[period];
-    const duration = this.findOptimalDuration(intervals);
+    const duration = findOptimalDurationFit(intervals, timelineTransform);
     if (!duration) return [];
 
     // Get the boundary values for the displayed part of the timeline.
-    const timeScale = this.getTimeScale(focusedTimestamp);
+    const timeScale = getTimeScale(timelineTransform);
     const startPosition = -this.state.boundingRect.width / 2;
     const endPosition = this.state.boundingRect.width / 2;
     const startDate = moment(timeScale.invert(startPosition));
@@ -290,11 +298,11 @@ class TimeTravelTimeline extends React.Component {
     );
   }
 
-  renderPeriodTicks(period, focusedTimestamp) {
+  renderPeriodTicks(period, timelineTransform) {
     const periodFormat = TICK_SETTINGS_PER_PERIOD[period].format;
-    const ticks = this.getTicksForPeriod(period, focusedTimestamp);
+    const ticks = this.getTicksForPeriod(period, timelineTransform);
 
-    const ticksRow = MAX_TICK_ROWS - this.getVerticalShiftForPeriod(period);
+    const ticksRow = MAX_TICK_ROWS - this.getVerticalShiftForPeriod(period, timelineTransform);
     const transform = `translate(0, ${ticksRow * TICKS_ROW_SPACING})`;
 
     // Ticks quickly fade in from the bottom and then slowly start
@@ -311,8 +319,8 @@ class TimeTravelTimeline extends React.Component {
     );
   }
 
-  renderDisabledShadow(focusedTimestamp) {
-    const timeScale = this.getTimeScale(focusedTimestamp);
+  renderDisabledShadow(timelineTransform) {
+    const timeScale = getTimeScale(timelineTransform);
     const nowShift = timeScale(this.state.timestampNow);
     const { width, height } = this.state.boundingRect;
 
@@ -325,7 +333,7 @@ class TimeTravelTimeline extends React.Component {
     );
   }
 
-  renderAxis(focusedTimestamp) {
+  renderAxis(timelineTransform) {
     const { width, height } = this.state.boundingRect;
 
     return (
@@ -335,23 +343,31 @@ class TimeTravelTimeline extends React.Component {
           transform={`translate(${-width / 2}, 0)`}
           width={width} height={height} fillOpacity={0}
         />
-        {this.renderDisabledShadow(focusedTimestamp)}
+        {this.renderDisabledShadow(timelineTransform)}
         <g className="ticks" transform="translate(0, 1)">
-          {this.renderPeriodTicks('year', focusedTimestamp)}
-          {this.renderPeriodTicks('month', focusedTimestamp)}
-          {this.renderPeriodTicks('day', focusedTimestamp)}
-          {this.renderPeriodTicks('minute', focusedTimestamp)}
+          {this.renderPeriodTicks('year', timelineTransform)}
+          {this.renderPeriodTicks('month', timelineTransform)}
+          {this.renderPeriodTicks('day', timelineTransform)}
+          {this.renderPeriodTicks('minute', timelineTransform)}
         </g>
       </g>
     );
   }
 
   renderAnimatedContent() {
-    const timestamp = this.state.focusedTimestamp.valueOf();
+    const focusedTimestampValue = this.state.focusedTimestamp.valueOf();
+    const durationPerPixelValue = this.state.durationPerPixel.asMilliseconds();
 
     return (
-      <Motion style={{ timestamp: spring(timestamp, NODES_SPRING_FAST_ANIMATION_CONFIG) }}>
-        {interpolated => this.renderAxis(moment(interpolated.timestamp))}
+      <Motion
+        style={{
+          focusedTimestampValue: spring(focusedTimestampValue, NODES_SPRING_FAST_ANIMATION_CONFIG),
+          durationPerPixelValue: spring(durationPerPixelValue, NODES_SPRING_FAST_ANIMATION_CONFIG),
+        }}>
+        {interpolated => this.renderAxis({
+          focusedTimestamp: moment(interpolated.focusedTimestampValue),
+          durationPerPixel: moment.duration(interpolated.durationPerPixelValue),
+        })}
       </Motion>
     );
   }
