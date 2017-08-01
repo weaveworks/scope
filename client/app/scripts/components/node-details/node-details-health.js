@@ -1,5 +1,4 @@
 import React from 'react';
-import { List as makeList } from 'immutable';
 
 import ShowMore from '../show-more';
 import NodeDetailsHealthOverflow from './node-details-health-overflow';
@@ -22,7 +21,7 @@ export default class NodeDetailsHealth extends React.Component {
 
   render() {
     const {
-      metrics = makeList(),
+      metrics = [],
       topologyId,
     } = this.props;
 
