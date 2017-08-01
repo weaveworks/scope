@@ -1,6 +1,7 @@
 package report
 
 import (
+	"encoding/binary"
 	"net"
 	"strings"
 
@@ -104,4 +105,33 @@ func ipv4Nets(addrs []net.Addr) []*net.IPNet {
 		}
 	}
 	return nets
+}
+
+// ContainingIPv4Network determines the smallest network containing
+// the given IPv4 addresses. When no addresses are specified, nil is
+// returned.
+func ContainingIPv4Network(ips []net.IP) *net.IPNet {
+	if len(ips) == 0 {
+		return nil
+	}
+	network := net.IPNet{
+		IP:   ips[0],
+		Mask: net.CIDRMask(net.IPv4len*8, net.IPv4len*8),
+	}
+	for _, ip := range ips[1:] {
+		network.Mask = net.CIDRMask(commonIPv4PrefixLen(network.IP, ip), net.IPv4len*8)
+		network.IP = network.IP.Mask(network.Mask)
+	}
+	return &network
+}
+
+func commonIPv4PrefixLen(a, b net.IP) int {
+	x := binary.BigEndian.Uint32(a)
+	y := binary.BigEndian.Uint32(b)
+	cpl := 32
+	for ; x != y; cpl-- {
+		x >>= 1
+		y >>= 1
+	}
+	return cpl
 }

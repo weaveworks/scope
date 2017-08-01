@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -294,23 +295,32 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 	return result, services, err
 }
 
-// FIXME: Hideous hack to remove persistent-connection edges to virtual service
-//        IPs attributed to the internet. We add each service IP as a /32 network
-//        (the global service-cluster-ip-range is not exposed by the API
-//        server so we treat each IP as a /32 network see
-//        https://github.com/kubernetes/kubernetes/issues/25533).
-//        The right way of fixing this is performing DNAT mapping on persistent
-//        connections for which we don't have a robust solution
-//        (see https://github.com/weaveworks/scope/issues/1491)
+// FIXME: Hideous hack to remove persistent-connection edges to
+// virtual service IPs attributed to the internet. The global
+// service-cluster-ip-range is not exposed by the API server (see
+// https://github.com/kubernetes/kubernetes/issues/25533), so instead
+// we synthesise it by computing the smallest network that contains
+// all service IPs. That network may be smaller than the actual range
+// but that is ok, since in the end all we care about is that it
+// contains all the service IPs.
+//
+// The right way of fixing this is performing DNAT mapping on
+// persistent connections for which we don't have a robust solution
+// (see https://github.com/weaveworks/scope/issues/1491).
 func (r *Reporter) hostTopology(services []Service) report.Topology {
-	localNetworks := report.MakeStringSet()
+	serviceIPs := make([]net.IP, 0, len(services))
 	for _, service := range services {
-		localNetworks = localNetworks.Add(service.ClusterIP() + "/32")
+		if ip := net.ParseIP(service.ClusterIP()).To4(); ip != nil {
+			serviceIPs = append(serviceIPs, ip)
+		}
 	}
-	node := report.MakeNode(report.MakeHostNodeID(r.hostID))
-	node = node.WithSets(report.MakeSets().
-		Add(host.LocalNetworks, localNetworks))
-	return report.MakeTopology().AddNode(node)
+	serviceNetwork := report.ContainingIPv4Network(serviceIPs)
+	if serviceNetwork == nil {
+		return report.MakeTopology()
+	}
+	return report.MakeTopology().AddNode(
+		report.MakeNode(report.MakeHostNodeID(r.hostID)).
+			WithSets(report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(serviceNetwork.String()))))
 }
 
 func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deployment, error) {
