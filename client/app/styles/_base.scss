@@ -189,7 +189,7 @@
 
   &.time-travel-open {
     .details-wrapper {
-      margin-top: 85px;
+      margin-top: $timeline-height + 15px;
     }
   }
 }
@@ -264,7 +264,7 @@
   height: 0;
 
   &.visible {
-    height: 105px;
+    height: $timeline-height + 35px;
     margin-bottom: 15px;
     margin-top: -5px;
   }
@@ -277,7 +277,7 @@
   .time-travel-timeline {
     align-items: center;
     display: flex;
-    height: 70px;
+    height: $timeline-height;
 
     svg {
       @extend .grabbable;
@@ -321,11 +321,11 @@
 
     &:before {
       top: 0;
-      height: 70px;
+      height: $timeline-height;
     }
 
     &:after {
-      top: 70px;
+      top: $timeline-height;
       height: 9px;
       opacity: 0.15;
     }
