@@ -8,6 +8,7 @@ import { scaleUtc } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
 import { Motion, spring } from 'react-motion';
 
+import { linearGradientValue } from '../utils/math-utils';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
   nowInSecondsPrecision,
@@ -66,6 +67,8 @@ const MIN_TICK_SPACING_PX = 70;
 const MAX_TICK_SPACING_PX = 415;
 const ZOOM_SENSITIVITY = 1.0015;
 const FADE_OUT_FACTOR = 1.4;
+const TICKS_ROW_SPACING = 16;
+const MAX_TICK_ROWS = 3;
 
 
 class TimeTravelTimeline extends React.Component {
@@ -291,12 +294,15 @@ class TimeTravelTimeline extends React.Component {
     const periodFormat = TICK_SETTINGS_PER_PERIOD[period].format;
     const ticks = this.getTicksForPeriod(period, focusedTimestamp);
 
-    const verticalShift = this.getVerticalShiftForPeriod(period);
-    const transform = `translate(0, ${49 - (verticalShift * 16)})`;
+    const ticksRow = MAX_TICK_ROWS - this.getVerticalShiftForPeriod(period);
+    const transform = `translate(0, ${ticksRow * TICKS_ROW_SPACING})`;
 
-    // Ticks quickly fade in from the bottom and then slowly
-    // start fading out as they are being pushed to the top.
-    const opacity = verticalShift > 1 ? (5 - verticalShift) / 4 : verticalShift;
+    // Ticks quickly fade in from the bottom and then slowly start
+    // fading out towards the top until they are pushed out of canvas.
+    const focusedRow = MAX_TICK_ROWS - 1;
+    const opacity = ticksRow > focusedRow ?
+      linearGradientValue(ticksRow, [MAX_TICK_ROWS, focusedRow]) :
+      linearGradientValue(ticksRow, [-2, focusedRow]);
 
     return (
       <g className={period} transform={transform} style={{ opacity }}>
@@ -330,7 +336,7 @@ class TimeTravelTimeline extends React.Component {
           width={width} height={height} fillOpacity={0}
         />
         {this.renderDisabledShadow(focusedTimestamp)}
-        <g className="ticks">
+        <g className="ticks" transform="translate(0, 1)">
           {this.renderPeriodTicks('year', focusedTimestamp)}
           {this.renderPeriodTicks('month', focusedTimestamp)}
           {this.renderPeriodTicks('day', focusedTimestamp)}
