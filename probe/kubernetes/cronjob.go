@@ -63,11 +63,14 @@ func (cj *cronJob) Selectors() ([]labels.Selector, error) {
 }
 
 func (cj *cronJob) GetNode() report.Node {
-	return cj.MetaNode(report.MakeCronJobNodeID(cj.UID())).WithLatests(map[string]string{
-		NodeType:      "CronJob",
-		Schedule:      cj.Spec.Schedule,
-		Suspended:     fmt.Sprint(cj.Spec.Suspend != nil && *cj.Spec.Suspend), // nil -> false
-		LastScheduled: cj.Status.LastScheduleTime.Format(time.RFC3339Nano),
-		ActiveJobs:    fmt.Sprint(len(cj.jobs)),
-	})
+	latest := map[string]string{
+		NodeType:   "CronJob",
+		Schedule:   cj.Spec.Schedule,
+		Suspended:  fmt.Sprint(cj.Spec.Suspend != nil && *cj.Spec.Suspend), // nil -> false
+		ActiveJobs: fmt.Sprint(len(cj.jobs)),
+	}
+	if cj.Status.LastScheduleTime != nil {
+		latest[LastScheduled] = cj.Status.LastScheduleTime.Format(time.RFC3339Nano)
+	}
+	return cj.MetaNode(report.MakeCronJobNodeID(cj.UID())).WithLatests(latest)
 }
