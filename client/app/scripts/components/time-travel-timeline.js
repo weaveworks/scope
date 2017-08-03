@@ -289,7 +289,7 @@ class TimeTravelTimeline extends React.Component {
       <g transform={`translate(${position}, 0)`} key={timestamp.format()}>
         {!isBehind && <line y2="75" stroke="#ddd" strokeWidth="1" />}
         {!disabled && <title>Jump to {timestamp.utc().format()}</title>}
-        <foreignObject width="100" height="20">
+        <foreignObject width="100" height="20" style={{ lineHeight: '20px' }}>
           <a className="timestamp-label" disabled={disabled} onClick={!disabled && handleClick}>
             {timestamp.utc().format(periodFormat)}
           </a>
