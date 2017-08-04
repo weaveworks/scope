@@ -27,15 +27,18 @@
 }
 
 .colorable {
-  transition: background-color .3s $base-ease;
+  transition: none;
+  // transition: background-color .3s $base-ease;
 }
 
 .palable {
-  transition: all .2s $base-ease;
+  transition: none;
+  // transition: all .2s $base-ease;
 }
 
 .hideable {
-  transition: opacity .5s $base-ease;
+  transition: none;
+  // transition: opacity .5s $base-ease;
 }
 
 .blinkable {
@@ -259,7 +262,7 @@
   margin-bottom: 15px;
   z-index: 2001;
 
-  transition: all .15s $base-ease;
+  // transition: all .15s $base-ease;
   overflow: hidden;
   height: 0;
 
@@ -411,6 +414,16 @@
 
 }
 
+.nodes-overlay {
+  // transition: opacity 2.5s $base-ease;
+  pointer-events: none;
+  opacity: 0;
+
+  &.active {
+    opacity: $node-elements-in-background-opacity;
+  }
+}
+
 .nodes-chart, .nodes-resources {
 
   &-error, &-loading {
@@ -439,7 +452,7 @@
   }
 
   &-loading &-error-icon-container {
-    @extend .blinkable;
+    // @extend .blinkable;
   }
 
   &-loading {
@@ -468,7 +481,7 @@
   }
 
   .nodes-chart-elements .node {
-    transition: opacity .2s $base-ease;
+    // transition: opacity .2s $base-ease;
     text-align: center;
 
     .node-label {
@@ -562,12 +575,6 @@
   }
 
   .edge {
-    transition: opacity .5s $base-ease;
-
-    &.blurred {
-      opacity: $edge-opacity-blurred;
-    }
-
     .link {
       fill: none;
       stroke: $edge-color;
@@ -628,7 +635,7 @@
       fill: none;
       stroke-opacity: 1;
       stroke-width: $node-border-stroke-width;
-      transition: stroke-opacity 0.333s $base-ease, fill 0.333s $base-ease;
+      // transition: stroke-opacity 0.333s $base-ease, fill 0.333s $base-ease;
     }
 
     &.metrics .border {
@@ -700,7 +707,7 @@
     right: $details-window-padding-left;
     top: 100px;
     bottom: 48px;
-    transition: transform 0.33333s cubic-bezier(0,0,0.21,1), margin-top .15s $base-ease;
+    // transition: transform 0.33333s cubic-bezier(0,0,0.21,1), margin-top .15s $base-ease;
   }
 }
 
@@ -848,7 +855,7 @@
       color: $white;
 
       &-icon {
-        @extend .blinkable;
+        // @extend .blinkable;
         margin-right: 0.5em;
       }
     }
@@ -1237,7 +1244,7 @@
     left: 10px;
     bottom: 10px;
     right: 0;
-    transition: transform 0.5s cubic-bezier(0.230, 1.000, 0.320, 1.000);
+    // transition: transform 0.5s cubic-bezier(0.230, 1.000, 0.320, 1.000);
     @extend .shadow-2;
   }
 
@@ -1397,7 +1404,7 @@
   }
 
   .error {
-    animation: blinking 2.0s 60 $base-ease; // blink for 2 minutes
+    // animation: blinking 2.0s 60 $base-ease; // blink for 2 minutes
     color: $text-secondary-color;
   }
 
@@ -1421,7 +1428,7 @@
   }
 
   &.status-loading {
-    animation: blinking 2.0s 150 $base-ease; // keep blinking for 5 minutes
+    // animation: blinking 2.0s 150 $base-ease; // keep blinking for 5 minutes
     text-transform: none;
     color: $text-color;
   }
@@ -1530,7 +1537,7 @@
   }
 
   &-info {
-    @extend .blinkable;
+    // @extend .blinkable;
     display: block;
     margin-top: 5px;
     text-align: right;
@@ -1618,7 +1625,7 @@
   display: inline-block;
   position: relative;
   width: 10em;
-  transition: width 0.3s 0s $base-ease;
+  // transition: width 0.3s 0s $base-ease;
 
   &-wrapper {
     flex: 0 1 20%;
@@ -1638,7 +1645,7 @@
     color: $text-tertiary-color;
     top: 0;
     opacity: 0;
-    transition: transform 0.3s 0s $base-ease, opacity 0.3s 0s $base-ease;
+    // transition: transform 0.3s 0s $base-ease, opacity 0.3s 0s $base-ease;
     text-align: left;
   }
 
@@ -1665,7 +1672,7 @@
     &-hint {
       font-size: 0.8rem;
       text-transform: uppercase;
-      transition: opacity 0.3s 0.5s $base-ease;
+      // transition: opacity 0.3s 0.5s $base-ease;
       opacity: 1;
     }
   }
@@ -1703,7 +1710,7 @@
   &-focused &-label-hint,
   &-pinned &-label-hint,
   &-filled &-label-hint {
-    transition: opacity 0.1s 0s $base-ease;
+    // transition: opacity 0.1s 0s $base-ease;
     opacity: 0;
   }
 
@@ -1712,7 +1719,7 @@
   &-pinned &-hint {
     opacity: 1;
     transform: translate3d(0, 2.75em, 0);
-    transition: transform 0.3s 0.3s $base-ease, opacity 0.3s 0.3s $base-ease;
+    // transition: transform 0.3s 0.3s $base-ease, opacity 0.3s 0.3s $base-ease;
   }
 
   &-focused &-input-field,

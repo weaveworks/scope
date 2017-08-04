@@ -151,6 +151,7 @@ class NodeDetails extends React.Component {
   }
 
   renderDetails() {
+    console.log('render details');
     const { details, nodeControlStatus, nodeMatches = makeMap() } = this.props;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);

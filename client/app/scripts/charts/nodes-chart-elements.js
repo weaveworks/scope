@@ -1,6 +1,7 @@
 import React from 'react';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
-import { Map as makeMap, List as makeList } from 'immutable';
+import { fromJS, Map as makeMap, List as makeList } from 'immutable';
 
 import NodeContainer from './node-container';
 import EdgeContainer from './edge-container';
@@ -152,7 +153,6 @@ class NodesChartElements extends React.Component {
         matches={node.get('matches')}
         networks={node.get('networks')}
         metric={node.get('metric')}
-        blurred={node.get('blurred')}
         focused={node.get('focused')}
         highlighted={node.get('highlighted')}
         shape={node.get('shape')}
@@ -183,7 +183,6 @@ class NodesChartElements extends React.Component {
         waypoints={edge.get('points')}
         highlighted={edge.get('highlighted')}
         focused={edge.get('focused')}
-        blurred={edge.get('blurred')}
         scale={edge.get('scale')}
         isAnimated={isAnimated}
       />
@@ -191,6 +190,16 @@ class NodesChartElements extends React.Component {
   }
 
   renderElement(element) {
+    if (element.get('overlay')) {
+      const className = classNames('nodes-overlay', { active: element.get('active') });
+      return (
+        <rect
+          className={className}
+          x={-1} y={-1} width={2} height={2}
+          transform="scale(1000000)"fill="#fff"
+        />
+      );
+    }
     // This heuristics is not ideal but it works.
     return element.get('points') ? this.renderEdge(element) : this.renderNode(element);
   }
@@ -213,6 +222,11 @@ class NodesChartElements extends React.Component {
       .map(this.edgeScaleDecorator)
       .groupBy(this.edgeDisplayLayer);
 
+    // const orderedElements = makeList([
+    //   edges,
+    //   nodes,
+    // ]).flatten(true);
+
     // NOTE: The elements need to be arranged into a single array outside
     // of DOM structure for React rendering engine to do smart rearrangements
     // without unnecessary re-rendering of the elements themselves. So e.g.
@@ -220,6 +234,7 @@ class NodesChartElements extends React.Component {
     const orderedElements = makeList([
       edges.get(BLURRED_EDGES_LAYER, makeList()),
       nodes.get(BLURRED_NODES_LAYER, makeList()),
+      fromJS([{ overlay: true, active: !!nodes.get(BLURRED_NODES_LAYER) }]),
       edges.get(NORMAL_EDGES_LAYER, makeList()),
       nodes.get(NORMAL_NODES_LAYER, makeList()),
       edges.get(HIGHLIGHTED_EDGES_LAYER, makeList()),
@@ -242,7 +257,7 @@ function mapStateToProps(state) {
     hasSelectedNode: hasSelectedNodeFn(state),
     layoutNodes: layoutNodesSelector(state),
     layoutEdges: layoutEdgesSelector(state),
-    isAnimated: !graphExceedsComplexityThreshSelector(state),
+    isAnimated: false && !graphExceedsComplexityThreshSelector(state),
     highlightedNodeIds: highlightedNodeIdsSelector(state),
     highlightedEdgeIds: highlightedEdgeIdsSelector(state),
     selectedNetworkNodesIds: selectedNetworkNodesIdsSelector(state),
