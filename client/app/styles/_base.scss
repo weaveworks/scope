@@ -448,8 +448,9 @@
     li { padding-top: 5px; }
   }
 
-  &-loading &-error-icon-container {
-    // @extend .blinkable;
+  // Make watermarks blink only if actually shown (otherwise the FF performance decreses weirdly).
+  &-loading:not(.hide) &-error-icon-container {
+    @extend .blinkable;
   }
 
   &-loading {
@@ -850,7 +851,7 @@
       color: $white;
 
       &-icon {
-        // @extend .blinkable;
+        @extend .blinkable;
         margin-right: 0.5em;
       }
     }
@@ -1399,7 +1400,7 @@
   }
 
   .error {
-    // animation: blinking 2.0s 60 $base-ease; // blink for 2 minutes
+    animation: blinking 2.0s 60 $base-ease; // blink for 2 minutes
     color: $text-secondary-color;
   }
 
@@ -1423,7 +1424,7 @@
   }
 
   &.status-loading {
-    // animation: blinking 2.0s 150 $base-ease; // keep blinking for 5 minutes
+    animation: blinking 2.0s 150 $base-ease; // keep blinking for 5 minutes
     text-transform: none;
     color: $text-color;
   }
@@ -1532,7 +1533,7 @@
   }
 
   &-info {
-    // @extend .blinkable;
+    @extend .blinkable;
     display: block;
     margin-top: 5px;
     text-align: right;
