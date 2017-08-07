@@ -190,13 +190,13 @@ class NodesChartElements extends React.Component {
   }
 
   renderElement(element) {
-    if (element.get('overlay')) {
-      const className = classNames('nodes-overlay', { active: element.get('active') });
+    if (element.get('isOverlay')) {
+      const className = classNames('nodes-overlay', { active: element.get('isActive') });
       return (
         <rect
           className={className}
           x={-1} y={-1} width={2} height={2}
-          transform="scale(1000000)"fill="#fff"
+          transform="scale(1000000)" fill="#fff"
         />
       );
     }
@@ -229,7 +229,7 @@ class NodesChartElements extends React.Component {
     const orderedElements = makeList([
       edges.get(BLURRED_EDGES_LAYER, makeList()),
       nodes.get(BLURRED_NODES_LAYER, makeList()),
-      fromJS([{ overlay: true, active: !!nodes.get(BLURRED_NODES_LAYER) }]),
+      fromJS([{ isOverlay: true, isActive: !!nodes.get(BLURRED_NODES_LAYER) }]),
       edges.get(NORMAL_EDGES_LAYER, makeList()),
       nodes.get(NORMAL_NODES_LAYER, makeList()),
       edges.get(HIGHLIGHTED_EDGES_LAYER, makeList()),

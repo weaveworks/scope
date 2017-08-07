@@ -27,18 +27,15 @@
 }
 
 .colorable {
-  transition: none;
-  // transition: background-color .3s $base-ease;
+  transition: background-color .3s $base-ease;
 }
 
 .palable {
-  transition: none;
-  // transition: all .2s $base-ease;
+  transition: all .2s $base-ease;
 }
 
 .hideable {
-  transition: none;
-  // transition: opacity .5s $base-ease;
+  transition: opacity .5s $base-ease;
 }
 
 .blinkable {
@@ -262,7 +259,7 @@
   margin-bottom: 15px;
   z-index: 2001;
 
-  // transition: all .15s $base-ease;
+  transition: all .15s $base-ease;
   overflow: hidden;
   height: 0;
 
@@ -415,7 +412,7 @@
 }
 
 .nodes-overlay {
-  // transition: opacity 2.5s $base-ease;
+  transition: all .5s $base-ease;
   pointer-events: none;
   opacity: 0;
 
@@ -481,7 +478,6 @@
   }
 
   .nodes-chart-elements .node {
-    // transition: opacity .2s $base-ease;
     text-align: center;
 
     .node-label {
@@ -635,7 +631,6 @@
       fill: none;
       stroke-opacity: 1;
       stroke-width: $node-border-stroke-width;
-      // transition: stroke-opacity 0.333s $base-ease, fill 0.333s $base-ease;
     }
 
     &.metrics .border {
@@ -707,7 +702,7 @@
     right: $details-window-padding-left;
     top: 100px;
     bottom: 48px;
-    // transition: transform 0.33333s cubic-bezier(0,0,0.21,1), margin-top .15s $base-ease;
+    transition: transform 0.33333s cubic-bezier(0,0,0.21,1), margin-top .15s $base-ease;
   }
 }
 
@@ -1244,7 +1239,7 @@
     left: 10px;
     bottom: 10px;
     right: 0;
-    // transition: transform 0.5s cubic-bezier(0.230, 1.000, 0.320, 1.000);
+    transition: transform 0.5s cubic-bezier(0.230, 1.000, 0.320, 1.000);
     @extend .shadow-2;
   }
 
@@ -1625,7 +1620,7 @@
   display: inline-block;
   position: relative;
   width: 10em;
-  // transition: width 0.3s 0s $base-ease;
+  transition: width 0.3s 0s $base-ease;
 
   &-wrapper {
     flex: 0 1 20%;
@@ -1645,7 +1640,7 @@
     color: $text-tertiary-color;
     top: 0;
     opacity: 0;
-    // transition: transform 0.3s 0s $base-ease, opacity 0.3s 0s $base-ease;
+    transition: transform 0.3s 0s $base-ease, opacity 0.3s 0s $base-ease;
     text-align: left;
   }
 
@@ -1672,7 +1667,7 @@
     &-hint {
       font-size: 0.8rem;
       text-transform: uppercase;
-      // transition: opacity 0.3s 0.5s $base-ease;
+      transition: opacity 0.3s 0.5s $base-ease;
       opacity: 1;
     }
   }
@@ -1710,7 +1705,7 @@
   &-focused &-label-hint,
   &-pinned &-label-hint,
   &-filled &-label-hint {
-    // transition: opacity 0.1s 0s $base-ease;
+    transition: opacity 0.1s 0s $base-ease;
     opacity: 0;
   }
 
@@ -1719,7 +1714,7 @@
   &-pinned &-hint {
     opacity: 1;
     transform: translate3d(0, 2.75em, 0);
-    // transition: transform 0.3s 0.3s $base-ease, opacity 0.3s 0.3s $base-ease;
+    transition: transform 0.3s 0.3s $base-ease, opacity 0.3s 0.3s $base-ease;
   }
 
   &-focused &-input-field,
