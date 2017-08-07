@@ -222,11 +222,6 @@ class NodesChartElements extends React.Component {
       .map(this.edgeScaleDecorator)
       .groupBy(this.edgeDisplayLayer);
 
-    // const orderedElements = makeList([
-    //   edges,
-    //   nodes,
-    // ]).flatten(true);
-
     // NOTE: The elements need to be arranged into a single array outside
     // of DOM structure for React rendering engine to do smart rearrangements
     // without unnecessary re-rendering of the elements themselves. So e.g.
@@ -257,7 +252,7 @@ function mapStateToProps(state) {
     hasSelectedNode: hasSelectedNodeFn(state),
     layoutNodes: layoutNodesSelector(state),
     layoutEdges: layoutEdgesSelector(state),
-    isAnimated: false && !graphExceedsComplexityThreshSelector(state),
+    isAnimated: !graphExceedsComplexityThreshSelector(state),
     highlightedNodeIds: highlightedNodeIdsSelector(state),
     highlightedEdgeIds: highlightedEdgeIdsSelector(state),
     selectedNetworkNodesIds: selectedNetworkNodesIdsSelector(state),
