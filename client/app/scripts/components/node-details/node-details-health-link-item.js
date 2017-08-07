@@ -3,6 +3,7 @@ import React from 'react';
 import NodeDetailsHealthItem from './node-details-health-item';
 import CloudLink from '../cloud-link';
 import { getMetricColor } from '../../utils/metric-utils';
+import { darkenColor } from '../../utils/color-utils';
 import { trackMixpanelEvent } from '../../utils/tracking-utils';
 
 export default class NodeDetailsHealthLinkItem extends React.Component {
@@ -33,6 +34,7 @@ export default class NodeDetailsHealthLinkItem extends React.Component {
   render() {
     const { id, url, ...props } = this.props;
     const metricColor = getMetricColor(id);
+    const labelColor = this.state.hovered && !props.valueEmpty && darkenColor(metricColor);
 
     return (
       <CloudLink
@@ -46,6 +48,7 @@ export default class NodeDetailsHealthLinkItem extends React.Component {
         <NodeDetailsHealthItem
           {...props}
           hovered={this.state.hovered}
+          labelColor={labelColor}
           metricColor={metricColor}
         />
       </CloudLink>
