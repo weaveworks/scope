@@ -189,16 +189,23 @@ class NodesChartElements extends React.Component {
     );
   }
 
+  renderOverlay(element) {
+    // NOTE: This piece of code is a bit hacky - as we can't set the absolute coords for the
+    // SVG element, we set the zoom level high enough that we're sure it covers the screen.
+    const className = classNames('nodes-chart-overlay', { active: element.get('isActive') });
+    const scale = this.props.selectedScale * 100000;
+    return (
+      <rect
+        className={className} fill="#fff"
+        x={-1} y={-1} width={2} height={2}
+        transform={`scale(${scale})`}
+      />
+    );
+  }
+
   renderElement(element) {
     if (element.get('isOverlay')) {
-      const className = classNames('nodes-overlay', { active: element.get('isActive') });
-      return (
-        <rect
-          className={className}
-          x={-1} y={-1} width={2} height={2}
-          transform="scale(1000000)" fill="#fff"
-        />
-      );
+      return this.renderOverlay(element);
     }
     // This heuristics is not ideal but it works.
     return element.get('points') ? this.renderEdge(element) : this.renderNode(element);

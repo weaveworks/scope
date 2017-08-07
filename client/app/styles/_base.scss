@@ -411,8 +411,7 @@
 
 }
 
-.nodes-overlay {
-  transition: all .5s $base-ease;
+.nodes-chart-overlay {
   pointer-events: none;
   opacity: 0;
 
