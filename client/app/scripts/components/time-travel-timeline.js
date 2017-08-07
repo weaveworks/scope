@@ -8,7 +8,7 @@ import { scaleUtc } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
 import { Motion, spring } from 'react-motion';
 
-import { defaultWheelDelta } from '../utils/zoom-utils';
+import { zoomFactor } from '../utils/zoom-utils';
 import { linearGradientValue } from '../utils/math-utils';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
@@ -66,7 +66,6 @@ const INIT_DURATION_PER_PX = moment.duration(1, 'minute');
 const MAX_DURATION_PER_PX = moment.duration(3, 'days');
 const MIN_TICK_SPACING_PX = 70;
 const MAX_TICK_SPACING_PX = 415;
-const ZOOM_SENSITIVITY = 2;
 const FADE_OUT_FACTOR = 1.4;
 const TICKS_ROW_SPACING = 16;
 const MAX_TICK_ROWS = 3;
@@ -169,8 +168,7 @@ class TimeTravelTimeline extends React.Component {
   }
 
   handleZoom(ev) {
-    const scale = Math.pow(ZOOM_SENSITIVITY, defaultWheelDelta(ev));
-    let durationPerPixel = scaleDuration(this.state.durationPerPixel, scale);
+    let durationPerPixel = scaleDuration(this.state.durationPerPixel, zoomFactor(ev));
     if (durationPerPixel > MAX_DURATION_PER_PX) durationPerPixel = MAX_DURATION_PER_PX;
     if (durationPerPixel < MIN_DURATION_PER_PX) durationPerPixel = MIN_DURATION_PER_PX;
 
