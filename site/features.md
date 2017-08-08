@@ -9,10 +9,11 @@ Browse the current feature set for Scope with links to relevant indepth topics:
  * [Topology Mapping](#topology-mapping)
  * [Views in Scope](#views)
  * [Graphic or Table Mode](#mode)
- * [Flexible Filtering](#flexible-filtering)
- * [Powerful Search](#powerful-search)
+ * [Filtering](#flexible-filtering)
+ * [Searching](#powerful-search)
  * [Real-time App and Container Metrics](#real-time-app-and-container-metrics)
  * [Troubleshoot and Manage Containers](#interact-with-and-manage-containers)
+ * [Time Travel](#timeline)
  * [Generate Custom Metrics using the Plugin API](#custom-plugins)
  
 
@@ -44,17 +45,17 @@ In addition to these views, nodes can be presented either in graphical or in tab
 
 !['Table Mode Displaying Nodes by resource usage'](images/table-mode.png)
 
-## <a name="flexible-filtering"></a>Flexible Filtering
+## <a name="flexible-filtering"></a>Filtering
 
 In the left-hand corner of the UI are other filtering and other options. Nodes can be filtered by CPU and Memory so that you can easily find containers using the most resources. In the container view, options are available to filter by system, application or to show all of the containers and if you are running an app in Kubernetes then your app can be filtered by namespace and by container state whether running or stopped or contained and uncontained. 
 
 !['CPU usage indicator in Weave Scope'](images/hosts-cpu.png)
 
-## <a name="powerful-search"></a> Powerful Search
+## <a name="powerful-search"></a> Searching
 
 Use Search to quickly find node types, containers and processes by name, label or even path.  The search functionality supports simple operands so that you can for example, find processes consuming a certain amount memory or nodes using too much CPU. Search terms may also be stacked to create custom, complex search criterion. See the online help within the product for a full list of allowable operands.
 
-!['Powerful Search'](images/search.png)
+!['Search'](images/search.png)
 
 ## <a name="real-time-app-and-container-metrics"></a>Real-time App and Container Metrics
 
@@ -69,6 +70,21 @@ Click on a container, pod or host to view the controls that allow you to: pause,
 And if further troubleshooting is required, terminal windows can be launched from any container or host so that you can interact with your app and run any UNIX command to diagnose issues.  Launch a terminal by clicking the `>_` icon from the details panel of a selected container or host. 
 
 !['Terminal for container interaction'](images/terminal-view.png)
+
+## <a name="timeline"></a> Time Travel 
+
+Another way to troubleshoot your app running in the cloud is to use the Time Travel controls. All Scope views: Processes, Containers, Orchestrators and Hosts allow you to travel back in time to view an _in situ_ state of your app that can be compared with its live state.  
+
+To gain insight into a newly deployed service, click on it and then toggle the Time Travel control. Compare its live state with a state in the past by scrolling through the Timeline that appears.  This feature is useful for verifying that newly deployed fixes have actually improved the functionality or performance of your app as it runs in the cluster. It also allows you to quickly see changes that have been as the service or container is running in its environment.   
+
+Other troubleshooting scenarios include: 
+
+* Comparing resources from the current state with one in the past
+* Comparing the state of your orchestrator at different points in time
+* Comparing container configuration from one deployment to the next
+
+!['Time Travel Controls and Timeline'](images/timeline.png)
+
 
 ## <a name="custom-plugins"></a>Generate Custom Metrics using the Plugin API
 
