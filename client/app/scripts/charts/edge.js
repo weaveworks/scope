@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 
 import { enterEdge, leaveEdge } from '../actions/app-actions';
+import { encodeIdAttribute, decodeIdAttribute } from '../utils/dom-utils';
 
 class Edge extends React.Component {
 
@@ -19,7 +20,7 @@ class Edge extends React.Component {
 
     return (
       <g
-        id={id} className={className}
+        id={encodeIdAttribute(id)} className={className}
         onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave}
       >
@@ -35,11 +36,11 @@ class Edge extends React.Component {
   }
 
   handleMouseEnter(ev) {
-    this.props.enterEdge(ev.currentTarget.id);
+    this.props.enterEdge(decodeIdAttribute(ev.currentTarget.id));
   }
 
   handleMouseLeave(ev) {
-    this.props.leaveEdge(ev.currentTarget.id);
+    this.props.leaveEdge(decodeIdAttribute(ev.currentTarget.id));
   }
 }
 

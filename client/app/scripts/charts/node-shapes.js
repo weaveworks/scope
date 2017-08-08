@@ -20,13 +20,14 @@ import {
   octagonShapeProps,
   cloudShapeProps,
 } from '../utils/node-shape-utils';
+import { encodeIdAttribute } from '../utils/dom-utils';
 
 
 function NodeShape(shapeType, shapeElement, shapeProps, { id, highlighted, color, metric }) {
   const { height, hasMetric, formattedValue } = getMetricValue(metric);
   const className = classNames('shape', `shape-${shapeType}`, { metrics: hasMetric });
   const metricStyle = { fill: getMetricColor(metric) };
-  const clipId = `metric-clip-${id}`;
+  const clipId = encodeIdAttribute(`metric-clip-${id}`);
 
   return (
     <g className={className}>
