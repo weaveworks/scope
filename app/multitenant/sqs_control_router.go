@@ -194,7 +194,7 @@ func (cr *sqsControlRouter) sendMessage(ctx context.Context, queueURL *string, m
 	if err := json.NewEncoder(&buf).Encode(message); err != nil {
 		return err
 	}
-	log.Infof("sendMessage to %s: %s", *queueURL, buf.String())
+	log.Debugf("sendMessage to %s: %s", *queueURL, buf.String())
 
 	return instrument.TimeRequestHistogram(ctx, "SQS.SendMessage", sqsRequestDuration, func(_ context.Context) error {
 		_, err := cr.service.SendMessage(&sqs.SendMessageInput{
