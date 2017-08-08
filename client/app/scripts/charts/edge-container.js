@@ -2,7 +2,7 @@ import React from 'react';
 import { Motion, spring } from 'react-motion';
 import { Map as makeMap } from 'immutable';
 import { line, curveBasis } from 'd3-shape';
-import { each, omit, times, constant } from 'lodash';
+import { each, times, constant } from 'lodash';
 
 import { NODES_SPRING_ANIMATION_CONFIG } from '../constants/animation';
 import { NODE_BASE_SIZE, EDGE_WAYPOINTS_CAP } from '../constants/styles';
@@ -70,8 +70,7 @@ export default class EdgeContainer extends React.PureComponent {
   }
 
   render() {
-    const { isAnimated, waypoints } = this.props;
-    const forwardedProps = omit(this.props, 'isAnimated', 'waypoints', 'scale');
+    const { isAnimated, waypoints, scale, ...forwardedProps } = this.props;
 
     if (!isAnimated) {
       return transformedEdge(forwardedProps, waypoints.toJS(), this.state.thickness);

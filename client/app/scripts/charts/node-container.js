@@ -1,5 +1,4 @@
 import React from 'react';
-import { omit } from 'lodash';
 import { Motion, spring } from 'react-motion';
 
 import { NODES_SPRING_ANIMATION_CONFIG } from '../constants/animation';
@@ -16,8 +15,7 @@ const transformedNode = (otherProps, { x, y, k }) => (
 
 export default class NodeContainer extends React.PureComponent {
   render() {
-    const { dx, dy, isAnimated, scale } = this.props;
-    const forwardedProps = omit(this.props, 'dx', 'dy', 'isAnimated', 'scale');
+    const { dx, dy, isAnimated, scale, ...forwardedProps } = this.props;
 
     if (!isAnimated) {
       // Show static node for optimized rendering
