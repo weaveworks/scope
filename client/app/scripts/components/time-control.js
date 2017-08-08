@@ -3,8 +3,6 @@ import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 
-import CloudFeature from './cloud-feature';
-import TimeTravelButton from './time-travel-button';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import { pauseTimeAtNow, resumeTime, startTimeTravel } from '../actions/app-actions';
 
@@ -65,7 +63,8 @@ class TimeControl extends React.Component {
   }
 
   render() {
-    const { showingTimeTravel, pausedAt, timeTravelTransitioning, topologiesLoaded } = this.props;
+    const { showingTimeTravel, pausedAt, timeTravelTransitioning, topologiesLoaded,
+      hasHistoricReports } = this.props;
 
     const isPausedNow = pausedAt && !showingTimeTravel;
     const isTimeTravelling = showingTimeTravel;
@@ -95,13 +94,13 @@ class TimeControl extends React.Component {
               {isPausedNow && <span className="fa fa-pause" />}
               <span className="label">{isPausedNow ? 'Paused' : 'Pause'}</span>
             </span>
-            <CloudFeature>
-              <TimeTravelButton
-                className={className(isTimeTravelling)}
-                onClick={this.handleTravelClick}
-                isTimeTravelling={isTimeTravelling}
-              />
-            </CloudFeature>
+            {hasHistoricReports && <span
+              className={className(isTimeTravelling)}
+              onClick={this.handleTravelClick}
+              title="Travel back in time">
+              {isTimeTravelling && <span className="fa fa-clock-o" />}
+              <span className="label">Time Travel</span>
+            </span>}
           </div>
         </div>
         {(isPausedNow || isTimeTravelling) && <span
@@ -120,6 +119,7 @@ class TimeControl extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    hasHistoricReports: state.getIn(['capabilities', 'historic_reports']),
     topologyViewMode: state.get('topologyViewMode'),
     topologiesLoaded: state.get('topologiesLoaded'),
     currentTopology: state.get('currentTopology'),

@@ -1,5 +1,6 @@
 import debug from 'debug';
 import { find } from 'lodash';
+import { fromJS } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
@@ -657,6 +658,7 @@ export function receiveTopologies(topologies) {
 export function receiveApiDetails(apiDetails) {
   return {
     type: ActionTypes.RECEIVE_API_DETAILS,
+    capabilities: fromJS(apiDetails.capabilities),
     hostname: apiDetails.hostname,
     version: apiDetails.version,
     newVersion: apiDetails.newVersion,
