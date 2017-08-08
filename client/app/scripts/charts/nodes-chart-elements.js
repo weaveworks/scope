@@ -1,6 +1,7 @@
 import React from 'react';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
-import { Map as makeMap, List as makeList } from 'immutable';
+import { fromJS, Map as makeMap, List as makeList } from 'immutable';
 
 import NodeContainer from './node-container';
 import EdgeContainer from './edge-container';
@@ -152,7 +153,6 @@ class NodesChartElements extends React.Component {
         matches={node.get('matches')}
         networks={node.get('networks')}
         metric={node.get('metric')}
-        blurred={node.get('blurred')}
         focused={node.get('focused')}
         highlighted={node.get('highlighted')}
         shape={node.get('shape')}
@@ -183,14 +183,30 @@ class NodesChartElements extends React.Component {
         waypoints={edge.get('points')}
         highlighted={edge.get('highlighted')}
         focused={edge.get('focused')}
-        blurred={edge.get('blurred')}
         scale={edge.get('scale')}
         isAnimated={isAnimated}
       />
     );
   }
 
+  renderOverlay(element) {
+    // NOTE: This piece of code is a bit hacky - as we can't set the absolute coords for the
+    // SVG element, we set the zoom level high enough that we're sure it covers the screen.
+    const className = classNames('nodes-chart-overlay', { active: element.get('isActive') });
+    const scale = (this.props.selectedScale || 1) * 100000;
+    return (
+      <rect
+        className={className} key="nodes-chart-overlay"
+        transform={`scale(${scale})`} fill="#fff"
+        x={-1} y={-1} width={2} height={2}
+      />
+    );
+  }
+
   renderElement(element) {
+    if (element.get('isOverlay')) {
+      return this.renderOverlay(element);
+    }
     // This heuristics is not ideal but it works.
     return element.get('points') ? this.renderEdge(element) : this.renderNode(element);
   }
@@ -220,6 +236,7 @@ class NodesChartElements extends React.Component {
     const orderedElements = makeList([
       edges.get(BLURRED_EDGES_LAYER, makeList()),
       nodes.get(BLURRED_NODES_LAYER, makeList()),
+      fromJS([{ isOverlay: true, isActive: !!nodes.get(BLURRED_NODES_LAYER) }]),
       edges.get(NORMAL_EDGES_LAYER, makeList()),
       nodes.get(NORMAL_NODES_LAYER, makeList()),
       edges.get(HIGHLIGHTED_EDGES_LAYER, makeList()),

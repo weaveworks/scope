@@ -411,6 +411,15 @@
 
 }
 
+.nodes-chart-overlay {
+  pointer-events: none;
+  opacity: 0;
+
+  &.active {
+    opacity: $node-elements-in-background-opacity;
+  }
+}
+
 .nodes-chart, .nodes-resources {
 
   &-error, &-loading {
@@ -438,7 +447,8 @@
     li { padding-top: 5px; }
   }
 
-  &-loading &-error-icon-container {
+  // Make watermarks blink only if actually shown (otherwise the FF performance decreses weirdly).
+  &-loading:not(.hide) &-error-icon-container {
     @extend .blinkable;
   }
 
@@ -468,7 +478,6 @@
   }
 
   .nodes-chart-elements .node {
-    transition: opacity .2s $base-ease;
     text-align: center;
 
     .node-label {
@@ -562,12 +571,6 @@
   }
 
   .edge {
-    transition: opacity .5s $base-ease;
-
-    &.blurred {
-      opacity: $edge-opacity-blurred;
-    }
-
     .link {
       fill: none;
       stroke: $edge-color;
@@ -628,7 +631,6 @@
       fill: none;
       stroke-opacity: 1;
       stroke-width: $node-border-stroke-width;
-      transition: stroke-opacity 0.333s $base-ease, fill 0.333s $base-ease;
     }
 
     &.metrics .border {
