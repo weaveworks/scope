@@ -73,9 +73,9 @@ And if further troubleshooting is required, terminal windows can be launched fro
 
 ## <a name="timeline"></a> Time Travel 
 
-Another way to troubleshoot your app running in the cloud is to use the Time travel controls. All Scope views: Processes, Containers, Orchestrators and Hosts allow you to travel back in time to view an _in situ_ state of your app that can be compared with its live state.  
+Another way to troubleshoot your app running in the cloud is to use the Time Travel controls. All Scope views: Processes, Containers, Orchestrators and Hosts allow you to travel back in time to view an _in situ_ state of your app that can be compared with its live state.  
 
-To gain insight into a newly deployed service, click on it and then toggle the time travel control. Compare its live state with a state in the past by scrolling through the timeline that appears.  This feature is useful for verifying that newly deployed fixes have actually improved the functionality or performance of your app as it runs in the cluster. It also allows you to quickly see changes that have been as the service or container is running in its environment.   
+To gain insight into a newly deployed service, click on it and then toggle the Time Travel control. Compare its live state with a state in the past by scrolling through the Timeline that appears.  This feature is useful for verifying that newly deployed fixes have actually improved the functionality or performance of your app as it runs in the cluster. It also allows you to quickly see changes that have been as the service or container is running in its environment.   
 
 Other troubleshooting scenarios include: 
 
@@ -83,7 +83,7 @@ Other troubleshooting scenarios include:
 * Comparing the state of your orchestrator at different points in time
 * Comparing container configuration from one deployment to the next
 
-!['Time travel Controls and Timeline'](images/timeline.png)
+!['Time Travel Controls and Timeline'](images/timeline.png)
 
 
 ## <a name="custom-plugins"></a>Generate Custom Metrics using the Plugin API
