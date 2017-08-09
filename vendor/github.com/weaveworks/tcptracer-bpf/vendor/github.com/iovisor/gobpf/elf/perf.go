@@ -109,7 +109,7 @@ type PerfMap struct {
 	pageCount    int
 	receiverChan chan []byte
 	lostChan     chan uint64
-	pollStop     chan bool
+	pollStop     chan struct{}
 	timestamp    func(*[]byte) uint64
 }
 
@@ -125,6 +125,9 @@ func InitPerfMap(b *Module, mapName string, receiverChan chan []byte, lostChan c
 	if !ok {
 		return nil, fmt.Errorf("no map with name %s", mapName)
 	}
+	if receiverChan == nil {
+		return nil, fmt.Errorf("receiverChan is nil")
+	}
 	// Maps are initialized in b.Load(), nothing to do here
 	return &PerfMap{
 		name:         mapName,
@@ -132,7 +135,7 @@ func InitPerfMap(b *Module, mapName string, receiverChan chan []byte, lostChan c
 		pageCount:    m.pageCount,
 		receiverChan: receiverChan,
 		lostChan:     lostChan,
-		pollStop:     make(chan bool),
+		pollStop:     make(chan struct{}),
 	}, nil
 }
 
@@ -162,6 +165,13 @@ func (pm *PerfMap) PollStart() {
 		cpuCount := len(m.pmuFDs)
 		pageSize := os.Getpagesize()
 		state := C.struct_read_state{}
+
+		defer func() {
+			close(pm.receiverChan)
+			if pm.lostChan != nil {
+				close(pm.lostChan)
+			}
+		}()
 
 		for {
 			select {
@@ -208,7 +218,11 @@ func (pm *PerfMap) PollStart() {
 							}
 						case C.PERF_RECORD_LOST:
 							if pm.lostChan != nil {
-								pm.lostChan <- lost.Lost
+								select {
+								case pm.lostChan <- lost.Lost:
+								case <-pm.pollStop:
+									return
+								}
 							}
 						default:
 							// ignore unknown events
@@ -226,7 +240,11 @@ func (pm *PerfMap) PollStart() {
 						// elements also must not be processed now.
 						break harvestLoop
 					}
-					pm.receiverChan <- incoming.bytesArray[0]
+					select {
+					case pm.receiverChan <- incoming.bytesArray[0]:
+					case <-pm.pollStop:
+						return
+					}
 					// remove first element
 					incoming.bytesArray = incoming.bytesArray[1:]
 				}
@@ -238,10 +256,11 @@ func (pm *PerfMap) PollStart() {
 	}()
 }
 
-// PollStop stops the goroutine that polls the perf event map. Make
-// sure to close the receiverChan only *after* calling PollStop.
+// PollStop stops the goroutine that polls the perf event map.
+// Callers must not close receiverChan or lostChan: they will be automatically
+// closed on the sender side.
 func (pm *PerfMap) PollStop() {
-	pm.pollStop <- true
+	close(pm.pollStop)
 }
 
 func perfEventPoll(fds []C.int) error {

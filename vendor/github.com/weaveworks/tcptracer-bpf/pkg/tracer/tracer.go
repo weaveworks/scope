@@ -79,10 +79,19 @@ func NewTracer(cb Callback) (*Tracer, error) {
 		for {
 			select {
 			case <-stopChan:
+				// On stop, stopChan will be closed but the other channels will
+				// also be closed shortly after. The select{} has no priorities,
+				// therefore, the "ok" value must be checked below.
 				return
-			case data := <-channelV4:
+			case data, ok := <-channelV4:
+				if !ok {
+					return // see explanation above
+				}
 				cb.TCPEventV4(tcpV4ToGo(&data))
-			case lost := <-lostChanV4:
+			case lost, ok := <-lostChanV4:
+				if !ok {
+					return // see explanation above
+				}
 				cb.LostV4(lost)
 			}
 		}
@@ -93,9 +102,15 @@ func NewTracer(cb Callback) (*Tracer, error) {
 			select {
 			case <-stopChan:
 				return
-			case data := <-channelV6:
+			case data, ok := <-channelV6:
+				if !ok {
+					return // see explanation above
+				}
 				cb.TCPEventV6(tcpV6ToGo(&data))
-			case lost := <-lostChanV6:
+			case lost, ok := <-lostChanV6:
+				if !ok {
+					return // see explanation above
+				}
 				cb.LostV6(lost)
 			}
 		}

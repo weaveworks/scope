@@ -515,6 +515,7 @@ func (b *Module) Load(parameters map[string]SectionParams) error {
 			isCgroupSkb := strings.HasPrefix(secName, "cgroup/skb")
 			isCgroupSock := strings.HasPrefix(secName, "cgroup/sock")
 			isSocketFilter := strings.HasPrefix(secName, "socket")
+			isTracepoint := strings.HasPrefix(secName, "tracepoint/")
 
 			var progType uint32
 			switch {
@@ -528,9 +529,11 @@ func (b *Module) Load(parameters map[string]SectionParams) error {
 				progType = uint32(C.BPF_PROG_TYPE_CGROUP_SOCK)
 			case isSocketFilter:
 				progType = uint32(C.BPF_PROG_TYPE_SOCKET_FILTER)
+			case isTracepoint:
+				progType = uint32(C.BPF_PROG_TYPE_TRACEPOINT)
 			}
 
-			if isKprobe || isKretprobe || isCgroupSkb || isCgroupSock || isSocketFilter {
+			if isKprobe || isKretprobe || isCgroupSkb || isCgroupSock || isSocketFilter || isTracepoint {
 				rdata, err := rsection.Data()
 				if err != nil {
 					return err
@@ -579,6 +582,12 @@ func (b *Module) Load(parameters map[string]SectionParams) error {
 						insns: insns,
 						fd:    int(progFd),
 					}
+				case isTracepoint:
+					b.tracepointPrograms[secName] = &TracepointProgram{
+						Name:  secName,
+						insns: insns,
+						fd:    int(progFd),
+					}
 				}
 			}
 		}
@@ -596,6 +605,7 @@ func (b *Module) Load(parameters map[string]SectionParams) error {
 		isCgroupSkb := strings.HasPrefix(secName, "cgroup/skb")
 		isCgroupSock := strings.HasPrefix(secName, "cgroup/sock")
 		isSocketFilter := strings.HasPrefix(secName, "socket")
+		isTracepoint := strings.HasPrefix(secName, "tracepoint/")
 
 		var progType uint32
 		switch {
@@ -609,9 +619,11 @@ func (b *Module) Load(parameters map[string]SectionParams) error {
 			progType = uint32(C.BPF_PROG_TYPE_CGROUP_SOCK)
 		case isSocketFilter:
 			progType = uint32(C.BPF_PROG_TYPE_SOCKET_FILTER)
+		case isTracepoint:
+			progType = uint32(C.BPF_PROG_TYPE_TRACEPOINT)
 		}
 
-		if isKprobe || isKretprobe || isCgroupSkb || isCgroupSock || isSocketFilter {
+		if isKprobe || isKretprobe || isCgroupSkb || isCgroupSock || isSocketFilter || isTracepoint {
 			data, err := section.Data()
 			if err != nil {
 				return err
@@ -651,6 +663,12 @@ func (b *Module) Load(parameters map[string]SectionParams) error {
 				}
 			case isSocketFilter:
 				b.socketFilters[secName] = &SocketFilter{
+					Name:  secName,
+					insns: insns,
+					fd:    int(progFd),
+				}
+			case isTracepoint:
+				b.tracepointPrograms[secName] = &TracepointProgram{
 					Name:  secName,
 					insns: insns,
 					fd:    int(progFd),

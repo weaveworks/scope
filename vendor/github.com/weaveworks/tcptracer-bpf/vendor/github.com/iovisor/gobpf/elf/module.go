@@ -96,11 +96,12 @@ type Module struct {
 	fileReader io.ReaderAt
 	file       *elf.File
 
-	log            []byte
-	maps           map[string]*Map
-	probes         map[string]*Kprobe
-	cgroupPrograms map[string]*CgroupProgram
-	socketFilters  map[string]*SocketFilter
+	log                []byte
+	maps               map[string]*Map
+	probes             map[string]*Kprobe
+	cgroupPrograms     map[string]*CgroupProgram
+	socketFilters      map[string]*SocketFilter
+	tracepointPrograms map[string]*TracepointProgram
 }
 
 // Kprobe represents a kprobe or kretprobe and has to be declared
@@ -134,13 +135,22 @@ type SocketFilter struct {
 	fd    int
 }
 
+// TracepointProgram represents a tracepoint program
+type TracepointProgram struct {
+	Name  string
+	insns *C.struct_bpf_insn
+	fd    int
+	efd   int
+}
+
 func NewModule(fileName string) *Module {
 	return &Module{
-		fileName:       fileName,
-		probes:         make(map[string]*Kprobe),
-		cgroupPrograms: make(map[string]*CgroupProgram),
-		socketFilters:  make(map[string]*SocketFilter),
-		log:            make([]byte, 65536),
+		fileName:           fileName,
+		probes:             make(map[string]*Kprobe),
+		cgroupPrograms:     make(map[string]*CgroupProgram),
+		socketFilters:      make(map[string]*SocketFilter),
+		tracepointPrograms: make(map[string]*TracepointProgram),
+		log:                make([]byte, 65536),
 	}
 }
 
@@ -186,6 +196,22 @@ func writeKprobeEvent(probeType, eventName, funcName, maxactiveStr string) (int,
 	return kprobeId, nil
 }
 
+func perfEventOpenTracepoint(id int, progFd int) (int, error) {
+	efd, err := C.perf_event_open_tracepoint(C.int(id), -1 /* pid */, 0 /* cpu */, -1 /* group_fd */, C.PERF_FLAG_FD_CLOEXEC)
+	if efd < 0 {
+		return -1, fmt.Errorf("perf_event_open error: %v", err)
+	}
+
+	if _, _, err := syscall.Syscall(syscall.SYS_IOCTL, uintptr(efd), C.PERF_EVENT_IOC_ENABLE, 0); err != 0 {
+		return -1, fmt.Errorf("error enabling perf event: %v", err)
+	}
+
+	if _, _, err := syscall.Syscall(syscall.SYS_IOCTL, uintptr(efd), C.PERF_EVENT_IOC_SET_BPF, uintptr(progFd)); err != 0 {
+		return -1, fmt.Errorf("error attaching bpf program to perf event: %v", err)
+	}
+	return int(efd), nil
+}
+
 // EnableKprobe enables a kprobe/kretprobe identified by secName.
 // For kretprobes, you can configure the maximum number of instances
 // of the function that can be probed simultaneously with maxactive.
@@ -222,22 +248,43 @@ func (b *Module) EnableKprobe(secName string, maxactive int) error {
 		return err
 	}
 
-	efd := C.perf_event_open_tracepoint(C.int(kprobeId), -1 /* pid */, 0 /* cpu */, -1 /* group_fd */, C.PERF_FLAG_FD_CLOEXEC)
-	if efd < 0 {
-		return fmt.Errorf("perf_event_open for kprobe error")
+	probe.efd, err = perfEventOpenTracepoint(kprobeId, progFd)
+	return err
+}
+
+func writeTracepointEvent(category, name string) (int, error) {
+	tracepointIdFile := fmt.Sprintf("/sys/kernel/debug/tracing/events/%s/%s/id", category, name)
+	tracepointIdBytes, err := ioutil.ReadFile(tracepointIdFile)
+	if err != nil {
+		return -1, fmt.Errorf("cannot read tracepoint id %q: %v", tracepointIdFile, err)
 	}
 
-	_, _, err2 := syscall.Syscall(syscall.SYS_IOCTL, uintptr(efd), C.PERF_EVENT_IOC_ENABLE, 0)
-	if err2 != 0 {
-		return fmt.Errorf("error enabling perf event: %v", err2)
+	tracepointId, err := strconv.Atoi(strings.TrimSpace(string(tracepointIdBytes)))
+	if err != nil {
+		return -1, fmt.Errorf("invalid tracepoint id: %v\n", err)
 	}
 
-	_, _, err2 = syscall.Syscall(syscall.SYS_IOCTL, uintptr(efd), C.PERF_EVENT_IOC_SET_BPF, uintptr(progFd))
-	if err2 != 0 {
-		return fmt.Errorf("error enabling perf event: %v", err2)
+	return tracepointId, nil
+}
+
+func (b *Module) EnableTracepoint(secName string) error {
+	prog, ok := b.tracepointPrograms[secName]
+	if !ok {
+		return fmt.Errorf("no such tracepoint program %q", secName)
 	}
-	probe.efd = int(efd)
-	return nil
+	progFd := prog.fd
+
+	tracepointGroup := strings.SplitN(secName, "/", 3)
+	category := tracepointGroup[1]
+	name := tracepointGroup[2]
+
+	tracepointId, err := writeTracepointEvent(category, name)
+	if err != nil {
+		return err
+	}
+
+	prog.efd, err = perfEventOpenTracepoint(tracepointId, progFd)
+	return err
 }
 
 // IterKprobes returns a channel that emits the kprobes that included in the
@@ -271,6 +318,17 @@ func (b *Module) IterCgroupProgram() <-chan *CgroupProgram {
 	go func() {
 		for name := range b.cgroupPrograms {
 			ch <- b.cgroupPrograms[name]
+		}
+		close(ch)
+	}()
+	return ch
+}
+
+func (b *Module) IterTracepointProgram() <-chan *TracepointProgram {
+	ch := make(chan *TracepointProgram)
+	go func() {
+		for name := range b.tracepointPrograms {
+			ch <- b.tracepointPrograms[name]
 		}
 		close(ch)
 	}()
@@ -412,6 +470,21 @@ func (b *Module) closeProbes() error {
 	return nil
 }
 
+func (b *Module) closeTracepointPrograms() error {
+	for _, program := range b.tracepointPrograms {
+		if program.efd != -1 {
+			if err := syscall.Close(program.efd); err != nil {
+				return fmt.Errorf("error closing perf event fd: %v", err)
+			}
+			program.efd = -1
+		}
+		if err := syscall.Close(program.fd); err != nil {
+			return fmt.Errorf("error closing tracepoint program fd: %v", err)
+		}
+	}
+	return nil
+}
+
 func (b *Module) closeCgroupPrograms() error {
 	for _, program := range b.cgroupPrograms {
 		if err := syscall.Close(program.fd); err != nil {
@@ -488,6 +561,9 @@ func (b *Module) CloseExt(options map[string]CloseOptions) error {
 		return err
 	}
 	if err := b.closeCgroupPrograms(); err != nil {
+		return err
+	}
+	if err := b.closeTracepointPrograms(); err != nil {
 		return err
 	}
 	if err := b.closeSocketFilters(); err != nil {
