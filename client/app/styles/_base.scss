@@ -337,15 +337,18 @@
     border-radius: 4px;
     padding: 2px 8px;
     pointer-events: all;
-    margin: 8px auto 25px;
+    margin: 8px 0 25px 50%;
+    transform: translateX(-50%);
     opacity: 0.8;
-    width: 215px;
+    display: inline-block;
 
     input {
       border: 0;
       background-color: transparent;
       font-size: 1rem;
-      width: 167px;
+      width: 165px;
+      font-family: "Roboto", sans-serif;
+      text-align: center;
       outline: 0;
     }
   }
