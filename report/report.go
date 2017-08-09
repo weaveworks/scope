@@ -148,6 +148,12 @@ type Report struct {
 	ID string `deepequal:"skip"`
 }
 
+// RenderContext carries contextual data that is needed when rendering parts of the report.
+type RenderContext struct {
+	Report
+	MetricsGraphURL string
+}
+
 // MakeReport makes a clean report, ready to Merge() other reports into.
 func MakeReport() Report {
 	return Report{
