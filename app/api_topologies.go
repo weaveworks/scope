@@ -556,9 +556,9 @@ func captureReporter(rep Reporter, metricsGraphURL string, f reporterHandler) Ct
 	}
 }
 
-type rendererHandler func(context.Context, render.Renderer, render.Decorator, report.Report, string, http.ResponseWriter, *http.Request)
+type rendererHandler func(context.Context, render.Renderer, render.Decorator, report.RenderContext, http.ResponseWriter, *http.Request)
 
-func (r *Registry) captureRenderer(rep Reporter, metricGraphsURL string, f rendererHandler) CtxHandlerFunc {
+func (r *Registry) captureRenderer(rep Reporter, metricsGraphURL string, f rendererHandler) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
 		var (
 			topologyID = mux.Vars(req)["topology"]
@@ -579,6 +579,6 @@ func (r *Registry) captureRenderer(rep Reporter, metricGraphsURL string, f rende
 			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
-		f(ctx, renderer, decorator, rpt, metricGraphsURL, w, req)
+		f(ctx, renderer, decorator, report.RenderContext{Report: rpt, MetricsGraphURL: metricsGraphURL}, w, req)
 	}
 }

@@ -99,8 +99,6 @@ func formatMetricQueries(filter string, ids []string) map[string]string {
 	return queries
 }
 
-var metricsGraphURL = ""
-
 // RenderMetricURLs sets respective URLs for metrics in a node summary. Missing metrics
 // where we have a query for will be appended as an empty metric (no values or samples).
 func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string) NodeSummary {
@@ -119,10 +117,10 @@ func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string
 		}
 
 		query := metricQuery(summary, n, metric.ID)
-
 		ms = append(ms, metric)
+
 		if query != "" {
-			ms[len(ms)-1].URL = metricURL(query)
+			ms[len(ms)-1].URL = metricURL(query, metricsGraphURL)
 		}
 
 		found[metric.ID] = struct{}{}
@@ -143,7 +141,7 @@ func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string
 		ms = append(ms, report.MetricRow{
 			ID:         metadata.ID,
 			Label:      metadata.Label,
-			URL:        metricURL(query),
+			URL:        metricURL(query, metricsGraphURL),
 			Metric:     &report.Metric{},
 			Priority:   maxprio,
 			ValueEmpty: true,
@@ -170,7 +168,7 @@ func metricQuery(summary NodeSummary, n report.Node, metricID string) string {
 }
 
 // metricURL builds the URL by embedding it into the configured `metricsGraphURL`.
-func metricURL(query string) string {
+func metricURL(query, metricsGraphURL string) string {
 	if strings.Contains(metricsGraphURL, urlQueryVarName) {
 		return strings.Replace(metricsGraphURL, urlQueryVarName, url.QueryEscape(query), -1)
 	}
