@@ -183,14 +183,14 @@ func getTestContainerLabelFilterTopologySummary(t *testing.T, exclude bool) (det
 		return nil, err
 	}
 
-	return detailed.Summaries(fixture.Report, renderer.Render(fixture.Report, decorator)), nil
+	return detailed.Summaries(fixture.Report, renderer.Render(fixture.Report, decorator), ""), nil
 }
 
 func TestAPITopologyAddsKubernetes(t *testing.T) {
 	router := mux.NewRouter()
 	c := app.NewCollector(1 * time.Minute)
 	app.RegisterReportPostHandler(c, router)
-	app.RegisterTopologyRoutes(router, c, map[string]bool{"foo_capability": true})
+	app.RegisterTopologyRoutes(router, c, map[string]bool{"foo_capability": true}, "")
 	ts := httptest.NewServer(router)
 	defer ts.Close()
 
