@@ -21,9 +21,6 @@ const (
 )
 
 var (
-	// As configured by the user
-	metricsGraphURL = ""
-
 	// Metadata for shown queries
 	shownQueries = []struct {
 		ID    string
@@ -102,17 +99,11 @@ func formatMetricQueries(filter string, ids []string) map[string]string {
 	return queries
 }
 
-// SetMetricsGraphURL sets the URL we deduce our eventual metric link from.
-// Supports placeholders such as `:orgID` and `:query`. An empty url disables
-// this feature. If the `:query` part is missing, a JSON version will be
-// appended, see `queryParamsAsJSON()` for more info.
-func SetMetricsGraphURL(url string) {
-	metricsGraphURL = url
-}
+var metricsGraphURL = ""
 
 // RenderMetricURLs sets respective URLs for metrics in a node summary. Missing metrics
 // where we have a query for will be appended as an empty metric (no values or samples).
-func RenderMetricURLs(summary NodeSummary, n report.Node) NodeSummary {
+func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string) NodeSummary {
 	if metricsGraphURL == "" {
 		return summary
 	}

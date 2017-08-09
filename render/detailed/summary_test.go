@@ -21,7 +21,7 @@ import (
 func TestSummaries(t *testing.T) {
 	{
 		// Just a convenient source of some rendered nodes
-		have := detailed.Summaries(fixture.Report, render.ProcessRenderer.Render(fixture.Report, nil))
+		have := detailed.Summaries(fixture.Report, render.ProcessRenderer.Render(fixture.Report, nil), "")
 		// The ids of the processes rendered above
 		expectedIDs := []string{
 			fixture.ClientProcess1NodeID,
@@ -51,7 +51,7 @@ func TestSummaries(t *testing.T) {
 		input := fixture.Report.Copy()
 
 		input.Process.Nodes[fixture.ClientProcess1NodeID].Metrics[process.CPUUsage] = metric
-		have := detailed.Summaries(input, render.ProcessRenderer.Render(input, nil))
+		have := detailed.Summaries(input, render.ProcessRenderer.Render(input, nil), "")
 
 		node, ok := have[fixture.ClientProcess1NodeID]
 		if !ok {
@@ -184,7 +184,7 @@ func TestMakeNodeSummary(t *testing.T) {
 		},
 	}
 	for _, testcase := range testcases {
-		have, ok := detailed.MakeNodeSummary(fixture.Report, testcase.input)
+		have, ok := detailed.MakeNodeSummary(fixture.Report, testcase.input, "")
 		if ok != testcase.ok {
 			t.Errorf("%s: MakeNodeSummary failed: expected ok value to be: %v", testcase.name, testcase.ok)
 			continue
