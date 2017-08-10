@@ -574,14 +574,16 @@ export function receiveNodesDelta(delta) {
 
 export function resumeTime() {
   return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.RESUME_TIME
-    });
-    // After unpausing, all of the following calls will re-activate polling.
-    getTopologies(getState, dispatch);
-    getNodes(getState, dispatch, true);
-    if (isResourceViewModeSelector(getState())) {
-      getResourceViewNodesSnapshot(getState(), dispatch);
+    if (isPausedSelector(getState())) {
+      dispatch({
+        type: ActionTypes.RESUME_TIME
+      });
+      // After unpausing, all of the following calls will re-activate polling.
+      getTopologies(getState, dispatch);
+      getNodes(getState, dispatch, true);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
     }
   };
 }
@@ -796,10 +798,16 @@ export function changeInstance() {
 }
 
 export function shutdown() {
-  stopPolling();
-  teardownWebsockets();
-  return {
-    type: ActionTypes.SHUTDOWN
+  return (dispatch) => {
+    stopPolling();
+    teardownWebsockets();
+    // Exit the time travel mode before unmounting the app.
+    dispatch({
+      type: ActionTypes.RESUME_TIME
+    });
+    dispatch({
+      type: ActionTypes.SHUTDOWN
+    });
   };
 }
 
