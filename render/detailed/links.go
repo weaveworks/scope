@@ -2,6 +2,7 @@ package detailed
 
 import (
 	"bytes"
+	"fmt"
 	"net/url"
 	"strings"
 
@@ -11,8 +12,13 @@ import (
 	"github.com/ugorji/go/codec"
 )
 
-// Replacement variable name for the query in the metrics graph url
-const urlQueryVarName = ":query"
+const (
+	// Replacement variable name for the query in the metrics graph url
+	urlQueryVarName = ":query"
+
+	idReceiveBytes  = "receive_bytes"
+	idTransmitBytes = "transmit_bytes"
+)
 
 var (
 	// As configured by the user
@@ -32,54 +38,32 @@ var (
 			Label: "Memory",
 		},
 		{
-			ID:    "receive_bytes",
+			ID:    idReceiveBytes,
 			Label: "Rx/s",
 		},
 		{
-			ID:    "transmit_bytes",
+			ID:    idTransmitBytes,
 			Label: "Tx/s",
 		},
 	}
 
 	// Prometheus queries for topologies
-	//
-	// Metrics
-	// - `container_cpu_usage_seconds_total` --> cAdvisor in Kubelets.
-	// - `container_memory_usage_bytes` --> cAdvisor in Kubelets.
 	topologyQueries = map[string]map[string]string{
 		// Containers
 
-		report.Container: {
-			docker.MemoryUsage:   `sum(container_memory_usage_bytes{container_name="{{label}}"})`,
-			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{container_name="{{label}}"}[1m]))`,
-		},
-		report.ContainerImage: {
-			docker.MemoryUsage:   `sum(container_memory_usage_bytes{image="{{label}}"})`,
-			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{image="{{label}}"}[1m]))`,
-		},
-		"group:container:docker_container_hostname": {
-			docker.MemoryUsage:   `sum(container_memory_usage_bytes{pod_name="{{label}}"})`,
-			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{pod_name="{{label}}"}[1m]))`,
-		},
+		report.Container:                            formatMetricQueries(`container_name="{{label}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		report.ContainerImage:                       formatMetricQueries(`image="{{label}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		"group:container:docker_container_hostname": formatMetricQueries(`pod_name="{{label}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
 
 		// Kubernetes topologies
 
-		report.Pod: {
-			docker.MemoryUsage:   `sum(container_memory_usage_bytes{pod_name="{{label}}"})`,
-			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{pod_name="{{label}}"}[1m]))`,
-			"receive_bytes":      `sum(rate(container_network_receive_bytes_total{pod_name="{{label}}"}[5m]))`,
-			"transmit_bytes":     `sum(rate(container_network_transmit_bytes_total{pod_name="{{label}}"}[5m]))`,
-		},
-		// Pod naming:
-		// https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label
-		"__k8s_controllers": {
-			docker.MemoryUsage:   `sum(container_memory_usage_bytes{pod_name=~"^{{label}}-[^-]+-[^-]+$"})`,
-			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{pod_name=~"^{{label}}-[^-]+-[^-]+$"}[1m]))`,
-		},
-		report.DaemonSet: {
-			docker.MemoryUsage:   `sum(container_memory_usage_bytes{pod_name=~"^{{label}}-[^-]+$"})`,
-			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{pod_name=~"^{{label}}-[^-]+$"}[1m]))`,
-		},
+		report.Pod: formatMetricQueries(
+			`pod_name="{{label}}"`,
+			[]string{docker.MemoryUsage, docker.CPUTotalUsage, idReceiveBytes, idTransmitBytes},
+		),
+		// Pod naming: // https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label
+		"__k8s_controllers": formatMetricQueries(`pod_name=~"^{{label}}-[^-]+-[^-]+$"}`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		report.DaemonSet:    formatMetricQueries(`pod_name=~"^{{label}}-[^-]+$"}`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
 		report.Service: {
 			// These recording rules must be defined in the prometheus config.
 			// NB: Pods need to be labeled and selected by their respective Service name, meaning:
@@ -90,11 +74,34 @@ var (
 		},
 	}
 	k8sControllers = map[string]struct{}{
-		report.Deployment: {},
-		"stateful_set":    {},
-		"cron_job":        {},
+		report.Deployment:  {},
+		report.StatefulSet: {},
+		report.CronJob:     {},
 	}
 )
+
+func formatMetricQueries(filter string, ids []string) map[string]string {
+	queries := make(map[string]string)
+	for _, id := range ids {
+		// All  `container_*`metrics  are provided by cAdvisor in Kubelets
+		switch id {
+		case docker.MemoryUsage:
+			queries[id] = fmt.Sprintf("sum(container_memory_usage_bytes{%s})/1024/1024", filter)
+		case docker.CPUTotalUsage:
+			queries[id] = fmt.Sprintf(
+				"sum(rate(container_cpu_usage_seconds_total{%s}[1m]))/count(container_cpu_usage_seconds_total{%s})*100",
+				filter,
+				filter,
+			)
+		case idReceiveBytes:
+			queries[id] = fmt.Sprintf(`sum(rate(container_network_receive_bytes_total{%s}[5m]))`, filter)
+		case idTransmitBytes:
+			queries[id] = fmt.Sprintf(`sum(rate(container_network_transmit_bytes_total{%s}[5m]))`, filter)
+		}
+	}
+
+	return queries
+}
 
 // SetMetricsGraphURL sets the URL we deduce our eventual metric link from.
 // Supports placeholders such as `:orgID` and `:query`. An empty url disables
