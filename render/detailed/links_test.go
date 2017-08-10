@@ -1,6 +1,7 @@
 package detailed_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -47,10 +48,10 @@ func TestRenderMetricURLs(t *testing.T) {
 	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
 	result := detailed.RenderMetricURLs(s, samplePodNode)
 
-	u := "/prom/:orgID/notebook/new/%7B%22cells%22%3A%5B%7B%22queries%22%3A%5B%22sum%28container_memory_usage_bytes%7Bpod_name%3D%5C%22foo%5C%22%7D%29%22%5D%7D%5D%7D"
-	assert.Equal(t, u, result.Metrics[0].URL)
-	u = "/prom/:orgID/notebook/new/%7B%22cells%22%3A%5B%7B%22queries%22%3A%5B%22sum%28rate%28container_cpu_usage_seconds_total%7Bpod_name%3D%5C%22foo%5C%22%7D%5B1m%5D%29%29%22%5D%7D%5D%7D"
-	assert.Equal(t, u, result.Metrics[1].URL)
+	assert.Equal(t, 0, strings.Index(result.Metrics[0].URL, sampleMetricsGraphURL))
+	assert.Contains(t, result.Metrics[0].URL, "container_memory_usage_bytes%7Bpod_name%3D%5C%22foo%5C%22%7D")
+	assert.Equal(t, 0, strings.Index(result.Metrics[1].URL, sampleMetricsGraphURL))
+	assert.Contains(t, result.Metrics[1].URL, "container_cpu_usage_seconds_total%7Bpod_name%3D%5C%22foo%5C%22%7D")
 }
 
 func TestRenderMetricURLs_EmptyMetrics(t *testing.T) {
@@ -94,8 +95,8 @@ func TestRenderMetricURLs_QueryReplacement(t *testing.T) {
 	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
 	result := detailed.RenderMetricURLs(s, samplePodNode)
 
-	u := "http://example.test/?q=sum%28container_memory_usage_bytes%7Bpod_name%3D%22foo%22%7D%29"
-	assert.Equal(t, u, result.Metrics[0].URL)
-	u = "http://example.test/?q=sum%28rate%28container_cpu_usage_seconds_total%7Bpod_name%3D%22foo%22%7D%5B1m%5D%29%29"
-	assert.Equal(t, u, result.Metrics[1].URL)
+	assert.Contains(t, result.Metrics[0].URL, "http://example.test/?q=")
+	assert.Contains(t, result.Metrics[0].URL, "container_memory_usage_bytes%7Bpod_name%3D%22foo%22%7D")
+	assert.Contains(t, result.Metrics[1].URL, "http://example.test/?q=")
+	assert.Contains(t, result.Metrics[1].URL, "container_cpu_usage_seconds_total%7Bpod_name%3D%22foo%22%7D")
 }
