@@ -47,11 +47,6 @@ class TimeTravel extends React.Component {
     this.setState(getTimestampStates(props.pausedAt));
   }
 
-  componentWillUnmount() {
-    // TODO: Get rid of this somehow. See: https://github.com/weaveworks/service-ui/issues/814
-    this.props.resumeTime();
-  }
-
   handleInputChange(ev) {
     const timestamp = moment(ev.target.value);
     this.setState({ inputValue: ev.target.value });

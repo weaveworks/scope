@@ -798,10 +798,16 @@ export function changeInstance() {
 }
 
 export function shutdown() {
-  stopPolling();
-  teardownWebsockets();
-  return {
-    type: ActionTypes.SHUTDOWN
+  return (dispatch) => {
+    stopPolling();
+    teardownWebsockets();
+    // Exit the time travel mode before unmounting the app.
+    dispatch({
+      type: ActionTypes.RESUME_TIME
+    });
+    dispatch({
+      type: ActionTypes.SHUTDOWN
+    });
   };
 }
 
