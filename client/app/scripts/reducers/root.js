@@ -555,9 +555,18 @@ export function rootReducer(state = initialState, action) {
         state = state.updateIn(['nodeDetails', action.details.id], (obj) => {
           const result = Object.assign({}, obj);
           result.notFound = false;
+          result.transitioning = false;
           result.details = action.details;
           return result;
         });
+      }
+      return state;
+    }
+
+    case ActionTypes.NODE_DETAILS_START_TRANSITION: {
+      const topNode = state.get('nodeDetails').last();
+      if (topNode && topNode.id) {
+        state = state.updateIn(['nodeDetails', topNode.id], d => ({ ...d, transitioning: true }));
       }
       return state;
     }

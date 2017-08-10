@@ -7,7 +7,8 @@ import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveEr
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
   receiveControlNodeRemoved, receiveControlPipe, receiveControlPipeStatus,
   receiveControlSuccess, receiveTopologies, receiveNotFound,
-  receiveNodesForTopology, receiveNodes } from '../actions/app-actions';
+  receiveNodesForTopology, receiveNodes, nodeDetailsStartTransition
+} from '../actions/app-actions';
 
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
@@ -299,6 +300,7 @@ export function getNodeDetails(getState, dispatch) {
     }
     const url = urlComponents.join('');
 
+    dispatch(nodeDetailsStartTransition());
     doRequest({
       url,
       success: (res) => {

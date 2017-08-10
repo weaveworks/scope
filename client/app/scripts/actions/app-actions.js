@@ -228,6 +228,7 @@ export function clickCloseDetails(nodeId) {
       type: ActionTypes.CLICK_CLOSE_DETAILS,
       nodeId
     });
+    getNodeDetails(getState, dispatch);
     updateRoute(getState);
   };
 }
@@ -542,6 +543,12 @@ export function receiveNodeDetails(details) {
   return {
     type: ActionTypes.RECEIVE_NODE_DETAILS,
     details
+  };
+}
+
+export function nodeDetailsStartTransition() {
+  return {
+    type: ActionTypes.NODE_DETAILS_START_TRANSITION
   };
 }
 

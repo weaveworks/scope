@@ -9,6 +9,7 @@ import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color
 import { isGenericTable, isPropertyList } from '../utils/node-details-utils';
 import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
 
+import Overlay from './overlay';
 import MatchedText from './matched-text';
 import NodeDetailsControls from './node-details/node-details-controls';
 import NodeDetailsGenericTable from './node-details/node-details-generic-table';
@@ -151,7 +152,7 @@ class NodeDetails extends React.Component {
   }
 
   renderDetails() {
-    const { details, nodeControlStatus, nodeMatches = makeMap() } = this.props;
+    const { details, nodeControlStatus, transitioning, nodeMatches = makeMap() } = this.props;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
     const {error, pending} = nodeControlStatus ? nodeControlStatus.toJS() : {};
@@ -241,6 +242,8 @@ class NodeDetails extends React.Component {
             />
           </CloudFeature>
         </div>
+
+        <Overlay faded={transitioning} />
       </div>
     );
   }

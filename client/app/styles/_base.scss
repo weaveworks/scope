@@ -78,7 +78,7 @@
   left: 0;
   opacity: 0;
   pointer-events: none;
-  z-index: 2000;
+  z-index: 1000;
 
   &.faded {
     // NOTE: Not sure if we should block the pointer events here..
