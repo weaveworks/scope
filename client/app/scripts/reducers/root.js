@@ -18,8 +18,9 @@ import {
   graphExceedsComplexityThreshSelector,
   isResourceViewModeSelector,
 } from '../selectors/topology';
+import { isPausedSelector } from '../selectors/time-travel';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
-import { nowInSecondsPrecision } from '../utils/time-utils';
+import { nowInSecondsPrecision, timestampsEqual } from '../utils/time-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,
@@ -543,8 +544,9 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.RECEIVE_NODE_DETAILS: {
-      // Freeze node details data updates after the first load when paused.
-      if (state.getIn(['nodeDetails', action.details.id, 'details']) && state.get('pausedAt')) {
+      // Ignore the update if paused and the timestamp didn't change.
+      const setTimestamp = state.getIn(['nodeDetails', action.details.id, 'timestamp']);
+      if (isPausedSelector(state) && timestampsEqual(action.requestTimestamp, setTimestamp)) {
         return state;
       }
 
@@ -552,21 +554,10 @@ export function rootReducer(state = initialState, action) {
 
       // disregard if node is not selected anymore
       if (state.hasIn(['nodeDetails', action.details.id])) {
-        console.log(action.timestamp && action.timestamp.toISOString());
         state = state.updateIn(['nodeDetails', action.details.id], obj => ({ ...obj,
           notFound: false,
-          timestamp: action.timestamp,
+          timestamp: action.requestTimestamp,
           details: action.details,
-        }));
-      }
-      return state;
-    }
-
-    case ActionTypes.NODE_DETAILS_START_TRANSITION: {
-      const topNode = state.get('nodeDetails').last();
-      if (topNode && topNode.id) {
-        state = state.updateIn(['nodeDetails', topNode.id], obj => ({ ...obj,
-          transitioning: true,
         }));
       }
       return state;
@@ -638,6 +629,7 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.RECEIVE_NOT_FOUND: {
       if (state.hasIn(['nodeDetails', action.nodeId])) {
         state = state.updateIn(['nodeDetails', action.nodeId], obj => ({ ...obj,
+          timestamp: action.requestTimestamp,
           notFound: true,
         }));
       }

@@ -228,6 +228,7 @@ export function clickCloseDetails(nodeId) {
       type: ActionTypes.CLICK_CLOSE_DETAILS,
       nodeId
     });
+    // Pull the most recent details for the next details panel that comes into focus.
     getNodeDetails(getState, dispatch);
     updateRoute(getState);
   };
@@ -539,17 +540,11 @@ export function receiveControlSuccess(nodeId) {
   };
 }
 
-export function receiveNodeDetails(details, timestamp = null) {
+export function receiveNodeDetails(details, requestTimestamp) {
   return {
     type: ActionTypes.RECEIVE_NODE_DETAILS,
-    timestamp,
+    requestTimestamp,
     details
-  };
-}
-
-export function nodeDetailsStartTransition() {
-  return {
-    type: ActionTypes.NODE_DETAILS_START_TRANSITION
   };
 }
 
@@ -606,6 +601,9 @@ export function startTimeTravel() {
       if (isResourceViewModeSelector(getState())) {
         getResourceViewNodesSnapshot(getState(), dispatch);
       }
+    } else {
+      // Get most recent details before freezing the state.
+      getNodeDetails(getState, dispatch);
     }
   };
 }
@@ -739,10 +737,11 @@ export function receiveError(errorUrl) {
   };
 }
 
-export function receiveNotFound(nodeId) {
+export function receiveNotFound(nodeId, requestTimestamp) {
   return {
+    type: ActionTypes.RECEIVE_NOT_FOUND,
+    requestTimestamp,
     nodeId,
-    type: ActionTypes.RECEIVE_NOT_FOUND
   };
 }
 

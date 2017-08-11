@@ -24,3 +24,9 @@ export function clampToNowInSecondsPrecision(timestamp) {
 export function scaleDuration(duration, scale) {
   return moment.duration(duration.asMilliseconds() * scale);
 }
+
+export function timestampsEqual(timestampA, timestampB) {
+  const stringifiedTimestampA = timestampA ? timestampA.toISOString() : '';
+  const stringifiedTimestampB = timestampB ? timestampB.toISOString() : '';
+  return stringifiedTimestampA === stringifiedTimestampB;
+}

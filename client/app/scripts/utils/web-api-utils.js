@@ -3,11 +3,12 @@ import reqwest from 'reqwest';
 import { defaults } from 'lodash';
 import { Map as makeMap, List } from 'immutable';
 
-import { blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
+import {
+  blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
   receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
   receiveControlNodeRemoved, receiveControlPipe, receiveControlPipeStatus,
   receiveControlSuccess, receiveTopologies, receiveNotFound,
-  receiveNodesForTopology, receiveNodes, nodeDetailsStartTransition
+  receiveNodesForTopology, receiveNodes,
 } from '../actions/app-actions';
 
 import { getCurrentTopologyUrl } from '../utils/topology-utils';
@@ -283,6 +284,7 @@ export function getNodeDetails(getState, dispatch) {
   const nodeMap = state.get('nodeDetails');
   const topologyUrlsById = state.get('topologyUrlsById');
   const currentTopologyId = state.get('currentTopologyId');
+  const requestTimestamp = state.get('pausedAt');
 
   // get details for all opened nodes
   const obj = nodeMap.last();
@@ -294,29 +296,25 @@ export function getNodeDetails(getState, dispatch) {
     const topologyOptions = currentTopologyId === obj.topologyId
       ? activeTopologyOptionsSelector(state) : makeMap();
 
-    const timestamp = state.get('pausedAt');
     const query = buildUrlQuery(topologyOptions, state);
     if (query) {
       urlComponents = urlComponents.concat(['?', query]);
     }
     const url = urlComponents.join('');
 
-    // if (isPausedSelector(state)) {
-    //   dispatch(nodeDetailsStartTransition());
-    // }
     doRequest({
       url,
       success: (res) => {
         // make sure node is still selected
         if (nodeMap.has(res.node.id)) {
-          dispatch(receiveNodeDetails(res.node, timestamp));
+          dispatch(receiveNodeDetails(res.node, requestTimestamp));
         }
       },
       error: (err) => {
         log(`Error in node details request: ${err.responseText}`);
         // dont treat missing node as error
         if (err.status === 404) {
-          dispatch(receiveNotFound(obj.id));
+          dispatch(receiveNotFound(obj.id, requestTimestamp));
         } else {
           dispatch(receiveError(topologyUrl));
         }

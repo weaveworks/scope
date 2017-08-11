@@ -8,6 +8,7 @@ import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-acti
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
 import { isGenericTable, isPropertyList } from '../utils/node-details-utils';
 import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
+import { timestampsEqual } from '../utils/time-utils';
 
 import Overlay from './overlay';
 import MatchedText from './matched-text';
@@ -139,6 +140,7 @@ class NodeDetails extends React.Component {
             Details will become available here when it communicates again.
           </p>
         </div>
+        <Overlay faded={this.props.transitioning} />
       </div>
     );
   }
@@ -156,7 +158,7 @@ class NodeDetails extends React.Component {
   }
 
   renderDetails() {
-    const { details, nodeControlStatus, transitioning, nodeMatches = makeMap() } = this.props;
+    const { details, nodeControlStatus, nodeMatches = makeMap() } = this.props;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
     const {error, pending} = nodeControlStatus ? nodeControlStatus.toJS() : {};
@@ -247,7 +249,7 @@ class NodeDetails extends React.Component {
           </CloudFeature>
         </div>
 
-        <Overlay faded={transitioning} />
+        <Overlay faded={this.props.transitioning} />
       </div>
     );
   }
@@ -287,8 +289,8 @@ class NodeDetails extends React.Component {
 function mapStateToProps(state, ownProps) {
   const currentTopologyId = state.get('currentTopologyId');
   return {
+    transitioning: !timestampsEqual(state.get('pausedAt'), ownProps.timestamp),
     nodeMatches: state.getIn(['searchNodeMatches', currentTopologyId, ownProps.id]),
-    transitioning: state.get('pausedAt') && (!ownProps.timestamp || ownProps.timestamp.toISOString() !== state.get('pausedAt').toISOString()),
     nodes: state.get('nodes'),
     selectedNodeId: state.get('selectedNodeId'),
   };
