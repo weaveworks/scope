@@ -68,7 +68,11 @@ class NodeDetails extends React.Component {
             onClick={this.handleShowTopologyForNode}>
             <span>Show in <span>{this.props.topologyId.replace(/-/g, ' ')}</span></span>
           </span>}
-          <span title="Close details" className="fa fa-close" onClick={this.handleClickClose} />
+          <span
+            title="Close details"
+            className="fa fa-close close-details"
+            onClick={this.handleClickClose}
+          />
         </div>
       </div>
     );
@@ -284,6 +288,7 @@ function mapStateToProps(state, ownProps) {
   const currentTopologyId = state.get('currentTopologyId');
   return {
     nodeMatches: state.getIn(['searchNodeMatches', currentTopologyId, ownProps.id]),
+    transitioning: state.get('pausedAt') && (!ownProps.timestamp || ownProps.timestamp.toISOString() !== state.get('pausedAt').toISOString()),
     nodes: state.get('nodes'),
     selectedNodeId: state.get('selectedNodeId'),
   };

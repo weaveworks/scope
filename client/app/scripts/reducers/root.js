@@ -552,13 +552,12 @@ export function rootReducer(state = initialState, action) {
 
       // disregard if node is not selected anymore
       if (state.hasIn(['nodeDetails', action.details.id])) {
-        state = state.updateIn(['nodeDetails', action.details.id], (obj) => {
-          const result = Object.assign({}, obj);
-          result.notFound = false;
-          result.transitioning = false;
-          result.details = action.details;
-          return result;
-        });
+        console.log(action.timestamp && action.timestamp.toISOString());
+        state = state.updateIn(['nodeDetails', action.details.id], obj => ({ ...obj,
+          notFound: false,
+          timestamp: action.timestamp,
+          details: action.details,
+        }));
       }
       return state;
     }
@@ -566,7 +565,9 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.NODE_DETAILS_START_TRANSITION: {
       const topNode = state.get('nodeDetails').last();
       if (topNode && topNode.id) {
-        state = state.updateIn(['nodeDetails', topNode.id], d => ({ ...d, transitioning: true }));
+        state = state.updateIn(['nodeDetails', topNode.id], obj => ({ ...obj,
+          transitioning: true,
+        }));
       }
       return state;
     }
@@ -636,11 +637,9 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.RECEIVE_NOT_FOUND: {
       if (state.hasIn(['nodeDetails', action.nodeId])) {
-        state = state.updateIn(['nodeDetails', action.nodeId], (obj) => {
-          const result = Object.assign({}, obj);
-          result.notFound = true;
-          return result;
-        });
+        state = state.updateIn(['nodeDetails', action.nodeId], obj => ({ ...obj,
+          notFound: true,
+        }));
       }
       return state;
     }

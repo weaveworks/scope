@@ -737,6 +737,10 @@
     top: 6px;
     right: 8px;
 
+    .close-details {
+      position: relative;
+      z-index: 1024;
+    }
 
     > span {
       @extend .btn-opacity;

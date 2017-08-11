@@ -539,9 +539,10 @@ export function receiveControlSuccess(nodeId) {
   };
 }
 
-export function receiveNodeDetails(details) {
+export function receiveNodeDetails(details, timestamp = null) {
   return {
     type: ActionTypes.RECEIVE_NODE_DETAILS,
+    timestamp,
     details
   };
 }

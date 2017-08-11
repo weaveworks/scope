@@ -294,19 +294,22 @@ export function getNodeDetails(getState, dispatch) {
     const topologyOptions = currentTopologyId === obj.topologyId
       ? activeTopologyOptionsSelector(state) : makeMap();
 
+    const timestamp = state.get('pausedAt');
     const query = buildUrlQuery(topologyOptions, state);
     if (query) {
       urlComponents = urlComponents.concat(['?', query]);
     }
     const url = urlComponents.join('');
 
-    dispatch(nodeDetailsStartTransition());
+    // if (isPausedSelector(state)) {
+    //   dispatch(nodeDetailsStartTransition());
+    // }
     doRequest({
       url,
       success: (res) => {
         // make sure node is still selected
         if (nodeMap.has(res.node.id)) {
-          dispatch(receiveNodeDetails(res.node));
+          dispatch(receiveNodeDetails(res.node, timestamp));
         }
       },
       error: (err) => {
