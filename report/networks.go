@@ -114,15 +114,20 @@ func ContainingIPv4Network(ips []net.IP) *net.IPNet {
 	if len(ips) == 0 {
 		return nil
 	}
-	network := net.IPNet{
-		IP:   ips[0],
-		Mask: net.CIDRMask(net.IPv4len*8, net.IPv4len*8),
-	}
+	cpl := net.IPv4len * 8
+	network := networkFromPrefix(ips[0], cpl)
 	for _, ip := range ips[1:] {
-		network.Mask = net.CIDRMask(commonIPv4PrefixLen(network.IP, ip), net.IPv4len*8)
-		network.IP = network.IP.Mask(network.Mask)
+		if ncpl := commonIPv4PrefixLen(network.IP, ip); ncpl < cpl {
+			cpl = ncpl
+			network = networkFromPrefix(network.IP, cpl)
+		}
 	}
-	return &network
+	return network
+}
+
+func networkFromPrefix(ip net.IP, prefixLen int) *net.IPNet {
+	mask := net.CIDRMask(prefixLen, net.IPv4len*8)
+	return &net.IPNet{IP: ip.Mask(mask), Mask: mask}
 }
 
 func commonIPv4PrefixLen(a, b net.IP) int {

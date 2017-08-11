@@ -29,6 +29,7 @@ func TestContainingIPv4Network(t *testing.T) {
 	assert.Nil(t, containingIPv4Networks([]string{}))
 	assert.Equal(t, "10.0.0.1/32", containingIPv4Networks([]string{"10.0.0.1"}).String())
 	assert.Equal(t, "10.0.0.0/17", containingIPv4Networks([]string{"10.0.0.1", "10.0.2.55", "10.0.106.48"}).String())
+	assert.Equal(t, "10.0.0.0/16", containingIPv4Networks([]string{"10.0.128.1", "10.0.0.1", "10.0.0.2"}).String())
 	assert.Equal(t, "0.0.0.0/0", containingIPv4Networks([]string{"10.0.0.1", "192.168.0.1"}).String())
 }
 
