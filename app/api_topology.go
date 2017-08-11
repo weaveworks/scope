@@ -56,7 +56,6 @@ func handleNode(ctx context.Context, renderer render.Renderer, decorator render.
 func handleWebsocket(
 	ctx context.Context,
 	rep Reporter,
-	metricsGraphURL string,
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
@@ -124,10 +123,7 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(
-			report.RenderContext{Report: re, MetricsGraphURL: metricsGraphURL},
-			renderer.Render(re, decorator),
-		)
+		newTopo := detailed.Summaries(RenderContextForReporter(rep, re), renderer.Render(re, decorator))
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

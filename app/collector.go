@@ -34,6 +34,23 @@ type Reporter interface {
 	UnWait(context.Context, chan struct{})
 }
 
+// WebReporter is a reporter that creates reports whose data is eventually
+// displayed on websites. It carries fields that will be forwarded to the
+// report.RenderContext
+type WebReporter struct {
+	Reporter
+	MetricsGraphURL string
+}
+
+// RenderContextForReporter creates the rendering context for the given reporter.
+func RenderContextForReporter(rep Reporter, r report.Report) report.RenderContext {
+	rc := report.RenderContext{Report: r}
+	if wrep, ok := rep.(WebReporter); ok {
+		rc.MetricsGraphURL = wrep.MetricsGraphURL
+	}
+	return rc
+}
+
 // Adder is something that can accept reports. It's a convenient interface for
 // parts of the app, and several experimental components.  It takes the following
 // arguments:
