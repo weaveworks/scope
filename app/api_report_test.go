@@ -14,7 +14,7 @@ import (
 
 func topologyServer() *httptest.Server {
 	router := mux.NewRouter().SkipClean(true)
-	app.RegisterTopologyRoutes(router, app.StaticCollector(fixture.Report), map[string]bool{"foo_capability": true}, "")
+	app.RegisterTopologyRoutes(router, app.StaticCollector(fixture.Report), map[string]bool{"foo_capability": true})
 	return httptest.NewServer(router)
 }
 
