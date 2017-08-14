@@ -8,7 +8,9 @@ import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-acti
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
 import { isGenericTable, isPropertyList } from '../utils/node-details-utils';
 import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
+import { timestampsEqual } from '../utils/time-utils';
 
+import Overlay from './overlay';
 import MatchedText from './matched-text';
 import NodeDetailsControls from './node-details/node-details-controls';
 import NodeDetailsGenericTable from './node-details/node-details-generic-table';
@@ -67,7 +69,11 @@ class NodeDetails extends React.Component {
             onClick={this.handleShowTopologyForNode}>
             <span>Show in <span>{this.props.topologyId.replace(/-/g, ' ')}</span></span>
           </span>}
-          <span title="Close details" className="fa fa-close" onClick={this.handleClickClose} />
+          <span
+            title="Close details"
+            className="fa fa-close close-details"
+            onClick={this.handleClickClose}
+          />
         </div>
       </div>
     );
@@ -134,6 +140,7 @@ class NodeDetails extends React.Component {
             Details will become available here when it communicates again.
           </p>
         </div>
+        <Overlay faded={this.props.transitioning} />
       </div>
     );
   }
@@ -241,6 +248,8 @@ class NodeDetails extends React.Component {
             />
           </CloudFeature>
         </div>
+
+        <Overlay faded={this.props.transitioning} />
       </div>
     );
   }
@@ -280,6 +289,7 @@ class NodeDetails extends React.Component {
 function mapStateToProps(state, ownProps) {
   const currentTopologyId = state.get('currentTopologyId');
   return {
+    transitioning: !timestampsEqual(state.get('pausedAt'), ownProps.timestamp),
     nodeMatches: state.getIn(['searchNodeMatches', currentTopologyId, ownProps.id]),
     nodes: state.get('nodes'),
     selectedNodeId: state.get('selectedNodeId'),
