@@ -1,14 +1,15 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { debounce, pick } from 'lodash';
+import { clamp, debounce, pick } from 'lodash';
 import { fromJS } from 'immutable';
 
+import { drag } from 'd3-drag';
 import { event as d3Event, select } from 'd3-selection';
-import { zoom, zoomIdentity } from 'd3-zoom';
 
 import Logo from '../components/logo';
 import ZoomControl from '../components/zoom-control';
 import { cacheZoomState } from '../actions/app-actions';
+import { zoomFactor } from '../utils/zoom-utils';
 import { transformToString } from '../utils/transform-utils';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
 import {
@@ -19,6 +20,15 @@ import {
 
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
+const transformF = ({ x, y }, t) => ({
+  x: t.translateX + (t.scaleX * x),
+  y: t.translateY + (t.scaleY * y),
+});
+
+const inverseTransform = ({ x, y }, t) => ({
+  x: (x - t.translateX) / t.scaleX,
+  y: (y - t.translateY) / t.scaleY,
+});
 
 class ZoomableCanvas extends React.Component {
   constructor(props, context) {
@@ -40,27 +50,26 @@ class ZoomableCanvas extends React.Component {
     this.debouncedCacheZoom = debounce(this.cacheZoom.bind(this), ZOOM_CACHE_DEBOUNCE_INTERVAL);
     this.handleZoomControlAction = this.handleZoomControlAction.bind(this);
     this.canChangeZoom = this.canChangeZoom.bind(this);
-    this.zoomed = this.zoomed.bind(this);
+    this.handleZoom = this.handleZoom.bind(this);
+    this.handlePan = this.handlePan.bind(this);
   }
 
   componentDidMount() {
     this.zoomRestored = false;
-    this.zoom = zoom().on('zoom', this.zoomed);
     this.svg = select('svg#canvas');
+    this.drag = drag().on('drag', this.handlePan);
+    this.svg.call(this.drag);
 
-    this.setZoomTriggers(!this.props.disabled);
     this.updateZoomLimits(this.props);
     this.restoreZoomState(this.props);
   }
 
   componentWillUnmount() {
-    this.setZoomTriggers(false);
     this.debouncedCacheZoom.cancel();
   }
 
   componentWillReceiveProps(nextProps) {
     const layoutChanged = nextProps.layoutId !== this.props.layoutId;
-    const disabledChanged = nextProps.disabled !== this.props.disabled;
 
     // If the layout has changed (either active topology or its options) or
     // relayouting has been requested, stop pending zoom caching event and
@@ -68,11 +77,6 @@ class ZoomableCanvas extends React.Component {
     if (layoutChanged || nextProps.forceRelayout) {
       this.debouncedCacheZoom.cancel();
       this.zoomRestored = false;
-    }
-
-    // If the zooming has been enabled/disabled, update its triggers.
-    if (disabledChanged) {
-      this.setZoomTriggers(!nextProps.disabled);
     }
 
     this.updateZoomLimits(nextProps);
@@ -83,14 +87,12 @@ class ZoomableCanvas extends React.Component {
 
   handleZoomControlAction(scale) {
     // Update the canvas scale (not touching the translation).
-    this.svg.call(this.zoom.scaleTo, scale);
-
-    // Update the scale state and propagate to the global cache.
-    this.setState(this.cachableState({
-      scaleX: scale,
-      scaleY: scale,
-    }));
-    this.debouncedCacheZoom();
+    const { top, bottom, left, right } = this.svg.node().getBoundingClientRect();
+    const centerOfCanvas = {
+      x: (left + right) / 2,
+      y: (top + bottom) / 2,
+    };
+    this.zoomAtPosition(centerOfCanvas, scale / this.state.scaleX);
   }
 
   render() {
@@ -103,7 +105,9 @@ class ZoomableCanvas extends React.Component {
 
     return (
       <div className="zoomable-canvas">
-        <svg id="canvas" width="100%" height="100%" onClick={this.props.onClick}>
+        <svg
+          id="canvas" width="100%" height="100%"
+          onClick={this.props.onClick} onWheel={this.handleZoom}>
           <Logo transform="translate(24,24) scale(0.25)" />
           <g className="zoom-content" transform={transform}>
             {forwardTransform ? children(this.state) : children}
@@ -117,16 +121,6 @@ class ZoomableCanvas extends React.Component {
         />}
       </div>
     );
-  }
-
-  setZoomTriggers(zoomingEnabled) {
-    if (zoomingEnabled) {
-      // use d3-zoom defaults but exclude double clicks
-      this.svg.call(this.zoom)
-        .on('dblclick.zoom', null);
-    } else {
-      this.svg.on('.zoom', null);
-    }
   }
 
   // Decides which part of the zoom state is cachable depending
@@ -144,39 +138,13 @@ class ZoomableCanvas extends React.Component {
   }
 
   updateZoomLimits(props) {
-    const zoomLimits = props.layoutZoomLimits.toJS();
-
-    this.zoom = this.zoom.scaleExtent([zoomLimits.minScale, zoomLimits.maxScale]);
-
-    if (props.bounded) {
-      this.zoom = this.zoom
-        // Translation limits are only set if explicitly demanded (currently we are using them
-        // in the resource view, but not in the graph view, although I think the idea would be
-        // to use them everywhere).
-        .translateExtent([
-          [zoomLimits.minTranslateX, zoomLimits.minTranslateY],
-          [zoomLimits.maxTranslateX, zoomLimits.maxTranslateY],
-        ])
-        // This is to ensure that the translation limits are properly
-        // centered, so that the canvas margins are respected.
-        .extent([
-          [props.canvasMargins.left, props.canvasMargins.top],
-          [props.canvasMargins.left + props.width, props.canvasMargins.top + props.height]
-        ]);
-    }
-
-    this.setState(zoomLimits);
+    this.setState(props.layoutZoomLimits.toJS());
   }
 
   // Restore the zooming settings
   restoreZoomState(props) {
     if (!props.layoutZoomState.isEmpty()) {
       const zoomState = props.layoutZoomState.toJS();
-
-      // After the limits have been set, update the zoom.
-      this.svg.call(this.zoom.transform, zoomIdentity
-        .translate(zoomState.translateX, zoomState.translateY)
-        .scale(zoomState.scaleX, zoomState.scaleY));
 
       // Update the state variables.
       this.setState(zoomState);
@@ -190,18 +158,82 @@ class ZoomableCanvas extends React.Component {
     return !disabled && canvasHasContent;
   }
 
-  zoomed() {
-    if (this.canChangeZoom()) {
-      const updatedState = this.cachableState({
-        scaleX: d3Event.transform.k,
-        scaleY: d3Event.transform.k,
-        translateX: d3Event.transform.x,
-        translateY: d3Event.transform.y,
-      });
+  handlePan() {
+    let state = { ...this.state };
+    state = this.clampedTranslation({ ...state,
+      translateX: this.state.translateX + d3Event.dx,
+      translateY: this.state.translateY + d3Event.dy,
+    });
+    this.updateState(state);
+  }
 
-      this.setState(updatedState);
-      this.debouncedCacheZoom();
+  handleZoom(ev) {
+    if (this.canChangeZoom()) {
+      const { top, left } = this.svg.node().getBoundingClientRect();
+      const mousePosition = {
+        x: ev.clientX - left,
+        y: ev.clientY - top,
+      };
+      this.zoomAtPosition(mousePosition, 1 / zoomFactor(ev));
     }
+  }
+
+  clampedTranslation(state) {
+    if (this.props.bounded) {
+      const { width, height, canvasMargins } = this.props;
+      const { maxTranslateX, minTranslateX, maxTranslateY, minTranslateY }
+        = this.props.layoutZoomLimits.toJS();
+
+      const minPoint = transformF({ x: minTranslateX, y: minTranslateY }, state);
+      const maxPoint = transformF({ x: maxTranslateX, y: maxTranslateY }, state);
+      const viewportMinPoint = { x: canvasMargins.left, y: canvasMargins.top };
+      const viewportMaxPoint = { x: canvasMargins.left + width, y: canvasMargins.top + height };
+
+      if (true) {
+        if (maxPoint.x < viewportMaxPoint.x) {
+          state.translateX += viewportMaxPoint.x - maxPoint.x;
+        } else if (minPoint.x > viewportMinPoint.x) {
+          state.translateX -= minPoint.x - viewportMinPoint.x;
+        }
+        if (maxPoint.y < viewportMaxPoint.y) {
+          state.translateY += viewportMaxPoint.y - maxPoint.y;
+        } else if (minPoint.y > viewportMinPoint.y) {
+          state.translateY -= minPoint.y - viewportMinPoint.y;
+        }
+      } else {
+        if (minPoint.x > viewportMaxPoint.x) {
+          state.translateX -= minPoint.x - viewportMaxPoint.x;
+        } else if (maxPoint.x < viewportMinPoint.x) {
+          state.translateX += viewportMinPoint.x - maxPoint.x;
+        }
+        if (minPoint.y > viewportMaxPoint.y) {
+          state.translateY -= minPoint.y - viewportMaxPoint.y;
+        } else if (maxPoint.y < viewportMinPoint.y) {
+          state.translateY += viewportMinPoint.y - maxPoint.y;
+        }
+      }
+    }
+    return state;
+  }
+
+  zoomAtPosition(position, factor) {
+    const { minScale, maxScale } = this.state;
+    const scaleX = clamp(this.state.scaleX * factor, minScale, maxScale);
+    const scaleY = clamp(this.state.scaleY * factor, minScale, maxScale);
+    let state = { ...this.state, scaleX, scaleY };
+
+    const inversePosition = inverseTransform(position, this.state);
+    state = this.clampedTranslation({ ...state,
+      translateX: position.x - (inversePosition.x * scaleX),
+      translateY: position.y - (inversePosition.y * scaleY),
+    });
+
+    this.updateState(state);
+  }
+
+  updateState(state) {
+    this.setState(this.cachableState(state));
+    this.debouncedCacheZoom();
   }
 }
 
