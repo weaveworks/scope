@@ -170,7 +170,7 @@ func metricQuery(summary NodeSummary, n report.Node, metricID string) string {
 // metricURL builds the URL by embedding it into the configured `metricsGraphURL`.
 func metricURL(query, metricsGraphURL string) string {
 	if strings.Contains(metricsGraphURL, urlQueryVarName) {
-		return strings.Replace(metricsGraphURL, urlQueryVarName, url.QueryEscape(query), -1)
+		return strings.Replace(metricsGraphURL, urlQueryVarName, queryEscape(query), -1)
 	}
 
 	params, err := queryParamsAsJSON(query)
@@ -182,7 +182,7 @@ func metricURL(query, metricsGraphURL string) string {
 		metricsGraphURL += "/"
 	}
 
-	return metricsGraphURL + url.QueryEscape(params)
+	return metricsGraphURL + queryEscape(params)
 }
 
 // queryParamsAsJSON packs the query into a JSON of the format `{"cells":[{"queries":[$query]}]}`.
@@ -202,4 +202,10 @@ func queryParamsAsJSON(query string) (string, error) {
 	}
 
 	return buf.String(), nil
+}
+
+// queryEscape uses `%20` instead of `+` to encode whitespaces. Both are
+// valid but react-router does not decode `+` properly.
+func queryEscape(query string) string {
+	return url.QueryEscape(strings.Replace(query, " ", "%20", -1))
 }
