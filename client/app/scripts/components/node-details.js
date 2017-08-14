@@ -206,8 +206,8 @@ class NodeDetails extends React.Component {
             <NodeDetailsInfo rows={details.metadata} matches={nodeMatches.get('metadata')} />
           </div>}
 
-          {details.connections && details.connections.map(connections => (
-            <div className="node-details-content-section" key={connections.id}>
+          {details.connections && details.connections.filter(cs => cs.connections.length > 0)
+            .map(connections => (<div className="node-details-content-section" key={connections.id}>
               <NodeDetailsTable
                 {...connections}
                 nodes={connections.connections}
