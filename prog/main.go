@@ -271,8 +271,8 @@ func setupFlags(flags *flags) {
 	flag.Bool("app-only", false, "Only run the app.")
 
 	// Probe flags
-	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to use to authenticate with cloud.weave.works")
-	flag.StringVar(&flags.probe.token, probeTokenFlag, "", "Token to use to authenticate with cloud.weave.works")
+	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to authenticate with cloud.weave.works")
+	flag.StringVar(&flags.probe.token, probeTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
 	flag.DurationVar(&flags.probe.publishInterval, "probe.publish.interval", 3*time.Second, "publish (output) interval")
 	flag.DurationVar(&flags.probe.spyInterval, "probe.spy.interval", time.Second, "spy (scan) interval")
