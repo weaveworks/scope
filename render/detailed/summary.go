@@ -135,7 +135,7 @@ func (n NodeSummary) SummarizeMetrics() NodeSummary {
 
 func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 	t, _ := r.Topology(n.Topology)
-	ns := NodeSummary{
+	return NodeSummary{
 		ID:        n.ID,
 		Shape:     t.GetShape(),
 		Linkable:  true,
@@ -145,8 +145,6 @@ func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 		Tables:    NodeTables(r, n),
 		Adjacency: n.Adjacency,
 	}
-
-	return ns
 }
 
 func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
