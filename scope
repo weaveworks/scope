@@ -21,6 +21,7 @@ SCOPE_APP_CONTAINER_NAME="${SCOPE_APP_CONTAINER_NAME:-weavescope-app}"
 IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
 IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
     xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
+LISTENING_IP_ADDR_CMD="for I in \$( $IP_ADDR_CMD ); do if curl -m 1 -s \${I}:4040 > /dev/null ; then echo \${I}; fi; done"
 WEAVESCOPE_DOCKER_ARGS=${WEAVESCOPE_DOCKER_ARGS:-}
 
 # When docker daemon is running with User Namespace enabled, this tool will run into errors:
@@ -198,7 +199,12 @@ launch() {
 }
 
 print_app_endpoints() {
-    echo "Weave Scope is reachable at the following URL(s):" >&2
+    HOST_SUFFIX=""
+    if [ -n "${DOCKER_HOST+x}" ]; then
+        DOCKER_HOSTNAME=$(docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c hostname)
+        HOST_SUFFIX=" of host $DOCKER_HOSTNAME"
+    fi
+    echo "Weave Scope is listening at the following URL(s)${HOST_SUFFIX}:" >&2
     for ip in "$@"; do
         echo "  * http://$ip:4040/" >&2
     done
@@ -209,6 +215,24 @@ dry_run() {
     # avoiding the entrypoint script in the process.
     # shellcheck disable=SC2046
     docker run --rm --entrypoint=/home/weave/scope $(docker_args) "$SCOPE_IMAGE" --dry-run "$@"
+}
+
+run_in_scope_container() {
+    docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$1"
+}
+
+# Wait for the scope app to start listening on localhost:4040
+wait_for_http() {
+    for seconds in $(seq 5); do
+        if run_in_scope_container "curl -m 1 -s localhost:4040" >/dev/null; then
+            break
+        fi
+        sleep 1
+    done
+    if [ "$seconds" -eq 5 ]; then
+        echo "The Scope App is not responding. Consult the container logs for further details."
+        exit 1
+    fi
 }
 
 check_docker_access
@@ -270,9 +294,10 @@ case "$COMMAND" in
         launch "$@"
         if ! check_probe_only; then
             if check_listen_address_arg; then
-                echo "Weave Scope is reachable at the address specified with --app.http.address" >&2
+                echo "Weave Scope is listening at the address specified with --app.http.address" >&2
             else
-                IP_ADDRS=$(docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$IP_ADDR_CMD")
+                wait_for_http
+                IP_ADDRS=$(run_in_scope_container "$LISTENING_IP_ADDR_CMD")
                 # shellcheck disable=SC2086
                 print_app_endpoints $IP_ADDRS
             fi
