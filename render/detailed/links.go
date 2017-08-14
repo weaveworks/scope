@@ -51,9 +51,8 @@ var (
 	topologyQueries = map[string]map[string]string{
 		// Containers
 
-		report.Container:                            formatMetricQueries(`container_name="{{label}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
-		report.ContainerImage:                       formatMetricQueries(`image="{{label}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
-		"group:container:docker_container_hostname": formatMetricQueries(`pod_name="{{label}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		report.Container:      formatMetricQueries(`container_name="{{label}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		report.ContainerImage: formatMetricQueries(`image="{{label}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
 
 		// Kubernetes topologies
 
