@@ -201,8 +201,8 @@ launch() {
 print_app_endpoints() {
     HOST_SUFFIX=""
     if [ -n "${DOCKER_HOST+x}" ]; then
-	DOCKER_HOSTNAME=$(docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c hostname)
-	HOST_SUFFIX=" of host $DOCKER_HOSTNAME"
+        DOCKER_HOSTNAME=$(docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c hostname)
+        HOST_SUFFIX=" of host $DOCKER_HOSTNAME"
     fi
     echo "Weave Scope is listening at the following URL(s)${HOST_SUFFIX}:" >&2
     for ip in "$@"; do
@@ -224,14 +224,14 @@ run_in_scope_container() {
 # Wait for the scope app to start listening on localhost:4040
 wait_for_http() {
     for seconds in $(seq 5); do
-	if run_in_scope_container "curl -m 1 -s localhost:4040" > /dev/null; then
-	    break;
-	fi
-	sleep 1
+        if run_in_scope_container "curl -m 1 -s localhost:4040" >/dev/null; then
+            break
+        fi
+        sleep 1
     done
     if [ "$seconds" -eq 5 ]; then
-	echo "The Scope App is not responding. Consult the container logs for further details."
-	exit 1
+        echo "The Scope App is not responding. Consult the container logs for further details."
+        exit 1
     fi
 }
 
