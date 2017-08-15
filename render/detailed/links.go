@@ -55,7 +55,7 @@ var (
 
 		report.Pod: formatMetricQueries(
 			`pod_name="{{label}}"`,
-			[]string{docker.MemoryUsage, docker.CPUTotalUsage, idReceiveBytes, idTransmitBytes},
+			[]string{docker.MemoryUsage, docker.CPUTotalUsage},
 		),
 		// Pod naming: // https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label
 		"__k8s_controllers": formatMetricQueries(`pod_name=~"^{{label}}-[^-]+-[^-]+$"}`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
