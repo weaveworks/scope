@@ -44,6 +44,10 @@ var (
 		},
 	}
 
+	// Queries on pod names of the format `name-<id>-<hash>`
+	// See also:  https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label
+	podIDHashQueries = formatMetricQueries(`pod_name=~"^{{label}}-[^-]+-[^-]+$"`, []string{docker.MemoryUsage, docker.CPUTotalUsage})
+
 	// Prometheus queries for topologies
 	topologyQueries = map[string]map[string]string{
 		// Containers
@@ -57,22 +61,18 @@ var (
 			`pod_name="{{label}}"`,
 			[]string{docker.MemoryUsage, docker.CPUTotalUsage},
 		),
-		// Pod naming: // https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label
-		"__k8s_controllers": formatMetricQueries(`pod_name=~"^{{label}}-[^-]+-[^-]+$"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
-		report.DaemonSet:    formatMetricQueries(`pod_name=~"^{{label}}-[^-]+$"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		report.DaemonSet:   formatMetricQueries(`pod_name=~"^{{label}}-[^-]+$"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		report.Deployment:  podIDHashQueries,
+		report.StatefulSet: podIDHashQueries,
+		report.CronJob:     podIDHashQueries,
 		report.Service: {
 			// These recording rules must be defined in the prometheus config.
 			// NB: Pods need to be labeled and selected by their respective Service name, meaning:
 			// - The Service's `spec.selector` needs to select on `name`
 			// - The Service's `metadata.name` needs to be the same value as `spec.selector.name`
+			docker.CPUTotalUsage: `namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{label}}"}/1024/1024`,
 			docker.MemoryUsage:   `namespace_label_name:container_memory_usage_bytes:sum{label_name="{{label}}"}`,
-			docker.CPUTotalUsage: `namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{label}}"}`,
 		},
-	}
-	k8sControllers = map[string]struct{}{
-		report.Deployment:  {},
-		report.StatefulSet: {},
-		report.CronJob:     {},
 	}
 )
 
@@ -155,11 +155,7 @@ func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string
 
 // metricQuery returns the query for the given node and metric.
 func metricQuery(summary NodeSummary, n report.Node, metricID string) string {
-	t := n.Topology
-	if _, ok := k8sControllers[n.Topology]; ok {
-		t = "__k8s_controllers"
-	}
-	queries := topologyQueries[t]
+	queries := topologyQueries[n.Topology]
 	if len(queries) == 0 {
 		return ""
 	}
