@@ -108,6 +108,9 @@ function sortNodes(nodes, getValue, sortedDesc) {
 function getSortedNodes(nodes, sortedByHeader, sortedDesc) {
   const getValue = getValueForSortedBy(sortedByHeader);
   const withAndWithoutValues = groupBy(nodes, (n) => {
+    if (!n || n.valueEmpty) {
+      return 'withoutValues';
+    }
     const v = getValue(n);
     return v !== null && v !== undefined ? 'withValues' : 'withoutValues';
   });

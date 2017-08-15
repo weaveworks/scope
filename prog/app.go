@@ -18,17 +18,17 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tylerb/graceful"
-	"github.com/weaveworks/go-checkpoint"
-	"github.com/weaveworks/scope/common/xfer"
-	"github.com/weaveworks/weave/common"
 
 	billing "github.com/weaveworks/billing-client"
 	"github.com/weaveworks/common/middleware"
 	"github.com/weaveworks/common/network"
+	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/app/multitenant"
 	"github.com/weaveworks/scope/common/weave"
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/weave/common"
 )
 
 const (
@@ -51,7 +51,7 @@ func init() {
 }
 
 // Router creates the mux for all the various app components.
-func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter, externalUI bool, capabilities map[string]bool) http.Handler {
+func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter, externalUI bool, capabilities map[string]bool, metricsGraphURL string) http.Handler {
 	router := mux.NewRouter().SkipClean(true)
 
 	// We pull in the http.DefaultServeMux to get the pprof routes
@@ -61,7 +61,7 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	app.RegisterReportPostHandler(collector, router)
 	app.RegisterControlRoutes(router, controlRouter)
 	app.RegisterPipeRoutes(router, pipeRouter)
-	app.RegisterTopologyRoutes(router, collector, capabilities)
+	app.RegisterTopologyRoutes(router, app.WebReporter{Reporter: collector, MetricsGraphURL: metricsGraphURL}, capabilities)
 
 	uiHandler := http.FileServer(GetFS(externalUI))
 	router.PathPrefix("/ui").Name("static").Handler(
@@ -297,7 +297,7 @@ func appMain(flags appFlags) {
 	capabilities := map[string]bool{
 		xfer.HistoricReportsCapability: collector.HasHistoricReports(),
 	}
-	handler := router(collector, controlRouter, pipeRouter, flags.externalUI, capabilities)
+	handler := router(collector, controlRouter, pipeRouter, flags.externalUI, capabilities, flags.metricsGraphURL)
 	if flags.logHTTP {
 		handler = middleware.Log{
 			LogRequestHeaders: flags.logHTTPHeaders,

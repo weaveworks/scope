@@ -102,19 +102,22 @@ var primaryAPITopology = map[string]string{
 }
 
 // MakeNodeSummary summarizes a node, if possible.
-func MakeNodeSummary(r report.Report, n report.Node) (NodeSummary, bool) {
+func MakeNodeSummary(rc report.RenderContext, n report.Node) (NodeSummary, bool) {
+	r := rc.Report
 	if renderer, ok := renderers[n.Topology]; ok {
 		// Skip (and don't fall through to fallback) if renderer maps to nil
 		if renderer != nil {
-			return renderer(baseNodeSummary(r, n), n)
+			summary, b := renderer(baseNodeSummary(r, n), n)
+			return RenderMetricURLs(summary, n, rc.MetricsGraphURL), b
 		}
-	} else if _, ok := r.Topology(n.Topology); ok {
+	} else if _, ok := rc.Topology(n.Topology); ok {
 		summary := baseNodeSummary(r, n)
 		summary.Label = n.ID // This is unlikely to look very good, but is a reasonable fallback
 		return summary, true
 	}
 	if strings.HasPrefix(n.Topology, "group:") {
-		return groupNodeSummary(baseNodeSummary(r, n), r, n)
+		summary, b := groupNodeSummary(baseNodeSummary(r, n), r, n)
+		return RenderMetricURLs(summary, n, rc.MetricsGraphURL), b
 	}
 	return NodeSummary{}, false
 }
@@ -370,11 +373,11 @@ func (s nodeSummariesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
 type NodeSummaries map[string]NodeSummary
 
 // Summaries converts RenderableNodes into a set of NodeSummaries
-func Summaries(r report.Report, rns report.Nodes) NodeSummaries {
+func Summaries(rc report.RenderContext, rns report.Nodes) NodeSummaries {
 
 	result := NodeSummaries{}
 	for id, node := range rns {
-		if summary, ok := MakeNodeSummary(r, node); ok {
+		if summary, ok := MakeNodeSummary(rc, node); ok {
 			for i, m := range summary.Metrics {
 				summary.Metrics[i] = m.Summary()
 			}

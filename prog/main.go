@@ -160,6 +160,7 @@ type appFlags struct {
 	memcachedCompressionLevel int
 	userIDHeader              string
 	externalUI                bool
+	metricsGraphURL           string
 
 	blockProfileRate int
 
@@ -355,6 +356,7 @@ func setupFlags(flags *flags) {
 	flag.IntVar(&flags.app.memcachedCompressionLevel, "app.memcached.compression", gzip.DefaultCompression, "How much to compress reports stored in memcached.")
 	flag.StringVar(&flags.app.userIDHeader, "app.userid.header", "", "HTTP header to use as userid")
 	flag.BoolVar(&flags.app.externalUI, "app.externalUI", false, "Point to externally hosted static UI assets")
+	flag.StringVar(&flags.app.metricsGraphURL, "app.metrics-graph", "", "Enable extended metrics graph by providing a templated URL (supports :orgID and :query). Example: --app.metric-graph=/prom/:orgID/notebook/new")
 
 	flag.IntVar(&flags.app.blockProfileRate, "app.block.profile.rate", 0, "If more than 0, enable block profiling. The profiler aims to sample an average of one blocking event per rate nanoseconds spent blocked.")
 

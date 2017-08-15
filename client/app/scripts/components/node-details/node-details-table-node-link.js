@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 
 import { clickRelative } from '../../actions/app-actions';
 import { trackMixpanelEvent } from '../../utils/tracking-utils';
+import { dismissRowClickProps } from './node-details-table-row';
 
 
 class NodeDetailsTableNodeLink extends React.Component {
@@ -38,7 +39,9 @@ class NodeDetailsTableNodeLink extends React.Component {
       return (
         <span
           className="node-details-table-node-link" title={title}
-          ref={this.saveNodeRef} onClick={this.handleClick}>
+          ref={this.saveNodeRef} onClick={this.handleClick}
+          {...dismissRowClickProps}
+        >
           {label}
         </span>
       );

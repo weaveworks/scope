@@ -5,7 +5,7 @@ import { intersperse } from '../../utils/array-utils';
 
 
 import NodeDetailsTableNodeLink from './node-details-table-node-link';
-import NodeDetailsTableNodeMetric from './node-details-table-node-metric';
+import NodeDetailsTableNodeMetricLink from './node-details-table-node-metric-link';
 import { formatDataType } from '../../utils/string-utils';
 
 function getValuesForNode(node) {
@@ -40,7 +40,7 @@ function getValuesForNode(node) {
 }
 
 
-function renderValues(node, columns = [], columnStyles = [], timestamp = null) {
+function renderValues(node, columns = [], columnStyles = [], timestamp = null, topologyId = null) {
   const fields = getValuesForNode(node);
   return columns.map(({ id }, i) => {
     const field = fields[id];
@@ -76,8 +76,10 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null) {
           </td>
         );
       }
+      // valueType === 'metrics'
       return (
-        <NodeDetailsTableNodeMetric style={style} key={field.id} {...field} />
+        <NodeDetailsTableNodeMetricLink
+          style={style} key={field.id} topologyId={topologyId} {...field} />
       );
     }
     // empty cell to complete the row for proper hover
@@ -86,6 +88,19 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null) {
     );
   });
 }
+
+/**
+ * Table row children may react to onClick events but the row
+ * itself does detect a click by looking at onMouseUp. To stop
+ * the bubbling of clicks on child elements we need to dismiss
+ * the onMouseUp event.
+ */
+export const dismissRowClickProps = {
+  onMouseUp: (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+};
 
 export default class NodeDetailsTableRow extends React.Component {
   constructor(props, context) {
@@ -142,7 +157,7 @@ export default class NodeDetailsTableRow extends React.Component {
   render() {
     const { node, nodeIdKey, topologyId, columns, onClick, colStyles, timestamp } = this.props;
     const [firstColumnStyle, ...columnStyles] = colStyles;
-    const values = renderValues(node, columns, columnStyles, timestamp);
+    const values = renderValues(node, columns, columnStyles, timestamp, topologyId);
     const nodeId = node[nodeIdKey];
 
     const className = classNames('node-details-table-node', {

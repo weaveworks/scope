@@ -29,27 +29,27 @@ type APINode struct {
 }
 
 // Full topology.
-func handleTopology(ctx context.Context, renderer render.Renderer, decorator render.Decorator, report report.Report, w http.ResponseWriter, r *http.Request) {
+func handleTopology(ctx context.Context, renderer render.Renderer, decorator render.Decorator, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(report, renderer.Render(report, decorator)),
+		Nodes: detailed.Summaries(rc, renderer.Render(rc.Report, decorator)),
 	})
 }
 
 // Individual nodes.
-func handleNode(ctx context.Context, renderer render.Renderer, decorator render.Decorator, report report.Report, w http.ResponseWriter, r *http.Request) {
+func handleNode(ctx context.Context, renderer render.Renderer, decorator render.Decorator, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars             = mux.Vars(r)
 		topologyID       = vars["topology"]
 		nodeID           = vars["id"]
 		preciousRenderer = render.PreciousNodeRenderer{PreciousNodeID: nodeID, Renderer: renderer}
-		rendered         = preciousRenderer.Render(report, decorator)
+		rendered         = preciousRenderer.Render(rc.Report, decorator)
 		node, ok         = rendered[nodeID]
 	)
 	if !ok {
 		http.NotFound(w, r)
 		return
 	}
-	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, report, rendered, node)})
+	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, rc, rendered, node)})
 }
 
 // Websocket for the full topology.
@@ -113,17 +113,17 @@ func handleWebsocket(
 		// might be interested in implementing in the future.
 		timestampDelta := time.Since(channelOpenedAt)
 		reportTimestamp := startReportingAt.Add(timestampDelta)
-		report, err := rep.Report(ctx, reportTimestamp)
+		re, err := rep.Report(ctx, reportTimestamp)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		renderer, decorator, err := topologyRegistry.RendererForTopology(topologyID, r.Form, report)
+		renderer, decorator, err := topologyRegistry.RendererForTopology(topologyID, r.Form, re)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(report, renderer.Render(report, decorator))
+		newTopo := detailed.Summaries(RenderContextForReporter(rep, re), renderer.Render(re, decorator))
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

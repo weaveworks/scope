@@ -12,6 +12,10 @@
 // TODO: Remove this line once Service UI CONFIGURE button stops being added to Scope.
 .scope-wrapper .setup-nav-button { display: none; }
 
+a {
+  text-decoration: none;
+}
+
 .browsehappy {
   margin: 0.2em 0;
   background: #ccc;
@@ -930,17 +934,45 @@
     &-item {
       padding: 8px 16px;
       width: 33%;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
 
       &-label {
         color: $text-secondary-color;
         text-transform: uppercase;
         font-size: 80%;
+
+        .fa {
+          margin-left: 0.5em;
+        }
       }
 
-      &-value {
-        color: $text-secondary-color;
-        font-size: 150%;
-        padding-bottom: 0.5em;
+      &-sparkline {
+        margin-top: auto;
+      }
+
+      &-placeholder {
+        font-size: 200%;
+        opacity: 0.2;
+        margin-bottom: 0.2em;
+      }
+    }
+
+    &-link-item {
+      @extend .btn-opacity;
+      cursor: pointer;
+      opacity: $link-opacity-default;
+      width: 33%;
+      display: flex;
+      color: inherit;
+
+      .label {
+        text-transform: uppercase;
+      }
+
+      .node-details-health-item {
+        width: auto;
       }
     }
   }
@@ -1085,6 +1117,14 @@
         flex: 1;
         margin-left: 0.5em;
         text-align: right;
+      }
+
+      &-metric-link {
+        @extend .btn-opacity;
+        text-decoration: underline;
+        cursor: pointer;
+        opacity: $link-opacity-default;
+        color: $text-color;
       }
 
       &-value-scalar {

@@ -23,6 +23,7 @@ function getColumns(nodes) {
     .toList()
     .flatMap((n) => {
       const metrics = (n.get('metrics') || makeList())
+        .filter(m => !m.get('valueEmpty'))
         .map(m => makeMap({ id: m.get('id'), label: m.get('label'), dataType: 'number' }));
       return metrics;
     })
@@ -87,10 +88,6 @@ class NodesGrid extends React.Component {
   }
 
   onClickRow(ev, node) {
-    // TODO: do this better
-    if (ev.target.className === 'node-details-table-node-link') {
-      return;
-    }
     trackMixpanelEvent('scope.node.click', {
       layout: TABLE_VIEW_MODE,
       topologyId: this.props.currentTopology.get('id'),

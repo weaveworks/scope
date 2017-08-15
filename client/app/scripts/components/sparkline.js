@@ -9,6 +9,10 @@ import { scaleLinear } from 'd3-scale';
 import { formatMetricSvg } from '../utils/string-utils';
 
 
+const HOVER_RADIUS_MULTIPLY = 1.5;
+const HOVER_STROKE_MULTIPLY = 5;
+const MARGIN = 2;
+
 export default class Sparkline extends React.Component {
   constructor(props, context) {
     super(props, context);
@@ -20,19 +24,23 @@ export default class Sparkline extends React.Component {
       .y(d => this.y(d.value));
   }
 
+  initRanges(hasCircle) {
+    // adjust scales and leave some room for the circle on the right, upper, and lower edge
+    let circleSpace = MARGIN;
+    if (hasCircle) {
+      circleSpace += Math.ceil(this.props.circleRadius * HOVER_RADIUS_MULTIPLY);
+    }
+
+    this.x.range([MARGIN, this.props.width - circleSpace]);
+    this.y.range([this.props.height - circleSpace, circleSpace]);
+    this.line.curve(this.props.curve);
+  }
+
   getGraphData() {
     // data is of shape [{date, value}, ...] and is sorted by date (ASC)
     let data = this.props.data;
 
-    // Do nothing if no data or data w/o date are passed in.
-    if (data === undefined || data.length === 0 || data[0].date === undefined) {
-      return <div />;
-    }
-
-    // adjust scales
-    this.x.range([2, this.props.width - 2]);
-    this.y.range([this.props.height - 2, 2]);
-    this.line.curve(this.props.curve);
+    this.initRanges(true);
 
     // Convert dates into D3 dates
     data = data.map(d => ({
@@ -70,30 +78,53 @@ export default class Sparkline extends React.Component {
     return {title, lastX, lastY, data};
   }
 
-  render() {
-    // Do nothing if no data or data w/o date are passed in.
-    if (!this.props.data || this.props.data.length === 0 || this.props.data[0].date === undefined) {
-      return <div />;
-    }
+  getEmptyGraphData() {
+    this.initRanges(false);
+    const first = new Date(0);
+    const last = new Date(15);
+    this.x.domain([first, last]);
+    this.y.domain([0, 1]);
 
-    const {lastX, lastY, title, data} = this.getGraphData();
+    return {
+      title: '',
+      lastX: this.x(last),
+      lastY: this.y(0),
+      data: [
+        {date: first, value: 0},
+        {date: last, value: 0},
+      ],
+    };
+  }
+
+  render() {
+    const dash = 5;
+    const hasData = this.props.data && this.props.data.length > 0;
+    const strokeColor = this.props.hovered && hasData
+      ? this.props.hoverColor
+      : this.props.strokeColor;
+    const strokeWidth = this.props.strokeWidth * (this.props.hovered ? HOVER_STROKE_MULTIPLY : 1);
+    const strokeDasharray = hasData || `${dash}, ${dash}`;
+    const radius = this.props.circleRadius * (this.props.hovered ? HOVER_RADIUS_MULTIPLY : 1);
+    const fillOpacity = this.props.hovered ? 1 : 0.6;
+    const circleColor = hasData && this.props.hovered ? strokeColor : strokeColor;
+    const graph = hasData ? this.getGraphData() : this.getEmptyGraphData();
 
     return (
-      <div title={title}>
+      <div title={graph.title}>
         <svg width={this.props.width} height={this.props.height}>
           <path
-            className="sparkline" fill="none" stroke={this.props.strokeColor}
-            strokeWidth={this.props.strokeWidth} d={this.line(data)}
+            className="sparkline" fill="none" stroke={strokeColor}
+            strokeWidth={strokeWidth} strokeDasharray={strokeDasharray}
+            d={this.line(graph.data)}
           />
-          <circle
-            className="sparkcircle" cx={lastX} cy={lastY} fill="#46466a"
-            fillOpacity="0.6" stroke="none" r={this.props.circleDiameter}
-          />
+          {hasData && <circle
+            className="sparkcircle" cx={graph.lastX} cy={graph.lastY} fill={circleColor}
+            fillOpacity={fillOpacity} stroke="none" r={radius}
+          />}
         </svg>
       </div>
     );
   }
-
 }
 
 Sparkline.propTypes = {
@@ -104,8 +135,10 @@ Sparkline.defaultProps = {
   width: 80,
   height: 24,
   strokeColor: '#7d7da8',
-  strokeWidth: '0.5px',
+  strokeWidth: 0.5,
+  hoverColor: '#7d7da8',
   curve: curveLinear,
-  circleDiameter: 1.75,
+  circleRadius: 1.75,
+  hovered: false,
   data: [],
 };

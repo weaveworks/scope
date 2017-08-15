@@ -556,7 +556,7 @@ func captureReporter(rep Reporter, f reporterHandler) CtxHandlerFunc {
 	}
 }
 
-type rendererHandler func(context.Context, render.Renderer, render.Decorator, report.Report, http.ResponseWriter, *http.Request)
+type rendererHandler func(context.Context, render.Renderer, render.Decorator, report.RenderContext, http.ResponseWriter, *http.Request)
 
 func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
@@ -579,6 +579,6 @@ func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFu
 			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
-		f(ctx, renderer, decorator, rpt, w, req)
+		f(ctx, renderer, decorator, RenderContextForReporter(rep, rpt), w, req)
 	}
 }

@@ -127,7 +127,7 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 		// Use MakeNodeSummary to render the id and label of this node
 		// TODO(paulbellamy): Would be cleaner if we hade just a
 		// MakeNodeID(ns[row.remoteNodeID]). As we don't need the whole summary.
-		summary, _ := MakeNodeSummary(r, ns[row.remoteNodeID])
+		summary, _ := MakeNodeSummary(report.RenderContext{Report: r}, ns[row.remoteNodeID])
 		connection := Connection{
 			ID:         fmt.Sprintf("%s-%s-%s-%s", row.remoteNodeID, row.remoteAddr, row.localAddr, row.port),
 			NodeID:     summary.ID,
