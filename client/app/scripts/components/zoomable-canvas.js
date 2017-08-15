@@ -20,6 +20,7 @@ import {
 } from '../selectors/canvas';
 
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
+import { CONTENT_INCLUDED, CONTENT_COVERING } from '../constants/naming';
 
 
 class ZoomableCanvas extends React.Component {
@@ -28,10 +29,10 @@ class ZoomableCanvas extends React.Component {
 
     this.state = {
       isPanning: false,
-      minTranslateX: 0,
-      maxTranslateX: 0,
-      minTranslateY: 0,
-      maxTranslateY: 0,
+      contentMinX: 0,
+      contentMaxX: 0,
+      contentMinY: 0,
+      contentMaxY: 0,
       translateX: 0,
       translateY: 0,
       minScale: 1,
@@ -86,13 +87,14 @@ class ZoomableCanvas extends React.Component {
   }
 
   handleZoomControlAction(scale) {
-    // Update the canvas scale (not touching the translation).
+    // Get the center of the SVG and zoom around it.
     const { top, bottom, left, right } = this.svg.node().getBoundingClientRect();
     const centerOfCanvas = {
       x: (left + right) / 2,
       y: (top + bottom) / 2,
     };
-    this.zoomAtPosition(centerOfCanvas, scale / this.state.scaleX);
+    // Zoom factor diff is obtained by dividing the new zoom scale with the old one.
+    this.zoomAtPositionByFactor(centerOfCanvas, scale / this.state.scaleX);
   }
 
   render() {
@@ -131,7 +133,7 @@ class ZoomableCanvas extends React.Component {
   }
 
   updateZoomLimits(props) {
-    this.setState(props.layoutZoomLimits.toJS());
+    this.setState(props.layoutLimits.toJS());
   }
 
   // Restore the zooming settings
@@ -146,8 +148,8 @@ class ZoomableCanvas extends React.Component {
   }
 
   canChangeZoom() {
-    const { disabled, layoutZoomLimits } = this.props;
-    const canvasHasContent = !layoutZoomLimits.isEmpty();
+    const { disabled, layoutLimits } = this.props;
+    const canvasHasContent = !layoutLimits.isEmpty();
     return !disabled && canvasHasContent;
   }
 
@@ -161,6 +163,7 @@ class ZoomableCanvas extends React.Component {
 
   handlePan() {
     let state = { ...this.state };
+    // Apply the translation respecting the boundaries.
     state = this.clampedTranslation({ ...state,
       translateX: this.state.translateX + d3Event.dx,
       translateY: this.state.translateY + d3Event.dy,
@@ -170,40 +173,70 @@ class ZoomableCanvas extends React.Component {
 
   handleZoom(ev) {
     if (this.canChangeZoom()) {
+      // Get the exact mouse cursor position in the SVG and zoom around it.
       const { top, left } = this.svg.node().getBoundingClientRect();
       const mousePosition = {
         x: ev.clientX - left,
         y: ev.clientY - top,
       };
-      this.zoomAtPosition(mousePosition, 1 / zoomFactor(ev));
+      this.zoomAtPositionByFactor(mousePosition, zoomFactor(ev));
     }
   }
 
   clampedTranslation(state) {
-    const { width, height, canvasMargins, bounded, layoutZoomLimits } = this.props;
-    const { maxTranslateX, minTranslateX, maxTranslateY, minTranslateY } = layoutZoomLimits.toJS();
+    const { width, height, canvasMargins, boundContent, layoutLimits } = this.props;
+    const { contentMinX, contentMaxX, contentMinY, contentMaxY } = layoutLimits.toJS();
 
-    if (bounded) {
-      const contentMinPoint = applyTransform(state, { x: minTranslateX, y: minTranslateY });
-      const contentMaxPoint = applyTransform(state, { x: maxTranslateX, y: maxTranslateY });
-      const viewportMinPoint = { x: canvasMargins.left, y: canvasMargins.top };
-      const viewportMaxPoint = { x: canvasMargins.left + width, y: canvasMargins.top + height };
+    if (boundContent) {
+      // If the content is required to be bounded in any way, the translation will
+      // be adjusted so that certain constraints between the viewport and displayed
+      // content bounding box are met.
+      const viewportMin = { x: canvasMargins.left, y: canvasMargins.top };
+      const viewportMax = { x: canvasMargins.left + width, y: canvasMargins.top + height };
+      const contentMin = applyTransform(state, { x: contentMinX, y: contentMinY });
+      const contentMax = applyTransform(state, { x: contentMaxX, y: contentMaxY });
 
-      state.translateX += Math.max(0, viewportMaxPoint.x - contentMaxPoint.x);
-      state.translateX += Math.min(0, viewportMinPoint.x - contentMinPoint.x);
-      state.translateY += Math.max(0, viewportMaxPoint.y - contentMaxPoint.y);
-      state.translateY += Math.min(0, viewportMinPoint.y - contentMinPoint.y);
+      switch (boundContent) {
+        case CONTENT_COVERING:
+          // These lines will adjust the translation by 'minimal effort' in
+          // such a way that the content always FULLY covers the viewport,
+          // i.e. that the viewport rectangle is always fully contained in
+          // the content bounding box rectangle - the assumption made here
+          // is that that can always be done.
+          state.translateX += Math.max(0, viewportMax.x - contentMax.x);
+          state.translateX -= Math.max(0, contentMin.x - viewportMin.x);
+          state.translateY += Math.max(0, viewportMax.y - contentMax.y);
+          state.translateY -= Math.max(0, contentMin.y - viewportMin.y);
+          break;
+        case CONTENT_INCLUDED:
+          // These lines will adjust the translation by 'minimal effort' in
+          // such a way that the content is always at least PARTLY contained
+          // within the viewport, i.e. that the intersection between the
+          // viewport and the content bounding box always exists.
+          state.translateX -= Math.max(0, contentMin.x - viewportMax.x);
+          state.translateX += Math.max(0, viewportMin.x - contentMax.x);
+          state.translateY -= Math.max(0, contentMin.y - viewportMax.y);
+          state.translateY += Math.max(0, viewportMin.y - contentMax.y);
+          break;
+        default:
+          break;
+      }
     }
 
     return state;
   }
 
-  zoomAtPosition(position, factor) {
+  zoomAtPositionByFactor(position, factor) {
+    // Update the scales by the given factor, respecting the zoom limits.
     const { minScale, maxScale } = this.state;
     const scaleX = clamp(this.state.scaleX * factor, minScale, maxScale);
     const scaleY = clamp(this.state.scaleY * factor, minScale, maxScale);
     let state = { ...this.state, scaleX, scaleY };
 
+    // Get the position in the coordinates before the transition and use it
+    // to adjust the translation part of the new transition (respecting the
+    // translation limits). Adapted from:
+    // https://github.com/d3/d3-zoom/blob/807f02c7a5fe496fbd08cc3417b62905a8ce95fa/src/zoom.js#L251
     const inversePosition = inverseTransform(this.state, position);
     state = this.clampedTranslation({ ...state,
       translateX: position.x - (inversePosition.x * scaleX),
@@ -226,7 +259,7 @@ function mapStateToProps(state, props) {
     height: canvasHeightSelector(state),
     canvasMargins: canvasMarginsSelector(state),
     layoutZoomState: props.zoomStateSelector(state),
-    layoutZoomLimits: props.zoomLimitsSelector(state),
+    layoutLimits: props.limitsSelector(state),
     layoutId: JSON.stringify(activeTopologyZoomCacheKeyPathSelector(state)),
     forceRelayout: state.get('forceRelayout'),
   };

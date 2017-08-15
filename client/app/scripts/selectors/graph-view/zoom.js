@@ -6,7 +6,7 @@ import { canvasMarginsSelector, canvasWidthSelector, canvasHeightSelector } from
 import { activeLayoutCachedZoomSelector } from '../zooming';
 import { graphNodesSelector } from './graph';
 
-// Nodes in the layout are always kept between 1px and 200px big.
+// Nodes in the layout are always kept between 3px and 200px big.
 const MAX_SCALE = 200 / NODE_BASE_SIZE;
 const MIN_SCALE = 3 / NODE_BASE_SIZE;
 
@@ -58,10 +58,24 @@ export const graphDefaultZoomSelector = createSelector(
   }
 );
 
-// NOTE: This constant is made into a selector to fit
-// props requirements for <ZoomableCanvas /> component.
-export const graphZoomLimitsSelector = createSelector(
-  [], () => makeMap({ minScale: MIN_SCALE, maxScale: MAX_SCALE })
+export const graphLimitsSelector = createSelector(
+  [
+    graphBoundingRectangleSelector,
+  ],
+  (boundingRectangle) => {
+    if (!boundingRectangle) return makeMap();
+
+    const { xMin, xMax, yMin, yMax } = boundingRectangle.toJS();
+
+    return makeMap({
+      minScale: MIN_SCALE,
+      maxScale: MAX_SCALE,
+      contentMinX: xMin,
+      contentMaxX: xMax,
+      contentMinY: yMin,
+      contentMaxY: yMax,
+    });
+  }
 );
 
 export const graphZoomStateSelector = createSelector(

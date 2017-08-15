@@ -6,9 +6,11 @@ import ZoomableCanvas from '../components/zoomable-canvas';
 import { transformToString } from '../utils/transform-utils';
 import { clickBackground } from '../actions/app-actions';
 import {
-  graphZoomLimitsSelector,
+  graphLimitsSelector,
   graphZoomStateSelector,
 } from '../selectors/graph-view/zoom';
+
+import { CONTENT_INCLUDED } from '../constants/naming';
 
 
 const EdgeMarkerDefinition = ({ selectedNodeId }) => {
@@ -58,7 +60,8 @@ class NodesChart extends React.Component {
       <div className="nodes-chart">
         <ZoomableCanvas
           onClick={this.handleMouseClick}
-          zoomLimitsSelector={graphZoomLimitsSelector}
+          boundContent={CONTENT_INCLUDED}
+          limitsSelector={graphLimitsSelector}
           zoomStateSelector={graphZoomStateSelector}
           disabled={this.props.selectedNodeId}>
           {transform => this.renderContent(transform)}
