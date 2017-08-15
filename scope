@@ -201,7 +201,7 @@ launch() {
 print_app_endpoints() {
     HOST_SUFFIX=""
     if [ -n "${DOCKER_HOST+x}" ]; then
-        DOCKER_HOSTNAME=$(docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c hostname)
+        DOCKER_HOSTNAME=$(run_in_scope_container hostname)
         HOST_SUFFIX=" of host $DOCKER_HOSTNAME"
     fi
     echo "Weave Scope is listening at the following URL(s)${HOST_SUFFIX}:" >&2
