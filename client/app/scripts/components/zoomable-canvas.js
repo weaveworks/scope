@@ -1,4 +1,5 @@
 import React from 'react';
+import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { clamp, debounce, pick } from 'lodash';
 import { fromJS } from 'immutable';
@@ -10,7 +11,6 @@ import Logo from '../components/logo';
 import ZoomControl from '../components/zoom-control';
 import { cacheZoomState } from '../actions/app-actions';
 import { zoomFactor } from '../utils/zoom-utils';
-import { transformToString } from '../utils/transform-utils';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
 import {
   canvasMarginsSelector,
@@ -35,6 +35,7 @@ class ZoomableCanvas extends React.Component {
     super(props, context);
 
     this.state = {
+      isPanning: false,
       minTranslateX: 0,
       maxTranslateX: 0,
       minTranslateY: 0,
@@ -50,15 +51,22 @@ class ZoomableCanvas extends React.Component {
     this.debouncedCacheZoom = debounce(this.cacheZoom.bind(this), ZOOM_CACHE_DEBOUNCE_INTERVAL);
     this.handleZoomControlAction = this.handleZoomControlAction.bind(this);
     this.canChangeZoom = this.canChangeZoom.bind(this);
+
     this.handleZoom = this.handleZoom.bind(this);
+    this.handlePanStart = this.handlePanStart.bind(this);
+    this.handlePanEnd = this.handlePanEnd.bind(this);
     this.handlePan = this.handlePan.bind(this);
   }
 
   componentDidMount() {
-    this.zoomRestored = false;
-    this.svg = select('svg#canvas');
-    this.drag = drag().on('drag', this.handlePan);
+    this.svg = select('.zoomable-canvas svg');
+    this.drag = drag()
+      .on('start', this.handlePanStart)
+      .on('end', this.handlePanEnd)
+      .on('drag', this.handlePan);
     this.svg.call(this.drag);
+
+    this.zoomRestored = false;
 
     this.updateZoomLimits(this.props);
     this.restoreZoomState(this.props);
@@ -96,21 +104,14 @@ class ZoomableCanvas extends React.Component {
   }
 
   render() {
-    // `forwardTransform` says whether the zoom transform is forwarded to the child
-    // component. The advantage of that is more control rendering control in the
-    // children, while the disadvantage is that it's slower, as all the children
-    // get updated on every zoom/pan action.
-    const { children, forwardTransform } = this.props;
-    const transform = forwardTransform ? '' : transformToString(this.state);
+    const className = classNames({ panning: this.state.isPanning });
 
     return (
       <div className="zoomable-canvas">
-        <svg
-          id="canvas" width="100%" height="100%"
-          onClick={this.props.onClick} onWheel={this.handleZoom}>
+        <svg className={className} onClick={this.props.onClick} onWheel={this.handleZoom}>
           <Logo transform="translate(24,24) scale(0.25)" />
-          <g className="zoom-content" transform={transform}>
-            {forwardTransform ? children(this.state) : children}
+          <g className="zoom-content">
+            {this.props.children(this.state)}
           </g>
         </svg>
         {this.canChangeZoom() && <ZoomControl
@@ -158,6 +159,14 @@ class ZoomableCanvas extends React.Component {
     return !disabled && canvasHasContent;
   }
 
+  handlePanStart() {
+    this.setState({ isPanning: true });
+  }
+
+  handlePanEnd() {
+    this.setState({ isPanning: false });
+  }
+
   handlePan() {
     let state = { ...this.state };
     state = this.clampedTranslation({ ...state,
@@ -179,40 +188,22 @@ class ZoomableCanvas extends React.Component {
   }
 
   clampedTranslation(state) {
-    if (this.props.bounded) {
-      const { width, height, canvasMargins } = this.props;
-      const { maxTranslateX, minTranslateX, maxTranslateY, minTranslateY }
-        = this.props.layoutZoomLimits.toJS();
+    const { width, height, canvasMargins, bounded } = this.props;
+    const { maxTranslateX, minTranslateX, maxTranslateY, minTranslateY }
+      = this.props.layoutZoomLimits.toJS();
 
+    if (bounded) {
       const minPoint = transformF({ x: minTranslateX, y: minTranslateY }, state);
       const maxPoint = transformF({ x: maxTranslateX, y: maxTranslateY }, state);
       const viewportMinPoint = { x: canvasMargins.left, y: canvasMargins.top };
       const viewportMaxPoint = { x: canvasMargins.left + width, y: canvasMargins.top + height };
 
-      if (true) {
-        if (maxPoint.x < viewportMaxPoint.x) {
-          state.translateX += viewportMaxPoint.x - maxPoint.x;
-        } else if (minPoint.x > viewportMinPoint.x) {
-          state.translateX -= minPoint.x - viewportMinPoint.x;
-        }
-        if (maxPoint.y < viewportMaxPoint.y) {
-          state.translateY += viewportMaxPoint.y - maxPoint.y;
-        } else if (minPoint.y > viewportMinPoint.y) {
-          state.translateY -= minPoint.y - viewportMinPoint.y;
-        }
-      } else {
-        if (minPoint.x > viewportMaxPoint.x) {
-          state.translateX -= minPoint.x - viewportMaxPoint.x;
-        } else if (maxPoint.x < viewportMinPoint.x) {
-          state.translateX += viewportMinPoint.x - maxPoint.x;
-        }
-        if (minPoint.y > viewportMaxPoint.y) {
-          state.translateY -= minPoint.y - viewportMaxPoint.y;
-        } else if (maxPoint.y < viewportMinPoint.y) {
-          state.translateY += viewportMinPoint.y - maxPoint.y;
-        }
-      }
+      state.translateX += Math.max(0, viewportMaxPoint.x - maxPoint.x);
+      state.translateX += Math.min(0, viewportMinPoint.x - minPoint.x);
+      state.translateY += Math.max(0, viewportMaxPoint.y - maxPoint.y);
+      state.translateY += Math.min(0, viewportMinPoint.y - minPoint.y);
     }
+
     return state;
   }
 

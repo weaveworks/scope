@@ -39,8 +39,8 @@ class NodesResources extends React.Component {
     return (
       <div className="nodes-resources">
         <ZoomableCanvas
+          bounded fixVertical
           onClick={this.handleMouseClick}
-          bounded forwardTransform fixVertical
           zoomLimitsSelector={resourcesZoomLimitsSelector}
           zoomStateSelector={resourcesZoomStateSelector}>
           {transform => this.renderLayers(transform)}

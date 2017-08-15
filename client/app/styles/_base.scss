@@ -358,6 +358,15 @@ a {
   }
 }
 
+.zoomable-canvas {
+  svg {
+    @extend .grabbable;
+    width: 100%;
+    height: 100%;
+
+    &.panning { @extend .grabbing; }
+  }
+}
 
 .topologies {
   margin: 0 4px;
