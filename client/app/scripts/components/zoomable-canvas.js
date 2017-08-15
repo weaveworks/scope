@@ -11,6 +11,7 @@ import Logo from '../components/logo';
 import ZoomControl from '../components/zoom-control';
 import { cacheZoomState } from '../actions/app-actions';
 import { zoomFactor } from '../utils/zoom-utils';
+import { applyTransform, inverseTransform } from '../utils/transform-utils';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
 import {
   canvasMarginsSelector,
@@ -20,15 +21,6 @@ import {
 
 import { ZOOM_CACHE_DEBOUNCE_INTERVAL } from '../constants/timer';
 
-const transformF = ({ x, y }, t) => ({
-  x: t.translateX + (t.scaleX * x),
-  y: t.translateY + (t.scaleY * y),
-});
-
-const inverseTransform = ({ x, y }, t) => ({
-  x: (x - t.translateX) / t.scaleX,
-  y: (y - t.translateY) / t.scaleY,
-});
 
 class ZoomableCanvas extends React.Component {
   constructor(props, context) {
@@ -188,20 +180,19 @@ class ZoomableCanvas extends React.Component {
   }
 
   clampedTranslation(state) {
-    const { width, height, canvasMargins, bounded } = this.props;
-    const { maxTranslateX, minTranslateX, maxTranslateY, minTranslateY }
-      = this.props.layoutZoomLimits.toJS();
+    const { width, height, canvasMargins, bounded, layoutZoomLimits } = this.props;
+    const { maxTranslateX, minTranslateX, maxTranslateY, minTranslateY } = layoutZoomLimits.toJS();
 
     if (bounded) {
-      const minPoint = transformF({ x: minTranslateX, y: minTranslateY }, state);
-      const maxPoint = transformF({ x: maxTranslateX, y: maxTranslateY }, state);
+      const contentMinPoint = applyTransform(state, { x: minTranslateX, y: minTranslateY });
+      const contentMaxPoint = applyTransform(state, { x: maxTranslateX, y: maxTranslateY });
       const viewportMinPoint = { x: canvasMargins.left, y: canvasMargins.top };
       const viewportMaxPoint = { x: canvasMargins.left + width, y: canvasMargins.top + height };
 
-      state.translateX += Math.max(0, viewportMaxPoint.x - maxPoint.x);
-      state.translateX += Math.min(0, viewportMinPoint.x - minPoint.x);
-      state.translateY += Math.max(0, viewportMaxPoint.y - maxPoint.y);
-      state.translateY += Math.min(0, viewportMinPoint.y - minPoint.y);
+      state.translateX += Math.max(0, viewportMaxPoint.x - contentMaxPoint.x);
+      state.translateX += Math.min(0, viewportMinPoint.x - contentMinPoint.x);
+      state.translateY += Math.max(0, viewportMaxPoint.y - contentMaxPoint.y);
+      state.translateY += Math.min(0, viewportMinPoint.y - contentMinPoint.y);
     }
 
     return state;
@@ -213,7 +204,7 @@ class ZoomableCanvas extends React.Component {
     const scaleY = clamp(this.state.scaleY * factor, minScale, maxScale);
     let state = { ...this.state, scaleX, scaleY };
 
-    const inversePosition = inverseTransform(position, this.state);
+    const inversePosition = inverseTransform(this.state, position);
     state = this.clampedTranslation({ ...state,
       translateX: position.x - (inversePosition.x * scaleX),
       translateY: position.y - (inversePosition.y * scaleY),
