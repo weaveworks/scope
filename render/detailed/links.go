@@ -58,8 +58,8 @@ var (
 			[]string{docker.MemoryUsage, docker.CPUTotalUsage},
 		),
 		// Pod naming: // https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label
-		"__k8s_controllers": formatMetricQueries(`pod_name=~"^{{label}}-[^-]+-[^-]+$"}`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
-		report.DaemonSet:    formatMetricQueries(`pod_name=~"^{{label}}-[^-]+$"}`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		"__k8s_controllers": formatMetricQueries(`pod_name=~"^{{label}}-[^-]+-[^-]+$"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		report.DaemonSet:    formatMetricQueries(`pod_name=~"^{{label}}-[^-]+$"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
 		report.Service: {
 			// These recording rules must be defined in the prometheus config.
 			// NB: Pods need to be labeled and selected by their respective Service name, meaning:
