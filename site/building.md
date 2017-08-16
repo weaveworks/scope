@@ -36,7 +36,7 @@ Similarly the frontent client tests can be run via:
     make client-test
 
 
-> **Note:** The tools from `make deps` depend on a local install of
+>**Note:** The tools from `make deps` depend on a local install of
 [Go](https://golang.org).
 
 ## <a name="debugging"></a>Debugging

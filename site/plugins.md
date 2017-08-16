@@ -34,13 +34,13 @@ Official Weave Scope plugins can be found at [Weaveworks Plugins](https://github
 	* Number of HTTP requests per seconds.
 	* Number of HTTP responses code per second (per code).
 
-> **Note:** The HTTP Statistics plugin requires a [recent kernel version with ebpf support](https://github.com/iovisor/bcc/blob/master/INSTALL.md#kernel-configuration) and it will not compile on [dlite](https://github.com/nlf/dlite) or on boot2docker hosts.
+>**Note:** The HTTP Statistics plugin requires a [recent kernel version with ebpf support](https://github.com/iovisor/bcc/blob/master/INSTALL.md#kernel-configuration) and it will not compile on [dlite](https://github.com/nlf/dlite) or on boot2docker hosts.
 
 * [Traffic Control](https://github.com/weaveworks-plugins/scope-traffic-control): This plugin allows you to modify latency and packet loss for a specific container via controls from the container's detailed view in the Scope user interface.
 
 * [Volume Count](https://github.com/weaveworks-plugins/scope-volume-count): This plugin (written in Python) requests the number of mounted volumes for each container, and provides a container-level count.
 
-> **Note:**Installed and running plugins are shown in the list of `PLUGINS` in the bottom right of the Scope UI.
+>**Note:**Installed and running plugins are shown in the list of `PLUGINS` in the bottom right of the Scope UI.
 
 ## <a id="plugins-internals"></a>How Plugins Communicate with Scope
 
@@ -88,7 +88,7 @@ For example:
 }
 ```
 
-> **Note:** The `Plugins` section includes exactly one plugin description that displays in the UI. The other plugin fields are:
+>**Note:** The `Plugins` section includes exactly one plugin description that displays in the UI. The other plugin fields are:
 
 * `id` - checks for duplicate plugins. It is required.
 * `label` - a human readable label displayed in the UI. It is required.
