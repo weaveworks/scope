@@ -51,35 +51,20 @@ func TestRenderMetricURLs_Pod(t *testing.T) {
 	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
 	result := detailed.RenderMetricURLs(s, samplePodNode, sampleMetricsGraphURL)
 
-	assert.Equal(t, 0, strings.Index(result.Metrics[0].URL, sampleMetricsGraphURL))
-	// Double quotes are escaped since these are json marshaled strings
-	contains := []string{"container_memory_usage_bytes", `pod_name=\"foo\"`, `namespace=\"noospace\"`}
-	for _, contain := range contains {
-		assert.Contains(t, result.Metrics[0].URL, url.QueryEscape(contain))
-	}
-
-	assert.Equal(t, 0, strings.Index(result.Metrics[1].URL, sampleMetricsGraphURL))
-	contains = []string{"container_cpu_usage_seconds", `pod_name=\"foo\"`, `namespace=\"noospace\"`}
-	for _, contain := range contains {
-		assert.Contains(t, result.Metrics[1].URL, url.QueryEscape(contain))
-	}
+	checkURL(t, result.Metrics[0].URL, sampleMetricsGraphURL,
+		[]string{"container_memory_usage_bytes", `pod_name=\"foo\"`, `namespace=\"noospace\"`})
+	checkURL(t, result.Metrics[1].URL, sampleMetricsGraphURL,
+		[]string{"container_cpu_usage_seconds", `pod_name=\"foo\"`, `namespace=\"noospace\"`})
 }
 
 func TestRenderMetricURLs_Container(t *testing.T) {
 	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
 	result := detailed.RenderMetricURLs(s, sampleContainerNode, sampleMetricsGraphURL)
 
-	assert.Equal(t, 0, strings.Index(result.Metrics[0].URL, sampleMetricsGraphURL))
-	contains := []string{"container_memory_usage_bytes", `name=\"cooname\"`}
-	for _, contain := range contains {
-		assert.Contains(t, result.Metrics[0].URL, url.QueryEscape(contain))
-	}
-
-	assert.Equal(t, 0, strings.Index(result.Metrics[1].URL, sampleMetricsGraphURL))
-	contains = []string{"container_cpu_usage_seconds", `name=\"cooname\"`}
-	for _, contain := range contains {
-		assert.Contains(t, result.Metrics[1].URL, url.QueryEscape(contain))
-	}
+	checkURL(t, result.Metrics[0].URL, sampleMetricsGraphURL,
+		[]string{"container_memory_usage_bytes", `name=\"cooname\"`})
+	checkURL(t, result.Metrics[1].URL, sampleMetricsGraphURL,
+		[]string{"container_cpu_usage_seconds", `name=\"cooname\"`})
 }
 
 func TestRenderMetricURLs_EmptyMetrics(t *testing.T) {
@@ -117,14 +102,15 @@ func TestRenderMetricURLs_QueryReplacement(t *testing.T) {
 	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
 	result := detailed.RenderMetricURLs(s, samplePodNode, "http://example.test/?q=:query")
 
-	assert.Contains(t, result.Metrics[0].URL, "http://example.test/?q=")
-	contains := []string{"container_memory_usage_bytes", `pod_name="foo"`, `namespace="noospace"`}
+	checkURL(t, result.Metrics[0].URL, "http://example.test/?q=",
+		[]string{"container_memory_usage_bytes", `pod_name="foo"`, `namespace="noospace"`})
+	checkURL(t, result.Metrics[1].URL, "http://example.test/?q=",
+		[]string{"container_cpu_usage_seconds", `pod_name="foo"`, `namespace="noospace"`})
+}
+
+func checkURL(t *testing.T, u string, prefix string, contains []string) {
+	assert.True(t, strings.HasPrefix(u, prefix))
 	for _, contain := range contains {
-		assert.Contains(t, result.Metrics[0].URL, url.QueryEscape(contain))
-	}
-	assert.Contains(t, result.Metrics[1].URL, "http://example.test/?q=")
-	contains = []string{"container_cpu_usage_seconds", `pod_name="foo"`, `namespace="noospace"`}
-	for _, contain := range contains {
-		assert.Contains(t, result.Metrics[1].URL, url.QueryEscape(contain))
+		assert.Contains(t, u, url.QueryEscape(contain))
 	}
 }
