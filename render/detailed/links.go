@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 
 	"github.com/ugorji/go/codec"
@@ -46,22 +47,22 @@ var (
 
 	// Queries on pod names of the format `name-<id>-<hash>`
 	// See also:  https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label
-	podIDHashQueries = formatMetricQueries(`pod_name=~"^{{label}}-[^-]+-[^-]+$"`, []string{docker.MemoryUsage, docker.CPUTotalUsage})
+	podIDHashQueries = formatMetricQueries(`pod_name=~"^{{label}}-[^-]+-[^-]+$",namespace="{{namespace}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage})
 
 	// Prometheus queries for topologies
 	topologyQueries = map[string]map[string]string{
 		// Containers
 
-		report.Container:      formatMetricQueries(`container_name="{{label}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		report.Container:      formatMetricQueries(`name="{{containerName}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
 		report.ContainerImage: formatMetricQueries(`image="{{label}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
 
 		// Kubernetes topologies
 
 		report.Pod: formatMetricQueries(
-			`pod_name="{{label}}"`,
+			`pod_name="{{label}}",namespace="{{namespace}}"`,
 			[]string{docker.MemoryUsage, docker.CPUTotalUsage},
 		),
-		report.DaemonSet:   formatMetricQueries(`pod_name=~"^{{label}}-[^-]+$"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		report.DaemonSet:   formatMetricQueries(`pod_name=~"^{{label}}-[^-]+$",namespace="{{namespace}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
 		report.Deployment:  podIDHashQueries,
 		report.StatefulSet: podIDHashQueries,
 		report.CronJob:     podIDHashQueries,
@@ -70,8 +71,8 @@ var (
 			// NB: Pods need to be labeled and selected by their respective Service name, meaning:
 			// - The Service's `spec.selector` needs to select on `name`
 			// - The Service's `metadata.name` needs to be the same value as `spec.selector.name`
-			docker.CPUTotalUsage: `namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{label}}"}/1024/1024`,
-			docker.MemoryUsage:   `namespace_label_name:container_memory_usage_bytes:sum{label_name="{{label}}"}`,
+			docker.CPUTotalUsage: `namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{label}}",namespace="{{namespace}}"}`,
+			docker.MemoryUsage:   `namespace_label_name:container_memory_usage_bytes:sum{label_name="{{label}}",namespace="{{namespace}}"}`,
 		},
 	}
 )
@@ -82,7 +83,7 @@ func formatMetricQueries(filter string, ids []string) map[string]string {
 		// All  `container_*`metrics  are provided by cAdvisor in Kubelets
 		switch id {
 		case docker.MemoryUsage:
-			queries[id] = fmt.Sprintf("sum(container_memory_usage_bytes{%s})/1024/1024", filter)
+			queries[id] = fmt.Sprintf("sum(container_memory_usage_bytes{%s})", filter)
 		case docker.CPUTotalUsage:
 			queries[id] = fmt.Sprintf(
 				"sum(rate(container_cpu_usage_seconds_total{%s}[1m]))/count(container_cpu_usage_seconds_total{%s})*100",
@@ -90,9 +91,9 @@ func formatMetricQueries(filter string, ids []string) map[string]string {
 				filter,
 			)
 		case idReceiveBytes:
-			queries[id] = fmt.Sprintf(`sum(rate(container_network_receive_bytes_total{%s}[5m]))`, filter)
+			queries[id] = fmt.Sprintf("sum(rate(container_network_receive_bytes_total{%s}[5m]))", filter)
 		case idTransmitBytes:
-			queries[id] = fmt.Sprintf(`sum(rate(container_network_transmit_bytes_total{%s}[5m]))`, filter)
+			queries[id] = fmt.Sprintf("sum(rate(container_network_transmit_bytes_total{%s}[5m]))", filter)
 		}
 	}
 
@@ -160,7 +161,14 @@ func metricQuery(summary NodeSummary, n report.Node, metricID string) string {
 		return ""
 	}
 
-	return strings.Replace(queries[metricID], "{{label}}", summary.Label, -1)
+	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
+	name, _ := n.Latest.Lookup(docker.ContainerName)
+	r := strings.NewReplacer(
+		"{{label}}", summary.Label,
+		"{{namespace}}", namespace,
+		"{{containerName}}", name,
+	)
+	return r.Replace(queries[metricID])
 }
 
 // metricURL builds the URL by embedding it into the configured `metricsGraphURL`.
