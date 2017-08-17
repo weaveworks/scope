@@ -57,7 +57,7 @@ class LinkWrapper extends React.Component {
   render() {
     const { url, children, ...props } = this.props;
     if (!url) {
-      return children;
+      return React.isValidElement(children) ? children : (<span>{children}</span>);
     }
 
     const href = this.buildHref(url);
