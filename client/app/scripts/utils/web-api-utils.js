@@ -103,6 +103,12 @@ export function getApiPath(pathname = window.location.pathname) {
   return basePath(pathname);
 }
 
+function topologiesUrl(state) {
+  const activeTopologyOptions = activeTopologyOptionsSelector(state);
+  const optionsQuery = buildUrlQuery(activeTopologyOptions, state);
+  return `${getApiPath()}/api/topology?${optionsQuery}`;
+}
+
 export function getWebsocketUrl(host = window.location.host, pathname = window.location.pathname) {
   const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
   return `${wsProto}://${host}${process.env.SCOPE_API_PREFIX || ''}${basePath(pathname)}`;
@@ -235,20 +241,19 @@ export function getResourceViewNodesSnapshot(state, dispatch) {
   getNodesForTopologies(state, dispatch, topologyIds);
 }
 
-// NOTE: getState is called every time to make sure the up-to-date state is used.
-export function getTopologies(getState, dispatch, initialPoll = false) {
+function pollTopologies(getState, dispatch, initialPoll = false) {
   // Used to resume polling when navigating between pages in Weave Cloud.
   continuePolling = initialPoll === true ? true : continuePolling;
   clearTimeout(topologyTimer);
-  const optionsQuery = buildUrlQuery(activeTopologyOptionsSelector(getState()), getState());
-  const url = `${getApiPath()}/api/topology?${optionsQuery}`;
+  // NOTE: getState is called every time to make sure the up-to-date state is used.
+  const url = topologiesUrl(getState());
   doRequest({
     url,
     success: (res) => {
       if (continuePolling && !isPausedSelector(getState())) {
         dispatch(receiveTopologies(res));
         topologyTimer = setTimeout(() => {
-          getTopologies(getState, dispatch);
+          pollTopologies(getState, dispatch);
         }, TOPOLOGY_REFRESH_INTERVAL);
       }
     },
@@ -258,9 +263,23 @@ export function getTopologies(getState, dispatch, initialPoll = false) {
       // Only retry in stand-alone mode
       if (continuePolling && !isPausedSelector(getState())) {
         topologyTimer = setTimeout(() => {
-          getTopologies(getState, dispatch);
+          pollTopologies(getState, dispatch);
         }, TOPOLOGY_REFRESH_INTERVAL);
       }
+    }
+  });
+}
+
+function getTopologiesOnce(getState, dispatch) {
+  const url = topologiesUrl(getState());
+  doRequest({
+    url,
+    success: (res) => {
+      dispatch(receiveTopologies(res));
+    },
+    error: (req) => {
+      log(`Error in topology request: ${req.responseText}`);
+      dispatch(receiveError(url));
     }
   });
 }
@@ -322,6 +341,14 @@ export function getNodeDetails(getState, dispatch) {
     });
   } else if (obj) {
     log('No details or url found for ', obj);
+  }
+}
+
+export function getTopologies(getState, dispatch, forceRequest) {
+  if (isPausedSelector(getState())) {
+    getTopologiesOnce(getState, dispatch);
+  } else {
+    pollTopologies(getState, dispatch, forceRequest);
   }
 }
 
