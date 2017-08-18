@@ -36,13 +36,18 @@ weave_proxy_on() {
 }
 
 server_on() {
-    weave_proxy_on "$1" run -d --name nginx nginx
+    local host=$1
+    local name=${2:-nginx}
+    weave_proxy_on "$1" run -d --name "$name" nginx
 }
 
 client_on() {
-    weave_proxy_on "$1" run -d --name client alpine /bin/sh -c "while true; do \
-    	wget http://nginx.weave.local:80/ -O - >/dev/null || true; \
-	sleep 1; \
+    local host=$1
+    local name=${2:-client}
+    local server=${3:-nginx}
+    weave_proxy_on "$1" run -d --name "$name" alpine /bin/sh -c "while true; do \
+        wget http://$server.weave.local:80/ -O - >/dev/null || true; \
+        sleep 1; \
     done"
 }
 
