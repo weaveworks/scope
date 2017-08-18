@@ -95,8 +95,7 @@ func (m *Map) Render(rpt report.Report, dct Decorator) report.Nodes {
 	// Rewrite all the nodes according to the map function
 	for _, inRenderable := range input {
 		for _, outRenderable := range m.MapFunc(inRenderable, localNetworks) {
-			existing, ok := output[outRenderable.ID]
-			if ok {
+			if existing, ok := output[outRenderable.ID]; ok {
 				outRenderable = outRenderable.Merge(existing)
 			}
 
