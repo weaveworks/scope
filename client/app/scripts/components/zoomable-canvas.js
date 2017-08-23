@@ -162,7 +162,7 @@ class ZoomableCanvas extends React.Component {
   }
 
   handlePan() {
-    let state = { ...this.state };
+    let state = this.state;
     // Apply the translation respecting the boundaries.
     state = this.clampedTranslation({ ...state,
       translateX: this.state.translateX + d3Event.dx,
@@ -181,6 +181,7 @@ class ZoomableCanvas extends React.Component {
       };
       this.zoomAtPositionByFactor(mousePosition, zoomFactor(ev));
     }
+    ev.preventDefault();
   }
 
   clampedTranslation(state) {
