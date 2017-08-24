@@ -1,4 +1,11 @@
 
+## Release 1.6.2
+
+Bugfix patch release
+
+- k8s probe: Fix a panic (nil pointer deref) when a cronjob has never been scheduled
+	[#2785](https://github.com/weaveworks/scope/pull/2785)
+
 ## Release 1.6.1
 
 This is a re-release of 1.6.0. The official build for 1.6.0 inadvertently
