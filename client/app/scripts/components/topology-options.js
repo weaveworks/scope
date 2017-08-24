@@ -83,6 +83,7 @@ class TopologyOptions extends React.Component {
     // TODO: This logic should probably be made consistent with how topology
     // selection is handled when time travelling, especially when the name-
     // spaces are brought under category selection.
+    // TODO: Consider extracting this into a global selector.
     let activeValue = option.get('defaultValue');
     if (activeOptions && activeOptions.has(optionId)) {
       const activeSelection = makeSet(activeOptions.get(optionId));
