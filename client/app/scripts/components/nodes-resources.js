@@ -5,10 +5,12 @@ import ZoomableCanvas from './zoomable-canvas';
 import NodesResourcesLayer from './nodes-resources/node-resources-layer';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import {
-  resourcesZoomLimitsSelector,
+  resourcesLimitsSelector,
   resourcesZoomStateSelector,
 } from '../selectors/resource-view/zoom';
 import { clickBackground } from '../actions/app-actions';
+
+import { CONTENT_COVERING } from '../constants/naming';
 
 
 class NodesResources extends React.Component {
@@ -40,8 +42,8 @@ class NodesResources extends React.Component {
       <div className="nodes-resources">
         <ZoomableCanvas
           onClick={this.handleMouseClick}
-          bounded forwardTransform fixVertical
-          zoomLimitsSelector={resourcesZoomLimitsSelector}
+          fixVertical boundContent={CONTENT_COVERING}
+          limitsSelector={resourcesLimitsSelector}
           zoomStateSelector={resourcesZoomStateSelector}>
           {transform => this.renderLayers(transform)}
         </ZoomableCanvas>

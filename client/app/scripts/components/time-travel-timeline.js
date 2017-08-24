@@ -168,7 +168,7 @@ class TimeTravelTimeline extends React.Component {
   }
 
   handleZoom(ev) {
-    let durationPerPixel = scaleDuration(this.state.durationPerPixel, zoomFactor(ev));
+    let durationPerPixel = scaleDuration(this.state.durationPerPixel, 1 / zoomFactor(ev));
     if (durationPerPixel > MAX_DURATION_PER_PX) durationPerPixel = MAX_DURATION_PER_PX;
     if (durationPerPixel < MIN_DURATION_PER_PX) durationPerPixel = MIN_DURATION_PER_PX;
 

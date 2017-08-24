@@ -16,3 +16,6 @@ export const HIGHLIGHTED_EDGES_LAYER = 'highlighted-edges';
 export const HIGHLIGHTED_NODES_LAYER = 'highlighted-nodes';
 export const HOVERED_EDGES_LAYER = 'hovered-edges';
 export const HOVERED_NODES_LAYER = 'hovered-nodes';
+
+export const CONTENT_INCLUDED = 'content-included';
+export const CONTENT_COVERING = 'content-covering';

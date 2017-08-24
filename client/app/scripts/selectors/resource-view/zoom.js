@@ -66,7 +66,7 @@ export const resourcesDefaultZoomSelector = createSelector(
   }
 );
 
-export const resourcesZoomLimitsSelector = createSelector(
+export const resourcesLimitsSelector = createSelector(
   [
     resourcesDefaultZoomSelector,
     resourceNodesBoundingRectangleSelector,
@@ -83,10 +83,10 @@ export const resourcesZoomLimitsSelector = createSelector(
       maxScale: width / minNodeWidth,
       // Minimal zoom is equivalent to the initial one, where the whole layout matches the canvas.
       minScale: defaultZoom.get('scaleX'),
-      minTranslateX: xMin,
-      maxTranslateX: xMax,
-      minTranslateY: yMin,
-      maxTranslateY: yMax,
+      contentMinX: xMin,
+      contentMaxX: xMax,
+      contentMinY: yMin,
+      contentMaxY: yMax,
     });
   }
 );
