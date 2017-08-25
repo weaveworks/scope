@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Map as makeMap } from 'immutable';
+import { Set as makeSet, Map as makeMap } from 'immutable';
 import includes from 'lodash/includes';
 
 import { trackMixpanelEvent } from '../utils/tracking-utils';
@@ -73,9 +73,27 @@ class TopologyOptions extends React.Component {
   renderOption(option) {
     const { activeOptions, currentTopologyId } = this.props;
     const optionId = option.get('id');
-    const activeValue = activeOptions && activeOptions.has(optionId)
-      ? activeOptions.get(optionId)
-      : option.get('defaultValue');
+
+    // Make the active value be the intersection of the available options
+    // and the active selection and use the default value if there is no
+    // overlap. It seems intuitive that active selection would always be a
+    // subset of available option, but the exception can happen when going
+    // back in time (making available options change, while not touching
+    // the selection).
+    // TODO: This logic should probably be made consistent with how topology
+    // selection is handled when time travelling, especially when the name-
+    // spaces are brought under category selection.
+    // TODO: Consider extracting this into a global selector.
+    let activeValue = option.get('defaultValue');
+    if (activeOptions && activeOptions.has(optionId)) {
+      const activeSelection = makeSet(activeOptions.get(optionId));
+      const availableOptions = makeSet(option.get('options').map(o => o.get('value')));
+      const intersection = activeSelection.intersect(availableOptions);
+      if (!intersection.isEmpty()) {
+        activeValue = intersection.toJS();
+      }
+    }
+
     const noneItem = makeMap({
       value: '',
       label: option.get('noneLabel')
