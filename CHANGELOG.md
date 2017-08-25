@@ -1,3 +1,90 @@
+## Release 1.6.3
+
+This is a minor patch release.
+
+New features and enhancements:
+- Make Scope's URL message more precise
+	[#2810](https://github.com/weaveworks/scope/pull/2810)
+- Balance timeline zooming sensitivity between Firefox and Chrome
+	[#2788](https://github.com/weaveworks/scope/pull/2788)
+- Adjust timeline zoom sensitivity on Firefox
+	[#2777](https://github.com/weaveworks/scope/pull/2777)
+- run a normal (rather than login) shell in containers
+	[#2781](https://github.com/weaveworks/scope/pull/2781)
+- Add pod restart count to details pane
+	[#2761](https://github.com/weaveworks/scope/pull/2761)
+
+Performance improvements:
+- Make nodes graph animations a bit faster
+	[#2803](https://github.com/weaveworks/scope/pull/2803)
+- Improve Firefox performance
+	[#2795](https://github.com/weaveworks/scope/pull/2795)
+- synthesise k8s service network from service IPs
+	[#2779](https://github.com/weaveworks/scope/pull/2779)
+	[#2806](https://github.com/weaveworks/scope/pull/2806)
+
+Bug fixes and minor improvements:
+- restart eBPF tracking on error
+	[#2735](https://github.com/weaveworks/scope/pull/2735)
+- Fix processes/hosts table not appearing
+	[#2824](https://github.com/weaveworks/scope/pull/2824)
+- Fix query filters by adding namespaces and using docker container name
+	[#2819](https://github.com/weaveworks/scope/pull/2819)
+- Remove whitespace from empty connection lists
+	[#2811](https://github.com/weaveworks/scope/pull/2811)
+- Fix rendering of exported SVG
+	[#2794](https://github.com/weaveworks/scope/pull/2794)
+- k8s probe: Fix a panic (nil pointer deref) when a cronjob has never been scheduled
+	[#2785](https://github.com/weaveworks/scope/pull/2785)
+
+Documentation:
+- remove extra indent on note
+	[#2816](https://github.com/weaveworks/scope/pull/2816)
+
+Internal improvements and cleanup:
+- Use Node 8.4 for builds
+	[#2830](https://github.com/weaveworks/scope/pull/2830)
+- refactor: reduce duplication in links_test
+	[#2820](https://github.com/weaveworks/scope/pull/2820)
+- add 'realclean' make target to clear out container images
+	[#2771](https://github.com/weaveworks/scope/pull/2771)
+- get rid of endpoint type indicators
+	[#2772](https://github.com/weaveworks/scope/pull/2772)
+- rename 'report_persistence' capability to 'historic_reports'
+	[#2774](https://github.com/weaveworks/scope/pull/2774)
+- Add test for pods number not updating
+	[#2741](https://github.com/weaveworks/scope/pull/2741)
+- refactor: remove duplication
+	[#2765](https://github.com/weaveworks/scope/pull/2765)
+- push release images to quay.io
+	[#2763](https://github.com/weaveworks/scope/pull/2763)
+
+Weave Cloud related changes:
+- Link scope-ui graphs clickable to prometheus queries
+	[#2664](https://github.com/weaveworks/scope/pull/2664)
+- scope/cortex: fix typo in query filter
+	[#2815](https://github.com/weaveworks/scope/pull/2815)
+- Time Travel: keep active node details panels up-to-date
+	[#2807](https://github.com/weaveworks/scope/pull/2807)
+- Time Travel: unmount in the shutdown() action
+	[#2801](https://github.com/weaveworks/scope/pull/2801)
+- Fixes timetravel timestamp input getting truncatated on OSX
+	[#2805](https://github.com/weaveworks/scope/pull/2805)
+- Time Travel: remove the feature flag and make the availability depend on historic reports capability
+	[#2616](https://github.com/weaveworks/scope/pull/2616)
+- log sqs messages at 'debug' rather than 'info' level
+	[#2798](https://github.com/weaveworks/scope/pull/2798)
+- Fix timeline label vertical displacement on some Chromes
+	[#2793](https://github.com/weaveworks/scope/pull/2793)
+- Shrink timeline height and make years fade out
+	[#2778](https://github.com/weaveworks/scope/pull/2778)
+- Always take timestamp into account in Node Details when time travelling
+	[#2775](https://github.com/weaveworks/scope/pull/2775)
+- Hide Service UI Configure button only in Scope
+	[#2766](https://github.com/weaveworks/scope/pull/2766)
+- Time Travel 3.0
+	[#2703](https://github.com/weaveworks/scope/pull/2703)
+
 
 ## Release 1.6.2
 
