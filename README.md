@@ -19,7 +19,7 @@ Choose an overview of your container infrastructure, or focus on a specific micr
 
 <img src="imgs/selected.png" width="200" alt="Focus on a single container" align="right">
 
-View contextual metrics, tags and metadata for your containers.  Effortlessly navigate between processes inside your container to hosts your containers run on, arranged in expandable, sortable tables.  Easily to find the container using the most CPU or memory for a given host or service.
+View contextual metrics, tags and metadata for your containers.  Effortlessly navigate between processes inside your container to hosts your containers run on, arranged in expandable, sortable tables.  Easily find the container using the most CPU or memory for a given host or service.
 
 ### Interact with and manage containers
 
