@@ -214,14 +214,18 @@ a {
   .selectors {
     display: flex;
     position: relative;
-    > * { z-index: 20; }
+    > * {
+      z-index: 20;
+      flex: 1 1;
+    }
 
     .time-control { z-index: 2001; }
 
     .logo {
-      margin: -16px 0 0 64px;
+      margin: -16px 0 0 8px;
       height: 64px;
-      width: 250px;
+      max-width: 250px;
+      min-width: 0;
     }
   }
 }
@@ -1535,7 +1539,6 @@ a {
 
 .view-mode-selector, .time-control {
   margin-left: 20px;
-  min-width: 161px;
 
   &-wrapper {
     pointer-events: all;
@@ -1565,8 +1568,7 @@ a {
 }
 
 .time-control {
-  position: absolute;
-  right: 20px;
+  margin-right: 20px;
 
   &-controls {
     align-items: center;
@@ -1677,8 +1679,8 @@ a {
   transition: width 0.3s 0s $base-ease;
 
   &-wrapper {
-    flex: 0 1 20%;
     margin: 0 8px;
+    min-width: 160px;
     text-align: right;
   }
 
