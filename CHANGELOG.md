@@ -1,3 +1,12 @@
+## Release 1.6.4
+
+Re-release of 1.6.3 for which there were some problems publishing Docker images.
+
+Documentation:
+- Fix phrasing in readme
+	[#2836](https://github.com/weaveworks/scope/pull/2836)
+
+
 ## Release 1.6.3
 
 This is a minor patch release.
