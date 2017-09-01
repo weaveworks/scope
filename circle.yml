@@ -86,7 +86,6 @@ deployment:
             docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE &&
             docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
           done
-          (test -z "${UI_BUCKET_KEY_ID}" || (cd $SRCDIR && make ui-upload && make ui-pkg-upload))
         )
       - |
         test -z "${QUAY_USER}" || (
@@ -94,6 +93,7 @@ deployment:
           docker tag weaveworks/scope:$(./tools/image-tag) "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)" &&
           docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
         )
+      - test -z "${UI_BUCKET_KEY_ID}" || (cd $SRCDIR && make ui-upload && make ui-pkg-upload))
   hub-dev:
     branch: /^((?!master).)*$/  # not the master branch
     commands:
