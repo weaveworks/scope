@@ -206,7 +206,7 @@ Where,
 
 * `SCOPE_SERVICE_TOKEN=<token>` is the token you obtained after you signed up for Weave Cloud.
 
-Note that you will need to launch Scope onto every node that you want to monitor.
+Note that you will need to launch Scope on every node that you want to monitor.
 
 **4.** Go to [https://cloud.weave.works](https://cloud.weave.works) and click 'View Instance'.
 
