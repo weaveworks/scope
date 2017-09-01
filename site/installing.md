@@ -114,7 +114,7 @@ Hostnames will be regularly resolved as A records, and each answer used as a tar
 
 ### <a name="docker-compose"></a>Using Docker Compose
 
-To install Scope on your local Docker machine in Standalone Mode using Docker Compose, run the following commands using one of the two fragments below.
+To install Scope on your local Docker machine in Standalone Mode using Docker Compose, copy the contents of one of the two fragments below into a file `docker-compose.yml` and run
 
     docker-compose up -d
 
@@ -195,6 +195,8 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
           - "--service-token=${SCOPE_SERVICE_TOKEN}"
 
 Version 2 of this YAML file supports a network mode that may be required with any Docker plugins that you are using. See [Compose File Reference](https://docs.docker.com/compose/compose-file/) for more information.
+
+Copy the contents of one of the above fragments into a file `docker-compose.yml`.
 
 **3.** Once you've set up a compose file, launch Scope onto your local machine:
 
