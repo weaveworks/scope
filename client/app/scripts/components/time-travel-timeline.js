@@ -6,9 +6,10 @@ import { connect } from 'react-redux';
 import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
-import { Motion, spring } from 'react-motion';
+import { Motion } from 'react-motion';
 
 import { zoomFactor } from '../utils/zoom-utils';
+import { strongSpring } from '../utils/animation-utils';
 import { linearGradientValue } from '../utils/math-utils';
 import { trackMixpanelEvent } from '../utils/tracking-utils';
 import {
@@ -17,7 +18,6 @@ import {
   scaleDuration,
 } from '../utils/time-utils';
 
-import { NODES_SPRING_FAST_ANIMATION_CONFIG } from '../constants/animation';
 import { TIMELINE_TICK_INTERVAL, ZOOM_TRACK_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
@@ -359,8 +359,8 @@ class TimeTravelTimeline extends React.Component {
     return (
       <Motion
         style={{
-          focusedTimestampValue: spring(focusedTimestampValue, NODES_SPRING_FAST_ANIMATION_CONFIG),
-          durationPerPixelValue: spring(durationPerPixelValue, NODES_SPRING_FAST_ANIMATION_CONFIG),
+          focusedTimestampValue: strongSpring(focusedTimestampValue),
+          durationPerPixelValue: strongSpring(durationPerPixelValue),
         }}>
         {interpolated => this.renderAxis({
           focusedTimestamp: moment(interpolated.focusedTimestampValue),

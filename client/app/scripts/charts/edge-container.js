@@ -1,11 +1,11 @@
 import React from 'react';
-import { Motion, spring } from 'react-motion';
+import { Motion } from 'react-motion';
 import { fromJS, Map as makeMap } from 'immutable';
 import { line, curveBasis } from 'd3-shape';
 import { times, constant } from 'lodash';
 
-import { NODES_SPRING_ANIMATION_CONFIG } from '../constants/animation';
 import { NODE_BASE_SIZE, EDGE_WAYPOINTS_CAP } from '../constants/styles';
+import { weakSpring } from '../utils/animation-utils';
 import Edge from './edge';
 
 
@@ -35,8 +35,8 @@ const waypointsMapToArray = (waypointsMap) => {
 const waypointsArrayToMap = (waypointsArray) => {
   let waypointsMap = makeMap();
   waypointsArray.forEach((point, index) => {
-    waypointsMap = waypointsMap.set(`x${index}`, spring(point.get('x'), NODES_SPRING_ANIMATION_CONFIG));
-    waypointsMap = waypointsMap.set(`y${index}`, spring(point.get('y'), NODES_SPRING_ANIMATION_CONFIG));
+    waypointsMap = waypointsMap.set(`x${index}`, weakSpring(point.get('x')));
+    waypointsMap = waypointsMap.set(`y${index}`, weakSpring(point.get('y')));
   });
   return waypointsMap;
 };
@@ -81,7 +81,7 @@ export default class EdgeContainer extends React.PureComponent {
       // { x0: 11, y0: 22, x1: 33, y1: 44 } that we convert to the array format when rendering.
       <Motion
         style={{
-          thickness: spring(this.state.thickness, NODES_SPRING_ANIMATION_CONFIG),
+          thickness: weakSpring(this.state.thickness),
           ...this.state.waypointsMap.toJS(),
         }}
       >

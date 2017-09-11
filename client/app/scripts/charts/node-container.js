@@ -1,7 +1,7 @@
 import React from 'react';
-import { Motion, spring } from 'react-motion';
+import { Motion } from 'react-motion';
 
-import { NODES_SPRING_ANIMATION_CONFIG } from '../constants/animation';
+import { weakSpring } from '../utils/animation-utils';
 import Node from './node';
 
 
@@ -24,12 +24,7 @@ export default class NodeContainer extends React.PureComponent {
 
     return (
       // Animate the node if the layout is sufficiently small
-      <Motion
-        style={{
-          x: spring(dx, NODES_SPRING_ANIMATION_CONFIG),
-          y: spring(dy, NODES_SPRING_ANIMATION_CONFIG),
-          k: spring(scale, NODES_SPRING_ANIMATION_CONFIG),
-        }}>
+      <Motion style={{ x: weakSpring(dx), y: weakSpring(dy), k: weakSpring(scale) }}>
         {interpolated => transformedNode(forwardedProps, interpolated)}
       </Motion>
     );
