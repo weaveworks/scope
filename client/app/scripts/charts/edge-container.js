@@ -1,8 +1,8 @@
 import React from 'react';
 import { Motion, spring } from 'react-motion';
-import { Map as makeMap } from 'immutable';
+import { fromJS, Map as makeMap } from 'immutable';
 import { line, curveBasis } from 'd3-shape';
-import { each, times, constant } from 'lodash';
+import { times, constant } from 'lodash';
 
 import { NODES_SPRING_ANIMATION_CONFIG } from '../constants/animation';
 import { NODE_BASE_SIZE, EDGE_WAYPOINTS_CAP } from '../constants/styles';
@@ -15,7 +15,7 @@ const spline = line()
   .y(d => d.y);
 
 const transformedEdge = (props, path, thickness) => (
-  <Edge {...props} path={spline(path)} thickness={thickness} />
+  <Edge {...props} path={spline(path.toJS())} thickness={thickness} />
 );
 
 // Converts a waypoints map of the format { x0: 11, y0: 22, x1: 33, y1: 44 }
@@ -23,11 +23,11 @@ const transformedEdge = (props, path, thickness) => (
 // [{ x: 11, y: 22 }, { x: 33, y: 44 }] that can be used by D3.
 const waypointsMapToArray = (waypointsMap) => {
   const waypointsArray = times(EDGE_WAYPOINTS_CAP, () => ({}));
-  each(waypointsMap, (value, key) => {
+  waypointsMap.forEach((value, key) => {
     const [axis, index] = [key[0], key.slice(1)];
     waypointsArray[index][axis] = value;
   });
-  return waypointsArray;
+  return fromJS(waypointsArray);
 };
 
 // Converts a waypoints array of the input format [{ x: 11, y: 22 }, { x: 33, y: 44 }]
@@ -35,8 +35,8 @@ const waypointsMapToArray = (waypointsMap) => {
 const waypointsArrayToMap = (waypointsArray) => {
   let waypointsMap = makeMap();
   waypointsArray.forEach((point, index) => {
-    waypointsMap = waypointsMap.set(`x${index}`, spring(point.x, NODES_SPRING_ANIMATION_CONFIG));
-    waypointsMap = waypointsMap.set(`y${index}`, spring(point.y, NODES_SPRING_ANIMATION_CONFIG));
+    waypointsMap = waypointsMap.set(`x${index}`, spring(point.get('x'), NODES_SPRING_ANIMATION_CONFIG));
+    waypointsMap = waypointsMap.set(`y${index}`, spring(point.get('y'), NODES_SPRING_ANIMATION_CONFIG));
   });
   return waypointsMap;
 };
@@ -53,14 +53,14 @@ export default class EdgeContainer extends React.PureComponent {
   }
 
   componentWillMount() {
-    if (this.props.isAnimated) {
-      this.prepareWaypointsForMotion(this.props.waypoints);
-    }
+    // if (this.props.isAnimated) {
+    this.prepareWaypointsForMotion(this.props.waypoints);
+    // }
   }
 
   componentWillReceiveProps(nextProps) {
     // immutablejs allows us to `===`! \o/
-    if (this.props.isAnimated && nextProps.waypoints !== this.props.waypoints) {
+    if (nextProps.waypoints !== this.props.waypoints) {
       this.prepareWaypointsForMotion(nextProps.waypoints);
     }
     // Edge thickness will reflect the zoom scale.
@@ -73,7 +73,7 @@ export default class EdgeContainer extends React.PureComponent {
     const { isAnimated, waypoints, scale, ...forwardedProps } = this.props;
 
     if (!isAnimated) {
-      return transformedEdge(forwardedProps, waypoints.toJS(), this.state.thickness);
+      return transformedEdge(forwardedProps, waypoints, this.state.thickness);
     }
 
     return (
@@ -86,7 +86,7 @@ export default class EdgeContainer extends React.PureComponent {
         }}
       >
         {({ thickness, ...interpolatedWaypoints}) => transformedEdge(
-          forwardedProps, waypointsMapToArray(interpolatedWaypoints), thickness
+          forwardedProps, waypointsMapToArray(fromJS(interpolatedWaypoints)), thickness
         )}
       </Motion>
     );
@@ -103,6 +103,6 @@ export default class EdgeContainer extends React.PureComponent {
       waypoints = times(waypointsMissing, constant(waypoints[0])).concat(waypoints);
     }
 
-    this.setState({ waypointsMap: waypointsArrayToMap(waypoints) });
+    this.setState({ waypointsMap: waypointsArrayToMap(fromJS(waypoints)) });
   }
 }
