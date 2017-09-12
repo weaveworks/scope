@@ -1,8 +1,8 @@
 import React from 'react';
 import { Motion } from 'react-motion';
-import { fromJS, Map as makeMap } from 'immutable';
+import { Repeat, fromJS, Map as makeMap } from 'immutable';
 import { line, curveBasis } from 'd3-shape';
-import { times, constant } from 'lodash';
+import { times } from 'lodash';
 
 import { NODE_BASE_SIZE, EDGE_WAYPOINTS_CAP } from '../constants/styles';
 import { weakSpring } from '../utils/animation-utils';
@@ -15,7 +15,7 @@ const spline = line()
   .y(d => d.y);
 
 const transformedEdge = (props, path, thickness) => (
-  <Edge {...props} path={spline(path.toJS())} thickness={thickness} />
+  <Edge {...props} path={spline(path)} thickness={thickness} />
 );
 
 // Converts a waypoints map of the format { x0: 11, y0: 22, x1: 33, y1: 44 }
@@ -27,7 +27,7 @@ const waypointsMapToArray = (waypointsMap) => {
     const [axis, index] = [key[0], key.slice(1)];
     waypointsArray[index][axis] = value;
   });
-  return fromJS(waypointsArray);
+  return waypointsArray;
 };
 
 // Converts a waypoints array of the input format [{ x: 11, y: 22 }, { x: 33, y: 44 }]
@@ -53,15 +53,15 @@ export default class EdgeContainer extends React.PureComponent {
   }
 
   componentWillMount() {
-    // if (this.props.isAnimated) {
-    this.prepareWaypointsForMotion(this.props.waypoints);
-    // }
+    this.prepareWaypointsForMotion(this.props);
   }
 
   componentWillReceiveProps(nextProps) {
     // immutablejs allows us to `===`! \o/
-    if (nextProps.waypoints !== this.props.waypoints) {
-      this.prepareWaypointsForMotion(nextProps.waypoints);
+    const waypointsChanged = this.props.waypoints !== nextProps.waypoints;
+    const animationChanged = this.props.isAnimated !== nextProps.isAnimated;
+    if (waypointsChanged || animationChanged) {
+      this.prepareWaypointsForMotion(nextProps);
     }
     // Edge thickness will reflect the zoom scale.
     const baseScale = (nextProps.scale * 0.01) * NODE_BASE_SIZE;
@@ -71,38 +71,35 @@ export default class EdgeContainer extends React.PureComponent {
 
   render() {
     const { isAnimated, waypoints, scale, ...forwardedProps } = this.props;
+    const { thickness, waypointsMap } = this.state;
 
     if (!isAnimated) {
-      return transformedEdge(forwardedProps, waypoints, this.state.thickness);
+      return transformedEdge(forwardedProps, waypoints.toJS(), thickness);
     }
 
     return (
       // For the Motion interpolation to work, the waypoints need to be in a map format like
       // { x0: 11, y0: 22, x1: 33, y1: 44 } that we convert to the array format when rendering.
-      <Motion
-        style={{
-          thickness: weakSpring(this.state.thickness),
-          ...this.state.waypointsMap.toJS(),
-        }}
-      >
-        {({ thickness, ...interpolatedWaypoints}) => transformedEdge(
-          forwardedProps, waypointsMapToArray(fromJS(interpolatedWaypoints)), thickness
+      <Motion style={{ interpolatedThickness: weakSpring(thickness), ...waypointsMap.toJS() }}>
+        {({ interpolatedThickness, ...interpolatedWaypoints}) => transformedEdge(
+          forwardedProps, waypointsMapToArray(fromJS(interpolatedWaypoints)), interpolatedThickness
         )}
       </Motion>
     );
   }
 
-  prepareWaypointsForMotion(waypoints) {
-    waypoints = waypoints.toJS();
+  prepareWaypointsForMotion({ waypoints, isAnimated }) {
+    // Don't update if the edges are not animated.
+    if (!isAnimated) return;
 
     // The Motion library requires the number of waypoints to be constant, so we fill in for
     // the missing ones by reusing the edge source point, which doesn't affect the edge shape
     // because of how the curveBasis interpolation is done.
-    const waypointsMissing = EDGE_WAYPOINTS_CAP - waypoints.length;
+    const waypointsMissing = EDGE_WAYPOINTS_CAP - waypoints.size;
     if (waypointsMissing > 0) {
-      waypoints = times(waypointsMissing, constant(waypoints[0])).concat(waypoints);
+      waypoints = Repeat(waypoints.get(0), waypointsMissing).concat(waypoints);
     }
 
-    this.setState({ waypointsMap: waypointsArrayToMap(fromJS(waypoints)) });
+    this.setState({ waypointsMap: waypointsArrayToMap(waypoints) });
   }
 }
