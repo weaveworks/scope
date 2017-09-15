@@ -20,17 +20,17 @@ not remove it and respect the format! -->
 
 | Region         | AMI          |
 |----------------|--------------|
-| us-east-1      | ami-f560d8e3 |
-| us-east-2      | ami-13e2c676 |
-| us-west-1      | ami-95cc97f5 |
-| us-west-2      | ami-4fe87c2f |
-| eu-west-1      | ami-13c8f475 |
-| eu-west-2      | ami-8a6276ee |
-| eu-central-1   | ami-216dbc4e |
-| ap-northeast-1 | ami-b2efb5d5 |
-| ap-southeast-1 | ami-e152ee82 |
-| ap-southeast-2 | ami-ac1b14cf |
-| ca-central-1   | ami-8104b9e5 |
+| us-east-1      | ami-cc6c71b7 |
+| us-east-2      | ami-134a6876 |
+| us-west-1      | ami-7c27101c |
+| us-west-2      | ami-0c778074 |
+| eu-west-1      | ami-e776b19e |
+| eu-west-2      | ami-63acbc07 |
+| eu-central-1   | ami-806dd9ef |
+| ap-northeast-1 | ami-5777b031 |
+| ap-southeast-1 | ami-21385142 |
+| ap-southeast-2 | ami-52c32730 |
+| ca-central-1   | ami-2efd444a |
 
 For more information about Weave AMIs and running them see: 
 
@@ -51,11 +51,11 @@ For more information about Weave AMIs and running them see:
 ## <a name="whats-in-ecs-ami"></a>What's in the Weave ECS AMIs?
 
 The latest Weave ECS AMIs are based on Amazon's
-[ECS-Optimized Amazon Linux AMI](https://aws.amazon.com/marketplace/pp/B00U6QTYI2),
-version `2016.09.b` and also includes:
+[ECS-Optimized Amazon Linux AMI](https://aws.amazon.com/marketplace/pp/B06XS8WHGJ),
+version `2017.03.f` and also includes:
 
-* [Weave Net 1.9.4](https://github.com/weaveworks/weave/blob/master/CHANGELOG.md#release-194)
-* [Weave Scope 1.3.0](https://github.com/weaveworks/scope/blob/master/CHANGELOG.md#release-130)
+* [Weave Net 2.0.4](https://github.com/weaveworks/weave/blob/master/CHANGELOG.md#release-204)
+* [Weave Scope 1.6.4](https://github.com/weaveworks/scope/blob/master/CHANGELOG.md#release-164)
 
 
 ## <a name="deployment-requirements"></a>Deployment Requirements
