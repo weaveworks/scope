@@ -167,11 +167,13 @@ func (pt *pipeTest) reconnectPipe(t *testing.T) {
 
 func TestPipeRouter(t *testing.T) {
 	var (
-		consul     = newMockConsulClient()
+		mockQuit   = make(chan struct{})
+		consul     = newMockConsulClient(mockQuit)
 		replicas   = 2
 		iterations = 10
 		pt         = pipeTest{}
 	)
+	defer close(mockQuit)
 
 	for i := 0; i < replicas; i++ {
 		pr := NewConsulPipeRouter(consul, "", fmt.Sprintf("127.0.0.1:44%02d", i), NoopUserIDer)

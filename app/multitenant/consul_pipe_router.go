@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -111,12 +112,14 @@ func NewConsulPipeRouter(client ConsulClient, prefix, advertise string, userIDer
 }
 
 func (pr *consulPipeRouter) Stop() {
+	log.Infof("pr.Stop() %s", pr.advertise)
 	close(pr.quit)
 	pr.wait.Wait()
 }
 
 func (pr *consulPipeRouter) actor() {
 	defer pr.wait.Done()
+	defer log.Infof("consulPipeRouter %s actor done", pr.advertise)
 	for {
 		select {
 		case f := <-pr.actorChan:
@@ -392,6 +395,7 @@ func newBridgeConnection(key, addr string, pipe xfer.Pipe) *bridgeConnection {
 
 func (bc *bridgeConnection) stop() {
 	log.Infof("%s: Stopping client bridge connection", bc.key)
+	debug.PrintStack()
 	bc.mtx.Lock()
 	bc.stopped = true
 	if bc.conn != nil {
@@ -421,10 +425,11 @@ func (bc *bridgeConnection) loop() {
 		bc.mtx.Unlock()
 
 		// connect to other pipes instance
+		log.Infof("loop calling %s", url)
 		conn, _, err := xfer.DialWS(wsDialer, url, http.Header{})
 		if err != nil {
 			log.Errorf("%s: Client bridge connection; Error connecting to %s: %v", bc.key, url, err)
-			time.Sleep(time.Second) // TODO backoff
+			time.Sleep(100 * time.Millisecond) // TODO backoff
 			continue
 		}
 
@@ -437,9 +442,10 @@ func (bc *bridgeConnection) loop() {
 		bc.conn = conn
 		bc.mtx.Unlock()
 
-		if err := bc.pipe.CopyToWebsocket(end, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
+		if err = bc.pipe.CopyToWebsocket(end, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
 			log.Errorf("%s: Client bridge connection; Error copying pipe to websocket: %v", bc.key, err)
 		}
+		log.Infof("loop copy ended %s", err)
 		conn.Close()
 	}
 }
