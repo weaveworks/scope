@@ -40,6 +40,8 @@ type Config struct {
 	HTTPListenPort   int
 	GRPCListenPort   int
 
+	RegisterInstrumentation bool
+
 	ServerGracefulShutdownTimeout time.Duration
 	HTTPServerReadTimeout         time.Duration
 	HTTPServerWriteTimeout        time.Duration
@@ -53,6 +55,7 @@ type Config struct {
 func (cfg *Config) RegisterFlags(f *flag.FlagSet) {
 	f.IntVar(&cfg.HTTPListenPort, "server.http-listen-port", 80, "HTTP server listen port.")
 	f.IntVar(&cfg.GRPCListenPort, "server.grpc-listen-port", 9095, "gRPC server listen port.")
+	f.BoolVar(&cfg.RegisterInstrumentation, "server.register-instrumentation", true, "Register the intrumentation handlers (/metrics etc).")
 	f.DurationVar(&cfg.ServerGracefulShutdownTimeout, "server.graceful-shutdown-timeout", 5*time.Second, "Timeout for graceful shutdowns")
 	f.DurationVar(&cfg.HTTPServerReadTimeout, "server.http-read-timeout", 5*time.Second, "Read timeout for HTTP server")
 	f.DurationVar(&cfg.HTTPServerWriteTimeout, "server.http-write-timeout", 5*time.Second, "Write timeout for HTTP server")
@@ -111,9 +114,9 @@ func New(cfg Config) (*Server, error) {
 
 	// Setup HTTP server
 	router := mux.NewRouter()
-	router.Handle("/metrics", prometheus.Handler())
-	router.Handle("/traces", loki.Handler())
-	router.PathPrefix("/debug/pprof").Handler(http.DefaultServeMux)
+	if cfg.RegisterInstrumentation {
+		RegisterInstrumentation(router)
+	}
 	httpMiddleware := []middleware.Interface{
 		middleware.Log{},
 		middleware.Instrument{
@@ -142,6 +145,13 @@ func New(cfg Config) (*Server, error) {
 		HTTP: router,
 		GRPC: grpcServer,
 	}, nil
+}
+
+// RegisterInstrumentation on the given router.
+func RegisterInstrumentation(router *mux.Router) {
+	router.Handle("/metrics", prometheus.Handler())
+	router.Handle("/traces", loki.Handler())
+	router.PathPrefix("/debug/pprof").Handler(http.DefaultServeMux)
 }
 
 // Run the server; blocks until SIGTERM is received.
