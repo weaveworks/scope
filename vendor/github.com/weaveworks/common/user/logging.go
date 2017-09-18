@@ -10,11 +10,11 @@ import (
 func LogFields(ctx context.Context) log.Fields {
 	fields := log.Fields{}
 	userID, err := ExtractUserID(ctx)
-	if err != nil {
+	if err == nil {
 		fields["userID"] = userID
 	}
 	orgID, err := ExtractOrgID(ctx)
-	if err != nil {
+	if err == nil {
 		fields["orgID"] = orgID
 	}
 	return fields

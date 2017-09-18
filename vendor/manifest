@@ -980,7 +980,7 @@
 			"importpath": "github.com/weaveworks/common",
 			"repository": "https://github.com/weaveworks/common",
 			"vcs": "git",
-			"revision": "493a1f760f47ed3b50afd5baabb36589d96017b8",
+			"revision": "b811bc96d43d51edbae6693e7d1b0a367114595b",
 			"branch": "master",
 			"notests": true
 		},

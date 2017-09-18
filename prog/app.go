@@ -13,13 +13,12 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/tylerb/graceful"
 
 	billing "github.com/weaveworks/billing-client"
+	"github.com/weaveworks/common/aws"
 	"github.com/weaveworks/common/middleware"
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/go-checkpoint"
@@ -76,21 +75,6 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	return instrument.Wrap(router)
 }
 
-func awsConfigFromURL(url *url.URL) (*aws.Config, error) {
-	if url.User == nil {
-		return nil, fmt.Errorf("Must specify username & password in URL")
-	}
-	password, _ := url.User.Password()
-	creds := credentials.NewStaticCredentials(url.User.Username(), password, "")
-	config := aws.NewConfig().WithCredentials(creds)
-	if strings.Contains(url.Host, ".") {
-		config = config.WithEndpoint(fmt.Sprintf("http://%s", url.Host)).WithRegion("dummy")
-	} else {
-		config = config.WithRegion(url.Host)
-	}
-	return config, nil
-}
-
 func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname string,
 	memcacheConfig multitenant.MemcacheConfig, window time.Duration, createTables bool) (app.Collector, error) {
 	if collectorURL == "local" {
@@ -110,11 +94,11 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 		if err != nil {
 			return nil, fmt.Errorf("Valid URL for s3 required: %v", err)
 		}
-		dynamoDBConfig, err := awsConfigFromURL(parsed)
+		dynamoDBConfig, err := aws.ConfigFromURL(parsed)
 		if err != nil {
 			return nil, err
 		}
-		s3Config, err := awsConfigFromURL(s3)
+		s3Config, err := aws.ConfigFromURL(s3)
 		if err != nil {
 			return nil, err
 		}
@@ -175,7 +159,7 @@ func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string
 
 	if parsed.Scheme == "sqs" {
 		prefix := strings.TrimPrefix(parsed.Path, "/")
-		sqsConfig, err := awsConfigFromURL(parsed)
+		sqsConfig, err := aws.ConfigFromURL(parsed)
 		if err != nil {
 			return nil, err
 		}
