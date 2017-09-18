@@ -124,9 +124,10 @@ type probeFlags struct {
 	kubernetesClientConfig kubernetes.ClientConfig
 	kubernetesKubeletPort  uint
 
-	ecsEnabled     bool
-	ecsCacheSize   int
-	ecsCacheExpiry time.Duration
+	ecsEnabled       bool
+	ecsCacheSize     int
+	ecsCacheExpiry   time.Duration
+	ecsClusterRegion string
 
 	weaveEnabled  bool
 	weaveAddr     string
@@ -323,6 +324,7 @@ func setupFlags(flags *flags) {
 	flag.BoolVar(&flags.probe.ecsEnabled, "probe.ecs", false, "Collect ecs-related attributes for containers on this node")
 	flag.IntVar(&flags.probe.ecsCacheSize, "probe.ecs.cache.size", 1024*1024, "Max size of cached info for each ECS cluster")
 	flag.DurationVar(&flags.probe.ecsCacheExpiry, "probe.ecs.cache.expiry", time.Hour, "How long to keep cached ECS info")
+	flag.StringVar(&flags.probe.ecsClusterRegion, "probe.ecs.cluster.region", "", "ECS Cluster Region")
 
 	// Weave
 	flag.StringVar(&flags.probe.weaveAddr, "probe.weave.addr", "127.0.0.1:6784", "IP address & port of the Weave router")

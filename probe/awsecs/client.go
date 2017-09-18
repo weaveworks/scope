@@ -70,16 +70,19 @@ type EcsInfo struct {
 	TaskServiceMap map[string]string
 }
 
-func newClient(cluster string, cacheSize int, cacheExpiry time.Duration) (EcsClient, error) {
+func newClient(cluster string, cacheSize int, cacheExpiry time.Duration, clusterRegion string) (EcsClient, error) {
 	sess := session.New()
+	var err error
 
-	region, err := ec2metadata.New(sess).Region()
-	if err != nil {
-		return nil, err
+	if clusterRegion == "" {
+		clusterRegion, err = ec2metadata.New(sess).Region()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &ecsClientImpl{
-		client:       ecs.New(sess, &aws.Config{Region: aws.String(region)}),
+		client:       ecs.New(sess, &aws.Config{Region: aws.String(clusterRegion)}),
 		cluster:      cluster,
 		taskCache:    gcache.New(cacheSize).LRU().Expiration(cacheExpiry).Build(),
 		serviceCache: gcache.New(cacheSize).LRU().Expiration(cacheExpiry).Build(),
