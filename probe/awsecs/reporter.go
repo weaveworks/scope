@@ -87,16 +87,18 @@ type Reporter struct {
 	ClientsByCluster map[string]EcsClient // Exported for test
 	cacheSize        int
 	cacheExpiry      time.Duration
+	clusterRegion    string
 	handlerRegistry  *controls.HandlerRegistry
 	probeID          string
 }
 
 // Make creates a new Reporter
-func Make(cacheSize int, cacheExpiry time.Duration, handlerRegistry *controls.HandlerRegistry, probeID string) Reporter {
+func Make(cacheSize int, cacheExpiry time.Duration, clusterRegion string, handlerRegistry *controls.HandlerRegistry, probeID string) Reporter {
 	r := Reporter{
 		ClientsByCluster: map[string]EcsClient{},
 		cacheSize:        cacheSize,
 		cacheExpiry:      cacheExpiry,
+		clusterRegion:    clusterRegion,
 		handlerRegistry:  handlerRegistry,
 		probeID:          probeID,
 	}
@@ -114,7 +116,7 @@ func (r Reporter) getClient(cluster string) (EcsClient, error) {
 	if !ok {
 		log.Debugf("Creating new ECS client")
 		var err error
-		client, err = newClient(cluster, r.cacheSize, r.cacheExpiry)
+		client, err = newClient(cluster, r.cacheSize, r.cacheExpiry, r.clusterRegion)
 		if err != nil {
 			return nil, err
 		}
