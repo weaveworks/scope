@@ -38,7 +38,7 @@ func getTestContainerNode() report.Node {
 
 func TestGetLabelInfo(t *testing.T) {
 	hr := controls.NewDefaultHandlerRegistry()
-	r := awsecs.Make(1e6, time.Hour, hr, "test-probe-id")
+	r := awsecs.Make(1e6, time.Hour, "", hr, "test-probe-id")
 	rpt, err := r.Report()
 	if err != nil {
 		t.Fatalf("Error making report: %v", err)
@@ -92,7 +92,7 @@ func (c mockEcsClient) ScaleService(serviceName string, amount int) error {
 
 func TestTagReport(t *testing.T) {
 	hr := controls.NewDefaultHandlerRegistry()
-	r := awsecs.Make(1e6, time.Hour, hr, "test-probe-id")
+	r := awsecs.Make(1e6, time.Hour, "", hr, "test-probe-id")
 
 	r.ClientsByCluster[testCluster] = newMockEcsClient(
 		t,
