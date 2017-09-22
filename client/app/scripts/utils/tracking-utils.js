@@ -4,8 +4,8 @@ const log = debug('service:tracking');
 
 // Track mixpanel events only if Scope is running inside of Weave Cloud.
 export function trackMixpanelEvent(name, props) {
-  if (window.mixpanel && process.env.WEAVE_CLOUD) {
-    window.mixpanel.track(name, props);
+  if (window.analytics && process.env.WEAVE_CLOUD) {
+    window.analytics.track(name, props);
   } else {
     log('trackMixpanelEvent', name, props);
   }
