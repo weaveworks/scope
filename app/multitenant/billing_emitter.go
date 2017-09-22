@@ -49,6 +49,9 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 	now := time.Now().UTC()
 	userID, err := e.UserIDer(ctx)
 	if err != nil {
+		// Underlying collector needs to get userID too, so it's OK to abort
+		// here. If this fails, so will underlying collector so no point
+		// proceeding.
 		return err
 	}
 	rowKey, colKey := calculateDynamoKeys(userID, now)
@@ -80,8 +83,10 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 		metadata,
 	)
 	if err != nil {
+		// No return, because we want to proceed even if we fail to emit
+		// billing data, so that defects in the billing system don't break
+		// report collection. Just log the fact & carry on.
 		log.Errorf("Failed emitting billing data: %v", err)
-		return err
 	}
 
 	return e.Collector.Add(ctx, rep, buf)
