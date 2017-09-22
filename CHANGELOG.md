@@ -1,3 +1,35 @@
+## Release 1.6.5
+
+This is a minor patch release.
+
+New features and enhancements:
+- Add ECS Cluster Region option
+	[#2854](https://github.com/weaveworks/scope/pull/2854)
+
+Bug fixes and minor improvements:
+- Fix edges disappearing in graph mode
+	[#2851](https://github.com/weaveworks/scope/pull/2851)
+- Fixed header elements responsiveness
+	[#2839](https://github.com/weaveworks/scope/pull/2839)
+
+Documentation:
+- Update ECS AMI docs
+	[#2846](https://github.com/weaveworks/scope/pull/2846)
+- More precise compose instructions
+	[#2843](https://github.com/weaveworks/scope/pull/2843)
+
+Internal improvements and cleanup:
+- Fix test broken by #2854
+	[#2856](https://github.com/weaveworks/scope/pull/2856)
+- Fix circle.yml syntax
+	[#2841](https://github.com/weaveworks/scope/pull/2841)
+- make circleci ui-upload unconditional
+	[#2837](https://github.com/weaveworks/scope/pull/2837)
+
+Weave Cloud related changes:
+- AWS connection keep-alive
+	[#2852](https://github.com/weaveworks/scope/pull/2852)
+
 ## Release 1.6.4
 
 Re-release of 1.6.3 for which there were some problems publishing Docker images.
