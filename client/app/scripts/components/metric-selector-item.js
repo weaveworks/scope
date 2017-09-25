@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 
 import { hoverMetric, pinMetric, unpinMetric } from '../actions/app-actions';
 import { selectedMetricTypeSelector } from '../selectors/node-metric';
-import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../utils/tracking-utils';
 
 
 class MetricSelectorItem extends React.Component {
@@ -16,7 +16,7 @@ class MetricSelectorItem extends React.Component {
   }
 
   trackEvent(eventName) {
-    trackMixpanelEvent(eventName, {
+    trackAnalyticsEvent(eventName, {
       metricType: this.props.metric.get('label'),
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),

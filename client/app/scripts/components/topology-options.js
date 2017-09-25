@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Set as makeSet, Map as makeMap } from 'immutable';
 import includes from 'lodash/includes';
 
-import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { getCurrentTopologyOptions } from '../utils/topology-utils';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
 import TopologyOptionAction from './topology-option-action';
@@ -19,7 +19,7 @@ class TopologyOptions extends React.Component {
   }
 
   trackOptionClick(optionId, nextOptions) {
-    trackMixpanelEvent('scope.topology.option.click', {
+    trackAnalyticsEvent('scope.topology.option.click', {
       optionId,
       value: nextOptions,
       layout: this.props.topologyViewMode,

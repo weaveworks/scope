@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import NodeResourcesMetricBoxInfo from './node-resources-metric-box-info';
 import { clickNode } from '../../actions/app-actions';
-import { trackMixpanelEvent } from '../../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../../utils/tracking-utils';
 import { applyTransform } from '../../utils/transform-utils';
 import { RESOURCE_VIEW_MODE } from '../../constants/naming';
 import {
@@ -62,7 +62,7 @@ class NodeResourcesMetricBox extends React.Component {
 
   handleClick(ev) {
     ev.stopPropagation();
-    trackMixpanelEvent('scope.node.click', {
+    trackAnalyticsEvent('scope.node.click', {
       layout: RESOURCE_VIEW_MODE,
       topologyId: this.props.topologyId,
     });

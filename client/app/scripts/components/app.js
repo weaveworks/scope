@@ -38,7 +38,7 @@ import ViewModeSelector from './view-mode-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
 import { getRouter, getUrlState } from '../utils/router-utils';
-import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { availableNetworksSelector } from '../selectors/node-networks';
 import {
   isResourceViewModeSelector,
@@ -147,7 +147,7 @@ class App extends React.Component {
   }
 
   trackEvent(eventName, additionalProps = {}) {
-    trackMixpanelEvent(eventName, {
+    trackAnalyticsEvent(eventName, {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),

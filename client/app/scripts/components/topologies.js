@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classnames from 'classnames';
 
-import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { searchMatchCountByTopologySelector } from '../selectors/search';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { clickTopology } from '../actions/app-actions';
@@ -28,7 +28,7 @@ class Topologies extends React.Component {
 
   onTopologyClick(ev, topology) {
     ev.preventDefault();
-    trackMixpanelEvent('scope.topology.selector.click', {
+    trackAnalyticsEvent('scope.topology.selector.click', {
       topologyId: topology.get('id'),
       parentTopologyId: topology.get('parentId'),
     });

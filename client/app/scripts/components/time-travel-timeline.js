@@ -11,7 +11,7 @@ import { Motion } from 'react-motion';
 import { zoomFactor } from '../utils/zoom-utils';
 import { strongSpring } from '../utils/animation-utils';
 import { linearGradientValue } from '../utils/math-utils';
-import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import {
   nowInSecondsPrecision,
   clampToNowInSecondsPrecision,
@@ -147,7 +147,7 @@ class TimeTravelTimeline extends React.Component {
     const periods = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds'];
     const duration = scaleDuration(this.state.durationPerPixel, MAX_TICK_SPACING_PX);
     const zoomedPeriod = find(periods, period => Math.floor(duration.get(period)) && period);
-    trackMixpanelEvent('scope.time.timeline.zoom', { zoomedPeriod });
+    trackAnalyticsEvent('scope.time.timeline.zoom', { zoomedPeriod });
   }
 
   handlePanStart() {
