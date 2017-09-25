@@ -19,11 +19,12 @@ function generate_header() {
     package report
 
     import (
+		"bytes"
         "fmt"
+		"sort"
         "time"
 
         "github.com/ugorji/go/codec"
-        "github.com/weaveworks/ps"
     )
 EOF
 }
@@ -35,7 +36,6 @@ function generate_latest_map() {
     local lowercase_data_type="${data_type,}"
     local entry_type="${lowercase_data_type}LatestEntry"
     local latest_map_type="${uppercase_data_type}LatestMap"
-    local empty_latest_map_variable="empty${latest_map_type}"
     local make_function="Make${latest_map_type}"
 
     # shellcheck disable=SC2016
@@ -45,6 +45,7 @@ function generate_latest_map() {
 
     cat <<EOF >>"${out_file}"
     type ${entry_type} struct {
+        key       string
         Timestamp time.Time    ${json_timestamp}
         Value     ${data_type} ${json_value}
         dummySelfer
@@ -60,31 +61,53 @@ function generate_latest_map() {
         return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
     }
 
-    // ${latest_map_type} holds latest ${data_type} instances.
-    type ${latest_map_type} struct { ps.Map }
-
-    var ${empty_latest_map_variable} = ${latest_map_type}{ps.NewMap()}
+    // ${latest_map_type} holds latest ${data_type} instances, as a slice sorted by key.
+    type ${latest_map_type} struct { entries []${entry_type} }
 
     // ${make_function} makes an empty ${latest_map_type}.
     func ${make_function}() ${latest_map_type} {
-        return ${empty_latest_map_variable}
+        return ${latest_map_type}{}
     }
 
     // Size returns the number of elements.
     func (m ${latest_map_type}) Size() int {
-        if m.Map == nil {
-	        return 0
-        }
-        return m.Map.Size()
+        return len(m.entries)
     }
 
     // Merge produces a fresh ${latest_map_type} containing the keys from both inputs.
     // When both inputs contain the same key, the newer value is used.
-    func (m ${latest_map_type}) Merge(other ${latest_map_type}) ${latest_map_type} {
-        output := mergeMaps(m.Map, other.Map, func(a, b interface{}) bool {
-	        return a.(*${entry_type}).Timestamp.Before(b.(*${entry_type}).Timestamp)
-        })
-        return ${latest_map_type}{output}
+    func (m ${latest_map_type}) Merge(n ${latest_map_type}) ${latest_map_type} {
+        switch {
+        case m.entries == nil:
+            return n
+        case n.entries == nil:
+            return m
+        }
+        out := make([]${entry_type}, 0, len(m.entries)+len(n.entries))
+
+        i, j := 0, 0
+        for i < len(m.entries) {
+            switch {
+            case j >= len(n.entries) || m.entries[i].key < n.entries[j].key:
+                out = append(out, m.entries[i])
+                i++
+            case m.entries[i].key == n.entries[j].key:
+                if m.entries[i].Timestamp.Before(n.entries[j].Timestamp) {
+                    out = append(out, n.entries[j])
+                } else {
+                    out = append(out, m.entries[i])
+                }
+                i++
+                j++
+            default:
+                out = append(out, n.entries[j])
+                j++
+            }
+        }
+        for ; j < len(n.entries); j++ {
+            out = append(out, n.entries[j])
+        }
+        return ${latest_map_type}{out}
     }
 
     // Lookup the value for the given key.
@@ -99,65 +122,135 @@ function generate_latest_map() {
 
     // LookupEntry returns the raw entry for the given key.
     func (m ${latest_map_type}) LookupEntry(key string) (${data_type}, time.Time, bool) {
-        if m.Map == nil {
-	        var zero ${data_type}
-	        return zero, time.Time{}, false
+        i := sort.Search(len(m.entries), func(i int) bool {
+            return m.entries[i].key >= key
+        })
+        if i < len(m.entries) && m.entries[i].key == key {
+            return m.entries[i].Value, m.entries[i].Timestamp, true
         }
-        value, ok := m.Map.Lookup(key)
-        if !ok {
-	        var zero ${data_type}
-	        return zero, time.Time{}, false
+        var zero ${data_type}
+        return zero, time.Time{}, false
+    }
+
+    // locate the position where key should go, and make room for it if not there already
+    func (m *${latest_map_type}) locate(key string) int {
+        i := sort.Search(len(m.entries), func(i int) bool {
+            return m.entries[i].key >= key
+        })
+        // i is now the position where key should go, either at the end or in the middle
+        if i == len(m.entries) || m.entries[i].key != key {
+            m.entries = append(m.entries, ${entry_type}{})
+            copy(m.entries[i+1:], m.entries[i:])
         }
-        e := value.(*${entry_type})
-        return e.Value, e.Timestamp, true
+        return i
     }
 
     // Set the value for the given key.
     func (m ${latest_map_type}) Set(key string, timestamp time.Time, value ${data_type}) ${latest_map_type} {
-        if m.Map == nil {
-	        m.Map = ps.NewMap()
+        i := sort.Search(len(m.entries), func(i int) bool {
+            return m.entries[i].key >= key
+        })
+        // i is now the position where key should go, either at the end or in the middle
+        oldEntries := m.entries
+        if i == len(m.entries) {
+            m.entries = make([]${entry_type}, len(oldEntries)+1)
+            copy(m.entries, oldEntries)
+        } else if m.entries[i].key == key {
+            m.entries = make([]${entry_type}, len(oldEntries))
+            copy(m.entries, oldEntries)
+        } else {
+            m.entries = make([]${entry_type}, len(oldEntries)+1)
+            copy(m.entries, oldEntries[:i])
+            copy(m.entries[i+1:], oldEntries[i:])
         }
-        return ${latest_map_type}{m.Map.Set(key, &${entry_type}{Timestamp: timestamp, Value: value})}
+        m.entries[i] = ${entry_type}{key: key, Timestamp: timestamp, Value: value}
+        return m
     }
 
     // ForEach executes fn on each key value pair in the map.
     func (m ${latest_map_type}) ForEach(fn func(k string, timestamp time.Time, v ${data_type})) {
-        if m.Map != nil {
-	        m.Map.ForEach(func(key string, value interface{}) {
-		        fn(key, value.(*${entry_type}).Timestamp, value.(*${entry_type}).Value)
-	        })
+        for _, value := range m.entries {
+            fn(value.key, value.Timestamp, value.Value)
         }
     }
 
     // String returns the ${latest_map_type}'s string representation.
     func (m ${latest_map_type}) String() string {
-        return mapToString(m.Map)
+        buf := bytes.NewBufferString("{")
+        for _, val := range m.entries {
+            fmt.Fprintf(buf, "%s: %s,\n", val.key, val)
+        }
+        fmt.Fprintf(buf, "}")
+        return buf.String()
     }
 
     // DeepEqual tests equality with other ${latest_map_type}.
     func (m ${latest_map_type}) DeepEqual(n ${latest_map_type}) bool {
-        return mapEqual(m.Map, n.Map, func(val, otherValue interface{}) bool {
-	        return val.(*${entry_type}).Equal(otherValue.(*${entry_type}))
-        })
+        if m.Size() != n.Size() {
+            return false
+        }
+        for i := range m.entries {
+            if m.entries[i].key != n.entries[i].key || !m.entries[i].Equal(&n.entries[i]) {
+                return false
+            }
+        }
+        return true
     }
 
     // CodecEncodeSelf implements codec.Selfer.
+    // Duplicates the output for a built-in map without generating an
+    // intermediate copy of the data structure, to save time.  Note this
+    // means we are using undocumented, internal APIs, which could break
+    // in the future.  See https://github.com/weaveworks/scope/pull/1709
+    // for more information.
     func (m *${latest_map_type}) CodecEncodeSelf(encoder *codec.Encoder) {
-        mapWrite(m.Map, encoder, func(encoder *codec.Encoder, val interface{}) {
-            val.(*${entry_type}).CodecEncodeSelf(encoder)
-        })
+        z, r := codec.GenHelperEncoder(encoder)
+        if m.entries == nil {
+            r.EncodeNil()
+            return
+        }
+        r.EncodeMapStart(m.Size())
+        for _, val := range m.entries {
+            z.EncSendContainerState(containerMapKey)
+            r.EncodeString(cUTF8, val.key)
+            z.EncSendContainerState(containerMapValue)
+            val.CodecEncodeSelf(encoder)
+        }
+        z.EncSendContainerState(containerMapEnd)
     }
 
     // CodecDecodeSelf implements codec.Selfer.
+    // Decodes the input as for a built-in map, without creating an
+    // intermediate copy of the data structure to save time. Uses
+    // undocumented, internal APIs as for CodecEncodeSelf.
     func (m *${latest_map_type}) CodecDecodeSelf(decoder *codec.Decoder) {
-        out := mapRead(decoder, func(isNil bool) interface{} {
-	        value := &${entry_type}{}
-	        if !isNil {
-		        value.CodecDecodeSelf(decoder)
-	        }
-	        return value
-        })
-        *m = ${latest_map_type}{out}
+        m.entries = nil
+        z, r := codec.GenHelperDecoder(decoder)
+        if r.TryDecodeAsNil() {
+            return
+        }
+
+        length := r.ReadMapStart()
+        if length > 0 {
+            m.entries = make([]${entry_type}, 0, length)
+        }
+        for i := 0; length < 0 || i < length; i++ {
+            if length < 0 && r.CheckBreak() {
+                break
+            }
+            z.DecSendContainerState(containerMapKey)
+            var key string
+            if !r.TryDecodeAsNil() {
+                key = r.DecodeString()
+            }
+            i := m.locate(key)
+            m.entries[i].key = key
+            z.DecSendContainerState(containerMapValue)
+            if !r.TryDecodeAsNil() {
+                m.entries[i].CodecDecodeSelf(decoder)
+            }
+        }
+        z.DecSendContainerState(containerMapEnd)
     }
 
     // MarshalJSON shouldn't be used, use CodecEncodeSelf instead.

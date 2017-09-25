@@ -72,7 +72,7 @@ func TestLatestMapDeepEquals(t *testing.T) {
 
 func nilStringLatestMap() StringLatestMap {
 	m := MakeStringLatestMap()
-	m.Map = nil
+	m.entries = nil
 	return m
 }
 
