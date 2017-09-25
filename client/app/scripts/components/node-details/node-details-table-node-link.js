@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { clickRelative } from '../../actions/app-actions';
-import { trackMixpanelEvent } from '../../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../../utils/tracking-utils';
 import { dismissRowClickProps } from './node-details-table-row';
 
 
@@ -16,7 +16,7 @@ class NodeDetailsTableNodeLink extends React.Component {
 
   handleClick(ev) {
     ev.preventDefault();
-    trackMixpanelEvent('scope.node.relative.click', {
+    trackAnalyticsEvent('scope.node.relative.click', {
       topologyId: this.props.topologyId,
     });
     this.props.dispatch(clickRelative(

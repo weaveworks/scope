@@ -3,7 +3,7 @@ import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 
-import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { pauseTimeAtNow, resumeTime, startTimeTravel } from '../actions/app-actions';
 
 import { TIMELINE_TICK_INTERVAL } from '../constants/timer';
@@ -43,21 +43,21 @@ class TimeControl extends React.Component {
   }
 
   handleNowClick() {
-    trackMixpanelEvent('scope.time.resume.click', this.getTrackingMetadata());
+    trackAnalyticsEvent('scope.time.resume.click', this.getTrackingMetadata());
     this.props.resumeTime();
   }
 
   handlePauseClick() {
-    trackMixpanelEvent('scope.time.pause.click', this.getTrackingMetadata());
+    trackAnalyticsEvent('scope.time.pause.click', this.getTrackingMetadata());
     this.props.pauseTimeAtNow();
   }
 
   handleTravelClick() {
     if (!this.props.showingTimeTravel) {
-      trackMixpanelEvent('scope.time.travel.click', this.getTrackingMetadata({ open: true }));
+      trackAnalyticsEvent('scope.time.travel.click', this.getTrackingMetadata({ open: true }));
       this.props.startTimeTravel();
     } else {
-      trackMixpanelEvent('scope.time.travel.click', this.getTrackingMetadata({ open: false }));
+      trackAnalyticsEvent('scope.time.travel.click', this.getTrackingMetadata({ open: false }));
       this.props.resumeTime();
     }
   }

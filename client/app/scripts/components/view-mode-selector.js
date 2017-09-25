@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 
 import MetricSelector from './metric-selector';
-import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { setGraphView, setTableView, setResourceView } from '../actions/app-actions';
 import { availableMetricsSelector } from '../selectors/node-metric';
 import {
@@ -30,7 +30,7 @@ class ViewModeSelector extends React.Component {
       'view-mode-selector-action-selected': isSelected,
     });
     const onClick = () => {
-      trackMixpanelEvent('scope.layout.selector.click', {
+      trackAnalyticsEvent('scope.layout.selector.click', {
         layout: viewMode,
         topologyId: this.props.currentTopology.get('id'),
         parentTopologyId: this.props.currentTopology.get('parentId'),

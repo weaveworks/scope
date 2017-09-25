@@ -5,7 +5,7 @@ import NodeDetailsHealthItem from './node-details-health-item';
 import CloudLink from '../cloud-link';
 import { getMetricColor } from '../../utils/metric-utils';
 import { darkenColor } from '../../utils/color-utils';
-import { trackMixpanelEvent } from '../../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../../utils/tracking-utils';
 
 /**
  * @param {string} url
@@ -59,7 +59,7 @@ class NodeDetailsHealthLinkItem extends React.Component {
   }
 
   onClick() {
-    trackMixpanelEvent('scope.node.metric.click', { topologyId: this.props.topologyId });
+    trackAnalyticsEvent('scope.node.metric.click', { topologyId: this.props.topologyId });
   }
 
   render() {

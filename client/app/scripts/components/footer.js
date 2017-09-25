@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import Plugins from './plugins';
-import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import {
   clickDownloadGraph,
   clickForceRelayout,
@@ -27,7 +27,7 @@ class Footer extends React.Component {
 
   handleRelayoutClick(ev) {
     ev.preventDefault();
-    trackMixpanelEvent('scope.layout.refresh.click', {
+    trackAnalyticsEvent('scope.layout.refresh.click', {
       layout: this.props.topologyViewMode,
     });
     this.props.clickForceRelayout();

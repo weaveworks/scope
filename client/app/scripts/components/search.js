@@ -9,7 +9,7 @@ import { isResourceViewModeSelector } from '../selectors/topology';
 import { slugify } from '../utils/string-utils';
 import { parseQuery } from '../utils/search-utils';
 import { isTopologyNodeCountZero } from '../utils/topology-utils';
-import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import SearchItem from './search-item';
 import { ENTER_KEY_CODE } from '../constants/key-codes';
 
@@ -82,7 +82,7 @@ class Search extends React.Component {
   handleKeyUp(ev) {
     // If the search query is parsable, pin it when ENTER key is hit.
     if (ev.keyCode === ENTER_KEY_CODE && parseQuery(this.props.searchQuery)) {
-      trackMixpanelEvent('scope.search.query.pin', {
+      trackAnalyticsEvent('scope.search.query.pin', {
         layout: this.props.topologyViewMode,
         topologyId: this.props.currentTopology.get('id'),
         parentTopologyId: this.props.currentTopology.get('parentId'),
@@ -97,7 +97,7 @@ class Search extends React.Component {
 
   doSearch(value) {
     if (value !== '') {
-      trackMixpanelEvent('scope.search.query.change', {
+      trackAnalyticsEvent('scope.search.query.change', {
         layout: this.props.topologyViewMode,
         topologyId: this.props.currentTopology.get('id'),
         parentTopologyId: this.props.currentTopology.get('parentId'),

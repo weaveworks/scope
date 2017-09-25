@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
 import TimeTravelTimeline from './time-travel-timeline';
-import { trackMixpanelEvent } from '../utils/tracking-utils';
+import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { clampToNowInSecondsPrecision } from '../utils/time-utils';
 import {
   jumpToTime,
@@ -83,7 +83,7 @@ class TimeTravel extends React.Component {
   }
 
   trackTimestampEdit() {
-    trackMixpanelEvent('scope.time.timestamp.edit', {
+    trackAnalyticsEvent('scope.time.timestamp.edit', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
@@ -91,7 +91,7 @@ class TimeTravel extends React.Component {
   }
 
   trackTimelineClick() {
-    trackMixpanelEvent('scope.time.timeline.click', {
+    trackAnalyticsEvent('scope.time.timeline.click', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
@@ -99,7 +99,7 @@ class TimeTravel extends React.Component {
   }
 
   trackTimelinePan() {
-    trackMixpanelEvent('scope.time.timeline.pan', {
+    trackAnalyticsEvent('scope.time.timeline.pan', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
