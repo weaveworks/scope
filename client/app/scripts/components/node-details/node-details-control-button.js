@@ -1,6 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { trackMixpanelEvent } from '../../utils/tracking-utils';
 import { doControl } from '../../actions/app-actions';
 
 class NodeDetailsControlButton extends React.Component {
@@ -21,6 +22,8 @@ class NodeDetailsControlButton extends React.Component {
 
   handleClick(ev) {
     ev.preventDefault();
+    const { id, human } = this.props.control;
+    trackMixpanelEvent('scope.node.control.click', { id, title: human });
     this.props.dispatch(doControl(this.props.nodeId, this.props.control));
   }
 }
