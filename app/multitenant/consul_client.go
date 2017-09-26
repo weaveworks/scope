@@ -66,10 +66,7 @@ func (c *consulClient) Get(key string, out interface{}) error {
 	if kvp == nil {
 		return ErrNotFound
 	}
-	if err := json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out); err != nil {
-		return err
-	}
-	return nil
+	return json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out)
 }
 
 // CAS atomically modify a value in a callback.
