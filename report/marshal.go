@@ -185,12 +185,7 @@ func (rep *Report) WriteToFile(path string, compressionLevel int) error {
 		w = gzwriter
 	}
 
-	if err = codec.NewEncoder(w, handle).Encode(rep); err != nil {
-		return err
-	}
-
-	return nil
-
+	return codec.NewEncoder(w, handle).Encode(rep)
 }
 
 func handlerFromFileType(path string) (codec.Handle, bool, error) {
