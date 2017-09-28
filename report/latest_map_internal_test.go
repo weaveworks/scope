@@ -126,21 +126,18 @@ func TestLatestMapMerge(t *testing.T) {
 	}
 }
 
+func makeBenchmarkMap(start, finish int, timestamp time.Time) StringLatestMap {
+	ret := MakeStringLatestMap()
+	for i := start; i < finish; i++ {
+		ret = ret.Set(fmt.Sprint(i), timestamp, "1")
+	}
+	return ret
+}
+
 func BenchmarkLatestMapMerge(b *testing.B) {
-	var (
-		left  = MakeStringLatestMap()
-		right = MakeStringLatestMap()
-		now   = time.Now()
-	)
-
 	// two large maps with some overlap
-	for i := 0; i < 1000; i++ {
-		left = left.Set(fmt.Sprint(i), now, "1")
-	}
-	for i := 700; i < 1700; i++ {
-		right = right.Set(fmt.Sprint(i), now.Add(1*time.Minute), "1")
-	}
-
+	left := makeBenchmarkMap(0, 1000, time.Now())
+	right := makeBenchmarkMap(700, 1700, time.Now().Add(1*time.Minute))
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
