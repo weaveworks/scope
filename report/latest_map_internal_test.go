@@ -145,6 +145,28 @@ func BenchmarkLatestMapMerge(b *testing.B) {
 	}
 }
 
+func BenchmarkLatestMapEncode(b *testing.B) {
+	map1 := makeBenchmarkMap(0, 1000, time.Now())
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		buf := &bytes.Buffer{}
+		codec.NewEncoder(buf, &codec.MsgpackHandle{}).Encode(&map1)
+	}
+}
+
+func BenchmarkLatestMapDecode(b *testing.B) {
+	map1 := makeBenchmarkMap(0, 1000, time.Now())
+	buf := &bytes.Buffer{}
+	codec.NewEncoder(buf, &codec.MsgpackHandle{}).Encode(&map1)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		var map1 StringLatestMap
+		codec.NewDecoderBytes(buf.Bytes(), &codec.MsgpackHandle{}).Decode(&map1)
+	}
+}
+
 func TestLatestMapEncoding(t *testing.T) {
 	now := time.Now()
 	want := MakeStringLatestMap().
