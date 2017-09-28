@@ -3,21 +3,28 @@ package report
 import (
 	"bytes"
 	"fmt"
+	"sort"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/ugorji/go/codec"
-	"github.com/weaveworks/ps"
 
 	"github.com/weaveworks/scope/test/reflect"
 )
 
-// NodeSet is a set of nodes keyed on ID. Clients must use
+// NodeSet is a set of nodes, as a slice sorted by ID. Clients must use
 // the Add method to add nodes
 type NodeSet struct {
-	psMap ps.Map
+	entries nodesByID
 }
 
-var emptyNodeSet = NodeSet{ps.NewMap()}
+// nodesByID implements sort.Interface.
+type nodesByID []*Node
+
+func (m nodesByID) Len() int           { return len(m) }
+func (m nodesByID) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
+func (m nodesByID) Less(i, j int) bool { return m[i].ID < m[j].ID }
+
+var emptyNodeSet = NodeSet{}
 
 // MakeNodeSet makes a new NodeSet with the given nodes.
 func MakeNodeSet(nodes ...Node) NodeSet {
@@ -30,12 +37,25 @@ func (n NodeSet) Add(nodes ...Node) NodeSet {
 	if len(nodes) == 0 {
 		return n
 	}
-	result := n.psMap
-	if result == nil {
-		result = ps.NewMap()
+	result := make(nodesByID, len(n.entries), len(n.entries)+len(nodes))
+	copy(result, n.entries)
+	addends := make(nodesByID, len(nodes))
+	for i := 0; i < len(nodes); i++ {
+		addends[i] = &nodes[i]
 	}
-	for _, node := range nodes {
-		result = result.Set(node.ID, node)
+	sort.Sort(addends)
+	for _, val := range addends {
+		i := sort.Search(len(result), func(i int) bool {
+			return result[i].ID >= val.ID
+		})
+		// i is now the position where val should go, either at the end or in the middle
+		if i == len(result) {
+			result = append(result, nil)
+		} else if result[i].ID != val.ID {
+			result = append(result, nil)
+			copy(result[i+1:], result[i:])
+		}
+		result[i] = val
 	}
 	return NodeSet{result}
 }
@@ -46,68 +66,77 @@ func (n NodeSet) Delete(ids ...string) NodeSet {
 	if n.Size() == 0 {
 		return n
 	}
-	result := n.psMap
+	result := make(nodesByID, len(n.entries))
+	copy(result, n.entries)
 	for _, id := range ids {
-		result = result.Delete(id)
-	}
-	if result.Size() == 0 {
-		return emptyNodeSet
+		i := sort.Search(len(result), func(i int) bool {
+			return result[i].ID >= id
+		})
+		if i < len(result) && result[i].ID == id {
+			copy(result[i:], result[i+1:])
+			result = result[:len(result)-1]
+		}
 	}
 	return NodeSet{result}
 }
 
 // Merge combines the two NodeSets and returns a new result.
-func (n NodeSet) Merge(other NodeSet) NodeSet {
-	nSize, otherSize := n.Size(), other.Size()
-	if nSize == 0 {
-		return other
-	}
-	if otherSize == 0 {
+func (m NodeSet) Merge(n NodeSet) NodeSet {
+	switch {
+	case m.entries == nil:
 		return n
+	case n.entries == nil:
+		return m
 	}
-	result, iter := n.psMap, other.psMap
-	if nSize < otherSize {
-		result, iter = iter, result
+	out := make(nodesByID, 0, len(m.entries)+len(n.entries))
+
+	i, j := 0, 0
+	for i < len(m.entries) {
+		switch {
+		case j >= len(n.entries) || m.entries[i].ID < n.entries[j].ID:
+			out = append(out, m.entries[i])
+			i++
+		case m.entries[i].ID == n.entries[j].ID:
+			i++
+			fallthrough
+		default:
+			out = append(out, n.entries[j])
+			j++
+		}
 	}
-	iter.ForEach(func(key string, otherVal interface{}) {
-		result = result.Set(key, otherVal)
-	})
-	return NodeSet{result}
+	for ; j < len(n.entries); j++ {
+		out = append(out, n.entries[j])
+	}
+	return NodeSet{out}
 }
 
 // Lookup the node 'key'
 func (n NodeSet) Lookup(key string) (Node, bool) {
-	if n.psMap != nil {
-		value, ok := n.psMap.Lookup(key)
-		if ok {
-			return value.(Node), true
-		}
+	i := sort.Search(len(n.entries), func(i int) bool {
+		return n.entries[i].ID >= key
+	})
+	if i < len(n.entries) && n.entries[i].ID == key {
+		return *n.entries[i], true
 	}
 	return Node{}, false
 }
 
 // Size is the number of nodes in the set
 func (n NodeSet) Size() int {
-	if n.psMap == nil {
-		return 0
-	}
-	return n.psMap.Size()
+	return len(n.entries)
 }
 
 // ForEach executes f for each node in the set.
 func (n NodeSet) ForEach(f func(Node)) {
-	if n.psMap != nil {
-		n.psMap.ForEach(func(_ string, val interface{}) {
-			f(val.(Node))
-		})
+	for _, value := range n.entries {
+		f(*value)
 	}
 }
 
 func (n NodeSet) String() string {
 	buf := bytes.NewBufferString("{")
-	for _, key := range mapKeys(n.psMap) {
-		val, _ := n.psMap.Lookup(key)
-		fmt.Fprintf(buf, "%s: %s, ", key, spew.Sdump(val))
+	for _, val := range n.entries {
+		fmt.Fprintf(buf, "%s: %s, ", val.ID, spew.Sdump(val))
 	}
 	fmt.Fprintf(buf, "}")
 	return buf.String()
@@ -115,37 +144,29 @@ func (n NodeSet) String() string {
 
 // DeepEqual tests equality with other NodeSets
 func (n NodeSet) DeepEqual(o NodeSet) bool {
-	return mapEqual(n.psMap, o.psMap, reflect.DeepEqual)
-}
-
-func (n NodeSet) toIntermediate() []Node {
-	intermediate := make([]Node, 0, n.Size())
-	n.ForEach(func(node Node) {
-		intermediate = append(intermediate, node)
-	})
-	return intermediate
-}
-
-func (n NodeSet) fromIntermediate(nodes []Node) NodeSet {
-	return MakeNodeSet(nodes...)
+	if n.Size() != o.Size() {
+		return false
+	}
+	for i := range n.entries {
+		if !reflect.DeepEqual(n.entries[i], o.entries[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // CodecEncodeSelf implements codec.Selfer
 func (n *NodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
-	if n.psMap != nil {
-		encoder.Encode(n.toIntermediate())
-	} else {
-		encoder.Encode(nil)
-	}
+	encoder.Encode(n.entries)
 }
 
 // CodecDecodeSelf implements codec.Selfer
 func (n *NodeSet) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := []Node{}
+	in := nodesByID{}
 	if err := decoder.Decode(&in); err != nil {
 		return
 	}
-	*n = NodeSet{}.fromIntermediate(in)
+	*n = NodeSet{in}
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
