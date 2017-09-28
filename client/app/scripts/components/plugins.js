@@ -1,22 +1,24 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
-import ReactTooltip from 'react-tooltip';
+
+import Tooltip from './tooltip';
 
 
 const Plugin = ({id, label, description, status}) => {
   const error = status !== 'ok';
   const className = classNames({ error });
-  const title = `Plugin description: ${description}<br />Status: ${status}`;
+  const tip = (<span>Description: {description}<br />Status: {status}</span>);
 
   // Inner span to hold styling so we don't effect the "before:content"
   return (
     <span className="plugins-plugin" key={id}>
-      <span className={className} data-tip={title} data-multiline>
-        {error && <span className="plugins-plugin-icon fa fa-exclamation-circle" />}
-        {label || id}
-      </span>
-      <ReactTooltip class="tooltip" effect="solid" offset={{right: 7}} />
+      <Tooltip tip={tip}>
+        <span className={className}>
+          {error && <span className="plugins-plugin-icon fa fa-exclamation-circle" />}
+          {label || id}
+        </span>
+      </Tooltip>
     </span>
   );
 };
