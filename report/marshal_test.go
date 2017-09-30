@@ -91,23 +91,30 @@ func TestBiggerRoundtrip(t *testing.T) {
 // check that what we decode from prior versions' output matches
 func TestBackwardsCompat(t *testing.T) {
 	r1 := makeTestReport()
-	// Field SwarmService didn't exist in older versions so blank it here for testing similarity
-	r1.SwarmService = report.Topology{}
+	// Create different variants of the struct contents to match older versions
+	r1b := r1
+	r1b.ReplicaSet.Shape = "heptagon"
+	r1b.DaemonSet = report.Topology{}
+	r1b.StatefulSet = report.Topology{}
+	r1b.CronJob = report.Topology{}
+	r1c := r1b
+	r1c.SwarmService = report.Topology{}
 	jh := &codec.JsonHandle{}
 	mh := &codec.MsgpackHandle{}
 	for i, data := range []struct {
 		buf     []byte
+		want    report.Report
 		handler codec.Handle
-	}{{json_v1_1, jh}, {json_v1_2, jh}, {json_v1_2x, jh},
-		{msgpack_1_1, mh}, {msgpack_1_2, mh}, {msgpack_1_2x, mh}} {
+	}{{json_v1_1, r1c, jh}, {json_v1_2, r1c, jh}, {json_v1_2x, r1c, jh},
+		{msgpack_1_1, r1c, mh}, {msgpack_1_2, r1c, mh}, {msgpack_1_2x, r1c, mh}, {msgpack_1_2xx, r1b, mh}} {
 		d := codec.NewDecoderBytes(data.buf, data.handler)
 		r2 := report.Report{}
 		err := d.Decode(&r2)
 		if err != nil {
 			t.Error(err)
 		}
-		if !s_reflect.DeepEqual(r1, r2) {
-			t.Errorf("json %d: %v != %v", i, r1, r2)
+		if !s_reflect.DeepEqual(data.want, r2) {
+			t.Errorf("json %d: %v != %v", i, data.want, r2)
 		}
 	}
 }
