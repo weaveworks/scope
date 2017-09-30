@@ -1,84 +1,103 @@
 package report
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 
 	"github.com/ugorji/go/codec"
-	"github.com/weaveworks/ps"
 )
+
+type edgeMetadataEntry struct {
+	key   string
+	Value EdgeMetadata `json:"value"`
+}
 
 // EdgeMetadatas collect metadata about each edge in a topology. Keys are the
 // remote node IDs, as in Adjacency.
 type EdgeMetadatas struct {
-	psMap ps.Map
+	entries []edgeMetadataEntry
 }
-
-var emptyEdgeMetadatas = EdgeMetadatas{ps.NewMap()}
 
 // MakeEdgeMetadatas returns EmptyEdgeMetadatas
 func MakeEdgeMetadatas() EdgeMetadatas {
-	return emptyEdgeMetadatas
+	return EdgeMetadatas{}
+}
+
+// locate the position where key should go, either at the end or in the middle
+func (c EdgeMetadatas) locate(key string) int {
+	return sort.Search(len(c.entries), func(i int) bool {
+		return c.entries[i].key >= key
+	})
 }
 
 // Add value to the counter 'key'
 func (c EdgeMetadatas) Add(key string, value EdgeMetadata) EdgeMetadatas {
-	if c.psMap == nil {
-		c = emptyEdgeMetadatas
+	i := c.locate(key)
+	oldEntries := c.entries
+	if i == len(c.entries) {
+		c.entries = make([]edgeMetadataEntry, len(oldEntries)+1)
+		copy(c.entries, oldEntries)
+	} else if c.entries[i].key == key {
+		value = value.Merge(c.entries[i].Value)
+		c.entries = make([]edgeMetadataEntry, len(oldEntries))
+		copy(c.entries, oldEntries)
+	} else {
+		c.entries = make([]edgeMetadataEntry, len(oldEntries)+1)
+		copy(c.entries, oldEntries[:i])
+		copy(c.entries[i+1:], oldEntries[i:])
 	}
-	if existingValue, ok := c.psMap.Lookup(key); ok {
-		value = value.Merge(existingValue.(EdgeMetadata))
-	}
-	return EdgeMetadatas{
-		c.psMap.Set(key, value),
-	}
+	c.entries[i] = edgeMetadataEntry{key: key, Value: value}
+	return c
 }
 
 // Lookup the counter 'key'
 func (c EdgeMetadatas) Lookup(key string) (EdgeMetadata, bool) {
-	if c.psMap != nil {
-		existingValue, ok := c.psMap.Lookup(key)
-		if ok {
-			return existingValue.(EdgeMetadata), true
-		}
+	i := c.locate(key)
+	if i < len(c.entries) && c.entries[i].key == key {
+		return c.entries[i].Value, true
 	}
 	return EdgeMetadata{}, false
 }
 
 // Size is the number of elements
 func (c EdgeMetadatas) Size() int {
-	if c.psMap == nil {
-		return 0
-	}
-	return c.psMap.Size()
+	return len(c.entries)
 }
 
 // Merge produces a fresh Counters, container the keys from both inputs. When
-// both inputs container the same key, the latter value is used.
-func (c EdgeMetadatas) Merge(other EdgeMetadatas) EdgeMetadatas {
-	var (
-		cSize     = c.Size()
-		otherSize = other.Size()
-		output    = c.psMap
-		iter      = other.psMap
-	)
+// both inputs container the same key, the values are Merged.
+func (m EdgeMetadatas) Merge(n EdgeMetadatas) EdgeMetadatas {
 	switch {
-	case cSize == 0:
-		return other
-	case otherSize == 0:
-		return c
-	case cSize < otherSize:
-		output, iter = iter, output
+	case m.entries == nil:
+		return n
+	case n.entries == nil:
+		return m
 	}
-	iter.ForEach(func(key string, otherVal interface{}) {
-		if val, ok := output.Lookup(key); ok {
-			output = output.Set(key, otherVal.(EdgeMetadata).Merge(val.(EdgeMetadata)))
-		} else {
-			output = output.Set(key, otherVal)
+	out := make([]edgeMetadataEntry, 0, len(m.entries)+len(n.entries))
+
+	i, j := 0, 0
+	for i < len(m.entries) {
+		switch {
+		case j >= len(n.entries) || m.entries[i].key < n.entries[j].key:
+			out = append(out, m.entries[i])
+			i++
+		case m.entries[i].key == n.entries[j].key:
+			newValue := m.entries[i].Value.Merge(n.entries[j].Value)
+			out = append(out, edgeMetadataEntry{key: m.entries[i].key, Value: newValue})
+			i++
+			j++
+		default:
+			out = append(out, n.entries[j])
+			j++
 		}
-	})
-	return EdgeMetadatas{output}
+	}
+	for ; j < len(n.entries); j++ {
+		out = append(out, n.entries[j])
+	}
+	return EdgeMetadatas{out}
 }
 
 // Flatten flattens all the EdgeMetadatas in this set and returns the result.
@@ -93,40 +112,87 @@ func (c EdgeMetadatas) Flatten() EdgeMetadata {
 
 // ForEach executes f on each key value pair in the map
 func (c EdgeMetadatas) ForEach(fn func(k string, v EdgeMetadata)) {
-	if c.psMap != nil {
-		c.psMap.ForEach(func(key string, value interface{}) {
-			fn(key, value.(EdgeMetadata))
-		})
+	for _, value := range c.entries {
+		fn(value.key, value.Value)
 	}
 }
 
 func (c EdgeMetadatas) String() string {
-	return mapToString(c.psMap)
+	buf := bytes.NewBufferString("{")
+	for _, val := range c.entries {
+		fmt.Fprintf(buf, "%s: %s,\n", val.key, val.Value)
+	}
+	fmt.Fprintf(buf, "}")
+	return buf.String()
 }
 
 // DeepEqual tests equality with other Counters
 func (c EdgeMetadatas) DeepEqual(d EdgeMetadatas) bool {
-	return mapEqual(c.psMap, d.psMap, reflect.DeepEqual)
+	if c.Size() != d.Size() {
+		return false
+	}
+	for i := range c.entries {
+		if !reflect.DeepEqual(c.entries[i], d.entries[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // CodecEncodeSelf implements codec.Selfer
-func (c *EdgeMetadatas) CodecEncodeSelf(encoder *codec.Encoder) {
-	mapWrite(c.psMap, encoder, func(encoder *codec.Encoder, val interface{}) {
-		e := val.(EdgeMetadata)
-		(&e).CodecEncodeSelf(encoder)
-	})
+// Note this uses undocumented, internal APIs, which could break
+// in the future.  See https://github.com/weaveworks/scope/pull/1709
+// for more information.
+func (m *EdgeMetadatas) CodecEncodeSelf(encoder *codec.Encoder) {
+	z, r := codec.GenHelperEncoder(encoder)
+	if m.entries == nil {
+		r.EncodeNil()
+		return
+	}
+	r.EncodeMapStart(m.Size())
+	for _, val := range m.entries {
+		z.EncSendContainerState(containerMapKey)
+		r.EncodeString(cUTF8, val.key)
+		z.EncSendContainerState(containerMapValue)
+		val.Value.CodecEncodeSelf(encoder)
+	}
+	z.EncSendContainerState(containerMapEnd)
 }
 
 // CodecDecodeSelf implements codec.Selfer
-func (c *EdgeMetadatas) CodecDecodeSelf(decoder *codec.Decoder) {
-	out := mapRead(decoder, func(isNil bool) interface{} {
-		var value EdgeMetadata
-		if !isNil {
-			value.CodecDecodeSelf(decoder)
+// Uses undocumented, internal APIs as for CodecEncodeSelf.
+func (m *EdgeMetadatas) CodecDecodeSelf(decoder *codec.Decoder) {
+	m.entries = nil
+	z, r := codec.GenHelperDecoder(decoder)
+	if r.TryDecodeAsNil() {
+		return
+	}
+
+	length := r.ReadMapStart()
+	if length > 0 {
+		m.entries = make([]edgeMetadataEntry, 0, length)
+	}
+	for i := 0; length < 0 || i < length; i++ {
+		if length < 0 && r.CheckBreak() {
+			break
 		}
-		return value
-	})
-	*c = EdgeMetadatas{out}
+		z.DecSendContainerState(containerMapKey)
+		var key string
+		if !r.TryDecodeAsNil() {
+			key = r.DecodeString()
+		}
+		i := m.locate(key)
+		if i == len(m.entries) || m.entries[i].key != key {
+			m.entries = append(m.entries, edgeMetadataEntry{})
+			copy(m.entries[i+1:], m.entries[i:])
+		}
+		m.entries[i].key = key
+		z.DecSendContainerState(containerMapValue)
+		if !r.TryDecodeAsNil() {
+			m.entries[i].Value.CodecDecodeSelf(decoder)
+		}
+	}
+	z.DecSendContainerState(containerMapEnd)
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
