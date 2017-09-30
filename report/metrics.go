@@ -238,6 +238,9 @@ func renderTime(t time.Time) string {
 }
 
 func parseTime(s string) time.Time {
+	if s == "" {
+		return time.Time{}
+	}
 	t, _ := time.Parse(time.RFC3339Nano, s)
 	return t
 }
