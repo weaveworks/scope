@@ -356,6 +356,9 @@ func (d *bincDecDriver) uncacheRead() {
 }
 
 func (d *bincDecDriver) ContainerType() (vt valueType) {
+	if !d.bdRead {
+		d.readNextBd()
+	}
 	if d.vd == bincVdSpecial && d.vs == bincSpNil {
 		return valueTypeNil
 	} else if d.vd == bincVdByteArray {
@@ -580,6 +583,9 @@ func (d *bincDecDriver) DecodeBool() (b bool) {
 }
 
 func (d *bincDecDriver) ReadMapStart() (length int) {
+	if !d.bdRead {
+		d.readNextBd()
+	}
 	if d.vd != bincVdMap {
 		d.d.errorf("Invalid d.vd for map. Expecting 0x%x. Got: 0x%x", bincVdMap, d.vd)
 		return
@@ -590,6 +596,9 @@ func (d *bincDecDriver) ReadMapStart() (length int) {
 }
 
 func (d *bincDecDriver) ReadArrayStart() (length int) {
+	if !d.bdRead {
+		d.readNextBd()
+	}
 	if d.vd != bincVdArray {
 		d.d.errorf("Invalid d.vd for array. Expecting 0x%x. Got: 0x%x", bincVdArray, d.vd)
 		return
@@ -719,11 +728,12 @@ func (d *bincDecDriver) DecodeString() (s string) {
 	return
 }
 
-func (d *bincDecDriver) DecodeBytes(bs []byte, isstring, zerocopy bool) (bsOut []byte) {
-	if isstring {
-		bsOut, _ = d.decStringAndBytes(bs, false, zerocopy)
-		return
-	}
+func (d *bincDecDriver) DecodeStringAsBytes() (s []byte) {
+	s, _ = d.decStringAndBytes(d.b[:], false, true)
+	return
+}
+
+func (d *bincDecDriver) DecodeBytes(bs []byte, zerocopy bool) (bsOut []byte) {
 	if !d.bdRead {
 		d.readNextBd()
 	}
@@ -780,7 +790,7 @@ func (d *bincDecDriver) decodeExtV(verifyTag bool, tag byte) (xtag byte, xbs []b
 		}
 		xbs = d.r.readx(l)
 	} else if d.vd == bincVdByteArray {
-		xbs = d.DecodeBytes(nil, false, true)
+		xbs = d.DecodeBytes(nil, true)
 	} else {
 		d.d.errorf("Invalid d.vd for extensions (Expecting extensions or byte array). Got: 0x%x", d.vd)
 		return
@@ -849,7 +859,7 @@ func (d *bincDecDriver) DecodeNaked() {
 		n.s = d.DecodeString()
 	case bincVdByteArray:
 		n.v = valueTypeBytes
-		n.l = d.DecodeBytes(nil, false, false)
+		n.l = d.DecodeBytes(nil, false)
 	case bincVdTimestamp:
 		n.v = valueTypeTimestamp
 		tt, err := decodeTime(d.r.readx(int(d.vs)))
