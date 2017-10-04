@@ -264,9 +264,47 @@ a {
     margin-left: 0.5em;
   }
 
-  .tooltip {
-    // above everything
-    z-index: 20000;
+  .tooltip-wrapper {
+    position: relative;
+
+    .tooltip {
+      display: none;
+      background-color: black;
+      position: absolute;
+      color: white;
+      text-align: center;
+      line-height: 22px;
+      border-radius: 3px;
+      font-size: 12px;
+      margin-bottom: 25px;
+      margin-left: -4px;
+      opacity: 0.75;
+      padding: 10px 20px;
+      bottom: 0;
+      left: 10px;
+      transform: translateX(-50%);
+      white-space: nowrap;
+      // above everything
+      z-index: 20000;
+
+      // Adjusted from http://www.cssarrowplease.com/
+      &:after {
+        border: 6px solid transparent;
+        content: ' ';
+        top: 100%;
+        left: 50%;
+        height: 0;
+        width: 0;
+        position: absolute;
+        border-color: transparent;
+        border-top-color: black;
+        margin-left: -6px;
+      }
+    }
+
+    &:hover .tooltip {
+      display: block;
+    }
   }
 }
 
