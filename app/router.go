@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/ghost/handlers"
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
 

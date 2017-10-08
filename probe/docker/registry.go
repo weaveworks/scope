@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-radix"
 	docker_client "github.com/fsouza/go-dockerclient"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
