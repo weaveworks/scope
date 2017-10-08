@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/fluent/fluent-logger-golang/fluent"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/net/context"
