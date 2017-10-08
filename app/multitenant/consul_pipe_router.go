@@ -1,6 +1,7 @@
 package multitenant
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -10,8 +11,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/app"

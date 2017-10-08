@@ -2,6 +2,7 @@ package multitenant
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -12,8 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/prometheus/client_golang/prometheus"
+
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 
 	"github.com/weaveworks/common/instrument"
 	"github.com/weaveworks/scope/app"

@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
+	"context"
 	"github.com/PuerkitoBio/ghost/handlers"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"github.com/ugorji/go/codec"
-	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/xfer"

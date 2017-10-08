@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"net/rpc"
 
+	"context"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"github.com/ugorji/go/codec"
-	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/xfer"
 )

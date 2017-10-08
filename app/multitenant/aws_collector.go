@@ -1,6 +1,7 @@
 package multitenant
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -16,7 +17,6 @@ import (
 	"github.com/nats-io/nats"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 
 	"github.com/weaveworks/common/instrument"
 	"github.com/weaveworks/scope/app"

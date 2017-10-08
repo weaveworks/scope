@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"context"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/common/xfer"
