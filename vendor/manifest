@@ -900,6 +900,14 @@
 			"branch": "master"
 		},
 		{
+			"importpath": "github.com/sirupsen/logrus",
+			"repository": "https://github.com/sirupsen/logrus",
+			"vcs": "git",
+			"revision": "f006c2ac4710855cf0f916dd6b77acf6b048dc6e",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/spaolacci/murmur3",
 			"repository": "https://github.com/spaolacci/murmur3",
 			"vcs": "",
