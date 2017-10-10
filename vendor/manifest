@@ -1330,7 +1330,7 @@
 			"importpath": "github.com/weaveworks/common",
 			"repository": "https://github.com/weaveworks/common",
 			"vcs": "git",
-			"revision": "15746cbb5831e70c58d520634b09393b7c3cfd56",
+			"revision": "41542d6238573fc99d2fd89e8df6618586974c7e",
 			"branch": "HEAD",
 			"notests": true
 		},
@@ -1362,7 +1362,7 @@
 			"importpath": "github.com/weaveworks/promrus",
 			"repository": "https://github.com/weaveworks/promrus",
 			"vcs": "git",
-			"revision": "0b17fa8b72895f7896cc65da81c3c945a66c8f82",
+			"revision": "0599d764e054d4e983bb120e30759179fafe3942",
 			"branch": "HEAD",
 			"notests": true
 		},
