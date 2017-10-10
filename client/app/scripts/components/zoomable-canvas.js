@@ -102,7 +102,7 @@ class ZoomableCanvas extends React.Component {
 
     return (
       <div className="zoomable-canvas">
-        <svg className={className} onClick={this.props.onClick} onWheel={this.handleZoom}>
+        <svg id="canvas" className={className} onClick={this.props.onClick} onWheel={this.handleZoom}>
           <Logo transform="translate(24,24) scale(0.25)" />
           <g className="zoom-content">
             {this.props.children(this.state)}
