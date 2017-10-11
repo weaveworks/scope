@@ -102,7 +102,7 @@ a {
 
 .overlay-wrapper {
   align-items: center;
-  background-color: fade-out($background-average-color, 0.1);
+  background-color: transparent;
   border-radius: 4px;
   color: $text-tertiary-color;
   display: flex;
