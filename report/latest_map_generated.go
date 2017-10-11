@@ -4,14 +4,16 @@
 package report
 
 import (
+	"bytes"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/ugorji/go/codec"
-	"github.com/weaveworks/ps"
 )
 
 type stringLatestEntry struct {
+	key       string
 	Timestamp time.Time `json:"timestamp"`
 	Value     string    `json:"value"`
 	dummySelfer
@@ -27,31 +29,51 @@ func (e *stringLatestEntry) Equal(e2 *stringLatestEntry) bool {
 	return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
 }
 
-// StringLatestMap holds latest string instances.
-type StringLatestMap struct{ ps.Map }
-
-var emptyStringLatestMap = StringLatestMap{ps.NewMap()}
+// StringLatestMap holds latest string instances, as a slice sorted by key.
+type StringLatestMap struct{ entries []stringLatestEntry }
 
 // MakeStringLatestMap makes an empty StringLatestMap.
 func MakeStringLatestMap() StringLatestMap {
-	return emptyStringLatestMap
+	return StringLatestMap{}
 }
 
 // Size returns the number of elements.
 func (m StringLatestMap) Size() int {
-	if m.Map == nil {
-		return 0
-	}
-	return m.Map.Size()
+	return len(m.entries)
 }
 
 // Merge produces a fresh StringLatestMap containing the keys from both inputs.
 // When both inputs contain the same key, the newer value is used.
-func (m StringLatestMap) Merge(other StringLatestMap) StringLatestMap {
-	output := mergeMaps(m.Map, other.Map, func(a, b interface{}) bool {
-		return a.(*stringLatestEntry).Timestamp.Before(b.(*stringLatestEntry).Timestamp)
-	})
-	return StringLatestMap{output}
+func (m StringLatestMap) Merge(n StringLatestMap) StringLatestMap {
+	switch {
+	case m.entries == nil:
+		return n
+	case n.entries == nil:
+		return m
+	}
+	out := make([]stringLatestEntry, 0, len(m.entries)+len(n.entries))
+
+	i, j := 0, 0
+	for i < len(m.entries) {
+		switch {
+		case j >= len(n.entries) || m.entries[i].key < n.entries[j].key:
+			out = append(out, m.entries[i])
+			i++
+		case m.entries[i].key == n.entries[j].key:
+			if m.entries[i].Timestamp.Before(n.entries[j].Timestamp) {
+				out = append(out, n.entries[j])
+			} else {
+				out = append(out, m.entries[i])
+			}
+			i++
+			j++
+		default:
+			out = append(out, n.entries[j])
+			j++
+		}
+	}
+	out = append(out, n.entries[j:]...)
+	return StringLatestMap{out}
 }
 
 // Lookup the value for the given key.
@@ -66,65 +88,135 @@ func (m StringLatestMap) Lookup(key string) (string, bool) {
 
 // LookupEntry returns the raw entry for the given key.
 func (m StringLatestMap) LookupEntry(key string) (string, time.Time, bool) {
-	if m.Map == nil {
-		var zero string
-		return zero, time.Time{}, false
+	i := sort.Search(len(m.entries), func(i int) bool {
+		return m.entries[i].key >= key
+	})
+	if i < len(m.entries) && m.entries[i].key == key {
+		return m.entries[i].Value, m.entries[i].Timestamp, true
 	}
-	value, ok := m.Map.Lookup(key)
-	if !ok {
-		var zero string
-		return zero, time.Time{}, false
+	var zero string
+	return zero, time.Time{}, false
+}
+
+// locate the position where key should go, and make room for it if not there already
+func (m *StringLatestMap) locate(key string) int {
+	i := sort.Search(len(m.entries), func(i int) bool {
+		return m.entries[i].key >= key
+	})
+	// i is now the position where key should go, either at the end or in the middle
+	if i == len(m.entries) || m.entries[i].key != key {
+		m.entries = append(m.entries, stringLatestEntry{})
+		copy(m.entries[i+1:], m.entries[i:])
 	}
-	e := value.(*stringLatestEntry)
-	return e.Value, e.Timestamp, true
+	return i
 }
 
 // Set the value for the given key.
 func (m StringLatestMap) Set(key string, timestamp time.Time, value string) StringLatestMap {
-	if m.Map == nil {
-		m.Map = ps.NewMap()
+	i := sort.Search(len(m.entries), func(i int) bool {
+		return m.entries[i].key >= key
+	})
+	// i is now the position where key should go, either at the end or in the middle
+	oldEntries := m.entries
+	if i == len(m.entries) {
+		m.entries = make([]stringLatestEntry, len(oldEntries)+1)
+		copy(m.entries, oldEntries)
+	} else if m.entries[i].key == key {
+		m.entries = make([]stringLatestEntry, len(oldEntries))
+		copy(m.entries, oldEntries)
+	} else {
+		m.entries = make([]stringLatestEntry, len(oldEntries)+1)
+		copy(m.entries, oldEntries[:i])
+		copy(m.entries[i+1:], oldEntries[i:])
 	}
-	return StringLatestMap{m.Map.Set(key, &stringLatestEntry{Timestamp: timestamp, Value: value})}
+	m.entries[i] = stringLatestEntry{key: key, Timestamp: timestamp, Value: value}
+	return m
 }
 
 // ForEach executes fn on each key value pair in the map.
 func (m StringLatestMap) ForEach(fn func(k string, timestamp time.Time, v string)) {
-	if m.Map != nil {
-		m.Map.ForEach(func(key string, value interface{}) {
-			fn(key, value.(*stringLatestEntry).Timestamp, value.(*stringLatestEntry).Value)
-		})
+	for _, value := range m.entries {
+		fn(value.key, value.Timestamp, value.Value)
 	}
 }
 
 // String returns the StringLatestMap's string representation.
 func (m StringLatestMap) String() string {
-	return mapToString(m.Map)
+	buf := bytes.NewBufferString("{")
+	for _, val := range m.entries {
+		fmt.Fprintf(buf, "%s: %s,\n", val.key, val)
+	}
+	fmt.Fprintf(buf, "}")
+	return buf.String()
 }
 
 // DeepEqual tests equality with other StringLatestMap.
 func (m StringLatestMap) DeepEqual(n StringLatestMap) bool {
-	return mapEqual(m.Map, n.Map, func(val, otherValue interface{}) bool {
-		return val.(*stringLatestEntry).Equal(otherValue.(*stringLatestEntry))
-	})
+	if m.Size() != n.Size() {
+		return false
+	}
+	for i := range m.entries {
+		if m.entries[i].key != n.entries[i].key || !m.entries[i].Equal(&n.entries[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // CodecEncodeSelf implements codec.Selfer.
+// Duplicates the output for a built-in map without generating an
+// intermediate copy of the data structure, to save time.  Note this
+// means we are using undocumented, internal APIs, which could break
+// in the future.  See https://github.com/weaveworks/scope/pull/1709
+// for more information.
 func (m *StringLatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
-	mapWrite(m.Map, encoder, func(encoder *codec.Encoder, val interface{}) {
-		val.(*stringLatestEntry).CodecEncodeSelf(encoder)
-	})
+	z, r := codec.GenHelperEncoder(encoder)
+	if m.entries == nil {
+		r.EncodeNil()
+		return
+	}
+	r.EncodeMapStart(m.Size())
+	for _, val := range m.entries {
+		z.EncSendContainerState(containerMapKey)
+		r.EncodeString(cUTF8, val.key)
+		z.EncSendContainerState(containerMapValue)
+		val.CodecEncodeSelf(encoder)
+	}
+	z.EncSendContainerState(containerMapEnd)
 }
 
 // CodecDecodeSelf implements codec.Selfer.
+// Decodes the input as for a built-in map, without creating an
+// intermediate copy of the data structure to save time. Uses
+// undocumented, internal APIs as for CodecEncodeSelf.
 func (m *StringLatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
-	out := mapRead(decoder, func(isNil bool) interface{} {
-		value := &stringLatestEntry{}
-		if !isNil {
-			value.CodecDecodeSelf(decoder)
+	m.entries = nil
+	z, r := codec.GenHelperDecoder(decoder)
+	if r.TryDecodeAsNil() {
+		return
+	}
+
+	length := r.ReadMapStart()
+	if length > 0 {
+		m.entries = make([]stringLatestEntry, 0, length)
+	}
+	for i := 0; length < 0 || i < length; i++ {
+		if length < 0 && r.CheckBreak() {
+			break
 		}
-		return value
-	})
-	*m = StringLatestMap{out}
+		z.DecSendContainerState(containerMapKey)
+		var key string
+		if !r.TryDecodeAsNil() {
+			key = r.DecodeString()
+		}
+		i := m.locate(key)
+		m.entries[i].key = key
+		z.DecSendContainerState(containerMapValue)
+		if !r.TryDecodeAsNil() {
+			m.entries[i].CodecDecodeSelf(decoder)
+		}
+	}
+	z.DecSendContainerState(containerMapEnd)
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead.
@@ -138,6 +230,7 @@ func (*StringLatestMap) UnmarshalJSON(b []byte) error {
 }
 
 type nodeControlDataLatestEntry struct {
+	key       string
 	Timestamp time.Time       `json:"timestamp"`
 	Value     NodeControlData `json:"value"`
 	dummySelfer
@@ -153,31 +246,51 @@ func (e *nodeControlDataLatestEntry) Equal(e2 *nodeControlDataLatestEntry) bool 
 	return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
 }
 
-// NodeControlDataLatestMap holds latest NodeControlData instances.
-type NodeControlDataLatestMap struct{ ps.Map }
-
-var emptyNodeControlDataLatestMap = NodeControlDataLatestMap{ps.NewMap()}
+// NodeControlDataLatestMap holds latest NodeControlData instances, as a slice sorted by key.
+type NodeControlDataLatestMap struct{ entries []nodeControlDataLatestEntry }
 
 // MakeNodeControlDataLatestMap makes an empty NodeControlDataLatestMap.
 func MakeNodeControlDataLatestMap() NodeControlDataLatestMap {
-	return emptyNodeControlDataLatestMap
+	return NodeControlDataLatestMap{}
 }
 
 // Size returns the number of elements.
 func (m NodeControlDataLatestMap) Size() int {
-	if m.Map == nil {
-		return 0
-	}
-	return m.Map.Size()
+	return len(m.entries)
 }
 
 // Merge produces a fresh NodeControlDataLatestMap containing the keys from both inputs.
 // When both inputs contain the same key, the newer value is used.
-func (m NodeControlDataLatestMap) Merge(other NodeControlDataLatestMap) NodeControlDataLatestMap {
-	output := mergeMaps(m.Map, other.Map, func(a, b interface{}) bool {
-		return a.(*nodeControlDataLatestEntry).Timestamp.Before(b.(*nodeControlDataLatestEntry).Timestamp)
-	})
-	return NodeControlDataLatestMap{output}
+func (m NodeControlDataLatestMap) Merge(n NodeControlDataLatestMap) NodeControlDataLatestMap {
+	switch {
+	case m.entries == nil:
+		return n
+	case n.entries == nil:
+		return m
+	}
+	out := make([]nodeControlDataLatestEntry, 0, len(m.entries)+len(n.entries))
+
+	i, j := 0, 0
+	for i < len(m.entries) {
+		switch {
+		case j >= len(n.entries) || m.entries[i].key < n.entries[j].key:
+			out = append(out, m.entries[i])
+			i++
+		case m.entries[i].key == n.entries[j].key:
+			if m.entries[i].Timestamp.Before(n.entries[j].Timestamp) {
+				out = append(out, n.entries[j])
+			} else {
+				out = append(out, m.entries[i])
+			}
+			i++
+			j++
+		default:
+			out = append(out, n.entries[j])
+			j++
+		}
+	}
+	out = append(out, n.entries[j:]...)
+	return NodeControlDataLatestMap{out}
 }
 
 // Lookup the value for the given key.
@@ -192,65 +305,135 @@ func (m NodeControlDataLatestMap) Lookup(key string) (NodeControlData, bool) {
 
 // LookupEntry returns the raw entry for the given key.
 func (m NodeControlDataLatestMap) LookupEntry(key string) (NodeControlData, time.Time, bool) {
-	if m.Map == nil {
-		var zero NodeControlData
-		return zero, time.Time{}, false
+	i := sort.Search(len(m.entries), func(i int) bool {
+		return m.entries[i].key >= key
+	})
+	if i < len(m.entries) && m.entries[i].key == key {
+		return m.entries[i].Value, m.entries[i].Timestamp, true
 	}
-	value, ok := m.Map.Lookup(key)
-	if !ok {
-		var zero NodeControlData
-		return zero, time.Time{}, false
+	var zero NodeControlData
+	return zero, time.Time{}, false
+}
+
+// locate the position where key should go, and make room for it if not there already
+func (m *NodeControlDataLatestMap) locate(key string) int {
+	i := sort.Search(len(m.entries), func(i int) bool {
+		return m.entries[i].key >= key
+	})
+	// i is now the position where key should go, either at the end or in the middle
+	if i == len(m.entries) || m.entries[i].key != key {
+		m.entries = append(m.entries, nodeControlDataLatestEntry{})
+		copy(m.entries[i+1:], m.entries[i:])
 	}
-	e := value.(*nodeControlDataLatestEntry)
-	return e.Value, e.Timestamp, true
+	return i
 }
 
 // Set the value for the given key.
 func (m NodeControlDataLatestMap) Set(key string, timestamp time.Time, value NodeControlData) NodeControlDataLatestMap {
-	if m.Map == nil {
-		m.Map = ps.NewMap()
+	i := sort.Search(len(m.entries), func(i int) bool {
+		return m.entries[i].key >= key
+	})
+	// i is now the position where key should go, either at the end or in the middle
+	oldEntries := m.entries
+	if i == len(m.entries) {
+		m.entries = make([]nodeControlDataLatestEntry, len(oldEntries)+1)
+		copy(m.entries, oldEntries)
+	} else if m.entries[i].key == key {
+		m.entries = make([]nodeControlDataLatestEntry, len(oldEntries))
+		copy(m.entries, oldEntries)
+	} else {
+		m.entries = make([]nodeControlDataLatestEntry, len(oldEntries)+1)
+		copy(m.entries, oldEntries[:i])
+		copy(m.entries[i+1:], oldEntries[i:])
 	}
-	return NodeControlDataLatestMap{m.Map.Set(key, &nodeControlDataLatestEntry{Timestamp: timestamp, Value: value})}
+	m.entries[i] = nodeControlDataLatestEntry{key: key, Timestamp: timestamp, Value: value}
+	return m
 }
 
 // ForEach executes fn on each key value pair in the map.
 func (m NodeControlDataLatestMap) ForEach(fn func(k string, timestamp time.Time, v NodeControlData)) {
-	if m.Map != nil {
-		m.Map.ForEach(func(key string, value interface{}) {
-			fn(key, value.(*nodeControlDataLatestEntry).Timestamp, value.(*nodeControlDataLatestEntry).Value)
-		})
+	for _, value := range m.entries {
+		fn(value.key, value.Timestamp, value.Value)
 	}
 }
 
 // String returns the NodeControlDataLatestMap's string representation.
 func (m NodeControlDataLatestMap) String() string {
-	return mapToString(m.Map)
+	buf := bytes.NewBufferString("{")
+	for _, val := range m.entries {
+		fmt.Fprintf(buf, "%s: %s,\n", val.key, val)
+	}
+	fmt.Fprintf(buf, "}")
+	return buf.String()
 }
 
 // DeepEqual tests equality with other NodeControlDataLatestMap.
 func (m NodeControlDataLatestMap) DeepEqual(n NodeControlDataLatestMap) bool {
-	return mapEqual(m.Map, n.Map, func(val, otherValue interface{}) bool {
-		return val.(*nodeControlDataLatestEntry).Equal(otherValue.(*nodeControlDataLatestEntry))
-	})
+	if m.Size() != n.Size() {
+		return false
+	}
+	for i := range m.entries {
+		if m.entries[i].key != n.entries[i].key || !m.entries[i].Equal(&n.entries[i]) {
+			return false
+		}
+	}
+	return true
 }
 
 // CodecEncodeSelf implements codec.Selfer.
+// Duplicates the output for a built-in map without generating an
+// intermediate copy of the data structure, to save time.  Note this
+// means we are using undocumented, internal APIs, which could break
+// in the future.  See https://github.com/weaveworks/scope/pull/1709
+// for more information.
 func (m *NodeControlDataLatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
-	mapWrite(m.Map, encoder, func(encoder *codec.Encoder, val interface{}) {
-		val.(*nodeControlDataLatestEntry).CodecEncodeSelf(encoder)
-	})
+	z, r := codec.GenHelperEncoder(encoder)
+	if m.entries == nil {
+		r.EncodeNil()
+		return
+	}
+	r.EncodeMapStart(m.Size())
+	for _, val := range m.entries {
+		z.EncSendContainerState(containerMapKey)
+		r.EncodeString(cUTF8, val.key)
+		z.EncSendContainerState(containerMapValue)
+		val.CodecEncodeSelf(encoder)
+	}
+	z.EncSendContainerState(containerMapEnd)
 }
 
 // CodecDecodeSelf implements codec.Selfer.
+// Decodes the input as for a built-in map, without creating an
+// intermediate copy of the data structure to save time. Uses
+// undocumented, internal APIs as for CodecEncodeSelf.
 func (m *NodeControlDataLatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
-	out := mapRead(decoder, func(isNil bool) interface{} {
-		value := &nodeControlDataLatestEntry{}
-		if !isNil {
-			value.CodecDecodeSelf(decoder)
+	m.entries = nil
+	z, r := codec.GenHelperDecoder(decoder)
+	if r.TryDecodeAsNil() {
+		return
+	}
+
+	length := r.ReadMapStart()
+	if length > 0 {
+		m.entries = make([]nodeControlDataLatestEntry, 0, length)
+	}
+	for i := 0; length < 0 || i < length; i++ {
+		if length < 0 && r.CheckBreak() {
+			break
 		}
-		return value
-	})
-	*m = NodeControlDataLatestMap{out}
+		z.DecSendContainerState(containerMapKey)
+		var key string
+		if !r.TryDecodeAsNil() {
+			key = r.DecodeString()
+		}
+		i := m.locate(key)
+		m.entries[i].key = key
+		z.DecSendContainerState(containerMapValue)
+		if !r.TryDecodeAsNil() {
+			m.entries[i].CodecDecodeSelf(decoder)
+		}
+	}
+	z.DecSendContainerState(containerMapEnd)
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead.
