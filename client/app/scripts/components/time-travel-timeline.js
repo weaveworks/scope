@@ -2,7 +2,6 @@ import React from 'react';
 import moment from 'moment';
 import classNames from 'classnames';
 import { map, clamp, find, last, debounce } from 'lodash';
-import { connect } from 'react-redux';
 import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
@@ -86,7 +85,7 @@ function findOptimalDurationFit(durations, { durationPerPixel }) {
 }
 
 
-class TimeTravelTimeline extends React.Component {
+export default class TimeTravelTimeline extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -132,8 +131,8 @@ class TimeTravelTimeline extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     // Don't update the focused timestamp if we're not paused (so the timeline is hidden).
-    if (nextProps.pausedAt) {
-      this.setState({ focusedTimestamp: nextProps.pausedAt });
+    if (nextProps.timestamp) {
+      this.setState({ focusedTimestamp: nextProps.timestamp });
     }
     // Always update the timeline dimension information.
     this.setState({ boundingRect: this.svgRef.getBoundingClientRect() });
@@ -392,14 +391,3 @@ class TimeTravelTimeline extends React.Component {
     );
   }
 }
-
-
-function mapStateToProps(state) {
-  return {
-    // Used only to trigger recalculations on window resize.
-    viewportWidth: state.getIn(['viewport', 'width']),
-    pausedAt: state.get('pausedAt'),
-  };
-}
-
-export default connect(mapStateToProps)(TimeTravelTimeline);
