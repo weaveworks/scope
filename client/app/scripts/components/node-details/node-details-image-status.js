@@ -6,7 +6,7 @@ import { CircularProgress } from 'weaveworks-ui-components';
 
 import { getImagesForService } from '../../actions/app-actions';
 
-const topologyWhitelist = ['services', 'deployments'];
+const topologyWhitelist = ['kube-controllers'];
 
 function getNewImages(images, currentId) {
   // Assume that the current image is always in the list of all available images.
@@ -107,7 +107,8 @@ class NodeDetailsImageStatus extends React.PureComponent {
 
 function mapStateToProps({ scope }, { metadata, name }) {
   const namespace = find(metadata, d => d.id === 'kubernetes_namespace');
-  const serviceId = namespace ? `${namespace.value}/${name}` : null;
+  const nodeType = find(metadata, d => d.id === 'kubernetes_node_type');
+  const serviceId = (namespace && nodeType) ? `${namespace.value}:${nodeType.value.toLowerCase()}/${name}` : null;
   const { containers, isFetching, errors } = scope.getIn(['serviceImages', serviceId]) || {};
 
   return {
