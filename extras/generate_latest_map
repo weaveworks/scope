@@ -104,9 +104,7 @@ function generate_latest_map() {
                 j++
             }
         }
-        for ; j < len(n.entries); j++ {
-            out = append(out, n.entries[j])
-        }
+        out = append(out, n.entries[j:]...)
         return ${latest_map_type}{out}
     }
 

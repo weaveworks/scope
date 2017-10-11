@@ -72,9 +72,7 @@ func (m StringLatestMap) Merge(n StringLatestMap) StringLatestMap {
 			j++
 		}
 	}
-	for ; j < len(n.entries); j++ {
-		out = append(out, n.entries[j])
-	}
+	out = append(out, n.entries[j:]...)
 	return StringLatestMap{out}
 }
 
@@ -291,9 +289,7 @@ func (m NodeControlDataLatestMap) Merge(n NodeControlDataLatestMap) NodeControlD
 			j++
 		}
 	}
-	for ; j < len(n.entries); j++ {
-		out = append(out, n.entries[j])
-	}
+	out = append(out, n.entries[j:]...)
 	return NodeControlDataLatestMap{out}
 }
 
