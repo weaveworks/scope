@@ -87,6 +87,9 @@ const (
 	containerMapKey   = 2
 	containerMapValue = 3
 	containerMapEnd   = 4
+
+	containerArrayElem = 6
+	containerArrayEnd  = 7
 	// from https://github.com/ugorji/go/blob/master/codec/helper.go#L152
 	cUTF8 = 2
 )

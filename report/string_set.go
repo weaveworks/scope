@@ -2,6 +2,8 @@ package report
 
 import (
 	"sort"
+
+	"github.com/ugorji/go/codec"
 )
 
 // StringSet is a sorted set of unique strings. Clients must use the Add
@@ -131,4 +133,42 @@ loop:
 	}
 	result = append(result, other[j:]...)
 	return result, false
+}
+
+func (v StringSet) CodecEncodeSelf(encoder *codec.Encoder) {
+	z, r := codec.GenHelperEncoder(encoder)
+	if v == nil {
+		r.EncodeNil()
+		return
+	}
+	r.EncodeArrayStart(len(v))
+	for _, yyv1 := range v {
+		z.EncSendContainerState(containerArrayElem)
+		r.EncodeString(cUTF8, yyv1)
+	}
+	z.EncSendContainerState(containerArrayEnd)
+}
+
+// CodecDecodeSelf implements codec.Selfer
+func (v *StringSet) CodecDecodeSelf(decoder *codec.Decoder) {
+	z, r := codec.GenHelperDecoder(decoder)
+	yyh1, length := z.DecSliceHelperStart()
+	if length == 0 {
+		*v = []string{}
+		return
+	} else if length < 0 {
+		*v = make([]string, 0, 8)
+	} else {
+		*v = make([]string, 0, length)
+	}
+	for i := 0; length < 0 || i < length; i++ {
+		if length < 0 && r.CheckBreak() {
+			break
+		}
+		yyh1.ElemContainerState(i)
+		b := r.DecodeStringAsBytes()
+		s := string(b)
+		*v = append(*v, s)
+	}
+	yyh1.End()
 }
