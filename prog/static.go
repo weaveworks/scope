@@ -11,7 +11,6 @@ import (
 func GetFS(useExternal bool) http.FileSystem {
 	if useExternal {
 		return externalui.FS(false)
-	} else {
-		return staticui.FS(false)
 	}
+	return staticui.FS(false)
 }
