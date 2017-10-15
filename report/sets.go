@@ -67,7 +67,7 @@ func (s Sets) Delete(key string) Sets {
 		return s // not found
 	}
 	result := make([]stringSetEntry, len(s.entries)-1)
-	copy(result, s.entries[:i-1])
+	copy(result, s.entries[:i])
 	copy(result[i:], s.entries[i+1:])
 	return Sets{entries: result}
 }
