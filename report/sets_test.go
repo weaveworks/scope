@@ -7,6 +7,36 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
+func TestSetsDelete(t *testing.T) {
+	aSet := report.MakeSets().Add("a", report.MakeStringSet("a"))
+	for _, testcase := range []struct {
+		input report.Sets
+		key   string
+		want  report.Sets
+	}{
+		{key: "", input: report.Sets{}, want: report.Sets{}},
+		{key: "", input: report.MakeSets(), want: report.MakeSets()},
+		{key: "", input: aSet, want: aSet},
+		{key: "a", input: report.MakeSets(), want: report.MakeSets()},
+		{key: "a", input: aSet, want: report.MakeSets()},
+		{key: "b", input: aSet, want: aSet},
+		{key: "b", input: aSet.Add("b", report.MakeStringSet("b")), want: aSet},
+		{
+			input: aSet.Add("b", report.MakeStringSet("b")),
+			key:   "a",
+			want:  report.MakeSets().Add("b", report.MakeStringSet("b")),
+		},
+	} {
+		originalLen := testcase.input.Size()
+		if want, have := testcase.want, testcase.input.Delete(testcase.key); !reflect.DeepEqual(want, have) {
+			t.Errorf("%v - %v: want %v, have %v", testcase.input, testcase.key, want, have)
+		}
+		if testcase.input.Size() != originalLen {
+			t.Errorf("%v - %v: modified the original input!", testcase.input, testcase.key)
+		}
+	}
+}
+
 func TestSetsMerge(t *testing.T) {
 	for _, testcase := range []struct {
 		a, b report.Sets
