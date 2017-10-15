@@ -156,7 +156,11 @@ func (m *Sets) CodecEncodeSelf(encoder *codec.Encoder) {
 		z.EncSendContainerState(containerMapKey)
 		r.EncodeString(cUTF8, val.key)
 		z.EncSendContainerState(containerMapValue)
-		val.Value.CodecEncodeSelf(encoder)
+		// Strange little dance via an interface so we can call CodecEncodeSelf before codecgen runs
+		var vi interface{} = &val.Value
+		if vs, ok := vi.(codec.Selfer); ok {
+			vs.CodecEncodeSelf(encoder)
+		}
 	}
 	z.EncSendContainerState(containerMapEnd)
 }
@@ -191,7 +195,11 @@ func (m *Sets) CodecDecodeSelf(decoder *codec.Decoder) {
 		m.entries[i].key = key
 		z.DecSendContainerState(containerMapValue)
 		if !r.TryDecodeAsNil() {
-			m.entries[i].Value.CodecDecodeSelf(decoder)
+			// Strange little dance via an interface so we can call CodecEncodeSelf before codecgen runs
+			var vi interface{} = &m.entries[i].Value
+			if vs, ok := vi.(codec.Selfer); ok {
+				vs.CodecDecodeSelf(decoder)
+			}
 		}
 	}
 	z.DecSendContainerState(containerMapEnd)
