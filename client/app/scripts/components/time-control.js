@@ -6,8 +6,6 @@ import { connect } from 'react-redux';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { pauseTimeAtNow, resumeTime, startTimeTravel } from '../actions/app-actions';
 
-import { TIMELINE_TICK_INTERVAL } from '../constants/timer';
-
 
 const className = isSelected => (
   classNames('time-control-action', { 'time-control-action-selected': isSelected })
@@ -24,8 +22,8 @@ class TimeControl extends React.Component {
   }
 
   componentDidMount() {
-    // Force periodic for the paused info.
-    this.timer = setInterval(() => { this.forceUpdate(); }, TIMELINE_TICK_INTERVAL);
+    // Force periodic updates every one second for the paused info.
+    this.timer = setInterval(() => { this.forceUpdate(); }, 1000);
   }
 
   componentWillUnmount() {

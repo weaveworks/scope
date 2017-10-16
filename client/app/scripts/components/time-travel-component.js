@@ -17,13 +17,6 @@ import {
 } from '../utils/time-utils';
 
 
-import {
-  TIMELINE_DEBOUNCE_INTERVAL,
-  TIMELINE_TICK_INTERVAL,
-  ZOOM_TRACK_DEBOUNCE_INTERVAL,
-} from '../constants/timer';
-
-
 const TICK_SETTINGS_PER_PERIOD = {
   year: {
     format: 'YYYY',
@@ -63,6 +56,10 @@ const TICK_SETTINGS_PER_PERIOD = {
     ],
   },
 };
+
+const ZOOM_TRACK_DEBOUNCE_INTERVAL = 5000;
+const TIMELINE_DEBOUNCE_INTERVAL = 500;
+const TIMELINE_TICK_INTERVAL = 1000;
 
 const TIMELINE_HEIGHT = '55px';
 const MIN_DURATION_PER_PX = moment.duration(250, 'milliseconds');
@@ -112,14 +109,14 @@ const TimelineContainer = styled.div`
   height: ${TIMELINE_HEIGHT};
 
   &:before, &:after {
+    border: 1px solid ${props => props.theme.colors.white};
+    background-color: ${props => props.theme.colors.accent.orange};
     content: '';
     position: absolute;
     display: block;
     left: 50%;
-    border: 1px solid white;
     border-top: 0;
     border-bottom: 0;
-    background-color: red;
     margin-left: -1px;
     width: 3px;
   }
@@ -138,14 +135,14 @@ const TimelineContainer = styled.div`
 
 const Timeline = FullyPannableCanvas.extend`
   background-color: rgba(255, 255, 255, 0.85);
-  box-shadow: inset 0 0 7px #aaa;
+  box-shadow: inset 0 0 7px ${props => props.theme.colors.gray};
   pointer-events: all;
   margin: 0 7px;
 `;
 
 const DisabledRange = styled.rect`
-  fill: #888;
-  fill-opacity: 0.1;
+  fill: ${props => props.theme.colors.gray};
+  fill-opacity: 0.15;
 `;
 
 const TimestampLabel = styled.a`
@@ -153,7 +150,7 @@ const TimestampLabel = styled.a`
   padding: 3px;
 
   &[disabled] {
-    color: #aaa;
+    color: ${props => props.theme.colors.gray};
     cursor: inherit;
   }
 `;
@@ -165,7 +162,7 @@ const TimelinePanButton = styled.a`
 
 const TimestampContainer = styled.div`
   background-color: ${props => props.theme.colors.white};
-  border: 1px solid #ccc;
+  border: 1px solid ${props => props.theme.colors.gray};
   border-radius: 4px;
   padding: 2px 8px;
   pointer-events: all;
@@ -176,12 +173,12 @@ const TimestampContainer = styled.div`
 `;
 
 const TimestampInput = styled.input`
-  border: 0;
   background-color: transparent;
-  font-size: 1rem;
-  width: 165px;
   font-family: "Roboto", sans-serif;
   text-align: center;
+  font-size: 1rem;
+  width: 165px;
+  border: 0;
   outline: 0;
 `;
 
