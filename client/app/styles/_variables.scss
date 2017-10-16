@@ -58,5 +58,5 @@ $search-border-width: 1px;
 $timeline-height: 55px;
 
 /* specific elements */
-$body-background-color: linear-gradient(30deg, $background-color 0%, $background-lighter-color 100%);
+$body-background-color: $background-average-color;
 $label-background-color: fade-out($background-average-color, .3);
