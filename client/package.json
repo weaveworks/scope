@@ -43,6 +43,7 @@
     "reqwest": "2.0.5",
     "reselect": "3.0.0",
     "reselect-map": "1.0.1",
+    "styled-components": "^2.2.1",
     "weaveworks-ui-components": "git+https://github.com/weaveworks/ui-components.git#v0.1.28",
     "whatwg-fetch": "2.0.3",
     "xterm": "2.5.0"
