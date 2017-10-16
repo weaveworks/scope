@@ -1,6 +1,6 @@
 import React from 'react';
 import moment from 'moment';
-import classNames from 'classnames';
+import styled from 'styled-components';
 import { map, clamp, find, last, debounce } from 'lodash';
 import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
@@ -64,6 +64,7 @@ const TICK_SETTINGS_PER_PERIOD = {
   },
 };
 
+const TIMELINE_HEIGHT = '55px';
 const MIN_DURATION_PER_PX = moment.duration(250, 'milliseconds');
 const INIT_DURATION_PER_PX = moment.duration(1, 'minute');
 const MAX_DURATION_PER_PX = moment.duration(3, 'days');
@@ -72,6 +73,117 @@ const MAX_TICK_SPACING_PX = 415;
 const FADE_OUT_FACTOR = 1.4;
 const TICKS_ROW_SPACING = 16;
 const MAX_TICK_ROWS = 3;
+
+
+// From https://stackoverflow.com/a/18294634
+const FullyPannableCanvas = styled.svg`
+  width: 100%;
+  height: 100%;
+  cursor: move;
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+
+  ${props => props.panning && `
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+  `}
+`;
+
+const TimeTravelContainer = styled.div`
+  transition: all .15s ease-in-out;
+  position: relative;
+  margin-bottom: 15px;
+  overflow: hidden;
+  z-index: 2001;
+  height: 0;
+
+  ${props => props.visible && `
+    height: calc(${TIMELINE_HEIGHT} + 35px);
+    margin-bottom: 15px;
+    margin-top: -5px;
+  `}
+`;
+
+const TimelineContainer = styled.div`
+  align-items: center;
+  display: flex;
+  height: ${TIMELINE_HEIGHT};
+
+  &:before, &:after {
+    content: '';
+    position: absolute;
+    display: block;
+    left: 50%;
+    border: 1px solid white;
+    border-top: 0;
+    border-bottom: 0;
+    background-color: red;
+    margin-left: -1px;
+    width: 3px;
+  }
+
+  &:before {
+    top: 0;
+    height: ${TIMELINE_HEIGHT};
+  }
+
+  &:after {
+    top: ${TIMELINE_HEIGHT};
+    height: 9px;
+    opacity: 0.15;
+  }
+`;
+
+const Timeline = FullyPannableCanvas.extend`
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 0 7px #aaa;
+  pointer-events: all;
+  margin: 0 7px;
+`;
+
+const DisabledRange = styled.rect`
+  fill: #888;
+  fill-opacity: 0.1;
+`;
+
+const TimestampLabel = styled.a`
+  margin-left: 2px;
+  padding: 3px;
+
+  &[disabled] {
+    color: #aaa;
+    cursor: inherit;
+  }
+`;
+
+const TimelinePanButton = styled.a`
+  pointer-events: all;
+  padding: 2px;
+`;
+
+const TimestampContainer = styled.div`
+  background-color: ${props => props.theme.colors.white};
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 2px 8px;
+  pointer-events: all;
+  margin: 8px 0 25px 50%;
+  transform: translateX(-50%);
+  opacity: 0.8;
+  display: inline-block;
+`;
+
+const TimestampInput = styled.input`
+  border: 0;
+  background-color: transparent;
+  font-size: 1rem;
+  width: 165px;
+  font-family: "Roboto", sans-serif;
+  text-align: center;
+  outline: 0;
+`;
 
 
 function getTimeScale({ focusedTimestamp, durationPerPixel }) {
@@ -342,9 +454,9 @@ export default class TimeTravelComponent extends React.Component {
         {!isBehind && <line y2="75" stroke="#ddd" strokeWidth="1" />}
         {!disabled && <title>Jump to {timestamp.utc().format()}</title>}
         <foreignObject width="100" height="20" style={{ lineHeight: '20px' }}>
-          <a className="timestamp-label" disabled={disabled} onClick={!disabled && handleClick}>
+          <TimestampLabel disabled={disabled} onClick={!disabled && handleClick}>
             {timestamp.utc().format(periodFormat)}
-          </a>
+          </TimestampLabel>
         </foreignObject>
       </g>
     );
@@ -377,11 +489,7 @@ export default class TimeTravelComponent extends React.Component {
     const { width, height } = this.state.boundingRect;
 
     return (
-      <rect
-        className="available-range"
-        transform={`translate(${nowShift}, 0)`}
-        width={width} height={height}
-      />
+      <DisabledRange transform={`translate(${nowShift}, 0)`} width={width} height={height} />
     );
   }
 
@@ -425,33 +533,32 @@ export default class TimeTravelComponent extends React.Component {
   }
 
   render() {
-    const { visible } = this.props;
-    const className = classNames({ panning: this.state.isPanning });
-    const halfWidth = this.state.boundingRect.width / 2;
+    const { isPanning, boundingRect } = this.state;
+    const halfWidth = boundingRect.width / 2;
 
     return (
-      <div className={classNames('time-travel', { visible })}>
-        <div className="time-travel-timeline">
-          <a className="button jump-backward" onClick={this.jumpBackward}>
+      <TimeTravelContainer visible={this.props.visible}>
+        <TimelineContainer className="time-travel-timeline">
+          <TimelinePanButton onClick={this.jumpBackward}>
             <span className="fa fa-chevron-left" />
-          </a>
-          <svg className={className} ref={this.saveSvgRef} onWheel={this.handleZoom}>
-            <g className="view" transform={`translate(${halfWidth}, 0)`}>
+          </TimelinePanButton>
+          <Timeline panning={isPanning} innerRef={this.saveSvgRef} onWheel={this.handleZoom}>
+            <g className="timeline-container" transform={`translate(${halfWidth}, 0)`}>
               <title>Scroll to zoom, drag to pan</title>
               {this.renderAnimatedContent()}
             </g>
-          </svg>
-          <a className="button jump-forward" onClick={this.jumpForward}>
+          </Timeline>
+          <TimelinePanButton onClick={this.jumpForward}>
             <span className="fa fa-chevron-right" />
-          </a>
-        </div>
-        <div className="time-travel-timestamp">
-          <input
+          </TimelinePanButton>
+        </TimelineContainer>
+        <TimestampContainer>
+          <TimestampInput
             value={this.state.inputValue}
             onChange={this.handleInputChange}
           /> UTC
-        </div>
-      </div>
+        </TimestampContainer>
+      </TimeTravelContainer>
     );
   }
 }
