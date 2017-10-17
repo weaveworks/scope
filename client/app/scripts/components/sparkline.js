@@ -33,7 +33,7 @@ export default class Sparkline extends React.Component {
 
     this.x.range([MARGIN, this.props.width - circleSpace]);
     this.y.range([this.props.height - circleSpace, circleSpace]);
-    this.line.curve(this.props.curve);
+    this.line.curve(curveLinear);
   }
 
   getGraphData() {
@@ -130,7 +130,14 @@ export default class Sparkline extends React.Component {
 }
 
 Sparkline.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.object)
+  width: PropTypes.number,
+  height: PropTypes.number,
+  strokeColor: PropTypes.string,
+  strokeWidth: PropTypes.number,
+  hoverColor: PropTypes.string,
+  circleRadius: PropTypes.number,
+  hovered: PropTypes.bool,
+  data: PropTypes.arrayOf(PropTypes.object),
 };
 
 Sparkline.defaultProps = {
@@ -139,7 +146,6 @@ Sparkline.defaultProps = {
   strokeColor: '#7d7da8',
   strokeWidth: 0.5,
   hoverColor: '#7d7da8',
-  curve: curveLinear,
   circleRadius: 1.75,
   hovered: false,
   data: [],
