@@ -235,7 +235,7 @@ export function parseQuery(query) {
         if (comparisonQuery && comparisonQuery.length === 2) {
           const value = parseValue(comparisonQuery[1]);
           const metric = comparisonQuery[0].trim();
-          if (!isNaN(value) && metric) {
+          if (!window.isNaN(value) && metric) {
             comparison = {
               metric,
               value,

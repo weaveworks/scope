@@ -10,7 +10,7 @@ const TRUNCATE_ELLIPSIS = '…';
  * `('text', {start: 2, length: 1}) => [{text: 'te'}, {text: 'x', match: true}, {text: 't'}]`
  */
 function chunkText(text, { start, length }) {
-  if (text && !isNaN(start) && !isNaN(length)) {
+  if (text && !window.isNaN(start) && !window.isNaN(length)) {
     const chunks = [];
     // text chunk before match
     if (start > 0) {

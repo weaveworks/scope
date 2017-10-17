@@ -294,7 +294,7 @@ class NodeDetailsTable extends React.Component {
 
 
 NodeDetailsTable.defaultProps = {
-  nodeIdKey: 'id',  // key to identify a node in a row (used for topology links)
+  nodeIdKey: 'id', // key to identify a node in a row (used for topology links)
   limit: NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
   onSortChange: () => {},
   sortedDesc: null,

@@ -117,7 +117,7 @@ function startPerf(delay) {
 
 export function showingDebugToolbar() {
   return (('debugToolbar' in localStorage && JSON.parse(localStorage.debugToolbar))
-    || location.pathname.indexOf('debug') > -1);
+    || window.location.pathname.indexOf('debug') > -1);
 }
 
 

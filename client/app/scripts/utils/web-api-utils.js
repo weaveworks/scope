@@ -27,7 +27,7 @@ const csrfToken = (() => {
   // Check for token at window level or parent level (for iframe);
   /* eslint-disable no-underscore-dangle */
   const token = typeof window !== 'undefined'
-    ? window.__WEAVEWORKS_CSRF_TOKEN || parent.__WEAVEWORKS_CSRF_TOKEN
+    ? window.__WEAVEWORKS_CSRF_TOKEN || window.parent.__WEAVEWORKS_CSRF_TOKEN
     : null;
   /* eslint-enable no-underscore-dangle */
   if (!token || token === '$__CSRF_TOKEN_PLACEHOLDER__') {
@@ -110,7 +110,7 @@ function topologiesUrl(state) {
 }
 
 export function getWebsocketUrl(host = window.location.host, pathname = window.location.pathname) {
-  const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
   return `${wsProto}://${host}${process.env.SCOPE_API_PREFIX || ''}${basePath(pathname)}`;
 }
 
