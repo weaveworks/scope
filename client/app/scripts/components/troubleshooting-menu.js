@@ -42,8 +42,7 @@ class DebugMenu extends React.Component {
               </a>
             </div>
             <div className="troubleshooting-menu-item">
-              <a
-                href=""
+              <button
                 className="footer-icon"
                 onClick={this.props.clickDownloadGraph}
                 title="Save canvas as SVG (does not include search highlighting)"
@@ -52,18 +51,17 @@ class DebugMenu extends React.Component {
                 <span className="description">
                   Save canvas as SVG (does not include search highlighting)
                 </span>
-              </a>
+              </button>
             </div>
             <div className="troubleshooting-menu-item">
-              <a
-                href=""
+              <button
                 className="footer-icon"
                 title="Reset view state"
                 onClick={this.handleClickReset}
               >
                 <span className="fa fa-undo" />
                 <span className="description">Reset your local view state and reload the page</span>
-              </a>
+              </button>
             </div>
             <div className="troubleshooting-menu-item">
               <a

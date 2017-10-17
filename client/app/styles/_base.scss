@@ -109,16 +109,19 @@ a {
   position: absolute;
   bottom: 11px;
 
-  a {
+  button {
     @extend .btn-opacity;
+    background-color: transparent;
     border: 1px solid transparent;
     border-radius: 4px;
     color: $text-secondary-color;
     cursor: pointer;
+    line-height: 20px;
     padding: 1px 3px;
+    outline: 0;
 
     .fa {
-      font-size: 150%;
+      font-size: 125%;
       position: relative;
       top: 2px;
     }
@@ -1135,6 +1138,14 @@ a {
       }
     }
 
+    .node-details-table-node-link {
+      background-color: transparent;
+      border: 0;
+      cursor: pointer;
+      padding: 0;
+      outline: 0;
+    }
+
     .node-details-table-node-link,
     .node-details-table-node-label,
     .node-details-table-node-value {
@@ -2116,6 +2127,22 @@ a {
 
   &-item {
     height: 40px;
+  }
+
+  button {
+    border: 0;
+    background-color: transparent;
+    cursor: pointer;
+    padding: 0;
+    outline: 0;
+  }
+
+  button, a {
+    color: $weave-charcoal-blue;
+
+    &:hover {
+      color: $text-color;
+    }
   }
 
   .fa {

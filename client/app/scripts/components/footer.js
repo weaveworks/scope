@@ -65,25 +65,25 @@ class Footer extends React.Component {
         </div>
 
         <div className="footer-tools">
-          <a
+          <button
             className="footer-icon"
             onClick={this.handleRelayoutClick}
             title={forceRelayoutTitle}>
             <span className="fa fa-refresh" />
-          </a>
-          <a onClick={this.handleContrastClick} className="footer-icon" title={otherContrastModeTitle}>
+          </button>
+          <button onClick={this.handleContrastClick} className="footer-icon" title={otherContrastModeTitle}>
             <span className="fa fa-adjust" />
-          </a>
-          <a
+          </button>
+          <button
             onClick={this.props.toggleTroubleshootingMenu}
             className="footer-icon" title="Open troubleshooting menu"
             href=""
           >
             <span className="fa fa-bug" />
-          </a>
-          <a className="footer-icon" onClick={this.props.toggleHelp} title="Show help">
+          </button>
+          <button className="footer-icon" onClick={this.props.toggleHelp} title="Show help">
             <span className="fa fa-question" />
-          </a>
+          </button>
         </div>
 
       </div>

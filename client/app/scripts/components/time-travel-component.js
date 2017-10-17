@@ -145,7 +145,7 @@ const DisabledRange = styled.rect`
   fill-opacity: 0.15;
 `;
 
-const TimestampLabel = styled.a`
+const TimestampLabel = styled.button`
   margin-left: 2px;
   padding: 3px;
 
@@ -155,7 +155,7 @@ const TimestampLabel = styled.a`
   }
 `;
 
-const TimelinePanButton = styled.a`
+const TimelinePanButton = styled.button`
   pointer-events: all;
   padding: 2px;
 `;
@@ -236,7 +236,9 @@ export default class TimeTravelComponent extends React.Component {
 
     this.instantUpdateTimestamp = this.instantUpdateTimestamp.bind(this);
     this.debouncedUpdateTimestamp = debounce(
-      this.instantUpdateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
+      this.instantUpdateTimestamp.bind(this),
+      TIMELINE_DEBOUNCE_INTERVAL
+    );
   }
 
   componentDidMount() {
