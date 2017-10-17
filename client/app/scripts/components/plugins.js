@@ -44,6 +44,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(Plugins);
+export default connect(mapStateToProps)(Plugins);

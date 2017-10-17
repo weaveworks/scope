@@ -13,8 +13,10 @@ class TerminalApp extends React.Component {
 
     const paramString = window.location.hash.split('/').pop();
     const params = JSON.parse(decodeURIComponent(paramString));
-    this.props.receiveControlPipeFromParams(params.pipe.id, params.pipe.raw,
-      params.pipe.resizeTtyControl);
+    this.props.receiveControlPipeFromParams(
+      params.pipe.id, params.pipe.raw,
+      params.pipe.resizeTtyControl
+    );
 
     this.state = {
       title: params.title,

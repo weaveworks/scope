@@ -11,11 +11,13 @@ const store = configureStore();
 
 function renderApp() {
   const TerminalApp = require('./components/terminal-app').default;
-  ReactDOM.render((
-    <Provider store={store}>
-      <TerminalApp />
-    </Provider>
-  ), document.getElementById('app'));
+  ReactDOM.render(
+    (
+      <Provider store={store}>
+        <TerminalApp />
+      </Provider>
+    ), document.getElementById('app')
+  );
 }
 
 renderApp();

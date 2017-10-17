@@ -79,7 +79,8 @@ describe('TopologyUtils', () => {
   it('sets node degrees', () => {
     nodes = TopologyUtils.updateNodeDegrees(
       nodeSets.initial4.nodes,
-      nodeSets.initial4.edges).toJS();
+      nodeSets.initial4.edges
+    ).toJS();
 
     expect(nodes.n1.degree).toEqual(2);
     expect(nodes.n2.degree).toEqual(1);
@@ -88,7 +89,8 @@ describe('TopologyUtils', () => {
 
     nodes = TopologyUtils.updateNodeDegrees(
       nodeSets.removeEdge24.nodes,
-      nodeSets.removeEdge24.edges).toJS();
+      nodeSets.removeEdge24.edges
+    ).toJS();
 
     expect(nodes.n1.degree).toEqual(2);
     expect(nodes.n2.degree).toEqual(0);
@@ -97,7 +99,8 @@ describe('TopologyUtils', () => {
 
     nodes = TopologyUtils.updateNodeDegrees(
       nodeSets.single3.nodes,
-      nodeSets.single3.edges).toJS();
+      nodeSets.single3.edges
+    ).toJS();
 
     expect(nodes.n1.degree).toEqual(0);
     expect(nodes.n2.degree).toEqual(0);

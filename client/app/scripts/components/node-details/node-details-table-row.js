@@ -71,8 +71,7 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null, t
                 linkable
                 nodeId={relative.id}
                 {...relative}
-              />
-            ), ' ')}
+              />), ' ')}
           </td>
         );
       }

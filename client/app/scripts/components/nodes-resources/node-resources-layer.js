@@ -50,6 +50,4 @@ function mapStateToProps(state, props) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(NodesResourcesLayer);
+export default connect(mapStateToProps)(NodesResourcesLayer);

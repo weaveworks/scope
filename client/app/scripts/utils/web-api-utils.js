@@ -167,8 +167,10 @@ function createWebsocket(websocketUrl, getState, dispatch) {
       firstMessageOnWebsocketAt = new Date();
       const timeToFirstMessage = firstMessageOnWebsocketAt - createWebsocketAt;
       if (timeToFirstMessage > FIRST_RENDER_TOO_LONG_THRESHOLD) {
-        log('Time (ms) to first nodes render after websocket was created',
-          firstMessageOnWebsocketAt - createWebsocketAt);
+        log(
+          'Time (ms) to first nodes render after websocket was created',
+          firstMessageOnWebsocketAt - createWebsocketAt
+        );
       }
     }
   };
@@ -197,13 +199,15 @@ function getNodesForTopologies(state, dispatch, topologyIds, topologyOptions = m
   // fetch sequentially
   state.get('topologyUrlsById')
     .filter((_, topologyId) => topologyIds.contains(topologyId))
-    .reduce((sequence, topologyUrl, topologyId) => sequence
-      .then(() => {
-        const optionsQuery = buildUrlQuery(topologyOptions.get(topologyId), state);
-        return doRequest({ url: `${getApiPath()}${topologyUrl}?${optionsQuery}` });
-      })
-      .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
-    Promise.resolve());
+    .reduce(
+      (sequence, topologyUrl, topologyId) => sequence
+        .then(() => {
+          const optionsQuery = buildUrlQuery(topologyOptions.get(topologyId), state);
+          return doRequest({ url: `${getApiPath()}${topologyUrl}?${optionsQuery}` });
+        })
+        .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
+      Promise.resolve()
+    );
 }
 
 function getNodesOnce(getState, dispatch) {

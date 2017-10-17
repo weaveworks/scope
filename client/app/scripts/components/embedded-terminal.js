@@ -70,6 +70,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(EmeddedTerminal);
+export default connect(mapStateToProps)(EmeddedTerminal);

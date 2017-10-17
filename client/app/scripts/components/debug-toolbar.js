@@ -385,6 +385,4 @@ function mapStateToProps(state) {
 }
 
 
-export default connect(
-  mapStateToProps
-)(DebugToolbar);
+export default connect(mapStateToProps)(DebugToolbar);

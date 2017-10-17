@@ -100,8 +100,10 @@ const proxyPathServer = http.createServer((req, res) => {
   return pathProxy.web(req, res, {target});
 }).listen(pathProxyPort, 'localhost', () => {
   const pathProxyHost = proxyPathServer.address().address;
-  console.log('Scope Proxy Path UI listening at http://%s:%s/scoped/',
-    pathProxyHost, pathProxyPort);
+  console.log(
+    'Scope Proxy Path UI listening at http://%s:%s/scoped/',
+    pathProxyHost, pathProxyPort
+  );
 });
 
 proxyPathServer.on('upgrade', (req, socket, head) => {

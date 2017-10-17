@@ -277,6 +277,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(NodesChartElements);
+export default connect(mapStateToProps)(NodesChartElements);

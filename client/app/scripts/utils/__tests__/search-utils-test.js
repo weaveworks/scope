@@ -125,15 +125,19 @@ describe('SearchUtils', () => {
 
     it('does not add a non-matching field', () => {
       let matches = fromJS({});
-      matches = fun(matches, ['node1', 'field1'],
-        'some value', 'some query', null, 'some label');
+      matches = fun(
+        matches, ['node1', 'field1'],
+        'some value', 'some query', null, 'some label'
+      );
       expect(matches.size).toBe(0);
     });
 
     it('adds a matching field', () => {
       let matches = fromJS({});
-      matches = fun(matches, ['node1', 'field1'],
-        'samevalue', 'samevalue', null, 'some label');
+      matches = fun(
+        matches, ['node1', 'field1'],
+        'samevalue', 'samevalue', null, 'some label'
+      );
       expect(matches.size).toBe(1);
       expect(matches.getIn(['node1', 'field1'])).toBeDefined();
       const {text, label, start, length} = matches.getIn(['node1', 'field1']);
@@ -145,15 +149,19 @@ describe('SearchUtils', () => {
 
     it('does not add a field when the prefix does not match the label', () => {
       let matches = fromJS({});
-      matches = fun(matches, ['node1', 'field1'],
-        'samevalue', 'samevalue', 'some prefix', 'some label');
+      matches = fun(
+        matches, ['node1', 'field1'],
+        'samevalue', 'samevalue', 'some prefix', 'some label'
+      );
       expect(matches.size).toBe(0);
     });
 
     it('adds a field when the prefix matches the label', () => {
       let matches = fromJS({});
-      matches = fun(matches, ['node1', 'field1'],
-        'samevalue', 'samevalue', 'prefix', 'prefixed label');
+      matches = fun(
+        matches, ['node1', 'field1'],
+        'samevalue', 'samevalue', 'prefix', 'prefixed label'
+      );
       expect(matches.size).toBe(1);
     });
   });
@@ -163,30 +171,40 @@ describe('SearchUtils', () => {
 
     it('does not add a non-matching field', () => {
       let matches = fromJS({});
-      matches = fun(matches, ['node1', 'field1'],
-        1, 'metric1', 'metric2', 'lt', 2);
+      matches = fun(
+        matches, ['node1', 'field1'],
+        1, 'metric1', 'metric2', 'lt', 2
+      );
       expect(matches.size).toBe(0);
     });
 
     it('adds a matching field', () => {
       let matches = fromJS({});
-      matches = fun(matches, ['node1', 'field1'],
-        1, 'metric1', 'metric1', 'lt', 2);
+      matches = fun(
+        matches, ['node1', 'field1'],
+        1, 'metric1', 'metric1', 'lt', 2
+      );
       expect(matches.size).toBe(1);
       expect(matches.getIn(['node1', 'field1'])).toBeDefined();
       const { metric } = matches.getIn(['node1', 'field1']);
       expect(metric).toBeTruthy();
 
-      matches = fun(matches, ['node2', 'field1'],
-        1, 'metric1', 'metric1', 'gt', 0);
+      matches = fun(
+        matches, ['node2', 'field1'],
+        1, 'metric1', 'metric1', 'gt', 0
+      );
       expect(matches.size).toBe(2);
 
-      matches = fun(matches, ['node3', 'field1'],
-        1, 'metric1', 'metric1', 'eq', 1);
+      matches = fun(
+        matches, ['node3', 'field1'],
+        1, 'metric1', 'metric1', 'eq', 1
+      );
       expect(matches.size).toBe(3);
 
-      matches = fun(matches, ['node3', 'field1'],
-        1, 'metric1', 'metric1', 'other', 1);
+      matches = fun(
+        matches, ['node3', 'field1'],
+        1, 'metric1', 'metric1', 'other', 1
+      );
       expect(matches.size).toBe(3);
     });
   });

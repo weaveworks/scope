@@ -119,8 +119,10 @@ function processTopologies(state, nextTopologies) {
   // set `selectType` field for topology and sub_topologies options (recursive).
   const topologiesWithSelectType = visibleTopologies.map(calcSelectType);
   // cache URLs by ID
-  state = state.set('topologyUrlsById',
-    setTopologyUrlsById(state.get('topologyUrlsById'), topologiesWithSelectType));
+  state = state.set(
+    'topologyUrlsById',
+    setTopologyUrlsById(state.get('topologyUrlsById'), topologiesWithSelectType)
+  );
 
   const topologiesWithFullnames = addTopologyFullname(topologiesWithSelectType);
   const immNextTopologies = fromJS(topologiesWithFullnames).sortBy(topologySorter);
@@ -144,7 +146,8 @@ function setDefaultTopologyOptions(state, topologyList) {
     }
 
     if (defaultOptions.size) {
-      state = state.setIn(['topologyOptions', topology.get('id')],
+      state = state.setIn(
+        ['topologyOptions', topology.get('id')],
         defaultOptions
       );
     }
@@ -157,8 +160,10 @@ function closeNodeDetails(state, nodeId) {
   if (nodeDetails.size > 0) {
     const popNodeId = nodeId || nodeDetails.keySeq().last();
     // remove pipe if it belongs to the node being closed
-    state = state.update('controlPipes',
-      controlPipes => controlPipes.filter(pipe => pipe.get('nodeId') !== popNodeId));
+    state = state.update(
+      'controlPipes',
+      controlPipes => controlPipes.filter(pipe => pipe.get('nodeId') !== popNodeId)
+    );
     state = state.deleteIn(['nodeDetails', popNodeId]);
   }
   if (state.get('nodeDetails').size === 0 || state.get('selectedNodeId') === nodeId) {
@@ -298,7 +303,8 @@ export function rootReducer(state = initialState, action) {
       if (prevDetailsStackSize > 1 || prevSelectedNodeId !== action.nodeId) {
         // dont set origin if a node was already selected, suppresses animation
         const origin = prevSelectedNodeId === null ? action.origin : null;
-        state = state.setIn(['nodeDetails', action.nodeId],
+        state = state.setIn(
+          ['nodeDetails', action.nodeId],
           {
             id: action.nodeId,
             label: action.label,
@@ -318,7 +324,8 @@ export function rootReducer(state = initialState, action) {
         state = state.deleteIn(['nodeDetails', action.nodeId]);
         state = state.setIn(['nodeDetails', action.nodeId], details);
       } else {
-        state = state.setIn(['nodeDetails', action.nodeId],
+        state = state.setIn(
+          ['nodeDetails', action.nodeId],
           {
             id: action.nodeId,
             label: action.label,
@@ -331,8 +338,10 @@ export function rootReducer(state = initialState, action) {
     }
 
     case ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE: {
-      state = state.update('nodeDetails',
-        nodeDetails => nodeDetails.filter((v, k) => k === action.nodeId));
+      state = state.update(
+        'nodeDetails',
+        nodeDetails => nodeDetails.filter((v, k) => k === action.nodeId)
+      );
       state = state.update('controlPipes', controlPipes => controlPipes.clear());
       state = state.set('selectedNodeId', action.nodeId);
 
@@ -579,11 +588,13 @@ export function rootReducer(state = initialState, action) {
         return state;
       }
 
-      log('RECEIVE_NODES_DELTA',
+      log(
+        'RECEIVE_NODES_DELTA',
         'remove', size(action.delta.remove),
         'update', size(action.delta.update),
         'add', size(action.delta.add),
-        'reset', action.delta.reset);
+        'reset', action.delta.reset
+      );
 
       if (action.delta.reset) {
         state = state.set('nodes', makeMap());
@@ -700,8 +711,7 @@ export function rootReducer(state = initialState, action) {
         state = state.update('controlPipes', controlPipes => controlPipes.clear());
       }
       if (action.state.nodeDetails) {
-        const actionNodeDetails = makeOrderedMap(
-          action.state.nodeDetails.map(obj => [obj.id, obj]));
+        const actionNodeDetails = makeOrderedMap(action.state.nodeDetails.map(h => [h.id, h]));
         // check if detail IDs have changed
         if (!isDeepEqual(state.get('nodeDetails').keySeq(), actionNodeDetails.keySeq())) {
           state = state.set('nodeDetails', actionNodeDetails);
@@ -709,8 +719,10 @@ export function rootReducer(state = initialState, action) {
       } else {
         state = state.update('nodeDetails', nodeDetails => nodeDetails.clear());
       }
-      state = state.set('topologyOptions',
-        fromJS(action.state.topologyOptions) || state.get('topologyOptions'));
+      state = state.set(
+        'topologyOptions',
+        fromJS(action.state.topologyOptions) || state.get('topologyOptions')
+      );
       return state;
     }
 

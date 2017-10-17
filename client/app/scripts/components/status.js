@@ -54,6 +54,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(Status);
+export default connect(mapStateToProps)(Status);

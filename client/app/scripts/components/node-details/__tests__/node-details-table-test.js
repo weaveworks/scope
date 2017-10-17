@@ -58,8 +58,7 @@ describe('NodeDetailsTable', () => {
     // form columnIndex + n * columns.length, where n >= 0. Therefore we take only the values
     // at the index which divided by columns.length gives a reminder columnIndex.
     const filteredValues = values.filter((element, index) =>
-      index % columns.length === columnIndex
-    );
+      index % columns.length === columnIndex);
     // Array comparison
     expect(filteredValues).toEqual(expectedValues);
   }
@@ -72,16 +71,14 @@ describe('NodeDetailsTable', () => {
 
   describe('kubernetes_ip', () => {
     it('sorts by column', () => {
-      component = TestUtils.renderIntoDocument(
-        <Provider store={configureStore()}>
-          <NodeDetailsTable
-            columns={columns}
-            sortedBy="kubernetes_ip"
-            nodeIdKey="id"
-            nodes={nodes}
+      component = TestUtils.renderIntoDocument(<Provider store={configureStore()}>
+        <NodeDetailsTable
+          columns={columns}
+          sortedBy="kubernetes_ip"
+          nodeIdKey="id"
+          nodes={nodes}
           />
-        </Provider>
-      );
+      </Provider>);
 
       matchColumnValues('kubernetes_ip', [
         '10.44.253.255',
@@ -108,16 +105,14 @@ describe('NodeDetailsTable', () => {
 
   describe('kubernetes_namespace', () => {
     it('sorts by column', () => {
-      component = TestUtils.renderIntoDocument(
-        <Provider store={configureStore()}>
-          <NodeDetailsTable
-            columns={columns}
-            sortedBy="kubernetes_namespace"
-            nodeIdKey="id"
-            nodes={nodes}
+      component = TestUtils.renderIntoDocument(<Provider store={configureStore()}>
+        <NodeDetailsTable
+          columns={columns}
+          sortedBy="kubernetes_namespace"
+          nodeIdKey="id"
+          nodes={nodes}
           />
-        </Provider>
-      );
+      </Provider>);
 
       matchColumnValues('kubernetes_namespace', ['00000', '1111', '12', '5']);
       clickColumn('Namespace');

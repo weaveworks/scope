@@ -20,7 +20,6 @@ function basicTopologyInfo(topology, searchMatchCount) {
 }
 
 class Topologies extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.onTopologyClick = this.onTopologyClick.bind(this);
@@ -88,9 +87,7 @@ class Topologies extends React.Component {
   render() {
     return (
       <div className="topologies">
-        {this.props.currentTopology && this.props.topologies.map(
-          topology => this.renderTopology(topology)
-        )}
+        {this.props.currentTopology && this.props.topologies.map(t => this.renderTopology(t))}
       </div>
     );
   }
