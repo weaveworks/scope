@@ -45,6 +45,21 @@ func NewDerivedExternalNode(n report.Node, addr string, local report.Networks) (
 	return NewDerivedPseudoNode(id, n), true
 }
 
+func pseudoNodeID(n report.Node, local report.Networks) (string, bool) {
+	_, addr, _, ok := report.ParseEndpointNodeID(n.ID)
+	if !ok {
+		return "", false
+	}
+
+	if id, ok := externalNodeID(n, addr, local); ok {
+		return id, ok
+	}
+
+	// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
+	// all non-external pseudo nodes for now.
+	return "", false
+}
+
 // figure out if a node should be considered external and returns an ID which can be used to create a pseudo node
 func externalNodeID(n report.Node, addr string, local report.Networks) (string, bool) {
 	// First, check if it's a known service and emit a a specific node if it

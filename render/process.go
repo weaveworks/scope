@@ -91,18 +91,12 @@ var ProcessNameRenderer = ConditionalRenderer(renderProcesses,
 
 // MapEndpoint2Pseudo makes internet of host pesudo nodes from a endpoint node.
 func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
-	_, addr, _, ok := report.ParseEndpointNodeID(n.ID)
+	id, ok := pseudoNodeID(n, local)
 	if !ok {
 		return report.Nodes{}
 	}
-
-	if externalNode, ok := NewDerivedExternalNode(n, addr, local); ok {
-		return report.Nodes{externalNode.ID: externalNode}
-	}
-
-	// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
-	// all non-external pseudo nodes for now.
-	return report.Nodes{}
+	externalNode := NewDerivedPseudoNode(id, n)
+	return report.Nodes{externalNode.ID: externalNode}
 }
 
 // MapEndpoint2Process maps endpoint Nodes to process
