@@ -51,7 +51,7 @@ function terminalCellSize(wrapperNode) {
     subjectRow.innerHTML = contentBuffer;
   }
 
-  log('Caculated (charWidth, charHeight) sizes in px: ', characterWidth, characterHeight);
+  log('Calculated (charWidth, charHeight) sizes in px: ', characterWidth, characterHeight);
   return {characterWidth, characterHeight};
 }
 
