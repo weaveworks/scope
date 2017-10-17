@@ -4,6 +4,9 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce } from 'lodash';
 
+import { ThemeProvider } from 'styled-components';
+import theme from 'weaveworks-ui-components/lib/theme';
+
 import Logo from './logo';
 import Footer from './footer';
 import Sidebar from './sidebar';
@@ -175,42 +178,44 @@ class App extends React.Component {
     const isIframe = window !== window.top;
 
     return (
-      <div className={className} ref={this.saveAppRef}>
-        {showingDebugToolbar() && <DebugToolbar />}
+      <ThemeProvider theme={theme}>
+        <div className={className} ref={this.saveAppRef}>
+          {showingDebugToolbar() && <DebugToolbar />}
 
-        {showingHelp && <HelpPanel />}
+          {showingHelp && <HelpPanel />}
 
-        {showingTroubleshootingMenu && <TroubleshootingMenu />}
+          {showingTroubleshootingMenu && <TroubleshootingMenu />}
 
-        {showingDetails && <Details />}
+          {showingDetails && <Details />}
 
-        <div className="header">
-          <TimeTravel />
-          <div className="selectors">
-            <div className="logo">
-              {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
-                <Logo />
-              </svg>}
+          <div className="header">
+            <TimeTravel />
+            <div className="selectors">
+              <div className="logo">
+                {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
+                  <Logo />
+                </svg>}
+              </div>
+              <Search />
+              <Topologies />
+              <ViewModeSelector />
+              <TimeControl />
             </div>
-            <Search />
-            <Topologies />
-            <ViewModeSelector />
-            <TimeControl />
           </div>
+
+          <Nodes />
+
+          <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
+            {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
+            {!isResourceViewMode && <Status />}
+            {!isResourceViewMode && <TopologyOptions />}
+          </Sidebar>
+
+          <Footer />
+
+          <Overlay faded={timeTravelTransitioning} />
         </div>
-
-        <Nodes />
-
-        <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
-          {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
-          {!isResourceViewMode && <Status />}
-          {!isResourceViewMode && <TopologyOptions />}
-        </Sidebar>
-
-        <Footer />
-
-        <Overlay faded={timeTravelTransitioning} />
-      </div>
+      </ThemeProvider>
     );
   }
 }

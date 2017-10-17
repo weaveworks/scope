@@ -51,24 +51,21 @@ a {
 }
 
 // From https://stackoverflow.com/a/18294634
-.grabbable {
-    cursor: move; /* fallback if grab cursor is unsupported */
-    cursor: grab;
-    cursor: -moz-grab;
-    cursor: -webkit-grab;
-}
-.grabbing {
-    cursor: grabbing;
-    cursor: -moz-grabbing;
-    cursor: -webkit-grabbing;
-}
-
 .fully-pannable {
   width: 100%;
   height: 100%;
-  @extend .grabbable;
+  // Grabbable
+  cursor: move; /* fallback if grab cursor is unsupported */
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
 
-  &.panning { @extend .grabbing; }
+  &.panning {
+    // Grabbing
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+  }
 }
 
 .shadow-2 {
@@ -304,102 +301,6 @@ a {
 
     &:hover .tooltip {
       display: block;
-    }
-  }
-}
-
-.time-travel {
-  position: relative;
-  margin-bottom: 15px;
-  z-index: 2001;
-
-  transition: all .15s $base-ease;
-  overflow: hidden;
-  height: 0;
-
-  &.visible {
-    height: $timeline-height + 35px;
-    margin-bottom: 15px;
-    margin-top: -5px;
-  }
-
-  .button {
-    padding: 2px;
-    pointer-events: all;
-  }
-
-  .time-travel-timeline {
-    align-items: center;
-    display: flex;
-    height: $timeline-height;
-
-    svg {
-      @extend .fully-pannable;
-      background-color: rgba(255, 255, 255, 0.85);
-      box-shadow: inset 0 0 7px #aaa;
-      pointer-events: all;
-      margin: 0 7px;
-
-      .available-range {
-        fill: #888;
-        fill-opacity: 0.1;
-      }
-
-      .timestamp-label {
-        margin-left: 2px;
-        padding: 3px;
-
-        &[disabled] {
-          color: #aaa;
-          cursor: inherit;
-        }
-      }
-    }
-
-    &:before, &:after {
-      content: '';
-      position: absolute;
-      display: block;
-      left: 50%;
-      border: 1px solid white;
-      border-top: 0;
-      border-bottom: 0;
-      background-color: red;
-      margin-left: -1px;
-      width: 3px;
-    }
-
-    &:before {
-      top: 0;
-      height: $timeline-height;
-    }
-
-    &:after {
-      top: $timeline-height;
-      height: 9px;
-      opacity: 0.15;
-    }
-  }
-
-  &-timestamp {
-    background-color: $background-lighter-color;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 2px 8px;
-    pointer-events: all;
-    margin: 8px 0 25px 50%;
-    transform: translateX(-50%);
-    opacity: 0.8;
-    display: inline-block;
-
-    input {
-      border: 0;
-      background-color: transparent;
-      font-size: 1rem;
-      width: 165px;
-      font-family: "Roboto", sans-serif;
-      text-align: center;
-      outline: 0;
     }
   }
 }

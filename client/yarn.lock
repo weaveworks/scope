@@ -710,6 +710,13 @@ babel-plugin-transform-object-rest-spread@6.23.0:
     babel-plugin-syntax-object-rest-spread "^6.8.0"
     babel-runtime "^6.22.0"
 
+babel-plugin-transform-object-rest-spread@^6.26.0:
+  version "6.26.0"
+  resolved "https://registry.yarnpkg.com/babel-plugin-transform-object-rest-spread/-/babel-plugin-transform-object-rest-spread-6.26.0.tgz#0f36692d50fef6b7e2d4b3ac1478137a963b7b06"
+  dependencies:
+    babel-plugin-syntax-object-rest-spread "^6.8.0"
+    babel-runtime "^6.26.0"
+
 babel-plugin-transform-react-display-name@^6.23.0, babel-plugin-transform-react-display-name@^6.3.13:
   version "6.23.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-transform-react-display-name/-/babel-plugin-transform-react-display-name-6.23.0.tgz#4398910c358441dc4cef18787264d0412ed36b37"
@@ -870,6 +877,13 @@ babel-runtime@6.x, babel-runtime@^6.0.0, babel-runtime@^6.18.0, babel-runtime@^6
   dependencies:
     core-js "^2.4.0"
     regenerator-runtime "^0.10.0"
+
+babel-runtime@^6.26.0:
+  version "6.26.0"
+  resolved "https://registry.yarnpkg.com/babel-runtime/-/babel-runtime-6.26.0.tgz#965c7058668e82b55d7bfe04ff2337bc8b5647fe"
+  dependencies:
+    core-js "^2.4.0"
+    regenerator-runtime "^0.11.0"
 
 babel-template@^6.16.0, babel-template@^6.24.1:
   version "6.24.1"
@@ -1106,6 +1120,13 @@ buffer@^4.3.0:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
     isarray "^1.0.0"
+
+buffer@^5.0.3:
+  version "5.0.8"
+  resolved "https://registry.yarnpkg.com/buffer/-/buffer-5.0.8.tgz#84daa52e7cf2fa8ce4195bc5cf0f7809e0930b24"
+  dependencies:
+    base64-js "^1.0.2"
+    ieee754 "^1.1.4"
 
 builtin-modules@^1.0.0, builtin-modules@^1.1.1:
   version "1.1.1"
@@ -1543,6 +1564,10 @@ css-animation@^1.3.0:
   dependencies:
     component-classes "^1.2.5"
 
+css-color-keywords@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/css-color-keywords/-/css-color-keywords-1.0.0.tgz#fea2616dc676b2962686b3af8dbdbe180b244e05"
+
 css-color-names@0.0.4:
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/css-color-names/-/css-color-names-0.0.4.tgz#808adc2e79cf84738069b646cb20ec27beb629e0"
@@ -1589,6 +1614,14 @@ css-selector-tokenizer@^0.7.0:
     cssesc "^0.1.0"
     fastparse "^1.1.1"
     regexpu-core "^1.0.0"
+
+css-to-react-native@^2.0.3:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/css-to-react-native/-/css-to-react-native-2.0.4.tgz#cf4cc407558b3474d4ba8be1a2cd3b6ce713101b"
+  dependencies:
+    css-color-keywords "^1.0.0"
+    fbjs "^0.8.5"
+    postcss-value-parser "^3.3.0"
 
 css-what@2.1:
   version "2.1.0"
@@ -2425,6 +2458,18 @@ fbjs@^0.8.4, fbjs@^0.8.9:
     setimmediate "^1.0.5"
     ua-parser-js "^0.7.9"
 
+fbjs@^0.8.5:
+  version "0.8.16"
+  resolved "https://registry.yarnpkg.com/fbjs/-/fbjs-0.8.16.tgz#5e67432f550dc41b572bf55847b8aca64e5337db"
+  dependencies:
+    core-js "^1.0.0"
+    isomorphic-fetch "^2.1.1"
+    loose-envify "^1.0.0"
+    object-assign "^4.1.0"
+    promise "^7.1.1"
+    setimmediate "^1.0.5"
+    ua-parser-js "^0.7.9"
+
 figures@^1.3.5:
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/figures/-/figures-1.7.0.tgz#cbe1e3affcf1cd44b80cadfed28dc793a9701d2e"
@@ -2851,7 +2896,7 @@ hoek@2.x.x:
   version "2.16.3"
   resolved "https://registry.yarnpkg.com/hoek/-/hoek-2.16.3.tgz#20bb7403d3cea398e91dc4710a8ff1b8274a25ed"
 
-hoist-non-react-statics@^1.0.3:
+hoist-non-react-statics@^1.0.3, hoist-non-react-statics@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-1.2.0.tgz#aa448cf0986d55cc40773b17174b7dd066cb7cfb"
 
@@ -3155,6 +3200,10 @@ is-fullwidth-code-point@^1.0.0:
 is-fullwidth-code-point@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/is-fullwidth-code-point/-/is-fullwidth-code-point-2.0.0.tgz#a3b30a5c4f199183167aaab93beefae3ddfb654f"
+
+is-function@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/is-function/-/is-function-1.0.1.tgz#12cfb98b65b57dd3d193a3121f5f6e2f437602b5"
 
 is-generator-function@^1.0.6:
   version "1.0.6"
@@ -4200,9 +4249,9 @@ node-pre-gyp@^0.6.29:
     tar "^2.2.1"
     tar-pack "^3.4.0"
 
-node-sass@3.13.0:
-  version "3.13.0"
-  resolved "https://registry.yarnpkg.com/node-sass/-/node-sass-3.13.0.tgz#d08b95bdebf40941571bd2c16a9334b980f8924f"
+node-sass@4.5.2:
+  version "4.5.2"
+  resolved "https://registry.yarnpkg.com/node-sass/-/node-sass-4.5.2.tgz#4012fa2bd129b1d6365117e88d9da0500d99da64"
   dependencies:
     async-foreach "^0.1.3"
     chalk "^1.1.1"
@@ -4213,17 +4262,19 @@ node-sass@3.13.0:
     in-publish "^2.0.0"
     lodash.assign "^4.2.0"
     lodash.clonedeep "^4.3.2"
+    lodash.mergewith "^4.6.0"
     meow "^3.7.0"
     mkdirp "^0.5.1"
     nan "^2.3.2"
     node-gyp "^3.3.1"
     npmlog "^4.0.0"
-    request "^2.61.0"
+    request "^2.79.0"
     sass-graph "^2.1.1"
+    stdout-stream "^1.4.0"
 
-node-sass@4.5.2:
-  version "4.5.2"
-  resolved "https://registry.yarnpkg.com/node-sass/-/node-sass-4.5.2.tgz#4012fa2bd129b1d6365117e88d9da0500d99da64"
+node-sass@4.5.3:
+  version "4.5.3"
+  resolved "https://registry.yarnpkg.com/node-sass/-/node-sass-4.5.3.tgz#d09c9d1179641239d1b97ffc6231fdcec53e1568"
   dependencies:
     async-foreach "^0.1.3"
     chalk "^1.1.1"
@@ -4594,6 +4645,10 @@ pkg-up@^1.0.0:
 pluralize@^1.2.1:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/pluralize/-/pluralize-1.2.1.tgz#d1a21483fd22bb41e58a12fa3421823140897c45"
+
+polished@^1.7.0:
+  version "1.8.1"
+  resolved "https://registry.yarnpkg.com/polished/-/polished-1.8.1.tgz#e50b9f789d37d98da64912f1be2bf759d8bfae6c"
 
 postcss-calc@^5.2.0:
   version "5.3.1"
@@ -5288,6 +5343,10 @@ regenerator-runtime@^0.10.0:
   version "0.10.3"
   resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.10.3.tgz#8c4367a904b51ea62a908ac310bf99ff90a82a3e"
 
+regenerator-runtime@^0.11.0:
+  version "0.11.0"
+  resolved "https://registry.yarnpkg.com/regenerator-runtime/-/regenerator-runtime-0.11.0.tgz#7e54fe5b5ccd5d6624ea6255c3473be090b802e1"
+
 regenerator-transform@0.9.11:
   version "0.9.11"
   resolved "https://registry.yarnpkg.com/regenerator-transform/-/regenerator-transform-0.9.11.tgz#3a7d067520cb7b7176769eb5ff868691befe1283"
@@ -5357,7 +5416,7 @@ repeating@^2.0.0:
   dependencies:
     is-finite "^1.0.0"
 
-request@2, request@^2.53.0, request@^2.61.0, request@^2.65.0, request@^2.72.0, request@^2.79.0, request@^2.81.0:
+request@2, request@^2.53.0, request@^2.65.0, request@^2.72.0, request@^2.79.0, request@^2.81.0:
   version "2.81.0"
   resolved "https://registry.yarnpkg.com/request/-/request-2.81.0.tgz#c6928946a0e06c5f8d6f8a9333469ffda46298a0"
   dependencies:
@@ -5818,6 +5877,24 @@ style-loader@0.17.0:
   dependencies:
     loader-utils "^1.0.2"
 
+styled-components@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/styled-components/-/styled-components-2.2.1.tgz#f4835f1001c37bcc301ac3865b5d93466de4dd5b"
+  dependencies:
+    buffer "^5.0.3"
+    css-to-react-native "^2.0.3"
+    fbjs "^0.8.9"
+    hoist-non-react-statics "^1.2.0"
+    is-function "^1.0.1"
+    is-plain-object "^2.0.1"
+    prop-types "^15.5.4"
+    stylis "^3.2.1"
+    supports-color "^3.2.3"
+
+stylis@^3.2.1:
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/stylis/-/stylis-3.3.2.tgz#95ef285836e98243f8b8f64a9a72706ea6c893ea"
+
 supports-color@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/supports-color/-/supports-color-2.0.0.tgz#535d045ce6b6363fa40117084629995e9df324c7"
@@ -6171,16 +6248,18 @@ wd@^0.4.0:
     underscore.string "~3.0.3"
     vargs "~0.1.0"
 
-"weaveworks-ui-components@git+https://github.com/weaveworks/ui-components.git#v0.1.28":
-  version "0.1.28"
-  resolved "git+https://github.com/weaveworks/ui-components.git#164a0d2770ee5c2318b2f1ab1948fb6046059909"
+"weaveworks-ui-components@git+https://github.com/weaveworks/ui-components.git#v0.1.45":
+  version "0.1.45"
+  resolved "git+https://github.com/weaveworks/ui-components.git#9b700e6231599d0f7b353d8e2bb5f466394dc081"
   dependencies:
     babel-cli "^6.18.0"
     babel-plugin-transform-export-extensions "6.8.0"
+    babel-plugin-transform-object-rest-spread "^6.26.0"
     babel-preset-es2015 "6.18.0"
     babel-preset-react "6.16.0"
     classnames "^2.2.5"
-    node-sass "3.13.0"
+    node-sass "4.5.3"
+    polished "^1.7.0"
     prop-types "^15.5.8"
 
 webidl-conversions@^3.0.0:

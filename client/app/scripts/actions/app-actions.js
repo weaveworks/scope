@@ -615,12 +615,6 @@ export function receiveNodes(nodes) {
   };
 }
 
-export function timeTravelStartTransition() {
-  return {
-    type: ActionTypes.TIME_TRAVEL_START_TRANSITION,
-  };
-}
-
 export function jumpToTime(timestamp) {
   return (dispatch, getState) => {
     dispatch({

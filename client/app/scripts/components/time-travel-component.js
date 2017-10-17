@@ -1,8 +1,7 @@
 import React from 'react';
 import moment from 'moment';
-import classNames from 'classnames';
+import styled from 'styled-components';
 import { map, clamp, find, last, debounce } from 'lodash';
-import { connect } from 'react-redux';
 import { drag } from 'd3-drag';
 import { scaleUtc } from 'd3-scale';
 import { event as d3Event, select } from 'd3-selection';
@@ -11,14 +10,11 @@ import { Motion } from 'react-motion';
 import { zoomFactor } from '../utils/zoom-utils';
 import { strongSpring } from '../utils/animation-utils';
 import { linearGradientValue } from '../utils/math-utils';
-import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import {
   nowInSecondsPrecision,
   clampToNowInSecondsPrecision,
   scaleDuration,
 } from '../utils/time-utils';
-
-import { TIMELINE_TICK_INTERVAL, ZOOM_TRACK_DEBOUNCE_INTERVAL } from '../constants/timer';
 
 
 const TICK_SETTINGS_PER_PERIOD = {
@@ -61,6 +57,11 @@ const TICK_SETTINGS_PER_PERIOD = {
   },
 };
 
+const ZOOM_TRACK_DEBOUNCE_INTERVAL = 5000;
+const TIMELINE_DEBOUNCE_INTERVAL = 500;
+const TIMELINE_TICK_INTERVAL = 1000;
+
+const TIMELINE_HEIGHT = '55px';
 const MIN_DURATION_PER_PX = moment.duration(250, 'milliseconds');
 const INIT_DURATION_PER_PX = moment.duration(1, 'minute');
 const MAX_DURATION_PER_PX = moment.duration(3, 'days');
@@ -69,6 +70,117 @@ const MAX_TICK_SPACING_PX = 415;
 const FADE_OUT_FACTOR = 1.4;
 const TICKS_ROW_SPACING = 16;
 const MAX_TICK_ROWS = 3;
+
+
+// From https://stackoverflow.com/a/18294634
+const FullyPannableCanvas = styled.svg`
+  width: 100%;
+  height: 100%;
+  cursor: move;
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+
+  ${props => props.panning && `
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+  `}
+`;
+
+const TimeTravelContainer = styled.div`
+  transition: all .15s ease-in-out;
+  position: relative;
+  margin-bottom: 15px;
+  overflow: hidden;
+  z-index: 2001;
+  height: 0;
+
+  ${props => props.visible && `
+    height: calc(${TIMELINE_HEIGHT} + 35px);
+    margin-bottom: 15px;
+    margin-top: -5px;
+  `}
+`;
+
+const TimelineContainer = styled.div`
+  align-items: center;
+  display: flex;
+  height: ${TIMELINE_HEIGHT};
+
+  &:before, &:after {
+    border: 1px solid ${props => props.theme.colors.white};
+    background-color: ${props => props.theme.colors.accent.orange};
+    content: '';
+    position: absolute;
+    display: block;
+    left: 50%;
+    border-top: 0;
+    border-bottom: 0;
+    margin-left: -1px;
+    width: 3px;
+  }
+
+  &:before {
+    top: 0;
+    height: ${TIMELINE_HEIGHT};
+  }
+
+  &:after {
+    top: ${TIMELINE_HEIGHT};
+    height: 9px;
+    opacity: 0.15;
+  }
+`;
+
+const Timeline = FullyPannableCanvas.extend`
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 0 7px ${props => props.theme.colors.gray};
+  pointer-events: all;
+  margin: 0 7px;
+`;
+
+const DisabledRange = styled.rect`
+  fill: ${props => props.theme.colors.gray};
+  fill-opacity: 0.15;
+`;
+
+const TimestampLabel = styled.a`
+  margin-left: 2px;
+  padding: 3px;
+
+  &[disabled] {
+    color: ${props => props.theme.colors.gray};
+    cursor: inherit;
+  }
+`;
+
+const TimelinePanButton = styled.a`
+  pointer-events: all;
+  padding: 2px;
+`;
+
+const TimestampContainer = styled.div`
+  background-color: ${props => props.theme.colors.white};
+  border: 1px solid ${props => props.theme.colors.gray};
+  border-radius: 4px;
+  padding: 2px 8px;
+  pointer-events: all;
+  margin: 8px 0 25px 50%;
+  transform: translateX(-50%);
+  opacity: 0.8;
+  display: inline-block;
+`;
+
+const TimestampInput = styled.input`
+  background-color: transparent;
+  font-family: "Roboto", sans-serif;
+  text-align: center;
+  font-size: 1rem;
+  width: 165px;
+  border: 0;
+  outline: 0;
+`;
 
 
 function getTimeScale({ focusedTimestamp, durationPerPixel }) {
@@ -85,8 +197,13 @@ function findOptimalDurationFit(durations, { durationPerPixel }) {
   return find(durations, d => d >= minimalDuration);
 }
 
+function getInputValue(timestamp) {
+  return {
+    inputValue: (timestamp ? moment(timestamp) : moment()).utc().format(),
+  };
+}
 
-class TimeTravelTimeline extends React.Component {
+export default class TimeTravelComponent extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -96,6 +213,7 @@ class TimeTravelTimeline extends React.Component {
       durationPerPixel: INIT_DURATION_PER_PX,
       boundingRect: { width: 0, height: 0 },
       isPanning: false,
+      ...getInputValue(props.timestamp),
     };
 
     this.jumpRelativePixels = this.jumpRelativePixels.bind(this);
@@ -110,6 +228,15 @@ class TimeTravelTimeline extends React.Component {
 
     this.saveSvgRef = this.saveSvgRef.bind(this);
     this.debouncedTrackZoom = debounce(this.trackZoom.bind(this), ZOOM_TRACK_DEBOUNCE_INTERVAL);
+
+    this.handleInputChange = this.handleInputChange.bind(this);
+    this.handleTimelinePan = this.handleTimelinePan.bind(this);
+    this.handleTimelinePanEnd = this.handleTimelinePanEnd.bind(this);
+    this.handleInstantJump = this.handleInstantJump.bind(this);
+
+    this.instantUpdateTimestamp = this.instantUpdateTimestamp.bind(this);
+    this.debouncedUpdateTimestamp = debounce(
+      this.instantUpdateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
   }
 
   componentDidMount() {
@@ -131,23 +258,37 @@ class TimeTravelTimeline extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
+    // Update the input value
+    this.setState(getInputValue(nextProps.timestamp));
     // Don't update the focused timestamp if we're not paused (so the timeline is hidden).
-    if (nextProps.pausedAt) {
-      this.setState({ focusedTimestamp: nextProps.pausedAt });
+    if (nextProps.timestamp) {
+      this.setState({ focusedTimestamp: nextProps.timestamp });
     }
     // Always update the timeline dimension information.
     this.setState({ boundingRect: this.svgRef.getBoundingClientRect() });
   }
 
-  saveSvgRef(ref) {
-    this.svgRef = ref;
+  handleInputChange(ev) {
+    const timestamp = moment(ev.target.value);
+    this.setState({ inputValue: ev.target.value });
+
+    if (timestamp.isValid()) {
+      const clampedTimestamp = clampToNowInSecondsPrecision(timestamp);
+      this.instantUpdateTimestamp(clampedTimestamp, this.props.trackTimestampEdit);
+    }
   }
 
-  trackZoom() {
-    const periods = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds'];
-    const duration = scaleDuration(this.state.durationPerPixel, MAX_TICK_SPACING_PX);
-    const zoomedPeriod = find(periods, period => Math.floor(duration.get(period)) && period);
-    trackAnalyticsEvent('scope.time.timeline.zoom', { zoomedPeriod });
+  handleTimelinePan(timestamp) {
+    this.setState(getInputValue(timestamp));
+    this.debouncedUpdateTimestamp(timestamp);
+  }
+
+  handleTimelinePanEnd(timestamp) {
+    this.instantUpdateTimestamp(timestamp, this.props.trackTimelinePan);
+  }
+
+  handleInstantJump(timestamp) {
+    this.instantUpdateTimestamp(timestamp, this.props.trackTimelineClick);
   }
 
   handlePanStart() {
@@ -155,7 +296,7 @@ class TimeTravelTimeline extends React.Component {
   }
 
   handlePanEnd() {
-    this.props.onTimelinePanEnd(this.state.focusedTimestamp);
+    this.handleTimelinePanEnd(this.state.focusedTimestamp);
     this.setState({ isPanning: false });
   }
 
@@ -163,7 +304,7 @@ class TimeTravelTimeline extends React.Component {
     const dragDuration = scaleDuration(this.state.durationPerPixel, -d3Event.dx);
     const timestamp = moment(this.state.focusedTimestamp).add(dragDuration);
     const focusedTimestamp = clampToNowInSecondsPrecision(timestamp);
-    this.props.onTimelinePan(focusedTimestamp);
+    this.handleTimelinePan(focusedTimestamp);
     this.setState({ focusedTimestamp });
   }
 
@@ -177,9 +318,31 @@ class TimeTravelTimeline extends React.Component {
     ev.preventDefault();
   }
 
+  instantUpdateTimestamp(timestamp, callback) {
+    if (!timestamp.isSame(this.props.timestamp)) {
+      this.debouncedUpdateTimestamp.cancel();
+      this.setState(getInputValue(timestamp));
+      this.props.changeTimestamp(moment(timestamp));
+
+      // Used for tracking.
+      if (callback) callback();
+    }
+  }
+
+  saveSvgRef(ref) {
+    this.svgRef = ref;
+  }
+
+  trackZoom() {
+    const periods = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds'];
+    const duration = scaleDuration(this.state.durationPerPixel, MAX_TICK_SPACING_PX);
+    const zoomedPeriod = find(periods, period => Math.floor(duration.get(period)) && period);
+    this.props.trackTimelineZoom(zoomedPeriod);
+  }
+
   jumpTo(timestamp) {
     const focusedTimestamp = clampToNowInSecondsPrecision(timestamp);
-    this.props.onInstantJump(focusedTimestamp);
+    this.handleInstantJump(focusedTimestamp);
     this.setState({ focusedTimestamp });
   }
 
@@ -288,9 +451,9 @@ class TimeTravelTimeline extends React.Component {
         {!isBehind && <line y2="75" stroke="#ddd" strokeWidth="1" />}
         {!disabled && <title>Jump to {timestamp.utc().format()}</title>}
         <foreignObject width="100" height="20" style={{ lineHeight: '20px' }}>
-          <a className="timestamp-label" disabled={disabled} onClick={!disabled && handleClick}>
+          <TimestampLabel disabled={disabled} onClick={!disabled && handleClick}>
             {timestamp.utc().format(periodFormat)}
-          </a>
+          </TimestampLabel>
         </foreignObject>
       </g>
     );
@@ -323,11 +486,7 @@ class TimeTravelTimeline extends React.Component {
     const { width, height } = this.state.boundingRect;
 
     return (
-      <rect
-        className="available-range"
-        transform={`translate(${nowShift}, 0)`}
-        width={width} height={height}
-      />
+      <DisabledRange transform={`translate(${nowShift}, 0)`} width={width} height={height} />
     );
   }
 
@@ -371,35 +530,32 @@ class TimeTravelTimeline extends React.Component {
   }
 
   render() {
-    const className = classNames({ panning: this.state.isPanning });
-    const halfWidth = this.state.boundingRect.width / 2;
+    const { isPanning, boundingRect } = this.state;
+    const halfWidth = boundingRect.width / 2;
 
     return (
-      <div className="time-travel-timeline">
-        <a className="button jump-backward" onClick={this.jumpBackward}>
-          <span className="fa fa-chevron-left" />
-        </a>
-        <svg className={className} ref={this.saveSvgRef} onWheel={this.handleZoom}>
-          <g className="view" transform={`translate(${halfWidth}, 0)`}>
-            <title>Scroll to zoom, drag to pan</title>
-            {this.renderAnimatedContent()}
-          </g>
-        </svg>
-        <a className="button jump-forward" onClick={this.jumpForward}>
-          <span className="fa fa-chevron-right" />
-        </a>
-      </div>
+      <TimeTravelContainer visible={this.props.visible}>
+        <TimelineContainer className="time-travel-timeline">
+          <TimelinePanButton onClick={this.jumpBackward}>
+            <span className="fa fa-chevron-left" />
+          </TimelinePanButton>
+          <Timeline panning={isPanning} innerRef={this.saveSvgRef} onWheel={this.handleZoom}>
+            <g className="timeline-container" transform={`translate(${halfWidth}, 0)`}>
+              <title>Scroll to zoom, drag to pan</title>
+              {this.renderAnimatedContent()}
+            </g>
+          </Timeline>
+          <TimelinePanButton onClick={this.jumpForward}>
+            <span className="fa fa-chevron-right" />
+          </TimelinePanButton>
+        </TimelineContainer>
+        <TimestampContainer>
+          <TimestampInput
+            value={this.state.inputValue}
+            onChange={this.handleInputChange}
+          /> UTC
+        </TimestampContainer>
+      </TimeTravelContainer>
     );
   }
 }
-
-
-function mapStateToProps(state) {
-  return {
-    // Used only to trigger recalculations on window resize.
-    viewportWidth: state.getIn(['viewport', 'width']),
-    pausedAt: state.get('pausedAt'),
-  };
-}
-
-export default connect(mapStateToProps)(TimeTravelTimeline);
