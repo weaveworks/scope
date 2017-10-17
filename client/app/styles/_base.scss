@@ -1019,8 +1019,12 @@ a {
       color: $text-tertiary-color;
       font-size: 90%;
       text-align: right;
-      cursor: pointer;
-      padding: 0 4px;
+      padding: 0;
+
+      .node-details-table-header-sortable {
+        padding: 3px 2px;
+        cursor: pointer;
+      }
 
       &-sorted {
         color: $text-secondary-color;

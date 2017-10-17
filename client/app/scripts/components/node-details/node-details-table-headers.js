@@ -38,14 +38,14 @@ export default class NodeDetailsTableHeaders extends React.Component {
             NODE_DETAILS_TABLE_XS_LABEL[header.id] : header.label;
 
           return (
-            <td
-              className={headerClasses.join(' ')} style={style} onClick={onClick}
-              title={header.label} key={header.id}>
-              {isSortedAsc
-                && <span className="node-details-table-header-sorter fa fa-caret-up" />}
-              {isSortedDesc
-                && <span className="node-details-table-header-sorter fa fa-caret-down" />}
-              {label}
+            <td className={headerClasses.join(' ')} style={style} title={header.label} key={header.id}>
+              <div className="node-details-table-header-sortable" onClick={onClick}>
+                {isSortedAsc
+                  && <span className="node-details-table-header-sorter fa fa-caret-up" />}
+                {isSortedDesc
+                  && <span className="node-details-table-header-sorter fa fa-caret-down" />}
+                {label}
+              </div>
             </td>
           );
         })}

@@ -159,9 +159,9 @@ class Search extends React.Component {
           </div>
           <div className="search-label">
             <i className="fa fa-search search-label-icon" />
-            <label className="search-label-hint" htmlFor={inputId}>
+            <span className="search-label-hint" htmlFor={inputId}>
               Search
-            </label>
+            </span>
           </div>
           {!showPinnedSearches && <div className="search-hint">
             {getHint(nodes)} <span
