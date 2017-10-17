@@ -3,7 +3,7 @@ import { scaleLinear } from 'd3-scale';
 import { extent } from 'd3-array';
 
 // Inspired by Lee Byron's test data generator.
-/*eslint-disable */
+/* eslint-disable */
 function bumpLayer(n, maxValue) {
   function bump(a) {
     const x = 1 / (0.1 + Math.random());
@@ -23,7 +23,7 @@ function bumpLayer(n, maxValue) {
   const s = scaleLinear().domain(extent(values)).range([0, maxValue]);
   return values.map(s);
 }
-/*eslint-enable */
+/* eslint-enable */
 
 
 const nodeData = {};
