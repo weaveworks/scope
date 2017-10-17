@@ -6,7 +6,6 @@ import { enterEdge, leaveEdge } from '../actions/app-actions';
 import { encodeIdAttribute, decodeIdAttribute } from '../utils/dom-utils';
 
 class Edge extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);

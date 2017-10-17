@@ -4,7 +4,6 @@ import ShowMore from '../show-more';
 import NodeDetailsHealthLinkItem from './node-details-health-link-item';
 
 export default class NodeDetailsHealth extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.state = {

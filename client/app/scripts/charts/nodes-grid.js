@@ -81,7 +81,6 @@ function renderIdCell({
 
 
 class NodesGrid extends React.Component {
-
   constructor(props, context) {
     super(props, context);
 

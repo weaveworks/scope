@@ -151,7 +151,6 @@ function setAppState(fn) {
 
 
 class DebugToolbar extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.onChange = this.onChange.bind(this);

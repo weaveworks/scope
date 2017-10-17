@@ -23,7 +23,6 @@ const WINDOW_LENGTH = 60;
  * This component also keeps a historic max of all samples it sees over time.
  */
 export default ComposedComponent => class extends React.Component {
-
   constructor(props, context) {
     super(props, context);
 

@@ -6,7 +6,6 @@ import { selectNetwork, pinNetwork, unpinNetwork } from '../actions/app-actions'
 import { getNetworkColor } from '../utils/color-utils';
 
 class NetworkSelectorItem extends React.Component {
-
   constructor(props, context) {
     super(props, context);
 

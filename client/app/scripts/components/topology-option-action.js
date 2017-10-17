@@ -1,7 +1,6 @@
 import React from 'react';
 
 export default class TopologyOptionAction extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.onClick = this.onClick.bind(this);

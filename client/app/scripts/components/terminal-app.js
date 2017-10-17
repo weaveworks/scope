@@ -7,7 +7,6 @@ import { receiveControlPipeFromParams, hitEsc } from '../actions/app-actions';
 const ESC_KEY_CODE = 27;
 
 class TerminalApp extends React.Component {
-
   constructor(props, context) {
     super(props, context);
 

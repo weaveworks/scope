@@ -38,7 +38,6 @@ export function appendTime(url, time) {
 }
 
 class NodeDetailsHealthLinkItem extends React.Component {
-
   constructor(props) {
     super(props);
     this.state = {

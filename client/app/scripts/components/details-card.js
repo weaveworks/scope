@@ -10,7 +10,6 @@ import {
 } from '../constants/styles';
 
 class DetailsCard extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.state = {

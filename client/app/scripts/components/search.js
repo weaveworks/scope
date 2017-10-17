@@ -46,7 +46,6 @@ function getHint(nodes) {
 
 
 class Search extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.handleBlur = this.handleBlur.bind(this);

@@ -4,7 +4,6 @@ import { connect } from 'react-redux';
 import { unpinSearch } from '../actions/app-actions';
 
 class SearchItem extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.handleClick = this.handleClick.bind(this);
