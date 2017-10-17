@@ -9,10 +9,7 @@ import (
 //
 // not memoised
 var HostRenderer = MakeReduce(
-	MakeMap(
-		MapEndpoint2Host,
-		EndpointRenderer,
-	),
+	endpoints2Hosts{},
 	MakeMap(
 		MapX2Host,
 		ColorConnectedProcessRenderer,
@@ -64,18 +61,68 @@ func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 	return result
 }
 
-// MapEndpoint2Host takes nodes from the endpoint topology and produces
+// endpoints2Hosts takes nodes from the endpoint topology and produces
 // host nodes or pseudo nodes.
-func MapEndpoint2Host(n report.Node, local report.Networks) report.Nodes {
-	// Nodes without a hostid are treated as pseudo nodes
-	hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
-	if !ok {
-		return MapEndpoint2Pseudo(n, local)
-	}
+type endpoints2Hosts struct {
+}
 
-	id := report.MakeHostNodeID(report.ExtractHostID(n))
-	result := NewDerivedNode(id, n).WithTopology(report.Host)
-	result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
-	result.Counters = result.Counters.Add(n.Topology, 1)
-	return report.Nodes{id: result}
+func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
+	ns := SelectEndpoint.Render(rpt, dct)
+	local := LocalNetworks(rpt)
+
+	var ret = make(report.Nodes)
+	var mapped = map[string]string{} // input node ID -> output node ID
+	for _, n := range ns {
+		var result report.Node
+		var exists bool
+		// Nodes without a hostid are treated as pseudo nodes
+		hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
+		if !ok {
+			id, ok := pseudoNodeID(n, local)
+			if !ok {
+				continue
+			}
+			result, exists = ret[id]
+			if !exists {
+				result = report.MakeNode(id).WithTopology(Pseudo)
+			}
+		} else {
+			id := report.MakeHostNodeID(report.ExtractHostID(n))
+			result, exists = ret[id]
+			if !exists {
+				result = report.MakeNode(id).WithTopology(report.Host)
+				result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
+			}
+			result.Children = result.Children.Merge(n.Children)
+		}
+		result.Children = result.Children.Add(n)
+		result.Counters = result.Counters.Add(n.Topology, 1)
+		ret[result.ID] = result
+		mapped[n.ID] = result.ID
+	}
+	fixupAdjancencies(ns, ret, mapped)
+	return ret
+}
+
+// Rewrite Adjacency for new nodes in ret, original nodes in input, and mapping old->new IDs in mapped
+func fixupAdjancencies(input, ret report.Nodes, mapped map[string]string) {
+	for _, n := range input {
+		outID, ok := mapped[n.ID]
+		if !ok {
+			continue
+		}
+		out := ret[outID]
+		// for each adjacency in the original node, find out what it maps to (if any),
+		// and add that to the new node
+		for _, a := range n.Adjacency {
+			if mappedDest, found := mapped[a]; found {
+				out.Adjacency = out.Adjacency.Add(mappedDest)
+			}
+		}
+		ret[outID] = out
+	}
+}
+
+func (e endpoints2Hosts) Stats(rpt report.Report, _ Decorator) Stats {
+	return Stats{} // nothing to report
 }
