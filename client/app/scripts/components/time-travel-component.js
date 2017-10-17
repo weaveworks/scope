@@ -145,7 +145,20 @@ const DisabledRange = styled.rect`
   fill-opacity: 0.15;
 `;
 
-const TimestampLabel = styled.button`
+const ShallowButton = styled.button`
+  background-color: transparent;
+  border: 0;
+  color: ${props => props.theme.colors.primary.lavender};
+  cursor: pointer;
+  padding: 0;
+  outline: 0;
+
+  &:hover {
+    color: ${props => props.theme.colors.primary.charcoal};
+  }
+`;
+
+const TimestampLabel = ShallowButton.extend`
   margin-left: 2px;
   padding: 3px;
 
@@ -155,7 +168,7 @@ const TimestampLabel = styled.button`
   }
 `;
 
-const TimelinePanButton = styled.button`
+const TimelinePanButton = ShallowButton.extend`
   pointer-events: all;
   padding: 2px;
 `;
