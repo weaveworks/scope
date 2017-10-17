@@ -63,12 +63,14 @@ class NodeDetails extends React.Component {
     return (
       <div className="node-details-tools-wrapper">
         <div className="node-details-tools">
-          {showSwitchTopology && <span
-            title={topologyTitle}
-            className="fa fa-long-arrow-left"
-            onClick={this.handleShowTopologyForNode}>
-            <span>Show in <span>{this.props.topologyId.replace(/-/g, ' ')}</span></span>
-          </span>}
+          {showSwitchTopology &&
+            <span
+              title={topologyTitle}
+              className="fa fa-long-arrow-left"
+              onClick={this.handleShowTopologyForNode}>
+              <span>Show in <span>{this.props.topologyId.replace(/-/g, ' ')}</span></span>
+            </span>
+          }
           <span
             title="Close details"
             className="fa fa-close close-details"
@@ -190,35 +192,42 @@ class NodeDetails extends React.Component {
           </div>
         </div>
 
-        {showControls && <div className="node-details-controls-wrapper" style={styles.controls}>
-          <NodeDetailsControls
-            nodeId={this.props.nodeId}
-            controls={details.controls}
-            pending={pending}
-            error={error} />
-        </div>}
+        {showControls &&
+          <div className="node-details-controls-wrapper" style={styles.controls}>
+            <NodeDetailsControls
+              nodeId={this.props.nodeId}
+              controls={details.controls}
+              pending={pending}
+              error={error} />
+          </div>
+        }
 
         <div className="node-details-content">
-          {details.metrics && <div className="node-details-content-section">
-            <div className="node-details-content-section-header">Status</div>
-            <NodeDetailsHealth
-              metrics={details.metrics}
-              topologyId={topologyId}
-              />
-          </div>}
-          {details.metadata && <div className="node-details-content-section">
-            <div className="node-details-content-section-header">Info</div>
-            <NodeDetailsInfo rows={details.metadata} matches={nodeMatches.get('metadata')} />
-          </div>}
+          {details.metrics &&
+            <div className="node-details-content-section">
+              <div className="node-details-content-section-header">Status</div>
+              <NodeDetailsHealth
+                metrics={details.metrics}
+                topologyId={topologyId}
+                />
+            </div>
+          }
+          {details.metadata &&
+            <div className="node-details-content-section">
+              <div className="node-details-content-section-header">Info</div>
+              <NodeDetailsInfo rows={details.metadata} matches={nodeMatches.get('metadata')} />
+            </div>
+          }
 
           {details.connections && details.connections.filter(cs => cs.connections.length > 0)
-            .map(connections => (<div className="node-details-content-section" key={connections.id}>
-              <NodeDetailsTable
-                {...connections}
-                nodes={connections.connections}
-                nodeIdKey="nodeId"
-              />
-            </div>
+            .map(connections => (
+              <div className="node-details-content-section" key={connections.id}>
+                <NodeDetailsTable
+                  {...connections}
+                  nodes={connections.connections}
+                  nodeIdKey="nodeId"
+                />
+              </div>
           ))}
 
           {details.children && details.children.map(children => (
@@ -233,10 +242,12 @@ class NodeDetails extends React.Component {
                 <div className="node-details-content-section" key={table.id}>
                   <div className="node-details-content-section-header">
                     {table.label && table.label.length > 0 && table.label}
-                    {table.truncationCount > 0 && <span
-                      className="node-details-content-section-header-warning">
-                      <Warning text={getTruncationText(table.truncationCount)} />
-                    </span>}
+                    {table.truncationCount > 0 &&
+                      <span
+                        className="node-details-content-section-header-warning">
+                        <Warning text={getTruncationText(table.truncationCount)} />
+                      </span>
+                    }
                   </div>
                   {this.renderTable(table)}
                 </div>

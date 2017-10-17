@@ -22,14 +22,16 @@ class MetricSelector extends React.Component {
 
     return (
       <div className="metric-selector">
-        {hasMetrics && <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
-          {availableMetrics.map(metric => (
-            <MetricSelectorItem
-              key={metric.get('id')}
-              metric={metric}
-            />
-          ))}
-        </div>}
+        {hasMetrics &&
+          <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
+            {availableMetrics.map(metric => (
+              <MetricSelectorItem
+                key={metric.get('id')}
+                metric={metric}
+              />
+            ))}
+          </div>
+        }
       </div>
     );
   }

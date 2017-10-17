@@ -15,10 +15,12 @@ export default function NodeDetailsControls({
 
   return (
     <div className="node-details-controls">
-      {error && <div className="node-details-controls-error" title={error}>
-        <span className="node-details-controls-error-icon fa fa-warning" />
-        <span className="node-details-controls-error-messages">{error}</span>
-      </div>}
+      {error &&
+        <div className="node-details-controls-error" title={error}>
+          <span className="node-details-controls-error-icon fa fa-warning" />
+          <span className="node-details-controls-error-messages">{error}</span>
+        </div>
+      }
       <span className="node-details-controls-buttons">
         {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
           nodeId={nodeId} control={control} pending={pending} key={control.id} />)}

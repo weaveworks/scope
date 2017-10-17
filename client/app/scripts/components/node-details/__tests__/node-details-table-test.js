@@ -71,14 +71,16 @@ describe('NodeDetailsTable', () => {
 
   describe('kubernetes_ip', () => {
     it('sorts by column', () => {
-      component = TestUtils.renderIntoDocument(<Provider store={configureStore()}>
-        <NodeDetailsTable
-          columns={columns}
-          sortedBy="kubernetes_ip"
-          nodeIdKey="id"
-          nodes={nodes}
-          />
-      </Provider>);
+      component = TestUtils.renderIntoDocument((
+        <Provider store={configureStore()}>
+          <NodeDetailsTable
+            columns={columns}
+            sortedBy="kubernetes_ip"
+            nodeIdKey="id"
+            nodes={nodes}
+            />
+        </Provider>
+      ));
 
       matchColumnValues('kubernetes_ip', [
         '10.44.253.255',
@@ -105,14 +107,16 @@ describe('NodeDetailsTable', () => {
 
   describe('kubernetes_namespace', () => {
     it('sorts by column', () => {
-      component = TestUtils.renderIntoDocument(<Provider store={configureStore()}>
-        <NodeDetailsTable
-          columns={columns}
-          sortedBy="kubernetes_namespace"
-          nodeIdKey="id"
-          nodes={nodes}
-          />
-      </Provider>);
+      component = TestUtils.renderIntoDocument((
+        <Provider store={configureStore()}>
+          <NodeDetailsTable
+            columns={columns}
+            sortedBy="kubernetes_namespace"
+            nodeIdKey="id"
+            nodes={nodes}
+            />
+        </Provider>
+      ));
 
       matchColumnValues('kubernetes_namespace', ['00000', '1111', '12', '5']);
       clickColumn('Namespace');

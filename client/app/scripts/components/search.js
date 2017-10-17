@@ -163,11 +163,13 @@ class Search extends React.Component {
               Search
             </span>
           </div>
-          {!showPinnedSearches && <div className="search-hint">
-            {getHint(nodes)} <span
-              className="search-help-link fa fa-question-circle"
-              onMouseDown={this.props.toggleHelp} />
-          </div>}
+          {!showPinnedSearches &&
+            <div className="search-hint">
+              {getHint(nodes)} <span
+                className="search-help-link fa fa-question-circle"
+                onMouseDown={this.props.toggleHelp} />
+            </div>
+          }
         </div>
       </div>
     );

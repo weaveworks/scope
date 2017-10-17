@@ -94,24 +94,27 @@ class TimeControl extends React.Component {
               {isPausedNow && <span className="fa fa-pause" />}
               <span className="label">{isPausedNow ? 'Paused' : 'Pause'}</span>
             </span>
-            {hasHistoricReports && <span
-              className={className(isTimeTravelling)}
-              onClick={this.handleTravelClick}
-              title="Travel back in time">
-              {isTimeTravelling && <span className="fa fa-clock-o" />}
-              <span className="label">Time Travel</span>
-            </span>}
+            {hasHistoricReports &&
+              <span
+                className={className(isTimeTravelling)}
+                onClick={this.handleTravelClick}
+                title="Travel back in time">
+                {isTimeTravelling && <span className="fa fa-clock-o" />}
+                <span className="label">Time Travel</span>
+              </span>
+            }
           </div>
         </div>
-        {(isPausedNow || isTimeTravelling) && <span
-          className="time-control-info"
-          title={moment(pausedAt).toISOString()}>
-          Showing state from {moment(pausedAt).fromNow()}
-        </span>}
-        {isRunningNow && timeTravelTransitioning && <span
-          className="time-control-info">
-          Resuming the live state
-        </span>}
+        {(isPausedNow || isTimeTravelling) &&
+          <span
+            className="time-control-info"
+            title={moment(pausedAt).toISOString()}>
+            Showing state from {moment(pausedAt).fromNow()}
+          </span>
+        }
+        {isRunningNow && timeTravelTransitioning &&
+          <span className="time-control-info">Resuming the live state</span>
+        }
       </div>
     );
   }
