@@ -38,18 +38,18 @@ export default class NodeDetailsHealth extends React.Component {
     return (
       <div className="node-details-health" style={{ justifyContent: 'space-around' }}>
         <div className="node-details-health-wrapper">
-          {shownWithData.map(item => <NodeDetailsHealthLinkItem
+          {shownWithData.map(item => (<NodeDetailsHealthLinkItem
             {...item}
             key={item.id}
             topologyId={topologyId}
-          />)}
+          />))}
         </div>
         <div className="node-details-health-wrapper">
-          {shownEmpty.map(item => <NodeDetailsHealthLinkItem
+          {shownEmpty.map(item => (<NodeDetailsHealthLinkItem
             {...item}
             key={item.id}
             topologyId={topologyId}
-          />)}
+          />))}
         </div>
         <ShowMore
           handleClick={this.handleClickMore}

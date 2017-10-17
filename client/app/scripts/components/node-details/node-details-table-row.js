@@ -66,12 +66,12 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null, t
             style={style}
             key={field.id}>
             {intersperse(field.relatives.map(relative =>
-              <NodeDetailsTableNodeLink
+              (<NodeDetailsTableNodeLink
                 key={relative.id}
                 linkable
                 nodeId={relative.id}
                 {...relative}
-              />), ' ')}
+              />)), ' ')}
           </td>
         );
       }

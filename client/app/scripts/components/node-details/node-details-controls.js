@@ -22,11 +22,11 @@ export default function NodeDetailsControls({
         </div>
       }
       <span className="node-details-controls-buttons">
-        {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
+        {sortBy(controls, 'rank').map(control => (<NodeDetailsControlButton
           nodeId={nodeId}
           control={control}
           pending={pending}
-          key={control.id} />)}
+          key={control.id} />))}
       </span>
       {controls && <span title="Applying..." className={spinnerClassName} />}
     </div>

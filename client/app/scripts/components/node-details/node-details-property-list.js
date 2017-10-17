@@ -9,10 +9,10 @@ import ShowMore from '../show-more';
 
 const Controls = controls => (
   <div className="node-details-property-list-controls">
-    {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
+    {sortBy(controls, 'rank').map(control => (<NodeDetailsControlButton
       nodeId={control.nodeId}
       control={control}
-      key={control.id} />)}
+      key={control.id} />))}
   </div>
 );
 
