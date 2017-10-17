@@ -58,7 +58,9 @@ function getColumns(nodes) {
 }
 
 
-function renderIdCell({ rank, label, labelMinor, pseudo }) {
+function renderIdCell({
+  rank, label, labelMinor, pseudo
+}) {
   const showSubLabel = Boolean(pseudo) && labelMinor;
   const title = showSubLabel ? `${label} (${labelMinor})` : label;
   const iconStyle = {
@@ -101,8 +103,10 @@ class NodesGrid extends React.Component {
   }
 
   render() {
-    const { nodes, height, gridSortedBy, gridSortedDesc, canvasMargins,
-      searchNodeMatches, searchQuery } = this.props;
+    const {
+      nodes, height, gridSortedBy, gridSortedDesc, canvasMargins,
+      searchNodeMatches, searchQuery
+    } = this.props;
     const cmpStyle = {
       height,
       marginTop: canvasMargins.top,

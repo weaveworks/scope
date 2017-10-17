@@ -75,7 +75,9 @@ export default class Sparkline extends React.Component {
     const title = `Last ${Math.round((lastDate - firstDate) / 1000)} seconds, ` +
       `${data.length} samples, min: ${min}, max: ${max}, mean: ${mean}`;
 
-    return {title, lastX, lastY, data};
+    return {
+      title, lastX, lastY, data
+    };
   }
 
   getEmptyGraphData() {

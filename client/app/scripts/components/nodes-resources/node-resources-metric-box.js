@@ -28,7 +28,9 @@ import {
 // down to this component, so a lot of stuff gets rerendered/recalculated on every zoom action.
 // On the other hand, this enables us to easily leave out the nodes that are not in the viewport.
 const transformedDimensions = (props) => {
-  const { width, height, x, y } = applyTransform(props.transform, props);
+  const {
+    width, height, x, y
+  } = applyTransform(props.transform, props);
 
   // Trim the beginning of the resource box just after the layer topology
   // name to the left and the viewport width to the right. That enables us
@@ -79,7 +81,9 @@ class NodeResourcesMetricBox extends React.Component {
   }
 
   defaultRectProps(relativeHeight = 1) {
-    const { x, y, width, height } = this.state;
+    const {
+      x, y, width, height
+    } = this.state;
     const translateY = height * (1 - relativeHeight);
     return {
       transform: `translate(0, ${translateY})`,
@@ -94,7 +98,9 @@ class NodeResourcesMetricBox extends React.Component {
 
   render() {
     const { x, y, width } = this.state;
-    const { id, selectedNodeId, label, color, metricSummary } = this.props;
+    const {
+      id, selectedNodeId, label, color, metricSummary
+    } = this.props;
     const { showCapacity, relativeConsumption, type } = metricSummary.toJS();
     const opacity = (selectedNodeId && selectedNodeId !== id) ? 0.35 : 1;
 

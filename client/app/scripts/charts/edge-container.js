@@ -70,7 +70,9 @@ export default class EdgeContainer extends React.PureComponent {
   }
 
   render() {
-    const { isAnimated, waypoints, scale, ...forwardedProps } = this.props;
+    const {
+      isAnimated, waypoints, scale, ...forwardedProps
+    } = this.props;
     const { thickness, waypointsMap } = this.state;
 
     if (!isAnimated) {

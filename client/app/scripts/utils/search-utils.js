@@ -74,7 +74,9 @@ function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label, truncat
       const index = text.search(queryRe);
       nodeMatches = nodeMatches.setIn(
         keyPath,
-        {text, label, start: index, length: firstMatch.length, truncate}
+        {
+          text, label, start: index, length: firstMatch.length, truncate
+        }
       );
     }
   }
@@ -121,7 +123,9 @@ function findNodeMatchMetric(nodeMatches, keyPath, fieldValue, fieldLabel, metri
   return nodeMatches;
 }
 
-export function searchNode(node, { prefix, query, metric, comp, value }) {
+export function searchNode(node, {
+  prefix, query, metric, comp, value
+}) {
   let nodeMatches = makeMap();
 
   if (query) {

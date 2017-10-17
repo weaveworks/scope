@@ -14,7 +14,9 @@ class Edge extends React.Component {
   }
 
   render() {
-    const { id, path, highlighted, focused, thickness, source, target } = this.props;
+    const {
+      id, path, highlighted, focused, thickness, source, target
+    } = this.props;
     const shouldRenderMarker = (focused || highlighted) && (source !== target);
     const className = classNames('edge', { highlighted });
 

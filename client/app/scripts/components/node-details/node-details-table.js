@@ -202,8 +202,10 @@ class NodeDetailsTable extends React.Component {
   }
 
   render() {
-    const { nodeIdKey, columns, topologyId, onClickRow,
-      onMouseEnter, onMouseLeave, timestamp } = this.props;
+    const {
+      nodeIdKey, columns, topologyId, onClickRow,
+      onMouseEnter, onMouseLeave, timestamp
+    } = this.props;
 
     const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
     const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);

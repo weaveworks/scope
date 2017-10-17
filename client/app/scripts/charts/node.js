@@ -103,8 +103,10 @@ class Node extends React.Component {
   }
 
   render() {
-    const { focused, highlighted, networks, pseudo, rank, label, transform,
-      exportingGraph, showingNetworks, stack, id, metric } = this.props;
+    const {
+      focused, highlighted, networks, pseudo, rank, label, transform,
+      exportingGraph, showingNetworks, stack, id, metric
+    } = this.props;
     const { hovered } = this.state;
 
     const color = getNodeColor(rank, label, pseudo);

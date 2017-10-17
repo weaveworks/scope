@@ -88,7 +88,9 @@ class ZoomableCanvas extends React.Component {
 
   handleZoomControlAction(scale) {
     // Get the center of the SVG and zoom around it.
-    const { top, bottom, left, right } = this.svg.node().getBoundingClientRect();
+    const {
+      top, bottom, left, right
+    } = this.svg.node().getBoundingClientRect();
     const centerOfCanvas = {
       x: (left + right) / 2,
       y: (top + bottom) / 2,
@@ -164,7 +166,8 @@ class ZoomableCanvas extends React.Component {
   handlePan() {
     let state = this.state;
     // Apply the translation respecting the boundaries.
-    state = this.clampedTranslation({ ...state,
+    state = this.clampedTranslation({
+      ...state,
       translateX: this.state.translateX + d3Event.dx,
       translateY: this.state.translateY + d3Event.dy,
     });
@@ -185,8 +188,12 @@ class ZoomableCanvas extends React.Component {
   }
 
   clampedTranslation(state) {
-    const { width, height, canvasMargins, boundContent, layoutLimits } = this.props;
-    const { contentMinX, contentMaxX, contentMinY, contentMaxY } = layoutLimits.toJS();
+    const {
+      width, height, canvasMargins, boundContent, layoutLimits
+    } = this.props;
+    const {
+      contentMinX, contentMaxX, contentMinY, contentMaxY
+    } = layoutLimits.toJS();
 
     if (boundContent) {
       // If the content is required to be bounded in any way, the translation will
@@ -239,7 +246,8 @@ class ZoomableCanvas extends React.Component {
     // translation limits). Adapted from:
     // https://github.com/d3/d3-zoom/blob/807f02c7a5fe496fbd08cc3417b62905a8ce95fa/src/zoom.js#L251
     const inversePosition = inverseTransform(this.state, position);
-    state = this.clampedTranslation({ ...state,
+    state = this.clampedTranslation({
+      ...state,
       translateX: position.x - (inversePosition.x * scaleX),
       translateY: position.y - (inversePosition.y * scaleY),
     });

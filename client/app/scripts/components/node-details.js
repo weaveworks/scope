@@ -158,7 +158,9 @@ class NodeDetails extends React.Component {
   }
 
   renderDetails() {
-    const { details, nodeControlStatus, nodeMatches = makeMap(), topologyId } = this.props;
+    const {
+      details, nodeControlStatus, nodeMatches = makeMap(), topologyId
+    } = this.props;
     const showControls = details.controls && details.controls.length > 0;
     const nodeColor = getNodeColorDark(details.rank, details.label, details.pseudo);
     const {error, pending} = nodeControlStatus ? nodeControlStatus.toJS() : {};

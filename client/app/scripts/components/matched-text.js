@@ -80,7 +80,9 @@ function truncateChunks(chunks, text, maxLength) {
  */
 export default class MatchedText extends React.PureComponent {
   render() {
-    const { match, text, truncate, maxLength } = this.props;
+    const {
+      match, text, truncate, maxLength
+    } = this.props;
 
     const showFullValue = !truncate || (match && (match.start + match.length) > truncate);
     const displayText = showFullValue ? text : text.slice(0, truncate);

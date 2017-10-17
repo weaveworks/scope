@@ -34,7 +34,9 @@ class Footer extends React.Component {
   }
 
   render() {
-    const { hostname, version, versionUpdate, contrastMode } = this.props;
+    const {
+      hostname, version, versionUpdate, contrastMode
+    } = this.props;
 
     const otherContrastModeTitle = contrastMode
       ? 'Switch to normal contrast' : 'Switch to high contrast';

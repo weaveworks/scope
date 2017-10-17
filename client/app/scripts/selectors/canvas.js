@@ -11,7 +11,9 @@ export const canvasMarginsSelector = createSelector(
   [
     state => state.get('topologyViewMode'),
   ],
-  viewMode => CANVAS_MARGINS[viewMode] || { top: 0, left: 0, right: 0, bottom: 0 }
+  viewMode => CANVAS_MARGINS[viewMode] || {
+    top: 0, left: 0, right: 0, bottom: 0
+  }
 );
 
 export const canvasWidthSelector = createSelector(

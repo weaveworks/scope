@@ -126,8 +126,10 @@ class Search extends React.Component {
   }
 
   render() {
-    const { nodes, pinnedSearches, searchFocused, searchMatchCountByTopology,
-      isResourceViewMode, searchQuery, topologiesLoaded, inputId = 'search' } = this.props;
+    const {
+      nodes, pinnedSearches, searchFocused, searchMatchCountByTopology,
+      isResourceViewMode, searchQuery, topologiesLoaded, inputId = 'search'
+    } = this.props;
     const hidden = !topologiesLoaded || isResourceViewMode;
     const disabled = this.props.isTopologyNodeCountZero && !hidden;
     const matchCount = searchMatchCountByTopology
@@ -188,5 +190,7 @@ export default connect(
     searchQuery: state.get('searchQuery'),
     searchMatchCountByTopology: searchMatchCountByTopologySelector(state),
   }),
-  { blurSearch, doSearch, focusSearch, pinSearch, toggleHelp }
+  {
+    blurSearch, doSearch, focusSearch, pinSearch, toggleHelp
+  }
 )(Search);

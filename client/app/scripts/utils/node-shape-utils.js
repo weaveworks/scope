@@ -22,7 +22,9 @@ function curvedUnitPolygonPath(n) {
 
 export const circleShapeProps = { r: 1 };
 export const triangleShapeProps = { d: curvedUnitPolygonPath(3) };
-export const squareShapeProps = { width: 1.8, height: 1.8, rx: 0.4, ry: 0.4, x: -0.9, y: -0.9 };
+export const squareShapeProps = {
+  width: 1.8, height: 1.8, rx: 0.4, ry: 0.4, x: -0.9, y: -0.9
+};
 export const pentagonShapeProps = { d: curvedUnitPolygonPath(5) };
 export const hexagonShapeProps = { d: curvedUnitPolygonPath(6) };
 export const heptagonShapeProps = { d: curvedUnitPolygonPath(7) };

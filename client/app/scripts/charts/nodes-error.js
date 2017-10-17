@@ -1,7 +1,9 @@
 import React from 'react';
 import classnames from 'classnames';
 
-const NodesError = ({ children, faIconClass, hidden, mainClassName = 'nodes-chart-error'}) => {
+const NodesError = ({
+  children, faIconClass, hidden, mainClassName = 'nodes-chart-error'
+}) => {
   const className = classnames(mainClassName, {
     hide: hidden
   });

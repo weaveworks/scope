@@ -37,9 +37,15 @@ describe('MathUtils', () => {
       expect(f(fromJS({...entryA, ...entryB}))).toBe(30);
       expect(f(fromJS({...entryA, ...entryC}))).toBe(40);
       expect(f(fromJS({...entryB, ...entryC}))).toBe(50);
-      expect(f(fromJS({...entryA, ...entryB, ...entryC, ...entryD}))).toBe(30);
-      expect(f(fromJS({...entryA, ...entryB, ...entryC, ...entryD, ...entryE}))).toBe(1);
-      expect(f(fromJS({...entryA, ...entryB, ...entryC, ...entryD, ...entryF}))).toBe(0);
+      expect(f(fromJS({
+        ...entryA, ...entryB, ...entryC, ...entryD
+      }))).toBe(30);
+      expect(f(fromJS({
+        ...entryA, ...entryB, ...entryC, ...entryD, ...entryE
+      }))).toBe(1);
+      expect(f(fromJS({
+        ...entryA, ...entryB, ...entryC, ...entryD, ...entryF
+      }))).toBe(0);
     });
   });
 });

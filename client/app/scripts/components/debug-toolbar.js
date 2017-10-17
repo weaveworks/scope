@@ -265,7 +265,9 @@ class DebugToolbar extends React.Component {
   addInternetNode() {
     setTimeout(() => {
       this.asyncDispatch(receiveNodesDelta({
-        add: [{id: INTERNET, label: INTERNET, pseudo: true, labelMinor: 'Outgoing packets', shape: 'cloud'}]
+        add: [{
+          id: INTERNET, label: INTERNET, pseudo: true, labelMinor: 'Outgoing packets', shape: 'cloud'
+        }]
       }));
     }, 0);
   }

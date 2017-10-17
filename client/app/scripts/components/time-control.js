@@ -61,8 +61,10 @@ class TimeControl extends React.Component {
   }
 
   render() {
-    const { showingTimeTravel, pausedAt, timeTravelTransitioning, topologiesLoaded,
-      hasHistoricReports } = this.props;
+    const {
+      showingTimeTravel, pausedAt, timeTravelTransitioning, topologiesLoaded,
+      hasHistoricReports
+    } = this.props;
 
     const isPausedNow = pausedAt && !showingTimeTravel;
     const isTimeTravelling = showingTimeTravel;

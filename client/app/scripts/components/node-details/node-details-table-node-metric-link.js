@@ -17,7 +17,9 @@ class NodeDetailsTableNodeMetricLink extends React.Component {
   }
 
   render() {
-    const { url, style, value, valueEmpty } = this.props;
+    const {
+      url, style, value, valueEmpty
+    } = this.props;
 
     return (
       <td

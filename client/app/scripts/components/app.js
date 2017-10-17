@@ -170,9 +170,11 @@ class App extends React.Component {
   }
 
   render() {
-    const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails,
+    const {
+      isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails,
       showingHelp, showingNetworkSelector, showingTroubleshootingMenu,
-      timeTravelTransitioning, showingTimeTravel } = this.props;
+      timeTravelTransitioning, showingTimeTravel
+    } = this.props;
 
     const className = classNames('scope-app', { 'time-travel-open': showingTimeTravel });
     const isIframe = window !== window.top;

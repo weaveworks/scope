@@ -3,7 +3,9 @@ import { sortBy } from 'lodash';
 
 import NodeDetailsControlButton from './node-details-control-button';
 
-export default function NodeDetailsControls({controls, error, nodeId, pending}) {
+export default function NodeDetailsControls({
+  controls, error, nodeId, pending
+}) {
   let spinnerClassName = 'fa fa-circle-o-notch fa-spin';
   if (pending) {
     spinnerClassName += ' node-details-controls-spinner';

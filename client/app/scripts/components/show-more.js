@@ -12,7 +12,9 @@ export default class ShowMore extends React.PureComponent {
   }
 
   render() {
-    const { collection, notShown, expanded, hideNumber } = this.props;
+    const {
+      collection, notShown, expanded, hideNumber
+    } = this.props;
     const showLimitAction = collection && (expanded || notShown > 0);
     const limitActionText = !hideNumber && !expanded && notShown > 0 ? `+${notShown}` : '';
     const limitActionIcon = !expanded && notShown > 0 ? 'fa fa-caret-down' : 'fa fa-caret-up';

@@ -560,7 +560,8 @@ export function rootReducer(state = initialState, action) {
 
       // disregard if node is not selected anymore
       if (state.hasIn(['nodeDetails', action.details.id])) {
-        state = state.updateIn(['nodeDetails', action.details.id], obj => ({ ...obj,
+        state = state.updateIn(['nodeDetails', action.details.id], obj => ({
+          ...obj,
           notFound: false,
           timestamp: action.requestTimestamp,
           details: action.details,
@@ -636,7 +637,8 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.RECEIVE_NOT_FOUND: {
       if (state.hasIn(['nodeDetails', action.nodeId])) {
-        state = state.updateIn(['nodeDetails', action.nodeId], obj => ({ ...obj,
+        state = state.updateIn(['nodeDetails', action.nodeId], obj => ({
+          ...obj,
           timestamp: action.requestTimestamp,
           notFound: true,
         }));

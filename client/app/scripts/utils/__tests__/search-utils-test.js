@@ -140,7 +140,9 @@ describe('SearchUtils', () => {
       );
       expect(matches.size).toBe(1);
       expect(matches.getIn(['node1', 'field1'])).toBeDefined();
-      const {text, label, start, length} = matches.getIn(['node1', 'field1']);
+      const {
+        text, label, start, length
+      } = matches.getIn(['node1', 'field1']);
       expect(text).toBe('samevalue');
       expect(label).toBe('some label');
       expect(start).toBe(0);

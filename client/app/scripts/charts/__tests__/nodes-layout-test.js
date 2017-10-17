@@ -134,13 +134,17 @@ describe('NodesLayout', () => {
     },
     layoutProps: {
       nodes: fromJS({
-        n1: {id: 'n1', label: 'lold', labelMinor: 'lmold', rank: 'rold'},
+        n1: {
+          id: 'n1', label: 'lold', labelMinor: 'lmold', rank: 'rold'
+        },
       }),
       edges: fromJS({})
     },
     layoutProps2: {
       nodes: fromJS({
-        n1: {id: 'n1', label: 'lnew', labelMinor: 'lmnew', rank: 'rnew', x: 111, y: 109},
+        n1: {
+          id: 'n1', label: 'lnew', labelMinor: 'lmnew', rank: 'rnew', x: 111, y: 109
+        },
       }),
       edges: fromJS({})
     }

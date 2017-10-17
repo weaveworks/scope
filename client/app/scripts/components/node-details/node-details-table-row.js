@@ -154,7 +154,9 @@ export default class NodeDetailsTableRow extends React.Component {
   }
 
   render() {
-    const { node, nodeIdKey, topologyId, columns, onClick, colStyles, timestamp } = this.props;
+    const {
+      node, nodeIdKey, topologyId, columns, onClick, colStyles, timestamp
+    } = this.props;
     const [firstColumnStyle, ...columnStyles] = colStyles;
     const values = renderValues(node, columns, columnStyles, timestamp, topologyId);
     const nodeId = node[nodeIdKey];

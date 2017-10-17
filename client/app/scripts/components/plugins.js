@@ -5,7 +5,9 @@ import classNames from 'classnames';
 import Tooltip from './tooltip';
 
 
-const Plugin = ({id, label, description, status}) => {
+const Plugin = ({
+  id, label, description, status
+}) => {
   const error = status !== 'ok';
   const className = classNames({ error });
   const tip = (<span>Description: {description}<br />Status: {status}</span>);

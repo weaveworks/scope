@@ -427,7 +427,8 @@ describe('RootReducer', () => {
     RouteAction.state = {
       topologyId: 'topo1',
       selectedNodeId: null,
-      topologyOptions: {topo1: {option1: 'on'}}};
+      topologyOptions: {topo1: {option1: 'on'}}
+    };
 
     let nextState = initialState;
     nextState = reducer(nextState, RouteAction);
@@ -445,7 +446,8 @@ describe('RootReducer', () => {
     RouteAction.state = {
       topologyId: 'topo1',
       selectedNodeId: null,
-      topologyOptions: null};
+      topologyOptions: null
+    };
     let nextState = initialState;
     nextState = reducer(nextState, RouteAction);
     nextState = reducer(nextState, ReceiveTopologiesAction);
