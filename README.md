@@ -5,6 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/weaveworks/scope)](https://goreportcard.com/report/github.com/weaveworks/scope)
 [![Slack Status](https://slack.weave.works/badge.svg)](https://slack.weave.works)
 [![Docker Pulls](https://img.shields.io/docker/pulls/weaveworks/scope.svg?maxAge=604800)](https://hub.docker.com/r/weaveworks/scope/)
+[![GoDoc](https://godoc.org/github.com/weaveworks/scope?status.svg)](https://godoc.org/github.com/weaveworks/scope)
 
 Weave Scope automatically generates a map of your application, enabling you to
 intuitively understand, monitor, and control your containerized, microservices based application.
