@@ -30,8 +30,7 @@ function getHint(nodes) {
 
   const node = nodes.filter(n => !n.get('pseudo') && n.has('metadata')).last();
   if (node) {
-    label = shortenHintLabel(node.get('label'))
-      .split('.')[0];
+    [label] = shortenHintLabel(node.get('label')).split('.');
     if (node.get('metadata')) {
       const metadataField = node.get('metadata').first();
       metadataLabel = shortenHintLabel(slugify(metadataField.get('label')))

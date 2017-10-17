@@ -20,7 +20,7 @@ class NetworkSelectorItem extends React.Component {
 
   onMouseClick() {
     const k = this.props.network.get('id');
-    const pinnedNetwork = this.props.pinnedNetwork;
+    const { pinnedNetwork } = this.props;
 
     if (k === pinnedNetwork) {
       this.props.unpinNetwork(k);

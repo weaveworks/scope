@@ -38,7 +38,7 @@ export default class Sparkline extends React.Component {
 
   getGraphData() {
     // data is of shape [{date, value}, ...] and is sorted by date (ASC)
-    let data = this.props.data;
+    let { data } = this.props;
 
     this.initRanges(true);
 

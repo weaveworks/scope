@@ -57,7 +57,7 @@ export default ComposedComponent => class extends React.Component {
 
   updateBuffer(props) {
     // merge new samples into buffer
-    let buffer = this.state.buffer;
+    let { buffer } = this.state;
     const nextSamples = makeOrderedMap(props.samples.map(d => [d.date, d.value]));
     // need to sort again after merge, some new data may have different times for old values
     buffer = buffer.merge(nextSamples).sortBy(sortDate);

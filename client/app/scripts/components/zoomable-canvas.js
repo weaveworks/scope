@@ -164,7 +164,7 @@ class ZoomableCanvas extends React.Component {
   }
 
   handlePan() {
-    let state = this.state;
+    let { state } = this;
     // Apply the translation respecting the boundaries.
     state = this.clampedTranslation({
       ...state,

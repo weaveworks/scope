@@ -30,7 +30,7 @@ export default class NodeDetailsPropertyList extends React.Component {
 
   render() {
     const { controls, matches = makeMap() } = this.props;
-    let rows = this.props.rows;
+    let { rows } = this.props;
     let notShown = 0;
     const limited = rows && this.state.limit > 0 && rows.length > this.state.limit;
     const expanded = this.state.limit === 0;

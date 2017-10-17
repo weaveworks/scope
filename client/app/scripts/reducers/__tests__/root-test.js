@@ -10,15 +10,13 @@ import { highlightedEdgeIdsSelector } from '../../selectors/graph-view/decorator
 describe('RootReducer', () => {
   const ActionTypes = require('../../constants/action-types').default;
   const reducer = require('../root').default;
-  const initialState = require('../root').initialState;
+  const { initialState } = require('../root');
   const topologyUtils = require('../../utils/topology-utils');
   const topologySelectors = require('../../selectors/topology');
   // TODO maybe extract those to topology-utils tests?
-  const activeTopologyOptionsSelector = topologySelectors.activeTopologyOptionsSelector;
-  const getAdjacentNodes = topologyUtils.getAdjacentNodes;
-  const isNodesDisplayEmpty = topologyUtils.isNodesDisplayEmpty;
-  const isTopologyNodeCountZero = topologyUtils.isTopologyNodeCountZero;
-  const getUrlState = require('../../utils/router-utils').getUrlState;
+  const { activeTopologyOptionsSelector } = topologySelectors;
+  const { getAdjacentNodes, isNodesDisplayEmpty, isTopologyNodeCountZero } = topologyUtils;
+  const { getUrlState } = require('../../utils/router-utils');
 
   // fixtures
 
