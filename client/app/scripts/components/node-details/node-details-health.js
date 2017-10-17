@@ -52,8 +52,11 @@ export default class NodeDetailsHealth extends React.Component {
           />)}
         </div>
         <ShowMore
-          handleClick={this.handleClickMore} collection={metrics}
-          expanded={this.state.expanded} notShown={notShown} hideNumber={this.state.expanded}
+          handleClick={this.handleClickMore}
+          collection={metrics}
+          expanded={this.state.expanded}
+          notShown={notShown}
+          hideNumber={this.state.expanded}
         />
       </div>
     );

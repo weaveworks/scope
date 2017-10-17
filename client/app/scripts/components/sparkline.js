@@ -115,13 +115,21 @@ export default class Sparkline extends React.Component {
       <div title={graph.title}>
         <svg width={this.props.width} height={this.props.height}>
           <path
-            className="sparkline" fill="none" stroke={strokeColor}
-            strokeWidth={strokeWidth} strokeDasharray={strokeDasharray}
+            className="sparkline"
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={strokeDasharray}
             d={this.line(graph.data)}
           />
           {hasData && <circle
-            className="sparkcircle" cx={graph.lastX} cy={graph.lastY} fill={circleColor}
-            fillOpacity={fillOpacity} stroke="none" r={radius}
+            className="sparkcircle"
+            cx={graph.lastX}
+            cy={graph.lastY}
+            fill={circleColor}
+            fillOpacity={fillOpacity}
+            stroke="none"
+            r={radius}
           />}
         </svg>
       </div>

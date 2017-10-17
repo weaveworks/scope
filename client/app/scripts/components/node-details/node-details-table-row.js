@@ -78,7 +78,10 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null, t
       // valueType === 'metrics'
       return (
         <NodeDetailsTableNodeMetricLink
-          style={style} key={field.id} topologyId={topologyId} {...field} />
+          style={style}
+          key={field.id}
+          topologyId={topologyId}
+          {...field} />
       );
     }
     // empty cell to complete the row for proper hover

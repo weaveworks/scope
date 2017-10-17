@@ -117,8 +117,10 @@ class NodeResourcesMetricBox extends React.Component {
 
     return (
       <g
-        className="node-resources-metric-box" style={{ opacity }}
-        onClick={this.handleClick} ref={this.saveNodeRef}>
+        className="node-resources-metric-box"
+        style={{ opacity }}
+        onClick={this.handleClick}
+        ref={this.saveNodeRef}>
         <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
         {showCapacity && <rect className="frame" {...this.defaultRectProps()} />}
         <rect className="bar" fill={color} {...this.defaultRectProps(relativeConsumption)} />

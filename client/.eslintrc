@@ -40,7 +40,6 @@
     "jsx-a11y/click-events-have-key-events": 0,
     "jsx-a11y/mouse-events-have-key-events": 0,
 
-    "react/jsx-max-props-per-line": 0,
     "react/jsx-wrap-multilines": 0,
   }
 }

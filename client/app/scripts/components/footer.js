@@ -54,7 +54,8 @@ class Footer extends React.Component {
               className="footer-versionupdate"
               title={versionUpdateTitle}
               href={versionUpdate.get('downloadUrl')}
-              target="_blank" rel="noopener noreferrer">
+              target="_blank"
+              rel="noopener noreferrer">
               Update available: {versionUpdate.get('version')}
             </a>
           }
@@ -80,7 +81,8 @@ class Footer extends React.Component {
           </button>
           <button
             onClick={this.props.toggleTroubleshootingMenu}
-            className="footer-icon" title="Open troubleshooting menu"
+            className="footer-icon"
+            title="Open troubleshooting menu"
             href=""
           >
             <span className="fa fa-bug" />

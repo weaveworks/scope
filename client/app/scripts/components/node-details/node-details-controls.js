@@ -23,7 +23,10 @@ export default function NodeDetailsControls({
       }
       <span className="node-details-controls-buttons">
         {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
-          nodeId={nodeId} control={control} pending={pending} key={control.id} />)}
+          nodeId={nodeId}
+          control={control}
+          pending={pending}
+          key={control.id} />)}
       </span>
       {controls && <span title="Applying..." className={spinnerClassName} />}
     </div>

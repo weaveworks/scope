@@ -91,7 +91,9 @@ export default class NodeDetailsGenericTable extends React.Component {
                   return (
                     <td
                       className="node-details-generic-table-value truncate"
-                      title={value} key={column.id} style={styles[index]}>
+                      title={value}
+                      key={column.id}
+                      style={styles[index]}>
                       <MatchedText text={value} match={match} />
                     </td>
                   );
@@ -101,8 +103,10 @@ export default class NodeDetailsGenericTable extends React.Component {
           </tbody>
         </table>
         <ShowMore
-          handleClick={this.handleLimitClick} collection={this.props.rows}
-          expanded={expanded} notShown={notShown}
+          handleClick={this.handleLimitClick}
+          collection={this.props.rows}
+          expanded={expanded}
+          notShown={notShown}
         />
       </div>
     );

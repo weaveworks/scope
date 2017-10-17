@@ -21,7 +21,8 @@ class Edge extends React.Component {
 
     return (
       <g
-        id={encodeIdAttribute(id)} className={className}
+        id={encodeIdAttribute(id)}
+        className={className}
         onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave}
       >

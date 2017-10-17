@@ -276,14 +276,16 @@ class NodeDetails extends React.Component {
     if (isGenericTable(table)) {
       return (
         <NodeDetailsGenericTable
-          rows={table.rows} columns={table.columns}
+          rows={table.rows}
+          columns={table.columns}
           matches={nodeMatches.get('tables')}
         />
       );
     } else if (isPropertyList(table)) {
       return (
         <NodeDetailsPropertyList
-          rows={table.rows} controls={table.controls}
+          rows={table.rows}
+          controls={table.controls}
           matches={nodeMatches.get('property-lists')}
         />
       );

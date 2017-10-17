@@ -65,9 +65,11 @@ class DebugMenu extends React.Component {
             </div>
             <div className="troubleshooting-menu-item">
               <a
-                className="footer-icon" title="Report an issue"
+                className="footer-icon"
+                title="Report an issue"
                 href="https://gitreports.com/issue/weaveworks/scope"
-                target="_blank" rel="noopener noreferrer"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <span className="fa fa-bug" />
                 <span className="description">Report a bug</span>

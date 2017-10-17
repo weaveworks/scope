@@ -10,8 +10,12 @@ function NodeDetailsHealthItem(props) {
       {!props.valueEmpty && <div className="node-details-health-item-value" style={labelStyle}>{formatMetric(props.value, props)}</div>}
       <div className="node-details-health-item-sparkline">
         <Sparkline
-          data={props.samples} max={props.max} format={props.format}
-          first={props.first} last={props.last} hoverColor={props.metricColor}
+          data={props.samples}
+          max={props.max}
+          format={props.format}
+          first={props.first}
+          last={props.last}
+          hoverColor={props.metricColor}
           hovered={props.hovered}
         />
       </div>

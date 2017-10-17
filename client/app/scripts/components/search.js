@@ -152,10 +152,16 @@ class Search extends React.Component {
             {showPinnedSearches && pinnedSearches.toIndexedSeq()
               .map(query => <SearchItem query={query} key={query} />)}
             <input
-              className="search-input-field" type="text" id={inputId}
-              value={value} onChange={this.handleChange} onKeyUp={this.handleKeyUp}
-              onFocus={this.handleFocus} onBlur={this.handleBlur}
-              disabled={disabled} ref={this.saveQueryInputRef} />
+              className="search-input-field"
+              type="text"
+              id={inputId}
+              value={value}
+              onChange={this.handleChange}
+              onKeyUp={this.handleKeyUp}
+              onFocus={this.handleFocus}
+              onBlur={this.handleBlur}
+              disabled={disabled}
+              ref={this.saveQueryInputRef} />
           </div>
           <div className="search-label">
             <i className="fa fa-search search-label-icon" />

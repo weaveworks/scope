@@ -39,7 +39,8 @@ describe('NodeDetails', () => {
         <NodeDetails
           nodes={nodes}
           topologyId="containers"
-          nodeId={nodeId} details={details}
+          nodeId={nodeId}
+          details={details}
           />
       </Provider>
     ));

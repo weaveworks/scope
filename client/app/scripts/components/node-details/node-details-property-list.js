@@ -10,7 +10,9 @@ import ShowMore from '../show-more';
 const Controls = controls => (
   <div className="node-details-property-list-controls">
     {sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
-      nodeId={control.nodeId} control={control} key={control.id} />)}
+      nodeId={control.nodeId}
+      control={control}
+      key={control.id} />)}
   </div>
 );
 
@@ -50,7 +52,8 @@ export default class NodeDetailsPropertyList extends React.Component {
           <div className="node-details-property-list-field" key={field.id}>
             <div
               className="node-details-property-list-field-label truncate"
-              title={field.entries.label} key={field.id}>
+              title={field.entries.label}
+              key={field.id}>
               {field.entries.label}
             </div>
             <div
@@ -61,8 +64,10 @@ export default class NodeDetailsPropertyList extends React.Component {
           </div>
         ))}
         <ShowMore
-          handleClick={this.handleLimitClick} collection={this.props.rows}
-          expanded={expanded} notShown={notShown} />
+          handleClick={this.handleLimitClick}
+          collection={this.props.rows}
+          expanded={expanded}
+          notShown={notShown} />
       </div>
     );
   }

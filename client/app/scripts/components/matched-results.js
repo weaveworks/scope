@@ -13,7 +13,8 @@ const Match = match => (
         {match.label}:
       </span>
       <MatchedText
-        text={match.text} match={match}
+        text={match.text}
+        match={match}
         maxLength={MAX_MATCH_LENGTH}
         truncate={match.truncate} />
     </div>

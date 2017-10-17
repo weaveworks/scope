@@ -11,8 +11,11 @@ class Details extends React.Component {
       <div className="details">
         {details.toIndexedSeq().map((obj, index) => (
           <DetailsCard
-            key={obj.id} index={index} cardCount={details.size}
-            nodeControlStatus={controlStatus.get(obj.id)} {...obj}
+            key={obj.id}
+            index={index}
+            cardCount={details.size}
+            nodeControlStatus={controlStatus.get(obj.id)}
+            {...obj}
           />
         ))}
       </div>

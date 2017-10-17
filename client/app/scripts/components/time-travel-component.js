@@ -500,7 +500,9 @@ export default class TimeTravelComponent extends React.Component {
         <rect
           className="tooltip-container"
           transform={`translate(${-width / 2}, 0)`}
-          width={width} height={height} fillOpacity={0}
+          width={width}
+          height={height}
+          fillOpacity={0}
         />
         {this.renderDisabledShadow(timelineTransform)}
         <g className="ticks" transform="translate(0, 1)">

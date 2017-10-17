@@ -57,8 +57,10 @@ class NodeDetailsInfo extends React.Component {
           );
         })}
         <ShowMore
-          handleClick={this.handleClickMore} collection={this.props.rows}
-          expanded={this.state.expanded} notShown={notShown} />
+          handleClick={this.handleClickMore}
+          collection={this.props.rows}
+          expanded={this.state.expanded}
+          notShown={notShown} />
       </div>
     );
   }

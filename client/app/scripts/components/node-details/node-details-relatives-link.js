@@ -35,8 +35,10 @@ class NodeDetailsRelativesLink extends React.Component {
     const title = `View in ${this.props.topologyId}: ${this.props.label}`;
     return (
       <span
-        className="node-details-relatives-link" title={title}
-        onClick={this.handleClick} ref={this.saveNodeRef}>
+        className="node-details-relatives-link"
+        title={title}
+        onClick={this.handleClick}
+        ref={this.saveNodeRef}>
         <MatchedText text={this.props.label} match={this.props.match} />
       </span>
     );

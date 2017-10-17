@@ -42,7 +42,8 @@ class NodesResources extends React.Component {
       <div className="nodes-resources">
         <ZoomableCanvas
           onClick={this.handleMouseClick}
-          fixVertical boundContent={CONTENT_COVERING}
+          fixVertical
+          boundContent={CONTENT_COVERING}
           limitsSelector={resourcesLimitsSelector}
           zoomStateSelector={resourcesZoomStateSelector}>
           {transform => this.renderLayers(transform)}
