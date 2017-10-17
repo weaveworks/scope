@@ -66,7 +66,7 @@ describe('NodeDetailsTable', () => {
   function clickColumn(title) {
     const node = TestUtils.scryRenderedDOMComponentsWithTag(component, 'td')
       .find(d => d.title === title);
-    TestUtils.Simulate.click(node);
+    TestUtils.Simulate.click(node.children[0]);
   }
 
   describe('kubernetes_ip', () => {
