@@ -21,7 +21,7 @@ const CloudLink = ({ alwaysShow, ...props }) => (
   <CloudFeature alwaysShow={alwaysShow}>
     <LinkWrapper {...props} />
   </CloudFeature>
-    );
+);
 
 class LinkWrapper extends React.Component {
   constructor(props, context) {

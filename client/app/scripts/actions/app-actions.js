@@ -778,6 +778,7 @@ export function resetLocalViewState() {
   return (dispatch) => {
     dispatch({type: ActionTypes.RESET_LOCAL_VIEW_STATE});
     storageSet('scopeViewState', '');
+    // eslint-disable-next-line prefer-destructuring
     window.location.href = window.location.href.split('#')[0];
   };
 }

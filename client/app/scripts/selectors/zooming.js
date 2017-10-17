@@ -13,14 +13,14 @@ export const activeTopologyZoomCacheKeyPathSelector = createSelector(
     state => JSON.stringify(activeTopologyOptionsSelector(state)),
   ],
   (isGraphViewMode, viewMode, topologyId, pinnedMetricType, topologyOptions) => (
-    isGraphViewMode ?
+    isGraphViewMode
       // In graph view, selecting different options/filters produces a different layout.
-      ['zoomCache', viewMode, topologyId, topologyOptions] :
+      ? ['zoomCache', viewMode, topologyId, topologyOptions]
       // Otherwise we're in the resource view where the options are hidden (for now),
       // but pinning different metrics can result in very different layouts.
       // TODO: Take `topologyId` into account once the resource
       // view layouts start differing between the topologies.
-      ['zoomCache', viewMode, pinnedMetricType]
+      : ['zoomCache', viewMode, pinnedMetricType]
   )
 );
 

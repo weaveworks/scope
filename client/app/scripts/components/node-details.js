@@ -87,8 +87,8 @@ class NodeDetails extends React.Component {
     // caused by a bug having to do with animating the details panel).
     const spinnerClassName = classNames('fa fa-circle-o-notch', { 'fa-spin': this.props.mounted });
     const nodeColor = (node ?
-                       getNodeColorDark(node.get('rank'), label, node.get('pseudo')) :
-                       getNeutralColor());
+      getNodeColorDark(node.get('rank'), label, node.get('pseudo')) :
+      getNeutralColor());
     const tools = this.renderTools();
     const styles = {
       header: {

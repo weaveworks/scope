@@ -1,8 +1,7 @@
 import React from 'react';
 import classnames from 'classnames';
 
-export default function NodesError({children, faIconClass, hidden,
-                                   mainClassName = 'nodes-chart-error'}) {
+const NodesError = ({ children, faIconClass, hidden, mainClassName = 'nodes-chart-error'}) => {
   const className = classnames(mainClassName, {
     hide: hidden
   });
@@ -18,4 +17,6 @@ export default function NodesError({children, faIconClass, hidden,
       {children}
     </div>
   );
-}
+};
+
+export default NodesError;

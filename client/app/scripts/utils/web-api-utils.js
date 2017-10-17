@@ -197,11 +197,12 @@ function getNodesForTopologies(state, dispatch, topologyIds, topologyOptions = m
   // fetch sequentially
   state.get('topologyUrlsById')
     .filter((_, topologyId) => topologyIds.contains(topologyId))
-    .reduce((sequence, topologyUrl, topologyId) => sequence.then(() => {
-      const optionsQuery = buildUrlQuery(topologyOptions.get(topologyId), state);
-      return doRequest({ url: `${getApiPath()}${topologyUrl}?${optionsQuery}` });
-    })
-    .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
+    .reduce((sequence, topologyUrl, topologyId) => sequence
+      .then(() => {
+        const optionsQuery = buildUrlQuery(topologyOptions.get(topologyId), state);
+        return doRequest({ url: `${getApiPath()}${topologyUrl}?${optionsQuery}` });
+      })
+      .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
     Promise.resolve());
 }
 
