@@ -86,6 +86,7 @@ func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Re
 		ErrorStream:  local,
 	})
 	if err != nil {
+		pipe.Close()
 		return xfer.ResponseError(err)
 	}
 	pipe.OnClose(func() {
@@ -133,6 +134,7 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 		ErrorStream:  local,
 	})
 	if err != nil {
+		pipe.Close()
 		return xfer.ResponseError(err)
 	}
 
