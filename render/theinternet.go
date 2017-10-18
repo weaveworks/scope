@@ -3,8 +3,7 @@ package render
 import (
 	"regexp"
 	"strings"
-
-	"github.com/bluele/gcache"
+	"sync"
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -46,18 +45,26 @@ var (
 	//
 	// Since names are generally <50 bytes, this shouldn't weight in
 	// at more than a few MB of memory.
-	knownServiceCache = gcache.New(10000).ARC().Build()
+	knownServiceCache        = map[string]bool{}
+	knownServiceCacheMutex   sync.Mutex
+	knownServiceCacheMaxSize = 10000
 )
 
 // TODO: Make it user-customizable https://github.com/weaveworks/scope/issues/1876
 // NB: this is a hotspot in rendering performance.
 func isKnownService(hostname string) bool {
-	if v, err := knownServiceCache.Get(hostname); err == nil {
-		return v.(bool)
+	knownServiceCacheMutex.Lock()
+	defer knownServiceCacheMutex.Unlock()
+	if v, ok := knownServiceCache[hostname]; ok {
+		return v
+	}
+	if len(knownServiceCache) > knownServiceCacheMaxSize {
+		// throw it all away and start again
+		knownServiceCache = map[string]bool{}
 	}
 
 	known := knownServiceMatcher.MatchString(hostname) && !knownServiceExcluder.MatchString(hostname)
-	knownServiceCache.Set(hostname, known)
+	knownServiceCache[hostname] = known
 
 	return known
 }
