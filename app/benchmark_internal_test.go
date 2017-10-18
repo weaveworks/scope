@@ -32,19 +32,43 @@ func loadReport() (report.Report, error) {
 }
 
 func BenchmarkTopologyList(b *testing.B) {
+	benchmarkRender(b, func(report report.Report) {
+		request := &http.Request{
+			Form: url.Values{},
+		}
+		topologyRegistry.renderTopologies(report, request)
+	})
+}
+
+func benchmarkRender(b *testing.B, f func(report.Report)) {
 	report, err := loadReport()
 	if err != nil {
 		b.Fatal(err)
 	}
 	b.ReportAllocs()
 	b.ResetTimer()
-	request := &http.Request{
-		Form: url.Values{},
-	}
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
 		render.ResetCache()
 		b.StartTimer()
-		topologyRegistry.renderTopologies(report, request)
+		f(report)
 	}
+}
+
+func BenchmarkTopologyHosts(b *testing.B) {
+	benchmarkOneTopology(b, "hosts")
+}
+
+func BenchmarkTopologyContainers(b *testing.B) {
+	benchmarkOneTopology(b, "containers")
+}
+
+func benchmarkOneTopology(b *testing.B, topologyID string) {
+	benchmarkRender(b, func(report report.Report) {
+		renderer, decorator, err := topologyRegistry.RendererForTopology(topologyID, url.Values{}, report)
+		if err != nil {
+			b.Fatal(err)
+		}
+		renderer.Render(report, decorator)
+	})
 }
