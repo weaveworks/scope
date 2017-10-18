@@ -21,7 +21,7 @@ const CloudLink = ({ alwaysShow, ...props }) => (
   <CloudFeature alwaysShow={alwaysShow}>
     <LinkWrapper {...props} />
   </CloudFeature>
-    );
+);
 
 class LinkWrapper extends React.Component {
   constructor(props, context) {
@@ -44,7 +44,7 @@ class LinkWrapper extends React.Component {
     if (router && href[0] === '/') {
       router.push(href);
     } else {
-      location.href = href;
+      window.location.href = href;
     }
   }
 

@@ -66,20 +66,22 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null, t
             style={style}
             key={field.id}>
             {intersperse(field.relatives.map(relative =>
-              <NodeDetailsTableNodeLink
+              (<NodeDetailsTableNodeLink
                 key={relative.id}
                 linkable
                 nodeId={relative.id}
                 {...relative}
-              />
-            ), ' ')}
+              />)), ' ')}
           </td>
         );
       }
       // valueType === 'metrics'
       return (
         <NodeDetailsTableNodeMetricLink
-          style={style} key={field.id} topologyId={topologyId} {...field} />
+          style={style}
+          key={field.id}
+          topologyId={topologyId}
+          {...field} />
       );
     }
     // empty cell to complete the row for proper hover
@@ -155,7 +157,9 @@ export default class NodeDetailsTableRow extends React.Component {
   }
 
   render() {
-    const { node, nodeIdKey, topologyId, columns, onClick, colStyles, timestamp } = this.props;
+    const {
+      node, nodeIdKey, topologyId, columns, onClick, colStyles, timestamp
+    } = this.props;
     const [firstColumnStyle, ...columnStyles] = colStyles;
     const values = renderValues(node, columns, columnStyles, timestamp, topologyId);
     const nodeId = node[nodeIdKey];

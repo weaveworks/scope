@@ -30,8 +30,7 @@ function getHint(nodes) {
 
   const node = nodes.filter(n => !n.get('pseudo') && n.has('metadata')).last();
   if (node) {
-    label = shortenHintLabel(node.get('label'))
-      .split('.')[0];
+    [label] = shortenHintLabel(node.get('label')).split('.');
     if (node.get('metadata')) {
       const metadataField = node.get('metadata').first();
       metadataLabel = shortenHintLabel(slugify(metadataField.get('label')))
@@ -46,7 +45,6 @@ function getHint(nodes) {
 
 
 class Search extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.handleBlur = this.handleBlur.bind(this);
@@ -126,8 +124,10 @@ class Search extends React.Component {
   }
 
   render() {
-    const { nodes, pinnedSearches, searchFocused, searchMatchCountByTopology,
-      isResourceViewMode, searchQuery, topologiesLoaded, inputId = 'search' } = this.props;
+    const {
+      nodes, pinnedSearches, searchFocused, searchMatchCountByTopology,
+      isResourceViewMode, searchQuery, topologiesLoaded, inputId = 'search'
+    } = this.props;
     const hidden = !topologiesLoaded || isResourceViewMode;
     const disabled = this.props.isTopologyNodeCountZero && !hidden;
     const matchCount = searchMatchCountByTopology
@@ -152,22 +152,30 @@ class Search extends React.Component {
             {showPinnedSearches && pinnedSearches.toIndexedSeq()
               .map(query => <SearchItem query={query} key={query} />)}
             <input
-              className="search-input-field" type="text" id={inputId}
-              value={value} onChange={this.handleChange} onKeyUp={this.handleKeyUp}
-              onFocus={this.handleFocus} onBlur={this.handleBlur}
-              disabled={disabled} ref={this.saveQueryInputRef} />
+              className="search-input-field"
+              type="text"
+              id={inputId}
+              value={value}
+              onChange={this.handleChange}
+              onKeyUp={this.handleKeyUp}
+              onFocus={this.handleFocus}
+              onBlur={this.handleBlur}
+              disabled={disabled}
+              ref={this.saveQueryInputRef} />
           </div>
           <div className="search-label">
             <i className="fa fa-search search-label-icon" />
-            <label className="search-label-hint" htmlFor={inputId}>
+            <span className="search-label-hint" htmlFor={inputId}>
               Search
-            </label>
+            </span>
           </div>
-          {!showPinnedSearches && <div className="search-hint">
-            {getHint(nodes)} <span
-              className="search-help-link fa fa-question-circle"
-              onMouseDown={this.props.toggleHelp} />
-          </div>}
+          {!showPinnedSearches &&
+            <div className="search-hint">
+              {getHint(nodes)} <span
+                className="search-help-link fa fa-question-circle"
+                onMouseDown={this.props.toggleHelp} />
+            </div>
+          }
         </div>
       </div>
     );
@@ -188,5 +196,7 @@ export default connect(
     searchQuery: state.get('searchQuery'),
     searchMatchCountByTopology: searchMatchCountByTopologySelector(state),
   }),
-  { blurSearch, doSearch, focusSearch, pinSearch, toggleHelp }
+  {
+    blurSearch, doSearch, focusSearch, pinSearch, toggleHelp
+  }
 )(Search);

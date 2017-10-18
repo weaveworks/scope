@@ -116,14 +116,21 @@ function renderSearchPanel() {
 
 
 function renderFieldsPanel(currentTopologyName, searchableFields) {
-  const none = <span style={{fontStyle: 'italic'}}>None</span>;
+  const none = (
+    <span style={{fontStyle: 'italic'}}>None</span>
+  );
+  const currentTopology = (
+    <span className="help-panel-fields-current-topology">
+      {currentTopologyName}
+    </span>
+  );
+
   return (
     <div className="help-panel-fields">
       <h2>Fields and Metrics</h2>
       <p>
         Searchable fields and metrics in the <br />
-        currently selected <span className="help-panel-fields-current-topology">
-          {currentTopologyName}</span> topology:
+        currently selected {currentTopology} topology:
       </p>
       <div className="help-panel-fields-fields">
         <div className="help-panel-fields-fields-column">
@@ -150,7 +157,9 @@ function renderFieldsPanel(currentTopologyName, searchableFields) {
 }
 
 
-function HelpPanel({ currentTopologyName, searchableFields, onClickClose, canvasMargins }) {
+function HelpPanel({
+  currentTopologyName, searchableFields, onClickClose, canvasMargins
+}) {
   return (
     <div className="help-panel-wrapper">
       <div className="help-panel" style={{marginTop: canvasMargins.top}}>

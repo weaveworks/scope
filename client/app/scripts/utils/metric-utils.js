@@ -26,10 +26,10 @@ export function getMetricValue(metric) {
     return {height: 0, value: null, formattedValue: 'n/a'};
   }
   const m = metric.toJS();
-  const value = m.value;
+  const { value } = m;
 
   let valuePercentage = value === 0 ? 0 : value / m.max;
-  let max = m.max;
+  let { max } = m;
   if (includes(['load1', 'load5', 'load15'], m.id)) {
     valuePercentage = loadScale(value);
     max = null;

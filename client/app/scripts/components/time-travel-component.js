@@ -145,7 +145,20 @@ const DisabledRange = styled.rect`
   fill-opacity: 0.15;
 `;
 
-const TimestampLabel = styled.a`
+const ShallowButton = styled.button`
+  background-color: transparent;
+  border: 0;
+  color: ${props => props.theme.colors.primary.lavender};
+  cursor: pointer;
+  padding: 0;
+  outline: 0;
+
+  &:hover {
+    color: ${props => props.theme.colors.primary.charcoal};
+  }
+`;
+
+const TimestampLabel = ShallowButton.extend`
   margin-left: 2px;
   padding: 3px;
 
@@ -155,7 +168,7 @@ const TimestampLabel = styled.a`
   }
 `;
 
-const TimelinePanButton = styled.a`
+const TimelinePanButton = ShallowButton.extend`
   pointer-events: all;
   padding: 2px;
 `;
@@ -236,7 +249,9 @@ export default class TimeTravelComponent extends React.Component {
 
     this.instantUpdateTimestamp = this.instantUpdateTimestamp.bind(this);
     this.debouncedUpdateTimestamp = debounce(
-      this.instantUpdateTimestamp.bind(this), TIMELINE_DEBOUNCE_INTERVAL);
+      this.instantUpdateTimestamp.bind(this),
+      TIMELINE_DEBOUNCE_INTERVAL
+    );
   }
 
   componentDidMount() {
@@ -498,7 +513,9 @@ export default class TimeTravelComponent extends React.Component {
         <rect
           className="tooltip-container"
           transform={`translate(${-width / 2}, 0)`}
-          width={width} height={height} fillOpacity={0}
+          width={width}
+          height={height}
+          fillOpacity={0}
         />
         {this.renderDisabledShadow(timelineTransform)}
         <g className="ticks" transform="translate(0, 1)">

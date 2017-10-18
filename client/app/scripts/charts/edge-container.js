@@ -70,7 +70,9 @@ export default class EdgeContainer extends React.PureComponent {
   }
 
   render() {
-    const { isAnimated, waypoints, scale, ...forwardedProps } = this.props;
+    const {
+      isAnimated, waypoints, scale, ...forwardedProps
+    } = this.props;
     const { thickness, waypointsMap } = this.state;
 
     if (!isAnimated) {
@@ -81,9 +83,14 @@ export default class EdgeContainer extends React.PureComponent {
       // For the Motion interpolation to work, the waypoints need to be in a map format like
       // { x0: 11, y0: 22, x1: 33, y1: 44 } that we convert to the array format when rendering.
       <Motion style={{ interpolatedThickness: weakSpring(thickness), ...waypointsMap.toJS() }}>
-        {({ interpolatedThickness, ...interpolatedWaypoints}) => transformedEdge(
-          forwardedProps, waypointsMapToArray(fromJS(interpolatedWaypoints)), interpolatedThickness
-        )}
+        {
+          ({ interpolatedThickness, ...interpolatedWaypoints}) =>
+            transformedEdge(
+              forwardedProps,
+              waypointsMapToArray(fromJS(interpolatedWaypoints)),
+              interpolatedThickness
+            )
+        }
       </Motion>
     );
   }

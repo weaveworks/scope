@@ -7,7 +7,6 @@ import { availableNetworksSelector } from '../selectors/node-networks';
 import NetworkSelectorItem from './network-selector-item';
 
 class NetworkSelector extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.onClick = this.onClick.bind(this);

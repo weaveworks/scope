@@ -38,7 +38,6 @@ export function appendTime(url, time) {
 }
 
 class NodeDetailsHealthLinkItem extends React.Component {
-
   constructor(props) {
     super(props);
     this.state = {
@@ -63,7 +62,9 @@ class NodeDetailsHealthLinkItem extends React.Component {
   }
 
   render() {
-    const { id, url, pausedAt, ...props } = this.props;
+    const {
+      id, url, pausedAt, ...props
+    } = this.props;
     const metricColor = getMetricColor(id);
     const labelColor = this.state.hovered && !props.valueEmpty && darkenColor(metricColor);
 

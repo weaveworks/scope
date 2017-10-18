@@ -9,9 +9,6 @@
     url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.ttf");
 }
 
-// TODO: Remove this line once Service UI CONFIGURE button stops being added to Scope.
-.scope-wrapper .setup-nav-button { display: none; }
-
 a {
   text-decoration: none;
 }
@@ -109,16 +106,19 @@ a {
   position: absolute;
   bottom: 11px;
 
-  a {
+  button {
     @extend .btn-opacity;
+    background-color: transparent;
     border: 1px solid transparent;
     border-radius: 4px;
     color: $text-secondary-color;
     cursor: pointer;
+    line-height: 20px;
     padding: 1px 3px;
+    outline: 0;
 
     .fa {
-      font-size: 150%;
+      font-size: 125%;
       position: relative;
       top: 2px;
     }
@@ -1016,8 +1016,12 @@ a {
       color: $text-tertiary-color;
       font-size: 90%;
       text-align: right;
-      cursor: pointer;
-      padding: 0 4px;
+      padding: 0;
+
+      .node-details-table-header-sortable {
+        padding: 3px 2px;
+        cursor: pointer;
+      }
 
       &-sorted {
         color: $text-secondary-color;
@@ -1133,6 +1137,14 @@ a {
         background-color: #f1f1f6;
         cursor: pointer;
       }
+    }
+
+    .node-details-table-node-link {
+      background-color: transparent;
+      border: 0;
+      cursor: pointer;
+      padding: 0;
+      outline: 0;
     }
 
     .node-details-table-node-link,
@@ -2116,6 +2128,22 @@ a {
 
   &-item {
     height: 40px;
+  }
+
+  button {
+    border: 0;
+    background-color: transparent;
+    cursor: pointer;
+    padding: 0;
+    outline: 0;
+  }
+
+  button, a {
+    color: $weave-charcoal-blue;
+
+    &:hover {
+      color: $text-color;
+    }
   }
 
   .fa {

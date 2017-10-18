@@ -202,8 +202,10 @@ class NodeDetailsTable extends React.Component {
   }
 
   render() {
-    const { nodeIdKey, columns, topologyId, onClickRow,
-      onMouseEnter, onMouseLeave, timestamp } = this.props;
+    const {
+      nodeIdKey, columns, topologyId, onClickRow,
+      onMouseEnter, onMouseLeave, timestamp
+    } = this.props;
 
     const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
     const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
@@ -294,7 +296,7 @@ class NodeDetailsTable extends React.Component {
 
 
 NodeDetailsTable.defaultProps = {
-  nodeIdKey: 'id',  // key to identify a node in a row (used for topology links)
+  nodeIdKey: 'id', // key to identify a node in a row (used for topology links)
   limit: NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
   onSortChange: () => {},
   sortedDesc: null,

@@ -33,12 +33,12 @@ export default class Sparkline extends React.Component {
 
     this.x.range([MARGIN, this.props.width - circleSpace]);
     this.y.range([this.props.height - circleSpace, circleSpace]);
-    this.line.curve(this.props.curve);
+    this.line.curve(curveLinear);
   }
 
   getGraphData() {
     // data is of shape [{date, value}, ...] and is sorted by date (ASC)
-    let data = this.props.data;
+    let { data } = this.props;
 
     this.initRanges(true);
 
@@ -75,7 +75,9 @@ export default class Sparkline extends React.Component {
     const title = `Last ${Math.round((lastDate - firstDate) / 1000)} seconds, ` +
       `${data.length} samples, min: ${min}, max: ${max}, mean: ${mean}`;
 
-    return {title, lastX, lastY, data};
+    return {
+      title, lastX, lastY, data
+    };
   }
 
   getEmptyGraphData() {
@@ -113,13 +115,21 @@ export default class Sparkline extends React.Component {
       <div title={graph.title}>
         <svg width={this.props.width} height={this.props.height}>
           <path
-            className="sparkline" fill="none" stroke={strokeColor}
-            strokeWidth={strokeWidth} strokeDasharray={strokeDasharray}
+            className="sparkline"
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            strokeDasharray={strokeDasharray}
             d={this.line(graph.data)}
           />
           {hasData && <circle
-            className="sparkcircle" cx={graph.lastX} cy={graph.lastY} fill={circleColor}
-            fillOpacity={fillOpacity} stroke="none" r={radius}
+            className="sparkcircle"
+            cx={graph.lastX}
+            cy={graph.lastY}
+            fill={circleColor}
+            fillOpacity={fillOpacity}
+            stroke="none"
+            r={radius}
           />}
         </svg>
       </div>
@@ -128,7 +138,14 @@ export default class Sparkline extends React.Component {
 }
 
 Sparkline.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.object)
+  width: PropTypes.number,
+  height: PropTypes.number,
+  strokeColor: PropTypes.string,
+  strokeWidth: PropTypes.number,
+  hoverColor: PropTypes.string,
+  circleRadius: PropTypes.number,
+  hovered: PropTypes.bool,
+  data: PropTypes.arrayOf(PropTypes.object),
 };
 
 Sparkline.defaultProps = {
@@ -137,7 +154,6 @@ Sparkline.defaultProps = {
   strokeColor: '#7d7da8',
   strokeWidth: 0.5,
   hoverColor: '#7d7da8',
-  curve: curveLinear,
   circleRadius: 1.75,
   hovered: false,
   data: [],

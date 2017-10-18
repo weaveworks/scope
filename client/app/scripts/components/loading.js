@@ -36,7 +36,6 @@ function renderTemplate(nodeType, template) {
 
 
 export class Loading extends React.Component {
-
   constructor(props, context) {
     super(props, context);
 
@@ -54,5 +53,4 @@ export class Loading extends React.Component {
       </NodesError>
     );
   }
-
 }

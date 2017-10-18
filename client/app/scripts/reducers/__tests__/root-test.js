@@ -10,15 +10,13 @@ import { highlightedEdgeIdsSelector } from '../../selectors/graph-view/decorator
 describe('RootReducer', () => {
   const ActionTypes = require('../../constants/action-types').default;
   const reducer = require('../root').default;
-  const initialState = require('../root').initialState;
+  const { initialState } = require('../root');
   const topologyUtils = require('../../utils/topology-utils');
   const topologySelectors = require('../../selectors/topology');
   // TODO maybe extract those to topology-utils tests?
-  const activeTopologyOptionsSelector = topologySelectors.activeTopologyOptionsSelector;
-  const getAdjacentNodes = topologyUtils.getAdjacentNodes;
-  const isNodesDisplayEmpty = topologyUtils.isNodesDisplayEmpty;
-  const isTopologyNodeCountZero = topologyUtils.isTopologyNodeCountZero;
-  const getUrlState = require('../../utils/router-utils').getUrlState;
+  const { activeTopologyOptionsSelector } = topologySelectors;
+  const { getAdjacentNodes, isNodesDisplayEmpty, isTopologyNodeCountZero } = topologyUtils;
+  const { getUrlState } = require('../../utils/router-utils');
 
   // fixtures
 
@@ -427,7 +425,8 @@ describe('RootReducer', () => {
     RouteAction.state = {
       topologyId: 'topo1',
       selectedNodeId: null,
-      topologyOptions: {topo1: {option1: 'on'}}};
+      topologyOptions: {topo1: {option1: 'on'}}
+    };
 
     let nextState = initialState;
     nextState = reducer(nextState, RouteAction);
@@ -445,7 +444,8 @@ describe('RootReducer', () => {
     RouteAction.state = {
       topologyId: 'topo1',
       selectedNodeId: null,
-      topologyOptions: null};
+      topologyOptions: null
+    };
     let nextState = initialState;
     nextState = reducer(nextState, RouteAction);
     nextState = reducer(nextState, ReceiveTopologiesAction);

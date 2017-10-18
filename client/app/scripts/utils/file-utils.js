@@ -76,7 +76,8 @@ function download(source, name) {
     filename = `${window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${(+new Date())}`;
   }
 
-  const url = window.URL.createObjectURL(new Blob(source,
+  const url = window.URL.createObjectURL(new Blob(
+    source,
     { type: 'text/xml' }
   ));
 

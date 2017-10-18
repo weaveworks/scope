@@ -170,9 +170,11 @@ class App extends React.Component {
   }
 
   render() {
-    const { isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails,
+    const {
+      isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails,
       showingHelp, showingNetworkSelector, showingTroubleshootingMenu,
-      timeTravelTransitioning, showingTimeTravel } = this.props;
+      timeTravelTransitioning, showingTimeTravel
+    } = this.props;
 
     const className = classNames('scope-app', { 'time-travel-open': showingTimeTravel });
     const isIframe = window !== window.top;
@@ -192,9 +194,11 @@ class App extends React.Component {
             <TimeTravel />
             <div className="selectors">
               <div className="logo">
-                {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
-                  <Logo />
-                </svg>}
+                {!isIframe &&
+                  <svg width="100%" height="100%" viewBox="0 0 1089 217">
+                    <Logo />
+                  </svg>
+                }
               </div>
               <Search />
               <Topologies />
@@ -243,6 +247,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(App);
+export default connect(mapStateToProps)(App);

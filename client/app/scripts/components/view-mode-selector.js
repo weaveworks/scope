@@ -58,8 +58,10 @@ class ViewModeSelector extends React.Component {
         <div className="view-mode-selector-wrapper">
           {this.renderItem('fa fa-share-alt', 'Graph', GRAPH_VIEW_MODE, this.props.setGraphView)}
           {this.renderItem('fa fa-table', 'Table', TABLE_VIEW_MODE, this.props.setTableView)}
-          {this.renderItem('fa fa-bar-chart', 'Resources', RESOURCE_VIEW_MODE,
-            this.props.setResourceView, hasResourceView)}
+          {this.renderItem(
+'fa fa-bar-chart', 'Resources', RESOURCE_VIEW_MODE,
+            this.props.setResourceView, hasResourceView
+)}
         </div>
         <MetricSelector />
       </div>

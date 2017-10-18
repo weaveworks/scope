@@ -117,7 +117,7 @@ function startPerf(delay) {
 
 export function showingDebugToolbar() {
   return (('debugToolbar' in localStorage && JSON.parse(localStorage.debugToolbar))
-    || location.pathname.indexOf('debug') > -1);
+    || window.location.pathname.indexOf('debug') > -1);
 }
 
 
@@ -151,7 +151,6 @@ function setAppState(fn) {
 
 
 class DebugToolbar extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.onChange = this.onChange.bind(this);
@@ -265,7 +264,9 @@ class DebugToolbar extends React.Component {
   addInternetNode() {
     setTimeout(() => {
       this.asyncDispatch(receiveNodesDelta({
-        add: [{id: INTERNET, label: INTERNET, pseudo: true, labelMinor: 'Outgoing packets', shape: 'cloud'}]
+        add: [{
+          id: INTERNET, label: INTERNET, pseudo: true, labelMinor: 'Outgoing packets', shape: 'cloud'
+        }]
       }));
     }, 0);
   }
@@ -385,6 +386,4 @@ function mapStateToProps(state) {
 }
 
 
-export default connect(
-  mapStateToProps
-)(DebugToolbar);
+export default connect(mapStateToProps)(DebugToolbar);

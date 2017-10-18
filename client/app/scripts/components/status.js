@@ -6,7 +6,9 @@ import { isPausedSelector } from '../selectors/time-travel';
 
 class Status extends React.Component {
   render() {
-    const { errorUrl, topologiesLoaded, filteredNodeCount, topology, websocketClosed } = this.props;
+    const {
+      errorUrl, topologiesLoaded, filteredNodeCount, topology, websocketClosed
+    } = this.props;
 
     let title = '';
     let text = 'Trying to reconnect...';
@@ -54,6 +56,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(Status);
+export default connect(mapStateToProps)(Status);

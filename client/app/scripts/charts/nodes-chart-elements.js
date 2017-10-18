@@ -196,9 +196,14 @@ class NodesChartElements extends React.Component {
     const scale = (this.props.selectedScale || 1) * 100000;
     return (
       <rect
-        className={className} key="nodes-chart-overlay"
-        transform={`scale(${scale})`} fill="#fff"
-        x={-1} y={-1} width={2} height={2}
+        className={className}
+        key="nodes-chart-overlay"
+        transform={`scale(${scale})`}
+        fill="#fff"
+        x={-1}
+        y={-1}
+        width={2}
+        height={2}
       />
     );
   }
@@ -277,6 +282,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(NodesChartElements);
+export default connect(mapStateToProps)(NodesChartElements);

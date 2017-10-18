@@ -13,7 +13,9 @@ const transformedNode = (otherProps, { x, y, k }) => (
 
 export default class NodeContainer extends React.PureComponent {
   render() {
-    const { dx, dy, isAnimated, scale, ...forwardedProps } = this.props;
+    const {
+      dx, dy, isAnimated, scale, ...forwardedProps
+    } = this.props;
 
     if (!isAnimated) {
       // Show static node for optimized rendering

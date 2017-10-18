@@ -38,8 +38,10 @@ class NodeDetailsTableNodeLink extends React.Component {
     if (linkable) {
       return (
         <span
-          className="node-details-table-node-link" title={title}
-          ref={this.saveNodeRef} onClick={this.handleClick}
+          className="node-details-table-node-link"
+          title={title}
+          ref={this.saveNodeRef}
+          onClick={this.handleClick}
           {...dismissRowClickProps}
         >
           {label}

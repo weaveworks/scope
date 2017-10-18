@@ -32,7 +32,9 @@ const resourceNodesBoundingRectangleSelector = createSelector(
     const xMax = flattenedNodes.map(n => n.get('offset') + n.get('width')).max();
     const yMax = verticalPositions.toList().max() + RESOURCES_LAYER_HEIGHT;
 
-    return makeMap({ xMin, xMax, yMin, yMax });
+    return makeMap({
+      xMin, xMax, yMin, yMax
+    });
   }
 );
 
@@ -47,7 +49,9 @@ export const resourcesDefaultZoomSelector = createSelector(
   (boundingRectangle, canvasMargins, width, height) => {
     if (!boundingRectangle) return makeMap();
 
-    const { xMin, xMax, yMin, yMax } = boundingRectangle.toJS();
+    const {
+      xMin, xMax, yMin, yMax
+    } = boundingRectangle.toJS();
 
     // The default scale takes all the available horizontal space and 70% of the vertical space.
     const scaleX = (width / (xMax - xMin)) * 1.0;
@@ -76,7 +80,9 @@ export const resourcesLimitsSelector = createSelector(
   (defaultZoom, boundingRectangle, minNodeWidth, width) => {
     if (defaultZoom.isEmpty()) return makeMap();
 
-    const { xMin, xMax, yMin, yMax } = boundingRectangle.toJS();
+    const {
+      xMin, xMax, yMin, yMax
+    } = boundingRectangle.toJS();
 
     return makeMap({
       // Maximal zoom is such that the smallest box takes the whole canvas.

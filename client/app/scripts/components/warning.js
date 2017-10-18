@@ -3,7 +3,6 @@ import classnames from 'classnames';
 
 
 class Warning extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.handleClick = this.handleClick.bind(this);

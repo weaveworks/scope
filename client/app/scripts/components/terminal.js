@@ -132,7 +132,9 @@ class Terminal extends React.Component {
           this.createWebsocket(term);
         } else {
           this.reconnectTimeout = setTimeout(
-            this.createWebsocket.bind(this, term), reconnectTimerInterval);
+            this.createWebsocket.bind(this, term),
+            reconnectTimerInterval
+          );
         }
       }
     };
@@ -291,7 +293,8 @@ class Terminal extends React.Component {
           Pop out
           </span>
           <span
-            title="Close" className="terminal-header-tools-item-icon fa fa-close"
+            title="Close"
+            className="terminal-header-tools-item-icon fa fa-close"
             onClick={this.handleCloseClick} />
         </div>
         {this.getControlStatusIcon()}
@@ -379,8 +382,7 @@ class Terminal extends React.Component {
 
 function mapStateToProps(state, ownProps) {
   const controlStatus = state.get('controlPipes').find(pipe =>
-    pipe.get('nodeId') === ownProps.pipe.get('nodeId')
-  );
+    pipe.get('nodeId') === ownProps.pipe.get('nodeId'));
   return { controlStatus };
 }
 

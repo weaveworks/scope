@@ -134,13 +134,17 @@ describe('NodesLayout', () => {
     },
     layoutProps: {
       nodes: fromJS({
-        n1: {id: 'n1', label: 'lold', labelMinor: 'lmold', rank: 'rold'},
+        n1: {
+          id: 'n1', label: 'lold', labelMinor: 'lmold', rank: 'rold'
+        },
       }),
       edges: fromJS({})
     },
     layoutProps2: {
       nodes: fromJS({
-        n1: {id: 'n1', label: 'lnew', labelMinor: 'lmnew', rank: 'rnew', x: 111, y: 109},
+        n1: {
+          id: 'n1', label: 'lnew', labelMinor: 'lmnew', rank: 'rnew', x: 111, y: 109
+        },
       }),
       edges: fromJS({})
     }
@@ -184,7 +188,8 @@ describe('NodesLayout', () => {
   it('lays out initial nodeset in a rectangle', () => {
     const result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
-      nodeSets.initial4.edges);
+      nodeSets.initial4.edges
+    );
     // console.log('initial', result.get('nodes'));
     nodes = result.nodes.toJS();
 
@@ -199,7 +204,8 @@ describe('NodesLayout', () => {
   it('keeps nodes in rectangle after removing one edge', () => {
     let result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
-      nodeSets.initial4.edges);
+      nodeSets.initial4.edges
+    );
 
     options.cachedLayout = result;
     options.nodeCache = options.nodeCache.merge(result.nodes);
@@ -221,7 +227,8 @@ describe('NodesLayout', () => {
   it('keeps nodes in rectangle after removed edge reappears', () => {
     let result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
-      nodeSets.initial4.edges);
+      nodeSets.initial4.edges
+    );
 
     coords = getNodeCoordinates(result.nodes);
     options.cachedLayout = result;
@@ -252,7 +259,8 @@ describe('NodesLayout', () => {
   it('keeps nodes in rectangle after node disappears', () => {
     let result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
-      nodeSets.initial4.edges);
+      nodeSets.initial4.edges
+    );
 
     options.cachedLayout = result;
     options.nodeCache = options.nodeCache.merge(result.nodes);
@@ -273,7 +281,8 @@ describe('NodesLayout', () => {
   it('keeps nodes in rectangle after removed node reappears', () => {
     let result = NodesLayout.doLayout(
       nodeSets.initial4.nodes,
-      nodeSets.initial4.edges);
+      nodeSets.initial4.edges
+    );
 
     nodes = result.nodes.toJS();
 
@@ -313,7 +322,8 @@ describe('NodesLayout', () => {
   it('renders single nodes in a square', () => {
     const result = NodesLayout.doLayout(
       nodeSets.single3.nodes,
-      nodeSets.single3.edges);
+      nodeSets.single3.edges
+    );
 
     nodes = result.nodes.toJS();
 
@@ -404,7 +414,8 @@ describe('NodesLayout', () => {
     expect(NodesLayout.hasNewNodesOfExistingRank(
       nodeSets.rank6.nodes,
       nodeSets.rank6.edges,
-      result.nodes)).toBeTruthy();
+      result.nodes
+    )).toBeTruthy();
 
     result = NodesLayout.doLayout(
       nodeSets.rank6.nodes,

@@ -8,12 +8,12 @@ const app = express();
 
 const BACKEND_HOST = process.env.BACKEND_HOST || 'localhost';
 
-/**
- *
- * Proxy requests to:
- *   - /api -> :4040/api
- *
- ************************************************************/
+/*
+*
+* Proxy requests to:
+*   - /api -> :4040/api
+*
+*/
 
 const backendProxy = httpProxy.createProxy({
   ws: true,
@@ -22,24 +22,24 @@ const backendProxy = httpProxy.createProxy({
 backendProxy.on('error', err => console.error('Proxy error', err));
 app.all('/api*', backendProxy.web.bind(backendProxy));
 
-/**
- *
- * Production env serves precompiled content from build/
- *
- ************************************************************/
+/*
+*
+* Production env serves precompiled content from build/
+*
+*/
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static('build'));
 }
 
-/**
- *
- * Webpack Dev Middleware with Hot Reload
- *
- * See: https://github.com/webpack/webpack-dev-middleware;
- *      https://github.com/glenjamin/webpack-hot-middleware
- *
- *************************************************************/
+/*
+*
+* Webpack Dev Middleware with Hot Reload
+*
+* See: https://github.com/webpack/webpack-dev-middleware;
+*      https://github.com/glenjamin/webpack-hot-middleware
+*
+*/
 
 if (process.env.NODE_ENV !== 'production') {
   const webpack = require('webpack');
@@ -60,11 +60,11 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 
-/**
- *
- * Express server
- *
- *****************/
+/*
+*
+* Express server
+*
+*/
 
 const port = process.env.PORT || 4042;
 const server = app.listen(port, 'localhost', () => {
@@ -76,11 +76,11 @@ const server = app.listen(port, 'localhost', () => {
 server.on('upgrade', backendProxy.ws.bind(backendProxy));
 
 
-/**
- *
- * Path proxy server
- *
- *************************************************************/
+/*
+*
+* Path proxy server
+*
+*/
 
 const proxyRules = new HttpProxyRules({
   rules: {
@@ -100,8 +100,10 @@ const proxyPathServer = http.createServer((req, res) => {
   return pathProxy.web(req, res, {target});
 }).listen(pathProxyPort, 'localhost', () => {
   const pathProxyHost = proxyPathServer.address().address;
-  console.log('Scope Proxy Path UI listening at http://%s:%s/scoped/',
-    pathProxyHost, pathProxyPort);
+  console.log(
+    'Scope Proxy Path UI listening at http://%s:%s/scoped/',
+    pathProxyHost, pathProxyPort
+  );
 });
 
 proxyPathServer.on('upgrade', (req, socket, head) => {

@@ -6,7 +6,6 @@ import { DETAILS_PANEL_WIDTH, DETAILS_PANEL_MARGINS } from '../constants/styles'
 import Terminal from './terminal';
 
 class EmeddedTerminal extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -70,6 +69,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(EmeddedTerminal);
+export default connect(mapStateToProps)(EmeddedTerminal);

@@ -27,7 +27,7 @@ const csrfToken = (() => {
   // Check for token at window level or parent level (for iframe);
   /* eslint-disable no-underscore-dangle */
   const token = typeof window !== 'undefined'
-    ? window.__WEAVEWORKS_CSRF_TOKEN || parent.__WEAVEWORKS_CSRF_TOKEN
+    ? window.__WEAVEWORKS_CSRF_TOKEN || window.parent.__WEAVEWORKS_CSRF_TOKEN
     : null;
   /* eslint-enable no-underscore-dangle */
   if (!token || token === '$__CSRF_TOKEN_PLACEHOLDER__') {
@@ -110,7 +110,7 @@ function topologiesUrl(state) {
 }
 
 export function getWebsocketUrl(host = window.location.host, pathname = window.location.pathname) {
-  const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
   return `${wsProto}://${host}${process.env.SCOPE_API_PREFIX || ''}${basePath(pathname)}`;
 }
 
@@ -167,8 +167,10 @@ function createWebsocket(websocketUrl, getState, dispatch) {
       firstMessageOnWebsocketAt = new Date();
       const timeToFirstMessage = firstMessageOnWebsocketAt - createWebsocketAt;
       if (timeToFirstMessage > FIRST_RENDER_TOO_LONG_THRESHOLD) {
-        log('Time (ms) to first nodes render after websocket was created',
-          firstMessageOnWebsocketAt - createWebsocketAt);
+        log(
+          'Time (ms) to first nodes render after websocket was created',
+          firstMessageOnWebsocketAt - createWebsocketAt
+        );
       }
     }
   };
@@ -197,12 +199,15 @@ function getNodesForTopologies(state, dispatch, topologyIds, topologyOptions = m
   // fetch sequentially
   state.get('topologyUrlsById')
     .filter((_, topologyId) => topologyIds.contains(topologyId))
-    .reduce((sequence, topologyUrl, topologyId) => sequence.then(() => {
-      const optionsQuery = buildUrlQuery(topologyOptions.get(topologyId), state);
-      return doRequest({ url: `${getApiPath()}${topologyUrl}?${optionsQuery}` });
-    })
-    .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
-    Promise.resolve());
+    .reduce(
+      (sequence, topologyUrl, topologyId) => sequence
+        .then(() => {
+          const optionsQuery = buildUrlQuery(topologyOptions.get(topologyId), state);
+          return doRequest({ url: `${getApiPath()}${topologyUrl}?${optionsQuery}` });
+        })
+        .then(json => dispatch(receiveNodesForTopology(json.nodes, topologyId))),
+      Promise.resolve()
+    );
 }
 
 function getNodesOnce(getState, dispatch) {

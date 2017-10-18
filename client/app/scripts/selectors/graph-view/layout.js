@@ -28,7 +28,9 @@ const translationToViewportCenterSelector = createSelector(
     graphZoomStateSelector,
   ],
   (centerX, centerY, zoomState) => {
-    const { scaleX, scaleY, translateX, translateY } = zoomState.toJS();
+    const {
+      scaleX, scaleY, translateX, translateY
+    } = zoomState.toJS();
     return {
       x: (-translateX + centerX) / scaleX,
       y: (-translateY + centerY) / scaleY,

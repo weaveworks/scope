@@ -4,7 +4,6 @@ import ShowMore from '../show-more';
 import NodeDetailsHealthLinkItem from './node-details-health-link-item';
 
 export default class NodeDetailsHealth extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -39,22 +38,25 @@ export default class NodeDetailsHealth extends React.Component {
     return (
       <div className="node-details-health" style={{ justifyContent: 'space-around' }}>
         <div className="node-details-health-wrapper">
-          {shownWithData.map(item => <NodeDetailsHealthLinkItem
+          {shownWithData.map(item => (<NodeDetailsHealthLinkItem
             {...item}
             key={item.id}
             topologyId={topologyId}
-          />)}
+          />))}
         </div>
         <div className="node-details-health-wrapper">
-          {shownEmpty.map(item => <NodeDetailsHealthLinkItem
+          {shownEmpty.map(item => (<NodeDetailsHealthLinkItem
             {...item}
             key={item.id}
             topologyId={topologyId}
-          />)}
+          />))}
         </div>
         <ShowMore
-          handleClick={this.handleClickMore} collection={metrics}
-          expanded={this.state.expanded} notShown={notShown} hideNumber={this.state.expanded}
+          handleClick={this.handleClickMore}
+          collection={metrics}
+          expanded={this.state.expanded}
+          notShown={notShown}
+          hideNumber={this.state.expanded}
         />
       </div>
     );

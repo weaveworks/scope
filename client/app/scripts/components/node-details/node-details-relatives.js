@@ -5,7 +5,6 @@ import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
 import NodeDetailsRelativesLink from './node-details-relatives-link';
 
 export default class NodeDetailsRelatives extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.state = {
@@ -39,11 +38,13 @@ export default class NodeDetailsRelatives extends React.Component {
             key={relative.id}
             match={matches.get(relative.id)}
             {...relative} />))}
-        {showLimitAction && <span
-          className="node-details-relatives-more"
-          onClick={this.handleLimitClick}>
-          {limitActionText}
-        </span>}
+        {showLimitAction &&
+          <span
+            className="node-details-relatives-more"
+            onClick={this.handleLimitClick}>
+            {limitActionText}
+          </span>
+        }
       </div>
     );
   }

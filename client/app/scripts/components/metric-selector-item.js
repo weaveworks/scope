@@ -31,7 +31,7 @@ class MetricSelectorItem extends React.Component {
 
   onMouseClick() {
     const metricType = this.props.metric.get('label');
-    const pinnedMetricType = this.props.pinnedMetricType;
+    const { pinnedMetricType } = this.props;
 
     if (metricType !== pinnedMetricType) {
       this.trackEvent('scope.metric.selector.pin.click');

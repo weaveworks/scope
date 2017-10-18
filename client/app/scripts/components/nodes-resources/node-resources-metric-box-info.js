@@ -3,8 +3,10 @@ import React from 'react';
 
 export default class NodeResourcesMetricBoxInfo extends React.Component {
   humanizedMetricInfo() {
-    const { humanizedTotalCapacity, humanizedAbsoluteConsumption,
-      humanizedRelativeConsumption, showCapacity, format } = this.props.metricSummary.toJS();
+    const {
+      humanizedTotalCapacity, humanizedAbsoluteConsumption,
+      humanizedRelativeConsumption, showCapacity, format
+    } = this.props.metricSummary.toJS();
     const showExtendedInfo = showCapacity && format !== 'percent';
 
     return (
@@ -12,9 +14,11 @@ export default class NodeResourcesMetricBoxInfo extends React.Component {
         <strong>
           {showExtendedInfo ? humanizedRelativeConsumption : humanizedAbsoluteConsumption}
         </strong> used
-        {showExtendedInfo && <i>{' - '}
-          ({humanizedAbsoluteConsumption} / <strong>{humanizedTotalCapacity}</strong>)
-        </i>}
+        {showExtendedInfo &&
+          <i>
+            {' - '}({humanizedAbsoluteConsumption} / <strong>{humanizedTotalCapacity}</strong>)
+          </i>
+        }
       </span>
     );
   }

@@ -23,7 +23,9 @@ import {
 import { encodeIdAttribute } from '../utils/dom-utils';
 
 
-function NodeShape(shapeType, shapeElement, shapeProps, { id, highlighted, color, metric }) {
+function NodeShape(shapeType, shapeElement, shapeProps, {
+  id, highlighted, color, metric
+}) {
   const { height, hasMetric, formattedValue } = getMetricValue(metric);
   const className = classNames('shape', `shape-${shapeType}`, { metrics: hasMetric });
   const metricStyle = { fill: getMetricColor(metric) };

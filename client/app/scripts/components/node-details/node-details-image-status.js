@@ -90,11 +90,11 @@ class NodeDetailsImageStatus extends React.PureComponent {
           Container Image Status
           {containers &&
             <div>
-              <a
+              <button
                 onClick={this.handleServiceClick}
                 className="node-details-table-node-link">
                   View in Deploy
-              </a>
+              </button>
             </div>
           }
 

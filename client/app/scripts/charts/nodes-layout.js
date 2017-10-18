@@ -88,7 +88,7 @@ function layoutSingleNodes(layout, opts) {
   const graphWidth = layout.graphWidth || layout.width;
   const aspectRatio = graphHeight ? graphWidth / graphHeight : 1;
 
-  let nodes = layout.nodes;
+  let { nodes } = layout;
 
   // 0-degree nodes
   const singleNodes = nodes.filter(node => node.get('degree') === 0);

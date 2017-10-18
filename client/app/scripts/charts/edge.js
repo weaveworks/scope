@@ -6,7 +6,6 @@ import { enterEdge, leaveEdge } from '../actions/app-actions';
 import { encodeIdAttribute, decodeIdAttribute } from '../utils/dom-utils';
 
 class Edge extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.handleMouseEnter = this.handleMouseEnter.bind(this);
@@ -14,13 +13,16 @@ class Edge extends React.Component {
   }
 
   render() {
-    const { id, path, highlighted, focused, thickness, source, target } = this.props;
+    const {
+      id, path, highlighted, focused, thickness, source, target
+    } = this.props;
     const shouldRenderMarker = (focused || highlighted) && (source !== target);
     const className = classNames('edge', { highlighted });
 
     return (
       <g
-        id={encodeIdAttribute(id)} className={className}
+        id={encodeIdAttribute(id)}
+        className={className}
         onMouseEnter={this.handleMouseEnter}
         onMouseLeave={this.handleMouseLeave}
       >

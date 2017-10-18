@@ -72,8 +72,12 @@ function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label, truncat
     if (matches) {
       const firstMatch = matches[0];
       const index = text.search(queryRe);
-      nodeMatches = nodeMatches.setIn(keyPath,
-        {text, label, start: index, length: firstMatch.length, truncate});
+      nodeMatches = nodeMatches.setIn(
+        keyPath,
+        {
+          text, label, start: index, length: firstMatch.length, truncate
+        }
+      );
     }
   }
   return nodeMatches;
@@ -110,14 +114,18 @@ function findNodeMatchMetric(nodeMatches, keyPath, fieldValue, fieldLabel, metri
       }
     }
     if (matched) {
-      nodeMatches = nodeMatches.setIn(keyPath,
-        {fieldLabel, metric: true});
+      nodeMatches = nodeMatches.setIn(
+        keyPath,
+        {fieldLabel, metric: true}
+      );
     }
   }
   return nodeMatches;
 }
 
-export function searchNode(node, { prefix, query, metric, comp, value }) {
+export function searchNode(node, {
+  prefix, query, metric, comp, value
+}) {
   let nodeMatches = makeMap();
 
   if (query) {
@@ -125,8 +133,10 @@ export function searchNode(node, { prefix, query, metric, comp, value }) {
     SEARCH_FIELDS.forEach((field, label) => {
       const keyPath = [label];
       if (node.has(field)) {
-        nodeMatches = findNodeMatch(nodeMatches, keyPath, node.get(field),
-          query, prefix, label);
+        nodeMatches = findNodeMatch(
+          nodeMatches, keyPath, node.get(field),
+          query, prefix, label
+        );
       }
     });
 
@@ -134,8 +144,10 @@ export function searchNode(node, { prefix, query, metric, comp, value }) {
     if (node.get('metadata')) {
       node.get('metadata').forEach((field) => {
         const keyPath = ['metadata', field.get('id')];
-        nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
-          query, prefix, field.get('label'), field.get('truncate'));
+        nodeMatches = findNodeMatch(
+          nodeMatches, keyPath, field.get('value'),
+          query, prefix, field.get('label'), field.get('truncate')
+        );
       });
     }
 
@@ -143,8 +155,10 @@ export function searchNode(node, { prefix, query, metric, comp, value }) {
     if (node.get('parents')) {
       node.get('parents').forEach((parent) => {
         const keyPath = ['parents', parent.get('id')];
-        nodeMatches = findNodeMatch(nodeMatches, keyPath, parent.get('label'),
-          query, prefix, parent.get('topologyId'));
+        nodeMatches = findNodeMatch(
+          nodeMatches, keyPath, parent.get('label'),
+          query, prefix, parent.get('topologyId')
+        );
       });
     }
 
@@ -153,8 +167,10 @@ export function searchNode(node, { prefix, query, metric, comp, value }) {
       (propertyList.get('rows') || []).forEach((row) => {
         const entries = row.get('entries');
         const keyPath = ['property-lists', row.get('id')];
-        nodeMatches = findNodeMatch(nodeMatches, keyPath, entries.get('value'),
-          query, prefix, entries.get('label'));
+        nodeMatches = findNodeMatch(
+          nodeMatches, keyPath, entries.get('value'),
+          query, prefix, entries.get('label')
+        );
       });
     });
 
@@ -173,8 +189,10 @@ export function searchNode(node, { prefix, query, metric, comp, value }) {
     if (metrics) {
       metrics.forEach((field) => {
         const keyPath = ['metrics', field.get('id')];
-        nodeMatches = findNodeMatchMetric(nodeMatches, keyPath, field.get('value'),
-          field.get('label'), metric, comp, value);
+        nodeMatches = findNodeMatchMetric(
+          nodeMatches, keyPath, field.get('value'),
+          field.get('label'), metric, comp, value
+        );
       });
     }
   }
@@ -221,7 +239,7 @@ export function parseQuery(query) {
         if (comparisonQuery && comparisonQuery.length === 2) {
           const value = parseValue(comparisonQuery[1]);
           const metric = comparisonQuery[0].trim();
-          if (!isNaN(value) && metric) {
+          if (!window.isNaN(value) && metric) {
             comparison = {
               metric,
               value,
@@ -259,8 +277,7 @@ export function getSearchableFields(nodes) {
   // Consider only property lists (and not generic tables).
   const tableRowLabels = nodes.reduce((labels, node) => (
     labels.union(get(node, 'tables').filter(isPropertyList).flatMap(t => (t.get('rows') || makeList)
-      .map(f => f.getIn(['entries', 'label']))
-    ))
+      .map(f => f.getIn(['entries', 'label']))))
   ), makeSet());
 
   const metricLabels = nodes.reduce((labels, node) => (
@@ -282,8 +299,10 @@ export function getSearchableFields(nodes) {
  */
 export function applyPinnedSearches(state) {
   // clear old filter state
-  state = state.update('nodes',
-    nodes => nodes.map(node => node.set('filtered', false)));
+  state = state.update(
+    'nodes',
+    nodes => nodes.map(node => node.set('filtered', false))
+  );
 
   const pinnedSearches = state.get('pinnedSearches');
   if (pinnedSearches.size > 0) {
@@ -292,10 +311,12 @@ export function applyPinnedSearches(state) {
       if (parsed) {
         const nodeMatches = searchTopology(state.get('nodes'), parsed);
         const filteredNodes = state.get('nodes')
-          .map(node => node.set('filtered',
+          .map(node => node.set(
+            'filtered',
             node.get('filtered') // matched by previous pinned search
             || nodeMatches.size === 0 // no match, filter all nodes
-            || !nodeMatches.has(node.get('id')))); // filter matches
+            || !nodeMatches.has(node.get('id'))
+          )); // filter matches
         state = state.set('nodes', filteredNodes);
       }
     });

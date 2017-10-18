@@ -34,7 +34,9 @@ class Footer extends React.Component {
   }
 
   render() {
-    const { hostname, version, versionUpdate, contrastMode } = this.props;
+    const {
+      hostname, version, versionUpdate, contrastMode
+    } = this.props;
 
     const otherContrastModeTitle = contrastMode
       ? 'Switch to normal contrast' : 'Switch to high contrast';
@@ -47,13 +49,16 @@ class Footer extends React.Component {
     return (
       <div className="footer">
         <div className="footer-status">
-          {versionUpdate && <a
-            className="footer-versionupdate"
-            title={versionUpdateTitle}
-            href={versionUpdate.get('downloadUrl')}
-            target="_blank" rel="noopener noreferrer">
-            Update available: {versionUpdate.get('version')}
-          </a>}
+          {versionUpdate &&
+            <a
+              className="footer-versionupdate"
+              title={versionUpdateTitle}
+              href={versionUpdate.get('downloadUrl')}
+              target="_blank"
+              rel="noopener noreferrer">
+              Update available: {versionUpdate.get('version')}
+            </a>
+          }
           <span className="footer-label">Version</span>
           {version}
           <span className="footer-label">on</span>
@@ -65,25 +70,26 @@ class Footer extends React.Component {
         </div>
 
         <div className="footer-tools">
-          <a
+          <button
             className="footer-icon"
             onClick={this.handleRelayoutClick}
             title={forceRelayoutTitle}>
             <span className="fa fa-refresh" />
-          </a>
-          <a onClick={this.handleContrastClick} className="footer-icon" title={otherContrastModeTitle}>
+          </button>
+          <button onClick={this.handleContrastClick} className="footer-icon" title={otherContrastModeTitle}>
             <span className="fa fa-adjust" />
-          </a>
-          <a
+          </button>
+          <button
             onClick={this.props.toggleTroubleshootingMenu}
-            className="footer-icon" title="Open troubleshooting menu"
+            className="footer-icon"
+            title="Open troubleshooting menu"
             href=""
           >
             <span className="fa fa-bug" />
-          </a>
-          <a className="footer-icon" onClick={this.props.toggleHelp} title="Show help">
+          </button>
+          <button className="footer-icon" onClick={this.props.toggleHelp} title="Show help">
             <span className="fa fa-question" />
-          </a>
+          </button>
         </div>
 
       </div>

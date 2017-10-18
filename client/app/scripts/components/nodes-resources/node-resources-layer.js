@@ -12,7 +12,9 @@ import {
 
 class NodesResourcesLayer extends React.Component {
   render() {
-    const { layerVerticalPosition, topologyId, transform, layoutNodes } = this.props;
+    const {
+      layerVerticalPosition, topologyId, transform, layoutNodes
+    } = this.props;
 
     return (
       <g className="node-resources-layer">
@@ -50,6 +52,4 @@ function mapStateToProps(state, props) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(NodesResourcesLayer);
+export default connect(mapStateToProps)(NodesResourcesLayer);
