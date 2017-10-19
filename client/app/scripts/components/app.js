@@ -85,7 +85,7 @@ class App extends React.Component {
   }
 
   componentWillUnmount() {
-    window.addEventListener('resize', this.handleResize);
+    window.removeEventListener('resize', this.handleResize);
     window.removeEventListener('keypress', this.onKeyPress);
     window.removeEventListener('keyup', this.onKeyUp);
     this.props.dispatch(shutdown());
