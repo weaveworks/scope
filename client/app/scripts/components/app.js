@@ -35,8 +35,8 @@ import {
 } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
-import TimeTravel from './time-travel';
 import TimeControl from './time-control';
+import TimeTravelWrapper from './time-travel-wrapper';
 import ViewModeSelector from './view-mode-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
@@ -191,7 +191,7 @@ class App extends React.Component {
           {showingDetails && <Details />}
 
           <div className="header">
-            <TimeTravel />
+            <TimeTravelWrapper />
             <div className="selectors">
               <div className="logo">
                 {!isIframe &&

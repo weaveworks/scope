@@ -1,13 +1,13 @@
 import React from 'react';
 import moment from 'moment';
 import { connect } from 'react-redux';
-import { TimeTravel as TimeTravelComponent } from 'weaveworks-ui-components';
+import { TimeTravel } from 'weaveworks-ui-components';
 
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { jumpToTime } from '../actions/app-actions';
 
 
-class TimeTravel extends React.Component {
+class TimeTravelWrapper extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -59,7 +59,7 @@ class TimeTravel extends React.Component {
     const { visible, timestamp } = this.props;
 
     return (
-      <TimeTravelComponent
+      <TimeTravel
         visible={visible}
         timestamp={timestamp || moment()}
         onChange={this.changeTimestamp}
@@ -84,4 +84,4 @@ function mapStateToProps(state) {
 export default connect(
   mapStateToProps,
   { jumpToTime },
-)(TimeTravel);
+)(TimeTravelWrapper);

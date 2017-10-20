@@ -9,6 +9,8 @@ import {
   OrderedMap as makeOrderedMap,
 } from 'immutable';
 
+import { nowInSecondsPrecision } from 'weaveworks-ui-components/lib/utils/time';
+
 import ActionTypes from '../constants/action-types';
 import {
   GRAPH_VIEW_MODE,
@@ -20,7 +22,7 @@ import {
 } from '../selectors/topology';
 import { isPausedSelector } from '../selectors/time-travel';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
-import { nowInSecondsPrecision, timestampsEqual } from '../utils/time-utils';
+import { timestampsEqual } from '../utils/time-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
 import {
   findTopologyById,

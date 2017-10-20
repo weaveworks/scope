@@ -6,11 +6,11 @@ import { fromJS } from 'immutable';
 
 import { drag } from 'd3-drag';
 import { event as d3Event, select } from 'd3-selection';
+import { zoomFactor } from 'weaveworks-ui-components/lib/utils/zooming';
 
 import Logo from '../components/logo';
 import ZoomControl from '../components/zoom-control';
 import { cacheZoomState } from '../actions/app-actions';
-import { zoomFactor } from '../utils/zoom-utils';
 import { applyTransform, inverseTransform } from '../utils/transform-utils';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
 import {
