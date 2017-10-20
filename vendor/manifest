@@ -186,18 +186,9 @@
 			"importpath": "github.com/docker/docker/pkg/archive",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
-			"revision": "b6a8a3da10698a43043b752552228eed71955994",
+			"revision": "bf1376f44a1177de2dc08d8470c80316f5df67f3",
 			"branch": "master",
-			"path": "pkg/archive",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/docker/docker/pkg/fileutils",
-			"repository": "https://github.com/docker/docker",
-			"vcs": "git",
-			"revision": "b6a8a3da10698a43043b752552228eed71955994",
-			"branch": "master",
-			"path": "pkg/fileutils",
+			"path": "/pkg/archive",
 			"notests": true
 		},
 		{
@@ -278,15 +269,6 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/docker/docker/pkg/stdcopy",
-			"repository": "https://github.com/docker/docker",
-			"vcs": "git",
-			"revision": "b6a8a3da10698a43043b752552228eed71955994",
-			"branch": "master",
-			"path": "pkg/stdcopy",
-			"notests": true
-		},
-		{
 			"importpath": "github.com/docker/docker/pkg/system",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
@@ -311,6 +293,51 @@
 			"revision": "60ea37d56f15d64961f0bc59dd2db1c968c80288",
 			"branch": "master",
 			"path": "/pkg/units"
+		},
+		{
+			"importpath": "github.com/docker/docker/vendor/archive/tar",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "bf1376f44a1177de2dc08d8470c80316f5df67f3",
+			"branch": "master",
+			"path": "vendor/archive/tar",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/vendor/github.com/opencontainers/runc/libcontainer/system",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "bf1376f44a1177de2dc08d8470c80316f5df67f3",
+			"branch": "master",
+			"path": "vendor/github.com/opencontainers/runc/libcontainer/system",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/vendor/github.com/sirupsen/logrus",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "bf1376f44a1177de2dc08d8470c80316f5df67f3",
+			"branch": "master",
+			"path": "vendor/github.com/sirupsen/logrus",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/vendor/golang.org/x/crypto/ssh/terminal",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "bf1376f44a1177de2dc08d8470c80316f5df67f3",
+			"branch": "master",
+			"path": "vendor/golang.org/x/crypto/ssh/terminal",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/docker/docker/vendor/golang.org/x/sys/unix",
+			"repository": "https://github.com/docker/docker",
+			"vcs": "git",
+			"revision": "bf1376f44a1177de2dc08d8470c80316f5df67f3",
+			"branch": "master",
+			"path": "vendor/golang.org/x/sys/unix",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/docker/engine-api/types",
@@ -666,6 +693,78 @@
 			"vcs": "",
 			"revision": "3d66e3747d22a77b24b119eb66e9d574ed99f86c",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/moby/moby/pkg/archive",
+			"repository": "https://github.com/moby/moby",
+			"vcs": "git",
+			"revision": "239d61f04bf1c00273c1c89b531fe37993e08a9f",
+			"branch": "HEAD",
+			"path": "/pkg/archive",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/moby/moby/pkg/fileutils",
+			"repository": "https://github.com/moby/moby",
+			"vcs": "git",
+			"revision": "239d61f04bf1c00273c1c89b531fe37993e08a9f",
+			"branch": "HEAD",
+			"path": "/pkg/fileutils",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/moby/moby/pkg/stdcopy",
+			"repository": "https://github.com/moby/moby",
+			"vcs": "git",
+			"revision": "239d61f04bf1c00273c1c89b531fe37993e08a9f",
+			"branch": "HEAD",
+			"path": "/pkg/stdcopy",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/moby/moby/vendor/archive/tar",
+			"repository": "https://github.com/moby/moby",
+			"vcs": "git",
+			"revision": "239d61f04bf1c00273c1c89b531fe37993e08a9f",
+			"branch": "HEAD",
+			"path": "vendor/archive/tar",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/moby/moby/vendor/github.com/opencontainers/runc/libcontainer/system",
+			"repository": "https://github.com/moby/moby",
+			"vcs": "git",
+			"revision": "239d61f04bf1c00273c1c89b531fe37993e08a9f",
+			"branch": "HEAD",
+			"path": "vendor/github.com/opencontainers/runc/libcontainer/system",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/moby/moby/vendor/github.com/sirupsen/logrus",
+			"repository": "https://github.com/moby/moby",
+			"vcs": "git",
+			"revision": "239d61f04bf1c00273c1c89b531fe37993e08a9f",
+			"branch": "HEAD",
+			"path": "vendor/github.com/sirupsen/logrus",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/moby/moby/vendor/golang.org/x/crypto/ssh/terminal",
+			"repository": "https://github.com/moby/moby",
+			"vcs": "git",
+			"revision": "239d61f04bf1c00273c1c89b531fe37993e08a9f",
+			"branch": "HEAD",
+			"path": "vendor/golang.org/x/crypto/ssh/terminal",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/moby/moby/vendor/golang.org/x/sys/unix",
+			"repository": "https://github.com/moby/moby",
+			"vcs": "git",
+			"revision": "239d61f04bf1c00273c1c89b531fe37993e08a9f",
+			"branch": "HEAD",
+			"path": "vendor/golang.org/x/sys/unix",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/nats-io/gnatsd/auth",
