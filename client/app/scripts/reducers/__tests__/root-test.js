@@ -1,5 +1,4 @@
 import { is, fromJS } from 'immutable';
-import expect from 'expect';
 
 import { TABLE_VIEW_MODE } from '../../constants/naming';
 import { constructEdgeId } from '../../utils/layouter-utils';
@@ -23,29 +22,12 @@ describe('RootReducer', () => {
   const NODE_SET = {
     n1: {
       id: 'n1',
-      rank: undefined,
       adjacency: ['n1', 'n2'],
-      pseudo: undefined,
-      label: undefined,
-      labelMinor: undefined,
       filtered: false,
-      metrics: undefined,
-      node_count: undefined,
-      shape: undefined,
-      stack: undefined
     },
     n2: {
       id: 'n2',
-      rank: undefined,
-      adjacency: undefined,
-      pseudo: undefined,
-      label: undefined,
-      labelMinor: undefined,
       filtered: false,
-      metrics: undefined,
-      node_count: undefined,
-      shape: undefined,
-      stack: undefined
     }
   };
 
@@ -336,7 +318,7 @@ describe('RootReducer', () => {
     expect(nextState.get('topologies').size).toBe(2);
     expect(nextState.get('currentTopology').get('name')).toBe('Topo1');
     expect(nextState.get('currentTopology').get('url')).toBe('/topo1');
-    expect(nextState.get('currentTopology').get('options').first().get('id')).toEqual(['option1']);
+    expect(nextState.get('currentTopology').get('options').first().get('id')).toEqual('option1');
     expect(nextState.getIn(['currentTopology', 'options']).toJS()).toEqual([{
       id: 'option1',
       defaultValue: 'off',
@@ -356,7 +338,7 @@ describe('RootReducer', () => {
     expect(nextState.get('topologies').size).toBe(2);
     expect(nextState.get('currentTopology').get('name')).toBe('topo 1 grouped');
     expect(nextState.get('currentTopology').get('url')).toBe('/topo1-grouped');
-    expect(nextState.get('currentTopology').get('options')).toNotExist();
+    expect(nextState.get('currentTopology').get('options')).toBeUndefined();
   });
 
   // topology options
@@ -368,7 +350,7 @@ describe('RootReducer', () => {
 
     // default options
     expect(activeTopologyOptionsSelector(nextState).has('option1')).toBeTruthy();
-    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBeA('array');
+    expect(activeTopologyOptionsSelector(nextState).get('option1')).toBeInstanceOf(Array);
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
     expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
 
@@ -469,7 +451,7 @@ describe('RootReducer', () => {
   it('shows nodes that were received', () => {
     let nextState = initialState;
     nextState = reducer(nextState, ReceiveNodesDeltaAction);
-    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
   });
 
   it('knows a route was set', () => {
@@ -485,11 +467,11 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ClickNodeAction);
 
     expect(nextState.get('selectedNodeId')).toBe('n1');
-    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
 
     nextState = reducer(nextState, deSelectNode);
     expect(nextState.get('selectedNodeId')).toBe(null);
-    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
   });
 
   it('keeps showing nodes on navigating back after node click', () => {
@@ -506,7 +488,7 @@ describe('RootReducer', () => {
     RouteAction.state = {topologyId: 'topo1', selectedNodeId: null};
     nextState = reducer(nextState, RouteAction);
     expect(nextState.get('selectedNodeId')).toBe(null);
-    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
   });
 
   it('closes details when changing topologies', () => {
@@ -532,12 +514,12 @@ describe('RootReducer', () => {
   it('resets topology on websocket reconnect', () => {
     let nextState = initialState;
     nextState = reducer(nextState, ReceiveNodesDeltaAction);
-    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
 
     nextState = reducer(nextState, CloseWebsocketAction);
     expect(nextState.get('websocketClosed')).toBeTruthy();
     // keep showing old nodes
-    expect(nextState.get('nodes').toJS()).toInclude(NODE_SET);
+    expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
 
     nextState = reducer(nextState, OpenWebsocketAction);
     expect(nextState.get('websocketClosed')).toBeFalsy();

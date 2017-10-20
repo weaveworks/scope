@@ -3,5 +3,5 @@
     "lodash",
     ["transform-object-rest-spread", { "useBuiltIns": true }]
   ],
-  "presets": ["es2015", "react"]
+  "presets": ["env", "react"]
 }

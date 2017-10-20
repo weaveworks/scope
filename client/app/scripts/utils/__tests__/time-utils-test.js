@@ -1,5 +1,5 @@
-import expect from 'expect';
 import { timer } from '../time-utils';
+
 
 describe('timer', () => {
   it('records how long a function takes to execute', () => {
@@ -13,6 +13,6 @@ describe('timer', () => {
     const timedFn = timer(add100k);
     const result = timedFn(70);
     expect(result).toEqual(100070);
-    expect(timedFn.time).toBeA('number');
+    expect(Number.isInteger(timedFn.time)).toBeTruthy();
   });
 });
