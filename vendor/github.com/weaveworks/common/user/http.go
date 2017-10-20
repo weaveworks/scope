@@ -7,9 +7,12 @@ import (
 )
 
 const (
-	// orgIDHeaderName is a legacy from scope as a service.
-	orgIDHeaderName  = "X-Scope-OrgID"
-	userIDHeaderName = "X-Scope-UserID"
+	// 'Scope' in the below headers is a legacy from scope as a service.
+
+	// OrgIDHeaderName denotes the OrgID the request has been authenticated as
+	OrgIDHeaderName = "X-Scope-OrgID"
+	// UserIDHeaderName denotes the UserID the request has been authenticated as
+	UserIDHeaderName = "X-Scope-UserID"
 
 	// LowerOrgIDHeaderName as gRPC / HTTP2.0 headers are lowercased.
 	lowerOrgIDHeaderName = "x-scope-orgid"
@@ -18,7 +21,7 @@ const (
 // ExtractOrgIDFromHTTPRequest extracts the org ID from the request headers and returns
 // the org ID and a context with the org ID embedded.
 func ExtractOrgIDFromHTTPRequest(r *http.Request) (string, context.Context, error) {
-	orgID := r.Header.Get(orgIDHeaderName)
+	orgID := r.Header.Get(OrgIDHeaderName)
 	if orgID == "" {
 		return "", r.Context(), ErrNoOrgID
 	}
@@ -31,18 +34,18 @@ func InjectOrgIDIntoHTTPRequest(ctx context.Context, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	existingID := r.Header.Get(orgIDHeaderName)
+	existingID := r.Header.Get(OrgIDHeaderName)
 	if existingID != "" && existingID != orgID {
 		return ErrDifferentOrgIDPresent
 	}
-	r.Header.Set(orgIDHeaderName, orgID)
+	r.Header.Set(OrgIDHeaderName, orgID)
 	return nil
 }
 
 // ExtractUserIDFromHTTPRequest extracts the org ID from the request headers and returns
 // the org ID and a context with the org ID embedded.
 func ExtractUserIDFromHTTPRequest(r *http.Request) (string, context.Context, error) {
-	userID := r.Header.Get(userIDHeaderName)
+	userID := r.Header.Get(UserIDHeaderName)
 	if userID == "" {
 		return "", r.Context(), ErrNoUserID
 	}
@@ -55,10 +58,10 @@ func InjectUserIDIntoHTTPRequest(ctx context.Context, r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	existingID := r.Header.Get(userIDHeaderName)
+	existingID := r.Header.Get(UserIDHeaderName)
 	if existingID != "" && existingID != userID {
 		return ErrDifferentUserIDPresent
 	}
-	r.Header.Set(userIDHeaderName, userID)
+	r.Header.Set(UserIDHeaderName, userID)
 	return nil
 }
