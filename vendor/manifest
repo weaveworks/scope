@@ -32,13 +32,6 @@
 			"branch": "master"
 		},
 		{
-			"importpath": "github.com/Sirupsen/logrus",
-			"repository": "https://github.com/Sirupsen/logrus",
-			"vcs": "git",
-			"revision": "5e5dc898656f695e2a086b8e12559febbfc01562",
-			"branch": "master"
-		},
-		{
 			"importpath": "github.com/armon/go-metrics",
 			"repository": "https://github.com/armon/go-metrics",
 			"vcs": "",
@@ -905,6 +898,14 @@
 			"vcs": "",
 			"revision": "244f5ac324cb97e1987ef901a0081a77bfd8e845",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/sirupsen/logrus",
+			"repository": "https://github.com/sirupsen/logrus",
+			"vcs": "git",
+			"revision": "f006c2ac4710855cf0f916dd6b77acf6b048dc6e",
+			"branch": "HEAD",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/spaolacci/murmur3",
