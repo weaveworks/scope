@@ -173,7 +173,7 @@ class NodeDetailsTable extends React.Component {
     this.focusState = {
       focusedNode: node,
       focusedRowIndex: rowIndex,
-      tableContentMinHeightConstraint: this.tableContent.scrollHeight,
+      tableContentMinHeightConstraint: this.tableContent && this.tableContent.scrollHeight,
     };
   }
 
