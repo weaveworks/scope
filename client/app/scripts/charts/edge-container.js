@@ -4,8 +4,9 @@ import { Repeat, fromJS, Map as makeMap } from 'immutable';
 import { line, curveBasis } from 'd3-shape';
 import { times } from 'lodash';
 
+import { weakSpring } from 'weaveworks-ui-components/lib/utils/animation';
+
 import { NODE_BASE_SIZE, EDGE_WAYPOINTS_CAP } from '../constants/styles';
-import { weakSpring } from '../utils/animation-utils';
 import Edge from './edge';
 
 

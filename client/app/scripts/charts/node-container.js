@@ -1,7 +1,8 @@
 import React from 'react';
 import { Motion } from 'react-motion';
 
-import { weakSpring } from '../utils/animation-utils';
+import { weakSpring } from 'weaveworks-ui-components/lib/utils/animation';
+
 import Node from './node';
 
 

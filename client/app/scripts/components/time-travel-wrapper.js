@@ -1,12 +1,13 @@
 import React from 'react';
+import moment from 'moment';
 import { connect } from 'react-redux';
+import { TimeTravel } from 'weaveworks-ui-components';
 
-import TimeTravelComponent from './time-travel-component';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { jumpToTime } from '../actions/app-actions';
 
 
-class TimeTravel extends React.Component {
+class TimeTravelWrapper extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -55,18 +56,17 @@ class TimeTravel extends React.Component {
   }
 
   render() {
-    const { visible, timestamp, viewportWidth } = this.props;
+    const { visible, timestamp } = this.props;
 
     return (
-      <TimeTravelComponent
+      <TimeTravel
         visible={visible}
-        timestamp={timestamp}
-        viewportWidth={viewportWidth}
-        changeTimestamp={this.changeTimestamp}
-        trackTimestampEdit={this.trackTimestampEdit}
-        trackTimelineClick={this.trackTimelineClick}
-        trackTimelineZoom={this.trackTimelineZoom}
-        trackTimelinePan={this.trackTimelinePan}
+        timestamp={timestamp || moment()}
+        onChange={this.changeTimestamp}
+        onTimestampInputEdit={this.trackTimestampEdit}
+        onTimestampLabelClick={this.trackTimelineClick}
+        onTimelineZoom={this.trackTimelineZoom}
+        onTimelinePan={this.trackTimelinePan}
       />
     );
   }
@@ -78,12 +78,10 @@ function mapStateToProps(state) {
     topologyViewMode: state.get('topologyViewMode'),
     currentTopology: state.get('currentTopology'),
     timestamp: state.get('pausedAt'),
-    // Used only to trigger recalculations on window resize.
-    viewportWidth: state.getIn(['viewport', 'width']),
   };
 }
 
 export default connect(
   mapStateToProps,
   { jumpToTime },
-)(TimeTravel);
+)(TimeTravelWrapper);
