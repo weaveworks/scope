@@ -88,7 +88,8 @@ export const initialState = makeMap({
   topologyViewMode: GRAPH_VIEW_MODE,
   version: '...',
   versionUpdate: null,
-  viewport: makeMap(),
+  // Set some initial numerical values to prevent NaN in case of edgy race conditions.
+  viewport: makeMap({ width: 0, height: 0 }),
   websocketClosed: false,
   zoomCache: makeMap(),
   serviceImages: makeMap()

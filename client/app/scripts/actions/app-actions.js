@@ -405,7 +405,8 @@ export function clickTopology(topologyId) {
 export function cacheZoomState(zoomState) {
   return {
     type: ActionTypes.CACHE_ZOOM_STATE,
-    zoomState
+    // Make sure only proper numerical values are cached.
+    zoomState: zoomState.filter(value => !window.isNaN(value)),
   };
 }
 
