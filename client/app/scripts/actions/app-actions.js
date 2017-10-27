@@ -618,14 +618,15 @@ export function receiveNodes(nodes) {
 
 export function jumpToTime(timestamp) {
   return (dispatch, getState) => {
+    const getScopeState = () => getState().scope || getState();
     dispatch({
       type: ActionTypes.JUMP_TO_TIME,
       timestamp,
     });
-    getTopologies(getState, dispatch);
-    getNodes(getState, dispatch);
-    if (isResourceViewModeSelector(getState())) {
-      getResourceViewNodesSnapshot(getState(), dispatch);
+    getNodes(getScopeState, dispatch);
+    getTopologies(getScopeState, dispatch);
+    if (isResourceViewModeSelector(getScopeState())) {
+      getResourceViewNodesSnapshot(getScopeState(), dispatch);
     }
   };
 }
@@ -640,14 +641,15 @@ export function receiveNodesForTopology(nodes, topologyId) {
 
 export function receiveTopologies(topologies) {
   return (dispatch, getState) => {
-    const firstLoad = !getState().get('topologiesLoaded');
+    const getScopeState = () => getState().scope || getState();
+    const firstLoad = !getScopeState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies
     });
-    getNodes(getState, dispatch);
+    getNodes(getScopeState, dispatch);
     // Populate search matches on first load
-    const state = getState();
+    const state = getScopeState();
     if (firstLoad && state.get('searchQuery')) {
       dispatch(focusSearch());
     }

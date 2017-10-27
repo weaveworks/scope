@@ -62,7 +62,8 @@ class TimeTravelWrapper extends React.Component {
       <TimeTravel
         visible={visible}
         timestamp={timestamp || moment()}
-        onChange={this.changeTimestamp}
+        earliestTimestamp={this.props.earliestTimestamp}
+        onChangeTimestamp={this.changeTimestamp}
         onTimestampInputEdit={this.trackTimestampEdit}
         onTimestampLabelClick={this.trackTimelineClick}
         onTimelineZoom={this.trackTimelineZoom}
@@ -72,12 +73,24 @@ class TimeTravelWrapper extends React.Component {
   }
 }
 
-function mapStateToProps(state) {
+function mapStateToProps(state, { params }) {
+  const scopeState = state.scope || state;
+  let firstSeenConnectedAt;
+
+  // If we're in the Weave Cloud context, use firstSeeConnectedAt as the earliest timestamp.
+  if (state.root && state.root.instances) {
+    const serviceInstance = state.root.instances[params && params.orgId];
+    if (serviceInstance && serviceInstance.firstSeenConnectedAt) {
+      firstSeenConnectedAt = moment(serviceInstance.firstSeenConnectedAt);
+    }
+  }
+
   return {
-    visible: state.get('showingTimeTravel'),
-    topologyViewMode: state.get('topologyViewMode'),
-    currentTopology: state.get('currentTopology'),
-    timestamp: state.get('pausedAt'),
+    visible: scopeState.get('showingTimeTravel'),
+    topologyViewMode: scopeState.get('topologyViewMode'),
+    currentTopology: scopeState.get('currentTopology'),
+    earliestTimestamp: firstSeenConnectedAt,
+    timestamp: scopeState.get('pausedAt'),
   };
 }
 
