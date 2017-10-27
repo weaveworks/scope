@@ -13,6 +13,8 @@ import (
 	"io"
 	"time"
 
+	"bufio"
+	"compress/gzip"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
@@ -23,6 +25,9 @@ import (
 //
 // We currenty read v2.4 file format with nanosecond and microsecdond
 // timestamp resolution in little-endian and big-endian encoding.
+//
+// If the PCAP data is gzip compressed it is transparently uncompressed
+// by wrapping the given io.Reader with a gzip.Reader.
 type Reader struct {
 	r              io.Reader
 	byteOrder      binary.ByteOrder
@@ -34,12 +39,15 @@ type Reader struct {
 	snaplen  uint32
 	linkType layers.LinkType
 	// reusable buffer
-	buf []byte
+	buf [16]byte
 }
 
 const magicNanoseconds = 0xA1B23C4D
 const magicMicrosecondsBigendian = 0xD4C3B2A1
 const magicNanosecondsBigendian = 0x4D3CB2A1
+
+const magicGzip1 = 0x1f
+const magicGzip2 = 0x8b
 
 // NewReader returns a new reader object, for reading packet data from
 // the given reader. The reader must be open and header data is
@@ -60,6 +68,20 @@ func NewReader(r io.Reader) (*Reader, error) {
 }
 
 func (r *Reader) readHeader() error {
+	br := bufio.NewReader(r.r)
+	gzipMagic, err := br.Peek(2)
+	if err != nil {
+		return err
+	}
+
+	if gzipMagic[0] == magicGzip1 && gzipMagic[1] == magicGzip2 {
+		if r.r, err = gzip.NewReader(br); err != nil {
+			return err
+		}
+	} else {
+		r.r = br
+	}
+
 	buf := make([]byte, 24)
 	if n, err := io.ReadFull(r.r, buf); err != nil {
 		return err
@@ -79,43 +101,36 @@ func (r *Reader) readHeader() error {
 		r.byteOrder = binary.BigEndian
 		r.nanoSecsFactor = 1000
 	} else {
-		return errors.New(fmt.Sprintf("Unknown maigc %x", magic))
+		return fmt.Errorf("Unknown magic %x", magic)
 	}
 	if r.versionMajor = r.byteOrder.Uint16(buf[4:6]); r.versionMajor != versionMajor {
-		return errors.New(fmt.Sprintf("Unknown major version %d", r.versionMajor))
+		return fmt.Errorf("Unknown major version %d", r.versionMajor)
 	}
 	if r.versionMinor = r.byteOrder.Uint16(buf[6:8]); r.versionMinor != versionMinor {
-		return errors.New(fmt.Sprintf("Unknown minor version %d", r.versionMinor))
+		return fmt.Errorf("Unknown minor version %d", r.versionMinor)
 	}
 	// ignore timezone 8:12 and sigfigs 12:16
 	r.snaplen = r.byteOrder.Uint32(buf[16:20])
-	r.buf = make([]byte, r.snaplen+16)
 	r.linkType = layers.LinkType(r.byteOrder.Uint32(buf[20:24]))
 	return nil
 }
 
-// Read next packet from file
+// ReadPacketData reads next packet from file.
 func (r *Reader) ReadPacketData() (data []byte, ci gopacket.CaptureInfo, err error) {
 	if ci, err = r.readPacketHeader(); err != nil {
 		return
 	}
-
-	var n int
-	data = r.buf[16 : 16+ci.CaptureLength]
-	if n, err = io.ReadFull(r.r, data); err != nil {
+	if ci.CaptureLength > int(r.snaplen) {
+		err = fmt.Errorf("capture length exceeds snap length: %d > %d", 16+ci.CaptureLength, r.snaplen)
 		return
-	} else if n < ci.CaptureLength {
-		err = io.ErrUnexpectedEOF
 	}
-	return
+	data = make([]byte, ci.CaptureLength)
+	_, err = io.ReadFull(r.r, data)
+	return data, ci, err
 }
 
 func (r *Reader) readPacketHeader() (ci gopacket.CaptureInfo, err error) {
-	var n int
-	if n, err = io.ReadFull(r.r, r.buf[0:16]); err != nil {
-		return
-	} else if n < 16 {
-		err = io.ErrUnexpectedEOF
+	if _, err = io.ReadFull(r.r, r.buf[:]); err != nil {
 		return
 	}
 	ci.Timestamp = time.Unix(int64(r.byteOrder.Uint32(r.buf[0:4])), int64(r.byteOrder.Uint32(r.buf[4:8])*r.nanoSecsFactor)).UTC()
@@ -127,6 +142,11 @@ func (r *Reader) readPacketHeader() (ci gopacket.CaptureInfo, err error) {
 // LinkType returns network, as a layers.LinkType.
 func (r *Reader) LinkType() layers.LinkType {
 	return r.linkType
+}
+
+// Snaplen returns the snapshot length of the capture file.
+func (r *Reader) Snaplen() uint32 {
+	return r.snaplen
 }
 
 // Reader formater
