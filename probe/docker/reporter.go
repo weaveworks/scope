@@ -32,7 +32,7 @@ var (
 		ImageName:             {ID: ImageName, Label: "Image", From: report.FromLatest, Priority: 1},
 		ContainerCommand:      {ID: ContainerCommand, Label: "Command", From: report.FromLatest, Priority: 2},
 		ContainerStateHuman:   {ID: ContainerStateHuman, Label: "State", From: report.FromLatest, Priority: 3},
-		ContainerUptime:       {ID: ContainerUptime, Label: "Uptime", From: report.FromLatest, Priority: 4},
+		ContainerUptime:       {ID: ContainerUptime, Label: "Uptime", From: report.FromLatest, Priority: 4, Datatype: "duration"},
 		ContainerRestartCount: {ID: ContainerRestartCount, Label: "Restart #", From: report.FromLatest, Priority: 5},
 		ContainerNetworks:     {ID: ContainerNetworks, Label: "Networks", From: report.FromSets, Priority: 6},
 		ContainerIPs:          {ID: ContainerIPs, Label: "IPs", From: report.FromSets, Priority: 7},

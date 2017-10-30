@@ -3,6 +3,7 @@ package host
 import (
 	"fmt"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -37,7 +38,7 @@ const (
 var (
 	MetadataTemplates = report.MetadataTemplates{
 		KernelVersion: {ID: KernelVersion, Label: "Kernel Version", From: report.FromLatest, Priority: 1},
-		Uptime:        {ID: Uptime, Label: "Uptime", From: report.FromLatest, Priority: 2},
+		Uptime:        {ID: Uptime, Label: "Uptime", From: report.FromLatest, Priority: 2, Datatype: "duration"},
 		HostName:      {ID: HostName, Label: "Hostname", From: report.FromLatest, Priority: 11},
 		OS:            {ID: OS, Label: "OS", From: report.FromLatest, Priority: 12},
 		LocalNetworks: {ID: LocalNetworks, Label: "Local Networks", From: report.FromSets, Priority: 13},
@@ -102,6 +103,7 @@ func (r *Reporter) Report() (report.Report, error) {
 		localCIDRs = append(localCIDRs, localNet.String())
 	}
 
+	// TODO: Make sure uptime is accurate also when time travelling.
 	uptime, err := GetUptime()
 	if err != nil {
 		return rep, err
@@ -130,7 +132,7 @@ func (r *Reporter) Report() (report.Report, error) {
 			HostName:              r.hostName,
 			OS:                    runtime.GOOS,
 			KernelVersion:         kernel,
-			Uptime:                uptime.String(),
+			Uptime:                strconv.Itoa(int(uptime / time.Millisecond)),
 			ScopeVersion:          r.version,
 		}).
 			WithSets(report.MakeSets().

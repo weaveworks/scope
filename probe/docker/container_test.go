@@ -2,6 +2,7 @@ package docker_test
 
 import (
 	"net"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -58,7 +59,7 @@ func TestContainer(t *testing.T) {
 
 	// Now see if we go them
 	{
-		uptime := (now.Sub(startTime) / time.Second) * time.Second
+		uptimeMs := int(now.Sub(startTime) / time.Millisecond)
 		controls := map[string]report.NodeControlData{
 			docker.UnpauseContainer: {Dead: true},
 			docker.RestartContainer: {Dead: false},
@@ -79,7 +80,7 @@ func TestContainer(t *testing.T) {
 			"docker_label_foo2":            "bar2",
 			"docker_container_state":       "running",
 			"docker_container_state_human": c.Container().State.String(),
-			"docker_container_uptime":      uptime.String(),
+			"docker_container_uptime":      strconv.Itoa(uptimeMs),
 			"docker_env_FOO":               "secret-bar",
 		}).WithLatestControls(
 			controls,
