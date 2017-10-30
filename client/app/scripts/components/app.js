@@ -11,6 +11,7 @@ import Logo from './logo';
 import Footer from './footer';
 import Sidebar from './sidebar';
 import HelpPanel from './help-panel';
+import CloudFeature from './cloud-feature';
 import TroubleshootingMenu from './troubleshooting-menu';
 import Search from './search';
 import Status from './status';
@@ -191,7 +192,10 @@ class App extends React.Component {
           {showingDetails && <Details />}
 
           <div className="header">
-            <TimeTravelWrapper />
+            <CloudFeature alwaysShow>
+              <TimeTravelWrapper />
+            </CloudFeature>
+
             <div className="selectors">
               <div className="logo">
                 {!isIframe &&
