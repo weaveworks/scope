@@ -1,5 +1,5 @@
 FROM progrium/busybox
-MAINTAINER Weaveworks Inc <help@weave.works>
+LABEL maintainer="Weaveworks Inc <help@weave.works>"
 WORKDIR /home/weave
 ADD searchapp /home/weave/
 EXPOSE 8080
