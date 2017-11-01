@@ -1,5 +1,5 @@
 FROM ubuntu
-MAINTAINER Weaveworks Inc <help@weave.works>
+LABEL maintainer="Weaveworks Inc <help@weave.works>"
 RUN apt-get update && \
   apt-get install -y nginx && \
   rm -rf /var/lib/apt/lists/*
