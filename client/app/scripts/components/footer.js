@@ -60,7 +60,7 @@ class Footer extends React.Component {
             </a>
           }
           <span className="footer-label">Version</span>
-          {version}
+          {version || '...'}
           <span className="footer-label">on</span>
           {hostname}
         </div>

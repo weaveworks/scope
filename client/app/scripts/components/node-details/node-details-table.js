@@ -11,7 +11,6 @@ import NodeDetailsTableRow from './node-details-table-row';
 import NodeDetailsTableHeaders from './node-details-table-headers';
 import { ipToPaddedString } from '../../utils/string-utils';
 import { moveElement, insertElement } from '../../utils/array-utils';
-import { getSerializedTimeTravelTimestamp } from '../../utils/web-api-utils';
 import {
   isIP, isNumber, defaultSortDesc, getTableColumnsStyles
 } from '../../utils/node-details-utils';
@@ -305,7 +304,7 @@ NodeDetailsTable.defaultProps = {
 
 function mapStateToProps(state) {
   return {
-    timestamp: getSerializedTimeTravelTimestamp(state),
+    timestamp: state.get('pausedAt'),
   };
 }
 

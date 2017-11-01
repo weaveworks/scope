@@ -1,5 +1,6 @@
 /* eslint-disable import/no-webpack-loader-syntax, import/no-unresolved */
 import debug from 'debug';
+import moment from 'moment';
 import { size, each, includes, isEqual } from 'lodash';
 import {
   fromJS,
@@ -8,8 +9,6 @@ import {
   Map as makeMap,
   OrderedMap as makeOrderedMap,
 } from 'immutable';
-
-import { nowInSecondsPrecision } from 'weaveworks-ui-components/lib/utils/time';
 
 import ActionTypes from '../constants/action-types';
 import {
@@ -24,6 +23,7 @@ import { isPausedSelector } from '../selectors/time-travel';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
 import { timestampsEqual } from '../utils/time-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
+import { deserializeTimestamp } from '../utils/web-api-utils';
 import {
   findTopologyById,
   setTopologyUrlsById,
@@ -86,7 +86,7 @@ export const initialState = makeMap({
   topologyOptions: makeOrderedMap(), // topologyId -> options
   topologyUrlsById: makeOrderedMap(), // topologyId -> topologyUrl
   topologyViewMode: GRAPH_VIEW_MODE,
-  version: '...',
+  version: null,
   versionUpdate: null,
   // Set some initial numerical values to prevent NaN in case of edgy race conditions.
   viewport: makeMap({ width: 0, height: 0 }),
@@ -381,13 +381,13 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.PAUSE_TIME_AT_NOW: {
       state = state.set('showingTimeTravel', false);
       state = state.set('timeTravelTransitioning', false);
-      return state.set('pausedAt', nowInSecondsPrecision());
+      return state.set('pausedAt', moment().utc());
     }
 
     case ActionTypes.START_TIME_TRAVEL: {
       state = state.set('showingTimeTravel', true);
       state = state.set('timeTravelTransitioning', false);
-      return state.set('pausedAt', nowInSecondsPrecision());
+      return state.set('pausedAt', action.timestamp || moment().utc());
     }
 
     case ActionTypes.JUMP_TO_TIME: {
@@ -694,6 +694,9 @@ export function rootReducer(state = initialState, action) {
         pinnedMetricType: action.state.pinnedMetricType
       });
       state = state.set('topologyViewMode', action.state.topologyViewMode);
+      if (action.state.pausedAt) {
+        state = state.set('pausedAt', deserializeTimestamp(action.state.pausedAt));
+      }
       if (action.state.gridSortedBy) {
         state = state.set('gridSortedBy', action.state.gridSortedBy);
       }
