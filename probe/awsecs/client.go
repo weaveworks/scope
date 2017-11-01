@@ -89,28 +89,51 @@ func newClient(cluster string, cacheSize int, cacheExpiry time.Duration, cluster
 	}, nil
 }
 
+// Helper functions to map from the AWS practice of storing everything
+// via a pointer to the Go practice of using zero values
+func stringOrBlank(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func timeOrZero(t *time.Time) time.Time {
+	if t == nil {
+		return time.Time{}
+	}
+	return *t
+}
+
+func int64OrZero(i *int64) int64 {
+	if i == nil {
+		return 0
+	}
+	return *i
+}
+
 func newECSTask(task *ecs.Task) EcsTask {
 	return EcsTask{
-		TaskARN:           *task.TaskArn,
-		CreatedAt:         *task.CreatedAt,
-		TaskDefinitionARN: *task.TaskDefinitionArn,
-		StartedAt:         *task.StartedAt,
-		StartedBy:         *task.StartedBy,
+		TaskARN:           stringOrBlank(task.TaskArn),
+		CreatedAt:         timeOrZero(task.CreatedAt),
+		TaskDefinitionARN: stringOrBlank(task.TaskDefinitionArn),
+		StartedAt:         timeOrZero(task.StartedAt),
+		StartedBy:         stringOrBlank(task.StartedBy),
 	}
 }
 
 func newECSService(service *ecs.Service) EcsService {
 	deploymentIDs := make([]string, len(service.Deployments))
 	for i, deployment := range service.Deployments {
-		deploymentIDs[i] = *deployment.Id
+		deploymentIDs[i] = stringOrBlank(deployment.Id)
 	}
 	return EcsService{
-		ServiceName:       *service.ServiceName,
+		ServiceName:       stringOrBlank(service.ServiceName),
 		DeploymentIDs:     deploymentIDs,
-		DesiredCount:      *service.DesiredCount,
-		PendingCount:      *service.PendingCount,
-		RunningCount:      *service.RunningCount,
-		TaskDefinitionARN: *service.TaskDefinition,
+		DesiredCount:      int64OrZero(service.DesiredCount),
+		PendingCount:      int64OrZero(service.PendingCount),
+		RunningCount:      int64OrZero(service.RunningCount),
+		TaskDefinitionARN: stringOrBlank(service.TaskDefinition),
 	}
 }
 
@@ -208,11 +231,11 @@ func (c ecsClientImpl) describeServicesBatch(names []string) {
 	}
 
 	for _, failure := range resp.Failures {
-		log.Warnf("Failed to describe ECS service %s, ECS service report may be incomplete: %s", *failure.Arn, failure.Reason)
+		log.Warnf("Failed to describe ECS service %s, ECS service report may be incomplete: %s", stringOrBlank(failure.Arn), stringOrBlank(failure.Reason))
 	}
 
 	for _, service := range resp.Services {
-		if service != nil {
+		if service != nil && service.ServiceName != nil {
 			c.serviceCache.Set(*service.ServiceName, newECSService(service))
 		}
 	}
@@ -239,7 +262,7 @@ func (c ecsClientImpl) getTasks(taskARNs []string) {
 	}
 
 	for _, failure := range resp.Failures {
-		log.Warnf("Failed to describe ECS task %s, ECS service report may be incomplete: %s", *failure.Arn, *failure.Reason)
+		log.Warnf("Failed to describe ECS task %s, ECS service report may be incomplete: %s", stringOrBlank(failure.Arn), stringOrBlank(failure.Reason))
 	}
 
 	for _, task := range resp.Tasks {
