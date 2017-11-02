@@ -14,8 +14,9 @@ import (
 	"github.com/armon/go-metrics"
 
 	"github.com/weaveworks/common/fs"
-	"github.com/weaveworks/scope/common/marshal"
 	"github.com/weaveworks/scope/probe/process"
+
+	"golang.org/x/sys/unix"
 )
 
 var (
@@ -53,13 +54,13 @@ func newPidWalker(walker process.Walker, tickc <-chan time.Time, fdBlockSize uin
 }
 
 func getKernelVersion() (major, minor int, err error) {
-	var u syscall.Utsname
-	if err = syscall.Uname(&u); err != nil {
+	var u unix.Utsname
+	if err = unix.Uname(&u); err != nil {
 		return
 	}
 
 	// Kernel versions are not always a semver, so we have to do minimal parsing.
-	release := marshal.FromUtsname(u.Release)
+	release := string(u.Release[:bytes.IndexByte(u.Release[:], 0)])
 	if n, err := fmt.Sscanf(release, "%d.%d", &major, &minor); err != nil || n != 2 {
 		return 0, 0, fmt.Errorf("Malformed version: %s", release)
 	}
