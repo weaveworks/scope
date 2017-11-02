@@ -103,7 +103,6 @@ func (r *Reporter) Report() (report.Report, error) {
 		localCIDRs = append(localCIDRs, localNet.String())
 	}
 
-	// TODO: Make sure uptime is accurate also when time travelling.
 	uptime, err := GetUptime()
 	if err != nil {
 		return rep, err
@@ -132,7 +131,7 @@ func (r *Reporter) Report() (report.Report, error) {
 			HostName:              r.hostName,
 			OS:                    runtime.GOOS,
 			KernelVersion:         kernel,
-			Uptime:                strconv.Itoa(int(uptime / time.Millisecond)),
+			Uptime:                strconv.Itoa(int(uptime / time.Second)), // uptime in seconds
 			ScopeVersion:          r.version,
 		}).
 			WithSets(report.MakeSets().

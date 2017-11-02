@@ -25,7 +25,7 @@ func TestReporter(t *testing.T) {
 			host.CPUUsage:    report.MakeSingletonMetric(timestamp, 30.0).WithMax(100.0),
 			host.MemoryUsage: report.MakeSingletonMetric(timestamp, 60.0).WithMax(100.0),
 		}
-		uptime      = "3600000" // one hour
+		uptime      = "3600" // one hour
 		kernel      = "release version"
 		_, ipnet, _ = net.ParseCIDR(network)
 	)

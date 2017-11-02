@@ -101,7 +101,7 @@ export function formatDataType(field, referenceTimestampStr = null) {
       };
     },
     duration(durationString) {
-      const humanizedDuration = moment.duration(parseInt(durationString, 10)).humanize();
+      const humanizedDuration = moment.duration(Number(durationString), 'seconds').humanize();
       return {
         value: humanizedDuration,
         title: humanizedDuration,

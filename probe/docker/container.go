@@ -425,14 +425,12 @@ func (c *container) GetNode() report.Node {
 	controls := c.controlsMap()
 
 	if !c.container.State.Paused && c.container.State.Running {
-		// TODO: Use mtime.Now() only as a fallback from Time Travel
-		// timestamp here to get accurate durations when time travelling.
-		uptimeMs := mtime.Now().Sub(c.container.State.StartedAt) / time.Millisecond
+		uptimeSeconds := int(mtime.Now().Sub(c.container.State.StartedAt) / time.Second)
 		networkMode := ""
 		if c.container.HostConfig != nil {
 			networkMode = c.container.HostConfig.NetworkMode
 		}
-		latest[ContainerUptime] = strconv.Itoa(int(uptimeMs))
+		latest[ContainerUptime] = strconv.Itoa(uptimeSeconds)
 		latest[ContainerRestartCount] = strconv.Itoa(c.container.RestartCount)
 		latest[ContainerNetworkMode] = networkMode
 	}
