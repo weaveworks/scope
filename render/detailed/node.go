@@ -137,8 +137,8 @@ var nodeSummaryGroupSpecs = []struct {
 			Label: "Pods",
 			Columns: []Column{
 				{ID: kubernetes.State, Label: "State"},
-				{ID: report.Container, Label: "# Containers", Datatype: "number"},
-				{ID: kubernetes.IP, Label: "IP", Datatype: "ip"},
+				{ID: report.Container, Label: "# Containers", Datatype: report.Number},
+				{ID: kubernetes.IP, Label: "IP", Datatype: report.IP},
 			},
 		},
 	},
@@ -147,7 +147,7 @@ var nodeSummaryGroupSpecs = []struct {
 		NodeSummaryGroup: NodeSummaryGroup{
 			Label: "Tasks",
 			Columns: []Column{
-				{ID: awsecs.CreatedAt, Label: "Created At", Datatype: "datetime"},
+				{ID: awsecs.CreatedAt, Label: "Created At", Datatype: report.DateTime},
 			},
 		},
 	},
@@ -156,8 +156,8 @@ var nodeSummaryGroupSpecs = []struct {
 		NodeSummaryGroup: NodeSummaryGroup{
 			Label: "Containers",
 			Columns: []Column{
-				{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
-				{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
+				{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: report.Number},
+				{ID: docker.MemoryUsage, Label: "Memory", Datatype: report.Number},
 			},
 		},
 	},
@@ -166,9 +166,9 @@ var nodeSummaryGroupSpecs = []struct {
 		NodeSummaryGroup: NodeSummaryGroup{
 			Label: "Processes",
 			Columns: []Column{
-				{ID: process.PID, Label: "PID", Datatype: "number"},
-				{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
-				{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
+				{ID: process.PID, Label: "PID", Datatype: report.Number},
+				{ID: process.CPUUsage, Label: "CPU", Datatype: report.Number},
+				{ID: process.MemoryUsage, Label: "Memory", Datatype: report.Number},
 			},
 		},
 	},

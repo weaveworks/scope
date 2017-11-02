@@ -25,14 +25,14 @@ const (
 var (
 	taskMetadata = report.MetadataTemplates{
 		Cluster:    {ID: Cluster, Label: "Cluster", From: report.FromLatest, Priority: 0},
-		CreatedAt:  {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: "datetime"},
+		CreatedAt:  {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: report.DateTime},
 		TaskFamily: {ID: TaskFamily, Label: "Family", From: report.FromLatest, Priority: 2},
 	}
 	serviceMetadata = report.MetadataTemplates{
 		Cluster:             {ID: Cluster, Label: "Cluster", From: report.FromLatest, Priority: 0},
-		CreatedAt:           {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: "datetime"},
-		ServiceDesiredCount: {ID: ServiceDesiredCount, Label: "Desired Tasks", From: report.FromLatest, Priority: 2, Datatype: "number"},
-		ServiceRunningCount: {ID: ServiceRunningCount, Label: "Running Tasks", From: report.FromLatest, Priority: 3, Datatype: "number"},
+		CreatedAt:           {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: report.DateTime},
+		ServiceDesiredCount: {ID: ServiceDesiredCount, Label: "Desired Tasks", From: report.FromLatest, Priority: 2, Datatype: report.Number},
+		ServiceRunningCount: {ID: ServiceRunningCount, Label: "Running Tasks", From: report.FromLatest, Priority: 3, Datatype: report.Number},
 	}
 )
 

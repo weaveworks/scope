@@ -110,7 +110,7 @@ func TestMakeNodeSummary(t *testing.T) {
 				Rank:       fixture.Client1Name,
 				Shape:      "square",
 				Metadata: []report.MetadataRow{
-					{ID: process.PID, Label: "PID", Value: fixture.Client1PID, Priority: 1, Datatype: "number"},
+					{ID: process.PID, Label: "PID", Value: fixture.Client1PID, Priority: 1, Datatype: report.Number},
 				},
 				Adjacency: report.MakeIDList(fixture.ServerProcessNodeID),
 			},
@@ -146,7 +146,7 @@ func TestMakeNodeSummary(t *testing.T) {
 				Linkable:   true,
 				Stack:      true,
 				Metadata: []report.MetadataRow{
-					{ID: report.Container, Label: "# Containers", Value: "1", Priority: 2, Datatype: "number"},
+					{ID: report.Container, Label: "# Containers", Value: "1", Priority: 2, Datatype: report.Number},
 				},
 				Adjacency: report.MakeIDList(expected.ServerContainerImageNodeID),
 			},

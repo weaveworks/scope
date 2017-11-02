@@ -23,10 +23,10 @@ const (
 // Exposed for testing
 var (
 	MetadataTemplates = report.MetadataTemplates{
-		PID:     {ID: PID, Label: "PID", From: report.FromLatest, Datatype: "number", Priority: 1},
+		PID:     {ID: PID, Label: "PID", From: report.FromLatest, Datatype: report.Number, Priority: 1},
 		Cmdline: {ID: Cmdline, Label: "Command", From: report.FromLatest, Priority: 2},
-		PPID:    {ID: PPID, Label: "Parent PID", From: report.FromLatest, Datatype: "number", Priority: 3},
-		Threads: {ID: Threads, Label: "# Threads", From: report.FromLatest, Datatype: "number", Priority: 4},
+		PPID:    {ID: PPID, Label: "Parent PID", From: report.FromLatest, Datatype: report.Number, Priority: 3},
+		Threads: {ID: Threads, Label: "# Threads", From: report.FromLatest, Datatype: report.Number, Priority: 4},
 	}
 
 	MetricTemplates = report.MetricTemplates{

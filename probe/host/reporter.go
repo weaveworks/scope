@@ -38,7 +38,7 @@ const (
 var (
 	MetadataTemplates = report.MetadataTemplates{
 		KernelVersion: {ID: KernelVersion, Label: "Kernel Version", From: report.FromLatest, Priority: 1},
-		Uptime:        {ID: Uptime, Label: "Uptime", From: report.FromLatest, Priority: 2, Datatype: "duration"},
+		Uptime:        {ID: Uptime, Label: "Uptime", From: report.FromLatest, Priority: 2, Datatype: report.Duration},
 		HostName:      {ID: HostName, Label: "Hostname", From: report.FromLatest, Priority: 11},
 		OS:            {ID: OS, Label: "OS", From: report.FromLatest, Priority: 12},
 		LocalNetworks: {ID: LocalNetworks, Label: "Local Networks", From: report.FromSets, Priority: 13},

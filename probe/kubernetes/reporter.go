@@ -29,10 +29,10 @@ const (
 var (
 	PodMetadataTemplates = report.MetadataTemplates{
 		State:            {ID: State, Label: "State", From: report.FromLatest, Priority: 2},
-		IP:               {ID: IP, Label: "IP", From: report.FromLatest, Datatype: "ip", Priority: 3},
-		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: "number", Priority: 4},
+		IP:               {ID: IP, Label: "IP", From: report.FromLatest, Datatype: report.IP, Priority: 3},
+		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: report.Number, Priority: 4},
 		Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 5},
-		Created:          {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 6},
+		Created:          {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 6},
 		RestartCount:     {ID: RestartCount, Label: "Restart #", From: report.FromLatest, Priority: 7},
 	}
 
@@ -40,10 +40,10 @@ var (
 
 	ServiceMetadataTemplates = report.MetadataTemplates{
 		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:    {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
-		PublicIP:   {ID: PublicIP, Label: "Public IP", From: report.FromLatest, Datatype: "ip", Priority: 4},
-		IP:         {ID: IP, Label: "Internal IP", From: report.FromLatest, Datatype: "ip", Priority: 5},
-		report.Pod: {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+		Created:    {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		PublicIP:   {ID: PublicIP, Label: "Public IP", From: report.FromLatest, Datatype: report.IP, Priority: 4},
+		IP:         {ID: IP, Label: "Internal IP", From: report.FromLatest, Datatype: report.IP, Priority: 5},
+		report.Pod: {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
 	}
 
 	ServiceMetricTemplates = PodMetricTemplates
@@ -51,10 +51,10 @@ var (
 	DeploymentMetadataTemplates = report.MetadataTemplates{
 		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: "number", Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
-		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
 		Strategy:           {ID: Strategy, Label: "Strategy", From: report.FromLatest, Priority: 7},
 	}
 
@@ -62,10 +62,10 @@ var (
 
 	ReplicaSetMetadataTemplates = report.MetadataTemplates{
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: "number", Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
-		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
 	}
 
 	ReplicaSetMetricTemplates = PodMetricTemplates
@@ -73,9 +73,9 @@ var (
 	DaemonSetMetadataTemplates = report.MetadataTemplates{
 		NodeType:        {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:       {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:         {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
-		DesiredReplicas: {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 4},
-		report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 5},
+		Created:         {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		DesiredReplicas: {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 5},
 	}
 
 	DaemonSetMetricTemplates = PodMetricTemplates
@@ -83,10 +83,10 @@ var (
 	StatefulSetMetadataTemplates = report.MetadataTemplates{
 		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: "number", Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
-		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
 	}
 
 	StatefulSetMetricTemplates = PodMetricTemplates
@@ -94,12 +94,12 @@ var (
 	CronJobMetadataTemplates = report.MetadataTemplates{
 		NodeType:      {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:     {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:       {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
+		Created:       {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
 		Schedule:      {ID: Schedule, Label: "Schedule", From: report.FromLatest, Priority: 4},
-		LastScheduled: {ID: LastScheduled, Label: "Last Scheduled", From: report.FromLatest, Datatype: "datetime", Priority: 5},
+		LastScheduled: {ID: LastScheduled, Label: "Last Scheduled", From: report.FromLatest, Datatype: report.DateTime, Priority: 5},
 		Suspended:     {ID: Suspended, Label: "Suspended", From: report.FromLatest, Priority: 6},
-		ActiveJobs:    {ID: ActiveJobs, Label: "# Jobs", From: report.FromLatest, Datatype: "number", Priority: 7},
-		report.Pod:    {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 8},
+		ActiveJobs:    {ID: ActiveJobs, Label: "# Jobs", From: report.FromLatest, Datatype: report.Number, Priority: 7},
+		report.Pod:    {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 8},
 	}
 
 	CronJobMetricTemplates = PodMetricTemplates
