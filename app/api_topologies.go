@@ -435,6 +435,7 @@ func (r *Registry) Add(ts ...APITopologyDesc) {
 	defer r.Unlock()
 	for _, t := range ts {
 		t.URL = apiTopologyURL + t.id
+		t.renderer = render.Memoise(t.renderer)
 
 		if t.parent != "" {
 			parent := r.items[t.parent]
