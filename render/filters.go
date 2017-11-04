@@ -114,20 +114,20 @@ type Filter struct {
 
 // MakeFilter makes a new Filter (that ignores pseudo nodes).
 func MakeFilter(f FilterFunc, r Renderer) Renderer {
-	return Memoise(&Filter{
+	return &Filter{
 		Renderer: r,
 		FilterFunc: func(n report.Node) bool {
 			return n.Topology == Pseudo || f(n)
 		},
-	})
+	}
 }
 
 // MakeFilterPseudo makes a new Filter that will not ignore pseudo nodes.
 func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
-	return Memoise(&Filter{
+	return &Filter{
 		Renderer:   r,
 		FilterFunc: f,
-	})
+	}
 }
 
 // MakeFilterDecorator makes a decorator that filters out non-pseudo nodes
