@@ -74,10 +74,14 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report, dct Decorato
 
 // ProcessWithContainerNameRenderer is a Renderer which produces a process
 // graph enriched with container names where appropriate
+//
+// not memoised
 var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessRenderer}
 
 // ProcessNameRenderer is a Renderer which produces a renderable process
 // name graph by munging the progess graph.
+//
+// not memoised
 var ProcessNameRenderer = ConditionalRenderer(renderProcesses,
 	MakeMap(
 		MapProcess2Name,

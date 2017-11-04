@@ -6,6 +6,8 @@ import (
 
 // HostRenderer is a Renderer which produces a renderable host
 // graph from the host topology.
+//
+// not memoised
 var HostRenderer = MakeReduce(
 	MakeMap(
 		MapEndpoint2Host,

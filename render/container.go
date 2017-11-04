@@ -182,11 +182,11 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator)
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container
 // graph where the ranks are the image names, not their IDs
-var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerRenderer}
+var ContainerWithImageNameRenderer = Memoise(containerWithImageNameRenderer{ContainerRenderer})
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
-var ContainerImageRenderer = FilterEmpty(report.Container,
+var ContainerImageRenderer = Memoise(FilterEmpty(report.Container,
 	MakeMap(
 		MapContainerImage2Name,
 		MakeReduce(
@@ -197,10 +197,12 @@ var ContainerImageRenderer = FilterEmpty(report.Container,
 			SelectContainerImage,
 		),
 	),
-)
+))
 
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
 // by hostname graph..
+//
+// not memoised
 var ContainerHostnameRenderer = FilterEmpty(report.Container,
 	MakeReduce(
 		MakeMap(

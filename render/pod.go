@@ -42,7 +42,7 @@ func isPauseContainer(n report.Node) bool {
 
 // PodRenderer is a Renderer which produces a renderable kubernetes
 // graph by merging the container graph and the pods topology.
-var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
+var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 	MakeFilter(
 		func(n report.Node) bool {
 			state, ok := n.Latest.Lookup(kubernetes.State)
@@ -65,10 +65,12 @@ var PodRenderer = ConditionalRenderer(renderKubernetesTopologies,
 			ConnectionJoin(MapPod2IP, selectPodsWithDeployments{}),
 		),
 	),
-)
+))
 
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
+//
+// not memoised
 var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	renderParents(
 		report.Pod, []string{report.Service}, "",
@@ -80,6 +82,8 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // Pods with no controller are mapped to 'Unmanaged'
 // We can't simply combine the rendered graphs of the high level objects as they would never
 // have connections to each other.
+//
+// not memoised
 var KubeControllerRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	renderParents(
 		report.Pod, []string{report.Deployment, report.DaemonSet, report.StatefulSet, report.CronJob}, UnmanagedID,
