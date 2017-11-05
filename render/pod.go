@@ -62,7 +62,9 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 					),
 				),
 			),
-			ConnectionJoin(MapPod2IP, selectPodsWithDeployments{}),
+			// ConnectionJoin invokes the renderer twice, hence it
+			// helps to memoise it.
+			ConnectionJoin(MapPod2IP, Memoise(selectPodsWithDeployments{})),
 		),
 	),
 ))
