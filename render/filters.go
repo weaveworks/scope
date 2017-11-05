@@ -55,7 +55,7 @@ func (c CustomRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
 // they have edges to or from them.  Edges to/from yourself
 // are not counted here (see #656).
 func ColorConnected(r Renderer) Renderer {
-	return CustomRenderer{
+	return Memoise(CustomRenderer{
 		Renderer: r,
 		RenderFunc: func(input report.Nodes) report.Nodes {
 			connected := map[string]struct{}{}
@@ -76,7 +76,7 @@ func ColorConnected(r Renderer) Renderer {
 			}
 			return output
 		},
-	}
+	})
 }
 
 // FilterFunc is the function type used by Filters
