@@ -24,7 +24,7 @@ var UncontainedIDPrefix = MakePseudoNodeID(UncontainedID)
 // NB We only want processes in container _or_ processes with network connections
 // but we need to be careful to ensure we only include each edge once, by only
 // including the ProcessRenderer once.
-var ContainerRenderer = MakeFilter(
+var ContainerRenderer = Memoise(MakeFilter(
 	func(n report.Node) bool {
 		// Drop deleted containers
 		state, ok := n.Latest.Lookup(docker.ContainerState)
@@ -37,9 +37,9 @@ var ContainerRenderer = MakeFilter(
 		),
 		ConnectionJoin(MapContainer2IP, SelectContainer),
 	),
-)
+))
 
-var mapEndpoint2IP = MakeMap(endpoint2IP, SelectEndpoint)
+var mapEndpoint2IP = Memoise(MakeMap(endpoint2IP, SelectEndpoint))
 
 const originalNodeID = "original_node_id"
 
