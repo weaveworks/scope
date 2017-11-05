@@ -26,15 +26,7 @@ var EndpointRenderer = SelectEndpoint
 
 // ProcessRenderer is a Renderer which produces a renderable process
 // graph by merging the endpoint graph and the process topology.
-var ProcessRenderer = Memoise(ConditionalRenderer(renderProcesses,
-	MakeReduce(
-		MakeMap(
-			MapEndpoint2Process,
-			EndpointRenderer,
-		),
-		SelectProcess,
-	),
-))
+var ProcessRenderer = Memoise(endpoints2Processes{})
 
 // ColorConnectedProcessRenderer colors connected nodes from
 // ProcessRenderer. Since the process topology views only show
@@ -99,40 +91,67 @@ func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
 	return report.Nodes{externalNode.ID: externalNode}
 }
 
-// MapEndpoint2Process maps endpoint Nodes to process
-// Nodes.
-//
-// If this function is given a pseudo node, then it will just return it;
-// Pseudo nodes will never have pids in them, and therefore will never
-// be able to be turned into a Process node.
-//
-// Otherwise, this function will produce a node with the correct ID
-// format for a process, but without any Major or Minor labels.
-// It does not have enough info to do that, and the resulting graph
-// must be merged with a process graph to get that info.
-func MapEndpoint2Process(n report.Node, local report.Networks) report.Nodes {
-	// Nodes without a hostid are treated as pseudo nodes
-	if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
-		return MapEndpoint2Pseudo(n, local)
-	}
+// endpoints2Processes joins the endpoint topology to the process
+// topology, matching on hostID and pid.
+type endpoints2Processes struct {
+}
 
-	pid, timestamp, ok := n.Latest.LookupEntry(process.PID)
-	if !ok {
+func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) report.Nodes {
+	if len(rpt.Process.Nodes) == 0 {
 		return report.Nodes{}
 	}
+	processes := SelectProcess.Render(rpt, dct)
+	endpoints := SelectEndpoint.Render(rpt, dct)
+	local := LocalNetworks(rpt)
 
-	if len(n.Adjacency) > 1 {
-		// We cannot be sure that the pid is associated with all the
-		// connections. It is better to drop such an endpoint than
-		// risk rendering bogus connections.
-		return report.Nodes{}
+	var ret = make(report.Nodes)
+	var mapped = map[string]string{} // input node ID -> output node ID
+	for _, n := range endpoints {
+		// Nodes without a hostid are treated as pseudo nodes
+		if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); !ok {
+			if id, ok := pseudoNodeID(n, local); ok {
+				addToResults(n, id, ret, mapped, func() report.Node {
+					return report.MakeNode(id).WithTopology(Pseudo)
+				})
+			}
+		} else {
+			pid, timestamp, ok := n.Latest.LookupEntry(process.PID)
+			if !ok {
+				continue
+			}
+
+			if len(n.Adjacency) > 1 {
+				// We cannot be sure that the pid is associated with all the
+				// connections. It is better to drop such an endpoint than
+				// risk rendering bogus connections.
+				continue
+			}
+
+			hostID, _, _ := report.ParseNodeID(hostNodeID)
+			id := report.MakeProcessNodeID(hostID, pid)
+			addToResults(n, id, ret, mapped, func() report.Node {
+				if processNode, found := processes[id]; found {
+					return processNode
+				}
+				// we have a pid, but no matching process node; create a new one rather than dropping the data
+				return report.MakeNode(id).WithTopology(report.Process).
+					WithLatest(process.PID, timestamp, pid)
+			})
+		}
 	}
+	// Copy through any unmatched process nodes
+	for _, n := range processes {
+		if _, found := ret[n.ID]; !found {
+			ret[n.ID] = n
+		}
+	}
+	fixupAdjancencies(processes, ret, mapped)
+	fixupAdjancencies(endpoints, ret, mapped)
+	return ret
+}
 
-	id := report.MakeProcessNodeID(report.ExtractHostID(n), pid)
-	node := NewDerivedNode(id, n).WithTopology(report.Process)
-	node.Latest = node.Latest.Set(process.PID, timestamp, pid)
-	node.Counters = node.Counters.Add(n.Topology, 1)
-	return report.Nodes{id: node}
+func (e endpoints2Processes) Stats(rpt report.Report, _ Decorator) Stats {
+	return Stats{} // nothing to report
 }
 
 // MapProcess2Name maps process Nodes to Nodes
