@@ -36,15 +36,6 @@ func NewDerivedPseudoNode(id string, node report.Node) report.Node {
 	return output
 }
 
-// NewDerivedExternalNode figures out if a node should be considered external and creates the corresponding pseudo node
-func NewDerivedExternalNode(n report.Node, addr string, local report.Networks) (report.Node, bool) {
-	id, ok := externalNodeID(n, addr, local)
-	if !ok {
-		return report.Node{}, false
-	}
-	return NewDerivedPseudoNode(id, n), true
-}
-
 func pseudoNodeID(n report.Node, local report.Networks) (string, bool) {
 	_, addr, _, ok := report.ParseEndpointNodeID(n.ID)
 	if !ok {

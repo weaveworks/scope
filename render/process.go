@@ -81,16 +81,6 @@ var ProcessNameRenderer = ConditionalRenderer(renderProcesses,
 	),
 )
 
-// MapEndpoint2Pseudo makes internet of host pesudo nodes from a endpoint node.
-func MapEndpoint2Pseudo(n report.Node, local report.Networks) report.Nodes {
-	id, ok := pseudoNodeID(n, local)
-	if !ok {
-		return report.Nodes{}
-	}
-	externalNode := NewDerivedPseudoNode(id, n)
-	return report.Nodes{externalNode.ID: externalNode}
-}
-
 // endpoints2Processes joins the endpoint topology to the process
 // topology, matching on hostID and pid.
 type endpoints2Processes struct {
