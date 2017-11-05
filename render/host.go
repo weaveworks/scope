@@ -73,8 +73,6 @@ func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
 	var ret = make(report.Nodes)
 	var mapped = map[string]string{} // input node ID -> output node ID
 	for _, n := range ns {
-		var result report.Node
-		var exists bool
 		// Nodes without a hostid are treated as pseudo nodes
 		hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
 		if !ok {
@@ -82,23 +80,16 @@ func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
 			if !ok {
 				continue
 			}
-			result, exists = ret[id]
-			if !exists {
-				result = report.MakeNode(id).WithTopology(Pseudo)
-			}
+			addToResults(n, id, ret, mapped, func() report.Node {
+				return report.MakeNode(id).WithTopology(Pseudo)
+			})
 		} else {
 			id := report.MakeHostNodeID(report.ExtractHostID(n))
-			result, exists = ret[id]
-			if !exists {
-				result = report.MakeNode(id).WithTopology(report.Host)
-				result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
-			}
-			result.Children = result.Children.Merge(n.Children)
+			addToResults(n, id, ret, mapped, func() report.Node {
+				return report.MakeNode(id).WithTopology(report.Host).
+					WithLatest(report.HostNodeID, timestamp, hostNodeID)
+			})
 		}
-		result.Children = result.Children.Add(n)
-		result.Counters = result.Counters.Add(n.Topology, 1)
-		ret[result.ID] = result
-		mapped[n.ID] = result.ID
 	}
 	fixupAdjancencies(ns, ret, mapped)
 	return ret
