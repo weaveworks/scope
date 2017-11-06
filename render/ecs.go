@@ -5,7 +5,7 @@ import (
 )
 
 // ECSTaskRenderer is a Renderer for Amazon ECS tasks.
-var ECSTaskRenderer = ConditionalRenderer(renderECSTopologies,
+var ECSTaskRenderer = Memoise(ConditionalRenderer(renderECSTopologies,
 	renderParents(
 		report.Container, []string{report.ECSTask}, UnmanagedID,
 		MakeFilter(
@@ -13,9 +13,11 @@ var ECSTaskRenderer = ConditionalRenderer(renderECSTopologies,
 			ContainerWithImageNameRenderer,
 		),
 	),
-)
+))
 
 // ECSServiceRenderer is a Renderer for Amazon ECS services.
+//
+// not memoised
 var ECSServiceRenderer = ConditionalRenderer(renderECSTopologies,
 	renderParents(
 		report.ECSTask, []string{report.ECSService}, "",

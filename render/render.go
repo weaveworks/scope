@@ -33,19 +33,18 @@ type Reduce []Renderer
 
 // MakeReduce is the only sane way to produce a Reduce Renderer.
 func MakeReduce(renderers ...Renderer) Renderer {
-	r := Reduce(renderers)
-	return Memoise(&r)
+	return Reduce(renderers)
 }
 
 // Render produces a set of Nodes given a Report.
-func (r *Reduce) Render(rpt report.Report, dct Decorator) report.Nodes {
-	l := len(*r)
+func (r Reduce) Render(rpt report.Report, dct Decorator) report.Nodes {
+	l := len(r)
 	switch l {
 	case 0:
 		return report.Nodes{}
 	}
 	c := make(chan report.Nodes, l)
-	for _, renderer := range *r {
+	for _, renderer := range r {
 		renderer := renderer // Pike!!
 		go func() {
 			c <- renderer.Render(rpt, dct)
@@ -61,9 +60,9 @@ func (r *Reduce) Render(rpt report.Report, dct Decorator) report.Nodes {
 }
 
 // Stats implements Renderer
-func (r *Reduce) Stats(rpt report.Report, dct Decorator) Stats {
+func (r Reduce) Stats(rpt report.Report, dct Decorator) Stats {
 	var result Stats
-	for _, renderer := range *r {
+	for _, renderer := range r {
 		result = result.merge(renderer.Stats(rpt, dct))
 	}
 	return result
@@ -78,7 +77,7 @@ type Map struct {
 
 // MakeMap makes a new Map
 func MakeMap(f MapFunc, r Renderer) Renderer {
-	return Memoise(&Map{f, r})
+	return &Map{f, r}
 }
 
 // Render transforms a set of Nodes produces by another Renderer.
@@ -180,7 +179,7 @@ type conditionalRenderer struct {
 // ConditionalRenderer renders nothing if the condition is false, otherwise it defers
 // to the wrapped Renderer.
 func ConditionalRenderer(c Condition, r Renderer) Renderer {
-	return Memoise(conditionalRenderer{c, r})
+	return conditionalRenderer{c, r}
 }
 
 func (cr conditionalRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {

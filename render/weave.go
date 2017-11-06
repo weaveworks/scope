@@ -6,6 +6,8 @@ import (
 )
 
 // WeaveRenderer is a Renderer which produces a renderable weave topology.
+//
+// not memoised
 var WeaveRenderer = MakeMap(
 	MapWeaveIdentity,
 	SelectOverlay,

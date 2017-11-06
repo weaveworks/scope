@@ -24,7 +24,7 @@ var UncontainedIDPrefix = MakePseudoNodeID(UncontainedID)
 // NB We only want processes in container _or_ processes with network connections
 // but we need to be careful to ensure we only include each edge once, by only
 // including the ProcessRenderer once.
-var ContainerRenderer = MakeFilter(
+var ContainerRenderer = Memoise(MakeFilter(
 	func(n report.Node) bool {
 		// Drop deleted containers
 		state, ok := n.Latest.Lookup(docker.ContainerState)
@@ -37,9 +37,9 @@ var ContainerRenderer = MakeFilter(
 		),
 		ConnectionJoin(MapContainer2IP, SelectContainer),
 	),
-)
+))
 
-var mapEndpoint2IP = MakeMap(endpoint2IP, SelectEndpoint)
+var mapEndpoint2IP = Memoise(MakeMap(endpoint2IP, SelectEndpoint))
 
 const originalNodeID = "original_node_id"
 
@@ -182,11 +182,11 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator)
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container
 // graph where the ranks are the image names, not their IDs
-var ContainerWithImageNameRenderer = containerWithImageNameRenderer{ContainerRenderer}
+var ContainerWithImageNameRenderer = Memoise(containerWithImageNameRenderer{ContainerRenderer})
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
-var ContainerImageRenderer = FilterEmpty(report.Container,
+var ContainerImageRenderer = Memoise(FilterEmpty(report.Container,
 	MakeMap(
 		MapContainerImage2Name,
 		MakeReduce(
@@ -197,10 +197,12 @@ var ContainerImageRenderer = FilterEmpty(report.Container,
 			SelectContainerImage,
 		),
 	),
-)
+))
 
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
 // by hostname graph..
+//
+// not memoised
 var ContainerHostnameRenderer = FilterEmpty(report.Container,
 	MakeReduce(
 		MakeMap(
