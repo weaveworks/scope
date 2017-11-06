@@ -90,9 +90,9 @@ func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) report.Nod
 	if len(rpt.Process.Nodes) == 0 {
 		return report.Nodes{}
 	}
+	local := LocalNetworks(rpt)
 	processes := SelectProcess.Render(rpt, dct)
 	endpoints := SelectEndpoint.Render(rpt, dct)
-	local := LocalNetworks(rpt)
 	ret := newJoinResults()
 
 	for _, n := range endpoints {

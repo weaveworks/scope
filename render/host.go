@@ -67,11 +67,11 @@ type endpoints2Hosts struct {
 }
 
 func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
-	ns := SelectEndpoint.Render(rpt, dct)
 	local := LocalNetworks(rpt)
+	endpoints := SelectEndpoint.Render(rpt, dct)
 	ret := newJoinResults()
 
-	for _, n := range ns {
+	for _, n := range endpoints {
 		// Nodes without a hostid are treated as pseudo nodes
 		hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
 		if !ok {
@@ -88,7 +88,7 @@ func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
 			})
 		}
 	}
-	ret.fixupAdjacencies(ns)
+	ret.fixupAdjacencies(endpoints)
 	return ret.nodes
 }
 
