@@ -25,7 +25,7 @@ func TestReporter(t *testing.T) {
 			host.CPUUsage:    report.MakeSingletonMetric(timestamp, 30.0).WithMax(100.0),
 			host.MemoryUsage: report.MakeSingletonMetric(timestamp, 60.0).WithMax(100.0),
 		}
-		uptime      = "278h55m43s"
+		uptime      = "3600" // one hour
 		kernel      = "release version"
 		_, ipnet, _ = net.ParseCIDR(network)
 	)
@@ -51,7 +51,7 @@ func TestReporter(t *testing.T) {
 	}()
 	host.GetKernelReleaseAndVersion = func() (string, string, error) { return release, version, nil }
 	host.GetLoad = func(time.Time) report.Metrics { return metrics }
-	host.GetUptime = func() (time.Duration, error) { return time.ParseDuration(uptime) }
+	host.GetUptime = func() (time.Duration, error) { return time.Hour, nil }
 	host.GetCPUUsagePercent = func() (float64, float64) { return 30.0, 100.0 }
 	host.GetMemoryUsageBytes = func() (float64, float64) { return 60.0, 100.0 }
 	host.GetLocalNetworks = func() ([]*net.IPNet, error) { return []*net.IPNet{ipnet}, nil }

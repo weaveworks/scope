@@ -32,12 +32,12 @@ var (
 		ImageName:             {ID: ImageName, Label: "Image", From: report.FromLatest, Priority: 1},
 		ContainerCommand:      {ID: ContainerCommand, Label: "Command", From: report.FromLatest, Priority: 2},
 		ContainerStateHuman:   {ID: ContainerStateHuman, Label: "State", From: report.FromLatest, Priority: 3},
-		ContainerUptime:       {ID: ContainerUptime, Label: "Uptime", From: report.FromLatest, Priority: 4},
+		ContainerUptime:       {ID: ContainerUptime, Label: "Uptime", From: report.FromLatest, Priority: 4, Datatype: report.Duration},
 		ContainerRestartCount: {ID: ContainerRestartCount, Label: "Restart #", From: report.FromLatest, Priority: 5},
 		ContainerNetworks:     {ID: ContainerNetworks, Label: "Networks", From: report.FromSets, Priority: 6},
 		ContainerIPs:          {ID: ContainerIPs, Label: "IPs", From: report.FromSets, Priority: 7},
 		ContainerPorts:        {ID: ContainerPorts, Label: "Ports", From: report.FromSets, Priority: 8},
-		ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 9},
+		ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 9},
 		ContainerID:           {ID: ContainerID, Label: "ID", From: report.FromLatest, Truncate: 12, Priority: 10},
 	}
 
@@ -47,7 +47,7 @@ var (
 	}
 
 	ContainerImageMetadataTemplates = report.MetadataTemplates{
-		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: "number", Priority: 2},
+		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: report.Number, Priority: 2},
 	}
 
 	ContainerTableTemplates = report.TableTemplates{
