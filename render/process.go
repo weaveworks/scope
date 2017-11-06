@@ -100,9 +100,7 @@ func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) report.Nod
 		// Nodes without a hostid are treated as pseudo nodes
 		if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); !ok {
 			if id, ok := pseudoNodeID(n, local); ok {
-				addToResults(n, id, ret, mapped, func() report.Node {
-					return report.MakeNode(id).WithTopology(Pseudo)
-				})
+				addToResults(n, id, ret, mapped, newPseudoNode)
 			}
 		} else {
 			pid, timestamp, ok := n.Latest.LookupEntry(process.PID)
@@ -119,7 +117,7 @@ func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) report.Nod
 
 			hostID, _, _ := report.ParseNodeID(hostNodeID)
 			id := report.MakeProcessNodeID(hostID, pid)
-			addToResults(n, id, ret, mapped, func() report.Node {
+			addToResults(n, id, ret, mapped, func(id string) report.Node {
 				if processNode, found := processes[id]; found {
 					return processNode
 				}

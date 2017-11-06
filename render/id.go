@@ -36,6 +36,10 @@ func NewDerivedPseudoNode(id string, node report.Node) report.Node {
 	return output
 }
 
+func newPseudoNode(id string) report.Node {
+	return report.MakeNode(id).WithTopology(Pseudo)
+}
+
 func pseudoNodeID(n report.Node, local report.Networks) (string, bool) {
 	_, addr, _, ok := report.ParseEndpointNodeID(n.ID)
 	if !ok {

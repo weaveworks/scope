@@ -80,12 +80,10 @@ func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
 			if !ok {
 				continue
 			}
-			addToResults(n, id, ret, mapped, func() report.Node {
-				return report.MakeNode(id).WithTopology(Pseudo)
-			})
+			addToResults(n, id, ret, mapped, newPseudoNode)
 		} else {
 			id := report.MakeHostNodeID(report.ExtractHostID(n))
-			addToResults(n, id, ret, mapped, func() report.Node {
+			addToResults(n, id, ret, mapped, func(id string) report.Node {
 				return report.MakeNode(id).WithTopology(report.Host).
 					WithLatest(report.HostNodeID, timestamp, hostNodeID)
 			})
@@ -98,15 +96,15 @@ func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
 // Add Node M to the result set ret under id, creating a new result
 // node if not already there, and updating the old-id to new-id mapping
 // Note we do not update any counters for child topologies here
-func addToResults(m report.Node, id string, ret report.Nodes, mapped map[string]string, create func() report.Node) {
+func addToResults(m report.Node, id string, ret report.Nodes, mapped map[string]string, create func(string) report.Node) {
 	result, exists := ret[id]
 	if !exists {
-		result = create()
+		result = create(id)
 	}
 	result.Children = result.Children.Add(m)
 	result.Children = result.Children.Merge(m.Children)
-	ret[result.ID] = result
-	mapped[m.ID] = result.ID
+	ret[id] = result
+	mapped[m.ID] = id
 }
 
 // Rewrite Adjacency for new nodes in ret, original nodes in input, and mapping old->new IDs in mapped
