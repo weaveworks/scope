@@ -71,8 +71,7 @@ func (c connectionJoin) Render(rpt report.Report, dct Decorator) report.Nodes {
 			}
 		}
 	}
-	var ret = make(report.Nodes)
-	var mapped = map[string]string{} // input node ID -> output node ID
+	ret := newJoinResults()
 
 	// Now look at all the endpoints and see which map to IP nodes
 	for _, m := range endpoints {
@@ -83,7 +82,7 @@ func (c connectionJoin) Render(rpt report.Report, dct Decorator) report.Nodes {
 		// Nodes without a hostid may be pseudo nodes - if so, pass through to result
 		if _, ok := m.Latest.Lookup(report.HostNodeID); !ok {
 			if id, ok := externalNodeID(m, addr, local); ok {
-				addToResults(m, id, ret, mapped, newPseudoNode)
+				ret.addToResults(m, id, newPseudoNode)
 				continue
 			}
 		}
@@ -95,20 +94,15 @@ func (c connectionJoin) Render(rpt report.Report, dct Decorator) report.Nodes {
 			id, found = ipNodes[report.MakeScopedEndpointNodeID(scope, addr, port)]
 		}
 		if found && id != "" { // not one we blanked out earlier
-			addToResults(m, id, ret, mapped, func(id string) report.Node {
+			ret.addToResults(m, id, func(id string) report.Node {
 				return inputNodes[id]
 			})
 		}
 	}
-	// Copy through any unmatched input nodes
-	for _, n := range inputNodes {
-		if _, found := ret[n.ID]; !found {
-			ret[n.ID] = n
-		}
-	}
-	fixupAdjancencies(inputNodes, ret, mapped)
-	fixupAdjancencies(endpoints, ret, mapped)
-	return ret
+	ret.copyUnmatched(inputNodes)
+	ret.fixupAdjacencies(inputNodes)
+	ret.fixupAdjacencies(endpoints)
+	return ret.nodes
 }
 
 func (c connectionJoin) Stats(rpt report.Report, _ Decorator) Stats {

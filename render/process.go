@@ -93,14 +93,13 @@ func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) report.Nod
 	processes := SelectProcess.Render(rpt, dct)
 	endpoints := SelectEndpoint.Render(rpt, dct)
 	local := LocalNetworks(rpt)
+	ret := newJoinResults()
 
-	var ret = make(report.Nodes)
-	var mapped = map[string]string{} // input node ID -> output node ID
 	for _, n := range endpoints {
 		// Nodes without a hostid are treated as pseudo nodes
 		if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); !ok {
 			if id, ok := pseudoNodeID(n, local); ok {
-				addToResults(n, id, ret, mapped, newPseudoNode)
+				ret.addToResults(n, id, newPseudoNode)
 			}
 		} else {
 			pid, timestamp, ok := n.Latest.LookupEntry(process.PID)
@@ -117,7 +116,7 @@ func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) report.Nod
 
 			hostID, _, _ := report.ParseNodeID(hostNodeID)
 			id := report.MakeProcessNodeID(hostID, pid)
-			addToResults(n, id, ret, mapped, func(id string) report.Node {
+			ret.addToResults(n, id, func(id string) report.Node {
 				if processNode, found := processes[id]; found {
 					return processNode
 				}
@@ -127,15 +126,10 @@ func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) report.Nod
 			})
 		}
 	}
-	// Copy through any unmatched process nodes
-	for _, n := range processes {
-		if _, found := ret[n.ID]; !found {
-			ret[n.ID] = n
-		}
-	}
-	fixupAdjancencies(processes, ret, mapped)
-	fixupAdjancencies(endpoints, ret, mapped)
-	return ret
+	ret.copyUnmatched(processes)
+	ret.fixupAdjacencies(processes)
+	ret.fixupAdjacencies(endpoints)
+	return ret.nodes
 }
 
 func (e endpoints2Processes) Stats(rpt report.Report, _ Decorator) Stats {

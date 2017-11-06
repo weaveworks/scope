@@ -69,9 +69,8 @@ type endpoints2Hosts struct {
 func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
 	ns := SelectEndpoint.Render(rpt, dct)
 	local := LocalNetworks(rpt)
+	ret := newJoinResults()
 
-	var ret = make(report.Nodes)
-	var mapped = map[string]string{} // input node ID -> output node ID
 	for _, n := range ns {
 		// Nodes without a hostid are treated as pseudo nodes
 		hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
@@ -80,50 +79,17 @@ func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
 			if !ok {
 				continue
 			}
-			addToResults(n, id, ret, mapped, newPseudoNode)
+			ret.addToResults(n, id, newPseudoNode)
 		} else {
 			id := report.MakeHostNodeID(report.ExtractHostID(n))
-			addToResults(n, id, ret, mapped, func(id string) report.Node {
+			ret.addToResults(n, id, func(id string) report.Node {
 				return report.MakeNode(id).WithTopology(report.Host).
 					WithLatest(report.HostNodeID, timestamp, hostNodeID)
 			})
 		}
 	}
-	fixupAdjancencies(ns, ret, mapped)
-	return ret
-}
-
-// Add Node M to the result set ret under id, creating a new result
-// node if not already there, and updating the old-id to new-id mapping
-// Note we do not update any counters for child topologies here
-func addToResults(m report.Node, id string, ret report.Nodes, mapped map[string]string, create func(string) report.Node) {
-	result, exists := ret[id]
-	if !exists {
-		result = create(id)
-	}
-	result.Children = result.Children.Add(m)
-	result.Children = result.Children.Merge(m.Children)
-	ret[id] = result
-	mapped[m.ID] = id
-}
-
-// Rewrite Adjacency for new nodes in ret, original nodes in input, and mapping old->new IDs in mapped
-func fixupAdjancencies(input, ret report.Nodes, mapped map[string]string) {
-	for _, n := range input {
-		outID, ok := mapped[n.ID]
-		if !ok {
-			continue
-		}
-		out := ret[outID]
-		// for each adjacency in the original node, find out what it maps to (if any),
-		// and add that to the new node
-		for _, a := range n.Adjacency {
-			if mappedDest, found := mapped[a]; found {
-				out.Adjacency = out.Adjacency.Add(mappedDest)
-			}
-		}
-		ret[outID] = out
-	}
+	ret.fixupAdjacencies(ns)
+	return ret.nodes
 }
 
 func (e endpoints2Hosts) Stats(rpt report.Report, _ Decorator) Stats {
