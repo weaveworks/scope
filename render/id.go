@@ -2,7 +2,6 @@ package render
 
 import (
 	"net"
-	"sort"
 	"strings"
 
 	"github.com/weaveworks/scope/probe/endpoint"
@@ -42,10 +41,8 @@ func NewDerivedExternalNode(n report.Node, addr string, local report.Networks) (
 	// First, check if it's a known service and emit a a specific node if it
 	// is. This needs to be done before checking IPs since known services can
 	// live in the same network, see https://github.com/weaveworks/scope/issues/2163
-	for _, hostname := range DNSNames(n) {
-		if isKnownService(hostname) {
-			return NewDerivedPseudoNode(ServiceNodeIDPrefix+hostname, n), true
-		}
+	if hostname, found := DNSFirstMatch(n, isKnownService); found {
+		return NewDerivedPseudoNode(ServiceNodeIDPrefix+hostname, n), true
 	}
 
 	// If the dstNodeAddr is not in a network local to this report, we emit an
@@ -62,15 +59,24 @@ func NewDerivedExternalNode(n report.Node, addr string, local report.Networks) (
 	return report.Node{}, false
 }
 
-// DNSNames returns a prioritized list of snooped and reverse-resolved
-// DNS names associated with node n.
-func DNSNames(n report.Node) []string {
-	snoopedNames, _ := n.Sets.Lookup(endpoint.SnoopedDNSNames)
-	reverseNames, _ := n.Sets.Lookup(endpoint.ReverseDNSNames)
-	// sort the names, to make selection for display more
+// DNSFirstMatch returns the first DNS name where match() returns
+// true, from a prioritized list of snooped and reverse-resolved DNS
+// names associated with node n.
+func DNSFirstMatch(n report.Node, match func(name string) bool) (string, bool) {
+	// we rely on Sets being sorted, to make selection for display more
 	// deterministic
-	sort.StringSlice(snoopedNames).Sort()
-	sort.StringSlice(reverseNames).Sort()
 	// prioritize snooped names
-	return append(snoopedNames, reverseNames...)
+	snoopedNames, _ := n.Sets.Lookup(endpoint.SnoopedDNSNames)
+	for _, hostname := range snoopedNames {
+		if match(hostname) {
+			return hostname, true
+		}
+	}
+	reverseNames, _ := n.Sets.Lookup(endpoint.ReverseDNSNames)
+	for _, hostname := range reverseNames {
+		if match(hostname) {
+			return hostname, true
+		}
+	}
+	return "", false
 }

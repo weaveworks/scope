@@ -113,10 +113,10 @@ func internetAddr(node report.Node, ep report.Node) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	if names := render.DNSNames(ep); len(names) > 0 {
+	if name, found := render.DNSFirstMatch(ep, func(string) bool { return true }); found {
 		// we show the "most important" name only, since we don't have
 		// space for more
-		addr = fmt.Sprintf("%s (%s)", names[0], addr)
+		addr = fmt.Sprintf("%s (%s)", name, addr)
 	}
 	return addr, true
 }
