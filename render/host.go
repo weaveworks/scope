@@ -7,8 +7,7 @@ import (
 // HostRenderer is a Renderer which produces a renderable host
 // graph from the host topology.
 //
-// not memoised
-var HostRenderer = MakeReduce(
+var HostRenderer = Memoise(MakeReduce(
 	endpoints2Hosts{},
 	MakeMap(
 		MapX2Host,
@@ -27,7 +26,7 @@ var HostRenderer = MakeReduce(
 		PodRenderer,
 	),
 	SelectHost,
-)
+))
 
 // MapX2Host maps any Nodes to host Nodes.
 //
