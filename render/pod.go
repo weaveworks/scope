@@ -117,7 +117,7 @@ func renderParents(childTopology string, parentTopologies []string, noParentsPse
 // to deployments where applicable.
 type selectPodsWithDeployments struct{}
 
-func (s selectPodsWithDeployments) Render(rpt report.Report, dct Decorator) report.Nodes {
+func (s selectPodsWithDeployments) Render(rpt report.Report, dct Decorator) Nodes {
 	result := report.Nodes{}
 	// For each pod, we check for any replica sets, and merge any deployments they point to
 	// into a replacement Parents value.
@@ -135,7 +135,7 @@ func (s selectPodsWithDeployments) Render(rpt report.Report, dct Decorator) repo
 		}
 		result[podID] = pod
 	}
-	return result
+	return Nodes{Nodes: result}
 }
 
 func (s selectPodsWithDeployments) Stats(rpt report.Report, _ Decorator) Stats {

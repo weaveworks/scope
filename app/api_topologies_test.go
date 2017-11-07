@@ -118,7 +118,7 @@ func TestRendererForTopologyWithFiltering(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
-	have := utils.Prune(renderer.Render(input, decorator))
+	have := utils.Prune(renderer.Render(input, decorator).Nodes)
 	want := utils.Prune(expected.RenderedContainers.Copy())
 	delete(want, fixture.ClientContainerNodeID)
 	delete(want, render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID))
@@ -149,7 +149,7 @@ func TestRendererForTopologyNoFiltering(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
-	have := utils.Prune(renderer.Render(input, decorator))
+	have := utils.Prune(renderer.Render(input, decorator).Nodes)
 	want := utils.Prune(expected.RenderedContainers.Copy())
 	delete(want, render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID))
 	delete(want, render.OutgoingInternetID)
@@ -183,7 +183,7 @@ func getTestContainerLabelFilterTopologySummary(t *testing.T, exclude bool) (det
 		return nil, err
 	}
 
-	return detailed.Summaries(report.RenderContext{Report: fixture.Report}, renderer.Render(fixture.Report, decorator)), nil
+	return detailed.Summaries(report.RenderContext{Report: fixture.Report}, renderer.Render(fixture.Report, decorator).Nodes), nil
 }
 
 func TestAPITopologyAddsKubernetes(t *testing.T) {

@@ -21,12 +21,13 @@ type PreciousNodeRenderer struct {
 }
 
 // Render implements Renderer
-func (p PreciousNodeRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+func (p PreciousNodeRenderer) Render(rpt report.Report, dct Decorator) Nodes {
 	undecoratedNodes := p.Renderer.Render(rpt, nil)
-	preciousNode, foundBeforeDecoration := undecoratedNodes[p.PreciousNodeID]
-	finalNodes := applyDecorator{ConstantRenderer(undecoratedNodes)}.Render(rpt, dct)
-	if _, ok := finalNodes[p.PreciousNodeID]; !ok && foundBeforeDecoration {
-		finalNodes[p.PreciousNodeID] = preciousNode
+	preciousNode, foundBeforeDecoration := undecoratedNodes.Nodes[p.PreciousNodeID]
+	finalNodes := applyDecorator{ConstantRenderer{undecoratedNodes}}.Render(rpt, dct)
+	if _, ok := finalNodes.Nodes[p.PreciousNodeID]; !ok && foundBeforeDecoration {
+		finalNodes.Nodes[p.PreciousNodeID] = preciousNode
+		finalNodes.Filtered--
 	}
 	return finalNodes
 }
@@ -42,12 +43,12 @@ func (p PreciousNodeRenderer) Stats(rpt report.Report, dct Decorator) Stats {
 // in one call - useful for functions that need to consider the entire graph.
 // We should minimise the use of this renderer type, as it is very inflexible.
 type CustomRenderer struct {
-	RenderFunc func(report.Nodes) report.Nodes
+	RenderFunc func(Nodes) Nodes
 	Renderer
 }
 
 // Render implements Renderer
-func (c CustomRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+func (c CustomRenderer) Render(rpt report.Report, dct Decorator) Nodes {
 	return c.RenderFunc(c.Renderer.Render(rpt, dct))
 }
 
@@ -57,11 +58,11 @@ func (c CustomRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
 func ColorConnected(r Renderer) Renderer {
 	return CustomRenderer{
 		Renderer: r,
-		RenderFunc: func(input report.Nodes) report.Nodes {
+		RenderFunc: func(input Nodes) Nodes {
 			connected := map[string]struct{}{}
 			void := struct{}{}
 
-			for id, node := range input {
+			for id, node := range input.Nodes {
 				for _, adj := range node.Adjacency {
 					if adj != id {
 						connected[id] = void
@@ -74,7 +75,7 @@ func ColorConnected(r Renderer) Renderer {
 			for id := range connected {
 				output[id] = output[id].WithLatest(IsConnected, mtime.Now(), "true")
 			}
-			return output
+			return Nodes{Nodes: output, Filtered: input.Filtered}
 		},
 	}
 }
@@ -147,16 +148,15 @@ func MakeFilterPseudoDecorator(f FilterFunc) Decorator {
 }
 
 // Render implements Renderer
-func (f *Filter) Render(rpt report.Report, dct Decorator) report.Nodes {
-	nodes, _ := f.render(rpt, dct)
-	return nodes
+func (f *Filter) Render(rpt report.Report, dct Decorator) Nodes {
+	return f.render(rpt, dct)
 }
 
-func (f *Filter) render(rpt report.Report, dct Decorator) (report.Nodes, int) {
+func (f *Filter) render(rpt report.Report, dct Decorator) Nodes {
 	output := report.Nodes{}
 	inDegrees := map[string]int{}
 	filtered := 0
-	for id, node := range f.Renderer.Render(rpt, dct) {
+	for id, node := range f.Renderer.Render(rpt, dct).Nodes {
 		if f.FilterFunc(node) {
 			output[id] = node
 			inDegrees[id] = 0
@@ -190,7 +190,7 @@ func (f *Filter) render(rpt report.Report, dct Decorator) (report.Nodes, int) {
 		delete(output, id)
 		filtered++
 	}
-	return output, filtered
+	return Nodes{Nodes: output, Filtered: filtered}
 }
 
 // Stats implements Renderer. General logic is to take the first (i.e.
@@ -198,8 +198,8 @@ func (f *Filter) render(rpt report.Report, dct Decorator) (report.Nodes, int) {
 // if we want to count the stats from multiple filters we need to compose their
 // FilterFuncs, into a single Filter.
 func (f Filter) Stats(rpt report.Report, dct Decorator) Stats {
-	_, filtered := f.render(rpt, dct)
-	return Stats{FilteredNodes: filtered}
+	nodes := f.render(rpt, dct)
+	return Stats{FilteredNodes: nodes.Filtered}
 }
 
 // IsConnected is the key added to Node.Metadata by ColorConnected

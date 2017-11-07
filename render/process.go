@@ -40,18 +40,18 @@ type processWithContainerNameRenderer struct {
 	Renderer
 }
 
-func (r processWithContainerNameRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+func (r processWithContainerNameRenderer) Render(rpt report.Report, dct Decorator) Nodes {
 	processes := r.Renderer.Render(rpt, dct)
 	containers := SelectContainer.Render(rpt, dct)
 
 	outputs := report.Nodes{}
-	for id, p := range processes {
+	for id, p := range processes.Nodes {
 		outputs[id] = p
 		containerID, timestamp, ok := p.Latest.LookupEntry(docker.ContainerID)
 		if !ok {
 			continue
 		}
-		container, ok := containers[report.MakeContainerNodeID(containerID)]
+		container, ok := containers.Nodes[report.MakeContainerNodeID(containerID)]
 		if !ok {
 			continue
 		}
@@ -61,7 +61,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report, dct Decorato
 		}
 		outputs[id] = p
 	}
-	return outputs
+	return Nodes{Nodes: outputs, Filtered: processes.Filtered}
 }
 
 // ProcessWithContainerNameRenderer is a Renderer which produces a process
@@ -86,16 +86,16 @@ var ProcessNameRenderer = ConditionalRenderer(renderProcesses,
 type endpoints2Processes struct {
 }
 
-func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) report.Nodes {
+func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) Nodes {
 	if len(rpt.Process.Nodes) == 0 {
-		return report.Nodes{}
+		return Nodes{}
 	}
 	local := LocalNetworks(rpt)
 	processes := SelectProcess.Render(rpt, dct)
 	endpoints := SelectEndpoint.Render(rpt, dct)
 	ret := newJoinResults()
 
-	for _, n := range endpoints {
+	for _, n := range endpoints.Nodes {
 		// Nodes without a hostid are treated as pseudo nodes
 		if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); !ok {
 			if id, ok := pseudoNodeID(n, local); ok {
@@ -117,7 +117,7 @@ func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) report.Nod
 			hostID, _, _ := report.ParseNodeID(hostNodeID)
 			id := report.MakeProcessNodeID(hostID, pid)
 			ret.addToResults(n, id, func(id string) report.Node {
-				if processNode, found := processes[id]; found {
+				if processNode, found := processes.Nodes[id]; found {
 					return processNode
 				}
 				// we have a pid, but no matching process node; create a new one rather than dropping the data
@@ -129,7 +129,7 @@ func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) report.Nod
 	ret.copyUnmatched(processes)
 	ret.fixupAdjacencies(processes)
 	ret.fixupAdjacencies(endpoints)
-	return ret.nodes
+	return ret.result()
 }
 
 func (e endpoints2Processes) Stats(rpt report.Report, _ Decorator) Stats {

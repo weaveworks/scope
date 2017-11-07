@@ -31,7 +31,7 @@ type APINode struct {
 // Full topology.
 func handleTopology(ctx context.Context, renderer render.Renderer, decorator render.Decorator, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(rc, renderer.Render(rc.Report, decorator)),
+		Nodes: detailed.Summaries(rc, renderer.Render(rc.Report, decorator).Nodes),
 	})
 }
 
@@ -42,7 +42,7 @@ func handleNode(ctx context.Context, renderer render.Renderer, decorator render.
 		topologyID       = vars["topology"]
 		nodeID           = vars["id"]
 		preciousRenderer = render.PreciousNodeRenderer{PreciousNodeID: nodeID, Renderer: renderer}
-		rendered         = preciousRenderer.Render(rc.Report, decorator)
+		rendered         = preciousRenderer.Render(rc.Report, decorator).Nodes
 		node, ok         = rendered[nodeID]
 	)
 	if !ok {
@@ -123,7 +123,7 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(RenderContextForReporter(rep, re), renderer.Render(re, decorator))
+		newTopo := detailed.Summaries(RenderContextForReporter(rep, re), renderer.Render(re, decorator).Nodes)
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

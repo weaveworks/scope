@@ -53,14 +53,14 @@ type connectionJoin struct {
 	r     Renderer
 }
 
-func (c connectionJoin) Render(rpt report.Report, dct Decorator) report.Nodes {
+func (c connectionJoin) Render(rpt report.Report, dct Decorator) Nodes {
 	local := LocalNetworks(rpt)
 	inputNodes := c.r.Render(rpt, dct)
 	endpoints := SelectEndpoint.Render(rpt, dct)
 
 	// Collect all the IPs we are trying to map to, and which ID they map from
 	var ipNodes = map[string]string{}
-	for _, n := range inputNodes {
+	for _, n := range inputNodes.Nodes {
 		for _, ip := range c.toIPs(n) {
 			if _, exists := ipNodes[ip]; exists {
 				// If an IP is shared between multiple nodes, we can't reliably
@@ -74,7 +74,7 @@ func (c connectionJoin) Render(rpt report.Report, dct Decorator) report.Nodes {
 	ret := newJoinResults()
 
 	// Now look at all the endpoints and see which map to IP nodes
-	for _, m := range endpoints {
+	for _, m := range endpoints.Nodes {
 		scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
 		if !ok {
 			continue
@@ -95,14 +95,14 @@ func (c connectionJoin) Render(rpt report.Report, dct Decorator) report.Nodes {
 		}
 		if found && id != "" { // not one we blanked out earlier
 			ret.addToResults(m, id, func(id string) report.Node {
-				return inputNodes[id]
+				return inputNodes.Nodes[id]
 			})
 		}
 	}
 	ret.copyUnmatched(inputNodes)
 	ret.fixupAdjacencies(inputNodes)
 	ret.fixupAdjacencies(endpoints)
-	return ret.nodes
+	return ret.result()
 }
 
 func (c connectionJoin) Stats(rpt report.Report, _ Decorator) Stats {
@@ -135,18 +135,18 @@ type containerWithImageNameRenderer struct {
 
 // Render produces a container graph where the the latest metadata contains the
 // container image name, if found.
-func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
+func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator) Nodes {
 	containers := r.Renderer.Render(rpt, dct)
 	images := SelectContainerImage.Render(rpt, dct)
 
 	outputs := report.Nodes{}
-	for id, c := range containers {
+	for id, c := range containers.Nodes {
 		outputs[id] = c
 		imageID, ok := c.Latest.Lookup(docker.ImageID)
 		if !ok {
 			continue
 		}
-		image, ok := images[report.MakeContainerImageNodeID(imageID)]
+		image, ok := images.Nodes[report.MakeContainerImageNodeID(imageID)]
 		if !ok {
 			continue
 		}
@@ -166,7 +166,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator)
 			Add(report.ContainerImage, report.MakeStringSet(imageNodeID))
 		outputs[id] = c
 	}
-	return outputs
+	return Nodes{Nodes: outputs, Filtered: containers.Filtered}
 }
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container

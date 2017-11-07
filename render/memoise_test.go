@@ -9,23 +9,23 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
-type renderFunc func(r report.Report) report.Nodes
+type renderFunc func(r report.Report) render.Nodes
 
-func (f renderFunc) Render(r report.Report, _ render.Decorator) report.Nodes { return f(r) }
+func (f renderFunc) Render(r report.Report, _ render.Decorator) render.Nodes { return f(r) }
 func (f renderFunc) Stats(r report.Report, _ render.Decorator) render.Stats  { return render.Stats{} }
 
 func TestMemoise(t *testing.T) {
 	calls := 0
-	r := renderFunc(func(rpt report.Report) report.Nodes {
+	r := renderFunc(func(rpt report.Report) render.Nodes {
 		calls++
-		return report.Nodes{rpt.ID: report.MakeNode(rpt.ID)}
+		return render.Nodes{Nodes: report.Nodes{rpt.ID: report.MakeNode(rpt.ID)}}
 	})
 	m := render.Memoise(r)
 	rpt1 := report.MakeReport()
 
 	result1 := m.Render(rpt1, nil)
 	// it should have rendered it.
-	if _, ok := result1[rpt1.ID]; !ok {
+	if _, ok := result1.Nodes[rpt1.ID]; !ok {
 		t.Errorf("Expected rendered report to contain a node, but got: %v", result1)
 	}
 	if calls != 1 {

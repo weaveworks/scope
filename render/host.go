@@ -65,12 +65,12 @@ func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 type endpoints2Hosts struct {
 }
 
-func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
+func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) Nodes {
 	local := LocalNetworks(rpt)
 	endpoints := SelectEndpoint.Render(rpt, dct)
 	ret := newJoinResults()
 
-	for _, n := range endpoints {
+	for _, n := range endpoints.Nodes {
 		// Nodes without a hostid are treated as pseudo nodes
 		hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
 		if !ok {
@@ -88,7 +88,7 @@ func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
 		}
 	}
 	ret.fixupAdjacencies(endpoints)
-	return ret.nodes
+	return ret.result()
 }
 
 func (e endpoints2Hosts) Stats(rpt report.Report, _ Decorator) Stats {

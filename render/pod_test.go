@@ -13,7 +13,7 @@ import (
 )
 
 func TestPodRenderer(t *testing.T) {
-	have := utils.Prune(render.PodRenderer.Render(fixture.Report, nil))
+	have := utils.Prune(render.PodRenderer.Render(fixture.Report, nil).Nodes)
 	want := utils.Prune(expected.RenderedPods)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -34,7 +34,7 @@ func TestPodFilterRenderer(t *testing.T) {
 		kubernetes.Namespace: "kube-system",
 	})
 
-	have := utils.Prune(renderer.Render(input, filterNonKubeSystem))
+	have := utils.Prune(renderer.Render(input, filterNonKubeSystem).Nodes)
 	want := utils.Prune(expected.RenderedPods.Copy())
 	delete(want, fixture.ClientPodNodeID)
 	if !reflect.DeepEqual(want, have) {
@@ -43,7 +43,7 @@ func TestPodFilterRenderer(t *testing.T) {
 }
 
 func TestPodServiceRenderer(t *testing.T) {
-	have := utils.Prune(render.PodServiceRenderer.Render(fixture.Report, nil))
+	have := utils.Prune(render.PodServiceRenderer.Render(fixture.Report, nil).Nodes)
 	want := utils.Prune(expected.RenderedPodServices)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -60,7 +60,7 @@ func TestPodServiceFilterRenderer(t *testing.T) {
 		kubernetes.Namespace: "kube-system",
 	})
 
-	have := utils.Prune(renderer.Render(input, filterNonKubeSystem))
+	have := utils.Prune(renderer.Render(input, filterNonKubeSystem).Nodes)
 	want := utils.Prune(expected.RenderedPodServices.Copy())
 	delete(want, fixture.ServiceNodeID)
 	delete(want, render.IncomingInternetID)
