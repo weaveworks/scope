@@ -7,12 +7,8 @@ import (
 // HostRenderer is a Renderer which produces a renderable host
 // graph from the host topology.
 //
-// not memoised
-var HostRenderer = MakeReduce(
-	MakeMap(
-		MapEndpoint2Host,
-		EndpointRenderer,
-	),
+var HostRenderer = Memoise(MakeReduce(
+	endpoints2Hosts{},
 	MakeMap(
 		MapX2Host,
 		ColorConnectedProcessRenderer,
@@ -30,7 +26,7 @@ var HostRenderer = MakeReduce(
 		PodRenderer,
 	),
 	SelectHost,
-)
+))
 
 // MapX2Host maps any Nodes to host Nodes.
 //
@@ -64,18 +60,37 @@ func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 	return result
 }
 
-// MapEndpoint2Host takes nodes from the endpoint topology and produces
+// endpoints2Hosts takes nodes from the endpoint topology and produces
 // host nodes or pseudo nodes.
-func MapEndpoint2Host(n report.Node, local report.Networks) report.Nodes {
-	// Nodes without a hostid are treated as pseudo nodes
-	hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
-	if !ok {
-		return MapEndpoint2Pseudo(n, local)
-	}
+type endpoints2Hosts struct {
+}
 
-	id := report.MakeHostNodeID(report.ExtractHostID(n))
-	result := NewDerivedNode(id, n).WithTopology(report.Host)
-	result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
-	result.Counters = result.Counters.Add(n.Topology, 1)
-	return report.Nodes{id: result}
+func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
+	local := LocalNetworks(rpt)
+	endpoints := SelectEndpoint.Render(rpt, dct)
+	ret := newJoinResults()
+
+	for _, n := range endpoints {
+		// Nodes without a hostid are treated as pseudo nodes
+		hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
+		if !ok {
+			id, ok := pseudoNodeID(n, local)
+			if !ok {
+				continue
+			}
+			ret.addToResults(n, id, newPseudoNode)
+		} else {
+			id := report.MakeHostNodeID(report.ExtractHostID(n))
+			ret.addToResults(n, id, func(id string) report.Node {
+				return report.MakeNode(id).WithTopology(report.Host).
+					WithLatest(report.HostNodeID, timestamp, hostNodeID)
+			})
+		}
+	}
+	ret.fixupAdjacencies(endpoints)
+	return ret.nodes
+}
+
+func (e endpoints2Hosts) Stats(rpt report.Report, _ Decorator) Stats {
+	return Stats{} // nothing to report
 }

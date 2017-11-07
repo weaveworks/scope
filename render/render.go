@@ -207,3 +207,55 @@ func (c ConstantRenderer) Render(_ report.Report, _ Decorator) report.Nodes {
 func (c ConstantRenderer) Stats(_ report.Report, _ Decorator) Stats {
 	return Stats{}
 }
+
+// joinResults is used by Renderers that join sets of nodes
+type joinResults struct {
+	nodes  report.Nodes
+	mapped map[string]string // input node ID -> output node ID
+}
+
+func newJoinResults() joinResults {
+	return joinResults{nodes: make(report.Nodes), mapped: map[string]string{}}
+}
+
+// Add Node M under id, creating a new result node if not already there
+// and updating the mapping from old ID to new ID
+// Note we do not update any counters for child topologies here, because addToResults
+// is only ever called when m is an endpoint and we never look at endpoint counts
+func (ret *joinResults) addToResults(m report.Node, id string, create func(string) report.Node) {
+	result, exists := ret.nodes[id]
+	if !exists {
+		result = create(id)
+	}
+	result.Children = result.Children.Add(m)
+	result.Children = result.Children.Merge(m.Children)
+	ret.nodes[id] = result
+	ret.mapped[m.ID] = id
+}
+
+// Rewrite Adjacency for new nodes in ret for original nodes in input
+func (ret *joinResults) fixupAdjacencies(input report.Nodes) {
+	for _, n := range input {
+		outID, ok := ret.mapped[n.ID]
+		if !ok {
+			continue
+		}
+		out := ret.nodes[outID]
+		// for each adjacency in the original node, find out what it maps to (if any),
+		// and add that to the new node
+		for _, a := range n.Adjacency {
+			if mappedDest, found := ret.mapped[a]; found {
+				out.Adjacency = out.Adjacency.Add(mappedDest)
+			}
+		}
+		ret.nodes[outID] = out
+	}
+}
+
+func (ret *joinResults) copyUnmatched(input report.Nodes) {
+	for _, n := range input {
+		if _, found := ret.nodes[n.ID]; !found {
+			ret.nodes[n.ID] = n
+		}
+	}
+}
