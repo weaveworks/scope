@@ -12,7 +12,6 @@ import (
 type renderFunc func(r report.Report) render.Nodes
 
 func (f renderFunc) Render(r report.Report, _ render.Decorator) render.Nodes { return f(r) }
-func (f renderFunc) Stats(r report.Report, _ render.Decorator) render.Stats  { return render.Stats{} }
 
 func TestMemoise(t *testing.T) {
 	calls := 0

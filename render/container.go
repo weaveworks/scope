@@ -105,10 +105,6 @@ func (c connectionJoin) Render(rpt report.Report, dct Decorator) Nodes {
 	return ret.result()
 }
 
-func (c connectionJoin) Stats(rpt report.Report, _ Decorator) Stats {
-	return Stats{} // nothing to report
-}
-
 // FilterEmpty is a Renderer which filters out nodes which have no children
 // from the specified topology.
 func FilterEmpty(topology string, r Renderer) Renderer {

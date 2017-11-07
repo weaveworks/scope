@@ -132,10 +132,6 @@ func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) Nodes {
 	return ret.result()
 }
 
-func (e endpoints2Processes) Stats(rpt report.Report, _ Decorator) Stats {
-	return Stats{} // nothing to report
-}
-
 // MapProcess2Name maps process Nodes to Nodes
 // for each process name.
 //

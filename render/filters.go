@@ -32,13 +32,6 @@ func (p PreciousNodeRenderer) Render(rpt report.Report, dct Decorator) Nodes {
 	return finalNodes
 }
 
-// Stats implements Renderer
-func (p PreciousNodeRenderer) Stats(rpt report.Report, dct Decorator) Stats {
-	// default to the underlying renderer
-	// TODO: we don't take into account the precious node, so we may be off by one
-	return p.Renderer.Stats(rpt, dct)
-}
-
 // CustomRenderer allow for mapping functions that received the entire topology
 // in one call - useful for functions that need to consider the entire graph.
 // We should minimise the use of this renderer type, as it is very inflexible.
@@ -191,15 +184,6 @@ func (f *Filter) render(rpt report.Report, dct Decorator) Nodes {
 		filtered++
 	}
 	return Nodes{Nodes: output, Filtered: filtered}
-}
-
-// Stats implements Renderer. General logic is to take the first (i.e.
-// highest-level) stats we find, so upstream stats are ignored. This means that
-// if we want to count the stats from multiple filters we need to compose their
-// FilterFuncs, into a single Filter.
-func (f Filter) Stats(rpt report.Report, dct Decorator) Stats {
-	nodes := f.render(rpt, dct)
-	return Stats{FilteredNodes: nodes.Filtered}
 }
 
 // IsConnected is the key added to Node.Metadata by ColorConnected

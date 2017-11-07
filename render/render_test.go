@@ -19,7 +19,6 @@ func (m mockRenderer) Render(rpt report.Report, d render.Decorator) render.Nodes
 	}
 	return render.Nodes{Nodes: m.Nodes}
 }
-func (m mockRenderer) Stats(rpt report.Report, _ render.Decorator) render.Stats { return render.Stats{} }
 
 func TestReduceRender(t *testing.T) {
 	renderer := render.Reduce([]render.Renderer{

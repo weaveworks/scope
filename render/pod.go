@@ -138,10 +138,6 @@ func (s selectPodsWithDeployments) Render(rpt report.Report, dct Decorator) Node
 	return Nodes{Nodes: result}
 }
 
-func (s selectPodsWithDeployments) Stats(rpt report.Report, _ Decorator) Stats {
-	return Stats{}
-}
-
 // MapPod2IP maps pod nodes to their IP address.  This allows pods to
 // be joined directly with the endpoint topology.
 func MapPod2IP(m report.Node) []string {

@@ -13,12 +13,6 @@ type MapFunc func(report.Node, report.Networks) report.Nodes
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
 	Render(report.Report, Decorator) Nodes
-	Stats(report.Report, Decorator) Stats
-}
-
-// Stats is the type returned by Renderer.Stats
-type Stats struct {
-	FilteredNodes int
 }
 
 // Nodes is the result of Rendering
@@ -32,12 +26,6 @@ func (r Nodes) Merge(o Nodes) Nodes {
 	return Nodes{
 		Nodes:    r.Nodes.Merge(o.Nodes),
 		Filtered: r.Filtered + o.Filtered,
-	}
-}
-
-func (s Stats) merge(other Stats) Stats {
-	return Stats{
-		FilteredNodes: s.FilteredNodes + other.FilteredNodes,
 	}
 }
 
@@ -71,15 +59,6 @@ func (r Reduce) Render(rpt report.Report, dct Decorator) Nodes {
 		}()
 	}
 	return <-c
-}
-
-// Stats implements Renderer
-func (r Reduce) Stats(rpt report.Report, dct Decorator) Stats {
-	var result Stats
-	for _, renderer := range r {
-		result = result.merge(renderer.Stats(rpt, dct))
-	}
-	return result
 }
 
 // Map is a Renderer which produces a set of Nodes from the set of
@@ -132,14 +111,6 @@ func (m *Map) Render(rpt report.Report, dct Decorator) Nodes {
 	return Nodes{Nodes: output}
 }
 
-// Stats implements Renderer
-func (m *Map) Stats(_ report.Report, _ Decorator) Stats {
-	// There doesn't seem to be an instance where we want stats to recurse
-	// through Maps - for instance we don't want to see the number of filtered
-	// processes in the container renderer.
-	return Stats{}
-}
-
 // Decorator transforms one renderer to another. e.g. Filters.
 type Decorator func(Renderer) Renderer
 
@@ -162,12 +133,6 @@ func (ad applyDecorator) Render(rpt report.Report, dct Decorator) Nodes {
 		return dct(ad.Renderer).Render(rpt, nil)
 	}
 	return ad.Renderer.Render(rpt, nil)
-}
-func (ad applyDecorator) Stats(rpt report.Report, dct Decorator) Stats {
-	if dct != nil {
-		return dct(ad.Renderer).Stats(rpt, nil)
-	}
-	return Stats{}
 }
 
 // ApplyDecorator returns a renderer which will apply the given decorator to the child render.
@@ -202,12 +167,6 @@ func (cr conditionalRenderer) Render(rpt report.Report, dct Decorator) Nodes {
 	}
 	return Nodes{}
 }
-func (cr conditionalRenderer) Stats(rpt report.Report, dct Decorator) Stats {
-	if cr.Condition(rpt) {
-		return cr.Renderer.Stats(rpt, dct)
-	}
-	return Stats{}
-}
 
 // ConstantRenderer renders a fixed set of nodes
 type ConstantRenderer struct {
@@ -217,11 +176,6 @@ type ConstantRenderer struct {
 // Render implements Renderer
 func (c ConstantRenderer) Render(_ report.Report, _ Decorator) Nodes {
 	return c.Nodes
-}
-
-// Stats implements Renderer
-func (c ConstantRenderer) Stats(_ report.Report, _ Decorator) Stats {
-	return Stats{}
 }
 
 // joinResults is used by Renderers that join sets of nodes

@@ -14,11 +14,6 @@ func (t TopologySelector) Render(r report.Report, _ Decorator) Nodes {
 	return Nodes{Nodes: topology.Nodes}
 }
 
-// Stats implements Renderer
-func (t TopologySelector) Stats(r report.Report, _ Decorator) Stats {
-	return Stats{}
-}
-
 // The topology selectors implement a Renderer which fetch the nodes from the
 // various report topologies.
 var (

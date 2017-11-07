@@ -90,7 +90,3 @@ func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) Nodes {
 	ret.fixupAdjacencies(endpoints)
 	return ret.result()
 }
-
-func (e endpoints2Hosts) Stats(rpt report.Report, _ Decorator) Stats {
-	return Stats{} // nothing to report
-}
