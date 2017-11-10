@@ -7,7 +7,8 @@ import (
 // HostRenderer is a Renderer which produces a renderable host
 // graph from the host topology.
 //
-var HostRenderer = Memoise(MakeReduce(
+// not memoised
+var HostRenderer = MakeReduce(
 	endpoints2Hosts{},
 	MakeMap(
 		MapX2Host,
@@ -26,7 +27,7 @@ var HostRenderer = Memoise(MakeReduce(
 		PodRenderer,
 	),
 	SelectHost,
-))
+)
 
 // MapX2Host maps any Nodes to host Nodes.
 //
@@ -65,12 +66,12 @@ func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 type endpoints2Hosts struct {
 }
 
-func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
+func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) Nodes {
 	local := LocalNetworks(rpt)
 	endpoints := SelectEndpoint.Render(rpt, dct)
 	ret := newJoinResults()
 
-	for _, n := range endpoints {
+	for _, n := range endpoints.Nodes {
 		// Nodes without a hostid are treated as pseudo nodes
 		hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
 		if !ok {
@@ -88,9 +89,5 @@ func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) report.Nodes {
 		}
 	}
 	ret.fixupAdjacencies(endpoints)
-	return ret.nodes
-}
-
-func (e endpoints2Hosts) Stats(rpt report.Report, _ Decorator) Stats {
-	return Stats{} // nothing to report
+	return ret.result()
 }

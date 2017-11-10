@@ -504,19 +504,19 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer, decorator re
 		realNodes int
 		edges     int
 	)
-	for _, n := range renderer.Render(rpt, decorator) {
+	r := renderer.Render(rpt, decorator)
+	for _, n := range r.Nodes {
 		nodes++
 		if n.Topology != render.Pseudo {
 			realNodes++
 		}
 		edges += len(n.Adjacency)
 	}
-	renderStats := renderer.Stats(rpt, decorator)
 	return topologyStats{
 		NodeCount:          nodes,
 		NonpseudoNodeCount: realNodes,
 		EdgeCount:          edges,
-		FilteredNodes:      renderStats.FilteredNodes,
+		FilteredNodes:      r.Filtered,
 	}
 }
 

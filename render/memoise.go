@@ -39,7 +39,7 @@ func Memoise(r Renderer) Renderer {
 // m.Renderer.
 //
 // The cache is bypassed when rendering a report with a decorator.
-func (m *memoise) Render(rpt report.Report, dct Decorator) report.Nodes {
+func (m *memoise) Render(rpt report.Report, dct Decorator) Nodes {
 	if dct != nil {
 		return m.Renderer.Render(rpt, dct)
 	}
@@ -64,7 +64,7 @@ func (m *memoise) Render(rpt report.Report, dct Decorator) report.Nodes {
 }
 
 type promise struct {
-	val  report.Nodes
+	val  Nodes
 	done chan struct{}
 }
 
@@ -72,12 +72,12 @@ func newPromise() *promise {
 	return &promise{done: make(chan struct{})}
 }
 
-func (p *promise) Set(val report.Nodes) {
+func (p *promise) Set(val Nodes) {
 	p.val = val
 	close(p.done)
 }
 
-func (p *promise) Get() report.Nodes {
+func (p *promise) Get() Nodes {
 	<-p.done
 	return p.val
 }

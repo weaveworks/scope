@@ -16,7 +16,7 @@ func TestFilterRender(t *testing.T) {
 		"baz": report.MakeNode("baz"),
 	}}
 	have := report.MakeIDList()
-	for id := range renderer.Render(report.MakeReport(), render.FilterUnconnected) {
+	for id := range renderer.Render(report.MakeReport(), render.FilterUnconnected).Nodes {
 		have = have.Add(id)
 	}
 	want := report.MakeIDList("foo", "bar")
@@ -41,7 +41,7 @@ func TestFilterRender2(t *testing.T) {
 		"baz": report.MakeNode("baz"),
 	}}
 
-	have := renderer.Render(report.MakeReport(), filter)
+	have := renderer.Render(report.MakeReport(), filter).Nodes
 	if have["foo"].Adjacency.Contains("bar") {
 		t.Error("adjacencies for removed nodes should have been removed")
 	}
@@ -66,7 +66,7 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 			}
 		}
 		want := nodes
-		have := renderer.Render(report.MakeReport(), filter)
+		have := renderer.Render(report.MakeReport(), filter).Nodes
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
 		}
@@ -85,7 +85,7 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 			"bar": report.MakeNode("bar").WithAdjacent("baz"),
 			"baz": report.MakeNode("baz").WithTopology(render.Pseudo),
 		}}
-		have := renderer.Render(report.MakeReport(), filter)
+		have := renderer.Render(report.MakeReport(), filter).Nodes
 		if _, ok := have["baz"]; ok {
 			t.Error("expected the unconnected pseudonode baz to have been removed")
 		}
@@ -104,7 +104,7 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 			"bar": report.MakeNode("bar").WithAdjacent("foo"),
 			"baz": report.MakeNode("baz").WithTopology(render.Pseudo).WithAdjacent("bar"),
 		}}
-		have := renderer.Render(report.MakeReport(), filter)
+		have := renderer.Render(report.MakeReport(), filter).Nodes
 		if _, ok := have["baz"]; ok {
 			t.Error("expected the unconnected pseudonode baz to have been removed")
 		}
@@ -118,7 +118,7 @@ func TestFilterUnconnectedSelf(t *testing.T) {
 			"foo": report.MakeNode("foo").WithAdjacent("foo"),
 		}
 		renderer := mockRenderer{Nodes: nodes}
-		have := renderer.Render(report.MakeReport(), render.FilterUnconnected)
+		have := renderer.Render(report.MakeReport(), render.FilterUnconnected).Nodes
 		if len(have) > 0 {
 			t.Error("expected node only connected to self to be removed")
 		}

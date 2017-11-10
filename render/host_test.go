@@ -12,7 +12,7 @@ import (
 )
 
 func TestHostRenderer(t *testing.T) {
-	have := utils.Prune(render.HostRenderer.Render(fixture.Report, FilterNoop))
+	have := utils.Prune(render.HostRenderer.Render(fixture.Report, FilterNoop).Nodes)
 	want := utils.Prune(expected.RenderedHosts)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
