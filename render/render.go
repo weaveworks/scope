@@ -160,13 +160,15 @@ func newJoinResults() joinResults {
 
 // Add Node M under id, creating a new result node if not already there
 // incrementing a counter if nonblank, and updating the mapping from old ID to new ID
-func (ret *joinResults) addToResults(m report.Node, id string, create func(string) report.Node, counters ...string) {
+func (ret *joinResults) addToResults(m report.Node, id string, addChildren bool, create func(string) report.Node, counters ...string) {
 	result, exists := ret.nodes[id]
 	if !exists {
 		result = create(id)
 	}
 	result.Children = result.Children.Add(m)
-	result.Children = result.Children.Merge(m.Children)
+	if addChildren {
+		result.Children = result.Children.Merge(m.Children)
+	}
 	for _, c := range counters {
 		result.Counters = result.Counters.Add(c, 1)
 	}
