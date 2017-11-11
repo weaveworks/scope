@@ -817,6 +817,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/patrickmn/go-cache",
+			"repository": "https://github.com/patrickmn/go-cache",
+			"vcs": "git",
+			"revision": "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/paypal/ionet",
 			"repository": "https://github.com/paypal/ionet",
 			"vcs": "",
