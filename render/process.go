@@ -74,12 +74,7 @@ var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessR
 // name graph by munging the progess graph.
 //
 // not memoised
-var ProcessNameRenderer = ConditionalRenderer(renderProcesses,
-	MakeMap(
-		MapProcess2Name,
-		ProcessRenderer,
-	),
-)
+var ProcessNameRenderer = CustomRenderer{Renderer: ProcessRenderer, RenderFunc: processes2Names}
 
 // endpoints2Processes joins the endpoint topology to the process
 // topology, matching on hostID and pid.
@@ -132,23 +127,23 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 	return ret.result()
 }
 
-// MapProcess2Name maps process Nodes to Nodes
-// for each process name.
-//
-// This mapper is unlike the other foo2bar mappers as the intention
-// is not to join the information with another topology.
-func MapProcess2Name(n report.Node, _ report.Networks) report.Nodes {
-	if n.Topology == Pseudo {
-		return report.Nodes{n.ID: n}
-	}
+// processes2Names maps process Nodes to Nodes for each process name.
+func processes2Names(processes Nodes) Nodes {
+	ret := newJoinResults()
 
-	name, timestamp, ok := n.Latest.LookupEntry(process.Name)
-	if !ok {
-		return report.Nodes{}
+	for _, n := range processes.Nodes {
+		if n.Topology == Pseudo {
+			ret.passThrough(n)
+		} else {
+			name, timestamp, ok := n.Latest.LookupEntry(process.Name)
+			if ok {
+				ret.addToResults(n, name, func(id string) report.Node {
+					return report.MakeNode(id).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name)).
+						WithLatest(process.Name, timestamp, name)
+				}, n.Topology)
+			}
+		}
 	}
-
-	node := NewDerivedNode(name, n).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name))
-	node.Latest = node.Latest.Set(process.Name, timestamp, name)
-	node.Counters = node.Counters.Add(n.Topology, 1)
-	return report.Nodes{name: node}
+	ret.fixupAdjacencies(processes)
+	return ret.result()
 }
