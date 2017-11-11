@@ -158,17 +158,32 @@ func newJoinResults() joinResults {
 	return joinResults{nodes: make(report.Nodes), mapped: map[string]string{}}
 }
 
-// Add Node M under id, creating a new result node if not already there
-// and updating the mapping from old ID to new ID
-// Note we do not update any counters for child topologies here, because addToResults
-// is only ever called when m is an endpoint and we never look at endpoint counts
-func (ret *joinResults) addToResults(m report.Node, id string, create func(string) report.Node) {
+// Add m as a child of the node at id, creating a new result node if
+// not already there, and updating the mapping from old ID to new ID.
+func (ret *joinResults) addChild(m report.Node, id string, create func(string) report.Node) {
+	result, exists := ret.nodes[id]
+	if !exists {
+		result = create(id)
+	}
+	result.Children = result.Children.Add(m)
+	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
+		result.Counters = result.Counters.Add(m.Topology, 1)
+	}
+	ret.nodes[id] = result
+	ret.mapped[m.ID] = id
+}
+
+// Like addChild, but also add m's children.
+func (ret *joinResults) addChildAndChildren(m report.Node, id string, create func(string) report.Node) {
 	result, exists := ret.nodes[id]
 	if !exists {
 		result = create(id)
 	}
 	result.Children = result.Children.Add(m)
 	result.Children = result.Children.Merge(m.Children)
+	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
+		result.Counters = result.Counters.Add(m.Topology, 1)
+	}
 	ret.nodes[id] = result
 	ret.mapped[m.ID] = id
 }
