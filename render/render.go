@@ -159,18 +159,26 @@ func newJoinResults() joinResults {
 }
 
 // Add Node M under id, creating a new result node if not already there
-// and updating the mapping from old ID to new ID
-// Note we do not update any counters for child topologies here, because addToResults
-// is only ever called when m is an endpoint and we never look at endpoint counts
-func (ret *joinResults) addToResults(m report.Node, id string, create func(string) report.Node) {
+// incrementing a counter if nonblank, and updating the mapping from old ID to new ID
+func (ret *joinResults) addToResults(m report.Node, id string, create func(string) report.Node, counters ...string) {
 	result, exists := ret.nodes[id]
 	if !exists {
 		result = create(id)
 	}
 	result.Children = result.Children.Add(m)
 	result.Children = result.Children.Merge(m.Children)
+	for _, c := range counters {
+		result.Counters = result.Counters.Add(c, 1)
+	}
 	ret.nodes[id] = result
 	ret.mapped[m.ID] = id
+}
+
+// Add a copy of n straight into the results
+func (ret *joinResults) passThrough(n report.Node) {
+	n.Adjacency = nil // fixupAdjacencies assumes all nodes start with blank lists
+	ret.nodes[n.ID] = n
+	ret.mapped[n.ID] = n.ID
 }
 
 // Rewrite Adjacency for new nodes in ret for original nodes in input
