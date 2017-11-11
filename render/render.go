@@ -188,6 +188,13 @@ func (ret *joinResults) addChildAndChildren(m report.Node, id string, create fun
 	ret.mapped[m.ID] = id
 }
 
+// Add a copy of n straight into the results
+func (ret *joinResults) passThrough(n report.Node) {
+	n.Adjacency = nil // fixupAdjacencies assumes all nodes start with blank lists
+	ret.nodes[n.ID] = n
+	ret.mapped[n.ID] = n.ID
+}
+
 // Rewrite Adjacency for new nodes in ret for original nodes in input
 func (ret *joinResults) fixupAdjacencies(input Nodes) {
 	for _, n := range input.Nodes {
