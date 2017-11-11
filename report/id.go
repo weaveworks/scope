@@ -166,11 +166,11 @@ func makeSingleComponentID(tag string) func(string) string {
 // parseSingleComponentID makes a single-component node id decoder
 func parseSingleComponentID(tag string) func(string) (string, bool) {
 	return func(id string) (string, bool) {
-		fields := strings.SplitN(id, ScopeDelim, 2)
-		if len(fields) != 2 || fields[1] != "<"+tag+">" {
+		field0, field1, ok := split2(id, ScopeDelim)
+		if !ok || field1 != "<"+tag+">" {
 			return "", false
 		}
-		return fields[0], true
+		return field0, true
 	}
 }
 
@@ -197,48 +197,54 @@ func ParseOverlayNodeID(id string) (overlayPrefix string, peerName string) {
 	return WeaveOverlayPeerPrefix, id
 }
 
+// Split a string s into to parts separated by sep.
+func split2(s, sep string) (s1, s2 string, ok bool) {
+	// Not using strings.SplitN() to avoid a heap allocation
+	pos := strings.Index(s, sep)
+	if pos == -1 {
+		return "", "", false
+	}
+	return s[:pos], s[pos+1:], true
+}
+
 // ParseNodeID produces the host ID and remainder (typically an address) from
 // a node ID. Note that hostID may be blank.
 func ParseNodeID(nodeID string) (hostID string, remainder string, ok bool) {
-	fields := strings.SplitN(nodeID, ScopeDelim, 2)
-	if len(fields) != 2 {
-		return "", "", false
-	}
-	return fields[0], fields[1], true
+	return split2(nodeID, ScopeDelim)
 }
 
 // ParseEndpointNodeID produces the scope, address, and port and remainder.
-// Note that hostID may be blank.
+// Note that scope may be blank.
 func ParseEndpointNodeID(endpointNodeID string) (scope, address, port string, ok bool) {
-	fields := strings.SplitN(endpointNodeID, ScopeDelim, 3)
-	if len(fields) != 3 {
+	// Not using strings.SplitN() to avoid a heap allocation
+	first := strings.Index(endpointNodeID, ScopeDelim)
+	if first == -1 {
 		return "", "", "", false
 	}
-
-	return fields[0], fields[1], fields[2], true
+	second := strings.Index(endpointNodeID[first+1:], ScopeDelim)
+	if second == -1 {
+		return "", "", "", false
+	}
+	return endpointNodeID[:first], endpointNodeID[first+1 : first+1+second], endpointNodeID[first+1+second+1:], true
 }
 
 // ParseAddressNodeID produces the host ID, address from an address node ID.
 func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) {
-	fields := strings.SplitN(addressNodeID, ScopeDelim, 2)
-	if len(fields) != 2 {
-		return "", "", false
-	}
-	return fields[0], fields[1], true
+	return split2(addressNodeID, ScopeDelim)
 }
 
 // ParseECSServiceNodeID produces the cluster, service name from an ECS Service node ID
 func ParseECSServiceNodeID(ecsServiceNodeID string) (cluster, serviceName string, ok bool) {
-	fields := strings.SplitN(ecsServiceNodeID, ScopeDelim, 2)
-	if len(fields) != 2 {
+	cluster, serviceName, ok = split2(ecsServiceNodeID, ScopeDelim)
+	if !ok {
 		return "", "", false
 	}
 	// In previous versions, ECS Service node IDs were of form serviceName + "<ecs_service>".
 	// For backwards compatibility, we should still return a sensical serviceName for these cases.
-	if fields[1] == "<ecs_service>" {
-		return "unknown", fields[0], true
+	if serviceName == "<ecs_service>" {
+		return "unknown", cluster, true
 	}
-	return fields[0], fields[1], true
+	return cluster, serviceName, true
 }
 
 // ExtractHostID extracts the host id from Node
