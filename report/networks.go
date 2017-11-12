@@ -140,3 +140,70 @@ func commonIPv4PrefixLen(a, b net.IP) int {
 	}
 	return cpl
 }
+
+// ParseIP parses s as an IP address into a byte slice if supplied, returning the result.
+// (mostly copied from net.ParseIP, modified to save memory allocations)
+func ParseIP(s []byte, into []byte) net.IP {
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '.':
+			return parseIPv4(s, into)
+		case ':':
+			return net.ParseIP(string(s)) // leave IPv6 to the original code since we don't see many of those
+		}
+	}
+	return nil
+}
+
+// Parse IPv4 address (d.d.d.d).
+// (mostly copied from net.parseIPv4, modified to save memory allocations)
+func parseIPv4(s []byte, into []byte) net.IP {
+	var p []byte
+	if len(into) >= net.IPv4len { // check if we can use the supplied slice
+		p = into[:net.IPv4len]
+	} else {
+		p = make([]byte, net.IPv4len)
+	}
+	for i := 0; i < net.IPv4len; i++ {
+		if len(s) == 0 {
+			// Missing octets.
+			return nil
+		}
+		if i > 0 {
+			if s[0] != '.' {
+				return nil
+			}
+			s = s[1:]
+		}
+		n, c, ok := dtoi(s)
+		if !ok || n > 0xFF {
+			return nil
+		}
+		s = s[c:]
+		p[i] = byte(n)
+	}
+	if len(s) != 0 {
+		return nil
+	}
+	return p
+}
+
+// Bigger than we need, not too big to worry about overflow
+const big = 0xFFFFFF
+
+// Decimal to integer.
+// Returns number, characters consumed, success.
+// (completely copied from net.dtoi, just because it wasn't exported)
+func dtoi(s []byte) (n int, i int, ok bool) {
+	n = 0
+	for i = 0; i < len(s) && '0' <= s[i] && s[i] <= '9'; i++ {
+		n = n*10 + int(s[i]-'0')
+		if n >= big {
+			return big, i, false
+		}
+	}
+	if i == 0 {
+		return 0, 0, false
+	}
+	return n, i, true
+}
