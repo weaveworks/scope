@@ -10,12 +10,16 @@ import { getImagesForService } from '../../actions/app-actions';
 const topologyWhitelist = ['kube-controllers'];
 
 function newImagesAvailable(images, currentId) {
-  // Assume that the current image is always in the list of all available images.
-  // Should be a safe assumption...
   const current = find(images, i => i.ID === currentId);
-  const timestamp = new Date(current.CreatedAt);
-  return !isNull(find(images, i => timestamp < new Date(i.CreatedAt)));
+
+  if (current) {
+    const timestamp = new Date(current.CreatedAt);
+    return !isNull(find(images, i => timestamp < new Date(i.CreatedAt)));
+  }
+
+  return false;
 }
+
 
 class NodeDetailsImageStatus extends React.PureComponent {
   constructor(props, context) {
