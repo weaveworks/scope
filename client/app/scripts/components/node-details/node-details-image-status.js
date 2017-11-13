@@ -2,25 +2,26 @@ import React from 'react';
 import { connect } from 'react-redux';
 import find from 'lodash/find';
 import map from 'lodash/map';
+import isNull from 'lodash/isNull';
 import { CircularProgress } from 'weaveworks-ui-components';
 
 import { getImagesForService } from '../../actions/app-actions';
 
 const topologyWhitelist = ['kube-controllers'];
 
-function getNewImages(images, currentId) {
+function newImagesAvailable(images, currentId) {
   // Assume that the current image is always in the list of all available images.
   // Should be a safe assumption...
   const current = find(images, i => i.ID === currentId);
   const timestamp = new Date(current.CreatedAt);
-  return find(images, i => timestamp < new Date(i.CreatedAt)) || [];
+  return !isNull(find(images, i => timestamp < new Date(i.CreatedAt)));
 }
 
 class NodeDetailsImageStatus extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
 
-    this.handleServiceClick = this.handleServiceClick.bind(this);
+    this.getImagesUrl = this.getImagesUrl.bind(this);
   }
 
   componentDidMount() {
@@ -29,9 +30,9 @@ class NodeDetailsImageStatus extends React.PureComponent {
     }
   }
 
-  handleServiceClick() {
-    const { router, serviceId, params } = this.props;
-    router.push(`/flux/${params.orgId}/services/${encodeURIComponent(serviceId)}`);
+  getImagesUrl() {
+    const { serviceId, params } = this.props;
+    return `/flux/${params.orgId}/services/${encodeURIComponent(serviceId)}`;
   }
 
   shouldRender() {
@@ -62,7 +63,7 @@ class NodeDetailsImageStatus extends React.PureComponent {
     return (
       <div className="images">
         {containers.map((container) => {
-          const statusText = getNewImages(container.Available, container.Current.ID).length > 0
+          const statusText = newImagesAvailable(container.Available, container.Current.ID)
             ? <span className="new-image">New image(s) available</span>
             : 'Image up to date';
 
@@ -90,11 +91,11 @@ class NodeDetailsImageStatus extends React.PureComponent {
           Container Image Status
           {containers &&
             <div>
-              <button
-                onClick={this.handleServiceClick}
+              <a
+                href={this.getImagesUrl()}
                 className="node-details-table-node-link">
                   View in Deploy
-              </button>
+              </a>
             </div>
           }
 
