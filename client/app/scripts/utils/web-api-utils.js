@@ -1,4 +1,5 @@
 import debug from 'debug';
+import moment from 'moment';
 import reqwest from 'reqwest';
 import { defaults } from 'lodash';
 import { Map as makeMap, List } from 'immutable';
@@ -49,16 +50,17 @@ let firstMessageOnWebsocketAt = null;
 let continuePolling = true;
 
 
-export function getSerializedTimeTravelTimestamp(state) {
-  // The timestamp parameter will be used only if it's in the past.
-  if (!isPausedSelector(state)) return null;
+export function serializeTimestamp(timestamp) {
+  return timestamp ? timestamp.toISOString() : null;
+}
 
-  return state.get('pausedAt').toISOString();
+export function deserializeTimestamp(str) {
+  return str ? moment(str) : null;
 }
 
 export function buildUrlQuery(params = makeMap(), state) {
   // Attach the time travel timestamp to every request to the backend.
-  params = params.set('timestamp', getSerializedTimeTravelTimestamp(state));
+  params = params.set('timestamp', serializeTimestamp(state.get('pausedAt')));
 
   // Ignore the entries with values `null` or `undefined`.
   return params.map((value, param) => {

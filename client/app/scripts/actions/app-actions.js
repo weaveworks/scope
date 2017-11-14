@@ -345,6 +345,7 @@ export function pauseTimeAtNow() {
     dispatch({
       type: ActionTypes.PAUSE_TIME_AT_NOW
     });
+    updateRoute(getState);
     if (!getState().get('nodesLoaded')) {
       getNodes(getState, dispatch);
       if (isResourceViewModeSelector(getState())) {
@@ -582,6 +583,7 @@ export function resumeTime() {
       dispatch({
         type: ActionTypes.RESUME_TIME
       });
+      updateRoute(getState);
       // After unpausing, all of the following calls will re-activate polling.
       getTopologies(getState, dispatch);
       getNodes(getState, dispatch, true);
@@ -592,11 +594,13 @@ export function resumeTime() {
   };
 }
 
-export function startTimeTravel() {
+export function startTimeTravel(timestamp = null) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.START_TIME_TRAVEL
+      type: ActionTypes.START_TIME_TRAVEL,
+      timestamp,
     });
+    updateRoute(getState);
     if (!getState().get('nodesLoaded')) {
       getNodes(getState, dispatch);
       if (isResourceViewModeSelector(getState())) {
@@ -623,6 +627,7 @@ export function jumpToTime(timestamp) {
       type: ActionTypes.JUMP_TO_TIME,
       timestamp,
     });
+    updateRoute(getScopeState);
     getNodes(getScopeState, dispatch);
     getTopologies(getScopeState, dispatch);
     if (isResourceViewModeSelector(getScopeState())) {
@@ -661,13 +666,32 @@ export function receiveTopologies(topologies) {
 }
 
 export function receiveApiDetails(apiDetails) {
-  return {
-    type: ActionTypes.RECEIVE_API_DETAILS,
-    capabilities: fromJS(apiDetails.capabilities),
-    hostname: apiDetails.hostname,
-    version: apiDetails.version,
-    newVersion: apiDetails.newVersion,
-    plugins: apiDetails.plugins,
+  return (dispatch, getState) => {
+    const isFirstTime = !getState().get('version');
+    const pausedAt = getState().get('pausedAt');
+
+    dispatch({
+      type: ActionTypes.RECEIVE_API_DETAILS,
+      capabilities: fromJS(apiDetails.capabilities || {}),
+      hostname: apiDetails.hostname,
+      version: apiDetails.version,
+      newVersion: apiDetails.newVersion,
+      plugins: apiDetails.plugins,
+    });
+
+    // On initial load either start time travelling at the pausedAt timestamp
+    // (if it was given as URL param) if time travelling is enabled, otherwise
+    // simply pause at the present time which is arguably the next best thing
+    // we could do.
+    // NOTE: We can't make this decision before API details are received because
+    // we have no prior info on whether time travel would be available.
+    if (isFirstTime && pausedAt) {
+      if (apiDetails.capabilities && apiDetails.capabilities.historic_reports) {
+        dispatch(startTimeTravel(pausedAt));
+      } else {
+        dispatch(pauseTimeAtNow());
+      }
+    }
   };
 }
 
@@ -806,10 +830,6 @@ export function shutdown() {
   return (dispatch) => {
     stopPolling();
     teardownWebsockets();
-    // Exit the time travel mode before unmounting the app.
-    dispatch({
-      type: ActionTypes.RESUME_TIME
-    });
     dispatch({
       type: ActionTypes.SHUTDOWN
     });

@@ -19,7 +19,7 @@ class TimeTravelWrapper extends React.Component {
   }
 
   changeTimestamp(timestamp) {
-    this.props.jumpToTime(timestamp);
+    this.props.jumpToTime(moment(timestamp).utc());
   }
 
   trackTimestampEdit() {
@@ -61,7 +61,7 @@ class TimeTravelWrapper extends React.Component {
     return (
       <TimeTravel
         visible={visible}
-        timestamp={timestamp || moment()}
+        timestamp={timestamp}
         earliestTimestamp={this.props.earliestTimestamp}
         onChangeTimestamp={this.changeTimestamp}
         onTimestampInputEdit={this.trackTimestampEdit}
@@ -75,6 +75,7 @@ class TimeTravelWrapper extends React.Component {
 
 function mapStateToProps(state, { params }) {
   const scopeState = state.scope || state;
+  const pausedAt = scopeState.get('pausedAt');
   let firstSeenConnectedAt;
 
   // If we're in the Weave Cloud context, use firstSeeConnectedAt as the earliest timestamp.
@@ -89,8 +90,8 @@ function mapStateToProps(state, { params }) {
     visible: scopeState.get('showingTimeTravel'),
     topologyViewMode: scopeState.get('topologyViewMode'),
     currentTopology: scopeState.get('currentTopology'),
-    earliestTimestamp: firstSeenConnectedAt,
-    timestamp: scopeState.get('pausedAt'),
+    earliestTimestamp: firstSeenConnectedAt && firstSeenConnectedAt.utc().format(),
+    timestamp: pausedAt && pausedAt.utc().format(),
   };
 }
 

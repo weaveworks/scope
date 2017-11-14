@@ -6581,9 +6581,9 @@ wd@^0.4.0:
     underscore.string "~3.0.3"
     vargs "~0.1.0"
 
-"weaveworks-ui-components@git+https://github.com/weaveworks/ui-components.git#v0.1.51":
-  version "0.1.51"
-  resolved "git+https://github.com/weaveworks/ui-components.git#a08ea6a026f4cd58c66d4965838cf04d074604a4"
+"weaveworks-ui-components@git+https://github.com/weaveworks/ui-components.git#v0.1.52":
+  version "0.1.52"
+  resolved "git+https://github.com/weaveworks/ui-components.git#48978545233bfb0d1ac87795f332221cdaa58fc9"
   dependencies:
     babel-cli "^6.18.0"
     babel-plugin-transform-export-extensions "6.8.0"
