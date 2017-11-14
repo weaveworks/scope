@@ -42,7 +42,7 @@ class ViewModeSelector extends React.Component {
       <div
         className={className}
         disabled={!isEnabled}
-        onClick={isEnabled && onClick}
+        onClick={isEnabled ? onClick : undefined}
         title={`View ${label.toLowerCase()}`}>
         <span className={icons} style={{ fontSize: 12 }} />
         <span className="label">{label}</span>

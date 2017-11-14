@@ -105,7 +105,7 @@ export default class Sparkline extends React.Component {
       ? this.props.hoverColor
       : this.props.strokeColor;
     const strokeWidth = this.props.strokeWidth * (this.props.hovered ? HOVER_STROKE_MULTIPLY : 1);
-    const strokeDasharray = hasData || `${dash}, ${dash}`;
+    const strokeDasharray = hasData ? undefined : `${dash}, ${dash}`;
     const radius = this.props.circleRadius * (this.props.hovered ? HOVER_RADIUS_MULTIPLY : 1);
     const fillOpacity = this.props.hovered ? 1 : 0.6;
     const circleColor = hasData && this.props.hovered ? strokeColor : strokeColor;
