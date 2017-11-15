@@ -31,9 +31,8 @@
     "page": "1.7.1",
     "prop-types": "15.6.0",
     "rc-slider": "8.3.2",
-    "react": "15.6.1",
-    "react-addons-perf": "15.4.2",
-    "react-dom": "15.6.1",
+    "react": "16.1.0",
+    "react-dom": "16.1.0",
     "react-motion": "0.5.2",
     "react-redux": "5.0.6",
     "redux": "3.7.2",
@@ -44,7 +43,7 @@
     "reselect": "3.0.1",
     "reselect-map": "1.0.3",
     "styled-components": "^2.2.1",
-    "weaveworks-ui-components": "git+https://github.com/weaveworks/ui-components.git#v0.1.52",
+    "weaveworks-ui-components": "git+https://github.com/weaveworks/ui-components.git#v0.2.1",
     "whatwg-fetch": "2.0.3",
     "xterm": "2.9.2"
   },
@@ -73,17 +72,12 @@
     "html-webpack-plugin": "2.30.1",
     "http-proxy": "1.16.2",
     "http-proxy-rules": "1.1.1",
-    "immutable-devtools": "0.0.7",
     "jest": "21.2.1",
     "jest-cli": "21.2.1",
     "json-loader": "0.5.7",
     "mockdate": "2.0.2",
     "node-sass": "^4.6.0",
     "postcss-loader": "1.3.3",
-    "react-addons-perf": "15.4.2",
-    "redux-devtools": "3.4.0",
-    "redux-devtools-dock-monitor": "1.1.2",
-    "redux-devtools-log-monitor": "1.3.0",
     "sass-loader": "6.0.6",
     "style-loader": "0.19.0",
     "url": "0.11.0",
@@ -112,6 +106,7 @@
       ".*": "<rootDir>/node_modules/babel-jest"
     },
     "setupFiles": [
+      "<rootDir>/test/support/raf.js",
       "<rootDir>/test/support/localStorage.js"
     ],
     "roots": [

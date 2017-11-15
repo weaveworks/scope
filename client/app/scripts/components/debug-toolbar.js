@@ -1,6 +1,5 @@
 /* eslint react/jsx-no-bind: "off" */
 import React from 'react';
-import Perf from 'react-addons-perf';
 import { connect } from 'react-redux';
 import { sampleSize, sample, random, range, flattenDeep, times } from 'lodash';
 import { fromJS, Set as makeSet } from 'immutable';
@@ -99,21 +98,6 @@ function addAllMetricVariants(availableMetrics) {
     }));
   };
 }
-
-
-function stopPerf() {
-  Perf.stop();
-  const measurements = Perf.getLastMeasurements();
-  Perf.printInclusive(measurements);
-  Perf.printWasted(measurements);
-}
-
-
-function startPerf(delay) {
-  Perf.start();
-  setTimeout(stopPerf, delay * 1000);
-}
-
 
 export function showingDebugToolbar() {
   return (('debugToolbar' in localStorage && JSON.parse(localStorage.debugToolbar))
@@ -364,13 +348,6 @@ class DebugToolbar extends React.Component {
           <strong>Short-lived nodes </strong>
           <button onClick={() => this.setShortLived()}>Toggle short-lived nodes</button>
           <button onClick={() => this.setIntermittent()}>Toggle intermittent nodes</button>
-        </div>
-
-        <div>
-          <strong>Measure React perf for </strong>
-          <button onClick={() => startPerf(2)}>2s</button>
-          <button onClick={() => startPerf(5)}>5s</button>
-          <button onClick={() => startPerf(10)}>10s</button>
         </div>
       </div>
     );
