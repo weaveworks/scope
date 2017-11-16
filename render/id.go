@@ -1,7 +1,6 @@
 package render
 
 import (
-	"net"
 	"strings"
 
 	"github.com/weaveworks/scope/probe/endpoint"
@@ -66,7 +65,9 @@ func externalNodeID(n report.Node, addr string, local report.Networks) (string, 
 
 	// If the dstNodeAddr is not in a network local to this report, we emit an
 	// internet pseudoNode
-	if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
+	// Create a buffer on the stack of this function, so we don't need to allocate in ParseIP
+	var into [5]byte // one extra byte to save a memory allocation in critbitgo
+	if ip := report.ParseIP([]byte(addr), into[:4]); ip != nil && !local.Contains(ip) {
 		// emit one internet node for incoming, one for outgoing
 		if len(n.Adjacency) > 0 {
 			return IncomingInternetID, true
