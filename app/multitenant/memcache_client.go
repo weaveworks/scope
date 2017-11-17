@@ -1,16 +1,17 @@
 package multitenant
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"sort"
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/context"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/common/instrument"
 	"github.com/weaveworks/scope/report"

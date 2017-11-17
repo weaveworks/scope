@@ -1,6 +1,7 @@
 package multitenant
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -8,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -16,7 +16,7 @@ import (
 	"github.com/bluele/gcache"
 	"github.com/nats-io/nats"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/context"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/common/instrument"
 	"github.com/weaveworks/scope/app"

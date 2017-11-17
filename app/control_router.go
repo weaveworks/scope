@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"sync"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/weaveworks/scope/common/xfer"
 )
