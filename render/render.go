@@ -70,12 +70,12 @@ type Map struct {
 
 // MakeMap makes a new Map
 func MakeMap(f MapFunc, r Renderer) Renderer {
-	return &Map{f, r}
+	return Map{f, r}
 }
 
 // Render transforms a set of Nodes produces by another Renderer.
 // using a map function
-func (m *Map) Render(rpt report.Report, dct Decorator) Nodes {
+func (m Map) Render(rpt report.Report, dct Decorator) Nodes {
 	var (
 		input         = m.Renderer.Render(rpt, dct)
 		output        = report.Nodes{}
