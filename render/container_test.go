@@ -59,7 +59,7 @@ func testMap(t *testing.T, f render.MapFunc, input testcase) {
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(fixture.Report, FilterNoop).Nodes)
+	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(fixture.Report).Nodes)
 	want := utils.Prune(expected.RenderedContainers)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))

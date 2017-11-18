@@ -53,10 +53,10 @@ type connectionJoin struct {
 	r     Renderer
 }
 
-func (c connectionJoin) Render(rpt report.Report, dct Decorator) Nodes {
+func (c connectionJoin) Render(rpt report.Report) Nodes {
 	local := LocalNetworks(rpt)
-	inputNodes := c.r.Render(rpt, dct)
-	endpoints := SelectEndpoint.Render(rpt, dct)
+	inputNodes := c.r.Render(rpt)
+	endpoints := SelectEndpoint.Render(rpt)
 
 	// Collect all the IPs we are trying to map to, and which ID they map from
 	var ipNodes = map[string]string{}
@@ -131,9 +131,9 @@ type containerWithImageNameRenderer struct {
 
 // Render produces a container graph where the the latest metadata contains the
 // container image name, if found.
-func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator) Nodes {
-	containers := r.Renderer.Render(rpt, dct)
-	images := SelectContainerImage.Render(rpt, dct)
+func (r containerWithImageNameRenderer) Render(rpt report.Report) Nodes {
+	containers := r.Renderer.Render(rpt)
+	images := SelectContainerImage.Render(rpt)
 
 	outputs := report.Nodes{}
 	for id, c := range containers.Nodes {

@@ -37,13 +37,7 @@ func Memoise(r Renderer) Renderer {
 // retrieves a promise from the cache and returns its value, otherwise
 // it stores a new promise and fulfils it by calling through to
 // m.Renderer.
-//
-// The cache is bypassed when rendering a report with a decorator.
-func (m *memoise) Render(rpt report.Report, dct Decorator) Nodes {
-	if dct != nil {
-		return m.Renderer.Render(rpt, dct)
-	}
-
+func (m *memoise) Render(rpt report.Report) Nodes {
 	key := fmt.Sprintf("%s-%s", rpt.ID, m.id)
 
 	m.Lock()
@@ -56,7 +50,7 @@ func (m *memoise) Render(rpt report.Report, dct Decorator) Nodes {
 	renderCache.Set(key, promise)
 	m.Unlock()
 
-	output := m.Renderer.Render(rpt, dct)
+	output := m.Renderer.Render(rpt)
 
 	promise.Set(output)
 

@@ -9,7 +9,7 @@ import (
 type TopologySelector string
 
 // Render implements Renderer
-func (t TopologySelector) Render(r report.Report, _ Decorator) Nodes {
+func (t TopologySelector) Render(r report.Report) Nodes {
 	topology, _ := r.Topology(string(t))
 	return Nodes{Nodes: topology.Nodes}
 }

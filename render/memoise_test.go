@@ -11,7 +11,7 @@ import (
 
 type renderFunc func(r report.Report) render.Nodes
 
-func (f renderFunc) Render(r report.Report, _ render.Decorator) render.Nodes { return f(r) }
+func (f renderFunc) Render(r report.Report) render.Nodes { return f(r) }
 
 func TestMemoise(t *testing.T) {
 	calls := 0
@@ -22,7 +22,7 @@ func TestMemoise(t *testing.T) {
 	m := render.Memoise(r)
 	rpt1 := report.MakeReport()
 
-	result1 := m.Render(rpt1, nil)
+	result1 := m.Render(rpt1)
 	// it should have rendered it.
 	if _, ok := result1.Nodes[rpt1.ID]; !ok {
 		t.Errorf("Expected rendered report to contain a node, but got: %v", result1)
@@ -31,7 +31,7 @@ func TestMemoise(t *testing.T) {
 		t.Errorf("Expected renderer to have been called the first time")
 	}
 
-	result2 := m.Render(rpt1, nil)
+	result2 := m.Render(rpt1)
 	if !reflect.DeepEqual(result1, result2) {
 		t.Errorf("Expected memoised result to be returned: %s", test.Diff(result1, result2))
 	}
@@ -40,7 +40,7 @@ func TestMemoise(t *testing.T) {
 	}
 
 	rpt2 := report.MakeReport()
-	result3 := m.Render(rpt2, nil)
+	result3 := m.Render(rpt2)
 	if reflect.DeepEqual(result1, result3) {
 		t.Errorf("Expected different result for different report, but were the same")
 	}
@@ -49,7 +49,7 @@ func TestMemoise(t *testing.T) {
 	}
 
 	render.ResetCache()
-	result4 := m.Render(rpt1, nil)
+	result4 := m.Render(rpt1)
 	if !reflect.DeepEqual(result1, result4) {
 		t.Errorf("Expected original result to be returned: %s", test.Diff(result1, result4))
 	}

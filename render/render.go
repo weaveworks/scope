@@ -12,7 +12,7 @@ type MapFunc func(report.Node, report.Networks) report.Nodes
 
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
-	Render(report.Report, Decorator) Nodes
+	Render(report.Report) Nodes
 }
 
 // Nodes is the result of Rendering
@@ -34,7 +34,7 @@ func Decorate(rpt report.Report, renderer Renderer, dct Decorator) Nodes {
 	if dct != nil {
 		renderer = dct(renderer)
 	}
-	return renderer.Render(rpt, nil)
+	return renderer.Render(rpt)
 }
 
 // Reduce renderer is a Renderer which merges together the output of several
@@ -47,7 +47,7 @@ func MakeReduce(renderers ...Renderer) Renderer {
 }
 
 // Render produces a set of Nodes given a Report.
-func (r Reduce) Render(rpt report.Report, dct Decorator) Nodes {
+func (r Reduce) Render(rpt report.Report) Nodes {
 	l := len(r)
 	switch l {
 	case 0:
@@ -57,7 +57,7 @@ func (r Reduce) Render(rpt report.Report, dct Decorator) Nodes {
 	for _, renderer := range r {
 		renderer := renderer // Pike!!
 		go func() {
-			c <- renderer.Render(rpt, dct)
+			c <- renderer.Render(rpt)
 		}()
 	}
 	for ; l > 1; l-- {
@@ -83,9 +83,9 @@ func MakeMap(f MapFunc, r Renderer) Renderer {
 
 // Render transforms a set of Nodes produces by another Renderer.
 // using a map function
-func (m Map) Render(rpt report.Report, dct Decorator) Nodes {
+func (m Map) Render(rpt report.Report) Nodes {
 	var (
-		input         = m.Renderer.Render(rpt, dct)
+		input         = m.Renderer.Render(rpt)
 		output        = report.Nodes{}
 		mapped        = map[string]report.IDList{} // input node ID -> output node IDs
 		adjacencies   = map[string]report.IDList{} // output node ID -> input node Adjacencies
@@ -153,9 +153,9 @@ func ConditionalRenderer(c Condition, r Renderer) Renderer {
 	return conditionalRenderer{c, r}
 }
 
-func (cr conditionalRenderer) Render(rpt report.Report, dct Decorator) Nodes {
+func (cr conditionalRenderer) Render(rpt report.Report) Nodes {
 	if cr.Condition(rpt) {
-		return cr.Renderer.Render(rpt, dct)
+		return cr.Renderer.Render(rpt)
 	}
 	return Nodes{}
 }
@@ -166,7 +166,7 @@ type ConstantRenderer struct {
 }
 
 // Render implements Renderer
-func (c ConstantRenderer) Render(_ report.Report, _ Decorator) Nodes {
+func (c ConstantRenderer) Render(_ report.Report) Nodes {
 	return c.Nodes
 }
 

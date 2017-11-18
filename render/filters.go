@@ -23,8 +23,8 @@ type CustomRenderer struct {
 }
 
 // Render implements Renderer
-func (c CustomRenderer) Render(rpt report.Report, dct Decorator) Nodes {
-	return c.RenderFunc(c.Renderer.Render(rpt, dct))
+func (c CustomRenderer) Render(rpt report.Report) Nodes {
+	return c.RenderFunc(c.Renderer.Render(rpt))
 }
 
 // ColorConnected colors nodes with the IsConnected key if
@@ -123,15 +123,15 @@ func MakeFilterPseudoDecorator(f FilterFunc) Decorator {
 }
 
 // Render implements Renderer
-func (f Filter) Render(rpt report.Report, dct Decorator) Nodes {
-	return f.render(rpt, dct)
+func (f Filter) Render(rpt report.Report) Nodes {
+	return f.render(rpt)
 }
 
-func (f Filter) render(rpt report.Report, dct Decorator) Nodes {
+func (f Filter) render(rpt report.Report) Nodes {
 	output := report.Nodes{}
 	inDegrees := map[string]int{}
 	filtered := 0
-	for id, node := range f.Renderer.Render(rpt, dct).Nodes {
+	for id, node := range f.Renderer.Render(rpt).Nodes {
 		if f.FilterFunc(node) {
 			output[id] = node
 			inDegrees[id] = 0

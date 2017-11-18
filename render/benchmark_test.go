@@ -52,7 +52,7 @@ func benchmarkRender(b *testing.B, r render.Renderer) {
 		b.StopTimer()
 		render.ResetCache()
 		b.StartTimer()
-		benchmarkRenderResult = r.Render(report, FilterNoop)
+		benchmarkRenderResult = r.Render(report)
 		if len(benchmarkRenderResult.Nodes) == 0 {
 			b.Errorf("Rendered topology contained no nodes")
 		}

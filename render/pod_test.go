@@ -13,7 +13,7 @@ import (
 )
 
 func TestPodRenderer(t *testing.T) {
-	have := utils.Prune(render.PodRenderer.Render(fixture.Report, nil).Nodes)
+	have := utils.Prune(render.PodRenderer.Render(fixture.Report).Nodes)
 	want := utils.Prune(expected.RenderedPods)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -41,7 +41,7 @@ func TestPodFilterRenderer(t *testing.T) {
 }
 
 func TestPodServiceRenderer(t *testing.T) {
-	have := utils.Prune(render.PodServiceRenderer.Render(fixture.Report, nil).Nodes)
+	have := utils.Prune(render.PodServiceRenderer.Render(fixture.Report).Nodes)
 	want := utils.Prune(expected.RenderedPodServices)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))

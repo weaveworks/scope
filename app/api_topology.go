@@ -51,7 +51,7 @@ func handleNode(ctx context.Context, renderer render.Renderer, decorator render.
 	// To avoid repeating the work from step (1) in step (2), we
 	// replace the renderer in the latter with a constant renderer of
 	// the result obtained in step (1).
-	nodes := renderer.Render(rc.Report, nil)
+	nodes := renderer.Render(rc.Report)
 	node, ok := nodes.Nodes[nodeID]
 	if !ok {
 		http.NotFound(w, r)

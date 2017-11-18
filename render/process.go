@@ -40,9 +40,9 @@ type processWithContainerNameRenderer struct {
 	Renderer
 }
 
-func (r processWithContainerNameRenderer) Render(rpt report.Report, dct Decorator) Nodes {
-	processes := r.Renderer.Render(rpt, dct)
-	containers := SelectContainer.Render(rpt, dct)
+func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
+	processes := r.Renderer.Render(rpt)
+	containers := SelectContainer.Render(rpt)
 
 	outputs := report.Nodes{}
 	for id, p := range processes.Nodes {
@@ -86,13 +86,13 @@ var ProcessNameRenderer = ConditionalRenderer(renderProcesses,
 type endpoints2Processes struct {
 }
 
-func (e endpoints2Processes) Render(rpt report.Report, dct Decorator) Nodes {
+func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 	if len(rpt.Process.Nodes) == 0 {
 		return Nodes{}
 	}
 	local := LocalNetworks(rpt)
-	processes := SelectProcess.Render(rpt, dct)
-	endpoints := SelectEndpoint.Render(rpt, dct)
+	processes := SelectProcess.Render(rpt)
+	endpoints := SelectEndpoint.Render(rpt)
 	ret := newJoinResults()
 
 	for _, n := range endpoints.Nodes {
