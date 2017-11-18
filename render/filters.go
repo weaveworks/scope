@@ -27,9 +27,9 @@ func (c CustomRenderer) Render(rpt report.Report) Nodes {
 	return c.RenderFunc(c.Renderer.Render(rpt))
 }
 
-// ColorConnected colors nodes with the IsConnected key if
-// they have edges to or from them.  Edges to/from yourself
-// are not counted here (see #656).
+// ColorConnected colors nodes with the IsConnectedMark key if they
+// have edges to or from them.  Edges to/from yourself are not counted
+// here (see #656).
 func ColorConnected(r Renderer) Renderer {
 	return CustomRenderer{
 		Renderer: r,
@@ -48,7 +48,7 @@ func ColorConnected(r Renderer) Renderer {
 
 			output := input.Copy()
 			for id := range connected {
-				output[id] = output[id].WithLatest(IsConnected, mtime.Now(), "true")
+				output[id] = output[id].WithLatest(IsConnectedMark, mtime.Now(), "true")
 			}
 			return Nodes{Nodes: output, Filtered: input.Filtered}
 		},
@@ -168,9 +168,10 @@ func (f Filter) render(rpt report.Report) Nodes {
 	return Nodes{Nodes: output, Filtered: filtered}
 }
 
-// IsConnected is the key added to Node.Metadata by ColorConnected
-// to indicate a node has an edge pointing to it or from it
-const IsConnected = "is_connected"
+// IsConnectedMark is the key added to Node.Metadata by
+// ColorConnected to indicate a node has an edge pointing to it or
+// from it
+const IsConnectedMark = "is_connected"
 
 // Complement takes a FilterFunc f and returns a FilterFunc that has the same
 // effects, if any, and returns the opposite truth value.
@@ -178,16 +179,17 @@ func Complement(f FilterFunc) FilterFunc {
 	return func(node report.Node) bool { return !f(node) }
 }
 
+// IsConnected checks whether the node has been marked with the
+// IsConnectedMark.
+func IsConnected(node report.Node) bool {
+	_, ok := node.Latest.Lookup(IsConnectedMark)
+	return ok
+}
+
 // FilterUnconnected produces a renderer that filters unconnected nodes
 // from the given renderer
 func FilterUnconnected(r Renderer) Renderer {
-	return MakeFilterPseudo(
-		func(node report.Node) bool {
-			_, ok := node.Latest.Lookup(IsConnected)
-			return ok
-		},
-		ColorConnected(r),
-	)
+	return MakeFilterPseudo(IsConnected, ColorConnected(r))
 }
 
 // FilterUnconnectedPseudo produces a renderer that filters
@@ -198,8 +200,7 @@ func FilterUnconnectedPseudo(r Renderer) Renderer {
 			if !IsPseudoTopology(node) {
 				return true
 			}
-			_, ok := node.Latest.Lookup(IsConnected)
-			return ok
+			return IsConnected(node)
 		},
 		ColorConnected(r),
 	)

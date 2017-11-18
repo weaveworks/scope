@@ -285,7 +285,7 @@ func MapProcess2Container(n report.Node, _ report.Networks) report.Nodes {
 		id = MakePseudoNodeID(UncontainedID, report.ExtractHostID(n))
 		node = NewDerivedPseudoNode(id, n)
 		node = propagateLatest(report.HostNodeID, n, node)
-		node = propagateLatest(IsConnected, n, node)
+		node = propagateLatest(IsConnectedMark, n, node)
 	}
 	return report.Nodes{id: node}
 }

@@ -209,8 +209,7 @@ func processNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 		base.LabelMinor = fmt.Sprintf("%s (%s)", report.ExtractHostID(n), pid)
 	}
 
-	_, isConnected := n.Latest.Lookup(render.IsConnected)
-	base.Linkable = isConnected
+	base.Linkable = render.IsConnected(n)
 	return base, true
 }
 
