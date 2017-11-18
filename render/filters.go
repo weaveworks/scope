@@ -108,7 +108,7 @@ type Filter struct {
 
 // MakeFilter makes a new Filter (that ignores pseudo nodes).
 func MakeFilter(f FilterFunc, r Renderer) Renderer {
-	return &Filter{
+	return Filter{
 		Renderer: r,
 		FilterFunc: func(n report.Node) bool {
 			return n.Topology == Pseudo || f(n)
@@ -118,7 +118,7 @@ func MakeFilter(f FilterFunc, r Renderer) Renderer {
 
 // MakeFilterPseudo makes a new Filter that will not ignore pseudo nodes.
 func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
-	return &Filter{
+	return Filter{
 		Renderer:   r,
 		FilterFunc: f,
 	}
@@ -141,11 +141,11 @@ func MakeFilterPseudoDecorator(f FilterFunc) Decorator {
 }
 
 // Render implements Renderer
-func (f *Filter) Render(rpt report.Report, dct Decorator) Nodes {
+func (f Filter) Render(rpt report.Report, dct Decorator) Nodes {
 	return f.render(rpt, dct)
 }
 
-func (f *Filter) render(rpt report.Report, dct Decorator) Nodes {
+func (f Filter) render(rpt report.Report, dct Decorator) Nodes {
 	output := report.Nodes{}
 	inDegrees := map[string]int{}
 	filtered := 0
