@@ -69,6 +69,6 @@ func benchmarkOneTopology(b *testing.B, topologyID string) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		renderer.Render(report, decorator)
+		render.Decorate(report, renderer, decorator)
 	})
 }

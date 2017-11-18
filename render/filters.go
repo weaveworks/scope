@@ -14,24 +14,6 @@ const (
 	swarmNamespaceLabel = "com.docker.stack.namespace"
 )
 
-// PreciousNodeRenderer ensures a node is never filtered out by decorators
-type PreciousNodeRenderer struct {
-	PreciousNodeID string
-	Renderer
-}
-
-// Render implements Renderer
-func (p PreciousNodeRenderer) Render(rpt report.Report, dct Decorator) Nodes {
-	undecoratedNodes := p.Renderer.Render(rpt, nil)
-	preciousNode, foundBeforeDecoration := undecoratedNodes.Nodes[p.PreciousNodeID]
-	finalNodes := applyDecorator{ConstantRenderer{undecoratedNodes}}.Render(rpt, dct)
-	if _, ok := finalNodes.Nodes[p.PreciousNodeID]; !ok && foundBeforeDecoration {
-		finalNodes.Nodes[p.PreciousNodeID] = preciousNode
-		finalNodes.Filtered--
-	}
-	return finalNodes
-}
-
 // CustomRenderer allow for mapping functions that received the entire topology
 // in one call - useful for functions that need to consider the entire graph.
 // We should minimise the use of this renderer type, as it is very inflexible.

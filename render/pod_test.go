@@ -28,13 +28,11 @@ func TestPodFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
-	renderer := render.ApplyDecorator(render.PodRenderer)
-
 	input.Pod.Nodes[fixture.ClientPodNodeID] = input.Pod.Nodes[fixture.ClientPodNodeID].WithLatests(map[string]string{
 		kubernetes.Namespace: "kube-system",
 	})
 
-	have := utils.Prune(renderer.Render(input, filterNonKubeSystem).Nodes)
+	have := utils.Prune(render.Decorate(input, render.PodRenderer, filterNonKubeSystem).Nodes)
 	want := utils.Prune(expected.RenderedPods.Copy())
 	delete(want, fixture.ClientPodNodeID)
 	if !reflect.DeepEqual(want, have) {
@@ -54,13 +52,11 @@ func TestPodServiceFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
-	renderer := render.ApplyDecorator(render.PodServiceRenderer)
-
 	input.Service.Nodes[fixture.ServiceNodeID] = input.Service.Nodes[fixture.ServiceNodeID].WithLatests(map[string]string{
 		kubernetes.Namespace: "kube-system",
 	})
 
-	have := utils.Prune(renderer.Render(input, filterNonKubeSystem).Nodes)
+	have := utils.Prune(render.Decorate(input, render.PodServiceRenderer, filterNonKubeSystem).Nodes)
 	want := utils.Prune(expected.RenderedPodServices.Copy())
 	delete(want, fixture.ServiceNodeID)
 	delete(want, render.IncomingInternetID)

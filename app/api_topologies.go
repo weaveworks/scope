@@ -504,7 +504,7 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer, decorator re
 		realNodes int
 		edges     int
 	)
-	r := renderer.Render(rpt, decorator)
+	r := render.Decorate(rpt, renderer, decorator)
 	for _, n := range r.Nodes {
 		nodes++
 		if n.Topology != render.Pseudo {
@@ -541,10 +541,7 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 		}
 	}
 	if len(decorators) > 0 {
-		// Here we tell the topology renderer to apply the filtering decorator
-		// that we construct as a composition of all the selected filters.
-		composedFilterDecorator := render.ComposeDecorators(decorators...)
-		return render.ApplyDecorator(topology.renderer), composedFilterDecorator, nil
+		return topology.renderer, render.ComposeDecorators(decorators...), nil
 	}
 	return topology.renderer, nil, nil
 }

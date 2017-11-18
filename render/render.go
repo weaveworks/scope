@@ -29,6 +29,14 @@ func (r Nodes) Merge(o Nodes) Nodes {
 	}
 }
 
+// Decorate renders the report with a decorated renderer
+func Decorate(rpt report.Report, renderer Renderer, dct Decorator) Nodes {
+	if dct != nil {
+		renderer = dct(renderer)
+	}
+	return renderer.Render(rpt, nil)
+}
+
 // Reduce renderer is a Renderer which merges together the output of several
 // other renderers.
 type Reduce []Renderer
@@ -122,22 +130,6 @@ func ComposeDecorators(decorators ...Decorator) Decorator {
 		}
 		return r
 	}
-}
-
-type applyDecorator struct {
-	Renderer
-}
-
-func (ad applyDecorator) Render(rpt report.Report, dct Decorator) Nodes {
-	if dct != nil {
-		return dct(ad.Renderer).Render(rpt, nil)
-	}
-	return ad.Renderer.Render(rpt, nil)
-}
-
-// ApplyDecorator returns a renderer which will apply the given decorator to the child render.
-func ApplyDecorator(renderer Renderer) Renderer {
-	return applyDecorator{renderer}
 }
 
 func propagateLatest(key string, from, to report.Node) report.Node {

@@ -31,25 +31,42 @@ type APINode struct {
 // Full topology.
 func handleTopology(ctx context.Context, renderer render.Renderer, decorator render.Decorator, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(rc, renderer.Render(rc.Report, decorator).Nodes),
+		Nodes: detailed.Summaries(rc, render.Decorate(rc.Report, renderer, decorator).Nodes),
 	})
 }
 
 // Individual nodes.
 func handleNode(ctx context.Context, renderer render.Renderer, decorator render.Decorator, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
 	var (
-		vars             = mux.Vars(r)
-		topologyID       = vars["topology"]
-		nodeID           = vars["id"]
-		preciousRenderer = render.PreciousNodeRenderer{PreciousNodeID: nodeID, Renderer: renderer}
-		rendered         = preciousRenderer.Render(rc.Report, decorator).Nodes
-		node, ok         = rendered[nodeID]
+		vars       = mux.Vars(r)
+		topologyID = vars["topology"]
+		nodeID     = vars["id"]
 	)
+	// We must not lose the node during decoration. We achieve that by
+	// (1) rendering the report with the base renderer, without
+	// decoration, which gives us the node (if it exists at all), then
+	// (2) performing a normal decorated render of the report. If the
+	// node is lost in the second step, we simply put it back.
+	//
+	// To avoid repeating the work from step (1) in step (2), we
+	// replace the renderer in the latter with a constant renderer of
+	// the result obtained in step (1).
+	nodes := renderer.Render(rc.Report, nil)
+	node, ok := nodes.Nodes[nodeID]
 	if !ok {
 		http.NotFound(w, r)
 		return
 	}
-	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, rc, rendered, node)})
+	if decorator != nil {
+		nodes = render.Decorate(rc.Report, render.ConstantRenderer{Nodes: nodes}, decorator)
+		if decoratedNode, ok := nodes.Nodes[nodeID]; ok {
+			node = decoratedNode
+		} else { // we've lost the node during decoration; put it back
+			nodes.Nodes[nodeID] = node
+			nodes.Filtered--
+		}
+	}
+	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, rc, nodes.Nodes, node)})
 }
 
 // Websocket for the full topology.
@@ -123,7 +140,7 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(RenderContextForReporter(rep, re), renderer.Render(re, decorator).Nodes)
+		newTopo := detailed.Summaries(RenderContextForReporter(rep, re), render.Decorate(re, renderer, decorator).Nodes)
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 
