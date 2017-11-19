@@ -31,10 +31,11 @@ func (r Nodes) Merge(o Nodes) Nodes {
 
 // Render renders the report and then applies the filter
 func Render(rpt report.Report, renderer Renderer, filter FilterFunc) Nodes {
+	nodes := renderer.Render(rpt)
 	if filter != nil {
-		renderer = MakeFilterPseudo(filter, renderer)
+		nodes = filter.Apply(nodes)
 	}
-	return renderer.Render(rpt)
+	return nodes
 }
 
 // Reduce renderer is a Renderer which merges together the output of several
@@ -145,16 +146,6 @@ func (cr conditionalRenderer) Render(rpt report.Report) Nodes {
 		return cr.Renderer.Render(rpt)
 	}
 	return Nodes{}
-}
-
-// ConstantRenderer renders a fixed set of nodes
-type ConstantRenderer struct {
-	Nodes
-}
-
-// Render implements Renderer
-func (c ConstantRenderer) Render(_ report.Report) Nodes {
-	return c.Nodes
 }
 
 // joinResults is used by Renderers that join sets of nodes

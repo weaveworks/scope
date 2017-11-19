@@ -44,13 +44,9 @@ func handleNode(ctx context.Context, renderer render.Renderer, filter render.Fil
 	)
 	// We must not lose the node during filtering. We achieve that by
 	// (1) rendering the report with the base renderer, without
-	// filtering, which gives us the node (if it exists at all), then
-	// (2) performing a normal filtered render of the report. If the
+	// filtering, which gives us the node (if it exists at all), and
+	// then (2) applying the filter separately to that result.  If the
 	// node is lost in the second step, we simply put it back.
-	//
-	// To avoid repeating the work from step (1) in step (2), we
-	// replace the renderer in the latter with a constant renderer of
-	// the result obtained in step (1).
 	nodes := renderer.Render(rc.Report)
 	node, ok := nodes.Nodes[nodeID]
 	if !ok {
@@ -58,7 +54,7 @@ func handleNode(ctx context.Context, renderer render.Renderer, filter render.Fil
 		return
 	}
 	if filter != nil {
-		nodes = render.Render(rc.Report, render.ConstantRenderer{Nodes: nodes}, filter)
+		nodes = filter.Apply(nodes)
 		if filteredNode, ok := nodes.Nodes[nodeID]; ok {
 			node = filteredNode
 		} else { // we've lost the node during filtering; put it back
