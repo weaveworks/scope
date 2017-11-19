@@ -82,41 +82,13 @@ func ComposeFilterFuncs(fs ...FilterFunc) FilterFunc {
 	}
 }
 
-// Filter removes nodes from a view based on a predicate.
-type Filter struct {
-	Renderer
-	FilterFunc FilterFunc
-}
-
-// MakeFilter makes a new Filter (that ignores pseudo nodes).
-func MakeFilter(f FilterFunc, r Renderer) Renderer {
-	return Filter{
-		Renderer: r,
-		FilterFunc: func(n report.Node) bool {
-			return n.Topology == Pseudo || f(n)
-		},
-	}
-}
-
-// MakeFilterPseudo makes a new Filter that will not ignore pseudo nodes.
-func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
-	return Filter{
-		Renderer:   r,
-		FilterFunc: f,
-	}
-}
-
-// Render implements Renderer
-func (f Filter) Render(rpt report.Report) Nodes {
-	return f.render(rpt)
-}
-
-func (f Filter) render(rpt report.Report) Nodes {
+// Apply applies the filter to all nodes
+func (f FilterFunc) Apply(nodes Nodes) Nodes {
 	output := report.Nodes{}
 	inDegrees := map[string]int{}
 	filtered := 0
-	for id, node := range f.Renderer.Render(rpt).Nodes {
-		if f.FilterFunc(node) {
+	for id, node := range nodes.Nodes {
+		if f(node) {
 			output[id] = node
 			inDegrees[id] = 0
 		} else {
@@ -150,6 +122,35 @@ func (f Filter) render(rpt report.Report) Nodes {
 		filtered++
 	}
 	return Nodes{Nodes: output, Filtered: filtered}
+}
+
+// Filter removes nodes from a view based on a predicate.
+type Filter struct {
+	Renderer
+	FilterFunc FilterFunc
+}
+
+// MakeFilter makes a new Filter (that ignores pseudo nodes).
+func MakeFilter(f FilterFunc, r Renderer) Renderer {
+	return Filter{
+		Renderer: r,
+		FilterFunc: func(n report.Node) bool {
+			return n.Topology == Pseudo || f(n)
+		},
+	}
+}
+
+// MakeFilterPseudo makes a new Filter that will not ignore pseudo nodes.
+func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
+	return Filter{
+		Renderer:   r,
+		FilterFunc: f,
+	}
+}
+
+// Render implements Renderer
+func (f Filter) Render(rpt report.Report) Nodes {
+	return f.FilterFunc.Apply(f.Renderer.Render(rpt))
 }
 
 // IsConnectedMark is the key added to Node.Metadata by
