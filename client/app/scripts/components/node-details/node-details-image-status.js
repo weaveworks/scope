@@ -2,7 +2,6 @@ import React from 'react';
 import { connect } from 'react-redux';
 import find from 'lodash/find';
 import map from 'lodash/map';
-import isNull from 'lodash/isNull';
 import { CircularProgress } from 'weaveworks-ui-components';
 
 import { getImagesForService } from '../../actions/app-actions';
@@ -14,7 +13,7 @@ function newImagesAvailable(images, currentId) {
 
   if (current) {
     const timestamp = new Date(current.CreatedAt);
-    return !isNull(find(images, i => timestamp < new Date(i.CreatedAt)));
+    return Boolean(find(images, i => new Date(i.CreatedAt) > timestamp));
   }
 
   return false;
