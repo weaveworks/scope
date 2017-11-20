@@ -94,7 +94,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 		// Nodes without a hostid are treated as pseudo nodes
 		if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); !ok {
 			if id, ok := pseudoNodeID(n, local); ok {
-				ret.addToResults(n, id, true, newPseudoNode)
+				ret.addEndpointChild(n, id, newPseudoNode)
 			}
 		} else {
 			pid, timestamp, ok := n.Latest.LookupEntry(process.PID)
@@ -111,7 +111,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 
 			hostID, _, _ := report.ParseNodeID(hostNodeID)
 			id := report.MakeProcessNodeID(hostID, pid)
-			ret.addToResults(n, id, true, func(id string) report.Node {
+			ret.addEndpointChild(n, id, func(id string) report.Node {
 				if processNode, found := processes.Nodes[id]; found {
 					return processNode
 				}
@@ -137,10 +137,10 @@ func processes2Names(processes Nodes) Nodes {
 		} else {
 			name, timestamp, ok := n.Latest.LookupEntry(process.Name)
 			if ok {
-				ret.addToResults(n, name, true, func(id string) report.Node {
+				ret.addChildAndChildren(n, name, func(id string) report.Node {
 					return report.MakeNode(id).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name)).
 						WithLatest(process.Name, timestamp, name)
-				}, n.Topology)
+				})
 			}
 		}
 	}
