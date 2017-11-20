@@ -74,7 +74,7 @@ var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessR
 // name graph by munging the progess graph.
 //
 // not memoised
-var ProcessNameRenderer = CustomRenderer{Renderer: ProcessRenderer, RenderFunc: processes2Names}
+var ProcessNameRenderer = CustomRenderer{RenderFunc: processes2Names, Renderer: ProcessRenderer}
 
 // endpoints2Processes joins the endpoint topology to the process
 // topology, matching on hostID and pid.
