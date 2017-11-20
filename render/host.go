@@ -63,10 +63,10 @@ func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 			if !ok {
 				continue
 			}
-			ret.addEndpointChild(n, id, newPseudoNode)
+			ret.addChild(n, id, newPseudoNode)
 		} else {
 			id := report.MakeHostNodeID(report.ExtractHostID(n))
-			ret.addEndpointChild(n, id, func(id string) report.Node {
+			ret.addChild(n, id, func(id string) report.Node {
 				return report.MakeNode(id).WithTopology(report.Host).
 					WithLatest(report.HostNodeID, timestamp, hostNodeID)
 			})

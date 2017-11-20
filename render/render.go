@@ -158,34 +158,22 @@ func newJoinResults() joinResults {
 	return joinResults{nodes: make(report.Nodes), mapped: map[string]string{}}
 }
 
-// Add Endpoint Node m under id, creating a new result node if not already there
-// and updating the mapping from old ID to new ID
-// Note we do not update any counters for child topologies here because we never look at endpoint counts
-func (ret *joinResults) addEndpointChild(m report.Node, id string, create func(string) report.Node) {
-	result, exists := ret.nodes[id]
-	if !exists {
-		result = create(id)
-	}
-	result.Children = result.Children.Add(m)
-	ret.nodes[id] = result
-	ret.mapped[m.ID] = id
-}
-
-// Add Node m as a child of the node at id, creating a new result node if not already there
-// incrementing a count of the topology, and updating the mapping from old ID to new ID
+// Add m as a child of the node at id, creating a new result node if
+// not already there, and updating the mapping from old ID to new ID.
 func (ret *joinResults) addChild(m report.Node, id string, create func(string) report.Node) {
 	result, exists := ret.nodes[id]
 	if !exists {
 		result = create(id)
 	}
 	result.Children = result.Children.Add(m)
-	result.Counters = result.Counters.Add(m.Topology, 1)
+	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
+		result.Counters = result.Counters.Add(m.Topology, 1)
+	}
 	ret.nodes[id] = result
 	ret.mapped[m.ID] = id
 }
 
-// Add m and its children as children under id, creating a new result node if not already there,
-// incrementing a count of the topology, and updating the mapping from old ID to new ID
+// Like addChild, but also add m's children.
 func (ret *joinResults) addChildAndChildren(m report.Node, id string, create func(string) report.Node) {
 	result, exists := ret.nodes[id]
 	if !exists {
@@ -193,7 +181,9 @@ func (ret *joinResults) addChildAndChildren(m report.Node, id string, create fun
 	}
 	result.Children = result.Children.Add(m)
 	result.Children = result.Children.Merge(m.Children)
-	result.Counters = result.Counters.Add(m.Topology, 1)
+	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
+		result.Counters = result.Counters.Add(m.Topology, 1)
+	}
 	ret.nodes[id] = result
 	ret.mapped[m.ID] = id
 }
