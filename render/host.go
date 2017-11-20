@@ -31,7 +31,7 @@ func nodes2Hosts(nodes Nodes) Nodes {
 
 	for _, n := range nodes.Nodes {
 		if n.Topology == Pseudo {
-			continue // Don't propagate pseudo nodes - we do this in MapEndpoint2Host
+			continue // Don't propagate pseudo nodes - we do this in endpoints2Hosts
 		} else {
 			hostIDs, _ := n.Parents.Lookup(report.Host)
 			for _, id := range hostIDs {
