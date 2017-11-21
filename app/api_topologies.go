@@ -96,7 +96,8 @@ func updateSwarmFilters(rpt report.Report, topologies []APITopologyDesc) []APITo
 
 func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
 	namespaces := map[string]struct{}{}
-	for _, t := range []report.Topology{rpt.Pod, rpt.Service, rpt.Deployment} {
+	// We exclude ReplicaSets since we don't show them anywhere.
+	for _, t := range []report.Topology{rpt.Pod, rpt.Service, rpt.Deployment, rpt.DaemonSet, rpt.StatefulSet, rpt.CronJob} {
 		for _, n := range t.Nodes {
 			if state, ok := n.Latest.Lookup(kubernetes.State); ok && state == kubernetes.StateDeleted {
 				continue
