@@ -12,7 +12,7 @@ type MapFunc func(report.Node, report.Networks) report.Nodes
 
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
-	Render(report.Report, Decorator) Nodes
+	Render(report.Report) Nodes
 }
 
 // Nodes is the result of Rendering
@@ -29,6 +29,15 @@ func (r Nodes) Merge(o Nodes) Nodes {
 	}
 }
 
+// Render renders the report and then applies the filter
+func Render(rpt report.Report, renderer Renderer, filter FilterFunc) Nodes {
+	nodes := renderer.Render(rpt)
+	if filter != nil {
+		nodes = filter.Apply(nodes)
+	}
+	return nodes
+}
+
 // Reduce renderer is a Renderer which merges together the output of several
 // other renderers.
 type Reduce []Renderer
@@ -39,7 +48,7 @@ func MakeReduce(renderers ...Renderer) Renderer {
 }
 
 // Render produces a set of Nodes given a Report.
-func (r Reduce) Render(rpt report.Report, dct Decorator) Nodes {
+func (r Reduce) Render(rpt report.Report) Nodes {
 	l := len(r)
 	switch l {
 	case 0:
@@ -49,7 +58,7 @@ func (r Reduce) Render(rpt report.Report, dct Decorator) Nodes {
 	for _, renderer := range r {
 		renderer := renderer // Pike!!
 		go func() {
-			c <- renderer.Render(rpt, dct)
+			c <- renderer.Render(rpt)
 		}()
 	}
 	for ; l > 1; l-- {
@@ -75,9 +84,9 @@ func MakeMap(f MapFunc, r Renderer) Renderer {
 
 // Render transforms a set of Nodes produces by another Renderer.
 // using a map function
-func (m Map) Render(rpt report.Report, dct Decorator) Nodes {
+func (m Map) Render(rpt report.Report) Nodes {
 	var (
-		input         = m.Renderer.Render(rpt, dct)
+		input         = m.Renderer.Render(rpt)
 		output        = report.Nodes{}
 		mapped        = map[string]report.IDList{} // input node ID -> output node IDs
 		adjacencies   = map[string]report.IDList{} // output node ID -> input node Adjacencies
@@ -111,35 +120,6 @@ func (m Map) Render(rpt report.Report, dct Decorator) Nodes {
 	return Nodes{Nodes: output}
 }
 
-// Decorator transforms one renderer to another. e.g. Filters.
-type Decorator func(Renderer) Renderer
-
-// ComposeDecorators composes decorators into one.
-func ComposeDecorators(decorators ...Decorator) Decorator {
-	return func(r Renderer) Renderer {
-		for _, decorator := range decorators {
-			r = decorator(r)
-		}
-		return r
-	}
-}
-
-type applyDecorator struct {
-	Renderer
-}
-
-func (ad applyDecorator) Render(rpt report.Report, dct Decorator) Nodes {
-	if dct != nil {
-		return dct(ad.Renderer).Render(rpt, nil)
-	}
-	return ad.Renderer.Render(rpt, nil)
-}
-
-// ApplyDecorator returns a renderer which will apply the given decorator to the child render.
-func ApplyDecorator(renderer Renderer) Renderer {
-	return applyDecorator{renderer}
-}
-
 func propagateLatest(key string, from, to report.Node) report.Node {
 	if value, timestamp, ok := from.Latest.LookupEntry(key); ok {
 		to.Latest = to.Latest.Set(key, timestamp, value)
@@ -161,21 +141,11 @@ func ConditionalRenderer(c Condition, r Renderer) Renderer {
 	return conditionalRenderer{c, r}
 }
 
-func (cr conditionalRenderer) Render(rpt report.Report, dct Decorator) Nodes {
+func (cr conditionalRenderer) Render(rpt report.Report) Nodes {
 	if cr.Condition(rpt) {
-		return cr.Renderer.Render(rpt, dct)
+		return cr.Renderer.Render(rpt)
 	}
 	return Nodes{}
-}
-
-// ConstantRenderer renders a fixed set of nodes
-type ConstantRenderer struct {
-	Nodes
-}
-
-// Render implements Renderer
-func (c ConstantRenderer) Render(_ report.Report, _ Decorator) Nodes {
-	return c.Nodes
 }
 
 // joinResults is used by Renderers that join sets of nodes

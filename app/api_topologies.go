@@ -337,9 +337,8 @@ type APITopologyOptionGroup struct {
 	NoneLabel string `json:"noneLabel,omitempty"`
 }
 
-// Get the render filters to use for this option group as a Decorator, if any.
-// If second arg is false, no decorator was needed.
-func (g APITopologyOptionGroup) getFilterDecorator(value string) (render.Decorator, bool) {
+// Get the render filters to use for this option group, if any, or nil otherwise.
+func (g APITopologyOptionGroup) filter(value string) render.FilterFunc {
 	selectType := g.SelectType
 	if selectType == "" {
 		selectType = "one"
@@ -352,7 +351,7 @@ func (g APITopologyOptionGroup) getFilterDecorator(value string) (render.Decorat
 		values = strings.Split(value, ",")
 	default:
 		log.Errorf("Invalid select type %s for option group %s, ignoring option", selectType, g.ID)
-		return nil, false
+		return nil
 	}
 	filters := []render.FilterFunc{}
 	for _, opt := range g.Options {
@@ -375,11 +374,9 @@ func (g APITopologyOptionGroup) getFilterDecorator(value string) (render.Decorat
 		}
 	}
 	if len(filters) == 0 {
-		return nil, false
+		return nil
 	}
-	// Since we've encoded whether to ignore pseudo topologies into each subfilter,
-	// we want no special behaviour for pseudo topologies here, which corresponds to MakePseudo
-	return render.MakeFilterPseudoDecorator(render.AnyFilterFunc(filters...)), true
+	return render.AnyFilterFunc(filters...)
 }
 
 // APITopologyOption describes a &param=value to a given topology.
@@ -488,24 +485,24 @@ func (r *Registry) renderTopologies(rpt report.Report, req *http.Request) []APIT
 	topologies := []APITopologyDesc{}
 	req.ParseForm()
 	r.walk(func(desc APITopologyDesc) {
-		renderer, decorator, _ := r.RendererForTopology(desc.id, req.Form, rpt)
-		desc.Stats = decorateWithStats(rpt, renderer, decorator)
+		renderer, filter, _ := r.RendererForTopology(desc.id, req.Form, rpt)
+		desc.Stats = computeStats(rpt, renderer, filter)
 		for i, sub := range desc.SubTopologies {
-			renderer, decorator, _ := r.RendererForTopology(sub.id, req.Form, rpt)
-			desc.SubTopologies[i].Stats = decorateWithStats(rpt, renderer, decorator)
+			renderer, filter, _ := r.RendererForTopology(sub.id, req.Form, rpt)
+			desc.SubTopologies[i].Stats = computeStats(rpt, renderer, filter)
 		}
 		topologies = append(topologies, desc)
 	})
 	return updateFilters(rpt, topologies)
 }
 
-func decorateWithStats(rpt report.Report, renderer render.Renderer, decorator render.Decorator) topologyStats {
+func computeStats(rpt report.Report, renderer render.Renderer, filter render.FilterFunc) topologyStats {
 	var (
 		nodes     int
 		realNodes int
 		edges     int
 	)
-	r := renderer.Render(rpt, decorator)
+	r := render.Render(rpt, renderer, filter)
 	for _, n := range r.Nodes {
 		nodes++
 		if n.Topology != render.Pseudo {
@@ -522,7 +519,7 @@ func decorateWithStats(rpt report.Report, renderer render.Renderer, decorator re
 }
 
 // RendererForTopology ..
-func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt report.Report) (render.Renderer, render.Decorator, error) {
+func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt report.Report) (render.Renderer, render.FilterFunc, error) {
 	topology, ok := r.get(topologyID)
 	if !ok {
 		return nil, nil, fmt.Errorf("topology not found: %s", topologyID)
@@ -534,18 +531,15 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 		return topology.renderer, nil, nil
 	}
 
-	var decorators []render.Decorator
+	var filters []render.FilterFunc
 	for _, group := range topology.Options {
 		value := values.Get(group.ID)
-		if decorator, ok := group.getFilterDecorator(value); ok {
-			decorators = append(decorators, decorator)
+		if filter := group.filter(value); filter != nil {
+			filters = append(filters, filter)
 		}
 	}
-	if len(decorators) > 0 {
-		// Here we tell the topology renderer to apply the filtering decorator
-		// that we construct as a composition of all the selected filters.
-		composedFilterDecorator := render.ComposeDecorators(decorators...)
-		return render.ApplyDecorator(topology.renderer), composedFilterDecorator, nil
+	if len(filters) > 0 {
+		return topology.renderer, render.ComposeFilterFuncs(filters...), nil
 	}
 	return topology.renderer, nil, nil
 }
@@ -558,7 +552,7 @@ func captureReporter(rep Reporter, f reporterHandler) CtxHandlerFunc {
 	}
 }
 
-type rendererHandler func(context.Context, render.Renderer, render.Decorator, report.RenderContext, http.ResponseWriter, *http.Request)
+type rendererHandler func(context.Context, render.Renderer, render.FilterFunc, report.RenderContext, http.ResponseWriter, *http.Request)
 
 func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {
@@ -576,11 +570,11 @@ func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFu
 			return
 		}
 		req.ParseForm()
-		renderer, decorator, err := r.RendererForTopology(topologyID, req.Form, rpt)
+		renderer, filter, err := r.RendererForTopology(topologyID, req.Form, rpt)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
-		f(ctx, renderer, decorator, RenderContextForReporter(rep, rpt), w, req)
+		f(ctx, renderer, filter, RenderContextForReporter(rep, rpt), w, req)
 	}
 }

@@ -66,9 +66,9 @@ func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
 type endpoints2Hosts struct {
 }
 
-func (e endpoints2Hosts) Render(rpt report.Report, dct Decorator) Nodes {
+func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 	local := LocalNetworks(rpt)
-	endpoints := SelectEndpoint.Render(rpt, dct)
+	endpoints := SelectEndpoint.Render(rpt)
 	ret := newJoinResults()
 
 	for _, n := range endpoints.Nodes {

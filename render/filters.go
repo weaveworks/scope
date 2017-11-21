@@ -14,24 +14,6 @@ const (
 	swarmNamespaceLabel = "com.docker.stack.namespace"
 )
 
-// PreciousNodeRenderer ensures a node is never filtered out by decorators
-type PreciousNodeRenderer struct {
-	PreciousNodeID string
-	Renderer
-}
-
-// Render implements Renderer
-func (p PreciousNodeRenderer) Render(rpt report.Report, dct Decorator) Nodes {
-	undecoratedNodes := p.Renderer.Render(rpt, nil)
-	preciousNode, foundBeforeDecoration := undecoratedNodes.Nodes[p.PreciousNodeID]
-	finalNodes := applyDecorator{ConstantRenderer{undecoratedNodes}}.Render(rpt, dct)
-	if _, ok := finalNodes.Nodes[p.PreciousNodeID]; !ok && foundBeforeDecoration {
-		finalNodes.Nodes[p.PreciousNodeID] = preciousNode
-		finalNodes.Filtered--
-	}
-	return finalNodes
-}
-
 // CustomRenderer allow for mapping functions that received the entire topology
 // in one call - useful for functions that need to consider the entire graph.
 // We should minimise the use of this renderer type, as it is very inflexible.
@@ -41,13 +23,13 @@ type CustomRenderer struct {
 }
 
 // Render implements Renderer
-func (c CustomRenderer) Render(rpt report.Report, dct Decorator) Nodes {
-	return c.RenderFunc(c.Renderer.Render(rpt, dct))
+func (c CustomRenderer) Render(rpt report.Report) Nodes {
+	return c.RenderFunc(c.Renderer.Render(rpt))
 }
 
-// ColorConnected colors nodes with the IsConnected key if
-// they have edges to or from them.  Edges to/from yourself
-// are not counted here (see #656).
+// ColorConnected colors nodes with the IsConnectedMark key if they
+// have edges to or from them.  Edges to/from yourself are not counted
+// here (see #656).
 func ColorConnected(r Renderer) Renderer {
 	return CustomRenderer{
 		Renderer: r,
@@ -66,7 +48,7 @@ func ColorConnected(r Renderer) Renderer {
 
 			output := input.Copy()
 			for id := range connected {
-				output[id] = output[id].WithLatest(IsConnected, mtime.Now(), "true")
+				output[id] = output[id].WithLatest(IsConnectedMark, mtime.Now(), "true")
 			}
 			return Nodes{Nodes: output, Filtered: input.Filtered}
 		},
@@ -100,57 +82,13 @@ func ComposeFilterFuncs(fs ...FilterFunc) FilterFunc {
 	}
 }
 
-// Filter removes nodes from a view based on a predicate.
-type Filter struct {
-	Renderer
-	FilterFunc FilterFunc
-}
-
-// MakeFilter makes a new Filter (that ignores pseudo nodes).
-func MakeFilter(f FilterFunc, r Renderer) Renderer {
-	return Filter{
-		Renderer: r,
-		FilterFunc: func(n report.Node) bool {
-			return n.Topology == Pseudo || f(n)
-		},
-	}
-}
-
-// MakeFilterPseudo makes a new Filter that will not ignore pseudo nodes.
-func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
-	return Filter{
-		Renderer:   r,
-		FilterFunc: f,
-	}
-}
-
-// MakeFilterDecorator makes a decorator that filters out non-pseudo nodes
-// which match the predicate.
-func MakeFilterDecorator(f FilterFunc) Decorator {
-	return func(renderer Renderer) Renderer {
-		return MakeFilter(f, renderer)
-	}
-}
-
-// MakeFilterPseudoDecorator makes a decorator that filters out all nodes
-// (including pseudo nodes) which match the predicate.
-func MakeFilterPseudoDecorator(f FilterFunc) Decorator {
-	return func(renderer Renderer) Renderer {
-		return MakeFilterPseudo(f, renderer)
-	}
-}
-
-// Render implements Renderer
-func (f Filter) Render(rpt report.Report, dct Decorator) Nodes {
-	return f.render(rpt, dct)
-}
-
-func (f Filter) render(rpt report.Report, dct Decorator) Nodes {
+// Apply applies the filter to all nodes
+func (f FilterFunc) Apply(nodes Nodes) Nodes {
 	output := report.Nodes{}
 	inDegrees := map[string]int{}
 	filtered := 0
-	for id, node := range f.Renderer.Render(rpt, dct).Nodes {
-		if f.FilterFunc(node) {
+	for id, node := range nodes.Nodes {
+		if f(node) {
 			output[id] = node
 			inDegrees[id] = 0
 		} else {
@@ -186,9 +124,39 @@ func (f Filter) render(rpt report.Report, dct Decorator) Nodes {
 	return Nodes{Nodes: output, Filtered: filtered}
 }
 
-// IsConnected is the key added to Node.Metadata by ColorConnected
-// to indicate a node has an edge pointing to it or from it
-const IsConnected = "is_connected"
+// Filter removes nodes from a view based on a predicate.
+type Filter struct {
+	Renderer
+	FilterFunc FilterFunc
+}
+
+// MakeFilter makes a new Filter (that ignores pseudo nodes).
+func MakeFilter(f FilterFunc, r Renderer) Renderer {
+	return Filter{
+		Renderer: r,
+		FilterFunc: func(n report.Node) bool {
+			return n.Topology == Pseudo || f(n)
+		},
+	}
+}
+
+// MakeFilterPseudo makes a new Filter that will not ignore pseudo nodes.
+func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
+	return Filter{
+		Renderer:   r,
+		FilterFunc: f,
+	}
+}
+
+// Render implements Renderer
+func (f Filter) Render(rpt report.Report) Nodes {
+	return f.FilterFunc.Apply(f.Renderer.Render(rpt))
+}
+
+// IsConnectedMark is the key added to Node.Metadata by
+// ColorConnected to indicate a node has an edge pointing to it or
+// from it
+const IsConnectedMark = "is_connected"
 
 // Complement takes a FilterFunc f and returns a FilterFunc that has the same
 // effects, if any, and returns the opposite truth value.
@@ -196,16 +164,17 @@ func Complement(f FilterFunc) FilterFunc {
 	return func(node report.Node) bool { return !f(node) }
 }
 
+// IsConnected checks whether the node has been marked with the
+// IsConnectedMark.
+func IsConnected(node report.Node) bool {
+	_, ok := node.Latest.Lookup(IsConnectedMark)
+	return ok
+}
+
 // FilterUnconnected produces a renderer that filters unconnected nodes
 // from the given renderer
 func FilterUnconnected(r Renderer) Renderer {
-	return MakeFilterPseudo(
-		func(node report.Node) bool {
-			_, ok := node.Latest.Lookup(IsConnected)
-			return ok
-		},
-		ColorConnected(r),
-	)
+	return MakeFilterPseudo(IsConnected, ColorConnected(r))
 }
 
 // FilterUnconnectedPseudo produces a renderer that filters
@@ -216,8 +185,7 @@ func FilterUnconnectedPseudo(r Renderer) Renderer {
 			if !IsPseudoTopology(node) {
 				return true
 			}
-			_, ok := node.Latest.Lookup(IsConnected)
-			return ok
+			return IsConnected(node)
 		},
 		ColorConnected(r),
 	)
