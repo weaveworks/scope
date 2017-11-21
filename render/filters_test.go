@@ -9,6 +9,15 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
+func isNotBar(renderer render.Renderer) render.Renderer {
+	return &render.Filter{
+		FilterFunc: func(node report.Node) bool {
+			return node.ID != "bar"
+		},
+		Renderer: renderer,
+	}
+}
+
 func TestFilterRender(t *testing.T) {
 	renderer := mockRenderer{Nodes: report.Nodes{
 		"foo": report.MakeNode("foo").WithAdjacent("bar"),
@@ -27,21 +36,12 @@ func TestFilterRender(t *testing.T) {
 
 func TestFilterRender2(t *testing.T) {
 	// Test adjacencies are removed for filtered nodes.
-	filter := func(renderer render.Renderer) render.Renderer {
-		return &render.Filter{
-			FilterFunc: func(node report.Node) bool {
-				return node.ID != "bar"
-			},
-			Renderer: renderer,
-		}
-	}
 	renderer := mockRenderer{Nodes: report.Nodes{
 		"foo": report.MakeNode("foo").WithAdjacent("bar"),
 		"bar": report.MakeNode("bar").WithAdjacent("foo"),
 		"baz": report.MakeNode("baz"),
 	}}
-
-	have := render.Decorate(report.MakeReport(), renderer, filter).Nodes
+	have := render.Decorate(report.MakeReport(), renderer, isNotBar).Nodes
 	if have["foo"].Adjacency.Contains("bar") {
 		t.Error("adjacencies for removed nodes should have been removed")
 	}
@@ -72,39 +72,23 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 		}
 	}
 	{
-		filter := func(renderer render.Renderer) render.Renderer {
-			return &render.Filter{
-				FilterFunc: func(node report.Node) bool {
-					return node.ID != "bar"
-				},
-				Renderer: renderer,
-			}
-		}
 		renderer := mockRenderer{Nodes: report.Nodes{
 			"foo": report.MakeNode("foo").WithAdjacent("bar"),
 			"bar": report.MakeNode("bar").WithAdjacent("baz"),
 			"baz": report.MakeNode("baz").WithTopology(render.Pseudo),
 		}}
-		have := render.Decorate(report.MakeReport(), renderer, filter).Nodes
+		have := render.Decorate(report.MakeReport(), renderer, isNotBar).Nodes
 		if _, ok := have["baz"]; ok {
 			t.Error("expected the unconnected pseudonode baz to have been removed")
 		}
 	}
 	{
-		filter := func(renderer render.Renderer) render.Renderer {
-			return &render.Filter{
-				FilterFunc: func(node report.Node) bool {
-					return node.ID != "bar"
-				},
-				Renderer: renderer,
-			}
-		}
 		renderer := mockRenderer{Nodes: report.Nodes{
 			"foo": report.MakeNode("foo"),
 			"bar": report.MakeNode("bar").WithAdjacent("foo"),
 			"baz": report.MakeNode("baz").WithTopology(render.Pseudo).WithAdjacent("bar"),
 		}}
-		have := render.Decorate(report.MakeReport(), renderer, filter).Nodes
+		have := render.Decorate(report.MakeReport(), renderer, isNotBar).Nodes
 		if _, ok := have["baz"]; ok {
 			t.Error("expected the unconnected pseudonode baz to have been removed")
 		}
