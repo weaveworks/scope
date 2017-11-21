@@ -106,22 +106,6 @@ func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
 	}
 }
 
-// MakeFilterDecorator makes a decorator that filters out non-pseudo nodes
-// which match the predicate.
-func MakeFilterDecorator(f FilterFunc) Decorator {
-	return func(renderer Renderer) Renderer {
-		return MakeFilter(f, renderer)
-	}
-}
-
-// MakeFilterPseudoDecorator makes a decorator that filters out all nodes
-// (including pseudo nodes) which match the predicate.
-func MakeFilterPseudoDecorator(f FilterFunc) Decorator {
-	return func(renderer Renderer) Renderer {
-		return MakeFilterPseudo(f, renderer)
-	}
-}
-
 // Render implements Renderer
 func (f Filter) Render(rpt report.Report) Nodes {
 	return f.render(rpt)

@@ -20,9 +20,7 @@ func TestPodRenderer(t *testing.T) {
 	}
 }
 
-func filterNonKubeSystem(renderer render.Renderer) render.Renderer {
-	return render.MakeFilter(render.Complement(render.IsNamespace("kube-system")), renderer)
-}
+var filterNonKubeSystem = render.Complement(render.IsNamespace("kube-system"))
 
 func TestPodFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure
@@ -32,7 +30,7 @@ func TestPodFilterRenderer(t *testing.T) {
 		kubernetes.Namespace: "kube-system",
 	})
 
-	have := utils.Prune(render.Decorate(input, render.PodRenderer, filterNonKubeSystem).Nodes)
+	have := utils.Prune(render.Render(input, render.PodRenderer, filterNonKubeSystem).Nodes)
 	want := utils.Prune(expected.RenderedPods.Copy())
 	delete(want, fixture.ClientPodNodeID)
 	if !reflect.DeepEqual(want, have) {
@@ -56,7 +54,7 @@ func TestPodServiceFilterRenderer(t *testing.T) {
 		kubernetes.Namespace: "kube-system",
 	})
 
-	have := utils.Prune(render.Decorate(input, render.PodServiceRenderer, filterNonKubeSystem).Nodes)
+	have := utils.Prune(render.Render(input, render.PodServiceRenderer, filterNonKubeSystem).Nodes)
 	want := utils.Prune(expected.RenderedPodServices.Copy())
 	delete(want, fixture.ServiceNodeID)
 	delete(want, render.IncomingInternetID)

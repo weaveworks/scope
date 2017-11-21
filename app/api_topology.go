@@ -29,23 +29,23 @@ type APINode struct {
 }
 
 // Full topology.
-func handleTopology(ctx context.Context, renderer render.Renderer, decorator render.Decorator, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
+func handleTopology(ctx context.Context, renderer render.Renderer, filter render.FilterFunc, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(rc, render.Decorate(rc.Report, renderer, decorator).Nodes),
+		Nodes: detailed.Summaries(rc, render.Render(rc.Report, renderer, filter).Nodes),
 	})
 }
 
 // Individual nodes.
-func handleNode(ctx context.Context, renderer render.Renderer, decorator render.Decorator, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
+func handleNode(ctx context.Context, renderer render.Renderer, filter render.FilterFunc, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars       = mux.Vars(r)
 		topologyID = vars["topology"]
 		nodeID     = vars["id"]
 	)
-	// We must not lose the node during decoration. We achieve that by
+	// We must not lose the node during filtering. We achieve that by
 	// (1) rendering the report with the base renderer, without
-	// decoration, which gives us the node (if it exists at all), then
-	// (2) performing a normal decorated render of the report. If the
+	// filtering, which gives us the node (if it exists at all), then
+	// (2) performing a normal filtered render of the report. If the
 	// node is lost in the second step, we simply put it back.
 	//
 	// To avoid repeating the work from step (1) in step (2), we
@@ -57,11 +57,11 @@ func handleNode(ctx context.Context, renderer render.Renderer, decorator render.
 		http.NotFound(w, r)
 		return
 	}
-	if decorator != nil {
-		nodes = render.Decorate(rc.Report, render.ConstantRenderer{Nodes: nodes}, decorator)
-		if decoratedNode, ok := nodes.Nodes[nodeID]; ok {
-			node = decoratedNode
-		} else { // we've lost the node during decoration; put it back
+	if filter != nil {
+		nodes = render.Render(rc.Report, render.ConstantRenderer{Nodes: nodes}, filter)
+		if filteredNode, ok := nodes.Nodes[nodeID]; ok {
+			node = filteredNode
+		} else { // we've lost the node during filtering; put it back
 			nodes.Nodes[nodeID] = node
 			nodes.Filtered--
 		}
@@ -135,12 +135,12 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		renderer, decorator, err := topologyRegistry.RendererForTopology(topologyID, r.Form, re)
+		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, r.Form, re)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(RenderContextForReporter(rep, re), render.Decorate(re, renderer, decorator).Nodes)
+		newTopo := detailed.Summaries(RenderContextForReporter(rep, re), render.Render(re, renderer, filter).Nodes)
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

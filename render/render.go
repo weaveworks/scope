@@ -29,10 +29,10 @@ func (r Nodes) Merge(o Nodes) Nodes {
 	}
 }
 
-// Decorate renders the report with a decorated renderer
-func Decorate(rpt report.Report, renderer Renderer, dct Decorator) Nodes {
-	if dct != nil {
-		renderer = dct(renderer)
+// Render renders the report and then applies the filter
+func Render(rpt report.Report, renderer Renderer, filter FilterFunc) Nodes {
+	if filter != nil {
+		renderer = MakeFilterPseudo(filter, renderer)
 	}
 	return renderer.Render(rpt)
 }
@@ -117,19 +117,6 @@ func (m Map) Render(rpt report.Report) Nodes {
 	}
 
 	return Nodes{Nodes: output}
-}
-
-// Decorator transforms one renderer to another. e.g. Filters.
-type Decorator func(Renderer) Renderer
-
-// ComposeDecorators composes decorators into one.
-func ComposeDecorators(decorators ...Decorator) Decorator {
-	return func(r Renderer) Renderer {
-		for _, decorator := range decorators {
-			r = decorator(r)
-		}
-		return r
-	}
 }
 
 func propagateLatest(key string, from, to report.Node) report.Node {

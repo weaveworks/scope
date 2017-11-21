@@ -65,10 +65,10 @@ func BenchmarkTopologyContainers(b *testing.B) {
 
 func benchmarkOneTopology(b *testing.B, topologyID string) {
 	benchmarkRender(b, func(report report.Report) {
-		renderer, decorator, err := topologyRegistry.RendererForTopology(topologyID, url.Values{}, report)
+		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, url.Values{}, report)
 		if err != nil {
 			b.Fatal(err)
 		}
-		render.Decorate(report, renderer, decorator)
+		render.Render(report, renderer, filter)
 	})
 }
