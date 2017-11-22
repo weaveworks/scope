@@ -27,34 +27,6 @@ func (c CustomRenderer) Render(rpt report.Report) Nodes {
 	return c.RenderFunc(c.Renderer.Render(rpt))
 }
 
-// ColorConnected colors nodes with the IsConnectedMark key if they
-// have edges to or from them.  Edges to/from yourself are not counted
-// here (see #656).
-func ColorConnected(r Renderer) Renderer {
-	return CustomRenderer{
-		Renderer: r,
-		RenderFunc: func(input Nodes) Nodes {
-			connected := map[string]struct{}{}
-			void := struct{}{}
-
-			for id, node := range input.Nodes {
-				for _, adj := range node.Adjacency {
-					if adj != id {
-						connected[id] = void
-						connected[adj] = void
-					}
-				}
-			}
-
-			output := input.Copy()
-			for id := range connected {
-				output[id] = output[id].WithLatest(IsConnectedMark, mtime.Now(), "true")
-			}
-			return Nodes{Nodes: output, Filtered: input.Filtered}
-		},
-	}
-}
-
 // FilterFunc is the function type used by Filters
 type FilterFunc func(report.Node) bool
 
@@ -80,6 +52,12 @@ func ComposeFilterFuncs(fs ...FilterFunc) FilterFunc {
 		}
 		return true
 	}
+}
+
+// Complement takes a FilterFunc f and returns a FilterFunc that has the same
+// effects, if any, and returns the opposite truth value.
+func Complement(f FilterFunc) FilterFunc {
+	return func(node report.Node) bool { return !f(node) }
 }
 
 // Apply applies the filter to all nodes
@@ -158,10 +136,32 @@ func (f Filter) Render(rpt report.Report) Nodes {
 // from it
 const IsConnectedMark = "is_connected"
 
-// Complement takes a FilterFunc f and returns a FilterFunc that has the same
-// effects, if any, and returns the opposite truth value.
-func Complement(f FilterFunc) FilterFunc {
-	return func(node report.Node) bool { return !f(node) }
+// ColorConnected colors nodes with the IsConnectedMark key if they
+// have edges to or from them.  Edges to/from yourself are not counted
+// here (see #656).
+func ColorConnected(r Renderer) Renderer {
+	return CustomRenderer{
+		Renderer: r,
+		RenderFunc: func(input Nodes) Nodes {
+			connected := map[string]struct{}{}
+			void := struct{}{}
+
+			for id, node := range input.Nodes {
+				for _, adj := range node.Adjacency {
+					if adj != id {
+						connected[id] = void
+						connected[adj] = void
+					}
+				}
+			}
+
+			output := input.Copy()
+			for id := range connected {
+				output[id] = output[id].WithLatest(IsConnectedMark, mtime.Now(), "true")
+			}
+			return Nodes{Nodes: output, Filtered: input.Filtered}
+		},
+	}
 }
 
 // IsConnected checks whether the node has been marked with the
