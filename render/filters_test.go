@@ -9,9 +9,12 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
-func isNotBar(node report.Node) bool {
-	return node.ID != "bar"
-}
+var filterBar = render.Transformers([]render.Transformer{
+	render.FilterFunc(func(node report.Node) bool {
+		return node.ID != "bar"
+	}),
+	render.FilterUnconnectedPseudo,
+})
 
 func TestFilterRender(t *testing.T) {
 	renderer := mockRenderer{Nodes: report.Nodes{
@@ -36,7 +39,7 @@ func TestFilterRender2(t *testing.T) {
 		"bar": report.MakeNode("bar").WithAdjacent("foo"),
 		"baz": report.MakeNode("baz"),
 	}}
-	have := render.Render(report.MakeReport(), renderer, render.FilterFunc(isNotBar)).Nodes
+	have := render.Render(report.MakeReport(), renderer, filterBar).Nodes
 	if have["foo"].Adjacency.Contains("bar") {
 		t.Error("adjacencies for removed nodes should have been removed")
 	}
@@ -64,7 +67,7 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 			"bar": report.MakeNode("bar").WithAdjacent("baz"),
 			"baz": report.MakeNode("baz").WithTopology(render.Pseudo),
 		}}
-		have := render.Render(report.MakeReport(), renderer, render.FilterFunc(isNotBar)).Nodes
+		have := render.Render(report.MakeReport(), renderer, filterBar).Nodes
 		if _, ok := have["baz"]; ok {
 			t.Error("expected the unconnected pseudonode baz to have been removed")
 		}
@@ -75,7 +78,7 @@ func TestFilterUnconnectedPseudoNodes(t *testing.T) {
 			"bar": report.MakeNode("bar").WithAdjacent("foo"),
 			"baz": report.MakeNode("baz").WithTopology(render.Pseudo).WithAdjacent("bar"),
 		}}
-		have := render.Render(report.MakeReport(), renderer, render.FilterFunc(isNotBar)).Nodes
+		have := render.Render(report.MakeReport(), renderer, filterBar).Nodes
 		if _, ok := have["baz"]; ok {
 			t.Error("expected the unconnected pseudonode baz to have been removed")
 		}

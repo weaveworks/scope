@@ -16,8 +16,14 @@ import (
 )
 
 var (
-	filterApplication = render.AnyFilterFunc(render.IsPseudoTopology, render.IsApplication)
-	filterSystem      = render.AnyFilterFunc(render.IsPseudoTopology, render.IsSystem)
+	filterApplication = render.Transformers([]render.Transformer{
+		render.AnyFilterFunc(render.IsPseudoTopology, render.IsApplication),
+		render.FilterUnconnectedPseudo,
+	})
+	filterSystem = render.Transformers([]render.Transformer{
+		render.AnyFilterFunc(render.IsPseudoTopology, render.IsSystem),
+		render.FilterUnconnectedPseudo,
+	})
 )
 
 func TestMapProcess2Container(t *testing.T) {

@@ -63,12 +63,10 @@ func Complement(f FilterFunc) FilterFunc {
 // Transform applies the filter to all nodes
 func (f FilterFunc) Transform(nodes Nodes) Nodes {
 	output := report.Nodes{}
-	inDegrees := map[string]int{}
 	filtered := nodes.Filtered
 	for id, node := range nodes.Nodes {
 		if f(node) {
 			output[id] = node
-			inDegrees[id] = 0
 		} else {
 			filtered++
 		}
@@ -80,25 +78,12 @@ func (f FilterFunc) Transform(nodes Nodes) Nodes {
 		for _, dstID := range node.Adjacency {
 			if _, ok := output[dstID]; ok {
 				newAdjacency = newAdjacency.Add(dstID)
-				inDegrees[dstID]++
 			}
 		}
 		node.Adjacency = newAdjacency
 		output[id] = node
 	}
 
-	// Remove unconnected pseudo nodes, see #483.
-	for id, inDegree := range inDegrees {
-		if inDegree > 0 {
-			continue
-		}
-		node := output[id]
-		if node.Topology != Pseudo || len(node.Adjacency) > 0 {
-			continue
-		}
-		delete(output, id)
-		filtered++
-	}
 	return Nodes{Nodes: output, Filtered: filtered}
 }
 
