@@ -86,7 +86,7 @@ func ComposeFilterFuncs(fs ...FilterFunc) FilterFunc {
 func (f FilterFunc) Apply(nodes Nodes) Nodes {
 	output := report.Nodes{}
 	inDegrees := map[string]int{}
-	filtered := 0
+	filtered := nodes.Filtered
 	for id, node := range nodes.Nodes {
 		if f(node) {
 			output[id] = node
