@@ -136,6 +136,13 @@ func (f Filter) Render(rpt report.Report) Nodes {
 // from it
 const IsConnectedMark = "is_connected"
 
+// IsConnected checks whether the node has been marked with the
+// IsConnectedMark.
+func IsConnected(node report.Node) bool {
+	_, ok := node.Latest.Lookup(IsConnectedMark)
+	return ok
+}
+
 // ColorConnected colors nodes with the IsConnectedMark key if they
 // have edges to or from them.  Edges to/from yourself are not counted
 // here (see #656).
@@ -162,13 +169,6 @@ func ColorConnected(r Renderer) Renderer {
 			return Nodes{Nodes: output, Filtered: input.Filtered}
 		},
 	}
-}
-
-// IsConnected checks whether the node has been marked with the
-// IsConnectedMark.
-func IsConnected(node report.Node) bool {
-	_, ok := node.Latest.Lookup(IsConnectedMark)
-	return ok
 }
 
 // FilterUnconnected produces a renderer that filters unconnected nodes
