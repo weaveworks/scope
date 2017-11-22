@@ -167,27 +167,12 @@ type filterUnconnected struct {
 // Transform implements Transformer
 func (f filterUnconnected) Transform(input Nodes) Nodes {
 	connected := connected(input.Nodes)
-	output := report.Nodes{}
-	filtered := input.Filtered
-	for id, node := range input.Nodes {
-		if _, ok := connected[id]; ok || (f.onlyPseudo && !IsPseudoTopology(node)) {
-			output[id] = node
-		} else {
-			filtered++
+	return FilterFunc(func(node report.Node) bool {
+		if _, ok := connected[node.ID]; ok || (f.onlyPseudo && !IsPseudoTopology(node)) {
+			return true
 		}
-	}
-	// Deleted nodes also need to be cut as destinations in adjacency lists.
-	for id, node := range output {
-		newAdjacency := report.MakeIDList()
-		for _, dstID := range node.Adjacency {
-			if _, ok := output[dstID]; ok {
-				newAdjacency = newAdjacency.Add(dstID)
-			}
-		}
-		node.Adjacency = newAdjacency
-		output[id] = node
-	}
-	return Nodes{Nodes: output, Filtered: filtered}
+		return false
+	}).Transform(input)
 }
 
 // FilterUnconnected is a transformer that filters unconnected nodes
