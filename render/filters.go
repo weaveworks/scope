@@ -143,6 +143,22 @@ func IsConnected(node report.Node) bool {
 	return ok
 }
 
+// connected returns the node ids of nodes which have edges to/from
+// them, excluding edges to/from themselves.
+func connected(nodes report.Nodes) map[string]struct{} {
+	res := map[string]struct{}{}
+	void := struct{}{}
+	for id, node := range nodes {
+		for _, adj := range node.Adjacency {
+			if adj != id {
+				res[id] = void
+				res[adj] = void
+			}
+		}
+	}
+	return res
+}
+
 // ColorConnected colors nodes with the IsConnectedMark key if they
 // have edges to or from them.  Edges to/from yourself are not counted
 // here (see #656).
@@ -150,20 +166,8 @@ func ColorConnected(r Renderer) Renderer {
 	return CustomRenderer{
 		Renderer: r,
 		RenderFunc: func(input Nodes) Nodes {
-			connected := map[string]struct{}{}
-			void := struct{}{}
-
-			for id, node := range input.Nodes {
-				for _, adj := range node.Adjacency {
-					if adj != id {
-						connected[id] = void
-						connected[adj] = void
-					}
-				}
-			}
-
 			output := input.Copy()
-			for id := range connected {
+			for id := range connected(input.Nodes) {
 				output[id] = output[id].WithLatest(IsConnectedMark, mtime.Now(), "true")
 			}
 			return Nodes{Nodes: output, Filtered: input.Filtered}
@@ -171,24 +175,47 @@ func ColorConnected(r Renderer) Renderer {
 	}
 }
 
+func filterUnconnected(input Nodes, onlyPseudo bool) Nodes {
+	connected := connected(input.Nodes)
+	output := report.Nodes{}
+	filtered := input.Filtered
+	for id, node := range input.Nodes {
+		if _, ok := connected[id]; ok || (onlyPseudo && !IsPseudoTopology(node)) {
+			output[id] = node
+		} else {
+			filtered++
+		}
+	}
+	// Deleted nodes also need to be cut as destinations in adjacency lists.
+	for id, node := range output {
+		newAdjacency := report.MakeIDList()
+		for _, dstID := range node.Adjacency {
+			if _, ok := output[dstID]; ok {
+				newAdjacency = newAdjacency.Add(dstID)
+			}
+		}
+		node.Adjacency = newAdjacency
+		output[id] = node
+	}
+	return Nodes{Nodes: output, Filtered: filtered}
+}
+
 // FilterUnconnected produces a renderer that filters unconnected nodes
 // from the given renderer
 func FilterUnconnected(r Renderer) Renderer {
-	return MakeFilterPseudo(IsConnected, ColorConnected(r))
+	return CustomRenderer{
+		Renderer:   r,
+		RenderFunc: func(input Nodes) Nodes { return filterUnconnected(input, false) },
+	}
 }
 
 // FilterUnconnectedPseudo produces a renderer that filters
 // unconnected pseudo nodes from the given renderer
 func FilterUnconnectedPseudo(r Renderer) Renderer {
-	return MakeFilterPseudo(
-		func(node report.Node) bool {
-			if !IsPseudoTopology(node) {
-				return true
-			}
-			return IsConnected(node)
-		},
-		ColorConnected(r),
-	)
+	return CustomRenderer{
+		Renderer:   r,
+		RenderFunc: func(input Nodes) Nodes { return filterUnconnected(input, true) },
+	}
 }
 
 // Noop allows all nodes through
