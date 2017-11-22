@@ -75,8 +75,3 @@ func (p *promise) Get() Nodes {
 	<-p.done
 	return p.val
 }
-
-// ResetCache blows away the rendered node cache.
-func ResetCache() {
-	renderCache.Purge()
-}
