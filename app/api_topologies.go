@@ -496,13 +496,13 @@ func (r *Registry) renderTopologies(rpt report.Report, req *http.Request) []APIT
 	return updateFilters(rpt, topologies)
 }
 
-func computeStats(rpt report.Report, renderer render.Renderer, filter render.FilterFunc) topologyStats {
+func computeStats(rpt report.Report, renderer render.Renderer, transformer render.Transformer) topologyStats {
 	var (
 		nodes     int
 		realNodes int
 		edges     int
 	)
-	r := render.Render(rpt, renderer, filter)
+	r := render.Render(rpt, renderer, transformer)
 	for _, n := range r.Nodes {
 		nodes++
 		if n.Topology != render.Pseudo {
@@ -519,7 +519,7 @@ func computeStats(rpt report.Report, renderer render.Renderer, filter render.Fil
 }
 
 // RendererForTopology ..
-func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt report.Report) (render.Renderer, render.FilterFunc, error) {
+func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt report.Report) (render.Renderer, render.Transformer, error) {
 	topology, ok := r.get(topologyID)
 	if !ok {
 		return nil, nil, fmt.Errorf("topology not found: %s", topologyID)
@@ -528,7 +528,7 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 
 	if len(values) == 0 {
 		// Do not apply filtering if no options where provided
-		return topology.renderer, nil, nil
+		return topology.renderer, render.Transformers(nil), nil
 	}
 
 	var filters []render.FilterFunc
@@ -541,7 +541,7 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 	if len(filters) > 0 {
 		return topology.renderer, render.ComposeFilterFuncs(filters...), nil
 	}
-	return topology.renderer, nil, nil
+	return topology.renderer, render.Transformers(nil), nil
 }
 
 type reporterHandler func(context.Context, Reporter, http.ResponseWriter, *http.Request)
@@ -552,7 +552,7 @@ func captureReporter(rep Reporter, f reporterHandler) CtxHandlerFunc {
 	}
 }
 
-type rendererHandler func(context.Context, render.Renderer, render.FilterFunc, report.RenderContext, http.ResponseWriter, *http.Request)
+type rendererHandler func(context.Context, render.Renderer, render.Transformer, report.RenderContext, http.ResponseWriter, *http.Request)
 
 func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, req *http.Request) {

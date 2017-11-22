@@ -60,8 +60,8 @@ func Complement(f FilterFunc) FilterFunc {
 	return func(node report.Node) bool { return !f(node) }
 }
 
-// Apply applies the filter to all nodes
-func (f FilterFunc) Apply(nodes Nodes) Nodes {
+// Transform applies the filter to all nodes
+func (f FilterFunc) Transform(nodes Nodes) Nodes {
 	output := report.Nodes{}
 	inDegrees := map[string]int{}
 	filtered := nodes.Filtered
@@ -128,7 +128,7 @@ func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
 
 // Render implements Renderer
 func (f Filter) Render(rpt report.Report) Nodes {
-	return f.FilterFunc.Apply(f.Renderer.Render(rpt))
+	return f.FilterFunc.Transform(f.Renderer.Render(rpt))
 }
 
 // IsConnectedMark is the key added to Node.Metadata by

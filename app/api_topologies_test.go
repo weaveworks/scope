@@ -164,14 +164,14 @@ func getTestContainerLabelFilterTopologySummary(t *testing.T, exclude bool) (det
 
 	var (
 		topologyRegistry = app.MakeRegistry()
-		filter           render.FilterFunc
+		filterFunc       render.FilterFunc
 	)
 	if exclude == true {
-		filter = render.DoesNotHaveLabel(fixture.TestLabelKey2, fixture.ApplicationLabelValue2)
+		filterFunc = render.DoesNotHaveLabel(fixture.TestLabelKey2, fixture.ApplicationLabelValue2)
 	} else {
-		filter = render.HasLabel(fixture.TestLabelKey1, fixture.ApplicationLabelValue1)
+		filterFunc = render.HasLabel(fixture.TestLabelKey1, fixture.ApplicationLabelValue1)
 	}
-	option := app.MakeAPITopologyOption(customAPITopologyOptionFilterID, "title", filter, false)
+	option := app.MakeAPITopologyOption(customAPITopologyOptionFilterID, "title", filterFunc, false)
 	topologyRegistry.AddContainerFilters(option)
 
 	urlvalues := url.Values{}
