@@ -225,3 +225,10 @@ func (ret *joinResults) copyUnmatched(input Nodes) {
 func (ret *joinResults) result() Nodes {
 	return Nodes{Nodes: ret.nodes}
 }
+
+// ResetCache blows away the rendered node cache, and known service
+// cache.
+func ResetCache() {
+	renderCache.Purge()
+	knownServiceCache.Purge()
+}
