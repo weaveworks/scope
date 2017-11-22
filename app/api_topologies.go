@@ -318,7 +318,7 @@ type APITopologyDesc struct {
 	id       string
 	parent   string
 	renderer render.Renderer
-	filter   func(render.Renderer) render.Renderer
+	filter   render.Transformer
 
 	Name        string                   `json:"name"`
 	Rank        int                      `json:"rank"`
@@ -447,7 +447,7 @@ func (r *Registry) Add(ts ...APITopologyDesc) {
 	defer r.Unlock()
 	for _, t := range ts {
 		t.URL = apiTopologyURL + t.id
-		t.renderer = render.Memoise(t.filter(t.renderer))
+		t.renderer = render.Memoise(t.renderer)
 
 		if t.parent != "" {
 			parent := r.items[t.parent]
@@ -541,8 +541,8 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 	topology = updateFilters(rpt, []APITopologyDesc{topology})[0]
 
 	if len(values) == 0 {
-		// Do not apply filtering if no options where provided
-		return topology.renderer, render.Transformers(nil), nil
+		// if no options where provided, only apply base filter
+		return topology.renderer, topology.filter, nil
 	}
 
 	var filters []render.FilterFunc
@@ -553,9 +553,9 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 		}
 	}
 	if len(filters) > 0 {
-		return topology.renderer, render.ComposeFilterFuncs(filters...), nil
+		return topology.renderer, render.Transformers([]render.Transformer{render.ComposeFilterFuncs(filters...), topology.filter}), nil
 	}
-	return topology.renderer, render.Transformers(nil), nil
+	return topology.renderer, topology.filter, nil
 }
 
 type reporterHandler func(context.Context, Reporter, http.ResponseWriter, *http.Request)

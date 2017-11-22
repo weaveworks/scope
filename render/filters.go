@@ -175,12 +175,17 @@ func ColorConnected(r Renderer) Renderer {
 	}
 }
 
-func filterUnconnected(input Nodes, onlyPseudo bool) Nodes {
+type filterUnconnected struct {
+	onlyPseudo bool
+}
+
+// Transform implements Transformer
+func (f filterUnconnected) Transform(input Nodes) Nodes {
 	connected := connected(input.Nodes)
 	output := report.Nodes{}
 	filtered := input.Filtered
 	for id, node := range input.Nodes {
-		if _, ok := connected[id]; ok || (onlyPseudo && !IsPseudoTopology(node)) {
+		if _, ok := connected[id]; ok || (f.onlyPseudo && !IsPseudoTopology(node)) {
 			output[id] = node
 		} else {
 			filtered++
@@ -200,23 +205,12 @@ func filterUnconnected(input Nodes, onlyPseudo bool) Nodes {
 	return Nodes{Nodes: output, Filtered: filtered}
 }
 
-// FilterUnconnected produces a renderer that filters unconnected nodes
-// from the given renderer
-func FilterUnconnected(r Renderer) Renderer {
-	return CustomRenderer{
-		Renderer:   r,
-		RenderFunc: func(input Nodes) Nodes { return filterUnconnected(input, false) },
-	}
-}
+// FilterUnconnected is a transformer that filters unconnected nodes
+var FilterUnconnected = filterUnconnected{onlyPseudo: false}
 
-// FilterUnconnectedPseudo produces a renderer that filters
-// unconnected pseudo nodes from the given renderer
-func FilterUnconnectedPseudo(r Renderer) Renderer {
-	return CustomRenderer{
-		Renderer:   r,
-		RenderFunc: func(input Nodes) Nodes { return filterUnconnected(input, true) },
-	}
-}
+// FilterUnconnectedPseudo is a transformer that filters unconnected
+// pseudo nodes
+var FilterUnconnectedPseudo = filterUnconnected{onlyPseudo: true}
 
 // Noop allows all nodes through
 func Noop(_ report.Node) bool { return true }
