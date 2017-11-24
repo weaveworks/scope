@@ -27,6 +27,9 @@ type memoise struct {
 
 // Memoise wraps the renderer in a loving embrace of caching.
 func Memoise(r Renderer) Renderer {
+	if _, ok := r.(*memoise); ok {
+		return r // fixpoint
+	}
 	return &memoise{
 		Renderer: r,
 		id:       fmt.Sprintf("%x", rand.Int63()),

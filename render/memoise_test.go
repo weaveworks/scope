@@ -20,6 +20,11 @@ func TestMemoise(t *testing.T) {
 		return render.Nodes{Nodes: report.Nodes{rpt.ID: report.MakeNode(rpt.ID)}}
 	})
 	m := render.Memoise(r)
+
+	if render.Memoise(m) != m {
+		t.Errorf("Memoised renderers should be fixpoints.")
+	}
+
 	rpt1 := report.MakeReport()
 
 	result1 := m.Render(rpt1)
