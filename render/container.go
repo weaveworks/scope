@@ -33,7 +33,7 @@ var ContainerRenderer = Memoise(MakeFilter(
 	MakeReduce(
 		MakeMap(
 			MapProcess2Container,
-			ColorConnectedProcessRenderer,
+			ProcessRenderer,
 		),
 		ConnectionJoin(MapContainer2IP, SelectContainer),
 	),

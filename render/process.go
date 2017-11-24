@@ -25,14 +25,11 @@ func renderProcesses(rpt report.Report) bool {
 var EndpointRenderer = SelectEndpoint
 
 // ProcessRenderer is a Renderer which produces a renderable process
-// graph by merging the endpoint graph and the process topology.
-var ProcessRenderer = Memoise(endpoints2Processes{})
-
-// ColorConnectedProcessRenderer colors connected nodes from
-// ProcessRenderer. Since the process topology views only show
-// connected processes, we need this info to determine whether
+// graph by merging the endpoint graph and the process topology. It
+// also colors connected nodes. Since the process topology views only
+// show connected processes, we need this info to determine whether
 // processes appearing in a details panel are linkable.
-var ColorConnectedProcessRenderer = Memoise(ColorConnected(ProcessRenderer))
+var ProcessRenderer = Memoise(ColorConnected(endpoints2Processes{}))
 
 // processWithContainerNameRenderer is a Renderer which produces a process
 // graph enriched with container names where appropriate
