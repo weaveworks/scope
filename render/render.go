@@ -230,5 +230,5 @@ func (ret *joinResults) result() Nodes {
 // cache.
 func ResetCache() {
 	renderCache.Purge()
-	knownServiceCache.Purge()
+	purgeKnownServiceCache()
 }

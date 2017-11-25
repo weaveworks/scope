@@ -116,6 +116,15 @@
 			"path": "/linux"
 		},
 		{
+			"importpath": "github.com/camlistore/camlistore/pkg/lru",
+			"repository": "https://github.com/camlistore/camlistore",
+			"vcs": "git",
+			"revision": "f9dcdfb07a66d3cc07176b50e1a6cbee879e1b90",
+			"branch": "master",
+			"path": "/pkg/lru",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/certifi/gocertifi",
 			"repository": "https://github.com/certifi/gocertifi",
 			"vcs": "",
