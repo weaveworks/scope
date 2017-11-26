@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/bluele/gcache"
+	"github.com/camlistore/camlistore/pkg/lru"
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -46,18 +46,22 @@ var (
 	//
 	// Since names are generally <50 bytes, this shouldn't weight in
 	// at more than a few MB of memory.
-	knownServiceCache = gcache.New(10000).ARC().Build()
+	knownServiceCache = lru.New(10000)
 )
+
+func purgeKnownServiceCache() {
+	knownServiceCache = lru.New(10000)
+}
 
 // TODO: Make it user-customizable https://github.com/weaveworks/scope/issues/1876
 // NB: this is a hotspot in rendering performance.
 func isKnownService(hostname string) bool {
-	if v, err := knownServiceCache.Get(hostname); err == nil {
+	if v, ok := knownServiceCache.Get(hostname); ok {
 		return v.(bool)
 	}
 
 	known := knownServiceMatcher.MatchString(hostname) && !knownServiceExcluder.MatchString(hostname)
-	knownServiceCache.Set(hostname, known)
+	knownServiceCache.Add(hostname, known)
 
 	return known
 }
