@@ -16,8 +16,14 @@ import (
 )
 
 var (
-	filterApplication = render.AnyFilterFunc(render.IsPseudoTopology, render.IsApplication)
-	filterSystem      = render.AnyFilterFunc(render.IsPseudoTopology, render.IsSystem)
+	filterApplication = render.Transformers([]render.Transformer{
+		render.AnyFilterFunc(render.IsPseudoTopology, render.IsApplication),
+		render.FilterUnconnectedPseudo,
+	})
+	filterSystem = render.Transformers([]render.Transformer{
+		render.AnyFilterFunc(render.IsPseudoTopology, render.IsSystem),
+		render.FilterUnconnectedPseudo,
+	})
 )
 
 func TestMapProcess2Container(t *testing.T) {
@@ -74,7 +80,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 }
 
 func TestContainerHostnameRenderer(t *testing.T) {
-	have := utils.Prune(render.Render(fixture.Report, render.ContainerHostnameRenderer, nil).Nodes)
+	have := utils.Prune(render.Render(fixture.Report, render.ContainerHostnameRenderer, render.Transformers(nil)).Nodes)
 	want := utils.Prune(expected.RenderedContainerHostnames)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -93,7 +99,7 @@ func TestContainerHostnameFilterRenderer(t *testing.T) {
 }
 
 func TestContainerImageRenderer(t *testing.T) {
-	have := utils.Prune(render.Render(fixture.Report, render.ContainerImageRenderer, nil).Nodes)
+	have := utils.Prune(render.Render(fixture.Report, render.ContainerImageRenderer, render.Transformers(nil)).Nodes)
 	want := utils.Prune(expected.RenderedContainerImages)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))

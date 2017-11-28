@@ -29,13 +29,26 @@ func (r Nodes) Merge(o Nodes) Nodes {
 	}
 }
 
-// Render renders the report and then applies the filter
-func Render(rpt report.Report, renderer Renderer, filter FilterFunc) Nodes {
-	nodes := renderer.Render(rpt)
-	if filter != nil {
-		nodes = filter.Apply(nodes)
+// Transformer is something that transforms one set of Nodes to
+// another set of Nodes.
+type Transformer interface {
+	Transform(nodes Nodes) Nodes
+}
+
+// Transformers is a composition of Transformers
+type Transformers []Transformer
+
+// Transform implements Transformer
+func (ts Transformers) Transform(nodes Nodes) Nodes {
+	for _, t := range ts {
+		nodes = t.Transform(nodes)
 	}
 	return nodes
+}
+
+// Render renders the report and then transforms it
+func Render(rpt report.Report, renderer Renderer, transformer Transformer) Nodes {
+	return transformer.Transform(renderer.Render(rpt))
 }
 
 // Reduce renderer is a Renderer which merges together the output of several

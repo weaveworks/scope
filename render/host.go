@@ -10,7 +10,7 @@ import (
 // not memoised
 var HostRenderer = MakeReduce(
 	endpoints2Hosts{},
-	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ColorConnectedProcessRenderer},
+	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ProcessRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerImageRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: PodRenderer},

@@ -60,15 +60,13 @@ func Complement(f FilterFunc) FilterFunc {
 	return func(node report.Node) bool { return !f(node) }
 }
 
-// Apply applies the filter to all nodes
-func (f FilterFunc) Apply(nodes Nodes) Nodes {
+// Transform applies the filter to all nodes
+func (f FilterFunc) Transform(nodes Nodes) Nodes {
 	output := report.Nodes{}
-	inDegrees := map[string]int{}
 	filtered := nodes.Filtered
 	for id, node := range nodes.Nodes {
 		if f(node) {
 			output[id] = node
-			inDegrees[id] = 0
 		} else {
 			filtered++
 		}
@@ -80,25 +78,12 @@ func (f FilterFunc) Apply(nodes Nodes) Nodes {
 		for _, dstID := range node.Adjacency {
 			if _, ok := output[dstID]; ok {
 				newAdjacency = newAdjacency.Add(dstID)
-				inDegrees[dstID]++
 			}
 		}
 		node.Adjacency = newAdjacency
 		output[id] = node
 	}
 
-	// Remove unconnected pseudo nodes, see #483.
-	for id, inDegree := range inDegrees {
-		if inDegree > 0 {
-			continue
-		}
-		node := output[id]
-		if node.Topology != Pseudo || len(node.Adjacency) > 0 {
-			continue
-		}
-		delete(output, id)
-		filtered++
-	}
 	return Nodes{Nodes: output, Filtered: filtered}
 }
 
@@ -128,7 +113,7 @@ func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
 
 // Render implements Renderer
 func (f Filter) Render(rpt report.Report) Nodes {
-	return f.FilterFunc.Apply(f.Renderer.Render(rpt))
+	return f.FilterFunc.Transform(f.Renderer.Render(rpt))
 }
 
 // IsConnectedMark is the key added to Node.Metadata by
@@ -143,6 +128,22 @@ func IsConnected(node report.Node) bool {
 	return ok
 }
 
+// connected returns the node ids of nodes which have edges to/from
+// them, excluding edges to/from themselves.
+func connected(nodes report.Nodes) map[string]struct{} {
+	res := map[string]struct{}{}
+	void := struct{}{}
+	for id, node := range nodes {
+		for _, adj := range node.Adjacency {
+			if adj != id {
+				res[id] = void
+				res[adj] = void
+			}
+		}
+	}
+	return res
+}
+
 // ColorConnected colors nodes with the IsConnectedMark key if they
 // have edges to or from them.  Edges to/from yourself are not counted
 // here (see #656).
@@ -150,20 +151,8 @@ func ColorConnected(r Renderer) Renderer {
 	return CustomRenderer{
 		Renderer: r,
 		RenderFunc: func(input Nodes) Nodes {
-			connected := map[string]struct{}{}
-			void := struct{}{}
-
-			for id, node := range input.Nodes {
-				for _, adj := range node.Adjacency {
-					if adj != id {
-						connected[id] = void
-						connected[adj] = void
-					}
-				}
-			}
-
 			output := input.Copy()
-			for id := range connected {
+			for id := range connected(input.Nodes) {
 				output[id] = output[id].WithLatest(IsConnectedMark, mtime.Now(), "true")
 			}
 			return Nodes{Nodes: output, Filtered: input.Filtered}
@@ -171,25 +160,27 @@ func ColorConnected(r Renderer) Renderer {
 	}
 }
 
-// FilterUnconnected produces a renderer that filters unconnected nodes
-// from the given renderer
-func FilterUnconnected(r Renderer) Renderer {
-	return MakeFilterPseudo(IsConnected, ColorConnected(r))
+type filterUnconnected struct {
+	onlyPseudo bool
 }
 
-// FilterUnconnectedPseudo produces a renderer that filters
-// unconnected pseudo nodes from the given renderer
-func FilterUnconnectedPseudo(r Renderer) Renderer {
-	return MakeFilterPseudo(
-		func(node report.Node) bool {
-			if !IsPseudoTopology(node) {
-				return true
-			}
-			return IsConnected(node)
-		},
-		ColorConnected(r),
-	)
+// Transform implements Transformer
+func (f filterUnconnected) Transform(input Nodes) Nodes {
+	connected := connected(input.Nodes)
+	return FilterFunc(func(node report.Node) bool {
+		if _, ok := connected[node.ID]; ok || (f.onlyPseudo && !IsPseudoTopology(node)) {
+			return true
+		}
+		return false
+	}).Transform(input)
 }
+
+// FilterUnconnected is a transformer that filters unconnected nodes
+var FilterUnconnected = filterUnconnected{onlyPseudo: false}
+
+// FilterUnconnectedPseudo is a transformer that filters unconnected
+// pseudo nodes
+var FilterUnconnectedPseudo = filterUnconnected{onlyPseudo: true}
 
 // Noop allows all nodes through
 func Noop(_ report.Node) bool { return true }

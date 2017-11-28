@@ -20,7 +20,10 @@ func TestPodRenderer(t *testing.T) {
 	}
 }
 
-var filterNonKubeSystem = render.Complement(render.IsNamespace("kube-system"))
+var filterNonKubeSystem = render.Transformers([]render.Transformer{
+	render.Complement(render.IsNamespace("kube-system")),
+	render.FilterUnconnectedPseudo,
+})
 
 func TestPodFilterRenderer(t *testing.T) {
 	// tag on containers or pod namespace in the topology and ensure

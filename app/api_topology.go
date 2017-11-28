@@ -29,14 +29,14 @@ type APINode struct {
 }
 
 // Full topology.
-func handleTopology(ctx context.Context, renderer render.Renderer, filter render.FilterFunc, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
+func handleTopology(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(rc, render.Render(rc.Report, renderer, filter).Nodes),
+		Nodes: detailed.Summaries(rc, render.Render(rc.Report, renderer, transformer).Nodes),
 	})
 }
 
 // Individual nodes.
-func handleNode(ctx context.Context, renderer render.Renderer, filter render.FilterFunc, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
+func handleNode(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars       = mux.Vars(r)
 		topologyID = vars["topology"]
@@ -53,14 +53,12 @@ func handleNode(ctx context.Context, renderer render.Renderer, filter render.Fil
 		http.NotFound(w, r)
 		return
 	}
-	if filter != nil {
-		nodes = filter.Apply(nodes)
-		if filteredNode, ok := nodes.Nodes[nodeID]; ok {
-			node = filteredNode
-		} else { // we've lost the node during filtering; put it back
-			nodes.Nodes[nodeID] = node
-			nodes.Filtered--
-		}
+	nodes = transformer.Transform(nodes)
+	if filteredNode, ok := nodes.Nodes[nodeID]; ok {
+		node = filteredNode
+	} else { // we've lost the node during filtering; put it back
+		nodes.Nodes[nodeID] = node
+		nodes.Filtered--
 	}
 	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, rc, nodes.Nodes, node)})
 }
