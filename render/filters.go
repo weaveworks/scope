@@ -144,6 +144,27 @@ func connected(nodes report.Nodes) map[string]struct{} {
 	return res
 }
 
+// filterInternetAdjacencies filters out edges between the incoming
+// and outgoing internet node. These are typically artifacts of
+// imperfect connection tracking, e.g. when VIPs and NAT traversal are
+// in use.
+func filterInternetAdjacencies(nodes report.Nodes) report.Nodes {
+	incomingInternet, ok := nodes[IncomingInternetID]
+	if !ok {
+		return nodes
+	}
+	newAdjacency := report.MakeIDList()
+	for _, dstID := range incomingInternet.Adjacency {
+		if dstID != OutgoingInternetID {
+			newAdjacency = newAdjacency.Add(dstID)
+		}
+	}
+	incomingInternet.Adjacency = newAdjacency
+	output := nodes.Copy()
+	output[IncomingInternetID] = incomingInternet
+	return output
+}
+
 // ColorConnected colors nodes with the IsConnectedMark key if they
 // have edges to or from them.  Edges to/from yourself are not counted
 // here (see #656).
@@ -166,13 +187,14 @@ type filterUnconnected struct {
 
 // Transform implements Transformer
 func (f filterUnconnected) Transform(input Nodes) Nodes {
-	connected := connected(input.Nodes)
+	output := filterInternetAdjacencies(input.Nodes)
+	connected := connected(output)
 	return FilterFunc(func(node report.Node) bool {
 		if _, ok := connected[node.ID]; ok || (f.onlyPseudo && !IsPseudoTopology(node)) {
 			return true
 		}
 		return false
-	}).Transform(input)
+	}).Transform(Nodes{Nodes: output, Filtered: input.Filtered})
 }
 
 // FilterUnconnected is a transformer that filters unconnected nodes
