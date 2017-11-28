@@ -144,6 +144,26 @@ func connected(nodes report.Nodes) map[string]struct{} {
 	return res
 }
 
+// filterPseudoPseudoAdjacencies does what it says. Edges between
+// pseudo nodes are typically artifacts of imperfect connection
+// tracking, e.g. when VIPs and NAT traversal are in use.
+func filterPseudoPseudoAdjacencies(nodes report.Nodes) report.Nodes {
+	output := make(report.Nodes, len(nodes))
+	for id, node := range nodes {
+		if IsPseudoTopology(node) {
+			newAdjacency := report.MakeIDList()
+			for _, dstID := range node.Adjacency {
+				if dst, ok := nodes[dstID]; ok && !IsPseudoTopology(dst) {
+					newAdjacency = newAdjacency.Add(dstID)
+				}
+			}
+			node.Adjacency = newAdjacency
+		}
+		output[id] = node
+	}
+	return output
+}
+
 // ColorConnected colors nodes with the IsConnectedMark key if they
 // have edges to or from them.  Edges to/from yourself are not counted
 // here (see #656).
@@ -166,13 +186,14 @@ type filterUnconnected struct {
 
 // Transform implements Transformer
 func (f filterUnconnected) Transform(input Nodes) Nodes {
-	connected := connected(input.Nodes)
+	output := filterPseudoPseudoAdjacencies(input.Nodes)
+	connected := connected(output)
 	return FilterFunc(func(node report.Node) bool {
 		if _, ok := connected[node.ID]; ok || (f.onlyPseudo && !IsPseudoTopology(node)) {
 			return true
 		}
 		return false
-	}).Transform(input)
+	}).Transform(Nodes{Nodes: output, Filtered: input.Filtered})
 }
 
 // FilterUnconnected is a transformer that filters unconnected nodes
