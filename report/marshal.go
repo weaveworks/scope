@@ -139,21 +139,7 @@ func MakeFromFile(path string) (rpt Report, _ error) {
 		return rpt, err
 	}
 
-	var buf []byte
-	if gzipped {
-		r, err := gzip.NewReader(f)
-		if err != nil {
-			return rpt, err
-		}
-		buf, err = ioutil.ReadAll(r)
-	} else {
-		buf, err = ioutil.ReadAll(f)
-	}
-	if err != nil {
-		return rpt, err
-	}
-	err = rpt.ReadBytes(buf, handle)
-
+	err = rpt.ReadBinary(f, gzipped, handle)
 	return rpt, err
 }
 
