@@ -260,11 +260,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	replicaSetTopology, replicaSets, err := r.replicaSetTopology(r.probeID, deployments)
-	if err != nil {
-		return result, err
-	}
-	podTopology, err := r.podTopology(services, replicaSets, daemonSets, statefulSets, cronJobs)
+	podTopology, err := r.podTopology(services, deployments, daemonSets, statefulSets, cronJobs)
 	if err != nil {
 		return result, err
 	}
@@ -275,7 +271,6 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.StatefulSet = result.StatefulSet.Merge(statefulSetTopology)
 	result.CronJob = result.CronJob.Merge(cronJobTopology)
 	result.Deployment = result.Deployment.Merge(deploymentTopology)
-	result.ReplicaSet = result.ReplicaSet.Merge(replicaSetTopology)
 	return result, nil
 }
 
@@ -383,54 +378,6 @@ func (r *Reporter) cronJobTopology() (report.Topology, []CronJob, error) {
 	return result, cronJobs, err
 }
 
-func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) (report.Topology, []ReplicaSet, error) {
-	var (
-		result = report.MakeTopology().
-			WithMetadataTemplates(ReplicaSetMetadataTemplates).
-			WithMetricTemplates(ReplicaSetMetricTemplates).
-			WithTableTemplates(TableTemplates)
-		replicaSets = []ReplicaSet{}
-		selectors   = []func(labelledChild){}
-	)
-	result.Controls.AddControls(ScalingControls)
-
-	for _, deployment := range deployments {
-		selector, err := deployment.Selector()
-		if err != nil {
-			return result, replicaSets, err
-		}
-
-		selectors = append(selectors, match(
-			deployment.Namespace(),
-			selector,
-			report.Deployment,
-			report.MakeDeploymentNodeID(deployment.UID()),
-		))
-	}
-
-	err := r.client.WalkReplicaSets(func(r ReplicaSet) error {
-		for _, selector := range selectors {
-			selector(r)
-		}
-		result = result.AddNode(r.GetNode(probeID))
-		replicaSets = append(replicaSets, r)
-		return nil
-	})
-	if err != nil {
-		return result, replicaSets, err
-	}
-
-	err = r.client.WalkReplicationControllers(func(r ReplicationController) error {
-		for _, selector := range selectors {
-			selector(r)
-		}
-		result = result.AddNode(r.GetNode(probeID))
-		replicaSets = append(replicaSets, ReplicaSet(r))
-		return nil
-	})
-	return result, replicaSets, err
-}
-
 type labelledChild interface {
 	Labels() map[string]string
 	AddParent(string, string)
@@ -446,7 +393,7 @@ func match(namespace string, selector labels.Selector, topology, id string) func
 	}
 }
 
-func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet, daemonSets []DaemonSet, statefulSets []StatefulSet, cronJobs []CronJob) (report.Topology, error) {
+func (r *Reporter) podTopology(services []Service, deployments []Deployment, daemonSets []DaemonSet, statefulSets []StatefulSet, cronJobs []CronJob) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
@@ -474,16 +421,16 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet, dae
 			report.MakeServiceNodeID(service.UID()),
 		))
 	}
-	for _, replicaSet := range replicaSets {
-		selector, err := replicaSet.Selector()
+	for _, deployment := range deployments {
+		selector, err := deployment.Selector()
 		if err != nil {
 			return pods, err
 		}
 		selectors = append(selectors, match(
-			replicaSet.Namespace(),
+			deployment.Namespace(),
 			selector,
-			report.ReplicaSet,
-			report.MakeReplicaSetNodeID(replicaSet.UID()),
+			report.Deployment,
+			report.MakeDeploymentNodeID(deployment.UID()),
 		))
 	}
 	for _, daemonSet := range daemonSets {
