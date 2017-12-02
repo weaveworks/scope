@@ -101,8 +101,20 @@ func BenchmarkTopologyHosts(b *testing.B) {
 	benchmarkOneTopology(b, "hosts")
 }
 
+func BenchmarkTopologyControllers(b *testing.B) {
+	benchmarkOneTopology(b, "kube-controllers")
+}
+
+func BenchmarkTopologyPods(b *testing.B) {
+	benchmarkOneTopology(b, "pods")
+}
+
 func BenchmarkTopologyContainers(b *testing.B) {
 	benchmarkOneTopology(b, "containers")
+}
+
+func BenchmarkTopologyProcesses(b *testing.B) {
+	benchmarkOneTopology(b, "processes")
 }
 
 func benchmarkOneTopology(b *testing.B, topologyID string) {
