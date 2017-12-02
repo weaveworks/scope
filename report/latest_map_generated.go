@@ -51,7 +51,11 @@ func (m StringLatestMap) Merge(n StringLatestMap) StringLatestMap {
 	case n.entries == nil:
 		return m
 	}
-	out := make([]stringLatestEntry, 0, len(m.entries)+len(n.entries))
+	l := len(m.entries)
+	if len(n.entries) > l {
+		l = len(n.entries)
+	}
+	out := make([]stringLatestEntry, 0, l)
 
 	i, j := 0, 0
 	for i < len(m.entries) {
@@ -268,7 +272,11 @@ func (m NodeControlDataLatestMap) Merge(n NodeControlDataLatestMap) NodeControlD
 	case n.entries == nil:
 		return m
 	}
-	out := make([]nodeControlDataLatestEntry, 0, len(m.entries)+len(n.entries))
+	l := len(m.entries)
+	if len(n.entries) > l {
+		l = len(n.entries)
+	}
+	out := make([]nodeControlDataLatestEntry, 0, l)
 
 	i, j := 0, 0
 	for i < len(m.entries) {
