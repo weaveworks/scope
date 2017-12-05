@@ -83,7 +83,11 @@ function generate_latest_map() {
         case n.entries == nil:
             return m
         }
-        out := make([]${entry_type}, 0, len(m.entries)+len(n.entries))
+        l := len(m.entries)
+        if len(n.entries) > l {
+            l = len(n.entries)
+        }
+        out := make([]${entry_type}, 0, l)
 
         i, j := 0, 0
         for i < len(m.entries) {
