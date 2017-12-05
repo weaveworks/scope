@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"runtime/pprof"
 	"testing"
 
 	"github.com/weaveworks/scope/render"
@@ -19,6 +20,7 @@ var (
 )
 
 func disableProfiling() int {
+	pprof.StopCPUProfile()
 	rate := runtime.MemProfileRate
 	runtime.MemProfileRate = 0
 	return rate
@@ -26,6 +28,18 @@ func disableProfiling() int {
 
 func enableProfiling(rate int) {
 	runtime.MemProfileRate = rate
+	if f := flag.CommandLine.Lookup("test.cpuprofile"); f != nil {
+		if cpuProfile := f.Value.String(); cpuProfile != "" {
+			f, err := os.Create(cpuProfile)
+			if err != nil {
+				panic(err)
+			}
+			if err := pprof.StartCPUProfile(f); err != nil {
+				f.Close()
+				panic(err)
+			}
+		}
+	}
 }
 
 func readReportFiles(path string) ([]report.Report, error) {
