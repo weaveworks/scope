@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/weaveworks/scope/render"
@@ -16,6 +17,16 @@ import (
 var (
 	benchReportPath = flag.String("bench-report-path", "", "report file, or dir with files, to use for benchmarking (relative to this package)")
 )
+
+func disableProfiling() int {
+	rate := runtime.MemProfileRate
+	runtime.MemProfileRate = 0
+	return rate
+}
+
+func enableProfiling(rate int) {
+	runtime.MemProfileRate = rate
+}
 
 func readReportFiles(path string) ([]report.Report, error) {
 	reports := []report.Report{}
@@ -52,12 +63,14 @@ func BenchmarkReportUnmarshal(b *testing.B) {
 }
 
 func BenchmarkReportMerge(b *testing.B) {
+	p := disableProfiling()
 	reports, err := readReportFiles(*benchReportPath)
 	if err != nil {
 		b.Fatal(err)
 	}
 	merger := NewSmartMerger()
 
+	enableProfiling(p)
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -77,6 +90,7 @@ func BenchmarkTopologyList(b *testing.B) {
 }
 
 func benchmarkRender(b *testing.B, f func(report.Report)) {
+	p := disableProfiling()
 	r := fixture.Report
 	if *benchReportPath != "" {
 		reports, err := readReportFiles(*benchReportPath)
@@ -86,6 +100,7 @@ func benchmarkRender(b *testing.B, f func(report.Report)) {
 		r = NewSmartMerger().Merge(reports)
 	}
 
+	enableProfiling(p)
 	b.ReportAllocs()
 	b.ResetTimer()
 
