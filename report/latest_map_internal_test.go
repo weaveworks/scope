@@ -71,9 +71,7 @@ func TestLatestMapDeepEquals(t *testing.T) {
 }
 
 func nilStringLatestMap() StringLatestMap {
-	m := MakeStringLatestMap()
-	m.entries = nil
-	return m
+	return nil
 }
 
 func TestLatestMapMerge(t *testing.T) {
