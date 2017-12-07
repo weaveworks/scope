@@ -45,7 +45,7 @@ func NewBillingEmitter(upstream app.Collector, billingClient *billing.Client, cf
 }
 
 // Add implements app.Collector
-func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte) error {
+func (e *BillingEmitter) Add(ctx context.Context, version string, rep report.Report, buf []byte) error {
 	now := time.Now().UTC()
 	userID, err := e.UserIDer(ctx)
 	if err != nil {
@@ -89,7 +89,7 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 		log.Errorf("Failed emitting billing data: %v", err)
 	}
 
-	return e.Collector.Add(ctx, rep, buf)
+	return e.Collector.Add(ctx, version, rep, buf)
 }
 
 // reportInterval tries to find the custom report interval of this report. If
