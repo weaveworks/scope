@@ -56,7 +56,7 @@ func BenchmarkMakeNodeSet(b *testing.B) {
 			"b": "2",
 		}))
 	}
-	b.ReportAllocs()
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -161,7 +161,6 @@ func BenchmarkNodeSetAdd(b *testing.B) {
 		"b": "2",
 	})
 
-	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -299,7 +298,7 @@ func BenchmarkNodeSetMerge(b *testing.B) {
 			}),
 		)
 	}
-	b.ReportAllocs()
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {

@@ -48,7 +48,7 @@ func BenchmarkMakePluginSpecs(b *testing.B) {
 	for i := 1000; i >= 0; i-- {
 		plugins = append(plugins, PluginSpec{ID: fmt.Sprint(i)})
 	}
-	b.ReportAllocs()
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -145,7 +145,6 @@ func BenchmarkPluginSpecsAdd(b *testing.B) {
 
 	plugin := PluginSpec{ID: "401.5"}
 
-	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
@@ -216,7 +215,7 @@ func BenchmarkPluginSpecsMerge(b *testing.B) {
 	for i := 400; i < 1000; i++ {
 		other = other.Add(PluginSpec{ID: fmt.Sprint(i)})
 	}
-	b.ReportAllocs()
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {

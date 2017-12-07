@@ -40,12 +40,11 @@ func BenchmarkPodServiceRender(b *testing.B) {
 }
 
 func benchmarkRender(b *testing.B, r render.Renderer) {
-
 	report, err := loadReport()
 	if err != nil {
 		b.Fatal(err)
 	}
-	b.ReportAllocs()
+
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
