@@ -62,7 +62,7 @@ function generate_latest_map() {
     }
 
     // ${latest_map_type} holds latest ${data_type} instances, as a slice sorted by key.
-    type ${latest_map_type} struct { entries []${entry_type} }
+    type ${latest_map_type} []${entry_type}
 
     // ${make_function} makes an empty ${latest_map_type}.
     func ${make_function}() ${latest_map_type} {
@@ -71,45 +71,45 @@ function generate_latest_map() {
 
     // Size returns the number of elements.
     func (m ${latest_map_type}) Size() int {
-        return len(m.entries)
+        return len(m)
     }
 
     // Merge produces a fresh ${latest_map_type} containing the keys from both inputs.
     // When both inputs contain the same key, the newer value is used.
     func (m ${latest_map_type}) Merge(n ${latest_map_type}) ${latest_map_type} {
         switch {
-        case m.entries == nil:
+        case m == nil:
             return n
-        case n.entries == nil:
+        case n == nil:
             return m
         }
-        l := len(m.entries)
-        if len(n.entries) > l {
-            l = len(n.entries)
+        l := len(m)
+        if len(n) > l {
+            l = len(n)
         }
         out := make([]${entry_type}, 0, l)
 
         i, j := 0, 0
-        for i < len(m.entries) {
+        for i < len(m) {
             switch {
-            case j >= len(n.entries) || m.entries[i].key < n.entries[j].key:
-                out = append(out, m.entries[i])
+            case j >= len(n) || m[i].key < n[j].key:
+                out = append(out, m[i])
                 i++
-            case m.entries[i].key == n.entries[j].key:
-                if m.entries[i].Timestamp.Before(n.entries[j].Timestamp) {
-                    out = append(out, n.entries[j])
+            case m[i].key == n[j].key:
+                if m[i].Timestamp.Before(n[j].Timestamp) {
+                    out = append(out, n[j])
                 } else {
-                    out = append(out, m.entries[i])
+                    out = append(out, m[i])
                 }
                 i++
                 j++
             default:
-                out = append(out, n.entries[j])
+                out = append(out, n[j])
                 j++
             }
         }
-        out = append(out, n.entries[j:]...)
-        return ${latest_map_type}{out}
+        out = append(out, n[j:]...)
+        return out
     }
 
     // Lookup the value for the given key.
@@ -124,11 +124,11 @@ function generate_latest_map() {
 
     // LookupEntry returns the raw entry for the given key.
     func (m ${latest_map_type}) LookupEntry(key string) (${data_type}, time.Time, bool) {
-        i := sort.Search(len(m.entries), func(i int) bool {
-            return m.entries[i].key >= key
+        i := sort.Search(len(m), func(i int) bool {
+            return m[i].key >= key
         })
-        if i < len(m.entries) && m.entries[i].key == key {
-            return m.entries[i].Value, m.entries[i].Timestamp, true
+        if i < len(m) && m[i].key == key {
+            return m[i].Value, m[i].Timestamp, true
         }
         var zero ${data_type}
         return zero, time.Time{}, false
@@ -136,42 +136,42 @@ function generate_latest_map() {
 
     // locate the position where key should go, and make room for it if not there already
     func (m *${latest_map_type}) locate(key string) int {
-        i := sort.Search(len(m.entries), func(i int) bool {
-            return m.entries[i].key >= key
+        i := sort.Search(len(*m), func(i int) bool {
+            return (*m)[i].key >= key
         })
         // i is now the position where key should go, either at the end or in the middle
-        if i == len(m.entries) || m.entries[i].key != key {
-            m.entries = append(m.entries, ${entry_type}{})
-            copy(m.entries[i+1:], m.entries[i:])
+        if i == len(*m) || (*m)[i].key != key {
+            *m = append(*m, ${entry_type}{})
+            copy((*m)[i+1:], (*m)[i:])
         }
         return i
     }
 
     // Set the value for the given key.
     func (m ${latest_map_type}) Set(key string, timestamp time.Time, value ${data_type}) ${latest_map_type} {
-        i := sort.Search(len(m.entries), func(i int) bool {
-            return m.entries[i].key >= key
+        i := sort.Search(len(m), func(i int) bool {
+            return m[i].key >= key
         })
         // i is now the position where key should go, either at the end or in the middle
-        oldEntries := m.entries
-        if i == len(m.entries) {
-            m.entries = make([]${entry_type}, len(oldEntries)+1)
-            copy(m.entries, oldEntries)
-        } else if m.entries[i].key == key {
-            m.entries = make([]${entry_type}, len(oldEntries))
-            copy(m.entries, oldEntries)
+        oldEntries := m
+        if i == len(m) {
+            m = make([]${entry_type}, len(oldEntries)+1)
+            copy(m, oldEntries)
+        } else if m[i].key == key {
+            m = make([]${entry_type}, len(oldEntries))
+            copy(m, oldEntries)
         } else {
-            m.entries = make([]${entry_type}, len(oldEntries)+1)
-            copy(m.entries, oldEntries[:i])
-            copy(m.entries[i+1:], oldEntries[i:])
+            m = make([]${entry_type}, len(oldEntries)+1)
+            copy(m, oldEntries[:i])
+            copy(m[i+1:], oldEntries[i:])
         }
-        m.entries[i] = ${entry_type}{key: key, Timestamp: timestamp, Value: value}
+        m[i] = ${entry_type}{key: key, Timestamp: timestamp, Value: value}
         return m
     }
 
     // ForEach executes fn on each key value pair in the map.
     func (m ${latest_map_type}) ForEach(fn func(k string, timestamp time.Time, v ${data_type})) {
-        for _, value := range m.entries {
+        for _, value := range m {
             fn(value.key, value.Timestamp, value.Value)
         }
     }
@@ -179,7 +179,7 @@ function generate_latest_map() {
     // String returns the ${latest_map_type}'s string representation.
     func (m ${latest_map_type}) String() string {
         buf := bytes.NewBufferString("{")
-        for _, val := range m.entries {
+        for _, val := range m {
             fmt.Fprintf(buf, "%s: %s,\n", val.key, val)
         }
         fmt.Fprintf(buf, "}")
@@ -191,8 +191,8 @@ function generate_latest_map() {
         if m.Size() != n.Size() {
             return false
         }
-        for i := range m.entries {
-            if m.entries[i].key != n.entries[i].key || !m.entries[i].Equal(&n.entries[i]) {
+        for i := range m {
+            if m[i].key != n[i].key || !m[i].Equal(&n[i]) {
                 return false
             }
         }
@@ -205,14 +205,14 @@ function generate_latest_map() {
     // means we are using undocumented, internal APIs, which could break
     // in the future.  See https://github.com/weaveworks/scope/pull/1709
     // for more information.
-    func (m *${latest_map_type}) CodecEncodeSelf(encoder *codec.Encoder) {
+    func (m ${latest_map_type}) CodecEncodeSelf(encoder *codec.Encoder) {
         z, r := codec.GenHelperEncoder(encoder)
-        if m.entries == nil {
+        if m == nil {
             r.EncodeNil()
             return
         }
         r.EncodeMapStart(m.Size())
-        for _, val := range m.entries {
+        for _, val := range m {
             z.EncSendContainerState(containerMapKey)
             r.EncodeString(cUTF8, val.key)
             z.EncSendContainerState(containerMapValue)
@@ -226,7 +226,7 @@ function generate_latest_map() {
     // intermediate copy of the data structure to save time. Uses
     // undocumented, internal APIs as for CodecEncodeSelf.
     func (m *${latest_map_type}) CodecDecodeSelf(decoder *codec.Decoder) {
-        m.entries = nil
+        *m = nil
         z, r := codec.GenHelperDecoder(decoder)
         if r.TryDecodeAsNil() {
             return
@@ -234,7 +234,7 @@ function generate_latest_map() {
 
         length := r.ReadMapStart()
         if length > 0 {
-            m.entries = make([]${entry_type}, 0, length)
+            *m = make([]${entry_type}, 0, length)
         }
         for i := 0; length < 0 || i < length; i++ {
             if length < 0 && r.CheckBreak() {
@@ -246,10 +246,10 @@ function generate_latest_map() {
                 key = r.DecodeString()
             }
             i := m.locate(key)
-            m.entries[i].key = key
+            (*m)[i].key = key
             z.DecSendContainerState(containerMapValue)
             if !r.TryDecodeAsNil() {
-                m.entries[i].CodecDecodeSelf(decoder)
+                (*m)[i].CodecDecodeSelf(decoder)
             }
         }
         z.DecSendContainerState(containerMapEnd)
