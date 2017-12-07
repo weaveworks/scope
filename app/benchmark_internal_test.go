@@ -67,6 +67,20 @@ func BenchmarkReportMerge(b *testing.B) {
 	}
 }
 
+func BenchmarkReportUpgrade(b *testing.B) {
+	reports, err := readReportFiles(*benchReportPath)
+	if err != nil {
+		b.Fatal(err)
+	}
+	r := NewSmartMerger().Merge(reports)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		r.Upgrade()
+	}
+}
+
 func BenchmarkTopologyList(b *testing.B) {
 	benchmarkRender(b, func(report report.Report) {
 		request := &http.Request{
