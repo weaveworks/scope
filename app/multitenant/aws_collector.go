@@ -337,7 +337,7 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 		return report.MakeReport(), err
 	}
 
-	return c.merger.Merge(reports).Upgrade(), nil
+	return c.merger.Merge(reports).Upgrade(""), nil
 }
 
 func (c *awsCollector) HasHistoricReports() bool {
@@ -401,7 +401,7 @@ func (c *awsCollector) putItemInDynamo(rowKey, colKey, reportKey string) (*dynam
 	return resp, err
 }
 
-func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) error {
+func (c *awsCollector) Add(ctx context.Context, version string, rep report.Report, buf []byte) error {
 	userid, err := c.userIDer(ctx)
 	if err != nil {
 		return err

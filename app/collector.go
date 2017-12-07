@@ -58,7 +58,7 @@ func RenderContextForReporter(rep Reporter, r report.Report) report.RenderContex
 // - report.Report: the deserialised report
 // - []byte: the serialised report (as gzip'd msgpack)
 type Adder interface {
-	Add(context.Context, report.Report, []byte) error
+	Add(context.Context, string, report.Report, []byte) error
 }
 
 // A Collector is a Reporter and an Adder
@@ -120,9 +120,12 @@ func NewCollector(window time.Duration) Collector {
 }
 
 // Add adds a report to the collector's internal state. It implements Adder.
-func (c *collector) Add(_ context.Context, rpt report.Report, _ []byte) error {
+func (c *collector) Add(_ context.Context, appVersion string, rpt report.Report, _ []byte) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
+
+	rpt = rpt.Upgrade(appVersion)
+
 	c.reports = append(c.reports, rpt)
 	c.timestamps = append(c.timestamps, mtime.Now())
 
@@ -152,7 +155,7 @@ func (c *collector) Report(_ context.Context, timestamp time.Time) (report.Repor
 	c.clean()
 	c.quantise()
 
-	rpt := c.merger.Merge(c.reports).Upgrade()
+	rpt := c.merger.Merge(c.reports).Upgrade("")
 	c.cached = &rpt
 	return rpt, nil
 }
@@ -226,7 +229,7 @@ func (c StaticCollector) HasHistoricReports() bool {
 }
 
 // Add adds a report to the collector's internal state. It implements Adder.
-func (c StaticCollector) Add(context.Context, report.Report, []byte) error { return nil }
+func (c StaticCollector) Add(context.Context, string, report.Report, []byte) error { return nil }
 
 // WaitOn lets other components wait on a new report being received. It
 // implements Reporter.
@@ -277,7 +280,7 @@ func NewFileCollector(path string, window time.Duration) (Collector, error) {
 		go replay(collector, timestamps, reports)
 		return collector, nil
 	}
-	return StaticCollector(NewSmartMerger().Merge(reports).Upgrade()), nil
+	return StaticCollector(NewSmartMerger().Merge(reports).Upgrade("")), nil
 }
 
 func timestampFromFilepath(path string) (time.Time, error) {
@@ -313,7 +316,7 @@ func replay(a Adder, timestamps []time.Time, reports []report.Report) {
 	due := time.Now()
 	for {
 		for i, r := range reports {
-			a.Add(nil, r, nil)
+			a.Add(nil, "", r, nil)
 			due = due.Add(delays[i])
 			delay := due.Sub(time.Now())
 			if delay > 0 {

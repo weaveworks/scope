@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/weaveworks/common/mtime"
+	"github.com/weaveworks/scope/common/version"
 	"github.com/weaveworks/scope/common/xfer"
 )
 
@@ -41,6 +42,10 @@ const (
 
 	// Used when counting the number of containers
 	ContainersKey = "containers"
+)
+
+var (
+	latestControlsRelease = version.New(0, 16, 2)
 )
 
 // Report is the core data type. It's produced by probes, and consumed and
@@ -340,7 +345,11 @@ func (r Report) Validate() error {
 // Upgrade returns a new report based on a report received from the old probe.
 //
 // This for now creates node's LatestControls from Controls.
-func (r Report) Upgrade() Report {
+func (r Report) Upgrade(appVersion string) Report {
+	if !r.RequiresUpgrade(appVersion) {
+		return r
+	}
+
 	cp := r.Copy()
 	ncd := NodeControlData{
 		Dead: false,
@@ -358,6 +367,61 @@ func (r Report) Upgrade() Report {
 		topology.Nodes = n
 	})
 	return cp
+}
+
+// RequiresUpgrade returns whether the report needs upgrading
+func (r Report) RequiresUpgrade(appVersion string) bool {
+	if appVersion == "" {
+		return true
+	}
+
+	// version can be a version, for instance 1.2.3, or a git revision (development)
+	_, err := version.ParseVersion(appVersion)
+	if err != nil {
+		return r.requiresUpgradeRevisionCheck(appVersion)
+	}
+	return r.requiresUpgradeVersionCheck()
+}
+
+func (r Report) requiresUpgradeVersionCheck() bool {
+	// count instead of using a boolean (default to requiring an upgrade)
+	hostsNotRequiringUpgrade := 0
+	for _, n := range r.Host.Nodes {
+		probeVersionStr, ok := n.Latest.Lookup(ScopeVersion)
+		if !ok {
+			return true
+		}
+
+		probeVersion, err := version.ParseVersion(probeVersionStr)
+		if err != nil {
+			return true
+		}
+
+		if probeVersion.Lower(latestControlsRelease) {
+			return true
+		}
+
+		hostsNotRequiringUpgrade++
+	}
+	return hostsNotRequiringUpgrade != len(r.Host.Nodes)
+}
+
+func (r Report) requiresUpgradeRevisionCheck(appVersion string) bool {
+	// count instead of using a boolean (default to requiring an upgrade)
+	hostsNotRequiringUpgrade := 0
+	for _, n := range r.Host.Nodes {
+		probeVersion, ok := n.Latest.Lookup(ScopeVersion)
+		if !ok {
+			return true
+		}
+
+		if probeVersion != appVersion {
+			return true
+		}
+
+		hostsNotRequiringUpgrade++
+	}
+	return hostsNotRequiringUpgrade != len(r.Host.Nodes)
 }
 
 // BackwardCompatible returns a new backward-compatible report.
@@ -422,4 +486,7 @@ const (
 	HostNodeID = "host_node_id"
 	// ControlProbeID is the random ID of the probe which controls the specific node.
 	ControlProbeID = "control_probe_id"
+
+	// ScopeVersion is the probe's version
+	ScopeVersion = "host_scope_version"
 )

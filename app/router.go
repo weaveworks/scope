@@ -154,7 +154,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 			rpt.WriteBinary(&buf, gzip.DefaultCompression)
 		}
 
-		if err := a.Add(ctx, rpt, buf.Bytes()); err != nil {
+		if err := a.Add(ctx, Version, rpt, buf.Bytes()); err != nil {
 			log.Errorf("Error Adding report: %v", err)
 			respondWith(w, http.StatusInternalServerError, err)
 			return

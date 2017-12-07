@@ -116,8 +116,47 @@ func TestReportUpgrade(t *testing.T) {
 	rpt.Pod.AddNode(node)
 	expected := report.MakeReport()
 	expected.Pod.AddNode(expectedNode)
-	got := rpt.Upgrade()
+	got := rpt.Upgrade("")
 	if !s_reflect.DeepEqual(expected, got) {
 		t.Error(test.Diff(expected, got))
+	}
+}
+
+func TestReportRequiresUpgrade(t *testing.T) {
+	node := report.MakeNodeWith("foo", map[string]string{report.ScopeVersion: "0.1.3"})
+	rpt := report.MakeReport()
+	rpt.Host.AddNode(node)
+	if !rpt.RequiresUpgrade("1.60.0") {
+		t.Errorf("report %v does require upgrading", rpt)
+	}
+
+	node = report.MakeNodeWith("foo", map[string]string{report.ScopeVersion: "1.50.0"})
+	rpt = report.MakeReport()
+	rpt.Host.AddNode(node)
+	if rpt.RequiresUpgrade("1.60.0") {
+		t.Errorf("report %v does not require upgrading", rpt)
+	}
+
+	node = report.MakeNodeWith("foo", map[string]string{report.ScopeVersion: "1.50.0"})
+	rpt = report.MakeReport()
+	rpt.Host.AddNode(node)
+	if !rpt.RequiresUpgrade("abcd1234") {
+		t.Errorf("report %v does require upgrading", rpt)
+	}
+
+	node = report.MakeNodeWith("foo", map[string]string{report.ScopeVersion: "abcd1234"})
+	rpt = report.MakeReport()
+	rpt.Host.AddNode(node)
+	if rpt.RequiresUpgrade("abcd1234") {
+		t.Errorf("report %v does not require upgrading", rpt)
+	}
+
+	node = report.MakeNodeWith("foo", map[string]string{report.ScopeVersion: "1.50.0"})
+	node2 := report.MakeNodeWith("foo", map[string]string{report.ScopeVersion: "0.1.3"})
+	rpt = report.MakeReport()
+	rpt.Host.AddNode(node)
+	rpt.Host.AddNode(node2)
+	if !rpt.RequiresUpgrade("1.60.0") {
+		t.Errorf("report %v does require upgrading", rpt)
 	}
 }
