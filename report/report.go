@@ -341,6 +341,18 @@ func (r Report) Validate() error {
 //
 // This for now creates node's LatestControls from Controls.
 func (r Report) Upgrade() Report {
+	needUpgrade := false
+	r.WalkTopologies(func(topology *Topology) {
+		for _, node := range topology.Nodes {
+			if node.LatestControls.Size() == 0 && len(node.Controls.Controls) > 0 {
+				needUpgrade = true
+			}
+		}
+	})
+	if !needUpgrade {
+		return r
+	}
+
 	cp := r.Copy()
 	ncd := NodeControlData{
 		Dead: false,
