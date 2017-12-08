@@ -62,9 +62,7 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 					),
 				),
 			),
-			// ConnectionJoin invokes the renderer twice, hence it
-			// helps to memoise it.
-			ConnectionJoin(MapPod2IP, Memoise(selectPodsWithDeployments{})),
+			ConnectionJoin(MapPod2IP, SelectPod),
 		),
 	),
 ))
@@ -111,31 +109,6 @@ func renderParents(childTopology string, parentTopologies []string, noParentsPse
 			),
 		),
 	)...)
-}
-
-// Renderer to return modified Pod nodes to elide replica sets and point directly
-// to deployments where applicable.
-type selectPodsWithDeployments struct{}
-
-func (s selectPodsWithDeployments) Render(rpt report.Report) Nodes {
-	result := report.Nodes{}
-	// For each pod, we check for any replica sets, and merge any deployments they point to
-	// into a replacement Parents value.
-	for podID, pod := range rpt.Pod.Nodes {
-		if replicaSetIDs, ok := pod.Parents.Lookup(report.ReplicaSet); ok {
-			newParents := pod.Parents.Delete(report.ReplicaSet)
-			for _, replicaSetID := range replicaSetIDs {
-				if replicaSet, ok := rpt.ReplicaSet.Nodes[replicaSetID]; ok {
-					if deploymentIDs, ok := replicaSet.Parents.Lookup(report.Deployment); ok {
-						newParents = newParents.Add(report.Deployment, deploymentIDs)
-					}
-				}
-			}
-			pod = pod.WithParents(newParents)
-		}
-		result[podID] = pod
-	}
-	return Nodes{Nodes: result}
 }
 
 // MapPod2IP maps pod nodes to their IP address.  This allows pods to

@@ -105,17 +105,21 @@ func TestReportBackwardCompatibility(t *testing.T) {
 func TestReportUpgrade(t *testing.T) {
 	mtime.NowForce(time.Now())
 	defer mtime.NowReset()
-	node := report.MakeNode("foo").WithControls("alive")
+	parentsWithDeployment := report.MakeSets().Add(report.Deployment, report.MakeStringSet("id"))
+	rsNode := report.MakeNode("bar").WithParents(parentsWithDeployment)
+	podNode := report.MakeNode("foo").WithControls("alive").WithParents(report.MakeSets().Add(report.ReplicaSet, report.MakeStringSet("bar")))
 	controls := map[string]report.NodeControlData{
 		"alive": {
 			Dead: false,
 		},
 	}
-	expectedNode := node.WithLatestControls(controls)
+	expectedPodNode := podNode.PruneParents().WithParents(parentsWithDeployment).WithLatestControls(controls)
 	rpt := report.MakeReport()
-	rpt.Pod.AddNode(node)
+	rpt.ReplicaSet.AddNode(rsNode)
+	rpt.Pod.AddNode(podNode)
 	expected := report.MakeReport()
-	expected.Pod.AddNode(expectedNode)
+	expected.ReplicaSet.AddNode(rsNode)
+	expected.Pod.AddNode(expectedPodNode)
 	got := rpt.Upgrade()
 	if !s_reflect.DeepEqual(expected, got) {
 		t.Error(test.Diff(expected, got))
