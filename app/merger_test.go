@@ -69,7 +69,6 @@ func benchmarkMerger(b *testing.B, merger app.Merger) {
 		reports = append(reports, makeReport())
 	}
 
-	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {

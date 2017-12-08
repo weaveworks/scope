@@ -40,11 +40,8 @@ func readReportFiles(path string) ([]report.Report, error) {
 }
 
 func BenchmarkReportUnmarshal(b *testing.B) {
-	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		b.StopTimer()
-		b.StartTimer()
 		if _, err := readReportFiles(*benchReportPath); err != nil {
 			b.Fatal(err)
 		}
@@ -58,11 +55,9 @@ func BenchmarkReportMerge(b *testing.B) {
 	}
 	merger := NewSmartMerger()
 
-	b.ReportAllocs()
 	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
-		b.StopTimer()
-		b.StartTimer()
 		merger.Merge(reports)
 	}
 }
@@ -100,7 +95,6 @@ func benchmarkRender(b *testing.B, f func(report.Report)) {
 		r = NewSmartMerger().Merge(reports)
 	}
 
-	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
