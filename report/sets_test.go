@@ -67,13 +67,13 @@ func TestSetsMerge(t *testing.T) {
 }
 
 func check(t *testing.T, desc string, haveSets report.Sets, want map[string][]string) {
-	have := map[string][]string{}
-	keys := haveSets.Keys()
-	for _, k := range keys {
-		have[k], _ = haveSets.Lookup(k)
+	if haveSets.Size() != len(want) {
+		t.Errorf("%s: different lengths: want %+v, have %+v", desc, want, haveSets)
 	}
-
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf("%s: want %+v, have %+v", desc, want, have)
+	for k, v := range want {
+		have, _ := haveSets.Lookup(k)
+		if !reflect.DeepEqual([]string(have), v) {
+			t.Errorf("%s: want %+v, have %+v", desc, want, haveSets)
+		}
 	}
 }
