@@ -123,6 +123,9 @@ func NewCollector(window time.Duration) Collector {
 func (c *collector) Add(_ context.Context, rpt report.Report, _ []byte) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
+
+	rpt = rpt.Upgrade()
+
 	c.reports = append(c.reports, rpt)
 	c.timestamps = append(c.timestamps, mtime.Now())
 
