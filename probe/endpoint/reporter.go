@@ -13,6 +13,7 @@ import (
 const (
 	ReverseDNSNames = "reverse_dns_names"
 	SnoopedDNSNames = "snooped_dns_names"
+	CopyOf          = "copy_of"
 )
 
 // ReporterConfig are the config options for the endpoint reporter.

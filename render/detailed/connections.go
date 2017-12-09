@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
@@ -81,7 +82,7 @@ func (c *connectionCounters) add(outgoing bool, localNode, remoteNode, localEndp
 		srcEndpoint, dstEndpoint = localEndpoint, remoteEndpoint
 	}
 	connectionID := srcEndpoint.ID
-	if copySrcEndpointID, _, ok := srcEndpoint.Latest.LookupEntry("copy_of"); ok {
+	if copySrcEndpointID, _, ok := srcEndpoint.Latest.LookupEntry(endpoint.CopyOf); ok {
 		connectionID = copySrcEndpointID
 	}
 	if _, ok := c.counted[connectionID]; ok {
@@ -240,7 +241,7 @@ func endpointChildIDsAndCopyMapOf(n report.Node) (report.IDList, map[string]stri
 	n.Children.ForEach(func(child report.Node) {
 		if child.Topology == report.Endpoint {
 			ids = ids.Add(child.ID)
-			if copyID, _, ok := child.Latest.LookupEntry("copy_of"); ok {
+			if copyID, _, ok := child.Latest.LookupEntry(endpoint.CopyOf); ok {
 				copies[child.ID] = copyID
 			}
 		}

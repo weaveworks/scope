@@ -76,8 +76,8 @@ func TestNat(t *testing.T) {
 		want := have.Copy()
 		wantID := report.MakeEndpointNodeID("host1", "", "1.2.3.4", "80")
 		want.Endpoint.AddNode(report.MakeNodeWith(wantID, map[string]string{
-			"copy_of": originalID,
-			"foo":     "bar",
+			CopyOf: originalID,
+			"foo":  "bar",
 		}))
 
 		makeNATMapper(ct).applyNAT(have, "host1")
@@ -128,8 +128,8 @@ func TestNat(t *testing.T) {
 
 		want := have.Copy()
 		want.Endpoint.AddNode(report.MakeNodeWith(report.MakeEndpointNodeID("host2", "", "2.3.4.5", "22223"), map[string]string{
-			"copy_of": originalID,
-			"foo":     "baz",
+			CopyOf: originalID,
+			"foo":  "baz",
 		}))
 
 		makeNATMapper(ct).applyNAT(have, "host1")
