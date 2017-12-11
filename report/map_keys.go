@@ -78,3 +78,113 @@ const (
 	ECSScaleUp             = "ecs_scale_up"
 	ECSScaleDown           = "ecs_scale_down"
 )
+
+/* Lookup table to allow msgpack/json decoder to avoid heap allocation
+   for common ps.Map keys. The map is static so we don't have to lock
+   access from multiple threads and don't have to worry about it
+   getting clogged with values that are only used once.
+*/
+var commonKeys = map[string]string{
+	Endpoint:       Endpoint,
+	Process:        Process,
+	Container:      Container,
+	Pod:            Pod,
+	Service:        Service,
+	Deployment:     Deployment,
+	ReplicaSet:     ReplicaSet,
+	DaemonSet:      DaemonSet,
+	StatefulSet:    StatefulSet,
+	CronJob:        CronJob,
+	ContainerImage: ContainerImage,
+	Host:           Host,
+	Overlay:        Overlay,
+	ECSService:     ECSService,
+	ECSTask:        ECSTask,
+	SwarmService:   SwarmService,
+
+	HostNodeID:             HostNodeID,
+	ControlProbeID:         ControlProbeID,
+	DoesNotMakeConnections: DoesNotMakeConnections,
+
+	ReverseDNSNames: ReverseDNSNames,
+	SnoopedDNSNames: SnoopedDNSNames,
+	CopyOf:          CopyOf,
+
+	PID:     PID,
+	Name:    Name,
+	PPID:    PPID,
+	Cmdline: Cmdline,
+	Threads: Threads,
+
+	DockerContainerID:            DockerContainerID,
+	DockerImageID:                DockerImageID,
+	DockerImageName:              DockerImageName,
+	DockerImageSize:              DockerImageSize,
+	DockerImageVirtualSize:       DockerImageVirtualSize,
+	DockerIsInHostNetwork:        DockerIsInHostNetwork,
+	DockerServiceName:            DockerServiceName,
+	DockerStackNamespace:         DockerStackNamespace,
+	DockerStopContainer:          DockerStopContainer,
+	DockerStartContainer:         DockerStartContainer,
+	DockerRestartContainer:       DockerRestartContainer,
+	DockerPauseContainer:         DockerPauseContainer,
+	DockerUnpauseContainer:       DockerUnpauseContainer,
+	DockerRemoveContainer:        DockerRemoveContainer,
+	DockerAttachContainer:        DockerAttachContainer,
+	DockerExecContainer:          DockerExecContainer,
+	DockerContainerName:          DockerContainerName,
+	DockerContainerCommand:       DockerContainerCommand,
+	DockerContainerPorts:         DockerContainerPorts,
+	DockerContainerCreated:       DockerContainerCreated,
+	DockerContainerNetworks:      DockerContainerNetworks,
+	DockerContainerIPs:           DockerContainerIPs,
+	DockerContainerHostname:      DockerContainerHostname,
+	DockerContainerIPsWithScopes: DockerContainerIPsWithScopes,
+	DockerContainerState:         DockerContainerState,
+	DockerContainerStateHuman:    DockerContainerStateHuman,
+	DockerContainerUptime:        DockerContainerUptime,
+	DockerContainerRestartCount:  DockerContainerRestartCount,
+	DockerContainerNetworkMode:   DockerContainerNetworkMode,
+
+	KubernetesName:                 KubernetesName,
+	KubernetesNamespace:            KubernetesNamespace,
+	KubernetesCreated:              KubernetesCreated,
+	KubernetesIP:                   KubernetesIP,
+	KubernetesObservedGeneration:   KubernetesObservedGeneration,
+	KubernetesReplicas:             KubernetesReplicas,
+	KubernetesDesiredReplicas:      KubernetesDesiredReplicas,
+	KubernetesNodeType:             KubernetesNodeType,
+	KubernetesGetLogs:              KubernetesGetLogs,
+	KubernetesDeletePod:            KubernetesDeletePod,
+	KubernetesScaleUp:              KubernetesScaleUp,
+	KubernetesScaleDown:            KubernetesScaleDown,
+	KubernetesUpdatedReplicas:      KubernetesUpdatedReplicas,
+	KubernetesAvailableReplicas:    KubernetesAvailableReplicas,
+	KubernetesUnavailableReplicas:  KubernetesUnavailableReplicas,
+	KubernetesStrategy:             KubernetesStrategy,
+	KubernetesFullyLabeledReplicas: KubernetesFullyLabeledReplicas,
+	KubernetesState:                KubernetesState,
+	KubernetesIsInHostNetwork:      KubernetesIsInHostNetwork,
+	KubernetesRestartCount:         KubernetesRestartCount,
+	KubernetesMisscheduledReplicas: KubernetesMisscheduledReplicas,
+	KubernetesPublicIP:             KubernetesPublicIP,
+	KubernetesSchedule:             KubernetesSchedule,
+	KubernetesSuspended:            KubernetesSuspended,
+	KubernetesLastScheduled:        KubernetesLastScheduled,
+	KubernetesActiveJobs:           KubernetesActiveJobs,
+
+	ECSCluster:             ECSCluster,
+	ECSCreatedAt:           ECSCreatedAt,
+	ECSTaskFamily:          ECSTaskFamily,
+	ECSServiceDesiredCount: ECSServiceDesiredCount,
+	ECSServiceRunningCount: ECSServiceRunningCount,
+	ECSScaleUp:             ECSScaleUp,
+	ECSScaleDown:           ECSScaleDown,
+}
+
+func lookupCommonKey(b []byte) string {
+	if key, ok := commonKeys[string(b)]; ok {
+		return key
+	}
+	return string(b)
+}
