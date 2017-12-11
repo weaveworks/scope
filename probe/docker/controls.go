@@ -12,14 +12,14 @@ import (
 
 // Control IDs used by the docker integration.
 const (
-	StopContainer    = "docker_stop_container"
-	StartContainer   = "docker_start_container"
-	RestartContainer = "docker_restart_container"
-	PauseContainer   = "docker_pause_container"
-	UnpauseContainer = "docker_unpause_container"
-	RemoveContainer  = "docker_remove_container"
-	AttachContainer  = "docker_attach_container"
-	ExecContainer    = "docker_exec_container"
+	StopContainer    = report.DockerStopContainer
+	StartContainer   = report.DockerStartContainer
+	RestartContainer = report.DockerRestartContainer
+	PauseContainer   = report.DockerPauseContainer
+	UnpauseContainer = report.DockerUnpauseContainer
+	RemoveContainer  = report.DockerRemoveContainer
+	AttachContainer  = report.DockerAttachContainer
+	ExecContainer    = report.DockerExecContainer
 	ResizeExecTTY    = "docker_resize_exec_tty"
 
 	waitTime = 10

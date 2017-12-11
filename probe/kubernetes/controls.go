@@ -11,10 +11,10 @@ import (
 
 // Control IDs used by the kubernetes integration.
 const (
-	GetLogs   = "kubernetes_get_logs"
-	DeletePod = "kubernetes_delete_pod"
-	ScaleUp   = "kubernetes_scale_up"
-	ScaleDown = "kubernetes_scale_down"
+	GetLogs   = report.KubernetesGetLogs
+	DeletePod = report.KubernetesDeletePod
+	ScaleUp   = report.KubernetesScaleUp
+	ScaleDown = report.KubernetesScaleDown
 )
 
 // GetLogs is the control to get the logs for a kubernetes pod

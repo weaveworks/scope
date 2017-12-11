@@ -10,11 +10,11 @@ import (
 
 // We use these keys in node metadata
 const (
-	PID            = "pid"
-	Name           = "name"
-	PPID           = "ppid"
-	Cmdline        = "cmdline"
-	Threads        = "threads"
+	PID            = report.PID
+	Name           = report.Name
+	PPID           = report.PPID
+	Cmdline        = report.Cmdline
+	Threads        = report.Threads
 	CPUUsage       = "process_cpu_usage_percent"
 	MemoryUsage    = "process_memory_usage_bytes"
 	OpenFilesCount = "open_files_count"

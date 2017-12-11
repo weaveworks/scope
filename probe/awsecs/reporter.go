@@ -13,13 +13,13 @@ import (
 
 // TaskFamily is the key that stores the task family of an ECS Task
 const (
-	Cluster             = "ecs_cluster"
-	CreatedAt           = "ecs_created_at"
-	TaskFamily          = "ecs_task_family"
-	ServiceDesiredCount = "ecs_service_desired_count"
-	ServiceRunningCount = "ecs_service_running_count"
-	ScaleUp             = "ecs_scale_up"
-	ScaleDown           = "ecs_scale_down"
+	Cluster             = report.ECSCluster
+	CreatedAt           = report.ECSCreatedAt
+	TaskFamily          = report.ECSTaskFamily
+	ServiceDesiredCount = report.ECSServiceDesiredCount
+	ServiceRunningCount = report.ECSServiceRunningCount
+	ScaleUp             = report.ECSScaleUp
+	ScaleDown           = report.ECSScaleDown
 )
 
 var (
