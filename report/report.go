@@ -341,6 +341,10 @@ func (r Report) Validate() error {
 //
 // This for now creates node's LatestControls from Controls.
 func (r Report) Upgrade() Report {
+	return r.upgradeLatestControls().upgradePodNodes()
+}
+
+func (r Report) upgradeLatestControls() Report {
 	needUpgrade := false
 	r.WalkTopologies(func(topology *Topology) {
 		for _, node := range topology.Nodes {
@@ -349,6 +353,7 @@ func (r Report) Upgrade() Report {
 			}
 		}
 	})
+
 	if !needUpgrade {
 		return r
 	}
@@ -369,7 +374,39 @@ func (r Report) Upgrade() Report {
 		}
 		topology.Nodes = n
 	})
+
 	return cp
+}
+
+func (r Report) upgradePodNodes() Report {
+	// At the same time the probe stopped reporting replicasets,
+	// it also started reporting deployments as pods' parents
+	if len(r.ReplicaSet.Nodes) == 0 {
+		return r
+	}
+
+	// For each pod, we check for any replica sets, and merge any deployments they point to
+	// into a replacement Parents value.
+	nodes := Nodes{}
+	for podID, pod := range r.Pod.Nodes {
+		if replicaSetIDs, ok := pod.Parents.Lookup(ReplicaSet); ok {
+			newParents := pod.Parents.Delete(ReplicaSet)
+			for _, replicaSetID := range replicaSetIDs {
+				if replicaSet, ok := r.ReplicaSet.Nodes[replicaSetID]; ok {
+					if deploymentIDs, ok := replicaSet.Parents.Lookup(Deployment); ok {
+						newParents = newParents.Add(Deployment, deploymentIDs)
+					}
+				}
+			}
+			// newParents contains a copy of the current parents without replicasets,
+			// PruneParents().WithParents() ensures replicasets are actually deleted
+			pod = pod.PruneParents().WithParents(newParents)
+		}
+		nodes[podID] = pod
+	}
+	r.Pod.Nodes = nodes
+
+	return r
 }
 
 // BackwardCompatible returns a new backward-compatible report.
