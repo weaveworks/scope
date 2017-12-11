@@ -1,3 +1,131 @@
+## Release 1.6.6
+
+This is a minor patch release.
+
+New features and enhancements:
+- Upgrade to React 16
+	[#2929](https://github.com/weaveworks/scope/pull/2929)
+- Humanize reported durations
+	[#2915](https://github.com/weaveworks/scope/pull/2915)
+- Use firstSeenConnectAt for beginning of availability period in Time Travel
+	[#2912](https://github.com/weaveworks/scope/pull/2912)
+- Flat background instead of gradient
+	[#2886](https://github.com/weaveworks/scope/pull/2886)
+
+Bug fixes and minor improvements:
+- fix incorrect reporting of replicaset DesiredReplicas
+	[#2955](https://github.com/weaveworks/scope/pull/2955)
+- filter internet adjacencies
+	[#2954](https://github.com/weaveworks/scope/pull/2954)
+- filter out unconnected pseudo nodes just once, at the end
+	[#2951](https://github.com/weaveworks/scope/pull/2951)
+- Correctly show whether there are new images or not.
+	[#2948](https://github.com/weaveworks/scope/pull/2948)
+- Fix undefined image bug
+	[#2934](https://github.com/weaveworks/scope/pull/2934)
+- Use timestamp in URL
+	[#2919](https://github.com/weaveworks/scope/pull/2919)
+- Fix incorrect image status text bug
+	[#2935](https://github.com/weaveworks/scope/pull/2935)
+- Don't de-reference pointers from ECS without checking
+	[#2918](https://github.com/weaveworks/scope/pull/2918)
+- MAINTAINER is deprecated, now using LABEL
+	[#2916](https://github.com/weaveworks/scope/pull/2916)
+- Try to prevent zooming NaN errors
+	[#2906](https://github.com/weaveworks/scope/pull/2906)
+- Check whether tableContent ref is present
+	[#2907](https://github.com/weaveworks/scope/pull/2907)
+- Use TimeTravel from ui-components repo
+	[#2903](https://github.com/weaveworks/scope/pull/2903)
+- docker: Close pipe when the docker API call fails
+	[#2894](https://github.com/weaveworks/scope/pull/2894)
+- terminal: Fix Caculated typo
+	[#2897](https://github.com/weaveworks/scope/pull/2897)
+- Fix golint if/else
+	[#2892](https://github.com/weaveworks/scope/pull/2892)
+- Make Time Travel a modular component
+	[#2888](https://github.com/weaveworks/scope/pull/2888)
+- Use a context sensitive route for the popped out terminal.html
+	[#2882](https://github.com/weaveworks/scope/pull/2882)
+- Fixes images in details-panel after service -> resources change
+	[#2885](https://github.com/weaveworks/scope/pull/2885)
+- Fixes "Save as svg" functionality.
+	[#2883](https://github.com/weaveworks/scope/pull/2883)
+- tracking: Fix in-flight collision of two related PRs
+	[#2867](https://github.com/weaveworks/scope/pull/2867)
+- lint: Fix 2 sites failing a recently introduced golint check
+	[#2868](https://github.com/weaveworks/scope/pull/2868)
+- Continue processing reports if billing fails
+	[#2860](https://github.com/weaveworks/scope/pull/2860)
+
+Documentation:
+- Add godoc to README
+	[#2891](https://github.com/weaveworks/scope/pull/2891)
+- Bump license copyright year to 2017
+	[#2873](https://github.com/weaveworks/scope/pull/2873)
+
+Internal improvements and cleanup:
+- make render.ResetCache() reset all caches
+	[#2949](https://github.com/weaveworks/scope/pull/2949)
+- Decorators, begone!
+	[#2947](https://github.com/weaveworks/scope/pull/2947)
+- Expand the app's k8s namespace calculation
+	[#2946](https://github.com/weaveworks/scope/pull/2946)
+- pass render filters and maps by value rather than reference
+	[#2944](https://github.com/weaveworks/scope/pull/2944)
+- Remove optional dependencies
+	[#2930](https://github.com/weaveworks/scope/pull/2930)
+- remove unused memoisation
+	[#2924](https://github.com/weaveworks/scope/pull/2924)
+- Simplify Utsname string conversion
+	[#2917](https://github.com/weaveworks/scope/pull/2917)
+- vendoring: Update gopacket to latest master
+	[#2911](https://github.com/weaveworks/scope/pull/2911)
+- Update minor node dependencies
+	[#2900](https://github.com/weaveworks/scope/pull/2900)
+- Update eslint dependencies
+	[#2896](https://github.com/weaveworks/scope/pull/2896)
+- Get rid of react-tooltip dependency
+	[#2871](https://github.com/weaveworks/scope/pull/2871)
+- Update ugorji/go/codec
+	[#2863](https://github.com/weaveworks/scope/pull/2863)
+
+Performance improvements:
+- make report upgrading fast when it's a no-op
+	[#2965](https://github.com/weaveworks/scope/pull/2965)
+- Remove struct wrapping LatestMap
+	[#2961](https://github.com/weaveworks/scope/pull/2961)
+- Stop reporting ReplicaSets
+	[#2957](https://github.com/weaveworks/scope/pull/2957)
+- optimisation: allocate less memory in LatestMap merging
+	[#2956](https://github.com/weaveworks/scope/pull/2956)
+- Decode reports from a byte buffer
+	[#2386](https://github.com/weaveworks/scope/pull/2386)
+- optimisation: faster knownServiceCache
+	[#2952](https://github.com/weaveworks/scope/pull/2952)
+- optimisation: make Memoise(Memoise(...)) only memoise once
+	[#2950](https://github.com/weaveworks/scope/pull/2950)
+- Rewrite more Map-Reduces as Renderers to save garbage
+	[#2938](https://github.com/weaveworks/scope/pull/2938)
+- Parsing optimisations
+	[#2937](https://github.com/weaveworks/scope/pull/2937)
+- produce stats as part of rendering
+	[#2926](https://github.com/weaveworks/scope/pull/2926)
+- Optimisation: replace three map-reduces with Renderers
+	[#2920](https://github.com/weaveworks/scope/pull/2920)
+- Avoid object creation when scanning DNS names
+	[#2921](https://github.com/weaveworks/scope/pull/2921)
+- Re-implement LatestMap as a sorted slice for better performance
+	[#2870](https://github.com/weaveworks/scope/pull/2870)
+- Small memory-allocation reduction
+	[#2872](https://github.com/weaveworks/scope/pull/2872)
+
+Weave Cloud related changes:
+- tracking: Use segment for tracking
+	[#2861](https://github.com/weaveworks/scope/pull/2861)
+- tracking: Add Mixpanel event on Control clicks
+	[#2857](https://github.com/weaveworks/scope/pull/2857)
+
 ## Release 1.6.5
 
 This is a minor patch release.
