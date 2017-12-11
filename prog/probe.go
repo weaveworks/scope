@@ -37,7 +37,7 @@ import (
 
 const (
 	versionCheckPeriod = 6 * time.Hour
-	defaultServiceHost = "https://cloud.weave.works:443"
+	defaultServiceHost = "https://cloud.weave.works.:443"
 )
 
 var (
