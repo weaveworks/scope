@@ -152,7 +152,11 @@ func (c *collector) Report(_ context.Context, timestamp time.Time) (report.Repor
 	c.clean()
 	c.quantise()
 
-	rpt := c.merger.Merge(c.reports).Upgrade()
+	for i := range c.reports {
+		c.reports[i] = c.reports[i].Upgrade()
+	}
+
+	rpt := c.merger.Merge(c.reports)
 	c.cached = &rpt
 	return rpt, nil
 }
