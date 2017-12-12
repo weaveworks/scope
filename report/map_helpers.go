@@ -81,11 +81,7 @@ func mapKeys(m ps.Map) []string {
 	return keys
 }
 
-// constants from https://github.com/ugorji/go/blob/master/codec/helper.go#L207
 const (
-	containerMapKey   = 2
-	containerMapValue = 3
-	containerMapEnd   = 4
 	// from https://github.com/ugorji/go/blob/master/codec/helper.go#L152
 	cUTF8 = 2
 )
@@ -95,7 +91,7 @@ const (
 // we are using undocumented, internal APIs, which could break in the future.
 // See https://github.com/weaveworks/scope/pull/1709 for more information.
 func mapRead(decoder *codec.Decoder, decodeValue func(isNil bool) interface{}) ps.Map {
-	z, r := codec.GenHelperDecoder(decoder)
+	_, r := codec.GenHelperDecoder(decoder)
 	if r.TryDecodeAsNil() {
 		return ps.NewMap()
 	}
@@ -108,33 +104,33 @@ func mapRead(decoder *codec.Decoder, decodeValue func(isNil bool) interface{}) p
 		}
 
 		var key string
-		z.DecSendContainerState(containerMapKey)
+		r.ReadMapElemKey()
 		if !r.TryDecodeAsNil() {
 			key = r.DecodeString()
 		}
 
-		z.DecSendContainerState(containerMapValue)
+		r.ReadMapElemValue()
 		value := decodeValue(r.TryDecodeAsNil())
 		out = out.UnsafeMutableSet(key, value)
 	}
-	z.DecSendContainerState(containerMapEnd)
+	r.ReadMapEnd()
 	return out
 }
 
 // Inverse of mapRead, done for performance. Same comments about
 // undocumented internal APIs apply.
 func mapWrite(m ps.Map, encoder *codec.Encoder, encodeValue func(*codec.Encoder, interface{})) {
-	z, r := codec.GenHelperEncoder(encoder)
+	_, r := codec.GenHelperEncoder(encoder)
 	if m == nil || m.IsNil() {
 		r.EncodeNil()
 		return
 	}
-	r.EncodeMapStart(m.Size())
+	r.WriteMapStart(m.Size())
 	m.ForEach(func(key string, val interface{}) {
-		z.EncSendContainerState(containerMapKey)
+		r.WriteMapElemKey()
 		r.EncodeString(cUTF8, key)
-		z.EncSendContainerState(containerMapValue)
+		r.WriteMapElemValue()
 		encodeValue(encoder, val)
 	})
-	z.EncSendContainerState(containerMapEnd)
+	r.WriteMapEnd()
 }
