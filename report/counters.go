@@ -110,7 +110,7 @@ func (c Counters) fromIntermediate(in map[string]int) Counters {
 func (c *Counters) CodecEncodeSelf(encoder *codec.Encoder) {
 	mapWrite(c.psMap, encoder, func(encoder *codec.Encoder, val interface{}) {
 		i := val.(int)
-		encoder.Encode(i)
+		encoder.MustEncode(i)
 	})
 }
 
@@ -119,7 +119,7 @@ func (c *Counters) CodecDecodeSelf(decoder *codec.Decoder) {
 	out := mapRead(decoder, func(isNil bool) interface{} {
 		var value int
 		if !isNil {
-			decoder.Decode(&value)
+			decoder.MustDecode(&value)
 		}
 		return value
 	})

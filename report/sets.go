@@ -114,7 +114,7 @@ func (s Sets) DeepEqual(t Sets) bool {
 // CodecEncodeSelf implements codec.Selfer
 func (s *Sets) CodecEncodeSelf(encoder *codec.Encoder) {
 	mapWrite(s.psMap, encoder, func(encoder *codec.Encoder, val interface{}) {
-		encoder.Encode(val.(StringSet))
+		encoder.MustEncode(val.(StringSet))
 	})
 }
 
@@ -123,7 +123,7 @@ func (s *Sets) CodecDecodeSelf(decoder *codec.Decoder) {
 	out := mapRead(decoder, func(isNil bool) interface{} {
 		var value StringSet
 		if !isNil {
-			decoder.Decode(&value)
+			decoder.MustDecode(&value)
 		}
 		return value
 	})

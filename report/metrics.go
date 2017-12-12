@@ -272,7 +272,7 @@ func (m WireMetrics) FromIntermediate() Metric {
 // CodecEncodeSelf implements codec.Selfer
 func (m *Metric) CodecEncodeSelf(encoder *codec.Encoder) {
 	in := m.ToIntermediate()
-	encoder.Encode(in)
+	encoder.MustEncode(in)
 }
 
 // CodecDecodeSelf implements codec.Selfer

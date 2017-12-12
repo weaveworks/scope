@@ -133,18 +133,16 @@ func (n NodeSet) fromIntermediate(nodes []Node) NodeSet {
 // CodecEncodeSelf implements codec.Selfer
 func (n *NodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
 	if n.psMap != nil {
-		encoder.Encode(n.toIntermediate())
+		encoder.MustEncode(n.toIntermediate())
 	} else {
-		encoder.Encode(nil)
+		encoder.MustEncode(nil)
 	}
 }
 
 // CodecDecodeSelf implements codec.Selfer
 func (n *NodeSet) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := []Node{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
+	decoder.MustDecode(&in)
 	*n = NodeSet{}.fromIntermediate(in)
 }
 
