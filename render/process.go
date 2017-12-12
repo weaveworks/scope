@@ -2,6 +2,7 @@ package render
 
 import (
 	"github.com/weaveworks/scope/probe/docker"
+	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -98,11 +99,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 			if !ok {
 				continue
 			}
-
-			if len(n.Adjacency) > 1 {
-				// We cannot be sure that the pid is associated with all the
-				// connections. It is better to drop such an endpoint than
-				// risk rendering bogus connections.
+			if hasMoreThanOneConnection(n, endpoints.Nodes) {
 				continue
 			}
 
@@ -122,6 +119,33 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 	ret.fixupAdjacencies(processes)
 	ret.fixupAdjacencies(endpoints)
 	return ret.result()
+}
+
+// When there is more than one connection originating from a source
+// endpoint, we cannot be sure that its pid is associated with all of
+// them, since the source endpoint may have been re-used by a
+// different process. See #2665. It is better to drop such an endpoint
+// than risk rendering bogus connections.  Aliased connections - when
+// all the remote endpoints represent the same logical endpoint, due
+// to NATing - are fine though.
+func hasMoreThanOneConnection(n report.Node, endpoints report.Nodes) bool {
+	if len(n.Adjacency) < 2 {
+		return false
+	}
+	firstRealEndpointID := ""
+	for _, endpointID := range n.Adjacency {
+		if ep, ok := endpoints[endpointID]; ok {
+			if copyID, _, ok := ep.Latest.LookupEntry(endpoint.CopyOf); ok {
+				endpointID = copyID
+			}
+		}
+		if firstRealEndpointID == "" {
+			firstRealEndpointID = endpointID
+		} else if firstRealEndpointID != endpointID {
+			return true
+		}
+	}
+	return false
 }
 
 // processes2Names maps process Nodes to Nodes for each process name.
