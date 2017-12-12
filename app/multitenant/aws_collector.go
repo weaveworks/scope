@@ -284,6 +284,7 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 			log.Warningf("Error fetching from cache: %v", err)
 		}
 		for key, report := range found {
+			report = report.Upgrade()
 			c.inProcess.StoreReport(key, report)
 			reports = append(reports, report)
 		}
@@ -337,7 +338,7 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 		return report.MakeReport(), err
 	}
 
-	return c.merger.Merge(reports).Upgrade(), nil
+	return c.merger.Merge(reports), nil
 }
 
 func (c *awsCollector) HasHistoricReports() bool {
