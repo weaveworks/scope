@@ -267,12 +267,13 @@ func (c *awsCollector) reportKeysInRange(ctx context.Context, userid string, row
 // getReportKeys returns the S3 for reports in the reporting window ending at timestamp.
 func (c *awsCollector) getReportKeys(ctx context.Context, timestamp time.Time) ([]string, error) {
 	var (
-		end         = timestamp
-		start       = end.Add(-c.window)
-		rowStart    = start.UnixNano() / time.Hour.Nanoseconds()
-		rowEnd      = end.UnixNano() / time.Hour.Nanoseconds()
-		userid, err = c.userIDer(ctx)
+		end      = timestamp
+		start    = end.Add(-c.window)
+		rowStart = start.UnixNano() / time.Hour.Nanoseconds()
+		rowEnd   = end.UnixNano() / time.Hour.Nanoseconds()
 	)
+
+	userid, err := c.userIDer(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -284,12 +285,10 @@ func (c *awsCollector) getReportKeys(ctx context.Context, timestamp time.Time) (
 		if err != nil {
 			return nil, err
 		}
-
 		reportKeys2, err := c.reportKeysInRange(ctx, userid, rowEnd, start, end)
 		if err != nil {
 			return nil, err
 		}
-
 		reportKeys = append(reportKeys, reportKeys1...)
 		reportKeys = append(reportKeys, reportKeys2...)
 	} else {
