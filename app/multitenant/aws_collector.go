@@ -215,8 +215,8 @@ func (c *awsCollector) CreateTables() error {
 	return err
 }
 
-// getReportKeys gets the s3 keys for reports in this range
-func (c *awsCollector) getReportKeys(ctx context.Context, userid string, row int64, start, end time.Time) ([]string, error) {
+// reportKeysInRange returns the s3 keys for reports in the specified range
+func (c *awsCollector) reportKeysInRange(ctx context.Context, userid string, row int64, start, end time.Time) ([]string, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
 	var resp *dynamodb.QueryOutput
 	err := instrument.TimeRequestHistogram(ctx, "DynamoDB.Query", dynamoRequestDuration, func(_ context.Context) error {
@@ -314,12 +314,12 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 	// Queries will only every span 2 rows max.
 	var reportKeys []string
 	if rowStart != rowEnd {
-		reportKeys1, err := c.getReportKeys(ctx, userid, rowStart, start, end)
+		reportKeys1, err := c.reportKeysInRange(ctx, userid, rowStart, start, end)
 		if err != nil {
 			return report.MakeReport(), err
 		}
 
-		reportKeys2, err := c.getReportKeys(ctx, userid, rowEnd, start, end)
+		reportKeys2, err := c.reportKeysInRange(ctx, userid, rowEnd, start, end)
 		if err != nil {
 			return report.MakeReport(), err
 		}
@@ -327,7 +327,7 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 		reportKeys = append(reportKeys, reportKeys1...)
 		reportKeys = append(reportKeys, reportKeys2...)
 	} else {
-		if reportKeys, err = c.getReportKeys(ctx, userid, rowEnd, start, end); err != nil {
+		if reportKeys, err = c.reportKeysInRange(ctx, userid, rowEnd, start, end); err != nil {
 			return report.MakeReport(), err
 		}
 	}
