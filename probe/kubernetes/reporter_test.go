@@ -154,6 +154,9 @@ func (c *mockClient) WalkReplicationControllers(f func(kubernetes.ReplicationCon
 func (*mockClient) WalkNodes(f func(*apiv1.Node) error) error {
 	return nil
 }
+func (c *mockClient) WalkNamespaces(f func(kubernetes.NamespaceResource) error) error {
+	return nil
+}
 func (*mockClient) WatchPods(func(kubernetes.Event, kubernetes.Pod)) {}
 func (c *mockClient) GetLogs(namespaceID, podName string) (io.ReadCloser, error) {
 	r, ok := c.logs[namespaceID+";"+podName]

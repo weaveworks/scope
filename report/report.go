@@ -22,6 +22,7 @@ const (
 	DaemonSet      = "daemon_set"
 	StatefulSet    = "stateful_set"
 	CronJob        = "cron_job"
+	Namespace      = "namespace"
 	ContainerImage = "container_image"
 	Host           = "host"
 	Overlay        = "overlay"
@@ -56,6 +57,7 @@ var topologyNames = []string{
 	DaemonSet,
 	StatefulSet,
 	CronJob,
+	Namespace,
 	Host,
 	Overlay,
 	ECSTask,
@@ -114,6 +116,11 @@ type Report struct {
 	// Metadata includes things like Cron Job id, name, etc. Edges are not
 	// present.
 	CronJob Topology
+
+	// Namespace nodes represent all Kubernetes Namespaces running on hosts running probes.
+	// Metadata includes things like Namespace id, name, etc. Edges are not
+	// present.
+	Namespace Topology
 
 	// ContainerImages nodes represent all Docker containers images on
 	// hosts running probes. Metadata includes things like image id, name etc.
@@ -217,6 +224,8 @@ func MakeReport() Report {
 			WithShape(Triangle).
 			WithLabel("cron job", "cron jobs"),
 
+		Namespace: MakeTopology(),
+
 		Overlay: MakeTopology().
 			WithShape(Circle).
 			WithLabel("peer", "peers"),
@@ -317,6 +326,8 @@ func (r *Report) topology(name string) *Topology {
 		return &r.StatefulSet
 	case CronJob:
 		return &r.CronJob
+	case Namespace:
+		return &r.Namespace
 	case Host:
 		return &r.Host
 	case Overlay:

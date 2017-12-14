@@ -36,6 +36,7 @@ type Client interface {
 	WalkCronJobs(f func(CronJob) error) error
 	WalkReplicationControllers(f func(ReplicationController) error) error
 	WalkNodes(f func(*apiv1.Node) error) error
+	WalkNamespaces(f func(NamespaceResource) error) error
 
 	WatchPods(f func(Event, Pod))
 
@@ -59,6 +60,7 @@ type client struct {
 	cronJobStore               cache.Store
 	replicationControllerStore cache.Store
 	nodeStore                  cache.Store
+	namespaceStore             cache.Store
 
 	podWatchesMutex sync.Mutex
 	podWatches      []func(Event, Pod)
@@ -158,6 +160,7 @@ func NewClient(config ClientConfig) (Client, error) {
 	result.serviceStore = result.setupStore(c.CoreV1Client.RESTClient(), "services", &apiv1.Service{}, nil)
 	result.replicationControllerStore = result.setupStore(c.CoreV1Client.RESTClient(), "replicationcontrollers", &apiv1.ReplicationController{}, nil)
 	result.nodeStore = result.setupStore(c.CoreV1Client.RESTClient(), "nodes", &apiv1.Node{}, nil)
+	result.namespaceStore = result.setupStore(c.CoreV1Client.RESTClient(), "namespaces", &apiv1.Namespace{}, nil)
 
 	// We list deployments here to check if this version of kubernetes is >= 1.2.
 	// We would use NegotiateVersion, but Kubernetes 1.1 "supports"
@@ -320,6 +323,16 @@ func (c *client) WalkNodes(f func(*apiv1.Node) error) error {
 	for _, m := range c.nodeStore.List() {
 		node := m.(*apiv1.Node)
 		if err := f(node); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *client) WalkNamespaces(f func(NamespaceResource) error) error {
+	for _, m := range c.namespaceStore.List() {
+		namespace := m.(*apiv1.Namespace)
+		if err := f(NewNamespace(namespace)); err != nil {
 			return err
 		}
 	}

@@ -140,6 +140,12 @@ var (
 	// ParseCronJobNodeID parses a cronjob node ID
 	ParseCronJobNodeID = parseSingleComponentID("cronjob")
 
+	// MakeNamespaceNodeID produces a namespace node ID from its composite parts.
+	MakeNamespaceNodeID = makeSingleComponentID("namespace")
+
+	// ParseNamespaceNodeID parses a namespace set node ID
+	ParseNamespaceNodeID = parseSingleComponentID("namespace")
+
 	// MakeECSTaskNodeID produces a ECSTask node ID from its composite parts.
 	MakeECSTaskNodeID = makeSingleComponentID("ecs_task")
 
