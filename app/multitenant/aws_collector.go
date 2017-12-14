@@ -215,8 +215,8 @@ func (c *awsCollector) CreateTables() error {
 	return err
 }
 
-// getReportKeys gets the s3 keys for reports in this range
-func (c *awsCollector) getReportKeys(ctx context.Context, userid string, row int64, start, end time.Time) ([]string, error) {
+// reportKeysInRange returns the s3 keys for reports in the specified range
+func (c *awsCollector) reportKeysInRange(ctx context.Context, userid string, row int64, start, end time.Time) ([]string, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
 	var resp *dynamodb.QueryOutput
 	err := instrument.TimeRequestHistogram(ctx, "DynamoDB.Query", dynamoRequestDuration, func(_ context.Context) error {
@@ -264,6 +264,42 @@ func (c *awsCollector) getReportKeys(ctx context.Context, userid string, row int
 	return result, nil
 }
 
+// getReportKeys returns the S3 for reports in the reporting window ending at timestamp.
+func (c *awsCollector) getReportKeys(ctx context.Context, timestamp time.Time) ([]string, error) {
+	var (
+		end      = timestamp
+		start    = end.Add(-c.window)
+		rowStart = start.UnixNano() / time.Hour.Nanoseconds()
+		rowEnd   = end.UnixNano() / time.Hour.Nanoseconds()
+	)
+
+	userid, err := c.userIDer(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Queries will only every span 2 rows max.
+	var reportKeys []string
+	if rowStart != rowEnd {
+		reportKeys1, err := c.reportKeysInRange(ctx, userid, rowStart, start, end)
+		if err != nil {
+			return nil, err
+		}
+		reportKeys2, err := c.reportKeysInRange(ctx, userid, rowEnd, start, end)
+		if err != nil {
+			return nil, err
+		}
+		reportKeys = append(reportKeys, reportKeys1...)
+		reportKeys = append(reportKeys, reportKeys2...)
+	} else {
+		if reportKeys, err = c.reportKeysInRange(ctx, userid, rowEnd, start, end); err != nil {
+			return nil, err
+		}
+	}
+
+	return reportKeys, nil
+}
+
 func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]report.Report, error) {
 	missing := reportKeys
 
@@ -300,45 +336,22 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 }
 
 func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.Report, error) {
-	var (
-		end         = timestamp
-		start       = end.Add(-c.window)
-		rowStart    = start.UnixNano() / time.Hour.Nanoseconds()
-		rowEnd      = end.UnixNano() / time.Hour.Nanoseconds()
-		userid, err = c.userIDer(ctx)
-	)
+	reportKeys, err := c.getReportKeys(ctx, timestamp)
 	if err != nil {
 		return report.MakeReport(), err
 	}
-
-	// Queries will only every span 2 rows max.
-	var reportKeys []string
-	if rowStart != rowEnd {
-		reportKeys1, err := c.getReportKeys(ctx, userid, rowStart, start, end)
-		if err != nil {
-			return report.MakeReport(), err
-		}
-
-		reportKeys2, err := c.getReportKeys(ctx, userid, rowEnd, start, end)
-		if err != nil {
-			return report.MakeReport(), err
-		}
-
-		reportKeys = append(reportKeys, reportKeys1...)
-		reportKeys = append(reportKeys, reportKeys2...)
-	} else {
-		if reportKeys, err = c.getReportKeys(ctx, userid, rowEnd, start, end); err != nil {
-			return report.MakeReport(), err
-		}
-	}
-
-	log.Debugf("Fetching %d reports from %v to %v", len(reportKeys), start, end)
+	log.Debugf("Fetching %d reports to %v", len(reportKeys), timestamp)
 	reports, err := c.getReports(ctx, reportKeys)
 	if err != nil {
 		return report.MakeReport(), err
 	}
 
 	return c.merger.Merge(reports), nil
+}
+
+func (c *awsCollector) HasReports(ctx context.Context, timestamp time.Time) (bool, error) {
+	reportKeys, err := c.getReportKeys(ctx, timestamp)
+	return len(reportKeys) > 0, err
 }
 
 func (c *awsCollector) HasHistoricReports() bool {

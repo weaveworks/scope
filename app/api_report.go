@@ -32,6 +32,16 @@ type probeDesc struct {
 // Probe handler
 func makeProbeHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		r.ParseForm()
+		if _, sparse := r.Form["sparse"]; sparse {
+			// if we have reports, we must have connected probes
+			hasProbes, err := rep.HasReports(ctx, time.Now())
+			if err != nil {
+				respondWith(w, http.StatusInternalServerError, err)
+			}
+			respondWith(w, http.StatusOK, hasProbes)
+			return
+		}
 		rpt, err := rep.Report(ctx, time.Now())
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
