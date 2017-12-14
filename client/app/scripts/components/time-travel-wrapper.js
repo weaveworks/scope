@@ -1,5 +1,6 @@
 import React from 'react';
 import moment from 'moment';
+import styled from 'styled-components';
 import { connect } from 'react-redux';
 import { TimeTravel } from 'weaveworks-ui-components';
 
@@ -7,13 +8,25 @@ import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { jumpToTime } from '../actions/app-actions';
 
 
+const TimeTravelContainer = styled.div`
+  transition: all .15s ease-in-out;
+  position: relative;
+  overflow: hidden;
+  height: 0;
+
+  ${props => props.visible && `
+    height: 105px;
+  `}
+`;
+
 class TimeTravelWrapper extends React.Component {
   constructor(props, context) {
     super(props, context);
 
     this.changeTimestamp = this.changeTimestamp.bind(this);
     this.trackTimestampEdit = this.trackTimestampEdit.bind(this);
-    this.trackTimelineClick = this.trackTimelineClick.bind(this);
+    this.trackTimelinePanButtonClick = this.trackTimelinePanButtonClick.bind(this);
+    this.trackTimelineLabelClick = this.trackTimelineLabelClick.bind(this);
     this.trackTimelineZoom = this.trackTimelineZoom.bind(this);
     this.trackTimelinePan = this.trackTimelinePan.bind(this);
   }
@@ -30,8 +43,16 @@ class TimeTravelWrapper extends React.Component {
     });
   }
 
-  trackTimelineClick() {
-    trackAnalyticsEvent('scope.time.timeline.click', {
+  trackTimelinePanButtonClick() {
+    trackAnalyticsEvent('scope.time.timeline.pan.button.click', {
+      layout: this.props.topologyViewMode,
+      topologyId: this.props.currentTopology.get('id'),
+      parentTopologyId: this.props.currentTopology.get('parentId'),
+    });
+  }
+
+  trackTimelineLabelClick() {
+    trackAnalyticsEvent('scope.time.timeline.label.click', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
@@ -56,19 +77,19 @@ class TimeTravelWrapper extends React.Component {
   }
 
   render() {
-    const { visible, timestamp } = this.props;
-
     return (
-      <TimeTravel
-        visible={visible}
-        timestamp={timestamp}
-        earliestTimestamp={this.props.earliestTimestamp}
-        onChangeTimestamp={this.changeTimestamp}
-        onTimestampInputEdit={this.trackTimestampEdit}
-        onTimestampLabelClick={this.trackTimelineClick}
-        onTimelineZoom={this.trackTimelineZoom}
-        onTimelinePan={this.trackTimelinePan}
-      />
+      <TimeTravelContainer visible={this.props.visible}>
+        <TimeTravel
+          timestamp={this.props.timestamp}
+          earliestTimestamp={this.props.earliestTimestamp}
+          onChangeTimestamp={this.changeTimestamp}
+          onTimestampInputEdit={this.trackTimestampEdit}
+          onTimelinePanButtonClick={this.trackTimelinePanButtonClick}
+          onTimelineLabelClick={this.trackTimelineLabelClick}
+          onTimelineZoom={this.trackTimelineZoom}
+          onTimelinePan={this.trackTimelinePan}
+        />
+      </TimeTravelContainer>
     );
   }
 }

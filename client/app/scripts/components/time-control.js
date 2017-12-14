@@ -88,7 +88,7 @@ class TimeControl extends React.Component {
             </span>
             <span
               className={className(isPausedNow)}
-              onClick={!isTimeTravelling && this.handlePauseClick}
+              onClick={!isTimeTravelling ? this.handlePauseClick : null}
               disabled={isTimeTravelling}
               title="Pause updates (freezes the nodes in their current layout)">
               {isPausedNow && <span className="fa fa-pause" />}
