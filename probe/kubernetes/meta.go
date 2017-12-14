@@ -10,9 +10,9 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	Name        = "kubernetes_name"
-	Namespace   = "kubernetes_namespace"
-	Created     = "kubernetes_created"
+	Name        = report.KubernetesName
+	Namespace   = report.KubernetesNamespace
+	Created     = report.KubernetesCreated
 	LabelPrefix = "kubernetes_labels_"
 )
 

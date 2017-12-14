@@ -10,9 +10,9 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	State           = "kubernetes_state"
-	IsInHostNetwork = "kubernetes_is_in_host_network"
-	RestartCount    = "kubernetes_restart_count"
+	State           = report.KubernetesState
+	IsInHostNetwork = report.KubernetesIsInHostNetwork
+	RestartCount    = report.KubernetesRestartCount
 
 	StateDeleted = "deleted"
 )

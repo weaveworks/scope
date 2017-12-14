@@ -15,10 +15,10 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	Schedule      = "kubernetes_schedule"
-	Suspended     = "kubernetes_suspended"
-	LastScheduled = "kubernetes_last_scheduled"
-	ActiveJobs    = "kubernetes_active_jobs"
+	Schedule      = report.KubernetesSchedule
+	Suspended     = report.KubernetesSuspended
+	LastScheduled = report.KubernetesLastScheduled
+	ActiveJobs    = report.KubernetesActiveJobs
 )
 
 // CronJob represents a Kubernetes cron job

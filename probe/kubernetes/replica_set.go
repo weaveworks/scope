@@ -13,7 +13,7 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	FullyLabeledReplicas = "kubernetes_fully_labeled_replicas"
+	FullyLabeledReplicas = report.KubernetesFullyLabeledReplicas
 )
 
 // ReplicaSet represents a Kubernetes replica set

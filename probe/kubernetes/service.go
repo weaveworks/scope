@@ -9,7 +9,7 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	PublicIP = "kubernetes_public_ip"
+	PublicIP = report.KubernetesPublicIP
 )
 
 // Service represents a Kubernetes service

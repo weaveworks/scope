@@ -18,19 +18,19 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	ContainerName          = "docker_container_name"
-	ContainerCommand       = "docker_container_command"
-	ContainerPorts         = "docker_container_ports"
-	ContainerCreated       = "docker_container_created"
-	ContainerNetworks      = "docker_container_networks"
-	ContainerIPs           = "docker_container_ips"
-	ContainerHostname      = "docker_container_hostname"
-	ContainerIPsWithScopes = "docker_container_ips_with_scopes"
-	ContainerState         = "docker_container_state"
-	ContainerStateHuman    = "docker_container_state_human"
-	ContainerUptime        = "docker_container_uptime"
-	ContainerRestartCount  = "docker_container_restart_count"
-	ContainerNetworkMode   = "docker_container_network_mode"
+	ContainerName          = report.DockerContainerName
+	ContainerCommand       = report.DockerContainerCommand
+	ContainerPorts         = report.DockerContainerPorts
+	ContainerCreated       = report.DockerContainerCreated
+	ContainerNetworks      = report.DockerContainerNetworks
+	ContainerIPs           = report.DockerContainerIPs
+	ContainerHostname      = report.DockerContainerHostname
+	ContainerIPsWithScopes = report.DockerContainerIPsWithScopes
+	ContainerState         = report.DockerContainerState
+	ContainerStateHuman    = report.DockerContainerStateHuman
+	ContainerUptime        = report.DockerContainerUptime
+	ContainerRestartCount  = report.DockerContainerRestartCount
+	ContainerNetworkMode   = report.DockerContainerNetworkMode
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"

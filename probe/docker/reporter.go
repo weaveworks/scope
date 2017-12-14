@@ -14,15 +14,15 @@ import (
 
 // Keys for use in Node
 const (
-	ImageID          = "docker_image_id"
-	ImageName        = "docker_image_name"
-	ImageSize        = "docker_image_size"
-	ImageVirtualSize = "docker_image_virtual_size"
+	ImageID          = report.DockerImageID
+	ImageName        = report.DockerImageName
+	ImageSize        = report.DockerImageSize
+	ImageVirtualSize = report.DockerImageVirtualSize
+	IsInHostNetwork  = report.DockerIsInHostNetwork
 	ImageLabelPrefix = "docker_image_label_"
-	IsInHostNetwork  = "docker_is_in_host_network"
 	ImageTableID     = "image_table"
-	ServiceName      = "service_name"
-	StackNamespace   = "stack_namespace"
+	ServiceName      = report.DockerServiceName
+	StackNamespace   = report.DockerStackNamespace
 	DefaultNamespace = "No Stack"
 )
 

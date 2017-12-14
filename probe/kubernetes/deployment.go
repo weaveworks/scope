@@ -13,10 +13,10 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	UpdatedReplicas     = "kubernetes_updated_replicas"
-	AvailableReplicas   = "kubernetes_available_replicas"
-	UnavailableReplicas = "kubernetes_unavailable_replicas"
-	Strategy            = "kubernetes_strategy"
+	UpdatedReplicas     = report.KubernetesUpdatedReplicas
+	AvailableReplicas   = report.KubernetesAvailableReplicas
+	UnavailableReplicas = report.KubernetesUnavailableReplicas
+	Strategy            = report.KubernetesStrategy
 )
 
 // Deployment represents a Kubernetes deployment

@@ -11,9 +11,9 @@ import (
 
 // Node metadata keys.
 const (
-	ReverseDNSNames = "reverse_dns_names"
-	SnoopedDNSNames = "snooped_dns_names"
-	CopyOf          = "copy_of"
+	ReverseDNSNames = report.ReverseDNSNames
+	SnoopedDNSNames = report.SnoopedDNSNames
+	CopyOf          = report.CopyOf
 )
 
 // ReporterConfig are the config options for the endpoint reporter.

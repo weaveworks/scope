@@ -10,9 +10,8 @@ import (
 
 // Node metadata keys.
 const (
-	ContainerID = "docker_container_id"
-	Domain      = "domain" // TODO this is ambiguous, be more specific
-	Name        = "name"   // TODO this is ambiguous, be more specific
+	ContainerID = report.DockerContainerID
+	Name        = report.Name
 )
 
 // These vars are exported for testing.

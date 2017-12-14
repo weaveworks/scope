@@ -243,7 +243,7 @@ function generate_latest_map() {
             z.DecSendContainerState(containerMapKey)
             var key string
             if !r.TryDecodeAsNil() {
-                key = r.DecodeString()
+            	key = lookupCommonKey(r.DecodeStringAsBytes())
             }
             i := m.locate(key)
             (*m)[i].key = key

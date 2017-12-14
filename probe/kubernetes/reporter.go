@@ -18,11 +18,11 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	IP                 = "kubernetes_ip"
-	ObservedGeneration = "kubernetes_observed_generation"
-	Replicas           = "kubernetes_replicas"
-	DesiredReplicas    = "kubernetes_desired_replicas"
-	NodeType           = "kubernetes_node_type"
+	IP                 = report.KubernetesIP
+	ObservedGeneration = report.KubernetesObservedGeneration
+	Replicas           = report.KubernetesReplicas
+	DesiredReplicas    = report.KubernetesDesiredReplicas
+	NodeType           = report.KubernetesNodeType
 )
 
 // Exposed for testing

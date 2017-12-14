@@ -211,7 +211,7 @@ func (m *StringLatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 		z.DecSendContainerState(containerMapKey)
 		var key string
 		if !r.TryDecodeAsNil() {
-			key = r.DecodeString()
+			key = lookupCommonKey(r.DecodeStringAsBytes())
 		}
 		i := m.locate(key)
 		(*m)[i].key = key
@@ -432,7 +432,7 @@ func (m *NodeControlDataLatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 		z.DecSendContainerState(containerMapKey)
 		var key string
 		if !r.TryDecodeAsNil() {
-			key = r.DecodeString()
+			key = lookupCommonKey(r.DecodeStringAsBytes())
 		}
 		i := m.locate(key)
 		(*m)[i].key = key

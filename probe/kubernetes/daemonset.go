@@ -12,7 +12,7 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	MisscheduledReplicas = "kubernetes_misscheduled_replicas"
+	MisscheduledReplicas = report.KubernetesMisscheduledReplicas
 )
 
 // DaemonSet represents a Kubernetes daemonset
