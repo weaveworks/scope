@@ -35,7 +35,6 @@ type Client interface {
 	WalkStatefulSets(f func(StatefulSet) error) error
 	WalkCronJobs(f func(CronJob) error) error
 	WalkReplicationControllers(f func(ReplicationController) error) error
-	WalkNodes(f func(*apiv1.Node) error) error
 	WalkNamespaces(f func(NamespaceResource) error) error
 
 	WatchPods(f func(Event, Pod))
@@ -313,16 +312,6 @@ func (c *client) WalkCronJobs(f func(CronJob) error) error {
 	for _, m := range c.cronJobStore.List() {
 		cj := m.(*apibatchv2alpha1.CronJob)
 		if err := f(NewCronJob(cj, jobs)); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *client) WalkNodes(f func(*apiv1.Node) error) error {
-	for _, m := range c.nodeStore.List() {
-		node := m.(*apiv1.Node)
-		if err := f(node); err != nil {
 			return err
 		}
 	}

@@ -151,9 +151,6 @@ func (c *mockClient) WalkReplicaSets(f func(kubernetes.ReplicaSet) error) error 
 func (c *mockClient) WalkReplicationControllers(f func(kubernetes.ReplicationController) error) error {
 	return nil
 }
-func (*mockClient) WalkNodes(f func(*apiv1.Node) error) error {
-	return nil
-}
 func (c *mockClient) WalkNamespaces(f func(kubernetes.NamespaceResource) error) error {
 	return nil
 }
