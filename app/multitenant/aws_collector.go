@@ -349,6 +349,11 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 	return c.merger.Merge(reports), nil
 }
 
+func (c *awsCollector) HasReports(ctx context.Context, timestamp time.Time) (bool, error) {
+	reportKeys, err := c.getReportKeys(ctx, timestamp)
+	return len(reportKeys) > 0, err
+}
+
 func (c *awsCollector) HasHistoricReports() bool {
 	return true
 }
