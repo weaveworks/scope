@@ -128,28 +128,28 @@ var (
 	// ParseDaemonSetNodeID parses a daemon set node ID
 	ParseDaemonSetNodeID = parseSingleComponentID("daemonset")
 
-	// MakeStatefulSetNodeID produces a replica set node ID from its composite parts.
+	// MakeStatefulSetNodeID produces a statefulset node ID from its composite parts.
 	MakeStatefulSetNodeID = makeSingleComponentID("statefulset")
 
-	// ParseStatefulSetNodeID parses a daemon set node ID
+	// ParseStatefulSetNodeID parses a statefulset node ID
 	ParseStatefulSetNodeID = parseSingleComponentID("statefulset")
 
-	// MakeCronJobNodeID produces a replica set node ID from its composite parts.
+	// MakeCronJobNodeID produces a cronjob node ID from its composite parts.
 	MakeCronJobNodeID = makeSingleComponentID("cronjob")
 
-	// ParseCronJobNodeID parses a daemon set node ID
+	// ParseCronJobNodeID parses a cronjob node ID
 	ParseCronJobNodeID = parseSingleComponentID("cronjob")
 
-	// MakeECSTaskNodeID produces a replica set node ID from its composite parts.
+	// MakeECSTaskNodeID produces a ECSTask node ID from its composite parts.
 	MakeECSTaskNodeID = makeSingleComponentID("ecs_task")
 
-	// ParseECSTaskNodeID parses a replica set node ID
+	// ParseECSTaskNodeID parses a ECSTask node ID
 	ParseECSTaskNodeID = parseSingleComponentID("ecs_task")
 
-	// MakeSwarmServiceNodeID produces a replica set node ID from its composite parts.
+	// MakeSwarmServiceNodeID produces a Swarm service node ID from its composite parts.
 	MakeSwarmServiceNodeID = makeSingleComponentID("swarm_service")
 
-	// ParseSwarmServiceNodeID parses a replica set node ID
+	// ParseSwarmServiceNodeID parses a Swarm service node ID
 	ParseSwarmServiceNodeID = parseSingleComponentID("swarm_service")
 )
 
