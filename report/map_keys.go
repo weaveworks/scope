@@ -69,6 +69,7 @@ const (
 	KubernetesSuspended            = "kubernetes_suspended"
 	KubernetesLastScheduled        = "kubernetes_last_scheduled"
 	KubernetesActiveJobs           = "kubernetes_active_jobs"
+	KubernetesStateDeleted         = "deleted"
 	// probe/awsecs
 	ECSCluster             = "ecs_cluster"
 	ECSCreatedAt           = "ecs_created_at"

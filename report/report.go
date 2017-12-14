@@ -371,7 +371,7 @@ func (r Report) Validate() error {
 //
 // This for now creates node's LatestControls from Controls.
 func (r Report) Upgrade() Report {
-	return r.upgradeLatestControls().upgradePodNodes()
+	return r.upgradeLatestControls().upgradePodNodes().upgradeNamespaces()
 }
 
 func (r Report) upgradeLatestControls() Report {
@@ -435,6 +435,36 @@ func (r Report) upgradePodNodes() Report {
 		nodes[podID] = pod
 	}
 	r.Pod.Nodes = nodes
+
+	return r
+}
+
+func (r Report) upgradeNamespaces() Report {
+	if len(r.Namespace.Nodes) > 0 {
+		return r
+	}
+
+	namespaces := map[string]struct{}{}
+	for _, t := range []Topology{r.Pod, r.Service, r.Deployment, r.DaemonSet, r.StatefulSet, r.CronJob} {
+		for _, n := range t.Nodes {
+			if state, ok := n.Latest.Lookup(KubernetesState); ok && state == KubernetesStateDeleted {
+				continue
+			}
+			if namespace, ok := n.Latest.Lookup(KubernetesNamespace); ok {
+				namespaces[namespace] = struct{}{}
+			}
+		}
+	}
+
+	nodes := make(Nodes, len(namespaces))
+	for ns := range namespaces {
+		// Namespace ID:
+		// Probes did not use to report namespace ids, but since creating a report node requires an id,
+		// the namespace name, which is unique, is passed to `MakeNamespaceNodeID`
+		namespaceID := MakeNamespaceNodeID(ns)
+		nodes[namespaceID] = MakeNodeWith(namespaceID, map[string]string{KubernetesName: ns})
+	}
+	r.Namespace.Nodes = nodes
 
 	return r
 }
