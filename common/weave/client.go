@@ -136,7 +136,7 @@ func (c *client) Status() (Status, error) {
 	req.Header.Add("Accept", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return Status{}, err
+		return Status{}, errorf("%v", err)
 	}
 	defer resp.Body.Close()
 
@@ -165,7 +165,7 @@ func (c *client) AddDNSEntry(fqdn, containerID string, ip net.IP) error {
 	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		return errorf("%v", err)
 	}
 	if err := resp.Body.Close(); err != nil {
 		return err
@@ -212,7 +212,7 @@ func (c *client) PS() (map[string]PSEntry, error) {
 	slurp, _ := ioutil.ReadAll(stdErr)
 	cmdErr := cmd.Wait()
 	if cmdErr != nil {
-		return nil, fmt.Errorf("%s: %q", cmdErr, slurp)
+		return nil, errorf("%s: %q", cmdErr, slurp)
 	}
 	if scannerErr != nil {
 		return nil, scannerErr
@@ -228,7 +228,7 @@ func (c *client) Expose() error {
 		if exitErr, ok := err.(*realexec.ExitError); ok {
 			stdErr = exitErr.Stderr
 		}
-		return fmt.Errorf("Error running weave ps: %s: %q", err, stdErr)
+		return errorf("Error running weave ps: %s: %q", err, stdErr)
 	}
 	ips := ipMatch.FindAllSubmatch(output, -1)
 	if ips != nil {
@@ -241,7 +241,7 @@ func (c *client) Expose() error {
 		if exitErr, ok := err.(*realexec.ExitError); ok {
 			stdErr = exitErr.Stderr
 		}
-		return fmt.Errorf("Error running weave expose: %s: %q", err, stdErr)
+		return errorf("Error running weave expose: %s: %q", err, stdErr)
 	}
 	return nil
 }
@@ -250,4 +250,8 @@ func weaveCommand(arg ...string) exec.Cmd {
 	cmd := exec.Command("weave", arg...)
 	cmd.SetEnv(append(os.Environ(), "DOCKER_API_VERSION="+dockerAPIVersion))
 	return cmd
+}
+
+func errorf(format string, a ...interface{}) error {
+	return fmt.Errorf(format+". If you are not running Weave Net, you may wish to suppress this warning by launching scope with the `--weave=false` option.", a...)
 }
