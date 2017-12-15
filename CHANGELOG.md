@@ -1,3 +1,36 @@
+## Release 1.6.7
+
+This is a minor patch release.
+
+Internal improvements and cleanup:
+- Upgrade weaveworks-ui-components to 0.3.10
+	[#2980](https://github.com/weaveworks/scope/pull/2980)
+- Lock styled-components version and upgrade ui-components
+	[#2976](https://github.com/weaveworks/scope/pull/2976)
+- don't embed docker binary
+	[#2977](https://github.com/weaveworks/scope/pull/2977)
+- bump embedded Weave Net version to 2.1.3
+	[#2975](https://github.com/weaveworks/scope/pull/2975)
+- do not report allocations in benchmarks
+	[#2964](https://github.com/weaveworks/scope/pull/2964)
+
+Performance improvements:
+- "Intern" map keys
+	[#2865](https://github.com/weaveworks/scope/pull/2865)
+- Upgrade reports before caching
+	[#2979](https://github.com/weaveworks/scope/pull/2979)
+- report.Upgrade() add deployments to pods as parent
+	[#2973](https://github.com/weaveworks/scope/pull/2973)
+
+Weave Cloud related changes:
+- probe: Use an absolute FQDN for cloud.weave.works by default
+	[#2971](https://github.com/weaveworks/scope/pull/2971)
+- Bump ui-components to include decomposed Time Travel
+	[#2986](https://github.com/weaveworks/scope/pull/2986)
+- cheap probe connectedness api endpoint
+	[#2983](https://github.com/weaveworks/scope/pull/2983)
+
+
 ## Release 1.6.6
 
 This is a minor patch release.
