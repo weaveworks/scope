@@ -30,6 +30,12 @@ var GetKernelReleaseAndVersion = func() (string, string, error) {
 	return string(release), string(version), nil
 }
 
+// GetPrettyName extracts the PRETTY_NAME from /etc/os-release
+var GetPrettyName = func () (string, error) {
+
+	return "unknown", nil
+}
+
 // GetLoad returns the current load averages as metrics.
 var GetLoad = func(now time.Time) report.Metrics {
 	out, err := exec.Command("w").CombinedOutput()

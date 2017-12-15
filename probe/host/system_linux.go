@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"regexp"
 
 	linuxproc "github.com/c9s/goprocinfo/linux"
 
@@ -29,6 +30,25 @@ var GetKernelReleaseAndVersion = func() (string, string, error) {
 	release := utsname.Release[:bytes.IndexByte(utsname.Release[:], 0)]
 	version := utsname.Version[:bytes.IndexByte(utsname.Version[:], 0)]
 	return string(release), string(version), nil
+}
+
+// GetPrettyName extracts the PRETTY_NAME from /etc/os-release
+var GetPrettyName = func () (string, error) {
+	buf, err := ioutil.ReadFile("/etc/os-release")
+	if err != nil {
+		return "unknown", nil
+	}
+	prettyParse, err := regexp.Compile("PRETTY_NAME=\"(.+?)\"\n")
+	if err != nil {
+		return "unknown", nil
+	}
+
+	prettyName := prettyParse.FindStringSubmatch(string(buf))
+	if prettyName == nil {
+		return "unknown", nil
+	}
+
+	return string(prettyName[1]), nil
 }
 
 // GetLoad returns the current load averages as metrics.
