@@ -94,9 +94,8 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 			id, found = ipNodes[report.MakeScopedEndpointNodeID(scope, addr, port)]
 		}
 		if found && id != "" { // not one we blanked out earlier
-			ret.addChild(m, id, func(id string) report.Node {
-				return inputNodes.Nodes[id]
-			})
+			// We are guaranteed to find the id, so no need to pass a node constructor.
+			ret.addChild(m, id, nil)
 		}
 	}
 	return ret.result(endpoints)

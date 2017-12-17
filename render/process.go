@@ -106,10 +106,8 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 			hostID, _, _ := report.ParseNodeID(hostNodeID)
 			id := report.MakeProcessNodeID(hostID, pid)
 			ret.addChild(n, id, func(id string) report.Node {
-				if processNode, found := processes.Nodes[id]; found {
-					return processNode
-				}
-				// we have a pid, but no matching process node; create a new one rather than dropping the data
+				// we have a pid, but no matching process node;
+				// create a new one rather than dropping the data
 				return report.MakeNode(id).WithTopology(report.Process).
 					WithLatest(process.PID, timestamp, pid)
 			})

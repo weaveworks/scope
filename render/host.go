@@ -62,9 +62,6 @@ func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 		} else {
 			id := report.MakeHostNodeID(report.ExtractHostID(n))
 			ret.addChild(n, id, func(id string) report.Node {
-				if hostNode, found := hosts.Nodes[id]; found {
-					return hostNode
-				}
 				// we have a hostNodeID, but no matching host node;
 				// create a new one rather than dropping the data
 				return report.MakeNode(id).WithTopology(report.Host).
