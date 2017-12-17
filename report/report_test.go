@@ -66,17 +66,6 @@ func TestNode(t *testing.T) {
 			t.Errorf("want foo, have %v", node.Adjacency)
 		}
 	}
-	{
-		node := report.MakeNode("foo").WithEdge("foo", report.EdgeMetadata{
-			EgressPacketCount: newu64(13),
-		})
-		if node.Adjacency[0] != "foo" {
-			t.Errorf("want foo, have %v", node.Adjacency)
-		}
-		if v, ok := node.Edges.Lookup("foo"); ok && *v.EgressPacketCount != 13 {
-			t.Errorf("want 13, have %v", node.Edges)
-		}
-	}
 }
 
 func TestReportBackwardCompatibility(t *testing.T) {

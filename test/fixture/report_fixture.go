@@ -129,18 +129,12 @@ var (
 				Client54001NodeID: report.MakeNode(Client54001NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					process.PID:       Client1PID,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(10),
-					EgressByteCount:   newu64(100),
-				}),
+				}).WithAdjacent(Server80NodeID),
 
 				Client54002NodeID: report.MakeNode(Client54002NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					process.PID:       Client2PID,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(20),
-					EgressByteCount:   newu64(200),
-				}),
+				}).WithAdjacent(Server80NodeID),
 
 				Server80NodeID: report.MakeNode(Server80NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					process.PID:       ServerPID,
@@ -153,26 +147,10 @@ var (
 				}).WithAdjacent(GoogleEndpointNodeID),
 
 				// Probe pseudo nodes
-				UnknownClient1NodeID: report.MakeNode(UnknownClient1NodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(30),
-					EgressByteCount:   newu64(300),
-				}),
-
-				UnknownClient2NodeID: report.MakeNode(UnknownClient2NodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(40),
-					EgressByteCount:   newu64(400),
-				}),
-
-				UnknownClient3NodeID: report.MakeNode(UnknownClient3NodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(50),
-					EgressByteCount:   newu64(500),
-				}),
-
-				RandomClientNodeID: report.MakeNode(RandomClientNodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(60),
-					EgressByteCount:   newu64(600),
-				}),
-
+				UnknownClient1NodeID: report.MakeNode(UnknownClient1NodeID).WithTopology(report.Endpoint).WithAdjacent(Server80NodeID),
+				UnknownClient2NodeID: report.MakeNode(UnknownClient2NodeID).WithTopology(report.Endpoint).WithAdjacent(Server80NodeID),
+				UnknownClient3NodeID: report.MakeNode(UnknownClient3NodeID).WithTopology(report.Endpoint).WithAdjacent(Server80NodeID),
+				RandomClientNodeID:   report.MakeNode(RandomClientNodeID).WithTopology(report.Endpoint).WithAdjacent(Server80NodeID),
 				GoogleEndpointNodeID: report.MakeNode(GoogleEndpointNodeID).WithTopology(report.Endpoint),
 			},
 		},
