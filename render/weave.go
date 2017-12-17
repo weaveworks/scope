@@ -14,7 +14,7 @@ var WeaveRenderer = MakeMap(
 )
 
 // MapWeaveIdentity maps an overlay topology node to a weave topology node.
-func MapWeaveIdentity(m report.Node, _ report.Networks) report.Nodes {
+func MapWeaveIdentity(m report.Node) report.Nodes {
 	peerPrefix, _ := report.ParseOverlayNodeID(m.ID)
 	if peerPrefix != report.WeaveOverlayPeerPrefix {
 		return nil

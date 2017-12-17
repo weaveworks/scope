@@ -8,7 +8,7 @@ import (
 // return a set of other Nodes.
 //
 // If the output is empty, the node shall be omitted from the rendered topology.
-type MapFunc func(report.Node, report.Networks) report.Nodes
+type MapFunc func(report.Node) report.Nodes
 
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
@@ -99,16 +99,15 @@ func MakeMap(f MapFunc, r Renderer) Renderer {
 // using a map function
 func (m Map) Render(rpt report.Report) Nodes {
 	var (
-		input         = m.Renderer.Render(rpt)
-		output        = report.Nodes{}
-		mapped        = map[string]report.IDList{} // input node ID -> output node IDs
-		adjacencies   = map[string]report.IDList{} // output node ID -> input node Adjacencies
-		localNetworks = LocalNetworks(rpt)
+		input       = m.Renderer.Render(rpt)
+		output      = report.Nodes{}
+		mapped      = map[string]report.IDList{} // input node ID -> output node IDs
+		adjacencies = map[string]report.IDList{} // output node ID -> input node Adjacencies
 	)
 
 	// Rewrite all the nodes according to the map function
 	for _, inRenderable := range input.Nodes {
-		for _, outRenderable := range m.MapFunc(inRenderable, localNetworks) {
+		for _, outRenderable := range m.MapFunc(inRenderable) {
 			if existing, ok := output[outRenderable.ID]; ok {
 				outRenderable = outRenderable.Merge(existing)
 			}

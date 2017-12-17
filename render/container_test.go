@@ -43,11 +43,7 @@ type testcase struct {
 }
 
 func testMap(t *testing.T, f render.MapFunc, input testcase) {
-	localNetworks := report.MakeNetworks()
-	if err := localNetworks.AddCIDR("1.2.3.0/16"); err != nil {
-		t.Fatalf(err.Error())
-	}
-	if have := f(input.n, localNetworks); input.ok != (len(have) > 0) {
+	if have := f(input.n); input.ok != (len(have) > 0) {
 		name := input.name
 		if name == "" {
 			name = fmt.Sprintf("%v", input.n)

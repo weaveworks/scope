@@ -36,7 +36,7 @@ func TestReduceRender(t *testing.T) {
 func TestMapRender1(t *testing.T) {
 	// 1. Check when we return false, the node gets filtered out
 	mapper := render.Map{
-		MapFunc: func(nodes report.Node, _ report.Networks) report.Nodes {
+		MapFunc: func(nodes report.Node) report.Nodes {
 			return report.Nodes{}
 		},
 		Renderer: mockRenderer{Nodes: report.Nodes{
@@ -53,7 +53,7 @@ func TestMapRender1(t *testing.T) {
 func TestMapRender2(t *testing.T) {
 	// 2. Check we can remap two nodes into one
 	mapper := render.Map{
-		MapFunc: func(nodes report.Node, _ report.Networks) report.Nodes {
+		MapFunc: func(nodes report.Node) report.Nodes {
 			return report.Nodes{
 				"bar": report.MakeNode("bar"),
 			}
@@ -75,7 +75,7 @@ func TestMapRender2(t *testing.T) {
 func TestMapRender3(t *testing.T) {
 	// 3. Check we can remap adjacencies
 	mapper := render.Map{
-		MapFunc: func(nodes report.Node, _ report.Networks) report.Nodes {
+		MapFunc: func(nodes report.Node) report.Nodes {
 			id := "_" + nodes.ID
 			return report.Nodes{id: report.MakeNode(id)}
 		},

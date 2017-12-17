@@ -136,7 +136,7 @@ func Map2Parent(
 	// any parents in the group, eg. UnmanagedID, or "" to drop nodes without any parents.
 	noParentsPseudoID string,
 ) MapFunc {
-	return func(n report.Node, _ report.Networks) report.Nodes {
+	return func(n report.Node) report.Nodes {
 		// Uncontained becomes Unmanaged/whatever if noParentsPseudoID is set
 		if noParentsPseudoID != "" && strings.HasPrefix(n.ID, UncontainedIDPrefix) {
 			id := MakePseudoNodeID(noParentsPseudoID, report.ExtractHostID(n))
