@@ -100,7 +100,6 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 		}
 	}
 	ret.copyUnmatched(inputNodes)
-	ret.fixupAdjacencies(inputNodes)
 	ret.fixupAdjacencies(endpoints)
 	return ret.result()
 }

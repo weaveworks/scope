@@ -116,7 +116,6 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 		}
 	}
 	ret.copyUnmatched(processes)
-	ret.fixupAdjacencies(processes)
 	ret.fixupAdjacencies(endpoints)
 	return ret.result()
 }
