@@ -169,6 +169,7 @@ type joinResults struct {
 func newJoinResults(inputNodes report.Nodes) joinResults {
 	nodes := make(report.Nodes, len(inputNodes))
 	for id, n := range inputNodes {
+		n.Adjacency = nil // result() assumes all nodes start with no adjacencies
 		nodes[id] = n
 	}
 	return joinResults{nodes: nodes, mapped: map[string]string{}}
@@ -206,7 +207,7 @@ func (ret *joinResults) addChildAndChildren(m report.Node, id string, create fun
 
 // Add a copy of n straight into the results
 func (ret *joinResults) passThrough(n report.Node) {
-	n.Adjacency = nil // result() assumes all nodes start with blank lists
+	n.Adjacency = nil // result() assumes all nodes start with no adjacencies
 	ret.nodes[n.ID] = n
 	ret.mapped[n.ID] = n.ID
 }
