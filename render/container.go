@@ -264,7 +264,7 @@ func MapContainer2IP(m report.Node) []string {
 // format for a container, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
-func MapProcess2Container(n report.Node, _ report.Networks) report.Nodes {
+func MapProcess2Container(n report.Node) report.Nodes {
 	// Propagate pseudo nodes
 	if n.Topology == Pseudo {
 		return report.Nodes{n.ID: n}
@@ -301,7 +301,7 @@ func MapProcess2Container(n report.Node, _ report.Networks) report.Nodes {
 // format for a container, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
-func MapContainer2ContainerImage(n report.Node, _ report.Networks) report.Nodes {
+func MapContainer2ContainerImage(n report.Node) report.Nodes {
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
 		return report.Nodes{n.ID: n}
@@ -323,7 +323,7 @@ func MapContainer2ContainerImage(n report.Node, _ report.Networks) report.Nodes 
 }
 
 // MapContainerImage2Name ignores image versions
-func MapContainerImage2Name(n report.Node, _ report.Networks) report.Nodes {
+func MapContainerImage2Name(n report.Node) report.Nodes {
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
 		return report.Nodes{n.ID: n}
@@ -345,7 +345,7 @@ func MapContainerImage2Name(n report.Node, _ report.Networks) report.Nodes {
 }
 
 // MapContainer2Hostname maps container Nodes to 'hostname' renderabled nodes..
-func MapContainer2Hostname(n report.Node, _ report.Networks) report.Nodes {
+func MapContainer2Hostname(n report.Node) report.Nodes {
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
 		return report.Nodes{n.ID: n}
@@ -366,6 +366,6 @@ func MapContainer2Hostname(n report.Node, _ report.Networks) report.Nodes {
 
 // MapToEmpty removes all the attributes, children, etc, of a node. Useful when
 // we just want to count the presence of nodes.
-func MapToEmpty(n report.Node, _ report.Networks) report.Nodes {
+func MapToEmpty(n report.Node) report.Nodes {
 	return report.Nodes{n.ID: report.MakeNode(n.ID).WithTopology(n.Topology)}
 }
