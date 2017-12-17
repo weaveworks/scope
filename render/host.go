@@ -26,7 +26,7 @@ var HostRenderer = MakeReduce(
 // not have enough info to do that, and the resulting graph must be
 // merged with a host graph to get that info.
 func nodes2Hosts(nodes Nodes) Nodes {
-	ret := newJoinResults()
+	ret := newJoinResults(nil)
 
 	for _, n := range nodes.Nodes {
 		if n.Topology == Pseudo {
@@ -51,7 +51,7 @@ func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 	local := LocalNetworks(rpt)
 	hosts := SelectHost.Render(rpt)
 	endpoints := SelectEndpoint.Render(rpt)
-	ret := newJoinResults()
+	ret := newJoinResults(hosts.Nodes)
 
 	for _, n := range endpoints.Nodes {
 		// Nodes without a hostid are treated as pseudo nodes
@@ -72,6 +72,5 @@ func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 			})
 		}
 	}
-	ret.copyUnmatched(hosts)
 	return ret.result(endpoints)
 }

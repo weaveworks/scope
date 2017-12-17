@@ -71,7 +71,7 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 			}
 		}
 	}
-	ret := newJoinResults()
+	ret := newJoinResults(inputNodes.Nodes)
 
 	// Now look at all the endpoints and see which map to IP nodes
 	for _, m := range endpoints.Nodes {
@@ -99,7 +99,6 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 			})
 		}
 	}
-	ret.copyUnmatched(inputNodes)
 	return ret.result(endpoints)
 }
 
