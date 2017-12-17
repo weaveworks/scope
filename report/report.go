@@ -121,7 +121,7 @@ type Report struct {
 
 	// Overlay nodes are active peers in any software-defined network that's
 	// overlaid on the infrastructure. The information is scraped by polling
-	// their status endpoints. Edges could be present, but aren't currently.
+	// their status endpoints. Edges are present.
 	Overlay Topology
 
 	// Sampling data for this report.

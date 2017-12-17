@@ -6,16 +6,15 @@ import (
 	"github.com/weaveworks/common/mtime"
 )
 
-// Node describes a superset of the metadata that probes can collect about a
-// given node in a given topology, along with the edges emanating from the
-// node and metadata about those edges.
+// Node describes a superset of the metadata that probes can collect
+// about a given node in a given topology, along with the edges (aka
+// adjacency) emanating from the node.
 type Node struct {
 	ID             string                   `json:"id,omitempty"`
 	Topology       string                   `json:"topology,omitempty"`
 	Counters       Counters                 `json:"counters,omitempty"`
 	Sets           Sets                     `json:"sets,omitempty"`
 	Adjacency      IDList                   `json:"adjacency"`
-	Edges          EdgeMetadatas            `json:"edges,omitempty"`
 	Controls       NodeControls             `json:"controls,omitempty"`
 	LatestControls NodeControlDataLatestMap `json:"latestControls,omitempty"`
 	Latest         StringLatestMap          `json:"latest,omitempty"`
@@ -31,7 +30,6 @@ func MakeNode(id string) Node {
 		Counters:       MakeCounters(),
 		Sets:           MakeSets(),
 		Adjacency:      MakeIDList(),
-		Edges:          MakeEdgeMetadatas(),
 		Controls:       MakeNodeControls(),
 		LatestControls: MakeNodeControlDataLatestMap(),
 		Latest:         MakeStringLatestMap(),
@@ -124,14 +122,6 @@ func (n Node) WithAdjacent(a ...string) Node {
 	return n
 }
 
-// WithEdge returns a fresh copy of n, with 'dst' added to Adjacency and md
-// added to EdgeMetadata.
-func (n Node) WithEdge(dst string, md EdgeMetadata) Node {
-	n.Adjacency = n.Adjacency.Add(dst)
-	n.Edges = n.Edges.Add(dst, md)
-	return n
-}
-
 // WithControls returns a fresh copy of n, with cs added to Controls.
 func (n Node) WithControls(cs ...string) Node {
 	n.Controls = n.Controls.Add(cs...)
@@ -205,7 +195,6 @@ func (n Node) Merge(other Node) Node {
 		Counters:       n.Counters.Merge(other.Counters),
 		Sets:           n.Sets.Merge(other.Sets),
 		Adjacency:      n.Adjacency.Merge(other.Adjacency),
-		Edges:          n.Edges.Merge(other.Edges),
 		Controls:       n.Controls.Merge(other.Controls),
 		LatestControls: n.LatestControls.Merge(other.LatestControls),
 		Latest:         n.Latest.Merge(other.Latest),
