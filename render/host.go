@@ -40,8 +40,7 @@ func nodes2Hosts(nodes Nodes) Nodes {
 			})
 		}
 	}
-	ret.fixupAdjacencies(nodes)
-	return ret.result()
+	return ret.result(nodes)
 }
 
 // endpoints2Hosts takes nodes from the endpoint topology and produces
@@ -68,6 +67,5 @@ func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 			})
 		}
 	}
-	ret.fixupAdjacencies(endpoints)
-	return ret.result()
+	return ret.result(endpoints)
 }

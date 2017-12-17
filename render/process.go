@@ -116,8 +116,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 		}
 	}
 	ret.copyUnmatched(processes)
-	ret.fixupAdjacencies(endpoints)
-	return ret.result()
+	return ret.result(endpoints)
 }
 
 // When there is more than one connection originating from a source
@@ -161,6 +160,5 @@ func processes2Names(processes Nodes) Nodes {
 			})
 		}
 	}
-	ret.fixupAdjacencies(processes)
-	return ret.result()
+	return ret.result(processes)
 }

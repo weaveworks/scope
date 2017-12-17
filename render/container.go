@@ -100,8 +100,7 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 		}
 	}
 	ret.copyUnmatched(inputNodes)
-	ret.fixupAdjacencies(endpoints)
-	return ret.result()
+	return ret.result(endpoints)
 }
 
 // FilterEmpty is a Renderer which filters out nodes which have no children
