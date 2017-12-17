@@ -5,9 +5,8 @@ import (
 	"strings"
 )
 
-// Topology describes a specific view of a network. It consists of nodes and
-// edges, and metadata about those nodes and edges, represented by
-// EdgeMetadatas and Nodes respectively. Edges are directional, and embedded
+// Topology describes a specific view of a network. It consists of
+// nodes with metadata, and edges. Edges are directional, and embedded
 // in the Node struct.
 type Topology struct {
 	Shape             string            `json:"shape,omitempty"`
