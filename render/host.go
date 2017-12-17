@@ -9,12 +9,11 @@ import (
 //
 // not memoised
 var HostRenderer = MakeReduce(
-	endpoints2Hosts{},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ProcessRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerImageRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: PodRenderer},
-	SelectHost,
+	endpoints2Hosts{},
 )
 
 // nodes2Hosts maps any Nodes to host Nodes.
@@ -50,6 +49,7 @@ type endpoints2Hosts struct {
 
 func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 	local := LocalNetworks(rpt)
+	hosts := SelectHost.Render(rpt)
 	endpoints := SelectEndpoint.Render(rpt)
 	ret := newJoinResults()
 
@@ -62,10 +62,16 @@ func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 		} else {
 			id := report.MakeHostNodeID(report.ExtractHostID(n))
 			ret.addChild(n, id, func(id string) report.Node {
+				if hostNode, found := hosts.Nodes[id]; found {
+					return hostNode
+				}
+				// we have a hostNodeID, but no matching host node;
+				// create a new one rather than dropping the data
 				return report.MakeNode(id).WithTopology(report.Host).
 					WithLatest(report.HostNodeID, timestamp, hostNodeID)
 			})
 		}
 	}
+	ret.copyUnmatched(hosts)
 	return ret.result(endpoints)
 }
