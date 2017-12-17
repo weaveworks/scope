@@ -56,13 +56,10 @@ func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 
 	for _, n := range endpoints.Nodes {
 		// Nodes without a hostid are treated as pseudo nodes
-		hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
-		if !ok {
-			id, ok := pseudoNodeID(n, local)
-			if !ok {
-				continue
+		if hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID); !ok {
+			if id, ok := pseudoNodeID(n, local); ok {
+				ret.addChild(n, id, newPseudoNode)
 			}
-			ret.addChild(n, id, newPseudoNode)
 		} else {
 			id := report.MakeHostNodeID(report.ExtractHostID(n))
 			ret.addChild(n, id, func(id string) report.Node {

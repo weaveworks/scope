@@ -155,14 +155,11 @@ func processes2Names(processes Nodes) Nodes {
 	for _, n := range processes.Nodes {
 		if n.Topology == Pseudo {
 			ret.passThrough(n)
-		} else {
-			name, timestamp, ok := n.Latest.LookupEntry(process.Name)
-			if ok {
-				ret.addChildAndChildren(n, name, func(id string) report.Node {
-					return report.MakeNode(id).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name)).
-						WithLatest(process.Name, timestamp, name)
-				})
-			}
+		} else if name, timestamp, ok := n.Latest.LookupEntry(process.Name); ok {
+			ret.addChildAndChildren(n, name, func(id string) report.Node {
+				return report.MakeNode(id).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name)).
+					WithLatest(process.Name, timestamp, name)
+			})
 		}
 	}
 	ret.fixupAdjacencies(processes)
