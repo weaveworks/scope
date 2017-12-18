@@ -163,7 +163,7 @@ func (cr conditionalRenderer) Render(rpt report.Report) Nodes {
 // joinResults is used by Renderers that join sets of nodes
 type joinResults struct {
 	nodes  report.Nodes
-	mapped map[string]string // input node ID -> output node ID
+	mapped map[string][]string // input node ID -> output node IDs
 }
 
 func newJoinResults(inputNodes report.Nodes) joinResults {
@@ -172,12 +172,12 @@ func newJoinResults(inputNodes report.Nodes) joinResults {
 		n.Adjacency = nil // result() assumes all nodes start with no adjacencies
 		nodes[id] = n
 	}
-	return joinResults{nodes: nodes, mapped: map[string]string{}}
+	return joinResults{nodes: nodes, mapped: map[string][]string{}}
 }
 
 func (ret *joinResults) add(m report.Node, n report.Node) {
 	ret.nodes[n.ID] = n
-	ret.mapped[m.ID] = n.ID
+	ret.mapped[m.ID] = append(ret.mapped[m.ID], n.ID)
 }
 
 // Add m as a child of the node at id, creating a new result node if
@@ -218,19 +218,15 @@ func (ret *joinResults) passThrough(n report.Node) {
 // input, and return the result.
 func (ret *joinResults) result(input Nodes) Nodes {
 	for _, n := range input.Nodes {
-		outID, ok := ret.mapped[n.ID]
-		if !ok {
-			continue
-		}
-		out := ret.nodes[outID]
-		// for each adjacency in the original node, find out what it maps to (if any),
-		// and add that to the new node
-		for _, a := range n.Adjacency {
-			if mappedDest, found := ret.mapped[a]; found {
-				out.Adjacency = out.Adjacency.Add(mappedDest)
+		for _, outID := range ret.mapped[n.ID] {
+			out := ret.nodes[outID]
+			// for each adjacency in the original node, find out what it maps to (if any),
+			// and add that to the new node
+			for _, a := range n.Adjacency {
+				out.Adjacency = out.Adjacency.Add(ret.mapped[a]...)
 			}
+			ret.nodes[outID] = out
 		}
-		ret.nodes[outID] = out
 	}
 	return Nodes{Nodes: ret.nodes}
 }
