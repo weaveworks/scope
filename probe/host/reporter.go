@@ -2,11 +2,9 @@ package host
 
 import (
 	"fmt"
-	"runtime"
 	"strconv"
 	"sync"
 	"time"
-
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
