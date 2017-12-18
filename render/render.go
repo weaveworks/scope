@@ -175,6 +175,11 @@ func newJoinResults(inputNodes report.Nodes) joinResults {
 	return joinResults{nodes: nodes, mapped: map[string]string{}}
 }
 
+func (ret *joinResults) add(m report.Node, n report.Node) {
+	ret.nodes[n.ID] = n
+	ret.mapped[m.ID] = n.ID
+}
+
 // Add m as a child of the node at id, creating a new result node if
 // not already there, and updating the mapping from old ID to new ID.
 func (ret *joinResults) addChild(m report.Node, id string, create func(string) report.Node) {
@@ -186,8 +191,7 @@ func (ret *joinResults) addChild(m report.Node, id string, create func(string) r
 	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
 		result.Counters = result.Counters.Add(m.Topology, 1)
 	}
-	ret.nodes[id] = result
-	ret.mapped[m.ID] = id
+	ret.add(m, result)
 }
 
 // Like addChild, but also add m's children.
@@ -201,15 +205,13 @@ func (ret *joinResults) addChildAndChildren(m report.Node, id string, create fun
 	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
 		result.Counters = result.Counters.Add(m.Topology, 1)
 	}
-	ret.nodes[id] = result
-	ret.mapped[m.ID] = id
+	ret.add(m, result)
 }
 
 // Add a copy of n straight into the results
 func (ret *joinResults) passThrough(n report.Node) {
 	n.Adjacency = nil // result() assumes all nodes start with no adjacencies
-	ret.nodes[n.ID] = n
-	ret.mapped[n.ID] = n.ID
+	ret.add(n, n)
 }
 
 // Rewrite Adjacency of nodes in ret mapped from original nodes in
