@@ -124,10 +124,6 @@ func (r *Reporter) Report() (report.Report, error) {
 		return rep, err
 	}
 
-	if os == "unknown" {
-		os = runtime.GOOS
-	}
-
 	now := mtime.Now()
 	metrics := GetLoad(now)
 	cpuUsage, max := GetCPUUsagePercent()

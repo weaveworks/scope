@@ -3,8 +3,8 @@ package host
 import (
 	"bytes"
 	"fmt"
-
 	"io/ioutil"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -41,14 +41,14 @@ var GetPrettyName = func () (string, error) {
 
 	buf, err := ioutil.ReadFile("/var/run/scope/host-os-release")
 	if err != nil {
-		return "unknown", nil
+		return runtime.GOOS, nil
 	}
 
 	// If can't find host-os-release, get container's os-release
 	if buf == nil {
 		bufContainer, err := ioutil.ReadFile("/etc/os-release")
 		if err != nil {
-			return "unknown", nil
+			return runtime.GOOS, nil
 		}
 		buf = bufContainer
 	}
@@ -74,7 +74,7 @@ var GetPrettyName = func () (string, error) {
 	if prettyName == nil {
 		if name == nil || version == nil {
 			if prettyID == nil || versionID == nil {
-				return string(buf), nil
+				return runtime.GOOS, nil
 			} else {
 				buffer.WriteString(string(prettyID[1]))
 				buffer.WriteString(" ")
