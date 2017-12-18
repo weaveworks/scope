@@ -166,8 +166,13 @@ type joinResults struct {
 	mapped map[string]string // input node ID -> output node ID
 }
 
-func newJoinResults() joinResults {
-	return joinResults{nodes: make(report.Nodes), mapped: map[string]string{}}
+func newJoinResults(inputNodes report.Nodes) joinResults {
+	nodes := make(report.Nodes, len(inputNodes))
+	for id, n := range inputNodes {
+		n.Adjacency = nil // result() assumes all nodes start with no adjacencies
+		nodes[id] = n
+	}
+	return joinResults{nodes: nodes, mapped: map[string]string{}}
 }
 
 // Add m as a child of the node at id, creating a new result node if
@@ -202,13 +207,14 @@ func (ret *joinResults) addChildAndChildren(m report.Node, id string, create fun
 
 // Add a copy of n straight into the results
 func (ret *joinResults) passThrough(n report.Node) {
-	n.Adjacency = nil // fixupAdjacencies assumes all nodes start with blank lists
+	n.Adjacency = nil // result() assumes all nodes start with no adjacencies
 	ret.nodes[n.ID] = n
 	ret.mapped[n.ID] = n.ID
 }
 
-// Rewrite Adjacency for new nodes in ret for original nodes in input
-func (ret *joinResults) fixupAdjacencies(input Nodes) {
+// Rewrite Adjacency of nodes in ret mapped from original nodes in
+// input, and return the result.
+func (ret *joinResults) result(input Nodes) Nodes {
 	for _, n := range input.Nodes {
 		outID, ok := ret.mapped[n.ID]
 		if !ok {
@@ -224,17 +230,6 @@ func (ret *joinResults) fixupAdjacencies(input Nodes) {
 		}
 		ret.nodes[outID] = out
 	}
-}
-
-func (ret *joinResults) copyUnmatched(input Nodes) {
-	for _, n := range input.Nodes {
-		if _, found := ret.nodes[n.ID]; !found {
-			ret.nodes[n.ID] = n
-		}
-	}
-}
-
-func (ret *joinResults) result() Nodes {
 	return Nodes{Nodes: ret.nodes}
 }
 

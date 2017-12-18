@@ -9,12 +9,11 @@ import (
 //
 // not memoised
 var HostRenderer = MakeReduce(
-	endpoints2Hosts{},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ProcessRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerImageRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: PodRenderer},
-	SelectHost,
+	endpoints2Hosts{},
 )
 
 // nodes2Hosts maps any Nodes to host Nodes.
@@ -27,7 +26,7 @@ var HostRenderer = MakeReduce(
 // not have enough info to do that, and the resulting graph must be
 // merged with a host graph to get that info.
 func nodes2Hosts(nodes Nodes) Nodes {
-	ret := newJoinResults()
+	ret := newJoinResults(nil)
 
 	for _, n := range nodes.Nodes {
 		if n.Topology == Pseudo {
@@ -40,8 +39,7 @@ func nodes2Hosts(nodes Nodes) Nodes {
 			})
 		}
 	}
-	ret.fixupAdjacencies(nodes)
-	return ret.result()
+	return ret.result(nodes)
 }
 
 // endpoints2Hosts takes nodes from the endpoint topology and produces
@@ -51,8 +49,9 @@ type endpoints2Hosts struct {
 
 func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 	local := LocalNetworks(rpt)
+	hosts := SelectHost.Render(rpt)
 	endpoints := SelectEndpoint.Render(rpt)
-	ret := newJoinResults()
+	ret := newJoinResults(hosts.Nodes)
 
 	for _, n := range endpoints.Nodes {
 		// Nodes without a hostid are treated as pseudo nodes
@@ -63,11 +62,12 @@ func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 		} else {
 			id := report.MakeHostNodeID(report.ExtractHostID(n))
 			ret.addChild(n, id, func(id string) report.Node {
+				// we have a hostNodeID, but no matching host node;
+				// create a new one rather than dropping the data
 				return report.MakeNode(id).WithTopology(report.Host).
 					WithLatest(report.HostNodeID, timestamp, hostNodeID)
 			})
 		}
 	}
-	ret.fixupAdjacencies(endpoints)
-	return ret.result()
+	return ret.result(endpoints)
 }

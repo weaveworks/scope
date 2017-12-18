@@ -86,7 +86,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 	local := LocalNetworks(rpt)
 	processes := SelectProcess.Render(rpt)
 	endpoints := SelectEndpoint.Render(rpt)
-	ret := newJoinResults()
+	ret := newJoinResults(processes.Nodes)
 
 	for _, n := range endpoints.Nodes {
 		// Nodes without a hostid are treated as pseudo nodes
@@ -106,19 +106,14 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 			hostID, _, _ := report.ParseNodeID(hostNodeID)
 			id := report.MakeProcessNodeID(hostID, pid)
 			ret.addChild(n, id, func(id string) report.Node {
-				if processNode, found := processes.Nodes[id]; found {
-					return processNode
-				}
-				// we have a pid, but no matching process node; create a new one rather than dropping the data
+				// we have a pid, but no matching process node;
+				// create a new one rather than dropping the data
 				return report.MakeNode(id).WithTopology(report.Process).
 					WithLatest(process.PID, timestamp, pid)
 			})
 		}
 	}
-	ret.copyUnmatched(processes)
-	ret.fixupAdjacencies(processes)
-	ret.fixupAdjacencies(endpoints)
-	return ret.result()
+	return ret.result(endpoints)
 }
 
 // When there is more than one connection originating from a source
@@ -150,7 +145,7 @@ func hasMoreThanOneConnection(n report.Node, endpoints report.Nodes) bool {
 
 // processes2Names maps process Nodes to Nodes for each process name.
 func processes2Names(processes Nodes) Nodes {
-	ret := newJoinResults()
+	ret := newJoinResults(nil)
 
 	for _, n := range processes.Nodes {
 		if n.Topology == Pseudo {
@@ -162,6 +157,5 @@ func processes2Names(processes Nodes) Nodes {
 			})
 		}
 	}
-	ret.fixupAdjacencies(processes)
-	return ret.result()
+	return ret.result(processes)
 }

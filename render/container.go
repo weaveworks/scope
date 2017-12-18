@@ -71,7 +71,7 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 			}
 		}
 	}
-	ret := newJoinResults()
+	ret := newJoinResults(inputNodes.Nodes)
 
 	// Now look at all the endpoints and see which map to IP nodes
 	for _, m := range endpoints.Nodes {
@@ -94,15 +94,11 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 			id, found = ipNodes[report.MakeScopedEndpointNodeID(scope, addr, port)]
 		}
 		if found && id != "" { // not one we blanked out earlier
-			ret.addChild(m, id, func(id string) report.Node {
-				return inputNodes.Nodes[id]
-			})
+			// We are guaranteed to find the id, so no need to pass a node constructor.
+			ret.addChild(m, id, nil)
 		}
 	}
-	ret.copyUnmatched(inputNodes)
-	ret.fixupAdjacencies(inputNodes)
-	ret.fixupAdjacencies(endpoints)
-	return ret.result()
+	return ret.result(endpoints)
 }
 
 // FilterEmpty is a Renderer which filters out nodes which have no children
