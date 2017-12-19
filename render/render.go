@@ -163,7 +163,8 @@ func (cr conditionalRenderer) Render(rpt report.Report) Nodes {
 // joinResults is used by Renderers that join sets of nodes
 type joinResults struct {
 	nodes  report.Nodes
-	mapped map[string][]string // input node ID -> output node IDs
+	mapped map[string]string   // input node ID -> output node ID - common case
+	multi  map[string][]string // input node ID -> output node IDs - exceptional case
 }
 
 func newJoinResults(inputNodes report.Nodes) joinResults {
@@ -172,12 +173,16 @@ func newJoinResults(inputNodes report.Nodes) joinResults {
 		n.Adjacency = nil // result() assumes all nodes start with no adjacencies
 		nodes[id] = n
 	}
-	return joinResults{nodes: nodes, mapped: map[string][]string{}}
+	return joinResults{nodes: nodes, mapped: map[string]string{}, multi: map[string][]string{}}
 }
 
 func (ret *joinResults) add(m report.Node, n report.Node) {
 	ret.nodes[n.ID] = n
-	ret.mapped[m.ID] = append(ret.mapped[m.ID], n.ID)
+	if _, ok := ret.mapped[m.ID]; !ok {
+		ret.mapped[m.ID] = n.ID
+	} else {
+		ret.multi[m.ID] = append(ret.multi[m.ID], n.ID)
+	}
 }
 
 // Add m as a child of the node at id, creating a new result node if
@@ -218,17 +223,29 @@ func (ret *joinResults) passThrough(n report.Node) {
 // input, and return the result.
 func (ret *joinResults) result(input Nodes) Nodes {
 	for _, n := range input.Nodes {
-		for _, outID := range ret.mapped[n.ID] {
-			out := ret.nodes[outID]
-			// for each adjacency in the original node, find out what it maps to (if any),
-			// and add that to the new node
-			for _, a := range n.Adjacency {
-				out.Adjacency = out.Adjacency.Add(ret.mapped[a]...)
-			}
-			ret.nodes[outID] = out
+		outID, ok := ret.mapped[n.ID]
+		if !ok {
+			continue
+		}
+		ret.rewriteAdjacency(outID, n.Adjacency)
+		for _, outID := range ret.multi[n.ID] {
+			ret.rewriteAdjacency(outID, n.Adjacency)
 		}
 	}
 	return Nodes{Nodes: ret.nodes}
+}
+
+func (ret *joinResults) rewriteAdjacency(outID string, adjacency report.IDList) {
+	out := ret.nodes[outID]
+	// for each adjacency in the original node, find out what it maps
+	// to (if any), and add that to the new node
+	for _, a := range adjacency {
+		if mappedDest, found := ret.mapped[a]; found {
+			out.Adjacency = out.Adjacency.Add(mappedDest)
+			out.Adjacency = out.Adjacency.Add(ret.multi[a]...)
+		}
+	}
+	ret.nodes[outID] = out
 }
 
 // ResetCache blows away the rendered node cache, and known service
