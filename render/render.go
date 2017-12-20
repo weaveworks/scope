@@ -186,6 +186,20 @@ func (ret *joinResults) add(m report.Node, n report.Node) {
 }
 
 // Add m as a child of the node at id, creating a new result node if
+// not already there.
+func (ret *joinResults) addUnmappedChild(m report.Node, id string, create func(string) report.Node) {
+	result, exists := ret.nodes[id]
+	if !exists {
+		result = create(id)
+	}
+	result.Children = result.Children.Add(m)
+	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
+		result.Counters = result.Counters.Add(m.Topology, 1)
+	}
+	ret.nodes[id] = result
+}
+
+// Add m as a child of the node at id, creating a new result node if
 // not already there, and updating the mapping from old ID to new ID.
 func (ret *joinResults) addChild(m report.Node, id string, create func(string) report.Node) {
 	result, exists := ret.nodes[id]
