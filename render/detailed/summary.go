@@ -309,6 +309,9 @@ func podGroupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 
 func ecsTaskNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Label, _ = n.Latest.Lookup(awsecs.TaskFamily)
+	if base.Label == "" {
+		base.Label, _ = report.ParseECSTaskNodeID(n.ID)
+	}
 	return base, true
 }
 
