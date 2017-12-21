@@ -16,6 +16,10 @@ var HostRenderer = MakeReduce(
 	endpoints2Hosts{},
 )
 
+func newHostNode(id string) report.Node {
+	return report.MakeNode(id).WithTopology(report.Host)
+}
+
 // nodes2Hosts maps any Nodes to host Nodes.
 //
 // If this function is given a node without a hostname
@@ -32,11 +36,19 @@ func nodes2Hosts(nodes Nodes) Nodes {
 		if n.Topology == Pseudo {
 			continue // Don't propagate pseudo nodes - we do this in endpoints2Hosts
 		}
+		isImage := n.Topology == report.ContainerImage
 		hostIDs, _ := n.Parents.Lookup(report.Host)
 		for _, id := range hostIDs {
-			ret.addChild(n, id, func(id string) report.Node {
-				return report.MakeNode(id).WithTopology(report.Host)
-			})
+			if isImage {
+				// We need to treat image nodes specially because they
+				// aggregate adjacencies of containers across multiple
+				// hosts, and hence mapping these adjacencies to host
+				// adjacencies would produce edges that aren't present
+				// in reality.
+				ret.addUnmappedChild(n, id, newHostNode)
+			} else {
+				ret.addChild(n, id, newHostNode)
+			}
 		}
 	}
 	return ret.result(nodes)
@@ -64,7 +76,7 @@ func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 			ret.addChild(n, id, func(id string) report.Node {
 				// we have a hostNodeID, but no matching host node;
 				// create a new one rather than dropping the data
-				return report.MakeNode(id).WithTopology(report.Host).
+				return newHostNode(id).
 					WithLatest(report.HostNodeID, timestamp, hostNodeID)
 			})
 		}

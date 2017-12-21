@@ -176,47 +176,49 @@ func newJoinResults(inputNodes report.Nodes) joinResults {
 	return joinResults{nodes: nodes, mapped: map[string]string{}, multi: map[string][]string{}}
 }
 
-func (ret *joinResults) add(m report.Node, n report.Node) {
-	ret.nodes[n.ID] = n
-	if _, ok := ret.mapped[m.ID]; !ok {
-		ret.mapped[m.ID] = n.ID
+func (ret *joinResults) mapChild(from, to string) {
+	if _, ok := ret.mapped[from]; !ok {
+		ret.mapped[from] = to
 	} else {
-		ret.multi[m.ID] = append(ret.multi[m.ID], n.ID)
+		ret.multi[from] = append(ret.multi[from], to)
 	}
+}
+
+// Add m as a child of the node at id, creating a new result node if
+// not already there.
+func (ret *joinResults) addUnmappedChild(m report.Node, id string, create func(string) report.Node) {
+	result, exists := ret.nodes[id]
+	if !exists {
+		result = create(id)
+	}
+	result.Children = result.Children.Add(m)
+	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
+		result.Counters = result.Counters.Add(m.Topology, 1)
+	}
+	ret.nodes[id] = result
 }
 
 // Add m as a child of the node at id, creating a new result node if
 // not already there, and updating the mapping from old ID to new ID.
 func (ret *joinResults) addChild(m report.Node, id string, create func(string) report.Node) {
-	result, exists := ret.nodes[id]
-	if !exists {
-		result = create(id)
-	}
-	result.Children = result.Children.Add(m)
-	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
-		result.Counters = result.Counters.Add(m.Topology, 1)
-	}
-	ret.add(m, result)
+	ret.addUnmappedChild(m, id, create)
+	ret.mapChild(m.ID, id)
 }
 
 // Like addChild, but also add m's children.
 func (ret *joinResults) addChildAndChildren(m report.Node, id string, create func(string) report.Node) {
-	result, exists := ret.nodes[id]
-	if !exists {
-		result = create(id)
-	}
-	result.Children = result.Children.Add(m)
+	ret.addUnmappedChild(m, id, create)
+	result := ret.nodes[id]
 	result.Children = result.Children.Merge(m.Children)
-	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
-		result.Counters = result.Counters.Add(m.Topology, 1)
-	}
-	ret.add(m, result)
+	ret.nodes[id] = result
+	ret.mapChild(m.ID, id)
 }
 
 // Add a copy of n straight into the results
 func (ret *joinResults) passThrough(n report.Node) {
 	n.Adjacency = nil // result() assumes all nodes start with no adjacencies
-	ret.add(n, n)
+	ret.nodes[n.ID] = n
+	ret.mapChild(n.ID, n.ID)
 }
 
 // Rewrite Adjacency of nodes in ret mapped from original nodes in
