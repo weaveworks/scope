@@ -243,25 +243,24 @@ func containerNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 }
 
 func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	imageName, ok := n.Latest.Lookup(docker.ImageName)
-	if !ok {
-		return NodeSummary{}, false
+	var (
+		imageName, _            = n.Latest.Lookup(docker.ImageName)
+		imageNameWithoutVersion = docker.ImageNameWithoutVersion(imageName)
+	)
+	switch {
+	case imageNameWithoutVersion != "" && imageNameWithoutVersion != ImageNameNone:
+		base.Label = imageNameWithoutVersion
+	case imageName != "" && imageName != ImageNameNone:
+		base.Label = imageName
+	default:
+		// The id can be an image id or an image name. Ideally we'd
+		// truncate the former but not the latter, but short of
+		// heuristic regexp match we cannot tell the difference.
+		base.Label, _ = report.ParseContainerImageNodeID(n.ID)
 	}
-
-	imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
-	base.Label = imageNameWithoutVersion
-	base.Rank = imageNameWithoutVersion
-	base.Stack = true
-
-	if base.Label == ImageNameNone {
-		base.Label, _ = n.Latest.Lookup(docker.ImageID)
-		if len(base.Label) > 12 {
-			base.Label = base.Label[:12]
-		}
-	}
-
 	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
-
+	base.Rank = base.Label
+	base.Stack = true
 	return base, true
 }
 
