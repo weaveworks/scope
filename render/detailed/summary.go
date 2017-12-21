@@ -264,8 +264,15 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 }
 
 func addKubernetesLabelAndRank(base NodeSummary, n report.Node) NodeSummary {
-	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
-	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
+	var (
+		name, _      = n.Latest.Lookup(kubernetes.Name)
+		namespace, _ = n.Latest.Lookup(kubernetes.Namespace)
+	)
+	if name != "" {
+		base.Label = name
+	} else {
+		base.Label, _, _ = report.ParseNodeID(n.ID)
+	}
 	base.Rank = namespace + "/" + base.Label
 	return base
 }
