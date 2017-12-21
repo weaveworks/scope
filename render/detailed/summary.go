@@ -6,7 +6,6 @@ import (
 
 	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
@@ -319,7 +318,7 @@ func swarmServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool
 
 func hostNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	var (
-		hostname, _ = n.Latest.Lookup(host.HostName)
+		hostname, _ = report.ParseHostNodeID(n.ID)
 		parts       = strings.SplitN(hostname, ".", 2)
 	)
 
