@@ -347,12 +347,14 @@ func hostNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 func weaveNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	var (
 		nickname, _ = n.Latest.Lookup(overlay.WeavePeerNickName)
+		_, peerName = report.ParseOverlayNodeID(n.ID)
 	)
-
-	_, peerName := report.ParseOverlayNodeID(n.ID)
-
-	base.Label, base.LabelMinor = nickname, peerName
-
+	if nickname != "" {
+		base.Label = nickname
+	} else {
+		base.Label = peerName
+	}
+	base.LabelMinor = peerName
 	return base, true
 }
 
