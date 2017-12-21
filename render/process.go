@@ -103,7 +103,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 				continue
 			}
 
-			hostID, _, _ := report.ParseNodeID(hostNodeID)
+			hostID, _ := report.ParseHostNodeID(hostNodeID)
 			id := report.MakeProcessNodeID(hostID, pid)
 			ret.addChild(n, id, func(id string) report.Node {
 				// we have a pid, but no matching process node;

@@ -197,7 +197,7 @@ func ParseOverlayNodeID(id string) (overlayPrefix string, peerName string) {
 	return WeaveOverlayPeerPrefix, id
 }
 
-// Split a string s into to parts separated by sep.
+// Split a string s into two parts separated by sep.
 func split2(s, sep string) (s1, s2 string, ok bool) {
 	// Not using strings.SplitN() to avoid a heap allocation
 	pos := strings.Index(s, sep)
@@ -207,9 +207,8 @@ func split2(s, sep string) (s1, s2 string, ok bool) {
 	return s[:pos], s[pos+1:], true
 }
 
-// ParseNodeID produces the host ID and remainder (typically an address) from
-// a node ID. Note that hostID may be blank.
-func ParseNodeID(nodeID string) (hostID string, remainder string, ok bool) {
+// ParseNodeID produces the id and tag of a single-component node ID.
+func ParseNodeID(nodeID string) (id string, tag string, ok bool) {
 	return split2(nodeID, ScopeDelim)
 }
 
@@ -250,7 +249,7 @@ func ParseECSServiceNodeID(ecsServiceNodeID string) (cluster, serviceName string
 // ExtractHostID extracts the host id from Node
 func ExtractHostID(m Node) string {
 	hostNodeID, _ := m.Latest.Lookup(HostNodeID)
-	hostID, _, _ := ParseNodeID(hostNodeID)
+	hostID, _ := ParseHostNodeID(hostNodeID)
 	return hostID
 }
 
