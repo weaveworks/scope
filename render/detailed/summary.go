@@ -323,6 +323,9 @@ func ecsServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) 
 
 func swarmServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	base.Label, _ = n.Latest.Lookup(docker.ServiceName)
+	if base.Label == "" {
+		base.Label, _ = report.ParseSwarmServiceNodeID(n.ID)
+	}
 	return base, true
 }
 
