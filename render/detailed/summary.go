@@ -155,51 +155,45 @@ func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 }
 
 func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+	pseudoID, _ := render.ParsePseudoNodeID(n.ID)
 	base.Pseudo = true
-	base.Rank = n.ID
+	base.Rank = pseudoID
 
-	// try rendering as an internet node
-	if template, ok := templates[n.ID]; ok {
+	switch {
+	case render.IsInternetNode(n):
+		// render as an internet node
+		template := templates[n.ID]
 		base.Label = template.Label
 		base.LabelMinor = template.LabelMinor
 		base.Shape = report.Cloud
-		return base, true
-	}
-
-	// try rendering as a known service node
-	if strings.HasPrefix(n.ID, render.ServiceNodeIDPrefix) {
+	case strings.HasPrefix(n.ID, render.ServiceNodeIDPrefix):
+		// render as a known service node
 		base.Label = n.ID[len(render.ServiceNodeIDPrefix):]
 		base.LabelMinor = ""
 		base.Shape = report.Cloud
-		return base, true
-	}
-
-	// try rendering it as an uncontained node
-	if strings.HasPrefix(n.ID, render.UncontainedIDPrefix) {
+	case strings.HasPrefix(n.ID, render.UncontainedIDPrefix):
+		// render as an uncontained node
 		base.Label = render.UncontainedMajor
 		base.LabelMinor = report.ExtractHostID(n)
 		base.Shape = report.Square
 		base.Stack = true
-		return base, true
-	}
-
-	// try rendering it as an unmanaged node
-	if strings.HasPrefix(n.ID, render.UnmanagedIDPrefix) {
+	case strings.HasPrefix(n.ID, render.UnmanagedIDPrefix):
+		// render as an unmanaged node
 		base.Label = render.UnmanagedMajor
+		base.LabelMinor = report.ExtractHostID(n)
 		base.Shape = report.Square
 		base.Stack = true
-		base.LabelMinor = report.ExtractHostID(n)
-		return base, true
+	default:
+		// try rendering it as an endpoint
+		if _, addr, _, ok := report.ParseEndpointNodeID(n.ID); ok {
+			base.Label = addr
+			base.Shape = report.Circle
+		} else {
+			// last resort
+			base.Label = pseudoID
+		}
 	}
-
-	// try rendering it as an endpoint
-	if _, addr, _, ok := report.ParseEndpointNodeID(n.ID); ok {
-		base.Label = addr
-		base.Shape = report.Circle
-		return base, true
-	}
-
-	return NodeSummary{}, false
+	return base, true
 }
 
 func processNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
