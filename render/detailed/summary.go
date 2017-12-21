@@ -231,13 +231,20 @@ func processNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 }
 
 func containerNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label = getRenderableContainerName(n)
-	base.LabelMinor = report.ExtractHostID(n)
-
-	if imageName, ok := n.Latest.Lookup(docker.ImageName); ok {
+	var (
+		containerName = getRenderableContainerName(n)
+		hostName      = report.ExtractHostID(n)
+		imageName, _  = n.Latest.Lookup(docker.ImageName)
+	)
+	base.Label = containerName
+	base.LabelMinor = hostName
+	if imageName != "" {
 		base.Rank = docker.ImageNameWithoutVersion(imageName)
+	} else if hostName != "" {
+		base.Rank = hostName
+	} else {
+		base.Rank = base.Label
 	}
-
 	return base, true
 }
 
@@ -428,5 +435,9 @@ func getRenderableContainerName(nmd report.Node) string {
 			return label
 		}
 	}
-	return ""
+	containerID, _ := report.ParseContainerNodeID(nmd.ID)
+	if len(containerID) > 12 {
+		containerID = containerID[:12]
+	}
+	return containerID
 }
