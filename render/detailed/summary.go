@@ -203,19 +203,29 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 }
 
 func processNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label, _ = n.Latest.Lookup(process.Name)
-	base.Rank, _ = n.Latest.Lookup(process.Name)
-
-	pid, ok := n.Latest.Lookup(process.PID)
-	if !ok {
-		return NodeSummary{}, false
+	var (
+		hostID, pid, _   = report.ParseProcessNodeID(n.ID)
+		processName, _   = n.Latest.Lookup(process.Name)
+		containerName, _ = n.Latest.Lookup(docker.ContainerName)
+	)
+	switch {
+	case processName != "" && containerName != "":
+		base.Label = processName
+		base.LabelMinor = fmt.Sprintf("%s (%s:%s)", hostID, containerName, pid)
+		base.Rank = processName
+	case processName != "":
+		base.Label = processName
+		base.LabelMinor = fmt.Sprintf("%s (%s)", hostID, pid)
+		base.Rank = processName
+	case containerName != "":
+		base.Label = pid
+		base.LabelMinor = fmt.Sprintf("%s (%s)", hostID, containerName)
+		base.Rank = hostID
+	default:
+		base.Label = pid
+		base.LabelMinor = hostID
+		base.Rank = hostID
 	}
-	if containerName, ok := n.Latest.Lookup(docker.ContainerName); ok {
-		base.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(n), containerName, pid)
-	} else {
-		base.LabelMinor = fmt.Sprintf("%s (%s)", report.ExtractHostID(n), pid)
-	}
-
 	base.Linkable = render.IsConnected(n)
 	return base, true
 }
