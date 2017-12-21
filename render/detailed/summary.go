@@ -58,7 +58,7 @@ type NodeSummary struct {
 	Adjacency  report.IDList        `json:"adjacency,omitempty"`
 }
 
-var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
+var renderers = map[string]func(NodeSummary, report.Node) NodeSummary{
 	render.Pseudo:         pseudoNodeSummary,
 	report.Process:        processNodeSummary,
 	report.Container:      containerNodeSummary,
@@ -105,8 +105,8 @@ func MakeNodeSummary(rc report.RenderContext, n report.Node) (NodeSummary, bool)
 	if renderer, ok := renderers[n.Topology]; ok {
 		// Skip (and don't fall through to fallback) if renderer maps to nil
 		if renderer != nil {
-			summary, b := renderer(baseNodeSummary(r, n), n)
-			return RenderMetricURLs(summary, n, rc.MetricsGraphURL), b
+			summary := renderer(baseNodeSummary(r, n), n)
+			return RenderMetricURLs(summary, n, rc.MetricsGraphURL), true
 		}
 	} else if _, ok := rc.Topology(n.Topology); ok {
 		summary := baseNodeSummary(r, n)
@@ -114,8 +114,8 @@ func MakeNodeSummary(rc report.RenderContext, n report.Node) (NodeSummary, bool)
 		return summary, true
 	}
 	if strings.HasPrefix(n.Topology, "group:") {
-		summary, b := groupNodeSummary(baseNodeSummary(r, n), r, n)
-		return RenderMetricURLs(summary, n, rc.MetricsGraphURL), b
+		summary := groupNodeSummary(baseNodeSummary(r, n), r, n)
+		return RenderMetricURLs(summary, n, rc.MetricsGraphURL), true
 	}
 	return NodeSummary{}, false
 }
@@ -153,7 +153,7 @@ func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
 	return summary
 }
 
-func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func pseudoNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	pseudoID, _ := render.ParsePseudoNodeID(n.ID)
 	base.Pseudo = true
 	base.Rank = pseudoID
@@ -192,10 +192,10 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 			base.Label = pseudoID
 		}
 	}
-	return base, true
+	return base
 }
 
-func processNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func processNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	var (
 		hostID, pid, _   = report.ParseProcessNodeID(n.ID)
 		processName, _   = n.Latest.Lookup(process.Name)
@@ -220,10 +220,10 @@ func processNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 		base.Rank = hostID
 	}
 	base.Linkable = render.IsConnected(n)
-	return base, true
+	return base
 }
 
-func containerNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func containerNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	var (
 		containerName = getRenderableContainerName(n)
 		hostName      = report.ExtractHostID(n)
@@ -238,10 +238,10 @@ func containerNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	} else {
 		base.Rank = base.Label
 	}
-	return base, true
+	return base
 }
 
-func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func containerImageNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	var (
 		imageName, _            = n.Latest.Lookup(docker.ImageName)
 		imageNameWithoutVersion = docker.ImageNameWithoutVersion(imageName)
@@ -260,7 +260,7 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bo
 	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
 	base.Rank = base.Label
 	base.Stack = true
-	return base, true
+	return base
 }
 
 func addKubernetesLabelAndRank(base NodeSummary, n report.Node) NodeSummary {
@@ -277,11 +277,10 @@ func addKubernetesLabelAndRank(base NodeSummary, n report.Node) NodeSummary {
 	return base
 }
 
-func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func podNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	base = addKubernetesLabelAndRank(base, n)
 	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
-
-	return base, true
+	return base
 }
 
 var podGroupNodeTypeName = map[string]string{
@@ -291,10 +290,9 @@ var podGroupNodeTypeName = map[string]string{
 	report.CronJob:     "CronJob",
 }
 
-func podGroupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func podGroupNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	base = addKubernetesLabelAndRank(base, n)
 	base.Stack = true
-
 	// NB: pods are the highest aggregation level for which we display
 	// counts.
 	count := pluralize(n.Counters, report.Pod, "pod", "pods")
@@ -303,48 +301,45 @@ func podGroupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	} else {
 		base.LabelMinor = count
 	}
-
-	return base, true
+	return base
 }
 
-func ecsTaskNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func ecsTaskNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	base.Label, _ = n.Latest.Lookup(awsecs.TaskFamily)
 	if base.Label == "" {
 		base.Label, _ = report.ParseECSTaskNodeID(n.ID)
 	}
-	return base, true
+	return base
 }
 
-func ecsServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func ecsServiceNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	_, base.Label, _ = report.ParseECSServiceNodeID(n.ID)
 	base.Stack = true
-	return base, true
+	return base
 }
 
-func swarmServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func swarmServiceNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	base.Label, _ = n.Latest.Lookup(docker.ServiceName)
 	if base.Label == "" {
 		base.Label, _ = report.ParseSwarmServiceNodeID(n.ID)
 	}
-	return base, true
+	return base
 }
 
-func hostNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func hostNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	var (
 		hostname, _ = report.ParseHostNodeID(n.ID)
 		parts       = strings.SplitN(hostname, ".", 2)
 	)
-
 	if len(parts) == 2 {
 		base.Label, base.LabelMinor, base.Rank = parts[0], parts[1], parts[1]
 	} else {
 		base.Label = hostname
 	}
-
-	return base, true
+	return base
 }
 
-func weaveNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func weaveNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	var (
 		nickname, _ = n.Latest.Lookup(overlay.WeavePeerNickName)
 		_, peerName = report.ParseOverlayNodeID(n.ID)
@@ -355,12 +350,12 @@ func weaveNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 		base.Label = peerName
 	}
 	base.LabelMinor = peerName
-	return base, true
+	return base
 }
 
 // groupNodeSummary renders the summary for a group node. n.Topology is
 // expected to be of the form: group:container:hostname
-func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) (NodeSummary, bool) {
+func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) NodeSummary {
 	base.Label, base.Rank = n.ID, n.ID
 	if topology, _, ok := render.ParseGroupNodeTopology(n.Topology); ok {
 		if t, ok := r.Topology(topology); ok {
@@ -371,7 +366,7 @@ func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) (NodeSum
 		}
 	}
 	base.Stack = true
-	return base, true
+	return base
 }
 
 func pluralize(counters report.Counters, key, singular, plural string) string {
