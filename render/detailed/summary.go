@@ -79,7 +79,6 @@ var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
 }
 
 var templates = map[string]struct{ Label, LabelMinor string }{
-	render.TheInternetID:      {render.InboundMajor, ""},
 	render.IncomingInternetID: {render.InboundMajor, render.InboundMinor},
 	render.OutgoingInternetID: {render.OutboundMajor, render.OutboundMinor},
 }

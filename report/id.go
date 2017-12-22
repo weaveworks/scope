@@ -5,9 +5,6 @@ import (
 	"strings"
 )
 
-// TheInternet is used as a node ID to indicate a remote IP.
-const TheInternet = "theinternet"
-
 // Delimiters are used to separate parts of node IDs, to guarantee uniqueness
 // in particular contexts.
 const (
