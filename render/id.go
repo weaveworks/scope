@@ -42,6 +42,15 @@ func MakeGroupNodeTopology(originalTopology, key string) string {
 	return strings.Join([]string{"group", originalTopology, key}, ":")
 }
 
+// ParseGroupNodeTopology returns the parts of a group topology.
+func ParseGroupNodeTopology(topology string) (string, string, bool) {
+	parts := strings.Split(topology, ":")
+	if len(parts) != 3 || parts[0] != "group" {
+		return "", "", false
+	}
+	return parts[1], parts[2], true
+}
+
 // NewDerivedNode makes a node based on node, but with a new ID
 func NewDerivedNode(id string, node report.Node) report.Node {
 	return report.MakeNode(id).WithChildren(node.Children.Add(node))
