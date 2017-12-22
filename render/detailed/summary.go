@@ -348,12 +348,12 @@ func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) (NodeSum
 	}
 	base.Label, base.Rank = label, label
 
-	t, ok := r.Topology(parts[1])
-	if ok && t.Label != "" {
-		base.LabelMinor = pluralize(n.Counters, parts[1], t.Label, t.LabelPlural)
+	if t, ok := r.Topology(parts[1]); ok {
+		base.Shape = t.GetShape()
+		if t.Label != "" {
+			base.LabelMinor = pluralize(n.Counters, parts[1], t.Label, t.LabelPlural)
+		}
 	}
-
-	base.Shape = t.GetShape()
 	base.Stack = true
 	return base, true
 }
