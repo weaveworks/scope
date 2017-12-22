@@ -18,6 +18,7 @@ var (
 		// See http://docs.aws.amazon.com/general/latest/gr/rande.html
 		// for finer grained details
 		`amazonaws\.com`,
+		`weave\.works`,
 		`googleapis\.com`,
 		`core\.windows\.net`,       // Azure Storage - Blob, Tables, Files & Queues
 		`servicebus\.windows\.net`, // Azure Service Bus
