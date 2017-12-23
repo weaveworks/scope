@@ -361,21 +361,13 @@ func weaveNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 // groupNodeSummary renders the summary for a group node. n.Topology is
 // expected to be of the form: group:container:hostname
 func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) (NodeSummary, bool) {
-	topology, key, ok := render.ParseGroupNodeTopology(n.Topology)
-	if !ok {
-		return NodeSummary{}, false
-	}
-
-	label, ok := n.Latest.Lookup(key)
-	if !ok {
-		return NodeSummary{}, false
-	}
-	base.Label, base.Rank = label, label
-
-	if t, ok := r.Topology(topology); ok {
-		base.Shape = t.GetShape()
-		if t.Label != "" {
-			base.LabelMinor = pluralize(n.Counters, topology, t.Label, t.LabelPlural)
+	base.Label, base.Rank = n.ID, n.ID
+	if topology, _, ok := render.ParseGroupNodeTopology(n.Topology); ok {
+		if t, ok := r.Topology(topology); ok {
+			base.Shape = t.GetShape()
+			if t.Label != "" {
+				base.LabelMinor = pluralize(n.Counters, topology, t.Label, t.LabelPlural)
+			}
 		}
 	}
 	base.Stack = true
