@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/weaveworks/scope/render"
+	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/fixture"
 )
@@ -128,4 +129,34 @@ func BenchmarkRenderContainers(b *testing.B) {
 
 func BenchmarkRenderProcesses(b *testing.B) {
 	benchmarkRenderTopology(b, "processes")
+}
+
+func benchmarkSummarizeTopology(b *testing.B, topologyID string) {
+	r := getReport(b)
+	rc := report.RenderContext{Report: r}
+	nodes := renderForTopology(b, topologyID, r)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		detailed.Summaries(rc, nodes)
+	}
+}
+
+func BenchmarkSummarizeHosts(b *testing.B) {
+	benchmarkSummarizeTopology(b, "hosts")
+}
+
+func BenchmarkSummarizeControllers(b *testing.B) {
+	benchmarkSummarizeTopology(b, "kube-controllers")
+}
+
+func BenchmarkSummarizePods(b *testing.B) {
+	benchmarkSummarizeTopology(b, "pods")
+}
+
+func BenchmarkSummarizeContainers(b *testing.B) {
+	benchmarkSummarizeTopology(b, "containers")
+}
+
+func BenchmarkSummarizeProcesses(b *testing.B) {
+	benchmarkSummarizeTopology(b, "processes")
 }
