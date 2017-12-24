@@ -76,9 +76,7 @@ func benchmarkRender(b *testing.B, f func(report.Report)) {
 	if *benchReportPath != "" {
 		r = NewSmartMerger().Merge(upgradeReports(readReportFiles(b, *benchReportPath)))
 	}
-
 	b.ResetTimer()
-
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
 		render.ResetCache()
@@ -99,10 +97,7 @@ func benchmarkRenderTopology(b *testing.B, topologyID string) {
 
 func BenchmarkRenderList(b *testing.B) {
 	benchmarkRender(b, func(report report.Report) {
-		request := &http.Request{
-			Form: url.Values{},
-		}
-		topologyRegistry.renderTopologies(report, request)
+		topologyRegistry.renderTopologies(report, &http.Request{Form: url.Values{}})
 	})
 }
 
