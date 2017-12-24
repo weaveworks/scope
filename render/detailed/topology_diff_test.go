@@ -19,17 +19,21 @@ func (r ByID) Less(i, j int) bool { return r[i].ID < r[j].ID }
 
 func TestTopoDiff(t *testing.T) {
 	nodea := detailed.NodeSummary{
-		ID:         "nodea",
-		Label:      "Node A",
-		LabelMinor: "'ts an a",
-		Pseudo:     false,
-		Adjacency:  report.MakeIDList("nodeb"),
+		BasicNodeSummary: detailed.BasicNodeSummary{
+			ID:         "nodea",
+			Label:      "Node A",
+			LabelMinor: "'ts an a",
+			Pseudo:     false,
+		},
+		Adjacency: report.MakeIDList("nodeb"),
 	}
 	nodeap := nodea
 	nodeap.Adjacency = report.MakeIDList("nodeb", "nodeq") // not the same anymore
 	nodeb := detailed.NodeSummary{
-		ID:    "nodeb",
-		Label: "Node B",
+		BasicNodeSummary: detailed.BasicNodeSummary{
+			ID:    "nodeb",
+			Label: "Node B",
+		},
 	}
 
 	// Helper to make RenderableNode maps.

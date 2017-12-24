@@ -41,24 +41,30 @@ type Column struct {
 	Datatype    string `json:"dataType"`
 }
 
-// NodeSummary is summary information about a child for a Node.
-type NodeSummary struct {
-	ID         string               `json:"id"`
-	Label      string               `json:"label"`
-	LabelMinor string               `json:"labelMinor"`
-	Rank       string               `json:"rank"`
-	Shape      string               `json:"shape,omitempty"`
-	Stack      bool                 `json:"stack,omitempty"`
-	Linkable   bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
-	Pseudo     bool                 `json:"pseudo,omitempty"`
-	Metadata   []report.MetadataRow `json:"metadata,omitempty"`
-	Parents    []Parent             `json:"parents,omitempty"`
-	Metrics    []report.MetricRow   `json:"metrics,omitempty"`
-	Tables     []report.Table       `json:"tables,omitempty"`
-	Adjacency  report.IDList        `json:"adjacency,omitempty"`
+// BasicNodeSummary is basic summary information about a Node,
+// sufficient for rendering links to the node.
+type BasicNodeSummary struct {
+	ID         string `json:"id"`
+	Label      string `json:"label"`
+	LabelMinor string `json:"labelMinor"`
+	Rank       string `json:"rank"`
+	Shape      string `json:"shape,omitempty"`
+	Stack      bool   `json:"stack,omitempty"`
+	Linkable   bool   `json:"linkable,omitempty"` // Whether this node can be linked-to
+	Pseudo     bool   `json:"pseudo,omitempty"`
 }
 
-var renderers = map[string]func(NodeSummary, report.Node) NodeSummary{
+// NodeSummary is summary information about a Node.
+type NodeSummary struct {
+	BasicNodeSummary
+	Metadata  []report.MetadataRow `json:"metadata,omitempty"`
+	Parents   []Parent             `json:"parents,omitempty"`
+	Metrics   []report.MetricRow   `json:"metrics,omitempty"`
+	Tables    []report.Table       `json:"tables,omitempty"`
+	Adjacency report.IDList        `json:"adjacency,omitempty"`
+}
+
+var renderers = map[string]func(BasicNodeSummary, report.Node) BasicNodeSummary{
 	render.Pseudo:         pseudoNodeSummary,
 	report.Process:        processNodeSummary,
 	report.Container:      containerNodeSummary,
@@ -99,25 +105,51 @@ var primaryAPITopology = map[string]string{
 	report.Host:           "hosts",
 }
 
-// MakeNodeSummary summarizes a node, if possible.
-func MakeNodeSummary(rc report.RenderContext, n report.Node) (NodeSummary, bool) {
-	r := rc.Report
+// MakeBasicNodeSummary returns a basic summary of a node, if
+// possible. This summary is sufficient for rendering links to the node.
+func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, bool) {
+	summary := BasicNodeSummary{
+		ID:       n.ID,
+		Linkable: true,
+	}
+	if t, ok := r.Topology(n.Topology); ok {
+		summary.Shape = t.GetShape()
+	}
 	if renderer, ok := renderers[n.Topology]; ok {
 		// Skip (and don't fall through to fallback) if renderer maps to nil
 		if renderer != nil {
-			summary := renderer(baseNodeSummary(r, n), n)
-			return RenderMetricURLs(summary, n, rc.MetricsGraphURL), true
+			return renderer(summary, n), true
 		}
-	} else if _, ok := rc.Topology(n.Topology); ok {
-		summary := baseNodeSummary(r, n)
+	} else if _, ok := r.Topology(n.Topology); ok {
 		summary.Label = n.ID // This is unlikely to look very good, but is a reasonable fallback
-		return RenderMetricURLs(summary, n, rc.MetricsGraphURL), true
+		return summary, true
 	}
 	if strings.HasPrefix(n.Topology, "group:") {
-		summary := groupNodeSummary(baseNodeSummary(r, n), r, n)
-		return RenderMetricURLs(summary, n, rc.MetricsGraphURL), true
+		return groupNodeSummary(summary, r, n), true
 	}
-	return NodeSummary{}, false
+	return summary, false
+}
+
+// MakeNodeSummary summarizes a node, if possible.
+func MakeNodeSummary(rc report.RenderContext, n report.Node) (NodeSummary, bool) {
+	base, ok := MakeBasicNodeSummary(rc.Report, n)
+	if !ok {
+		return NodeSummary{}, false
+	}
+	summary := NodeSummary{
+		BasicNodeSummary: base,
+		Parents:          Parents(rc.Report, n),
+		Adjacency:        n.Adjacency,
+	}
+	// Only include metadata, metrics, tables when it's not a group node
+	if _, ok := n.Counters.Lookup(n.Topology); !ok {
+		if topology, ok := rc.Topology(n.Topology); ok {
+			summary.Metadata = topology.MetadataTemplates.MetadataRows(n)
+			summary.Metrics = topology.MetricTemplates.MetricRows(n)
+			summary.Tables = topology.TableTemplates.Tables(n)
+		}
+	}
+	return RenderMetricURLs(summary, n, rc.MetricsGraphURL), true
 }
 
 // SummarizeMetrics returns a copy of the NodeSummary where the metrics are
@@ -131,29 +163,7 @@ func (n NodeSummary) SummarizeMetrics() NodeSummary {
 	return n
 }
 
-func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
-	summary := NodeSummary{
-		ID:        n.ID,
-		Linkable:  true,
-		Parents:   Parents(r, n),
-		Adjacency: n.Adjacency,
-	}
-	if t, ok := r.Topology(n.Topology); ok {
-		summary.Shape = t.GetShape()
-	}
-	if _, ok := n.Counters.Lookup(n.Topology); ok {
-		// This is a group of nodes, so no metadata, metrics, tables
-		return summary
-	}
-	if topology, ok := r.Topology(n.Topology); ok {
-		summary.Metadata = topology.MetadataTemplates.MetadataRows(n)
-		summary.Metrics = topology.MetricTemplates.MetricRows(n)
-		summary.Tables = topology.TableTemplates.Tables(n)
-	}
-	return summary
-}
-
-func pseudoNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func pseudoNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	pseudoID, _ := render.ParsePseudoNodeID(n.ID)
 	base.Pseudo = true
 	base.Rank = pseudoID
@@ -195,7 +205,7 @@ func pseudoNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	return base
 }
 
-func processNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func processNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	var (
 		hostID, pid, _   = report.ParseProcessNodeID(n.ID)
 		processName, _   = n.Latest.Lookup(process.Name)
@@ -223,7 +233,7 @@ func processNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	return base
 }
 
-func containerNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func containerNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	var (
 		containerName = getRenderableContainerName(n)
 		hostName      = report.ExtractHostID(n)
@@ -241,7 +251,7 @@ func containerNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	return base
 }
 
-func containerImageNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func containerImageNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	var (
 		imageName, _            = n.Latest.Lookup(docker.ImageName)
 		imageNameWithoutVersion = docker.ImageNameWithoutVersion(imageName)
@@ -263,7 +273,7 @@ func containerImageNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	return base
 }
 
-func addKubernetesLabelAndRank(base NodeSummary, n report.Node) NodeSummary {
+func addKubernetesLabelAndRank(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	var (
 		name, _      = n.Latest.Lookup(kubernetes.Name)
 		namespace, _ = n.Latest.Lookup(kubernetes.Namespace)
@@ -277,7 +287,7 @@ func addKubernetesLabelAndRank(base NodeSummary, n report.Node) NodeSummary {
 	return base
 }
 
-func podNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func podNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base = addKubernetesLabelAndRank(base, n)
 	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
 	return base
@@ -290,7 +300,7 @@ var podGroupNodeTypeName = map[string]string{
 	report.CronJob:     "CronJob",
 }
 
-func podGroupNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func podGroupNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base = addKubernetesLabelAndRank(base, n)
 	base.Stack = true
 	// NB: pods are the highest aggregation level for which we display
@@ -304,7 +314,7 @@ func podGroupNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	return base
 }
 
-func ecsTaskNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func ecsTaskNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base.Label, _ = n.Latest.Lookup(awsecs.TaskFamily)
 	if base.Label == "" {
 		base.Label, _ = report.ParseECSTaskNodeID(n.ID)
@@ -312,13 +322,13 @@ func ecsTaskNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	return base
 }
 
-func ecsServiceNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func ecsServiceNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	_, base.Label, _ = report.ParseECSServiceNodeID(n.ID)
 	base.Stack = true
 	return base
 }
 
-func swarmServiceNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func swarmServiceNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base.Label, _ = n.Latest.Lookup(docker.ServiceName)
 	if base.Label == "" {
 		base.Label, _ = report.ParseSwarmServiceNodeID(n.ID)
@@ -326,7 +336,7 @@ func swarmServiceNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	return base
 }
 
-func hostNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func hostNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	var (
 		hostname, _ = report.ParseHostNodeID(n.ID)
 		parts       = strings.SplitN(hostname, ".", 2)
@@ -339,7 +349,7 @@ func hostNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 	return base
 }
 
-func weaveNodeSummary(base NodeSummary, n report.Node) NodeSummary {
+func weaveNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	var (
 		nickname, _ = n.Latest.Lookup(overlay.WeavePeerNickName)
 		_, peerName = report.ParseOverlayNodeID(n.ID)
@@ -355,7 +365,7 @@ func weaveNodeSummary(base NodeSummary, n report.Node) NodeSummary {
 
 // groupNodeSummary renders the summary for a group node. n.Topology is
 // expected to be of the form: group:container:hostname
-func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) NodeSummary {
+func groupNodeSummary(base BasicNodeSummary, r report.Report, n report.Node) BasicNodeSummary {
 	base.Label, base.Rank = n.ID, n.ID
 	if topology, _, ok := render.ParseGroupNodeTopology(n.Topology); ok {
 		if t, ok := r.Topology(topology); ok {
