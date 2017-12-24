@@ -44,19 +44,10 @@ func Parents(r report.Report, n report.Node) []Parent {
 			if topologyID == n.Topology && id == n.ID {
 				continue
 			}
-
-			var parentNode report.Node
-			// Special case: container image parents should be empty nodes for some reason
-			if topologyID == report.ContainerImage {
+			parentNode, ok := topology.Nodes[id]
+			if !ok {
 				parentNode = report.MakeNode(id).WithTopology(topologyID)
-			} else {
-				if parent, ok := topology.Nodes[id]; ok {
-					parentNode = parent
-				} else {
-					continue
-				}
 			}
-
 			apiTopologyID, ok := primaryAPITopology[topologyID]
 			if !ok {
 				continue
