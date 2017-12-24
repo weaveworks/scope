@@ -17,7 +17,7 @@ var (
 	benchReportPath = flag.String("bench-report-path", "", "report file, or dir with files, to use for benchmarking (relative to this package)")
 )
 
-func readReportFiles(path string) ([]report.Report, error) {
+func readReportFiles(b *testing.B, path string) []report.Report {
 	reports := []report.Report{}
 	if err := filepath.Walk(path,
 		func(p string, info os.FileInfo, err error) error {
@@ -34,28 +34,21 @@ func readReportFiles(path string) ([]report.Report, error) {
 			reports = append(reports, rpt)
 			return nil
 		}); err != nil {
-		return nil, err
+		b.Fatal(err)
 	}
-	return reports, nil
+	return reports
 }
 
 func BenchmarkReportUnmarshal(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if _, err := readReportFiles(*benchReportPath); err != nil {
-			b.Fatal(err)
-		}
+		readReportFiles(b, *benchReportPath)
 	}
 }
 
 func BenchmarkReportUpgrade(b *testing.B) {
-	reports, err := readReportFiles(*benchReportPath)
-	if err != nil {
-		b.Fatal(err)
-	}
-
+	reports := readReportFiles(b, *benchReportPath)
 	b.ResetTimer()
-
 	for i := 0; i < b.N; i++ {
 		for _, r := range reports {
 			r.Upgrade()
@@ -64,14 +57,9 @@ func BenchmarkReportUpgrade(b *testing.B) {
 }
 
 func BenchmarkReportMerge(b *testing.B) {
-	reports, err := readReportFiles(*benchReportPath)
-	if err != nil {
-		b.Fatal(err)
-	}
+	reports := readReportFiles(b, *benchReportPath)
 	merger := NewSmartMerger()
-
 	b.ResetTimer()
-
 	for i := 0; i < b.N; i++ {
 		merger.Merge(reports)
 	}
@@ -80,11 +68,7 @@ func BenchmarkReportMerge(b *testing.B) {
 func benchmarkRender(b *testing.B, f func(report.Report)) {
 	r := fixture.Report
 	if *benchReportPath != "" {
-		reports, err := readReportFiles(*benchReportPath)
-		if err != nil {
-			b.Fatal(err)
-		}
-		r = NewSmartMerger().Merge(reports)
+		r = NewSmartMerger().Merge(readReportFiles(b, *benchReportPath))
 	}
 
 	b.ResetTimer()
