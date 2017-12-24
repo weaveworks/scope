@@ -46,18 +46,24 @@ func BenchmarkReportUnmarshal(b *testing.B) {
 	}
 }
 
+func upgradeReports(reports []report.Report) []report.Report {
+	upgraded := make([]report.Report, len(reports))
+	for i, r := range reports {
+		upgraded[i] = r.Upgrade()
+	}
+	return upgraded
+}
+
 func BenchmarkReportUpgrade(b *testing.B) {
 	reports := readReportFiles(b, *benchReportPath)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		for _, r := range reports {
-			r.Upgrade()
-		}
+		upgradeReports(reports)
 	}
 }
 
 func BenchmarkReportMerge(b *testing.B) {
-	reports := readReportFiles(b, *benchReportPath)
+	reports := upgradeReports(readReportFiles(b, *benchReportPath))
 	merger := NewSmartMerger()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -68,7 +74,7 @@ func BenchmarkReportMerge(b *testing.B) {
 func benchmarkRender(b *testing.B, f func(report.Report)) {
 	r := fixture.Report
 	if *benchReportPath != "" {
-		r = NewSmartMerger().Merge(readReportFiles(b, *benchReportPath))
+		r = NewSmartMerger().Merge(upgradeReports(readReportFiles(b, *benchReportPath)))
 	}
 
 	b.ResetTimer()
