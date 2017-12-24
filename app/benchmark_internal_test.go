@@ -76,15 +76,6 @@ func BenchmarkReportUpgrade(b *testing.B) {
 	}
 }
 
-func BenchmarkRenderList(b *testing.B) {
-	benchmarkRender(b, func(report report.Report) {
-		request := &http.Request{
-			Form: url.Values{},
-		}
-		topologyRegistry.renderTopologies(report, request)
-	})
-}
-
 func benchmarkRender(b *testing.B, f func(report.Report)) {
 	r := fixture.Report
 	if *benchReportPath != "" {
@@ -105,6 +96,25 @@ func benchmarkRender(b *testing.B, f func(report.Report)) {
 	}
 }
 
+func benchmarkRenderTopology(b *testing.B, topologyID string) {
+	benchmarkRender(b, func(report report.Report) {
+		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, url.Values{}, report)
+		if err != nil {
+			b.Fatal(err)
+		}
+		render.Render(report, renderer, filter)
+	})
+}
+
+func BenchmarkRenderList(b *testing.B) {
+	benchmarkRender(b, func(report report.Report) {
+		request := &http.Request{
+			Form: url.Values{},
+		}
+		topologyRegistry.renderTopologies(report, request)
+	})
+}
+
 func BenchmarkRenderHosts(b *testing.B) {
 	benchmarkRenderTopology(b, "hosts")
 }
@@ -123,14 +133,4 @@ func BenchmarkRenderContainers(b *testing.B) {
 
 func BenchmarkRenderProcesses(b *testing.B) {
 	benchmarkRenderTopology(b, "processes")
-}
-
-func benchmarkRenderTopology(b *testing.B, topologyID string) {
-	benchmarkRender(b, func(report report.Report) {
-		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, url.Values{}, report)
-		if err != nil {
-			b.Fatal(err)
-		}
-		render.Render(report, renderer, filter)
-	})
 }
