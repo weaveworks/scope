@@ -111,7 +111,7 @@ func MakeNodeSummary(rc report.RenderContext, n report.Node) (NodeSummary, bool)
 	} else if _, ok := rc.Topology(n.Topology); ok {
 		summary := baseNodeSummary(r, n)
 		summary.Label = n.ID // This is unlikely to look very good, but is a reasonable fallback
-		return summary, true
+		return RenderMetricURLs(summary, n, rc.MetricsGraphURL), true
 	}
 	if strings.HasPrefix(n.Topology, "group:") {
 		summary := groupNodeSummary(baseNodeSummary(r, n), r, n)
