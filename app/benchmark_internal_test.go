@@ -76,7 +76,7 @@ func BenchmarkReportUpgrade(b *testing.B) {
 	}
 }
 
-func BenchmarkTopologyList(b *testing.B) {
+func BenchmarkRenderList(b *testing.B) {
 	benchmarkRender(b, func(report report.Report) {
 		request := &http.Request{
 			Form: url.Values{},
@@ -105,27 +105,27 @@ func benchmarkRender(b *testing.B, f func(report.Report)) {
 	}
 }
 
-func BenchmarkTopologyHosts(b *testing.B) {
-	benchmarkOneTopology(b, "hosts")
+func BenchmarkRenderHosts(b *testing.B) {
+	benchmarkRenderTopology(b, "hosts")
 }
 
-func BenchmarkTopologyControllers(b *testing.B) {
-	benchmarkOneTopology(b, "kube-controllers")
+func BenchmarkRenderControllers(b *testing.B) {
+	benchmarkRenderTopology(b, "kube-controllers")
 }
 
-func BenchmarkTopologyPods(b *testing.B) {
-	benchmarkOneTopology(b, "pods")
+func BenchmarkRenderPods(b *testing.B) {
+	benchmarkRenderTopology(b, "pods")
 }
 
-func BenchmarkTopologyContainers(b *testing.B) {
-	benchmarkOneTopology(b, "containers")
+func BenchmarkRenderContainers(b *testing.B) {
+	benchmarkRenderTopology(b, "containers")
 }
 
-func BenchmarkTopologyProcesses(b *testing.B) {
-	benchmarkOneTopology(b, "processes")
+func BenchmarkRenderProcesses(b *testing.B) {
+	benchmarkRenderTopology(b, "processes")
 }
 
-func benchmarkOneTopology(b *testing.B, topologyID string) {
+func benchmarkRenderTopology(b *testing.B, topologyID string) {
 	benchmarkRender(b, func(report report.Report) {
 		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, url.Values{}, report)
 		if err != nil {
