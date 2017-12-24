@@ -273,16 +273,6 @@ func (r Report) Merge(other Report) Report {
 	return newReport
 }
 
-// Topologies returns a slice of Topologies in this report
-func (r Report) Topologies() []Topology {
-	result := make([]Topology, len(topologyNames))
-	for i, name := range topologyNames {
-		t, _ := r.Topology(name)
-		result[i] = t
-	}
-	return result
-}
-
 // WalkTopologies iterates through the Topologies of the report,
 // potentially modifying them
 func (r *Report) WalkTopologies(f func(*Topology)) {
@@ -358,8 +348,8 @@ func (r Report) Topology(name string) (Topology, bool) {
 // Validate checks the report for various inconsistencies.
 func (r Report) Validate() error {
 	var errs []string
-	for _, topology := range r.Topologies() {
-		if err := topology.Validate(); err != nil {
+	for _, name := range topologyNames {
+		if err := r.topology(name).Validate(); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

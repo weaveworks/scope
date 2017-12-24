@@ -20,14 +20,18 @@ func TestReportTopologies(t *testing.T) {
 		topologyType = reflect.TypeOf(report.MakeTopology())
 	)
 
-	var want int
+	var want, have int
 	for i := 0; i < reportType.NumField(); i++ {
 		if reportType.Field(i).Type == topologyType {
 			want++
 		}
 	}
 
-	if have := len(report.MakeReport().Topologies()); want != have {
+	r := report.MakeReport()
+	r.WalkTopologies(func(_ *report.Topology) {
+		have++
+	})
+	if want != have {
 		t.Errorf("want %d, have %d", want, have)
 	}
 }
