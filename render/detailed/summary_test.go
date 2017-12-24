@@ -49,8 +49,10 @@ func TestSummaries(t *testing.T) {
 		t1, t2 := mtime.Now().Add(-1*time.Minute), mtime.Now()
 		metric := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 1}, {Timestamp: t2, Value: 2}})
 		input := fixture.Report.Copy()
-
-		input.Process.Nodes[fixture.ClientProcess1NodeID].Metrics[process.CPUUsage] = metric
+		processNode := input.Process.Nodes[fixture.ClientProcess1NodeID]
+		processNode.Metrics = processNode.Metrics.Copy()
+		processNode.Metrics[process.CPUUsage] = metric
+		input.Process.Nodes[fixture.ClientProcess1NodeID] = processNode
 		have := detailed.Summaries(report.RenderContext{Report: input}, render.ProcessRenderer.Render(input).Nodes)
 
 		node, ok := have[fixture.ClientProcess1NodeID]
@@ -192,6 +194,242 @@ func TestMakeNodeSummary(t *testing.T) {
 
 		if !reflect.DeepEqual(testcase.want, have) {
 			t.Errorf("%s: Node Summary did not match: %s", testcase.name, test.Diff(testcase.want, have))
+		}
+	}
+}
+
+func TestNodeMetadata(t *testing.T) {
+	inputs := []struct {
+		name string
+		node report.Node
+		want []report.MetadataRow
+	}{
+		{
+			name: "container",
+			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
+				docker.ContainerID:            fixture.ClientContainerID,
+				docker.LabelPrefix + "label1": "label1value",
+				docker.ContainerStateHuman:    docker.StateRunning,
+			}).WithTopology(report.Container).WithSets(report.MakeSets().
+				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
+			),
+			want: []report.MetadataRow{
+				{ID: docker.ContainerStateHuman, Label: "State", Value: "running", Priority: 3},
+				{ID: docker.ContainerIPs, Label: "IPs", Value: "10.10.10.0/24, 10.10.10.1/24", Priority: 7},
+				{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 10, Truncate: 12},
+			},
+		},
+		{
+			name: "unknown topology",
+			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
+				docker.ContainerID: fixture.ClientContainerID,
+			}).WithTopology("foobar"),
+			want: nil,
+		},
+	}
+	for _, input := range inputs {
+		summary, _ := detailed.MakeNodeSummary(report.RenderContext{Report: fixture.Report}, input.node)
+		have := summary.Metadata
+		if !reflect.DeepEqual(input.want, have) {
+			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
+		}
+	}
+}
+
+func TestNodeMetrics(t *testing.T) {
+	inputs := []struct {
+		name string
+		node report.Node
+		want []report.MetricRow
+	}{
+		{
+			name: "process",
+			node: fixture.Report.Process.Nodes[fixture.ClientProcess1NodeID],
+			want: []report.MetricRow{
+				{
+					ID:       process.CPUUsage,
+					Label:    "CPU",
+					Format:   "percent",
+					Group:    "",
+					Value:    0.01,
+					Priority: 1,
+					Metric:   &fixture.ClientProcess1CPUMetric,
+				},
+				{
+					ID:       process.MemoryUsage,
+					Label:    "Memory",
+					Format:   "filesize",
+					Group:    "",
+					Value:    0.02,
+					Priority: 2,
+					Metric:   &fixture.ClientProcess1MemoryMetric,
+				},
+			},
+		},
+		{
+			name: "container",
+			node: fixture.Report.Container.Nodes[fixture.ClientContainerNodeID],
+			want: []report.MetricRow{
+				{
+					ID:       docker.CPUTotalUsage,
+					Label:    "CPU",
+					Format:   "percent",
+					Group:    "",
+					Value:    0.03,
+					Priority: 1,
+					Metric:   &fixture.ClientContainerCPUMetric,
+				},
+				{
+					ID:       docker.MemoryUsage,
+					Label:    "Memory",
+					Format:   "filesize",
+					Group:    "",
+					Value:    0.04,
+					Priority: 2,
+					Metric:   &fixture.ClientContainerMemoryMetric,
+				},
+			},
+		},
+		{
+			name: "host",
+			node: fixture.Report.Host.Nodes[fixture.ClientHostNodeID],
+			want: []report.MetricRow{
+				{
+					ID:       host.CPUUsage,
+					Label:    "CPU",
+					Format:   "percent",
+					Group:    "",
+					Value:    0.07,
+					Priority: 1,
+					Metric:   &fixture.ClientHostCPUMetric,
+				},
+				{
+					ID:       host.MemoryUsage,
+					Label:    "Memory",
+					Format:   "filesize",
+					Group:    "",
+					Value:    0.08,
+					Priority: 2,
+					Metric:   &fixture.ClientHostMemoryMetric,
+				},
+				{
+					ID:       host.Load1,
+					Label:    "Load (1m)",
+					Group:    "load",
+					Value:    0.09,
+					Priority: 11,
+					Metric:   &fixture.ClientHostLoad1Metric,
+				},
+			},
+		},
+		{
+			name: "unknown topology",
+			node: report.MakeNode(fixture.ClientContainerNodeID).WithTopology("foobar"),
+			want: nil,
+		},
+	}
+	for _, input := range inputs {
+		summary, _ := detailed.MakeNodeSummary(report.RenderContext{Report: fixture.Report}, input.node)
+		have := summary.Metrics
+		if !reflect.DeepEqual(input.want, have) {
+			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
+		}
+	}
+}
+
+func TestMetricRowSummary(t *testing.T) {
+	var (
+		now    = time.Now()
+		metric = report.MakeSingletonMetric(now, 1.234)
+		row    = report.MetricRow{
+			ID:       "id",
+			Format:   "format",
+			Group:    "group",
+			Value:    1.234,
+			Priority: 1,
+			Metric:   &metric,
+		}
+		summary = row.Summary()
+	)
+	// summary should not have any samples
+	if summary.Metric.Len() != 0 {
+		t.Errorf("Expected summary to have no samples, but had %d", summary.Metric.Len())
+	}
+	// original metric should still have its samples
+	if metric.Len() != 1 {
+		t.Errorf("Expected original metric to still have it's samples, but had %d", metric.Len())
+	}
+	// summary should have all the same fields (minus the metric)
+	summary.Metric = nil
+	row.Metric = nil
+	if !reflect.DeepEqual(summary, row) {
+		t.Errorf("Expected summary to have same fields as original: %s", test.Diff(summary, row))
+	}
+}
+
+func TestNodeTables(t *testing.T) {
+	inputs := []struct {
+		name string
+		rpt  report.Report
+		node report.Node
+		want []report.Table
+	}{
+		{
+			name: "container",
+			rpt: report.Report{
+				Container: report.MakeTopology().
+					WithTableTemplates(docker.ContainerTableTemplates),
+			},
+			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
+				docker.ContainerID:            fixture.ClientContainerID,
+				docker.LabelPrefix + "label1": "label1value",
+				docker.ContainerState:         docker.StateRunning,
+			}).WithTopology(report.Container).WithSets(report.MakeSets().
+				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
+			),
+			want: []report.Table{
+				{
+					ID:    docker.EnvPrefix,
+					Type:  report.PropertyListType,
+					Label: "Environment Variables",
+					Rows:  []report.Row{},
+				},
+				{
+					ID:    docker.LabelPrefix,
+					Type:  report.PropertyListType,
+					Label: "Docker Labels",
+					Rows: []report.Row{
+						{
+							ID: "label_label1",
+							Entries: map[string]string{
+								"label": "label1",
+								"value": "label1value",
+							},
+						},
+					},
+				},
+				{
+					ID:    docker.ImageTableID,
+					Type:  report.PropertyListType,
+					Label: "Image",
+					Rows:  []report.Row{},
+				},
+			},
+		},
+		{
+			name: "unknown topology",
+			rpt:  report.MakeReport(),
+			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
+				docker.ContainerID: fixture.ClientContainerID,
+			}).WithTopology("foobar"),
+			want: nil,
+		},
+	}
+	for _, input := range inputs {
+		summary, _ := detailed.MakeNodeSummary(report.RenderContext{Report: input.rpt}, input.node)
+		have := summary.Tables
+		if !reflect.DeepEqual(input.want, have) {
+			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
 		}
 	}
 }

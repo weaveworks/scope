@@ -134,17 +134,25 @@ func (n NodeSummary) SummarizeMetrics() NodeSummary {
 }
 
 func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
-	t, _ := r.Topology(n.Topology)
-	return NodeSummary{
+	summary := NodeSummary{
 		ID:        n.ID,
-		Shape:     t.GetShape(),
 		Linkable:  true,
-		Metadata:  NodeMetadata(r, n),
-		Metrics:   NodeMetrics(r, n),
 		Parents:   Parents(r, n),
-		Tables:    NodeTables(r, n),
 		Adjacency: n.Adjacency,
 	}
+	if t, ok := r.Topology(n.Topology); ok {
+		summary.Shape = t.GetShape()
+	}
+	if _, ok := n.Counters.Lookup(n.Topology); ok {
+		// This is a group of nodes, so no metadata, metrics, tables
+		return summary
+	}
+	if topology, ok := r.Topology(n.Topology); ok {
+		summary.Metadata = topology.MetadataTemplates.MetadataRows(n)
+		summary.Metrics = topology.MetricTemplates.MetricRows(n)
+		summary.Tables = topology.TableTemplates.Tables(n)
+	}
+	return summary
 }
 
 func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
