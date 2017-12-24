@@ -231,30 +231,11 @@ func (r *Registry) updateAndRegisterControlsInReport(rpt *report.Report) {
 	key := rpt.Plugins.Keys()[0]
 	spec, _ := rpt.Plugins.Lookup(key)
 	pluginID := spec.ID
-	topologies := topologyPointers(rpt)
 	var newPluginControls []string
-	for _, topology := range topologies {
+	rpt.WalkTopologies(func(topology *report.Topology) {
 		newPluginControls = append(newPluginControls, r.updateAndGetControlsInTopology(pluginID, topology)...)
-	}
+	})
 	r.updatePluginControls(pluginID, report.MakeStringSet(newPluginControls...))
-}
-
-func topologyPointers(rpt *report.Report) []*report.Topology {
-	// We cannot use rpt.Topologies(), because it makes a slice of
-	// topology copies and we need original locations to modify
-	// them.
-	return []*report.Topology{
-		&rpt.Endpoint,
-		&rpt.Process,
-		&rpt.Container,
-		&rpt.ContainerImage,
-		&rpt.Pod,
-		&rpt.Service,
-		&rpt.Deployment,
-		&rpt.ReplicaSet,
-		&rpt.Host,
-		&rpt.Overlay,
-	}
 }
 
 func (r *Registry) updateAndGetControlsInTopology(pluginID string, topology *report.Topology) []string {
