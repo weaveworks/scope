@@ -67,12 +67,13 @@ func BenchmarkReportUpgrade(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	r := NewSmartMerger().Merge(reports)
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		r.Upgrade()
+		for _, r := range reports {
+			r.Upgrade()
+		}
 	}
 }
 
