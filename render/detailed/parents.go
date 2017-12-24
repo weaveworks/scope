@@ -39,6 +39,10 @@ func Parents(r report.Report, n report.Node) []Parent {
 		if !ok {
 			continue
 		}
+		apiTopologyID, ok := primaryAPITopology[topologyID]
+		if !ok {
+			continue
+		}
 		parents, _ := n.Parents.Lookup(topologyID)
 		for _, id := range parents {
 			if topologyID == n.Topology && id == n.ID {
@@ -47,10 +51,6 @@ func Parents(r report.Report, n report.Node) []Parent {
 			parentNode, ok := topology.Nodes[id]
 			if !ok {
 				parentNode = report.MakeNode(id).WithTopology(topologyID)
-			}
-			apiTopologyID, ok := primaryAPITopology[topologyID]
-			if !ok {
-				continue
 			}
 			if summary, ok := MakeBasicNodeSummary(r, parentNode); ok {
 				result = append(result, Parent{
