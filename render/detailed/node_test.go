@@ -230,14 +230,14 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 					TopologyID: "containers-by-image",
 				},
 				{
-					ID:         fixture.ServerHostNodeID,
-					Label:      fixture.ServerHostName,
-					TopologyID: "hosts",
-				},
-				{
 					ID:         fixture.ServerPodNodeID,
 					Label:      "pong-b",
 					TopologyID: "pods",
+				},
+				{
+					ID:         fixture.ServerHostNodeID,
+					Label:      "server",
+					TopologyID: "hosts",
 				},
 			},
 		},
@@ -340,14 +340,14 @@ func TestMakeDetailedPodNode(t *testing.T) {
 			},
 			Parents: []detailed.Parent{
 				{
-					ID:         fixture.ServerHostNodeID,
-					Label:      fixture.ServerHostName,
-					TopologyID: "hosts",
-				},
-				{
 					ID:         fixture.ServiceNodeID,
 					Label:      fixture.ServiceName,
 					TopologyID: "services",
+				},
+				{
+					ID:         fixture.ServerHostNodeID,
+					Label:      "server",
+					TopologyID: "hosts",
 				},
 			},
 		},
