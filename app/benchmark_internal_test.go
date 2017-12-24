@@ -90,13 +90,17 @@ func benchmarkRender(b *testing.B, f func(report.Report)) {
 	}
 }
 
+func renderForTopology(b *testing.B, topologyID string, report report.Report) report.Nodes {
+	renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, url.Values{}, report)
+	if err != nil {
+		b.Fatal(err)
+	}
+	return render.Render(report, renderer, filter).Nodes
+}
+
 func benchmarkRenderTopology(b *testing.B, topologyID string) {
 	benchmarkRender(b, func(report report.Report) {
-		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, url.Values{}, report)
-		if err != nil {
-			b.Fatal(err)
-		}
-		render.Render(report, renderer, filter)
+		renderForTopology(b, topologyID, report)
 	})
 }
 
