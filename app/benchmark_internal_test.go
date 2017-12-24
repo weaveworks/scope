@@ -71,11 +71,16 @@ func BenchmarkReportMerge(b *testing.B) {
 	}
 }
 
-func benchmarkRender(b *testing.B, f func(report.Report)) {
+func getReport(b *testing.B) report.Report {
 	r := fixture.Report
 	if *benchReportPath != "" {
 		r = NewSmartMerger().Merge(upgradeReports(readReportFiles(b, *benchReportPath)))
 	}
+	return r
+}
+
+func benchmarkRender(b *testing.B, f func(report.Report)) {
+	r := getReport(b)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
