@@ -314,8 +314,39 @@ func (r *Report) WalkPairedTopologies(o *Report, f func(*Topology, *Topology)) {
 
 // Topology gets a topology by name
 func (r Report) Topology(name string) (Topology, bool) {
-	if t, ok := r.TopologyMap()[name]; ok {
-		return *t, true
+	switch name {
+	case Endpoint:
+		return r.Endpoint, true
+	case Process:
+		return r.Process, true
+	case Container:
+		return r.Container, true
+	case ContainerImage:
+		return r.ContainerImage, true
+	case Pod:
+		return r.Pod, true
+	case Service:
+		return r.Service, true
+	case Deployment:
+		return r.Deployment, true
+	case ReplicaSet:
+		return r.ReplicaSet, true
+	case DaemonSet:
+		return r.DaemonSet, true
+	case StatefulSet:
+		return r.StatefulSet, true
+	case CronJob:
+		return r.CronJob, true
+	case Host:
+		return r.Host, true
+	case Overlay:
+		return r.Overlay, true
+	case ECSTask:
+		return r.ECSTask, true
+	case ECSService:
+		return r.ECSService, true
+	case SwarmService:
+		return r.SwarmService, true
 	}
 	return Topology{}, false
 }
