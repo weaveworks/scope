@@ -111,7 +111,7 @@ func (e MetadataTemplates) Copy() MetadataTemplates {
 	if e == nil {
 		return nil
 	}
-	result := MetadataTemplates{}
+	result := make(MetadataTemplates, len(e))
 	for k, v := range e {
 		result[k] = v
 	}
@@ -124,10 +124,10 @@ func (e MetadataTemplates) Merge(other MetadataTemplates) MetadataTemplates {
 	if e == nil && other == nil {
 		return nil
 	}
-	result := make(MetadataTemplates, len(e))
-	for k, v := range e {
-		result[k] = v
+	if len(other) > len(e) {
+		e, other = other, e
 	}
+	result := e.Copy()
 	for k, v := range other {
 		if existing, ok := result[k]; !ok || existing.Priority < v.Priority {
 			result[k] = v

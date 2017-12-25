@@ -294,10 +294,10 @@ func (t TableTemplates) Merge(other TableTemplates) TableTemplates {
 	if t == nil && other == nil {
 		return nil
 	}
-	result := make(TableTemplates, len(t))
-	for k, v := range t {
-		result[k] = v
+	if len(other) > len(t) {
+		t, other = other, t
 	}
+	result := t.Copy()
 	for k, v := range other {
 		if existing, ok := result[k]; ok {
 			result[k] = v.Merge(existing)

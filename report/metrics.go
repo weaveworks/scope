@@ -19,6 +19,9 @@ func (m Metrics) Lookup(key string) (Metric, bool) {
 // Merge merges two sets maps into a fresh set, performing set-union merges as
 // appropriate.
 func (m Metrics) Merge(other Metrics) Metrics {
+	if len(other) > len(m) {
+		m, other = other, m
+	}
 	result := m.Copy()
 	for k, v := range other {
 		if rv, ok := result[k]; ok {
