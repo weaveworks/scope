@@ -252,9 +252,10 @@ func MapContainer2IP(m report.Node) []string {
 // MapProcess2Container maps process Nodes to container
 // Nodes.
 //
-// If this function is given a node without a docker_container_id
-// (including other pseudo nodes), it will produce an "Uncontained"
-// pseudo node.
+// Pseudo nodes are passed straight through.
+//
+// If this function is given a node without a docker_container_id, it
+// will produce an "Uncontained" pseudo node.
 //
 // Otherwise, this function will produce a node with the correct ID
 // format for a container, but without any Major or Minor labels.
@@ -266,10 +267,10 @@ func MapProcess2Container(n report.Node) report.Nodes {
 		return report.Nodes{n.ID: n}
 	}
 
-	// Otherwise, if the process is not in a container, group it
-	// into an per-host "Uncontained" node.  If for whatever reason
-	// this node doesn't have a host id in their nodemetadata, it'll
-	// all get grouped into a single uncontained node.
+	// Otherwise, if the process is not in a container, group it into
+	// an per-host "Uncontained" node.  If for whatever reason this
+	// node doesn't have a host id in their node metadata, it'll all
+	// get grouped into a single uncontained node.
 	var (
 		id   string
 		node report.Node
@@ -289,14 +290,15 @@ func MapProcess2Container(n report.Node) report.Nodes {
 // MapContainer2ContainerImage maps container Nodes to container
 // image Nodes.
 //
+// Pseudo nodes are passed straight through.
+//
 // If this function is given a node without a docker_image_id
-// (including other pseudo nodes), it will produce an "Uncontained"
-// pseudo node.
+// it will drop that node.
 //
 // Otherwise, this function will produce a node with the correct ID
-// format for a container, but without any Major or Minor labels.
-// It does not have enough info to do that, and the resulting graph
-// must be merged with a container graph to get that info.
+// format for a container image, but without any Major or Minor
+// labels.  It does not have enough info to do that, and the resulting
+// graph must be merged with a container image graph to get that info.
 func MapContainer2ContainerImage(n report.Node) report.Nodes {
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
@@ -310,7 +312,8 @@ func MapContainer2ContainerImage(n report.Node) report.Nodes {
 		return report.Nodes{}
 	}
 
-	// Add container id key to the counters, which will later be counted to produce the minor label
+	// Add container id key to the counters, which will later be
+	// counted to produce the minor label
 	id := report.MakeContainerImageNodeID(imageID)
 	result := NewDerivedNode(id, n).WithTopology(report.ContainerImage)
 	result.Latest = result.Latest.Set(docker.ImageID, timestamp, imageID)
