@@ -107,7 +107,7 @@ func (c *connectionCounters) add(outgoing bool, localNode, remoteNode, localEndp
 }
 
 func internetAddr(node report.Node, ep report.Node) (string, bool) {
-	if !isInternetNode(node) {
+	if !render.IsInternetNode(node) {
 		return "", true
 	}
 	_, addr, _, ok := report.ParseEndpointNodeID(ep.ID)
@@ -181,7 +181,7 @@ func incomingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 	}
 
 	columnHeaders := NormalColumns
-	if isInternetNode(n) {
+	if render.IsInternetNode(n) {
 		columnHeaders = InternetColumns
 	}
 	return ConnectionsSummary{
@@ -189,7 +189,7 @@ func incomingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		TopologyID:  topologyID,
 		Label:       "Inbound",
 		Columns:     columnHeaders,
-		Connections: counts.rows(r, ns, isInternetNode(n)),
+		Connections: counts.rows(r, ns, render.IsInternetNode(n)),
 	}
 }
 
@@ -213,7 +213,7 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 	}
 
 	columnHeaders := NormalColumns
-	if isInternetNode(n) {
+	if render.IsInternetNode(n) {
 		columnHeaders = InternetColumns
 	}
 	return ConnectionsSummary{
@@ -221,7 +221,7 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		TopologyID:  topologyID,
 		Label:       "Outbound",
 		Columns:     columnHeaders,
-		Connections: counts.rows(r, ns, isInternetNode(n)),
+		Connections: counts.rows(r, ns, render.IsInternetNode(n)),
 	}
 }
 
@@ -263,8 +263,4 @@ func canonicalEndpointID(copies map[string]string, id string) string {
 		return original
 	}
 	return id
-}
-
-func isInternetNode(n report.Node) bool {
-	return n.ID == render.IncomingInternetID || n.ID == render.OutgoingInternetID
 }
