@@ -252,7 +252,10 @@ type TableTemplates map[string]TableTemplate
 
 // Tables renders the TableTemplates for a given node.
 func (t TableTemplates) Tables(node Node) []Table {
-	var result []Table
+	if len(t) == 0 {
+		return nil
+	}
+	result := make([]Table, 0, len(t))
 	for _, template := range t {
 		rows, truncationCount := node.ExtractTable(template)
 		// Extract the type from the template; default to
