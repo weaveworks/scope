@@ -14,11 +14,11 @@ type MetricTemplate struct {
 	Priority float64 `json:"priority,omitempty"`
 }
 
-// MetricRows returns the rows for a node
-func (t MetricTemplate) MetricRows(n Node) []MetricRow {
+// MetricRow returns the row for a node
+func (t MetricTemplate) MetricRow(n Node) (MetricRow, bool) {
 	metric, ok := n.Metrics.Lookup(t.ID)
 	if !ok {
-		return nil
+		return MetricRow{}, false
 	}
 	row := MetricRow{
 		ID:       t.ID,
@@ -31,7 +31,7 @@ func (t MetricTemplate) MetricRows(n Node) []MetricRow {
 	if s, ok := metric.LastSample(); ok {
 		row.Value = toFixed(s.Value, 2)
 	}
-	return []MetricRow{row}
+	return row, true
 }
 
 // MetricTemplates is a mergeable set of metric templates
@@ -39,9 +39,17 @@ type MetricTemplates map[string]MetricTemplate
 
 // MetricRows returns the rows for a node
 func (e MetricTemplates) MetricRows(n Node) []MetricRow {
-	var rows []MetricRow
+	if len(e) == 0 {
+		return nil
+	}
+	rows := make([]MetricRow, 0, len(e))
 	for _, template := range e {
-		rows = append(rows, template.MetricRows(n)...)
+		if row, ok := template.MetricRow(n); ok {
+			rows = append(rows, row)
+		}
+	}
+	if len(rows) == 0 {
+		return nil
 	}
 	sort.Sort(MetricRowsByPriority(rows))
 	return rows
