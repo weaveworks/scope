@@ -43,6 +43,26 @@ const (
 	ContainersKey = "containers"
 )
 
+// topologyNames are the names of all report topologies.
+var topologyNames = []string{
+	Endpoint,
+	Process,
+	Container,
+	ContainerImage,
+	Pod,
+	Service,
+	Deployment,
+	ReplicaSet,
+	DaemonSet,
+	StatefulSet,
+	CronJob,
+	Host,
+	Overlay,
+	ECSTask,
+	ECSService,
+	SwarmService,
+}
+
 // Report is the core data type. It's produced by probes, and consumed and
 // stored by apps. It's composed of multiple topologies, each representing
 // a different (related, but not equivalent) view of the network.
@@ -226,28 +246,6 @@ func MakeReport() Report {
 	}
 }
 
-// TopologyMap gets a map from topology names to pointers to the respective topologies
-func (r *Report) TopologyMap() map[string]*Topology {
-	return map[string]*Topology{
-		Endpoint:       &r.Endpoint,
-		Process:        &r.Process,
-		Container:      &r.Container,
-		ContainerImage: &r.ContainerImage,
-		Pod:            &r.Pod,
-		Service:        &r.Service,
-		Deployment:     &r.Deployment,
-		ReplicaSet:     &r.ReplicaSet,
-		DaemonSet:      &r.DaemonSet,
-		StatefulSet:    &r.StatefulSet,
-		CronJob:        &r.CronJob,
-		Host:           &r.Host,
-		Overlay:        &r.Overlay,
-		ECSTask:        &r.ECSTask,
-		ECSService:     &r.ECSService,
-		SwarmService:   &r.SwarmService,
-	}
-}
-
 // Copy returns a value copy of the report.
 func (r Report) Copy() Report {
 	newReport := Report{
@@ -275,46 +273,73 @@ func (r Report) Merge(other Report) Report {
 	return newReport
 }
 
-// Topologies returns a slice of Topologies in this report
-func (r Report) Topologies() []Topology {
-	result := []Topology{}
-	r.WalkTopologies(func(t *Topology) {
-		result = append(result, *t)
-	})
-	return result
-}
-
 // WalkTopologies iterates through the Topologies of the report,
 // potentially modifying them
 func (r *Report) WalkTopologies(f func(*Topology)) {
-	var dummy Report
-	r.WalkPairedTopologies(&dummy, func(t, _ *Topology) { f(t) })
+	for _, name := range topologyNames {
+		f(r.topology(name))
+	}
+}
+
+// WalkNamedTopologies iterates through the Topologies of the report,
+// potentially modifying them.
+func (r *Report) WalkNamedTopologies(f func(string, *Topology)) {
+	for _, name := range topologyNames {
+		f(name, r.topology(name))
+	}
 }
 
 // WalkPairedTopologies iterates through the Topologies of this and another report,
 // potentially modifying one or both.
 func (r *Report) WalkPairedTopologies(o *Report, f func(*Topology, *Topology)) {
-	f(&r.Endpoint, &o.Endpoint)
-	f(&r.Process, &o.Process)
-	f(&r.Container, &o.Container)
-	f(&r.ContainerImage, &o.ContainerImage)
-	f(&r.Pod, &o.Pod)
-	f(&r.Service, &o.Service)
-	f(&r.Deployment, &o.Deployment)
-	f(&r.ReplicaSet, &o.ReplicaSet)
-	f(&r.DaemonSet, &o.DaemonSet)
-	f(&r.StatefulSet, &o.StatefulSet)
-	f(&r.CronJob, &o.CronJob)
-	f(&r.Host, &o.Host)
-	f(&r.Overlay, &o.Overlay)
-	f(&r.ECSTask, &o.ECSTask)
-	f(&r.ECSService, &o.ECSService)
-	f(&r.SwarmService, &o.SwarmService)
+	for _, name := range topologyNames {
+		f(r.topology(name), o.topology(name))
+	}
 }
 
-// Topology gets a topology by name
+// topology returns a reference to one of the report's topologies,
+// selected by name.
+func (r *Report) topology(name string) *Topology {
+	switch name {
+	case Endpoint:
+		return &r.Endpoint
+	case Process:
+		return &r.Process
+	case Container:
+		return &r.Container
+	case ContainerImage:
+		return &r.ContainerImage
+	case Pod:
+		return &r.Pod
+	case Service:
+		return &r.Service
+	case Deployment:
+		return &r.Deployment
+	case ReplicaSet:
+		return &r.ReplicaSet
+	case DaemonSet:
+		return &r.DaemonSet
+	case StatefulSet:
+		return &r.StatefulSet
+	case CronJob:
+		return &r.CronJob
+	case Host:
+		return &r.Host
+	case Overlay:
+		return &r.Overlay
+	case ECSTask:
+		return &r.ECSTask
+	case ECSService:
+		return &r.ECSService
+	case SwarmService:
+		return &r.SwarmService
+	}
+	return nil
+}
+
+// Topology returns one of the report's topologies, selected by name.
 func (r Report) Topology(name string) (Topology, bool) {
-	if t, ok := r.TopologyMap()[name]; ok {
+	if t := r.topology(name); t != nil {
 		return *t, true
 	}
 	return Topology{}, false
@@ -323,8 +348,8 @@ func (r Report) Topology(name string) (Topology, bool) {
 // Validate checks the report for various inconsistencies.
 func (r Report) Validate() error {
 	var errs []string
-	for _, topology := range r.Topologies() {
-		if err := topology.Validate(); err != nil {
+	for _, name := range topologyNames {
+		if err := r.topology(name).Validate(); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
