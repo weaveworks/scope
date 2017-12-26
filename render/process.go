@@ -42,7 +42,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
 	processes := r.Renderer.Render(rpt)
 	containers := SelectContainer.Render(rpt)
 
-	outputs := report.Nodes{}
+	outputs := make(report.Nodes, len(processes.Nodes))
 	for id, p := range processes.Nodes {
 		outputs[id] = p
 		containerID, timestamp, ok := p.Latest.LookupEntry(docker.ContainerID)

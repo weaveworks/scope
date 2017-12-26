@@ -131,7 +131,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) Nodes {
 	containers := r.Renderer.Render(rpt)
 	images := SelectContainerImage.Render(rpt)
 
-	outputs := report.Nodes{}
+	outputs := make(report.Nodes, len(containers.Nodes))
 	for id, c := range containers.Nodes {
 		outputs[id] = c
 		imageID, ok := c.Latest.Lookup(docker.ImageID)
