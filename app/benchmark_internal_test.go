@@ -131,6 +131,10 @@ func BenchmarkRenderProcesses(b *testing.B) {
 	benchmarkRenderTopology(b, "processes")
 }
 
+func BenchmarkRenderProcessNames(b *testing.B) {
+	benchmarkRenderTopology(b, "processes-by-name")
+}
+
 func benchmarkSummarizeTopology(b *testing.B, topologyID string) {
 	r := getReport(b)
 	rc := report.RenderContext{Report: r}
@@ -159,4 +163,8 @@ func BenchmarkSummarizeContainers(b *testing.B) {
 
 func BenchmarkSummarizeProcesses(b *testing.B) {
 	benchmarkSummarizeTopology(b, "processes")
+}
+
+func BenchmarkSummarizeProcessNames(b *testing.B) {
+	benchmarkSummarizeTopology(b, "processes-by-name")
 }
