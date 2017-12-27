@@ -117,17 +117,28 @@ func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, boo
 	if t, ok := r.Topology(n.Topology); ok {
 		summary.Shape = t.GetShape()
 	}
+
+	// Do we have a renderer for the topology?
 	if renderer, ok := renderers[n.Topology]; ok {
-		// Skip (and don't fall through to fallback) if renderer maps to nil
-		if renderer != nil {
-			return renderer(summary, n), true
+		if renderer == nil { // we don't want to render this
+			return summary, false
 		}
-	} else if _, ok := r.Topology(n.Topology); ok {
-		return summary, true
+		return renderer(summary, n), true
 	}
+
+	// Is it a group topology?
 	if strings.HasPrefix(n.Topology, "group:") {
 		return groupNodeSummary(summary, r, n), true
 	}
+
+	// Is it any known topology?
+	if _, ok := r.Topology(n.Topology); ok {
+		// We should never get here, since all known topologies are in
+		// 'renderers'.
+		return summary, true
+	}
+
+	// We have no idea how to render this.
 	return summary, false
 }
 
