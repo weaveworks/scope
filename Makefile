@@ -69,7 +69,6 @@ $(RUNSVINIT): vendor/runsvinit/*.go
 $(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name '*.go') prog/staticui/staticui.go prog/externalui/externalui.go $(CODECGEN_TARGETS)
 
 report/report.codecgen.go: $(call GET_CODECGEN_DEPS,report/)
-render/render.codecgen.go: $(call GET_CODECGEN_DEPS,render/)
 render/detailed/detailed.codecgen.go: $(call GET_CODECGEN_DEPS,render/detailed/)
 static: prog/staticui/staticui.go prog/externalui/externalui.go
 prog/staticui/staticui.go: client/build/index.html
