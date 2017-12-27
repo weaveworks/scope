@@ -108,8 +108,10 @@ var primaryAPITopology = map[string]string{
 // MakeBasicNodeSummary returns a basic summary of a node, if
 // possible. This summary is sufficient for rendering links to the node.
 func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, bool) {
-	summary := BasicNodeSummary{
+	summary := BasicNodeSummary{ // This is unlikely to look very good, but is a reasonable fallback
 		ID:       n.ID,
+		Label:    n.ID,
+		Shape:    report.Triangle,
 		Linkable: true,
 	}
 	if t, ok := r.Topology(n.Topology); ok {
@@ -121,7 +123,6 @@ func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, boo
 			return renderer(summary, n), true
 		}
 	} else if _, ok := r.Topology(n.Topology); ok {
-		summary.Label = n.ID // This is unlikely to look very good, but is a reasonable fallback
 		return summary, true
 	}
 	if strings.HasPrefix(n.Topology, "group:") {
