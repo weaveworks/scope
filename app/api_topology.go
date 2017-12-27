@@ -28,15 +28,26 @@ type APINode struct {
 	Node detailed.Node `json:"node"`
 }
 
+// RenderContextForReporter creates the rendering context for the given reporter.
+func RenderContextForReporter(rep Reporter, r report.Report) detailed.RenderContext {
+	rc := detailed.RenderContext{Report: r}
+	if wrep, ok := rep.(WebReporter); ok {
+		rc.MetricsGraphURL = wrep.MetricsGraphURL
+	}
+	return rc
+}
+
+type rendererHandler func(context.Context, render.Renderer, render.Transformer, detailed.RenderContext, http.ResponseWriter, *http.Request)
+
 // Full topology.
-func handleTopology(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
+func handleTopology(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
 		Nodes: detailed.Summaries(rc, render.Render(rc.Report, renderer, transformer).Nodes),
 	})
 }
 
 // Individual nodes.
-func handleNode(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc report.RenderContext, w http.ResponseWriter, r *http.Request) {
+func handleNode(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars       = mux.Vars(r)
 		topologyID = vars["topology"]
