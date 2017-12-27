@@ -229,6 +229,11 @@ func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) 
 	return split2(addressNodeID, ScopeDelim)
 }
 
+// ParseProcessNodeID produces the host ID and PID from a process node ID.
+func ParseProcessNodeID(processNodeID string) (hostID, pid string, ok bool) {
+	return split2(processNodeID, ScopeDelim)
+}
+
 // ParseECSServiceNodeID produces the cluster, service name from an ECS Service node ID
 func ParseECSServiceNodeID(ecsServiceNodeID string) (cluster, serviceName string, ok bool) {
 	cluster, serviceName, ok = split2(ecsServiceNodeID, ScopeDelim)

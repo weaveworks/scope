@@ -23,9 +23,32 @@ func MakePseudoNodeID(parts ...string) string {
 	return strings.Join(append([]string{"pseudo"}, parts...), ":")
 }
 
+// ParsePseudoNodeID returns the joined id parts of a pseudonode
+// ID. If the ID is not recognisable as a pseudonode ID, it is
+// returned as is, with the returned bool set to false. That is
+// convenient because not all pseudonode IDs actually follow the
+// format produced by MakePseudoNodeID.
+func ParsePseudoNodeID(nodeID string) (string, bool) {
+	// Not using strings.SplitN() to avoid a heap allocation
+	pos := strings.Index(nodeID, ":")
+	if pos == -1 || nodeID[:pos] != "pseudo" {
+		return nodeID, false
+	}
+	return nodeID[pos+1:], true
+}
+
 // MakeGroupNodeTopology joins the parts of a group topology into the topology of a group node
 func MakeGroupNodeTopology(originalTopology, key string) string {
 	return strings.Join([]string{"group", originalTopology, key}, ":")
+}
+
+// ParseGroupNodeTopology returns the parts of a group topology.
+func ParseGroupNodeTopology(topology string) (string, string, bool) {
+	parts := strings.Split(topology, ":")
+	if len(parts) != 3 || parts[0] != "group" {
+		return "", "", false
+	}
+	return parts[1], parts[2], true
 }
 
 // NewDerivedNode makes a node based on node, but with a new ID

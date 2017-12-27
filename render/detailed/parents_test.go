@@ -34,7 +34,7 @@ func TestParents(t *testing.T) {
 			name: "Container image",
 			node: render.ContainerImageRenderer.Render(fixture.Report).Nodes[expected.ClientContainerImageNodeID],
 			want: []detailed.Parent{
-				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
+				{ID: fixture.ClientHostNodeID, Label: "client", TopologyID: "hosts"},
 			},
 		},
 		{
@@ -42,15 +42,15 @@ func TestParents(t *testing.T) {
 			node: render.ContainerWithImageNameRenderer.Render(fixture.Report).Nodes[fixture.ClientContainerNodeID],
 			want: []detailed.Parent{
 				{ID: expected.ClientContainerImageNodeID, Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
-				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
 				{ID: fixture.ClientPodNodeID, Label: "pong-a", TopologyID: "pods"},
+				{ID: fixture.ClientHostNodeID, Label: "client", TopologyID: "hosts"},
 			},
 		},
 		{
 			node: render.ProcessRenderer.Render(fixture.Report).Nodes[fixture.ClientProcess1NodeID],
 			want: []detailed.Parent{
 				{ID: fixture.ClientContainerNodeID, Label: fixture.ClientContainerName, TopologyID: "containers"},
-				{ID: fixture.ClientHostNodeID, Label: fixture.ClientHostName, TopologyID: "hosts"},
+				{ID: fixture.ClientHostNodeID, Label: "client", TopologyID: "hosts"},
 			},
 		},
 	} {

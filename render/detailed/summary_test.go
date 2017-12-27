@@ -106,11 +106,13 @@ func TestMakeNodeSummary(t *testing.T) {
 			input: expected.RenderedProcesses[fixture.ClientProcess1NodeID],
 			ok:    true,
 			want: detailed.NodeSummary{
-				ID:         fixture.ClientProcess1NodeID,
-				Label:      fixture.Client1Name,
-				LabelMinor: "client.hostname.com (10001)",
-				Rank:       fixture.Client1Name,
-				Shape:      "square",
+				BasicNodeSummary: detailed.BasicNodeSummary{
+					ID:         fixture.ClientProcess1NodeID,
+					Label:      fixture.Client1Name,
+					LabelMinor: "client.hostname.com (10001)",
+					Rank:       fixture.Client1Name,
+					Shape:      "square",
+				},
 				Metadata: []report.MetadataRow{
 					{ID: process.PID, Label: "PID", Value: fixture.Client1PID, Priority: 1, Datatype: report.Number},
 				},
@@ -122,12 +124,14 @@ func TestMakeNodeSummary(t *testing.T) {
 			input: expected.RenderedContainers[fixture.ClientContainerNodeID],
 			ok:    true,
 			want: detailed.NodeSummary{
-				ID:         fixture.ClientContainerNodeID,
-				Label:      fixture.ClientContainerName,
-				LabelMinor: fixture.ClientHostName,
-				Rank:       fixture.ClientContainerImageName,
-				Shape:      "hexagon",
-				Linkable:   true,
+				BasicNodeSummary: detailed.BasicNodeSummary{
+					ID:         fixture.ClientContainerNodeID,
+					Label:      fixture.ClientContainerName,
+					LabelMinor: fixture.ClientHostName,
+					Rank:       fixture.ClientContainerImageName,
+					Shape:      "hexagon",
+					Linkable:   true,
+				},
 				Metadata: []report.MetadataRow{
 					{ID: docker.ImageName, Label: "Image", Value: fixture.ClientContainerImageName, Priority: 1},
 					{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 10, Truncate: 12},
@@ -140,13 +144,15 @@ func TestMakeNodeSummary(t *testing.T) {
 			input: expected.RenderedContainerImages[expected.ClientContainerImageNodeID],
 			ok:    true,
 			want: detailed.NodeSummary{
-				ID:         expected.ClientContainerImageNodeID,
-				Label:      fixture.ClientContainerImageName,
-				LabelMinor: "1 container",
-				Rank:       fixture.ClientContainerImageName,
-				Shape:      "hexagon",
-				Linkable:   true,
-				Stack:      true,
+				BasicNodeSummary: detailed.BasicNodeSummary{
+					ID:         expected.ClientContainerImageNodeID,
+					Label:      fixture.ClientContainerImageName,
+					LabelMinor: "1 container",
+					Rank:       fixture.ClientContainerImageName,
+					Shape:      "hexagon",
+					Linkable:   true,
+					Stack:      true,
+				},
 				Metadata: []report.MetadataRow{
 					{ID: report.Container, Label: "# Containers", Value: "1", Priority: 2, Datatype: report.Number},
 				},
@@ -158,12 +164,14 @@ func TestMakeNodeSummary(t *testing.T) {
 			input: expected.RenderedHosts[fixture.ClientHostNodeID],
 			ok:    true,
 			want: detailed.NodeSummary{
-				ID:         fixture.ClientHostNodeID,
-				Label:      "client",
-				LabelMinor: "hostname.com",
-				Rank:       "hostname.com",
-				Shape:      "circle",
-				Linkable:   true,
+				BasicNodeSummary: detailed.BasicNodeSummary{
+					ID:         fixture.ClientHostNodeID,
+					Label:      "client",
+					LabelMinor: "hostname.com",
+					Rank:       "hostname.com",
+					Shape:      "circle",
+					Linkable:   true,
+				},
 				Metadata: []report.MetadataRow{
 					{ID: host.HostName, Label: "Hostname", Value: fixture.ClientHostName, Priority: 11},
 				},
@@ -175,13 +183,15 @@ func TestMakeNodeSummary(t *testing.T) {
 			input: expected.RenderedProcessNames[fixture.ServerName],
 			ok:    true,
 			want: detailed.NodeSummary{
-				ID:         "apache",
-				Label:      "apache",
-				LabelMinor: "1 process",
-				Rank:       "apache",
-				Shape:      "square",
-				Stack:      true,
-				Linkable:   true,
+				BasicNodeSummary: detailed.BasicNodeSummary{
+					ID:         "apache",
+					Label:      "apache",
+					LabelMinor: "1 process",
+					Rank:       "apache",
+					Shape:      "square",
+					Stack:      true,
+					Linkable:   true,
+				},
 			},
 		},
 	}
@@ -194,6 +204,38 @@ func TestMakeNodeSummary(t *testing.T) {
 
 		if !reflect.DeepEqual(testcase.want, have) {
 			t.Errorf("%s: Node Summary did not match: %s", testcase.name, test.Diff(testcase.want, have))
+		}
+	}
+}
+
+func TestMakeNodeSummaryNoMetadata(t *testing.T) {
+	processNameTopology := render.MakeGroupNodeTopology(report.Process, process.Name)
+	for topology, id := range map[string]string{
+		render.Pseudo:         render.MakePseudoNodeID("id"),
+		report.Process:        report.MakeProcessNodeID("ip-123-45-6-100", "1234"),
+		report.Container:      report.MakeContainerNodeID("0001accbecc2c95e650fe641926fb923b7cc307a71101a1200af3759227b6d7d"),
+		report.ContainerImage: report.MakeContainerImageNodeID("0001accbecc2c95e650fe641926fb923b7cc307a71101a1200af3759227b6d7d"),
+		report.Pod:            report.MakePodNodeID("005e2999-d429-11e7-8535-0a41257e78e8"),
+		report.Service:        report.MakeServiceNodeID("005e2999-d429-11e7-8535-0a41257e78e8"),
+		report.Deployment:     report.MakeDeploymentNodeID("005e2999-d429-11e7-8535-0a41257e78e8"),
+		report.DaemonSet:      report.MakeDaemonSetNodeID("005e2999-d429-11e7-8535-0a41257e78e8"),
+		report.StatefulSet:    report.MakeStatefulSetNodeID("005e2999-d429-11e7-8535-0a41257e78e8"),
+		report.CronJob:        report.MakeCronJobNodeID("005e2999-d429-11e7-8535-0a41257e78e8"),
+		report.ECSTask:        report.MakeECSTaskNodeID("arn:aws:ecs:us-east-1:012345678910:task/1dc5c17a-422b-4dc4-b493-371970c6c4d6"),
+		report.ECSService:     report.MakeECSServiceNodeID("cluster", "service"),
+		report.SwarmService:   report.MakeSwarmServiceNodeID("0001accbecc2c95e650fe641926fb923b7cc307a71101a1200af3759227b6d7d"),
+		report.Host:           report.MakeHostNodeID("ip-123-45-6-100"),
+		report.Overlay:        report.MakeOverlayNodeID("", "3e:ca:14:ca:12:5c"),
+		processNameTopology:   "/home/weave/scope",
+	} {
+		summary, b := detailed.MakeNodeSummary(report.RenderContext{}, report.MakeNode(id).WithTopology(topology))
+		switch {
+		case !b:
+			t.Errorf("Node Summary missing for topology %s, id %s", topology, id)
+		case summary.Label == "":
+			t.Errorf("Node Summary Label missing for topology %s, id %s", topology, id)
+		case summary.Label == id && topology != processNameTopology:
+			t.Errorf("Node Summary Label same as id (that's cheating!) for topology %s, id %s", topology, id)
 		}
 	}
 }

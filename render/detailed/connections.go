@@ -125,10 +125,8 @@ func internetAddr(node report.Node, ep report.Node) (string, bool) {
 func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal bool) []Connection {
 	output := []Connection{}
 	for row, count := range c.counts {
-		// Use MakeNodeSummary to render the id and label of this node
-		// TODO(paulbellamy): Would be cleaner if we hade just a
-		// MakeNodeID(ns[row.remoteNodeID]). As we don't need the whole summary.
-		summary, _ := MakeNodeSummary(report.RenderContext{Report: r}, ns[row.remoteNodeID])
+		// Use MakeBasicNodeSummary to render the id and label of this node
+		summary, _ := MakeBasicNodeSummary(r, ns[row.remoteNodeID])
 		connection := Connection{
 			ID:         fmt.Sprintf("%s-%s-%s-%s", row.remoteNodeID, row.remoteAddr, row.localAddr, row.port),
 			NodeID:     summary.ID,

@@ -31,8 +31,17 @@ var (
 	}
 )
 
+func nodeSummaryWithMetrics(label string, metrics []report.MetricRow) detailed.NodeSummary {
+	return detailed.NodeSummary{
+		BasicNodeSummary: detailed.BasicNodeSummary{
+			Label: label,
+		},
+		Metrics: metrics,
+	}
+}
+
 func TestRenderMetricURLs_Disabled(t *testing.T) {
-	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
+	s := nodeSummaryWithMetrics("foo", sampleMetrics)
 	result := detailed.RenderMetricURLs(s, samplePodNode, "")
 
 	assert.Empty(t, result.Metrics[0].URL)
@@ -40,7 +49,7 @@ func TestRenderMetricURLs_Disabled(t *testing.T) {
 }
 
 func TestRenderMetricURLs_UnknownTopology(t *testing.T) {
-	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
+	s := nodeSummaryWithMetrics("foo", sampleMetrics)
 	result := detailed.RenderMetricURLs(s, sampleUnknownNode, sampleMetricsGraphURL)
 
 	assert.Empty(t, result.Metrics[0].URL)
@@ -48,7 +57,7 @@ func TestRenderMetricURLs_UnknownTopology(t *testing.T) {
 }
 
 func TestRenderMetricURLs_Pod(t *testing.T) {
-	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
+	s := nodeSummaryWithMetrics("foo", sampleMetrics)
 	result := detailed.RenderMetricURLs(s, samplePodNode, sampleMetricsGraphURL)
 
 	checkURL(t, result.Metrics[0].URL, sampleMetricsGraphURL,
@@ -58,7 +67,7 @@ func TestRenderMetricURLs_Pod(t *testing.T) {
 }
 
 func TestRenderMetricURLs_Container(t *testing.T) {
-	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
+	s := nodeSummaryWithMetrics("foo", sampleMetrics)
 	result := detailed.RenderMetricURLs(s, sampleContainerNode, sampleMetricsGraphURL)
 
 	checkURL(t, result.Metrics[0].URL, sampleMetricsGraphURL,
@@ -84,10 +93,7 @@ func TestRenderMetricURLs_EmptyMetrics(t *testing.T) {
 }
 
 func TestRenderMetricURLs_CombinedEmptyMetrics(t *testing.T) {
-	s := detailed.NodeSummary{
-		Label:   "foo",
-		Metrics: []report.MetricRow{{ID: docker.MemoryUsage, Priority: 1}},
-	}
+	s := nodeSummaryWithMetrics("foo", []report.MetricRow{{ID: docker.MemoryUsage, Priority: 1}})
 	result := detailed.RenderMetricURLs(s, samplePodNode, sampleMetricsGraphURL)
 
 	assert.NotEmpty(t, result.Metrics[0].URL)
@@ -99,7 +105,7 @@ func TestRenderMetricURLs_CombinedEmptyMetrics(t *testing.T) {
 }
 
 func TestRenderMetricURLs_QueryReplacement(t *testing.T) {
-	s := detailed.NodeSummary{Label: "foo", Metrics: sampleMetrics}
+	s := nodeSummaryWithMetrics("foo", sampleMetrics)
 	result := detailed.RenderMetricURLs(s, samplePodNode, "http://example.test/?q=:query")
 
 	checkURL(t, result.Metrics[0].URL, "http://example.test/?q=",
