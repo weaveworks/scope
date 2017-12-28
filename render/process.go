@@ -76,6 +76,10 @@ var ProcessNameRenderer = CustomRenderer{RenderFunc: processes2Names, Renderer: 
 type endpoints2Processes struct {
 }
 
+func newProcessNode(id string) report.Node {
+	return report.MakeNode(id).WithTopology(report.Process)
+}
+
 func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 	if len(rpt.Process.Nodes) == 0 {
 		return Nodes{}
@@ -102,11 +106,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 
 			hostID, _ := report.ParseHostNodeID(hostNodeID)
 			id := report.MakeProcessNodeID(hostID, pid)
-			ret.addChild(n, id, func(id string) report.Node {
-				// we have a pid, but no matching process node;
-				// create a new one rather than dropping the data
-				return report.MakeNode(id).WithTopology(report.Process)
-			})
+			ret.addChild(n, id, newProcessNode)
 		}
 	}
 	return ret.result(endpoints)
@@ -139,6 +139,12 @@ func hasMoreThanOneConnection(n report.Node, endpoints report.Nodes) bool {
 	return false
 }
 
+var processNameTopology = MakeGroupNodeTopology(report.Process, process.Name)
+
+func newProcessNameNode(id string) report.Node {
+	return report.MakeNode(id).WithTopology(processNameTopology)
+}
+
 // processes2Names maps process Nodes to Nodes for each process name.
 func processes2Names(processes Nodes) Nodes {
 	ret := newJoinResults(nil)
@@ -147,9 +153,7 @@ func processes2Names(processes Nodes) Nodes {
 		if n.Topology == Pseudo {
 			ret.passThrough(n)
 		} else if name, ok := n.Latest.Lookup(process.Name); ok {
-			ret.addChildAndChildren(n, name, func(id string) report.Node {
-				return report.MakeNode(id).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name))
-			})
+			ret.addChildAndChildren(n, name, newProcessNameNode)
 		}
 	}
 	return ret.result(processes)

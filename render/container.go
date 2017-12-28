@@ -335,6 +335,8 @@ func MapContainerImage2Name(n report.Node) report.Nodes {
 	return report.Nodes{n.ID: n}
 }
 
+var containerHostnameTopology = MakeGroupNodeTopology(report.Container, docker.ContainerHostname)
+
 // MapContainer2Hostname maps container Nodes to 'hostname' renderabled nodes..
 func MapContainer2Hostname(n report.Node) report.Nodes {
 	// Propagate all pseudo nodes
@@ -349,7 +351,7 @@ func MapContainer2Hostname(n report.Node) report.Nodes {
 		return report.Nodes{}
 	}
 
-	node := NewDerivedNode(id, n).WithTopology(MakeGroupNodeTopology(n.Topology, docker.ContainerHostname))
+	node := NewDerivedNode(id, n).WithTopology(containerHostnameTopology)
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: node}
 }
