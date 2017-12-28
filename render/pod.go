@@ -49,8 +49,7 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 			return (!ok || state != kubernetes.StateDeleted)
 		},
 		MakeReduce(
-			MakeMap(
-				PropagateSingleMetrics(report.Container),
+			PropagateSingleMetrics(report.Container,
 				MakeMap(
 					Map2Parent([]string{report.Pod}, UnmanagedID),
 					MakeFilter(
@@ -101,8 +100,7 @@ func renderParents(childTopology string, parentTopologies []string, noParentsPse
 	}
 	return MakeReduce(append(
 		selectors,
-		MakeMap(
-			PropagateSingleMetrics(childTopology),
+		PropagateSingleMetrics(childTopology,
 			MakeMap(
 				Map2Parent(parentTopologies, noParentsPseudoID),
 				childRenderer,
