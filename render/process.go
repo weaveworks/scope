@@ -146,10 +146,9 @@ func processes2Names(processes Nodes) Nodes {
 	for _, n := range processes.Nodes {
 		if n.Topology == Pseudo {
 			ret.passThrough(n)
-		} else if name, timestamp, ok := n.Latest.LookupEntry(process.Name); ok {
+		} else if name, ok := n.Latest.Lookup(process.Name); ok {
 			ret.addChildAndChildren(n, name, func(id string) report.Node {
-				return report.MakeNode(id).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name)).
-					WithLatest(process.Name, timestamp, name)
+				return report.MakeNode(id).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name))
 			})
 		}
 	}
