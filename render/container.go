@@ -307,7 +307,7 @@ func MapContainer2ContainerImage(n report.Node) report.Nodes {
 
 	// Otherwise, if some some reason the container doesn't have a image_id
 	// (maybe slightly out of sync reports), just drop it
-	imageID, timestamp, ok := n.Latest.LookupEntry(docker.ImageID)
+	imageID, ok := n.Latest.Lookup(docker.ImageID)
 	if !ok {
 		return report.Nodes{}
 	}
@@ -316,7 +316,6 @@ func MapContainer2ContainerImage(n report.Node) report.Nodes {
 	// counted to produce the minor label
 	id := report.MakeContainerImageNodeID(imageID)
 	result := NewDerivedNode(id, n).WithTopology(report.ContainerImage)
-	result.Latest = result.Latest.Set(docker.ImageID, timestamp, imageID)
 	result.Counters = result.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: result}
 }
