@@ -139,7 +139,7 @@ func Map2Parent(
 	return func(n report.Node) report.Nodes {
 		// Uncontained becomes Unmanaged/whatever if noParentsPseudoID is set
 		if noParentsPseudoID != "" && strings.HasPrefix(n.ID, UncontainedIDPrefix) {
-			id := MakePseudoNodeID(noParentsPseudoID, report.ExtractHostID(n))
+			id := MakePseudoNodeID(noParentsPseudoID, n.ID[len(UncontainedIDPrefix):])
 			node := NewDerivedPseudoNode(id, n)
 			return report.Nodes{id: node}
 		}
