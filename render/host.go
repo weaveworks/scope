@@ -67,18 +67,12 @@ func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
 
 	for _, n := range endpoints.Nodes {
 		// Nodes without a hostid are treated as pseudo nodes
-		if hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID); !ok {
+		if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); !ok {
 			if id, ok := pseudoNodeID(n, local); ok {
 				ret.addChild(n, id, newPseudoNode)
 			}
 		} else {
-			id := report.MakeHostNodeID(report.ExtractHostID(n))
-			ret.addChild(n, id, func(id string) report.Node {
-				// we have a hostNodeID, but no matching host node;
-				// create a new one rather than dropping the data
-				return newHostNode(id).
-					WithLatest(report.HostNodeID, timestamp, hostNodeID)
-			})
+			ret.addChild(n, hostNodeID, newHostNode)
 		}
 	}
 	return ret.result(endpoints)
