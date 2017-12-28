@@ -21,16 +21,20 @@ func (p propagateSingleMetrics) Render(rpt report.Report) Nodes {
 	nodes := p.r.Render(rpt)
 	outputs := make(report.Nodes, len(nodes.Nodes))
 	for id, n := range nodes.Nodes {
-		var found []report.Node
+		var first report.Node
+		found := 0
 		n.Children.ForEach(func(child report.Node) {
 			if child.Topology == p.topology {
 				if _, ok := child.Latest.Lookup(report.DoesNotMakeConnections); !ok {
-					found = append(found, child)
+					if found == 0 {
+						first = child
+					}
+					found++
 				}
 			}
 		})
-		if len(found) == 1 {
-			n = n.WithMetrics(found[0].Metrics)
+		if found == 1 {
+			n = n.WithMetrics(first.Metrics)
 		}
 		outputs[id] = n
 	}
