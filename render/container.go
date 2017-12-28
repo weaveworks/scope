@@ -352,13 +352,12 @@ func MapContainer2Hostname(n report.Node) report.Nodes {
 
 	// Otherwise, if some some reason the container doesn't have a hostname
 	// (maybe slightly out of sync reports), just drop it
-	id, timestamp, ok := n.Latest.LookupEntry(docker.ContainerHostname)
+	id, ok := n.Latest.Lookup(docker.ContainerHostname)
 	if !ok {
 		return report.Nodes{}
 	}
 
 	node := NewDerivedNode(id, n).WithTopology(MakeGroupNodeTopology(n.Topology, docker.ContainerHostname))
-	node.Latest = node.Latest.Set(docker.ContainerHostname, timestamp, id)
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: node}
 }
