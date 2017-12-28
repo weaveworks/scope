@@ -83,11 +83,6 @@ var renderers = map[string]func(BasicNodeSummary, report.Node) BasicNodeSummary{
 	report.Endpoint:       nil, // Do not render
 }
 
-var templates = map[string]struct{ Label, LabelMinor string }{
-	render.IncomingInternetID: {render.InboundMajor, render.InboundMinor},
-	render.OutgoingInternetID: {render.OutboundMajor, render.OutboundMinor},
-}
-
 // For each report.Topology, map to a 'primary' API topology. This can then be used in a variety of places.
 var primaryAPITopology = map[string]string{
 	report.Process:        "processes",
@@ -181,11 +176,15 @@ func pseudoNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base.Rank = pseudoID
 
 	switch {
-	case render.IsInternetNode(n):
+	case n.ID == render.IncomingInternetID:
 		// render as an internet node
-		template := templates[n.ID]
-		base.Label = template.Label
-		base.LabelMinor = template.LabelMinor
+		base.Label = render.InboundMajor
+		base.LabelMinor = render.InboundMinor
+		base.Shape = report.Cloud
+	case n.ID == render.OutgoingInternetID:
+		// render as an internet node
+		base.Label = render.OutboundMajor
+		base.LabelMinor = render.OutboundMinor
 		base.Shape = report.Cloud
 	case strings.HasPrefix(n.ID, render.ServiceNodeIDPrefix):
 		// render as a known service node
