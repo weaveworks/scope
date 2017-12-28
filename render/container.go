@@ -82,7 +82,7 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 		// Nodes without a hostid may be pseudo nodes - if so, pass through to result
 		if _, ok := m.Latest.Lookup(report.HostNodeID); !ok {
 			if id, ok := externalNodeID(m, addr, local); ok {
-				ret.addChild(m, id, newPseudoNode)
+				ret.addChild(m, id, Pseudo)
 				continue
 			}
 		}
@@ -94,8 +94,9 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 			id, found = ipNodes[report.MakeScopedEndpointNodeID(scope, addr, port)]
 		}
 		if found && id != "" { // not one we blanked out earlier
-			// We are guaranteed to find the id, so no need to pass a node constructor.
-			ret.addChild(m, id, nil)
+			// We are guaranteed to find the id, so really this should
+			// never end up creating a node.
+			ret.addChild(m, id, report.Container)
 		}
 	}
 	return ret.result(endpoints)
