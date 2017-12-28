@@ -92,7 +92,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 				ret.addChild(n, id, newPseudoNode)
 			}
 		} else {
-			pid, timestamp, ok := n.Latest.LookupEntry(process.PID)
+			pid, ok := n.Latest.Lookup(process.PID)
 			if !ok {
 				continue
 			}
@@ -105,8 +105,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 			ret.addChild(n, id, func(id string) report.Node {
 				// we have a pid, but no matching process node;
 				// create a new one rather than dropping the data
-				return report.MakeNode(id).WithTopology(report.Process).
-					WithLatest(process.PID, timestamp, pid)
+				return report.MakeNode(id).WithTopology(report.Process)
 			})
 		}
 	}
