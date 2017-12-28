@@ -195,13 +195,13 @@ func pseudoNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	case strings.HasPrefix(n.ID, render.UncontainedIDPrefix):
 		// render as an uncontained node
 		base.Label = render.UncontainedMajor
-		base.LabelMinor = report.ExtractHostID(n)
+		base.LabelMinor = n.ID[len(render.UncontainedIDPrefix):]
 		base.Shape = report.Square
 		base.Stack = true
 	case strings.HasPrefix(n.ID, render.UnmanagedIDPrefix):
 		// render as an unmanaged node
 		base.Label = render.UnmanagedMajor
-		base.LabelMinor = report.ExtractHostID(n)
+		base.LabelMinor = n.ID[len(render.UnmanagedIDPrefix):]
 		base.Shape = report.Square
 		base.Stack = true
 	default:
