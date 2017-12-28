@@ -45,7 +45,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
 	outputs := make(report.Nodes, len(processes.Nodes))
 	for id, p := range processes.Nodes {
 		outputs[id] = p
-		containerID, timestamp, ok := p.Latest.LookupEntry(docker.ContainerID)
+		containerID, ok := p.Latest.Lookup(docker.ContainerID)
 		if !ok {
 			continue
 		}
@@ -53,7 +53,6 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
 		if !ok {
 			continue
 		}
-		p.Latest = p.Latest.Set(docker.ContainerID, timestamp, containerID)
 		if containerName, timestamp, ok := container.Latest.LookupEntry(docker.ContainerName); ok {
 			p.Latest = p.Latest.Set(docker.ContainerName, timestamp, containerName)
 		}
