@@ -268,9 +268,7 @@ func MapProcess2Container(n report.Node) report.Nodes {
 	}
 
 	// Otherwise, if the process is not in a container, group it into
-	// an per-host "Uncontained" node.  If for whatever reason this
-	// node doesn't have a host id in their node metadata, it'll all
-	// get grouped into a single uncontained node.
+	// a per-host "Uncontained" node.
 	var (
 		id   string
 		node report.Node
@@ -279,7 +277,8 @@ func MapProcess2Container(n report.Node) report.Nodes {
 		id = report.MakeContainerNodeID(containerID)
 		node = NewDerivedNode(id, n).WithTopology(report.Container)
 	} else {
-		id = MakePseudoNodeID(UncontainedID, report.ExtractHostID(n))
+		hostID, _, _ := report.ParseProcessNodeID(n.ID)
+		id = MakePseudoNodeID(UncontainedID, hostID)
 		node = NewDerivedPseudoNode(id, n)
 	}
 	return report.Nodes{id: node}
