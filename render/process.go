@@ -53,9 +53,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
 		if !ok {
 			continue
 		}
-		if containerName, timestamp, ok := container.Latest.LookupEntry(docker.ContainerName); ok {
-			p.Latest = p.Latest.Set(docker.ContainerName, timestamp, containerName)
-		}
+		propagateLatest(docker.ContainerName, container, p)
 		outputs[id] = p
 	}
 	return Nodes{Nodes: outputs, Filtered: processes.Filtered}
