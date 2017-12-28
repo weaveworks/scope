@@ -15,7 +15,7 @@ const (
 )
 
 // UnmanagedIDPrefix is the prefix of unmanaged pseudo nodes
-var UnmanagedIDPrefix = MakePseudoNodeID(UnmanagedID)
+var UnmanagedIDPrefix = MakePseudoNodeID(UnmanagedID, "")
 
 func renderKubernetesTopologies(rpt report.Report) bool {
 	// Render if any k8s topology has any nodes

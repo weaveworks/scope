@@ -17,7 +17,7 @@ const (
 )
 
 // UncontainedIDPrefix is the prefix of uncontained pseudo nodes
-var UncontainedIDPrefix = MakePseudoNodeID(UncontainedID)
+var UncontainedIDPrefix = MakePseudoNodeID(UncontainedID, "")
 
 // ContainerRenderer is a Renderer which produces a renderable container
 // graph by merging the process graph and the container topology.
