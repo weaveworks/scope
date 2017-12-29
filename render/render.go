@@ -184,12 +184,12 @@ func (ret *joinResults) mapChild(from, to string) {
 	}
 }
 
-// Add m as a child of the node at id, creating a new result node if
-// not already there.
-func (ret *joinResults) addUnmappedChild(m report.Node, id string, create func(string) report.Node) {
+// Add m as a child of the node at id, creating a new result node in
+// the specified topology if not already there.
+func (ret *joinResults) addUnmappedChild(m report.Node, id string, topology string) {
 	result, exists := ret.nodes[id]
 	if !exists {
-		result = create(id)
+		result = report.MakeNode(id).WithTopology(topology)
 	}
 	result.Children = result.Children.Add(m)
 	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
@@ -198,16 +198,17 @@ func (ret *joinResults) addUnmappedChild(m report.Node, id string, create func(s
 	ret.nodes[id] = result
 }
 
-// Add m as a child of the node at id, creating a new result node if
-// not already there, and updating the mapping from old ID to new ID.
-func (ret *joinResults) addChild(m report.Node, id string, create func(string) report.Node) {
-	ret.addUnmappedChild(m, id, create)
+// Add m as a child of the node at id, creating a new result node in
+// the specified topology if not already there, and updating the
+// mapping from old ID to new ID.
+func (ret *joinResults) addChild(m report.Node, id string, topology string) {
+	ret.addUnmappedChild(m, id, topology)
 	ret.mapChild(m.ID, id)
 }
 
 // Like addChild, but also add m's children.
-func (ret *joinResults) addChildAndChildren(m report.Node, id string, create func(string) report.Node) {
-	ret.addUnmappedChild(m, id, create)
+func (ret *joinResults) addChildAndChildren(m report.Node, id string, topology string) {
+	ret.addUnmappedChild(m, id, topology)
 	result := ret.nodes[id]
 	result.Children = result.Children.Merge(m.Children)
 	ret.nodes[id] = result

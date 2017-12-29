@@ -45,7 +45,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
 	outputs := make(report.Nodes, len(processes.Nodes))
 	for id, p := range processes.Nodes {
 		outputs[id] = p
-		containerID, timestamp, ok := p.Latest.LookupEntry(docker.ContainerID)
+		containerID, ok := p.Latest.Lookup(docker.ContainerID)
 		if !ok {
 			continue
 		}
@@ -53,10 +53,7 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
 		if !ok {
 			continue
 		}
-		p.Latest = p.Latest.Set(docker.ContainerID, timestamp, containerID)
-		if containerName, timestamp, ok := container.Latest.LookupEntry(docker.ContainerName); ok {
-			p.Latest = p.Latest.Set(docker.ContainerName, timestamp, containerName)
-		}
+		propagateLatest(docker.ContainerName, container, p)
 		outputs[id] = p
 	}
 	return Nodes{Nodes: outputs, Filtered: processes.Filtered}
@@ -92,10 +89,10 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 		// Nodes without a hostid are treated as pseudo nodes
 		if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); !ok {
 			if id, ok := pseudoNodeID(n, local); ok {
-				ret.addChild(n, id, newPseudoNode)
+				ret.addChild(n, id, Pseudo)
 			}
 		} else {
-			pid, timestamp, ok := n.Latest.LookupEntry(process.PID)
+			pid, ok := n.Latest.Lookup(process.PID)
 			if !ok {
 				continue
 			}
@@ -105,12 +102,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 
 			hostID, _ := report.ParseHostNodeID(hostNodeID)
 			id := report.MakeProcessNodeID(hostID, pid)
-			ret.addChild(n, id, func(id string) report.Node {
-				// we have a pid, but no matching process node;
-				// create a new one rather than dropping the data
-				return report.MakeNode(id).WithTopology(report.Process).
-					WithLatest(process.PID, timestamp, pid)
-			})
+			ret.addChild(n, id, report.Process)
 		}
 	}
 	return ret.result(endpoints)
@@ -143,6 +135,8 @@ func hasMoreThanOneConnection(n report.Node, endpoints report.Nodes) bool {
 	return false
 }
 
+var processNameTopology = MakeGroupNodeTopology(report.Process, process.Name)
+
 // processes2Names maps process Nodes to Nodes for each process name.
 func processes2Names(processes Nodes) Nodes {
 	ret := newJoinResults(nil)
@@ -150,11 +144,8 @@ func processes2Names(processes Nodes) Nodes {
 	for _, n := range processes.Nodes {
 		if n.Topology == Pseudo {
 			ret.passThrough(n)
-		} else if name, timestamp, ok := n.Latest.LookupEntry(process.Name); ok {
-			ret.addChildAndChildren(n, name, func(id string) report.Node {
-				return report.MakeNode(id).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name)).
-					WithLatest(process.Name, timestamp, name)
-			})
+		} else if name, ok := n.Latest.Lookup(process.Name); ok {
+			ret.addChildAndChildren(n, name, processNameTopology)
 		}
 	}
 	return ret.result(processes)

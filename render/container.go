@@ -82,7 +82,7 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 		// Nodes without a hostid may be pseudo nodes - if so, pass through to result
 		if _, ok := m.Latest.Lookup(report.HostNodeID); !ok {
 			if id, ok := externalNodeID(m, addr, local); ok {
-				ret.addChild(m, id, newPseudoNode)
+				ret.addChild(m, id, Pseudo)
 				continue
 			}
 		}
@@ -94,8 +94,9 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 			id, found = ipNodes[report.MakeScopedEndpointNodeID(scope, addr, port)]
 		}
 		if found && id != "" { // not one we blanked out earlier
-			// We are guaranteed to find the id, so no need to pass a node constructor.
-			ret.addChild(m, id, nil)
+			// We are guaranteed to find the id, so really this should
+			// never end up creating a node.
+			ret.addChild(m, id, report.Container)
 		}
 	}
 	return ret.result(endpoints)
@@ -268,9 +269,7 @@ func MapProcess2Container(n report.Node) report.Nodes {
 	}
 
 	// Otherwise, if the process is not in a container, group it into
-	// an per-host "Uncontained" node.  If for whatever reason this
-	// node doesn't have a host id in their node metadata, it'll all
-	// get grouped into a single uncontained node.
+	// a per-host "Uncontained" node.
 	var (
 		id   string
 		node report.Node
@@ -279,10 +278,9 @@ func MapProcess2Container(n report.Node) report.Nodes {
 		id = report.MakeContainerNodeID(containerID)
 		node = NewDerivedNode(id, n).WithTopology(report.Container)
 	} else {
-		id = MakePseudoNodeID(UncontainedID, report.ExtractHostID(n))
+		hostID, _, _ := report.ParseProcessNodeID(n.ID)
+		id = MakePseudoNodeID(UncontainedID, hostID)
 		node = NewDerivedPseudoNode(id, n)
-		node = propagateLatest(report.HostNodeID, n, node)
-		node = propagateLatest(IsConnectedMark, n, node)
 	}
 	return report.Nodes{id: node}
 }
@@ -307,7 +305,7 @@ func MapContainer2ContainerImage(n report.Node) report.Nodes {
 
 	// Otherwise, if some some reason the container doesn't have a image_id
 	// (maybe slightly out of sync reports), just drop it
-	imageID, timestamp, ok := n.Latest.LookupEntry(docker.ImageID)
+	imageID, ok := n.Latest.Lookup(docker.ImageID)
 	if !ok {
 		return report.Nodes{}
 	}
@@ -316,7 +314,6 @@ func MapContainer2ContainerImage(n report.Node) report.Nodes {
 	// counted to produce the minor label
 	id := report.MakeContainerImageNodeID(imageID)
 	result := NewDerivedNode(id, n).WithTopology(report.ContainerImage)
-	result.Latest = result.Latest.Set(docker.ImageID, timestamp, imageID)
 	result.Counters = result.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: result}
 }
@@ -336,12 +333,10 @@ func MapContainerImage2Name(n report.Node) report.Nodes {
 	imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
 	n.ID = report.MakeContainerImageNodeID(imageNameWithoutVersion)
 
-	if imageID, ok := report.ParseContainerImageNodeID(n.ID); ok {
-		n.Sets = n.Sets.Add(docker.ImageID, report.MakeStringSet(imageID))
-	}
-
 	return report.Nodes{n.ID: n}
 }
+
+var containerHostnameTopology = MakeGroupNodeTopology(report.Container, docker.ContainerHostname)
 
 // MapContainer2Hostname maps container Nodes to 'hostname' renderabled nodes..
 func MapContainer2Hostname(n report.Node) report.Nodes {
@@ -352,13 +347,12 @@ func MapContainer2Hostname(n report.Node) report.Nodes {
 
 	// Otherwise, if some some reason the container doesn't have a hostname
 	// (maybe slightly out of sync reports), just drop it
-	id, timestamp, ok := n.Latest.LookupEntry(docker.ContainerHostname)
+	id, ok := n.Latest.Lookup(docker.ContainerHostname)
 	if !ok {
 		return report.Nodes{}
 	}
 
-	node := NewDerivedNode(id, n).WithTopology(MakeGroupNodeTopology(n.Topology, docker.ContainerHostname))
-	node.Latest = node.Latest.Set(docker.ContainerHostname, timestamp, id)
+	node := NewDerivedNode(id, n).WithTopology(containerHostnameTopology)
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return report.Nodes{id: node}
 }
