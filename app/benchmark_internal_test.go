@@ -137,7 +137,7 @@ func BenchmarkRenderProcessNames(b *testing.B) {
 
 func benchmarkSummarizeTopology(b *testing.B, topologyID string) {
 	r := getReport(b)
-	rc := report.RenderContext{Report: r}
+	rc := detailed.RenderContext{Report: r}
 	nodes := renderForTopology(b, topologyID, r)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

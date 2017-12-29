@@ -138,7 +138,7 @@ func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, boo
 }
 
 // MakeNodeSummary summarizes a node, if possible.
-func MakeNodeSummary(rc report.RenderContext, n report.Node) (NodeSummary, bool) {
+func MakeNodeSummary(rc RenderContext, n report.Node) (NodeSummary, bool) {
 	base, ok := MakeBasicNodeSummary(rc.Report, n)
 	if !ok {
 		return NodeSummary{}, false
@@ -411,7 +411,7 @@ func (s nodeSummariesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
 type NodeSummaries map[string]NodeSummary
 
 // Summaries converts RenderableNodes into a set of NodeSummaries
-func Summaries(rc report.RenderContext, rns report.Nodes) NodeSummaries {
+func Summaries(rc RenderContext, rns report.Nodes) NodeSummaries {
 
 	result := NodeSummaries{}
 	for id, node := range rns {

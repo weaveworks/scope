@@ -21,7 +21,7 @@ import (
 func TestSummaries(t *testing.T) {
 	{
 		// Just a convenient source of some rendered nodes
-		have := detailed.Summaries(report.RenderContext{Report: fixture.Report}, render.ProcessRenderer.Render(fixture.Report).Nodes)
+		have := detailed.Summaries(detailed.RenderContext{Report: fixture.Report}, render.ProcessRenderer.Render(fixture.Report).Nodes)
 		// The ids of the processes rendered above
 		expectedIDs := []string{
 			fixture.ClientProcess1NodeID,
@@ -53,7 +53,7 @@ func TestSummaries(t *testing.T) {
 		processNode.Metrics = processNode.Metrics.Copy()
 		processNode.Metrics[process.CPUUsage] = metric
 		input.Process.Nodes[fixture.ClientProcess1NodeID] = processNode
-		have := detailed.Summaries(report.RenderContext{Report: input}, render.ProcessRenderer.Render(input).Nodes)
+		have := detailed.Summaries(detailed.RenderContext{Report: input}, render.ProcessRenderer.Render(input).Nodes)
 
 		node, ok := have[fixture.ClientProcess1NodeID]
 		if !ok {
@@ -196,7 +196,7 @@ func TestMakeNodeSummary(t *testing.T) {
 		},
 	}
 	for _, testcase := range testcases {
-		have, ok := detailed.MakeNodeSummary(report.RenderContext{Report: fixture.Report}, testcase.input)
+		have, ok := detailed.MakeNodeSummary(detailed.RenderContext{Report: fixture.Report}, testcase.input)
 		if ok != testcase.ok {
 			t.Errorf("%s: MakeNodeSummary failed: expected ok value to be: %v", testcase.name, testcase.ok)
 			continue
@@ -228,7 +228,7 @@ func TestMakeNodeSummaryNoMetadata(t *testing.T) {
 		report.Overlay:        report.MakeOverlayNodeID("", "3e:ca:14:ca:12:5c"),
 		processNameTopology:   "/home/weave/scope",
 	} {
-		summary, b := detailed.MakeNodeSummary(report.RenderContext{}, report.MakeNode(id).WithTopology(topology))
+		summary, b := detailed.MakeNodeSummary(detailed.RenderContext{}, report.MakeNode(id).WithTopology(topology))
 		switch {
 		case !b:
 			t.Errorf("Node Summary missing for topology %s, id %s", topology, id)
@@ -270,7 +270,7 @@ func TestNodeMetadata(t *testing.T) {
 		},
 	}
 	for _, input := range inputs {
-		summary, _ := detailed.MakeNodeSummary(report.RenderContext{Report: fixture.Report}, input.node)
+		summary, _ := detailed.MakeNodeSummary(detailed.RenderContext{Report: fixture.Report}, input.node)
 		have := summary.Metadata
 		if !reflect.DeepEqual(input.want, have) {
 			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
@@ -371,7 +371,7 @@ func TestNodeMetrics(t *testing.T) {
 		},
 	}
 	for _, input := range inputs {
-		summary, _ := detailed.MakeNodeSummary(report.RenderContext{Report: fixture.Report}, input.node)
+		summary, _ := detailed.MakeNodeSummary(detailed.RenderContext{Report: fixture.Report}, input.node)
 		have := summary.Metrics
 		if !reflect.DeepEqual(input.want, have) {
 			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
@@ -468,7 +468,7 @@ func TestNodeTables(t *testing.T) {
 		},
 	}
 	for _, input := range inputs {
-		summary, _ := detailed.MakeNodeSummary(report.RenderContext{Report: input.rpt}, input.node)
+		summary, _ := detailed.MakeNodeSummary(detailed.RenderContext{Report: input.rpt}, input.node)
 		have := summary.Tables
 		if !reflect.DeepEqual(input.want, have) {
 			t.Errorf("%s: %s", input.name, test.Diff(input.want, have))
