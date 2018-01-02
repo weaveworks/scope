@@ -27,9 +27,8 @@ var EndpointRenderer = SelectEndpoint
 
 // ProcessRenderer is a Renderer which produces a renderable process
 // graph by merging the endpoint graph and the process topology. It
-// also colors connected nodes. Since the process topology views only
-// show connected processes, we need this info to determine whether
-// processes appearing in a details panel are linkable.
+// also colors connected nodes, so we can apply a filter to show/hide
+// unconnected nodes depending on user choice.
 var ProcessRenderer = Memoise(ColorConnected(endpoints2Processes{}))
 
 // processWithContainerNameRenderer is a Renderer which produces a process

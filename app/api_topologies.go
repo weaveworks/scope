@@ -188,9 +188,8 @@ func MakeRegistry() *Registry {
 			ID:      "unconnected",
 			Default: "hide",
 			Options: []APITopologyOption{
-				// Show the user why there are filtered nodes in this view.
-				// Don't give them the option to show those nodes.
-				{Value: "hide", Label: "Unconnected nodes hidden", filter: nil, filterPseudo: false},
+				{Value: "show", Label: "Show Unconnected", filter: nil, filterPseudo: false},
+				{Value: "hide", Label: "Hide Unconnected", filter: render.IsConnected, filterPseudo: false},
 			},
 		},
 	}
@@ -201,7 +200,6 @@ func MakeRegistry() *Registry {
 		APITopologyDesc{
 			id:          processesID,
 			renderer:    render.ProcessWithContainerNameRenderer,
-			filter:      render.FilterUnconnected,
 			Name:        "Processes",
 			Rank:        1,
 			Options:     unconnectedFilter,
@@ -211,7 +209,6 @@ func MakeRegistry() *Registry {
 			id:          processesByNameID,
 			parent:      processesID,
 			renderer:    render.ProcessNameRenderer,
-			filter:      render.FilterUnconnected,
 			Name:        "by name",
 			Options:     unconnectedFilter,
 			HideIfEmpty: true,
@@ -219,7 +216,6 @@ func MakeRegistry() *Registry {
 		APITopologyDesc{
 			id:       containersID,
 			renderer: render.ContainerWithImageNameRenderer,
-			filter:   render.FilterUnconnectedPseudo,
 			Name:     "Containers",
 			Rank:     2,
 			Options:  containerFilters,
@@ -228,7 +224,6 @@ func MakeRegistry() *Registry {
 			id:       containersByHostnameID,
 			parent:   containersID,
 			renderer: render.ContainerHostnameRenderer,
-			filter:   render.FilterUnconnectedPseudo,
 			Name:     "by DNS name",
 			Options:  containerFilters,
 		},
@@ -236,14 +231,12 @@ func MakeRegistry() *Registry {
 			id:       containersByImageID,
 			parent:   containersID,
 			renderer: render.ContainerImageRenderer,
-			filter:   render.FilterUnconnectedPseudo,
 			Name:     "by image",
 			Options:  containerFilters,
 		},
 		APITopologyDesc{
 			id:          podsID,
 			renderer:    render.PodRenderer,
-			filter:      render.FilterUnconnectedPseudo,
 			Name:        "Pods",
 			Rank:        3,
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
@@ -253,7 +246,6 @@ func MakeRegistry() *Registry {
 			id:          kubeControllersID,
 			parent:      podsID,
 			renderer:    render.KubeControllerRenderer,
-			filter:      render.FilterUnconnectedPseudo,
 			Name:        "controllers",
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
@@ -262,7 +254,6 @@ func MakeRegistry() *Registry {
 			id:          servicesID,
 			parent:      podsID,
 			renderer:    render.PodServiceRenderer,
-			filter:      render.FilterUnconnectedPseudo,
 			Name:        "services",
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
@@ -270,7 +261,6 @@ func MakeRegistry() *Registry {
 		APITopologyDesc{
 			id:          ecsTasksID,
 			renderer:    render.ECSTaskRenderer,
-			filter:      render.FilterUnconnectedPseudo,
 			Name:        "Tasks",
 			Rank:        3,
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
@@ -280,7 +270,6 @@ func MakeRegistry() *Registry {
 			id:          ecsServicesID,
 			parent:      ecsTasksID,
 			renderer:    render.ECSServiceRenderer,
-			filter:      render.FilterUnconnectedPseudo,
 			Name:        "services",
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
@@ -288,7 +277,6 @@ func MakeRegistry() *Registry {
 		APITopologyDesc{
 			id:          swarmServicesID,
 			renderer:    render.SwarmServiceRenderer,
-			filter:      render.FilterUnconnectedPseudo,
 			Name:        "services",
 			Rank:        3,
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
@@ -297,7 +285,6 @@ func MakeRegistry() *Registry {
 		APITopologyDesc{
 			id:       hostsID,
 			renderer: render.HostRenderer,
-			filter:   render.FilterUnconnectedPseudo,
 			Name:     "Hosts",
 			Rank:     4,
 		},
@@ -305,7 +292,6 @@ func MakeRegistry() *Registry {
 			id:       weaveID,
 			parent:   hostsID,
 			renderer: render.WeaveRenderer,
-			filter:   render.FilterUnconnectedPseudo,
 			Name:     "Weave Net",
 		},
 	)
@@ -318,7 +304,6 @@ type APITopologyDesc struct {
 	id       string
 	parent   string
 	renderer render.Renderer
-	filter   render.Transformer
 
 	Name        string                   `json:"name"`
 	Rank        int                      `json:"rank"`
@@ -542,7 +527,7 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 
 	if len(values) == 0 {
 		// if no options where provided, only apply base filter
-		return topology.renderer, topology.filter, nil
+		return topology.renderer, render.FilterUnconnectedPseudo, nil
 	}
 
 	var filters []render.FilterFunc
@@ -553,9 +538,9 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 		}
 	}
 	if len(filters) > 0 {
-		return topology.renderer, render.Transformers([]render.Transformer{render.ComposeFilterFuncs(filters...), topology.filter}), nil
+		return topology.renderer, render.Transformers([]render.Transformer{render.ComposeFilterFuncs(filters...), render.FilterUnconnectedPseudo}), nil
 	}
-	return topology.renderer, topology.filter, nil
+	return topology.renderer, render.FilterUnconnectedPseudo, nil
 }
 
 type reporterHandler func(context.Context, Reporter, http.ResponseWriter, *http.Request)

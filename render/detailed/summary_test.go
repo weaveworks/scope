@@ -130,7 +130,6 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: fixture.ClientHostName,
 					Rank:       fixture.ClientContainerImageName,
 					Shape:      "hexagon",
-					Linkable:   true,
 				},
 				Metadata: []report.MetadataRow{
 					{ID: docker.ImageName, Label: "Image", Value: fixture.ClientContainerImageName, Priority: 1},
@@ -150,7 +149,6 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: "1 container",
 					Rank:       fixture.ClientContainerImageName,
 					Shape:      "hexagon",
-					Linkable:   true,
 					Stack:      true,
 				},
 				Metadata: []report.MetadataRow{
@@ -170,7 +168,6 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: "hostname.com",
 					Rank:       "hostname.com",
 					Shape:      "circle",
-					Linkable:   true,
 				},
 				Metadata: []report.MetadataRow{
 					{ID: host.HostName, Label: "Hostname", Value: fixture.ClientHostName, Priority: 11},
@@ -190,7 +187,6 @@ func TestMakeNodeSummary(t *testing.T) {
 					Rank:       "apache",
 					Shape:      "square",
 					Stack:      true,
-					Linkable:   true,
 				},
 			},
 		},
