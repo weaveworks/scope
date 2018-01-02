@@ -188,9 +188,8 @@ func MakeRegistry() *Registry {
 			ID:      "unconnected",
 			Default: "hide",
 			Options: []APITopologyOption{
-				// Show the user why there are filtered nodes in this view.
-				// Don't give them the option to show those nodes.
-				{Value: "hide", Label: "Unconnected nodes hidden", filter: nil, filterPseudo: false},
+				{Value: "show", Label: "Show Unconnected", filter: nil, filterPseudo: false},
+				{Value: "hide", Label: "Hide Unconnected", filter: render.IsConnected, filterPseudo: false},
 			},
 		},
 	}
@@ -201,7 +200,7 @@ func MakeRegistry() *Registry {
 		APITopologyDesc{
 			id:          processesID,
 			renderer:    render.ProcessWithContainerNameRenderer,
-			filter:      render.FilterUnconnected,
+			filter:      render.FilterUnconnectedPseudo,
 			Name:        "Processes",
 			Rank:        1,
 			Options:     unconnectedFilter,
@@ -211,7 +210,7 @@ func MakeRegistry() *Registry {
 			id:          processesByNameID,
 			parent:      processesID,
 			renderer:    render.ProcessNameRenderer,
-			filter:      render.FilterUnconnected,
+			filter:      render.FilterUnconnectedPseudo,
 			Name:        "by name",
 			Options:     unconnectedFilter,
 			HideIfEmpty: true,
