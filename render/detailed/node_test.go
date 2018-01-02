@@ -154,7 +154,6 @@ func TestMakeDetailedHostNode(t *testing.T) {
 						NodeID:     fixture.ServerHostNodeID,
 						Label:      "server",
 						LabelMinor: "hostname.com",
-						Linkable:   true,
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
@@ -261,7 +260,6 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						NodeID:     fixture.ClientContainerNodeID,
 						Label:      "client",
 						LabelMinor: "client.hostname.com",
-						Linkable:   true,
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
@@ -274,10 +272,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						},
 					},
 					{
-						ID:       connectionID(render.IncomingInternetID, fixture.RandomClientIP),
-						NodeID:   render.IncomingInternetID,
-						Label:    fixture.RandomClientIP,
-						Linkable: true,
+						ID:     connectionID(render.IncomingInternetID, fixture.RandomClientIP),
+						NodeID: render.IncomingInternetID,
+						Label:  fixture.RandomClientIP,
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
@@ -378,7 +375,6 @@ func TestMakeDetailedPodNode(t *testing.T) {
 						NodeID:     fixture.ClientPodNodeID,
 						Label:      "pong-a",
 						LabelMinor: "1 container",
-						Linkable:   true,
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
@@ -391,10 +387,9 @@ func TestMakeDetailedPodNode(t *testing.T) {
 						},
 					},
 					{
-						ID:       connectionID(render.IncomingInternetID, fixture.RandomClientIP),
-						NodeID:   render.IncomingInternetID,
-						Label:    fixture.RandomClientIP,
-						Linkable: true,
+						ID:     connectionID(render.IncomingInternetID, fixture.RandomClientIP),
+						NodeID: render.IncomingInternetID,
+						Label:  fixture.RandomClientIP,
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",

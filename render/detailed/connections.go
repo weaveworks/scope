@@ -48,7 +48,6 @@ type Connection struct {
 	NodeID     string               `json:"nodeId"` // ID of a node in the topology. Optional, must be set if linkable is true.
 	Label      string               `json:"label"`
 	LabelMinor string               `json:"labelMinor,omitempty"`
-	Linkable   bool                 `json:"linkable"`
 	Metadata   []report.MetadataRow `json:"metadata,omitempty"`
 }
 
@@ -132,7 +131,6 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 			NodeID:     summary.ID,
 			Label:      summary.Label,
 			LabelMinor: summary.LabelMinor,
-			Linkable:   true,
 		}
 		if row.remoteAddr != "" {
 			connection.Label = row.remoteAddr
