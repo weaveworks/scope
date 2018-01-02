@@ -50,7 +50,6 @@ type BasicNodeSummary struct {
 	Rank       string `json:"rank"`
 	Shape      string `json:"shape,omitempty"`
 	Stack      bool   `json:"stack,omitempty"`
-	Linkable   bool   `json:"linkable,omitempty"` // Whether this node can be linked-to
 	Pseudo     bool   `json:"pseudo,omitempty"`
 }
 
@@ -104,10 +103,9 @@ var primaryAPITopology = map[string]string{
 // possible. This summary is sufficient for rendering links to the node.
 func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, bool) {
 	summary := BasicNodeSummary{ // This is unlikely to look very good, but is a reasonable fallback
-		ID:       n.ID,
-		Label:    n.ID,
-		Shape:    report.Triangle,
-		Linkable: true,
+		ID:    n.ID,
+		Label: n.ID,
+		Shape: report.Triangle,
 	}
 	if t, ok := r.Topology(n.Topology); ok {
 		summary.Shape = t.GetShape()

@@ -37,9 +37,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 	containerImageNodeSummary := child(t, render.ContainerImageRenderer, expected.ClientContainerImageNodeID)
 	containerNodeSummary := child(t, render.ContainerRenderer, fixture.ClientContainerNodeID)
 	process1NodeSummary := child(t, render.ProcessRenderer, fixture.ClientProcess1NodeID)
-	process1NodeSummary.Linkable = true
 	process2NodeSummary := child(t, render.ProcessRenderer, fixture.ClientProcess2NodeID)
-	process2NodeSummary.Linkable = true
 	podNodeSummary := child(t, render.PodRenderer, fixture.ClientPodNodeID)
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
@@ -50,7 +48,6 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Rank:       "hostname.com",
 				Pseudo:     false,
 				Shape:      "circle",
-				Linkable:   true,
 			},
 			Adjacency: report.MakeIDList(fixture.ServerHostNodeID),
 			Metadata: []report.MetadataRow{
@@ -188,7 +185,6 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 	have := detailed.MakeNode("containers", detailed.RenderContext{Report: fixture.Report}, renderableNodes, renderableNode)
 
 	serverProcessNodeSummary := child(t, render.ProcessRenderer, fixture.ServerProcessNodeID)
-	serverProcessNodeSummary.Linkable = true
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
 			BasicNodeSummary: detailed.BasicNodeSummary{
@@ -197,7 +193,6 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				LabelMinor: "server.hostname.com",
 				Rank:       fixture.ServerContainerImageName,
 				Shape:      "hexagon",
-				Linkable:   true,
 				Pseudo:     false,
 			},
 			Metadata: []report.MetadataRow{
@@ -321,7 +316,6 @@ func TestMakeDetailedPodNode(t *testing.T) {
 
 	containerNodeSummary := child(t, render.ContainerWithImageNameRenderer, fixture.ServerContainerNodeID)
 	serverProcessNodeSummary := child(t, render.ProcessRenderer, fixture.ServerProcessNodeID)
-	serverProcessNodeSummary.Linkable = true // Temporary workaround for: https://github.com/weaveworks/scope/issues/1295
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
 			BasicNodeSummary: detailed.BasicNodeSummary{
@@ -330,7 +324,6 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				LabelMinor: "1 container",
 				Rank:       "ping/pong-b",
 				Shape:      "heptagon",
-				Linkable:   true,
 				Pseudo:     false,
 			},
 			Metadata: []report.MetadataRow{

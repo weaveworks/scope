@@ -32,24 +32,17 @@ class NodeDetailsTableNodeLink extends React.Component {
   }
 
   render() {
-    const { label, labelMinor, linkable } = this.props;
+    const { label, labelMinor } = this.props;
     const title = !labelMinor ? label : `${label} (${labelMinor})`;
 
-    if (linkable) {
-      return (
-        <span
-          className="node-details-table-node-link"
-          title={title}
-          ref={this.saveNodeRef}
-          onClick={this.handleClick}
-          {...dismissRowClickProps}
-        >
-          {label}
-        </span>
-      );
-    }
     return (
-      <span className="node-details-table-node" title={title}>
+      <span
+        className="node-details-table-node-link"
+        title={title}
+        ref={this.saveNodeRef}
+        onClick={this.handleClick}
+        {...dismissRowClickProps}
+      >
         {label}
       </span>
     );
