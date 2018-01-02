@@ -18,8 +18,8 @@ const (
 )
 
 // GetLogs is the control to get the logs for a kubernetes pod
-func (r *Reporter) GetLogs(req xfer.Request, namespaceID, podID string) xfer.Response {
-	readCloser, err := r.client.GetLogs(namespaceID, podID)
+func (r *Reporter) GetLogs(req xfer.Request, namespaceID, podID string, containerNames []string) xfer.Response {
+	readCloser, err := r.client.GetLogs(namespaceID, podID, containerNames)
 	if err != nil {
 		return xfer.ResponseError(err)
 	}
@@ -43,7 +43,7 @@ func (r *Reporter) GetLogs(req xfer.Request, namespaceID, podID string) xfer.Res
 	}
 }
 
-func (r *Reporter) deletePod(req xfer.Request, namespaceID, podID string) xfer.Response {
+func (r *Reporter) deletePod(req xfer.Request, namespaceID, podID string, _ []string) xfer.Response {
 	if err := r.client.DeletePod(namespaceID, podID); err != nil {
 		return xfer.ResponseError(err)
 	}
@@ -53,7 +53,7 @@ func (r *Reporter) deletePod(req xfer.Request, namespaceID, podID string) xfer.R
 }
 
 // CapturePod is exported for testing
-func (r *Reporter) CapturePod(f func(xfer.Request, string, string) xfer.Response) func(xfer.Request) xfer.Response {
+func (r *Reporter) CapturePod(f func(xfer.Request, string, string, []string) xfer.Response) func(xfer.Request) xfer.Response {
 	return func(req xfer.Request) xfer.Response {
 		uid, ok := report.ParsePodNodeID(req.NodeID)
 		if !ok {
@@ -70,7 +70,7 @@ func (r *Reporter) CapturePod(f func(xfer.Request, string, string) xfer.Response
 		if pod == nil {
 			return xfer.ResponseErrorf("Pod not found: %s", uid)
 		}
-		return f(req, pod.Namespace(), pod.Name())
+		return f(req, pod.Namespace(), pod.Name(), pod.ContainerNames())
 	}
 }
 

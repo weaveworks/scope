@@ -155,7 +155,7 @@ func (*mockClient) WalkNodes(f func(*apiv1.Node) error) error {
 	return nil
 }
 func (*mockClient) WatchPods(func(kubernetes.Event, kubernetes.Pod)) {}
-func (c *mockClient) GetLogs(namespaceID, podName string) (io.ReadCloser, error) {
+func (c *mockClient) GetLogs(namespaceID, podName string, _ []string) (io.ReadCloser, error) {
 	r, ok := c.logs[namespaceID+";"+podName]
 	if !ok {
 		return nil, fmt.Errorf("Not found")
