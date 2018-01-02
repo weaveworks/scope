@@ -240,7 +240,6 @@ func processNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 		base.LabelMinor = hostID
 		base.Rank = hostID
 	}
-	base.Linkable = render.IsConnected(n)
 	return base
 }
 
