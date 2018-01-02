@@ -189,12 +189,14 @@ type filterUnconnected struct {
 func (f filterUnconnected) Transform(input Nodes) Nodes {
 	output := filterInternetAdjacencies(input.Nodes)
 	connected := connected(output)
-	return FilterFunc(func(node report.Node) bool {
-		if _, ok := connected[node.ID]; ok || (f.onlyPseudo && !IsPseudoTopology(node)) {
-			return true
+	filtered := input.Filtered
+	for id, node := range output {
+		if _, ok := connected[id]; !ok && (!f.onlyPseudo || IsPseudoTopology(node)) {
+			delete(output, id)
+			filtered++
 		}
-		return false
-	}).Transform(Nodes{Nodes: output, Filtered: input.Filtered})
+	}
+	return Nodes{Nodes: output, Filtered: filtered}
 }
 
 // FilterUnconnected is a transformer that filters unconnected nodes
