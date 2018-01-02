@@ -12,9 +12,8 @@ $mono-font: "Menlo", "DejaVu Sans Mono", "Liberation Mono", monospace;
 $base-ease: ease-in-out;
 $primary-color: $weave-charcoal-blue;
 
-$background-color: lighten($primary-color, 66%);
+$background-color: #f8f8f8;
 $background-lighter-color: lighten($background-color, 8%);
-$background-average-color: mix($background-color, $background-lighter-color);
 $background-darker-color: darken($background-color, 8%);
 $background-darker-secondary-color: darken($background-color, 4%);
 $background-dark-color: $primary-color;
@@ -58,5 +57,5 @@ $search-border-width: 1px;
 $timeline-height: 55px;
 
 /* specific elements */
-$body-background-color: $background-average-color;
-$label-background-color: fade-out($background-average-color, .3);
+$body-background-color: $background-color;
+$label-background-color: fade-out($background-color, .3);
