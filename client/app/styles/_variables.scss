@@ -14,8 +14,8 @@ $primary-color: $weave-charcoal-blue;
 
 $background-color: #f8f8f8;
 $background-lighter-color: lighten($background-color, 8%);
-$background-darker-color: darken($background-color, 8%);
-$background-darker-secondary-color: darken($background-color, 4%);
+$background-darker-color: darken($background-color, 16%);
+$background-darker-secondary-color: darken($background-color, 8%);
 $background-dark-color: $primary-color;
 $text-color: lighten($primary-color, 5%);
 $text-secondary-color: lighten($text-color, 15%);
