@@ -95,26 +95,13 @@ func updateSwarmFilters(rpt report.Report, topologies []APITopologyDesc) []APITo
 }
 
 func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
-	namespaces := map[string]struct{}{}
-	// We exclude ReplicaSets since we don't show them anywhere.
-	for _, t := range []report.Topology{rpt.Pod, rpt.Service, rpt.Deployment, rpt.DaemonSet, rpt.StatefulSet, rpt.CronJob} {
-		for _, n := range t.Nodes {
-			if state, ok := n.Latest.Lookup(kubernetes.State); ok && state == kubernetes.StateDeleted {
-				continue
-			}
-			if namespace, ok := n.Latest.Lookup(kubernetes.Namespace); ok {
-				namespaces[namespace] = struct{}{}
-			}
-		}
-	}
-	if len(namespaces) == 0 {
-		// We only want to apply k8s filters when we have k8s-related nodes,
-		// so if we don't then return early
-		return topologies
-	}
 	ns := []string{}
-	for namespace := range namespaces {
-		ns = append(ns, namespace)
+	for _, n := range rpt.Namespace.Nodes {
+		name, ok := n.Latest.Lookup(kubernetes.Name)
+		if !ok {
+			continue
+		}
+		ns = append(ns, name)
 	}
 	sort.Strings(ns)
 	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely

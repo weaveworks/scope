@@ -264,6 +264,10 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
+	namespaceTopology, err := r.namespaceTopology()
+	if err != nil {
+		return result, err
+	}
 	result.Pod = result.Pod.Merge(podTopology)
 	result.Service = result.Service.Merge(serviceTopology)
 	result.Host = result.Host.Merge(hostTopology)
@@ -271,6 +275,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.StatefulSet = result.StatefulSet.Merge(statefulSetTopology)
 	result.CronJob = result.CronJob.Merge(cronJobTopology)
 	result.Deployment = result.Deployment.Merge(deploymentTopology)
+	result.Namespace = result.Namespace.Merge(namespaceTopology)
 	return result, nil
 }
 
@@ -499,4 +504,13 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 		return nil
 	})
 	return pods, err
+}
+
+func (r *Reporter) namespaceTopology() (report.Topology, error) {
+	result := report.MakeTopology()
+	err := r.client.WalkNamespaces(func(ns NamespaceResource) error {
+		result = result.AddNode(ns.GetNode())
+		return nil
+	})
+	return result, err
 }

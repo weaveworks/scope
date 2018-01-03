@@ -99,8 +99,14 @@ func TestReportUpgrade(t *testing.T) {
 	mtime.NowForce(time.Now())
 	defer mtime.NowReset()
 	parentsWithDeployment := report.MakeSets().Add(report.Deployment, report.MakeStringSet("id"))
-	rsNode := report.MakeNode("bar").WithParents(parentsWithDeployment)
-	podNode := report.MakeNode("foo").WithControls("alive").WithParents(report.MakeSets().Add(report.ReplicaSet, report.MakeStringSet("bar")))
+	rsNode := report.MakeNode("bar").
+		WithParents(parentsWithDeployment)
+	namespaceName := "ns"
+	namespaceID := report.MakeNamespaceNodeID(namespaceName)
+	podNode := report.MakeNode("foo").
+		WithLatests(map[string]string{report.KubernetesNamespace: namespaceName}).
+		WithControls("alive").
+		WithParents(report.MakeSets().Add(report.ReplicaSet, report.MakeStringSet("bar")))
 	controls := map[string]report.NodeControlData{
 		"alive": {
 			Dead: false,
@@ -110,9 +116,12 @@ func TestReportUpgrade(t *testing.T) {
 	rpt := report.MakeReport()
 	rpt.ReplicaSet.AddNode(rsNode)
 	rpt.Pod.AddNode(podNode)
+	namespaceNode := report.MakeNode(namespaceID).
+		WithLatests(map[string]string{report.KubernetesName: namespaceName})
 	expected := report.MakeReport()
 	expected.ReplicaSet.AddNode(rsNode)
 	expected.Pod.AddNode(expectedPodNode)
+	expected.Namespace.AddNode(namespaceNode)
 	got := rpt.Upgrade()
 	if !s_reflect.DeepEqual(expected, got) {
 		t.Error(test.Diff(expected, got))

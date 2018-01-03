@@ -22,6 +22,7 @@ const (
 	DaemonSet      = "daemon_set"
 	StatefulSet    = "stateful_set"
 	CronJob        = "cron_job"
+	Namespace      = "namespace"
 	ContainerImage = "container_image"
 	Host           = "host"
 	Overlay        = "overlay"
@@ -56,6 +57,7 @@ var topologyNames = []string{
 	DaemonSet,
 	StatefulSet,
 	CronJob,
+	Namespace,
 	Host,
 	Overlay,
 	ECSTask,
@@ -114,6 +116,11 @@ type Report struct {
 	// Metadata includes things like Cron Job id, name, etc. Edges are not
 	// present.
 	CronJob Topology
+
+	// Namespace nodes represent all Kubernetes Namespaces running on hosts running probes.
+	// Metadata includes things like Namespace id, name, etc. Edges are not
+	// present.
+	Namespace Topology
 
 	// ContainerImages nodes represent all Docker containers images on
 	// hosts running probes. Metadata includes things like image id, name etc.
@@ -217,6 +224,8 @@ func MakeReport() Report {
 			WithShape(Triangle).
 			WithLabel("cron job", "cron jobs"),
 
+		Namespace: MakeTopology(),
+
 		Overlay: MakeTopology().
 			WithShape(Circle).
 			WithLabel("peer", "peers"),
@@ -317,6 +326,8 @@ func (r *Report) topology(name string) *Topology {
 		return &r.StatefulSet
 	case CronJob:
 		return &r.CronJob
+	case Namespace:
+		return &r.Namespace
 	case Host:
 		return &r.Host
 	case Overlay:
@@ -360,7 +371,7 @@ func (r Report) Validate() error {
 //
 // This for now creates node's LatestControls from Controls.
 func (r Report) Upgrade() Report {
-	return r.upgradeLatestControls().upgradePodNodes()
+	return r.upgradeLatestControls().upgradePodNodes().upgradeNamespaces()
 }
 
 func (r Report) upgradeLatestControls() Report {
@@ -424,6 +435,36 @@ func (r Report) upgradePodNodes() Report {
 		nodes[podID] = pod
 	}
 	r.Pod.Nodes = nodes
+
+	return r
+}
+
+func (r Report) upgradeNamespaces() Report {
+	if len(r.Namespace.Nodes) > 0 {
+		return r
+	}
+
+	namespaces := map[string]struct{}{}
+	for _, t := range []Topology{r.Pod, r.Service, r.Deployment, r.DaemonSet, r.StatefulSet, r.CronJob} {
+		for _, n := range t.Nodes {
+			if state, ok := n.Latest.Lookup(KubernetesState); ok && state == KubernetesStateDeleted {
+				continue
+			}
+			if namespace, ok := n.Latest.Lookup(KubernetesNamespace); ok {
+				namespaces[namespace] = struct{}{}
+			}
+		}
+	}
+
+	nodes := make(Nodes, len(namespaces))
+	for ns := range namespaces {
+		// Namespace ID:
+		// Probes did not use to report namespace ids, but since creating a report node requires an id,
+		// the namespace name, which is unique, is passed to `MakeNamespaceNodeID`
+		namespaceID := MakeNamespaceNodeID(ns)
+		nodes[namespaceID] = MakeNodeWith(namespaceID, map[string]string{KubernetesName: ns})
+	}
+	r.Namespace.Nodes = nodes
 
 	return r
 }
