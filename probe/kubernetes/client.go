@@ -66,7 +66,7 @@ type client struct {
 
 // runReflectorUntil runs cache.Reflector#ListAndWatch in an endless loop.
 // Errors are logged and retried with exponential backoff.
-func runReflectorUntil(r *cache.Reflector, resyncPeriod time.Duration, stopCh <-chan struct{}, msg string) {
+func runReflectorUntil(r *cache.Reflector, stopCh <-chan struct{}, msg string) {
 	listAndWatch := func() (bool, error) {
 		select {
 		case <-stopCh:
@@ -77,7 +77,6 @@ func runReflectorUntil(r *cache.Reflector, resyncPeriod time.Duration, stopCh <-
 		}
 	}
 	bo := backoff.New(listAndWatch, fmt.Sprintf("Kubernetes reflector (%s)", msg))
-	bo.SetInitialBackoff(resyncPeriod)
 	bo.SetMaxBackoff(5 * time.Minute)
 	go bo.Start()
 }
@@ -192,7 +191,7 @@ func (c *client) setupStore(kclient cache.Getter, resource string, itemType inte
 	if store == nil {
 		store = cache.NewStore(cache.MetaNamespaceKeyFunc)
 	}
-	runReflectorUntil(cache.NewReflector(lw, itemType, store, c.resyncPeriod), c.resyncPeriod, c.quit, resource)
+	runReflectorUntil(cache.NewReflector(lw, itemType, store, c.resyncPeriod), c.quit, resource)
 	return store
 }
 
