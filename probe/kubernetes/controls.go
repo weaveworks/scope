@@ -83,7 +83,6 @@ func (r *Reporter) CaptureResource(f func(xfer.Request, string, string, string) 
 			f   func(string) (string, bool)
 		}{
 			{report.Deployment, report.ParseDeploymentNodeID},
-			{report.ReplicaSet, report.ParseReplicaSetNodeID},
 		} {
 			if u, ok := parser.f(req.NodeID); ok {
 				resource, uid = parser.res, u
@@ -105,28 +104,6 @@ func (r *Reporter) CaptureResource(f func(xfer.Request, string, string, string) 
 			})
 			if deployment != nil {
 				return f(req, "deployment", deployment.Namespace(), deployment.Name())
-			}
-		case report.ReplicaSet:
-			var replicaSet ReplicaSet
-			var res string
-			r.client.WalkReplicaSets(func(r ReplicaSet) error {
-				if r.UID() == uid {
-					replicaSet = r
-					res = "replicaset"
-				}
-				return nil
-			})
-			if replicaSet == nil {
-				r.client.WalkReplicationControllers(func(r ReplicationController) error {
-					if r.UID() == uid {
-						replicaSet = ReplicaSet(r)
-						res = "replicationcontroller"
-					}
-					return nil
-				})
-			}
-			if replicaSet != nil {
-				return f(req, res, replicaSet.Namespace(), replicaSet.Name())
 			}
 		}
 		return xfer.ResponseErrorf("%s not found: %s", resource, uid)

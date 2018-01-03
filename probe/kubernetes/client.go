@@ -30,11 +30,9 @@ type Client interface {
 	WalkPods(f func(Pod) error) error
 	WalkServices(f func(Service) error) error
 	WalkDeployments(f func(Deployment) error) error
-	WalkReplicaSets(f func(ReplicaSet) error) error
 	WalkDaemonSets(f func(DaemonSet) error) error
 	WalkStatefulSets(f func(StatefulSet) error) error
 	WalkCronJobs(f func(CronJob) error) error
-	WalkReplicationControllers(f func(ReplicationController) error) error
 	WalkNamespaces(f func(NamespaceResource) error) error
 
 	WatchPods(f func(Event, Pod))
@@ -46,20 +44,18 @@ type Client interface {
 }
 
 type client struct {
-	quit                       chan struct{}
-	resyncPeriod               time.Duration
-	client                     *kubernetes.Clientset
-	podStore                   cache.Store
-	serviceStore               cache.Store
-	deploymentStore            cache.Store
-	replicaSetStore            cache.Store
-	daemonSetStore             cache.Store
-	statefulSetStore           cache.Store
-	jobStore                   cache.Store
-	cronJobStore               cache.Store
-	replicationControllerStore cache.Store
-	nodeStore                  cache.Store
-	namespaceStore             cache.Store
+	quit             chan struct{}
+	resyncPeriod     time.Duration
+	client           *kubernetes.Clientset
+	podStore         cache.Store
+	serviceStore     cache.Store
+	deploymentStore  cache.Store
+	daemonSetStore   cache.Store
+	statefulSetStore cache.Store
+	jobStore         cache.Store
+	cronJobStore     cache.Store
+	nodeStore        cache.Store
+	namespaceStore   cache.Store
 
 	podWatchesMutex sync.Mutex
 	podWatches      []func(Event, Pod)
@@ -157,18 +153,16 @@ func NewClient(config ClientConfig) (Client, error) {
 	result.podStore = result.setupStore(c.CoreV1Client.RESTClient(), "pods", &apiv1.Pod{}, podStore)
 
 	result.serviceStore = result.setupStore(c.CoreV1Client.RESTClient(), "services", &apiv1.Service{}, nil)
-	result.replicationControllerStore = result.setupStore(c.CoreV1Client.RESTClient(), "replicationcontrollers", &apiv1.ReplicationController{}, nil)
 	result.nodeStore = result.setupStore(c.CoreV1Client.RESTClient(), "nodes", &apiv1.Node{}, nil)
 	result.namespaceStore = result.setupStore(c.CoreV1Client.RESTClient(), "namespaces", &apiv1.Namespace{}, nil)
 
 	// We list deployments here to check if this version of kubernetes is >= 1.2.
 	// We would use NegotiateVersion, but Kubernetes 1.1 "supports"
-	// extensions/v1beta1, but not deployments, replicasets or daemonsets.
+	// extensions/v1beta1, but not deployments or daemonsets.
 	if _, err := c.Extensions().Deployments(metav1.NamespaceAll).List(metav1.ListOptions{}); err != nil {
-		log.Infof("Deployments, ReplicaSets and DaemonSets are not supported by this Kubernetes version: %v", err)
+		log.Infof("Deployments and DaemonSets are not supported by this Kubernetes version: %v", err)
 	} else {
 		result.deploymentStore = result.setupStore(c.ExtensionsV1beta1Client.RESTClient(), "deployments", &apiextensionsv1beta1.Deployment{}, nil)
-		result.replicaSetStore = result.setupStore(c.ExtensionsV1beta1Client.RESTClient(), "replicasets", &apiextensionsv1beta1.ReplicaSet{}, nil)
 		result.daemonSetStore = result.setupStore(c.ExtensionsV1beta1Client.RESTClient(), "daemonsets", &apiextensionsv1beta1.DaemonSet{}, nil)
 	}
 	// CronJobs and StatefulSets were introduced later. Easiest to use the same technique.
@@ -238,32 +232,6 @@ func (c *client) WalkDeployments(f func(Deployment) error) error {
 	for _, m := range c.deploymentStore.List() {
 		d := m.(*apiextensionsv1beta1.Deployment)
 		if err := f(NewDeployment(d)); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// WalkReplicaSets calls f for each replica set
-func (c *client) WalkReplicaSets(f func(ReplicaSet) error) error {
-	if c.replicaSetStore == nil {
-		return nil
-	}
-	for _, m := range c.replicaSetStore.List() {
-		rs := m.(*apiextensionsv1beta1.ReplicaSet)
-		if err := f(NewReplicaSet(rs)); err != nil {
-			return err
-		}
-	}
-	return nil
-
-}
-
-// WalkReplicationcontrollers calls f for each replication controller
-func (c *client) WalkReplicationControllers(f func(ReplicationController) error) error {
-	for _, m := range c.replicationControllerStore.List() {
-		rc := m.(*apiv1.ReplicationController)
-		if err := f(NewReplicationController(rc)); err != nil {
 			return err
 		}
 	}
