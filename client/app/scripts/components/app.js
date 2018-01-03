@@ -204,10 +204,10 @@ class App extends React.Component {
                   </svg>
                 }
               </div>
-              <Search />
-              <Topologies />
               <ViewModeSelector />
+              <Topologies />
               <TimeControl />
+              <Search />
             </div>
           </div>
 

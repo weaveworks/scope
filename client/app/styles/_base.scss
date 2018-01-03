@@ -204,15 +204,16 @@ a {
 }
 
 .header {
-  padding: 15px 10px 0;
   pointer-events: none;
   width: 100%;
 
   .selectors {
-    display: flex;
-    position: relative;
+    position: fixed;
+    width: 400px;
+    height: -webkit-fill-available;
+    background: white;
     > * {
-      z-index: 20;
+      z-index: 1024;
       flex: 1 1;
     }
 
@@ -311,7 +312,6 @@ a {
 
 .topologies {
   margin: 0 4px;
-  display: flex;
 
   .topologies-item {
     margin: 0px 8px;
@@ -1489,7 +1489,7 @@ a {
 }
 
 .view-mode-selector, .time-control {
-  margin-left: 20px;
+  margin: 20px 0px 0px 20px;
 
   &-wrapper {
     pointer-events: all;
@@ -1519,11 +1519,10 @@ a {
 }
 
 .time-control {
-  margin-right: 20px;
+  margin: 0px 10px 10px 0px;
 
   &-controls {
     align-items: center;
-    justify-content: flex-end;
     display: flex;
   }
 
@@ -1632,7 +1631,7 @@ a {
   &-wrapper {
     margin: 0 8px;
     min-width: 160px;
-    text-align: right;
+    text-align: left;
   }
 
   &-disabled {
@@ -1668,7 +1667,7 @@ a {
     color: $text-secondary-color;
 
     &-icon {
-      margin-right: 0.5em;
+      margin-right: 1em;
     }
 
     &-hint {
@@ -1681,7 +1680,7 @@ a {
 
   &-input {
     overflow: hidden;
-    background: #fff;
+    background: $background-lighter-color;
     position: relative;
     z-index: 1;
     display: flex;
@@ -1749,7 +1748,7 @@ a {
   display: inline-block;
 
   & + .search-item {
-    margin-left: 4px;
+    margin-right: 4px;
   }
 
   & + .search-input-field {
