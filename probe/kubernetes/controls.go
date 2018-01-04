@@ -74,58 +74,43 @@ func (r *Reporter) CapturePod(f func(xfer.Request, string, string) xfer.Response
 	}
 }
 
-// CaptureResource is exported for testing
-func (r *Reporter) CaptureResource(f func(xfer.Request, string, string, string) xfer.Response) func(xfer.Request) xfer.Response {
+// CaptureDeployment is exported for testing
+func (r *Reporter) CaptureDeployment(f func(xfer.Request, string, string) xfer.Response) func(xfer.Request) xfer.Response {
 	return func(req xfer.Request) xfer.Response {
-		var resource, uid string
-		for _, parser := range []struct {
-			res string
-			f   func(string) (string, bool)
-		}{
-			{report.Deployment, report.ParseDeploymentNodeID},
-		} {
-			if u, ok := parser.f(req.NodeID); ok {
-				resource, uid = parser.res, u
-				break
-			}
-		}
-		if resource == "" {
+		uid, ok := report.ParseDeploymentNodeID(req.NodeID)
+		if !ok {
 			return xfer.ResponseErrorf("Invalid ID: %s", req.NodeID)
 		}
-
-		switch resource {
-		case report.Deployment:
-			var deployment Deployment
-			r.client.WalkDeployments(func(d Deployment) error {
-				if d.UID() == uid {
-					deployment = d
-				}
-				return nil
-			})
-			if deployment != nil {
-				return f(req, "deployment", deployment.Namespace(), deployment.Name())
+		var deployment Deployment
+		r.client.WalkDeployments(func(d Deployment) error {
+			if d.UID() == uid {
+				deployment = d
 			}
+			return nil
+		})
+		if deployment == nil {
+			return xfer.ResponseErrorf("Deployment not found: %s", uid)
 		}
-		return xfer.ResponseErrorf("%s not found: %s", resource, uid)
+		return f(req, deployment.Namespace(), deployment.Name())
 	}
 }
 
 // ScaleUp is the control to scale up a deployment
-func (r *Reporter) ScaleUp(req xfer.Request, resource, namespace, id string) xfer.Response {
-	return xfer.ResponseError(r.client.ScaleUp(resource, namespace, id))
+func (r *Reporter) ScaleUp(req xfer.Request, namespace, id string) xfer.Response {
+	return xfer.ResponseError(r.client.ScaleUp(report.Deployment, namespace, id))
 }
 
 // ScaleDown is the control to scale up a deployment
-func (r *Reporter) ScaleDown(req xfer.Request, resource, namespace, id string) xfer.Response {
-	return xfer.ResponseError(r.client.ScaleDown(resource, namespace, id))
+func (r *Reporter) ScaleDown(req xfer.Request, namespace, id string) xfer.Response {
+	return xfer.ResponseError(r.client.ScaleDown(report.Deployment, namespace, id))
 }
 
 func (r *Reporter) registerControls() {
 	controls := map[string]xfer.ControlHandlerFunc{
 		GetLogs:   r.CapturePod(r.GetLogs),
 		DeletePod: r.CapturePod(r.deletePod),
-		ScaleUp:   r.CaptureResource(r.ScaleUp),
-		ScaleDown: r.CaptureResource(r.ScaleDown),
+		ScaleUp:   r.CaptureDeployment(r.ScaleUp),
+		ScaleDown: r.CaptureDeployment(r.ScaleDown),
 	}
 	r.handlerRegistry.Batch(nil, controls)
 }
