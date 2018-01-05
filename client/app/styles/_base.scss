@@ -96,7 +96,7 @@ a {
 
 .overlay-wrapper {
   align-items: center;
-  background-color: fade-out($background-average-color, 0.1);
+  background-color: fade-out($background-color, 0.1);
   border-radius: 4px;
   color: $text-tertiary-color;
   display: flex;
@@ -2044,7 +2044,7 @@ a {
     }
 
     tr:nth-child(even) {
-      background: $background-color;
+      background: $background-darker-secondary-color;
     }
 
     tbody tr {
