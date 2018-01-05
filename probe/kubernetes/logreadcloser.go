@@ -1,17 +1,16 @@
 package kubernetes
 
 import (
+	"bufio"
 	"bytes"
+	"fmt"
 	"io"
-
-	log "github.com/Sirupsen/logrus"
-)
-
-const (
-	internalBufferSize = 1024
+	"math"
 )
 
 type logReadCloser struct {
+	labels       []string
+	labelLength  int
 	readClosers  []io.ReadCloser
 	eof          []bool
 	buffer       bytes.Buffer
@@ -20,15 +19,27 @@ type logReadCloser struct {
 	eofChannel   chan int
 }
 
-// NewLogReadCloser takes multiple io.ReadCloser and reads where data is available.
-func NewLogReadCloser(readClosers ...io.ReadCloser) io.ReadCloser {
-	stopChannels := make([]chan struct{}, len(readClosers))
-	for i := range readClosers {
+// NewLogReadCloser reads from multiple io.ReadCloser, where data is available,
+// and annotates each line with the reader's label
+func NewLogReadCloser(readClosersWithLabel map[io.ReadCloser]string) io.ReadCloser {
+	stopChannels := make([]chan struct{}, len(readClosersWithLabel))
+	labels := make([]string, len(readClosersWithLabel))
+	readClosers := make([]io.ReadCloser, len(readClosersWithLabel))
+
+	i := 0
+	labelLength := 0
+	for readCloser, label := range readClosersWithLabel {
 		stopChannels[i] = make(chan struct{})
+		readClosers[i] = readCloser
+		labels[i] = label
+		labelLength = int(math.Max(float64(labelLength), float64(len(label))))
+		i++
 	}
 
 	l := logReadCloser{
 		readClosers:  readClosers,
+		labels:       labels,
+		labelLength:  labelLength,
 		dataChannel:  make(chan []byte),
 		stopChannels: stopChannels,
 		eofChannel:   make(chan int),
@@ -112,30 +123,37 @@ func (l *logReadCloser) readInternalBuffer(p []byte) (int, error) {
 	if err == io.EOF && !l.isEOF() {
 		return n, nil
 	}
-
 	return n, err
 }
 
 func (l *logReadCloser) readInput(idx int) {
-	tmpBuffer := make([]byte, internalBufferSize)
+	reader := bufio.NewReader(l.readClosers[idx])
 	for {
-		n, err := l.readClosers[idx].Read(tmpBuffer)
+		line, err := reader.ReadBytes('\n')
 		if err == io.EOF {
-			if n > 0 {
-				l.dataChannel <- tmpBuffer[:n]
+			if len(line) > 0 {
+				l.dataChannel <- l.annotateLine(idx, line)
 			}
 			l.eofChannel <- idx
 			break
 		}
 		if err != nil {
-			log.Errorf("Failed to read: %v", err)
+			// error, exit
 			break
 		}
-		l.dataChannel <- tmpBuffer[:n]
+		l.dataChannel <- l.annotateLine(idx, line)
 	}
 
 	// signal the routine won't write to dataChannel
 	l.stopChannels[idx] <- struct{}{}
+}
+
+func (l *logReadCloser) annotateLine(idx int, line []byte) []byte {
+	// do not annotate if it's the only reader
+	if len(l.labels) == 1 {
+		return line
+	}
+	return []byte(fmt.Sprintf("[%-*s] %v", l.labelLength, l.labels[idx], string(line)))
 }
 
 func (l *logReadCloser) isEOF() bool {

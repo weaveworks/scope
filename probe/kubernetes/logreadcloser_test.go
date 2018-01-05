@@ -2,23 +2,34 @@ package kubernetes_test
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
+	"strings"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/kubernetes"
 )
 
 func TestLogReadCloser(t *testing.T) {
-	s0 := []byte("abcdefghijklmnopqrstuvwxyz")
-	s1 := []byte("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-	s2 := []byte("0123456789012345")
+	data0 := []byte("abcdefghijklmno\npqrstuvwxyz\n")
+	data1 := []byte("ABCDEFGHI\nJKLMNOPQRSTUVWXYZ\n")
+	data2 := []byte("012345678901\n2345\n\n678\n")
 
-	r0 := ioutil.NopCloser(bytes.NewReader(s0))
-	r1 := ioutil.NopCloser(bytes.NewReader(s1))
-	r2 := ioutil.NopCloser(bytes.NewReader(s2))
+	label0 := "zero"
+	label1 := "one"
+	label2 := "two"
+	longestlabelLength := len(label0)
 
-	l := kubernetes.NewLogReadCloser(r0, r1, r2)
+	readClosersWithLabel := map[io.ReadCloser]string{}
+	r0 := ioutil.NopCloser(bytes.NewReader(data0))
+	readClosersWithLabel[r0] = label0
+	r1 := ioutil.NopCloser(bytes.NewReader(data1))
+	readClosersWithLabel[r1] = label1
+	r2 := ioutil.NopCloser(bytes.NewReader(data2))
+	readClosersWithLabel[r2] = label2
+
+	l := kubernetes.NewLogReadCloser(readClosersWithLabel)
 
 	buf := make([]byte, 3000)
 	count := 0
@@ -33,29 +44,23 @@ func TestLogReadCloser(t *testing.T) {
 		count += n
 	}
 
-	total := len(s0) + len(s1) + len(s2)
-	if count != total {
-		t.Errorf("Must read %v characters, but got %v", total, count)
-	}
+	// convert to string for easier comparison
+	result := map[string]int{}
+	lineCounter(result, longestlabelLength, label0, data0)
+	lineCounter(result, longestlabelLength, label1, data1)
+	lineCounter(result, longestlabelLength, label2, data2)
 
-	// check every byte
-	byteCounter := map[byte]int{}
-	byteCount(byteCounter, s0)
-	byteCount(byteCounter, s1)
-	byteCount(byteCounter, s2)
-
-	for i := 0; i < count; i++ {
-		b := buf[i]
-		v, ok := byteCounter[b]
+	str := string(buf[:count])
+	for _, line := range strings.SplitAfter(str, "\n") {
+		v, ok := result[line]
 		if ok {
-			v--
-			byteCounter[b] = v
+			result[line] = v - 1
 		}
 	}
 
-	for b, c := range byteCounter {
-		if c != 0 {
-			t.Errorf("%v should be 0 instead of %v", b, c)
+	for line, v := range result {
+		if v != 0 {
+			t.Errorf("Line %v has not be read from reader", line)
 		}
 	}
 
@@ -65,13 +70,18 @@ func TestLogReadCloser(t *testing.T) {
 	}
 }
 
-func byteCount(accumulator map[byte]int, s []byte) {
-	for _, b := range s {
-		v, ok := accumulator[b]
+func lineCounter(counter map[string]int, pad int, label string, data []byte) {
+	for _, str := range strings.SplitAfter(string(data), "\n") {
+		if len(str) == 0 {
+			// SplitAfter ends with an empty string if the last character is '\n'
+			continue
+		}
+		line := fmt.Sprintf("[%-*s] %v", pad, label, str)
+		v, ok := counter[line]
 		if !ok {
 			v = 0
 		}
 		v++
-		accumulator[b] = v
+		counter[line] = v
 	}
 }

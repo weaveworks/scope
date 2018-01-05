@@ -327,8 +327,8 @@ func (c *client) WalkNodes(f func(*apiv1.Node) error) error {
 }
 
 func (c *client) GetLogs(namespaceID, podID string, containerNames []string) (io.ReadCloser, error) {
-	readClosers := make([]io.ReadCloser, len(containerNames))
-	for i, container := range containerNames {
+	readClosersWithLabel := map[io.ReadCloser]string{}
+	for _, container := range containerNames {
 		req := c.client.CoreV1().Pods(namespaceID).GetLogs(
 			podID,
 			&apiv1.PodLogOptions{
@@ -339,14 +339,15 @@ func (c *client) GetLogs(namespaceID, podID string, containerNames []string) (io
 		)
 		readCloser, err := req.Stream()
 		if err != nil {
-			for _, rc := range readClosers {
+			for rc := range readClosersWithLabel {
 				rc.Close()
 			}
 			return nil, err
 		}
-		readClosers[i] = readCloser
+		readClosersWithLabel[readCloser] = container
 	}
-	return NewLogReadCloser(readClosers...), nil
+
+	return NewLogReadCloser(readClosersWithLabel), nil
 }
 
 func (c *client) DeletePod(namespaceID, podID string) error {
