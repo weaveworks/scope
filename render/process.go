@@ -13,17 +13,11 @@ const (
 	OutboundMajor = "The Internet"
 	InboundMinor  = "Inbound connections"
 	OutboundMinor = "Outbound connections"
-
-	// Topology for pseudo-nodes and IPs so we can differentiate them at the end
-	Pseudo = "pseudo"
 )
 
 func renderProcesses(rpt report.Report) bool {
 	return len(rpt.Process.Nodes) >= 1
 }
-
-// EndpointRenderer is a Renderer which produces a renderable endpoint graph.
-var EndpointRenderer = SelectEndpoint
 
 // ProcessRenderer is a Renderer which produces a renderable process
 // graph by merging the endpoint graph and the process topology. It
@@ -79,32 +73,22 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 	if len(rpt.Process.Nodes) == 0 {
 		return Nodes{}
 	}
-	local := LocalNetworks(rpt)
-	processes := SelectProcess.Render(rpt)
-	endpoints := SelectEndpoint.Render(rpt)
-	ret := newJoinResults(processes.Nodes)
-
-	for _, n := range endpoints.Nodes {
-		// Nodes without a hostid are treated as pseudo nodes
-		if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); !ok {
-			if id, ok := pseudoNodeID(n, local); ok {
-				ret.addChild(n, id, Pseudo)
-			}
-		} else {
+	endpoints := SelectEndpoint.Render(rpt).Nodes
+	return MapEndpoints(
+		func(n report.Node) string {
 			pid, ok := n.Latest.Lookup(process.PID)
 			if !ok {
-				continue
+				return ""
 			}
-			if hasMoreThanOneConnection(n, endpoints.Nodes) {
-				continue
+			if hasMoreThanOneConnection(n, endpoints) {
+				return ""
 			}
-
-			hostID, _ := report.ParseHostNodeID(hostNodeID)
-			id := report.MakeProcessNodeID(hostID, pid)
-			ret.addChild(n, id, report.Process)
-		}
-	}
-	return ret.result(endpoints)
+			hostID := report.ExtractHostID(n)
+			if hostID == "" {
+				return ""
+			}
+			return report.MakeProcessNodeID(hostID, pid)
+		}, report.Process).Render(rpt)
 }
 
 // When there is more than one connection originating from a source

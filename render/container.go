@@ -35,32 +35,29 @@ var ContainerRenderer = Memoise(MakeFilter(
 			MapProcess2Container,
 			ProcessRenderer,
 		),
-		ConnectionJoin(MapContainer2IP, SelectContainer),
+		ConnectionJoin(MapContainer2IP, report.Container),
 	),
 ))
 
 const originalNodeID = "original_node_id"
 
-// ConnectionJoin joins the given renderer with connections from the
+// ConnectionJoin joins the given topology with connections from the
 // endpoints topology, using the toIPs function to extract IPs from
 // the nodes.
-func ConnectionJoin(toIPs func(report.Node) []string, r Renderer) Renderer {
-	return connectionJoin{toIPs: toIPs, r: r}
+func ConnectionJoin(toIPs func(report.Node) []string, topology string) Renderer {
+	return connectionJoin{toIPs: toIPs, topology: topology}
 }
 
 type connectionJoin struct {
-	toIPs func(report.Node) []string
-	r     Renderer
+	toIPs    func(report.Node) []string
+	topology string
 }
 
 func (c connectionJoin) Render(rpt report.Report) Nodes {
-	local := LocalNetworks(rpt)
-	inputNodes := c.r.Render(rpt)
-	endpoints := SelectEndpoint.Render(rpt)
-
+	inputNodes := TopologySelector(c.topology).Render(rpt).Nodes
 	// Collect all the IPs we are trying to map to, and which ID they map from
 	var ipNodes = map[string]string{}
-	for _, n := range inputNodes.Nodes {
+	for _, n := range inputNodes {
 		for _, ip := range c.toIPs(n) {
 			if _, exists := ipNodes[ip]; exists {
 				// If an IP is shared between multiple nodes, we can't reliably
@@ -71,35 +68,27 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 			}
 		}
 	}
-	ret := newJoinResults(inputNodes.Nodes)
-
-	// Now look at all the endpoints and see which map to IP nodes
-	for _, m := range endpoints.Nodes {
-		scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
-		if !ok {
-			continue
-		}
-		// Nodes without a hostid may be pseudo nodes - if so, pass through to result
-		if _, ok := m.Latest.Lookup(report.HostNodeID); !ok {
-			if id, ok := externalNodeID(m, addr, local); ok {
-				ret.addChild(m, id, Pseudo)
-				continue
+	return MapEndpoints(
+		func(m report.Node) string {
+			scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
+			if !ok {
+				return ""
 			}
-		}
-		id, found := ipNodes[report.MakeScopedEndpointNodeID(scope, addr, "")]
-		// We also allow for joining on ip:port pairs.  This is useful for
-		// connections to the host IPs which have been port mapped to a
-		// container can only be unambiguously identified with the port.
-		if !found {
-			id, found = ipNodes[report.MakeScopedEndpointNodeID(scope, addr, port)]
-		}
-		if found && id != "" { // not one we blanked out earlier
-			// We are guaranteed to find the id, so really this should
-			// never end up creating a node.
-			ret.addChild(m, id, report.Container)
-		}
-	}
-	return ret.result(endpoints)
+			id, found := ipNodes[report.MakeScopedEndpointNodeID(scope, addr, "")]
+			// We also allow for joining on ip:port pairs.  This is
+			// useful for connections to the host IPs which have been
+			// port mapped to a container can only be unambiguously
+			// identified with the port.
+			if !found {
+				id, found = ipNodes[report.MakeScopedEndpointNodeID(scope, addr, port)]
+			}
+			if found && id != "" { // not one we blanked out earlier
+				// We are guaranteed to find the id, so really this
+				// should never end up creating a node.
+				return id
+			}
+			return ""
+		}, c.topology).Render(rpt)
 }
 
 // FilterEmpty is a Renderer which filters out nodes which have no children
