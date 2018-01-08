@@ -103,6 +103,9 @@ func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITop
 		}
 		ns = append(ns, name)
 	}
+	if len(ns) == 0 {
+		return topologies
+	}
 	sort.Strings(ns)
 	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
 	for i, t := range topologies {
