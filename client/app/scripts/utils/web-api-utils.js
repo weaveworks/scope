@@ -27,7 +27,14 @@ let firstMessageOnWebsocketAt = 0;
 
 export function buildOptionsQuery(options) {
   if (options) {
-    return options.map((value, param) => `${param}=${value}`).join('&');
+    return options.map((value, param) => {
+      if (param === 'system') {
+        value = 'application';
+      } else if (param === 'stopped') {
+        value = 'running';
+      }
+      return `${param}=${value}`;
+    }).join('&');
   }
   return '';
 }

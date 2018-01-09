@@ -3,21 +3,13 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import Logo from './logo';
-import Footer from './footer.js';
-import Sidebar from './sidebar.js';
 import HelpPanel from './help-panel';
 import Search from './search';
-import Status from './status.js';
-import Topologies from './topologies.js';
-import TopologyOptions from './topology-options.js';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric,
   selectMetric, toggleHelp, toggleGridMode } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
-import GridModeSelector from './grid-mode-selector';
-import MetricSelector from './metric-selector';
-import NetworkSelector from './networks-selector';
 import { getRouter } from '../utils/router-utils';
 import DebugToolbar, { showingDebugToolbar,
   toggleDebugToolbar } from './debug-toolbar.js';
@@ -100,8 +92,7 @@ class App extends React.Component {
   }
 
   render() {
-    const { gridMode, showingDetails, showingHelp, showingMetricsSelector,
-      showingNetworkSelector } = this.props;
+    const {showingDetails, showingHelp} = this.props;
     const isIframe = window !== window.top;
 
     return (
@@ -119,20 +110,10 @@ class App extends React.Component {
             </svg>}
           </div>
           <Search />
-          <Topologies />
-          <GridModeSelector />
         </div>
 
         <Nodes />
 
-        <Sidebar classNames={gridMode ? 'sidebar-gridmode' : ''}>
-          {showingMetricsSelector && !gridMode && <MetricSelector />}
-          {showingNetworkSelector && !gridMode && <NetworkSelector />}
-          <Status />
-          <TopologyOptions />
-        </Sidebar>
-
-        <Footer />
       </div>
     );
   }

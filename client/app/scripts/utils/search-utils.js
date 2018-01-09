@@ -67,7 +67,12 @@ function matchPrefix(label, prefix) {
 function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label, truncate) {
   if (!prefix || matchPrefix(label, prefix)) {
     const queryRe = makeRegExp(query);
-    const matches = text.match(queryRe);
+    let matches = null;
+    try {
+      matches = text.match(queryRe);
+    } catch (e) {
+      matches = null;
+    }
     if (matches) {
       const firstMatch = matches[0];
       const index = text.search(queryRe);
