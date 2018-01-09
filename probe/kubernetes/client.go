@@ -39,7 +39,7 @@ type Client interface {
 
 	WatchPods(f func(Event, Pod))
 
-	GetLogs(namespaceID, podID string) (io.ReadCloser, error)
+	GetLogs(namespaceID, podID string, containerNames []string) (io.ReadCloser, error)
 	DeletePod(namespaceID, podID string) error
 	ScaleUp(resource, namespaceID, id string) error
 	ScaleDown(resource, namespaceID, id string) error
@@ -328,15 +328,28 @@ func (c *client) WalkNamespaces(f func(NamespaceResource) error) error {
 	return nil
 }
 
-func (c *client) GetLogs(namespaceID, podID string) (io.ReadCloser, error) {
-	req := c.client.CoreV1().Pods(namespaceID).GetLogs(
-		podID,
-		&apiv1.PodLogOptions{
-			Follow:     true,
-			Timestamps: true,
-		},
-	)
-	return req.Stream()
+func (c *client) GetLogs(namespaceID, podID string, containerNames []string) (io.ReadCloser, error) {
+	readClosersWithLabel := map[io.ReadCloser]string{}
+	for _, container := range containerNames {
+		req := c.client.CoreV1().Pods(namespaceID).GetLogs(
+			podID,
+			&apiv1.PodLogOptions{
+				Follow:     true,
+				Timestamps: true,
+				Container:  container,
+			},
+		)
+		readCloser, err := req.Stream()
+		if err != nil {
+			for rc := range readClosersWithLabel {
+				rc.Close()
+			}
+			return nil, err
+		}
+		readClosersWithLabel[readCloser] = container
+	}
+
+	return NewLogReadCloser(readClosersWithLabel), nil
 }
 
 func (c *client) DeletePod(namespaceID, podID string) error {
