@@ -2,7 +2,6 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
-import NodesGrid from '../charts/nodes-grid';
 import NodesError from '../charts/nodes-error';
 import { DelayedShow } from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
@@ -49,7 +48,7 @@ class Nodes extends React.Component {
   }
 
   render() {
-    const { topologyEmpty, gridMode, topologiesLoaded, nodesLoaded, topologies,
+    const { topologyEmpty, topologiesLoaded, nodesLoaded, topologies,
       currentTopology } = this.props;
 
     return (
@@ -62,14 +61,10 @@ class Nodes extends React.Component {
         </DelayedShow>
         {this.renderEmptyTopologyError(topologiesLoaded && nodesLoaded && topologyEmpty)}
 
-        {gridMode ?
-          <NodesGrid {...this.state}
-            nodeSize="24"
-            margins={CANVAS_MARGINS}
-          /> :
-         <NodesChart {...this.state}
-           margins={CANVAS_MARGINS}
-           />}
+
+        <NodesChart {...this.state}
+          margins={CANVAS_MARGINS}
+        />
       </div>
     );
   }

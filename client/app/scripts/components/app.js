@@ -2,7 +2,6 @@ import debug from 'debug';
 import React from 'react';
 import { connect } from 'react-redux';
 
-import Logo from './logo';
 import HelpPanel from './help-panel';
 import Search from './search';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
@@ -92,8 +91,7 @@ class App extends React.Component {
   }
 
   render() {
-    const {showingDetails, showingHelp} = this.props;
-    const isIframe = window !== window.top;
+    const {showingDetails, showingHelp, searchFocused} = this.props;
 
     return (
       <div className="app">
@@ -104,12 +102,8 @@ class App extends React.Component {
         {showingDetails && <Details />}
 
         <div className="header">
-          <div className="logo">
-            {!isIframe && <svg width="100%" height="100%" viewBox="0 0 1089 217">
-              <Logo />
-            </svg>}
-          </div>
-          <Search />
+
+          {searchFocused && <Search />}
         </div>
 
         <Nodes />

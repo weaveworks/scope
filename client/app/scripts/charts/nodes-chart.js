@@ -207,14 +207,27 @@ class NodesChart extends React.Component {
   }
 
   render() {
-    const { edges, nodes, panTranslateX, panTranslateY, scale } = this.state;
+    const { edges, nodes, panTranslateX, panTranslateY, scale, selectedNodeId } = this.state;
+    let ns = makeMap();
+    if (!selectedNodeId) {
+      try {
+        let hash = window.location.hash;
+        hash = hash.substring(hash.lastIndexOf('/') + 1);
+        hash = JSON.parse(hash);
+        if (hash.showAll) {
+          ns = nodes;
+        }
+      } catch (e) {
+        ns = makeMap();
+      }
+    }
 
     // not passing translates into child components for perf reasons, use getTranslate instead
     const translate = [panTranslateX, panTranslateY];
     const transform = `translate(${translate}) scale(${scale})`;
     const svgClassNames = this.props.isEmpty ? 'hide' : '';
 
-    const layoutPrecision = getLayoutPrecision(nodes.size);
+    const layoutPrecision = getLayoutPrecision(ns.size);
     return (
       <div className="nodes-chart">
         <svg width="100%" height="100%" id="nodes-chart-canvas"
@@ -223,7 +236,7 @@ class NodesChart extends React.Component {
             <Logo />
           </g>
           <NodesChartElements
-            layoutNodes={nodes}
+            layoutNodes={ns}
             layoutEdges={edges}
             nodeScale={this.state.nodeScale}
             scale={scale}
