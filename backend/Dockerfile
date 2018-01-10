@@ -5,7 +5,8 @@ RUN apt-get update && \
 RUN go clean -i net && \
 	go install -tags netgo std && \
 	go install -race -tags netgo std
-RUN go get -tags netgo \
+RUN go get -u github.com/gpmgo/gopm
+RUN gopm get -tags netgo \
 		github.com/fzipp/gocyclo \
 		github.com/golang/lint/golint \
 		github.com/kisielk/errcheck \
