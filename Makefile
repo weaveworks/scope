@@ -108,13 +108,13 @@ lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
 prog/staticui/staticui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	mkdir -p prog/staticui
 	go get github.com/mjibson/esc 
- 	go install github.com/mjibson/esc
+	go install github.com/mjibson/esc
 	esc -o $@ -pkg staticui -prefix client/build client/build
 
 prog/externalui/externalui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	mkdir -p prog/externalui
 	go get github.com/mjibson/esc 
- 	go install github.com/mjibson/esc
+	go install github.com/mjibson/esc
 	esc -o $@ -pkg externalui -prefix client/build-external -include '\.html$$' client/build-external
 
 endif
