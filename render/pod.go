@@ -61,7 +61,7 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 					),
 				),
 			),
-			ConnectionJoin(MapPod2IP, SelectPod),
+			ConnectionJoin(MapPod2IP, report.Pod),
 		),
 	),
 ))

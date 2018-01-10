@@ -13,7 +13,7 @@ var HostRenderer = MakeReduce(
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerImageRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: PodRenderer},
-	endpoints2Hosts{},
+	MapEndpoints(endpoint2Host, report.Host),
 )
 
 // nodes2Hosts maps any Nodes to host Nodes.
@@ -50,26 +50,9 @@ func nodes2Hosts(nodes Nodes) Nodes {
 	return ret.result(nodes)
 }
 
-// endpoints2Hosts takes nodes from the endpoint topology and produces
-// host nodes or pseudo nodes.
-type endpoints2Hosts struct {
-}
-
-func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
-	local := LocalNetworks(rpt)
-	hosts := SelectHost.Render(rpt)
-	endpoints := SelectEndpoint.Render(rpt)
-	ret := newJoinResults(hosts.Nodes)
-
-	for _, n := range endpoints.Nodes {
-		// Nodes without a hostid are treated as pseudo nodes
-		if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); !ok {
-			if id, ok := pseudoNodeID(n, local); ok {
-				ret.addChild(n, id, Pseudo)
-			}
-		} else {
-			ret.addChild(n, hostNodeID, report.Host)
-		}
+func endpoint2Host(n report.Node) string {
+	if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); ok {
+		return hostNodeID
 	}
-	return ret.result(endpoints)
+	return ""
 }
