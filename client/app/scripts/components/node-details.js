@@ -46,16 +46,33 @@ export class NodeDetails extends React.Component {
     resetDocumentTitle();
   }
 
+  parseHash() {
+    try {
+      let hash = window.location.hash;
+      hash = hash.substring(hash.lastIndexOf('/') + 1);
+      const end = hash.indexOf('?');
+      if (end !== -1) {
+        hash = hash.substring(0, end);
+      }
+      hash = JSON.parse(hash);
+      return hash;
+    } catch (e) {
+      return {};
+    }
+  }
+
   renderTools() {
     const showSwitchTopology = this.props.nodeId !== this.props.selectedNodeId;
     const topologyTitle = `View ${this.props.label} in ${this.props.topologyId}`;
-
+    const hash = this.parseHash();
+    const canClose = !!hash.showAll;
     return (
       <div className="node-details-tools-wrapper">
         <div className="node-details-tools">
           {showSwitchTopology && <span title={topologyTitle}
             className="fa fa-exchange" onClick={this.handleShowTopologyForNode} />}
-          <span title="Close details" className="fa fa-close" onClick={this.handleClickClose} />
+          {canClose && <span title="Close details" className="fa fa-close"
+            onClick={this.handleClickClose} />}
         </div>
       </div>
     );
