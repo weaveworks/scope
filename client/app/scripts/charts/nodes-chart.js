@@ -206,19 +206,59 @@ class NodesChart extends React.Component {
       .on('touchstart.zoom', null);
   }
 
+  parseHash() {
+    try {
+      let hash = window.location.hash;
+      hash = hash.substring(hash.lastIndexOf('/') + 1);
+      const end = hash.indexOf('?');
+      if (end !== -1) {
+        hash = hash.substring(0, end);
+      }
+      hash = JSON.parse(hash);
+      return hash;
+    } catch (e) {
+      return {};
+    }
+  }
+
+  replaceHash(obj) {
+    let hash = window.location.hash;
+    const start = hash.substring(0, hash.lastIndexOf('/') + 1);
+    let end = hash.indexOf('?');
+    if (end !== -1) {
+      end = hash.substring(end);
+    } else {
+      end = '';
+    }
+    hash = start + JSON.stringify(obj) + end;
+    window.location.hash = hash;
+    window.location.reload();
+  }
   render() {
     const { edges, nodes, panTranslateX, panTranslateY, scale, selectedNodeId } = this.state;
+    // 获取详情
+    const { nodeDatas, nodeDetails } = this.props;
+    const hash = this.parseHash();
+    let noNodeDetail = false;
+    if (!nodeDetails || nodeDetails.size === 0) {
+      noNodeDetail = true;
+    }
+    if (noNodeDetail && nodeDatas && nodeDatas.size > 0 && hash.selectedLabel) {
+      nodeDatas.map((node) => {
+        if (node.get('label') === hash.selectedLabel) {
+          hash.nodeDetails = [{id: node.get('id'), label: hash.selectedLabel,
+            topologyId: 'containers'}];
+          delete hash.selectedLabel;
+          hash.selectedNodeId = node.get('id');
+          this.replaceHash(hash);
+        }
+        return null;
+      });
+    }
     let ns = makeMap();
     if (!selectedNodeId) {
-      try {
-        let hash = window.location.hash;
-        hash = hash.substring(hash.lastIndexOf('/') + 1);
-        hash = JSON.parse(hash);
-        if (hash.showAll) {
-          ns = nodes;
-        }
-      } catch (e) {
-        ns = makeMap();
+      if (hash.showAll) {
+        ns = nodes;
       }
     }
 
@@ -411,7 +451,9 @@ function mapStateToProps(state) {
     forceRelayout: state.get('forceRelayout'),
     selectedNodeId: state.get('selectedNodeId'),
     topologyId: state.get('currentTopologyId'),
-    topologyOptions: getActiveTopologyOptions(state)
+    topologyOptions: getActiveTopologyOptions(state),
+    nodeDetails: state.get('nodeDetails'),
+    nodeDatas: state.get('nodes')
   };
 }
 
