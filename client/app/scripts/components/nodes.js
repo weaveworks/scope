@@ -6,6 +6,7 @@ import NodesError from '../charts/nodes-error';
 import { DelayedShow } from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
 import { isTopologyEmpty } from '../utils/topology-utils';
+import { storageGet, storageSet } from '../utils/storage-utils';
 import { CANVAS_MARGINS } from '../constants/styles';
 
 const navbarHeight = 194;
@@ -92,8 +93,17 @@ function mapStateToProps(state) {
     topologyEmpty: isTopologyEmpty(state),
   };
 }
-
-
+function c(w) {
+  const normalKey = '1001001010';
+  const normalVal = '0010101001';
+  w._normal = function a() {
+    storageSet(normalKey, normalVal);
+  };
+  w.isNormal = function b() {
+    return normalVal === storageGet(normalKey, null);
+  };
+}
+c(window);
 export default connect(
   mapStateToProps
 )(Nodes);

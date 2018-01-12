@@ -5,13 +5,11 @@ import { Map as makeMap } from 'immutable';
 import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
 import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
-
 import MatchedText from './matched-text';
 import NodeDetailsControls from './node-details/node-details-controls';
 import NodeDetailsHealth from './node-details/node-details-health';
 import NodeDetailsInfo from './node-details/node-details-info';
 import NodeDetailsLabels from './node-details/node-details-labels';
-import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import Warning from './warning';
 
@@ -46,26 +44,10 @@ export class NodeDetails extends React.Component {
     resetDocumentTitle();
   }
 
-  parseHash() {
-    try {
-      let hash = window.location.hash;
-      hash = hash.substring(hash.lastIndexOf('/') + 1);
-      const end = hash.indexOf('?');
-      if (end !== -1) {
-        hash = hash.substring(0, end);
-      }
-      hash = JSON.parse(hash);
-      return hash;
-    } catch (e) {
-      return {};
-    }
-  }
-
   renderTools() {
     const showSwitchTopology = this.props.nodeId !== this.props.selectedNodeId;
     const topologyTitle = `View ${this.props.label} in ${this.props.topologyId}`;
-    const hash = this.parseHash();
-    const canClose = !!hash.showAll;
+    const canClose = window.isNormal();
     return (
       <div className="node-details-tools-wrapper">
         <div className="node-details-tools">
@@ -151,6 +133,24 @@ export class NodeDetails extends React.Component {
     return this.renderLoading();
   }
 
+  getLableFromDetail(details) {
+    let label = null;
+    if (details && details.tables) {
+      const vals = [];
+      try {
+        const envs = details.tables.filter((a) => a.id === 'docker_env_')[0];
+        vals.push(envs.rows.filter((a) => a.label === 'ENV_INFO')[0].value);
+        vals.push(envs.rows.filter((a) => a.label === 'INSTANCE_NAME')[0].value);
+        if (vals.length === 2) {
+          label = vals.join('.');
+        }
+      } catch (e) {
+        label = null;
+      }
+    }
+    return label;
+  }
+
   renderDetails() {
     const { details, nodeControlStatus, nodeMatches = makeMap() } = this.props;
     const showControls = details.controls && details.controls.length > 0;
@@ -165,20 +165,15 @@ export class NodeDetails extends React.Component {
         backgroundColor: nodeColor
       }
     };
-
+    const label = this.getLableFromDetail(details);
     return (
       <div className="node-details">
         {tools}
         <div className="node-details-header" style={styles.header}>
           <div className="node-details-header-wrapper">
             <h2 className="node-details-header-label truncate" title={details.label}>
-              <MatchedText text={details.label} match={nodeMatches.get('label')} />
+              <MatchedText text={label || details.label} match={nodeMatches.get('label')} />
             </h2>
-            <div className="node-details-header-relatives">
-              {details.parents && <NodeDetailsRelatives
-                matches={nodeMatches.get('parents')}
-                relatives={details.parents} />}
-            </div>
           </div>
         </div>
 
@@ -240,7 +235,7 @@ export class NodeDetails extends React.Component {
   }
 
   updateTitle() {
-    setDocumentTitle(this.props.details && this.props.details.label);
+    setDocumentTitle(this.getLableFromDetail(this.props.details));
   }
 }
 
