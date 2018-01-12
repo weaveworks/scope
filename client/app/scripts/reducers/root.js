@@ -114,6 +114,9 @@ function setDefaultTopologyOptions(state, topologyList) {
 }
 
 function closeNodeDetails(state, nodeId) {
+  if (!window.isNormal()) {
+    return state;
+  }
   const nodeDetails = state.get('nodeDetails');
   if (nodeDetails.size > 0) {
     const popNodeId = nodeId || nodeDetails.keySeq().last();
