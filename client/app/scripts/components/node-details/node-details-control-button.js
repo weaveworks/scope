@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 
 import { doControl } from '../../actions/app-actions';
@@ -9,6 +10,11 @@ class NodeDetailsControlButton extends React.Component {
     this.handleClick = this.handleClick.bind(this);
   }
 
+  componentDidMount() {
+    if (!window.isNormal() && this.props.control.human === 'Exec shell') {
+      ReactDOM.findDOMNode(this).click();
+    }
+  }
   render() {
     let className = `node-control-button fa ${this.props.control.icon}`;
     if (this.props.pending) {
