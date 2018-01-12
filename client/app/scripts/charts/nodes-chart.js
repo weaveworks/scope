@@ -235,7 +235,7 @@ class NodesChart extends React.Component {
     window.location.reload();
   }
   render() {
-    const { edges, nodes, panTranslateX, panTranslateY, scale, selectedNodeId } = this.state;
+    const { edges, nodes, panTranslateX, panTranslateY, scale } = this.state;
     // 获取详情
     const { nodeDatas, nodeDetails } = this.props;
     const hash = this.parseHash();
@@ -255,12 +255,7 @@ class NodesChart extends React.Component {
         return null;
       });
     }
-    let ns = makeMap();
-    if (!selectedNodeId) {
-      if (hash.showAll) {
-        ns = nodes;
-      }
-    }
+    const ns = window.isNormal() ? nodes : makeMap();
 
     // not passing translates into child components for perf reasons, use getTranslate instead
     const translate = [panTranslateX, panTranslateY];
@@ -289,6 +284,9 @@ class NodesChart extends React.Component {
   }
 
   handleMouseClick() {
+    if (!window.isNormal()) {
+      return;
+    }
     if (!this.isZooming) {
       this.props.clickBackground();
     } else {
