@@ -1,10 +1,9 @@
 
-const PREFIX = 'Weave Scope';
-const SEPARATOR = ' - ';
+const PREFIX = 'Container';
 
 export function setDocumentTitle(title) {
   if (title) {
-    document.title = [PREFIX, title].join(SEPARATOR);
+    document.title = title;
   } else {
     document.title = PREFIX;
   }
