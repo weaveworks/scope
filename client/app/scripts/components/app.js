@@ -6,7 +6,7 @@ import HelpPanel from './help-panel';
 import Search from './search';
 import { getApiDetails, getTopologies } from '../utils/web-api-utils';
 import { focusSearch, pinNextMetric, hitBackspace, hitEnter, hitEsc, unpinMetric,
-  selectMetric, toggleHelp, toggleGridMode } from '../actions/app-actions';
+  selectMetric, toggleHelp } from '../actions/app-actions';
 import Details from './details';
 import Nodes from './nodes';
 import { getRouter } from '../utils/router-utils';
@@ -76,8 +76,8 @@ class App extends React.Component {
         dispatch(pinNextMetric(-1));
       } else if (char === '>') {
         dispatch(pinNextMetric(1));
-      } else if (char === 't' || char === 'g') {
-        dispatch(toggleGridMode());
+      // } else if (char === 't' || char === 'g') {
+      //  dispatch(toggleGridMode());
       } else if (char === 'q') {
         dispatch(unpinMetric());
         dispatch(selectMetric(null));
