@@ -245,8 +245,14 @@ class NodesChart extends React.Component {
     }
     if (noNodeDetail && nodeDatas && nodeDatas.size > 0 && hash.selectedLabel) {
       nodeDatas.map((node) => {
-        if (node.get('label') === hash.selectedLabel) {
-          hash.nodeDetails = [{id: node.get('id'), label: hash.selectedLabel,
+        // 不同版本的mesos生成的容器名称不一样
+        let shortLable = hash.selectedLabel;
+        if (hash.selectedLabel.indexOf('.') !== -1) {
+          shortLable = shortLable.substring(0, hash.selectedLabel.indexOf('-') + 1) +
+            shortLable.substring(hash.selectedLabel.lastIndexOf('.') + 1);
+        }
+        if (node.get('label') === hash.selectedLabel || node.get('label') === shortLable) {
+          hash.nodeDetails = [{id: node.get('id'), label: node.get('label'),
             topologyId: 'containers'}];
           delete hash.selectedLabel;
           hash.selectedNodeId = node.get('id');
