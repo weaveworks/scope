@@ -145,12 +145,6 @@ func (c *mockClient) WalkCronJobs(f func(kubernetes.CronJob) error) error {
 func (c *mockClient) WalkDeployments(f func(kubernetes.Deployment) error) error {
 	return nil
 }
-func (c *mockClient) WalkReplicaSets(f func(kubernetes.ReplicaSet) error) error {
-	return nil
-}
-func (c *mockClient) WalkReplicationControllers(f func(kubernetes.ReplicationController) error) error {
-	return nil
-}
 func (c *mockClient) WalkNamespaces(f func(kubernetes.NamespaceResource) error) error {
 	return nil
 }

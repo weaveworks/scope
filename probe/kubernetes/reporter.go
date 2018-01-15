@@ -58,17 +58,7 @@ var (
 		Strategy:           {ID: Strategy, Label: "Strategy", From: report.FromLatest, Priority: 7},
 	}
 
-	DeploymentMetricTemplates = ReplicaSetMetricTemplates
-
-	ReplicaSetMetadataTemplates = report.MetadataTemplates{
-		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
-		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
-	}
-
-	ReplicaSetMetricTemplates = PodMetricTemplates
+	DeploymentMetricTemplates = PodMetricTemplates
 
 	DaemonSetMetadataTemplates = report.MetadataTemplates{
 		NodeType:        {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
