@@ -17,9 +17,17 @@ class EmeddedTerminal extends React.Component {
   }
 
   componentDidMount() {
-    setTimeout(() => {
+    this.mountedTimeout = setTimeout(() => {
       this.setState({mounted: true});
     });
+    this.animationTimeout = setTimeout(() => {
+      this.setState({ animated: true });
+    }, 2000);
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.mountedTimeout);
+    clearTimeout(this.animationTimeout);
   }
 
   getTransform() {
