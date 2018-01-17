@@ -76,7 +76,9 @@ class App extends React.Component {
     window.addEventListener('keypress', this.onKeyPress);
     window.addEventListener('keyup', this.onKeyUp);
 
-    getRouter(this.props.dispatch, this.props.urlState).start({hashbang: true});
+    this.router = getRouter(this.props.dispatch, this.props.urlState);
+    this.router.start({ hashbang: true });
+
     if (!this.props.routeSet || process.env.WEAVE_CLOUD) {
       // dont request topologies when already done via router.
       // If running as a component, always request topologies when the app mounts.
@@ -90,6 +92,7 @@ class App extends React.Component {
     window.removeEventListener('keypress', this.onKeyPress);
     window.removeEventListener('keyup', this.onKeyUp);
     this.props.dispatch(shutdown());
+    this.router.stop();
   }
 
   onKeyUp(ev) {
