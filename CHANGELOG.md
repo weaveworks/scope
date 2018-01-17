@@ -1,3 +1,78 @@
+## Release 1.7.0
+
+Highlights:
+- Displaying pod logs now shows all container logs with each line prefixed by `[containerName]`.
+  Previously, the same view would fail if the pod had multiple containers.
+- Show all Kubernetes namespaces, including empty ones.
+- Various small improvements and performance work
+
+New features and enhancements:
+- Reading pod logs returns all container logs
+	[#3013](https://github.com/weaveworks/scope/pull/3013)
+- Probe reports namespaces
+	[#2985](https://github.com/weaveworks/scope/pull/2985)
+- show unconnected processes
+	[#3009](https://github.com/weaveworks/scope/pull/3009)
+
+Bug fixes and minor improvements:
+- Set a timeout to Terminal animation
+	[#3021](https://github.com/weaveworks/scope/pull/3021)
+- 'updateKubeFilters` returns early if there are no namespaces
+	[#3017](https://github.com/weaveworks/scope/pull/3017)
+- don't map image adjacencies to hosts
+	[#2997](https://github.com/weaveworks/scope/pull/2997)
+- cope with one->many topology mappings
+	[#2996](https://github.com/weaveworks/scope/pull/2996)
+- Tag images at build time
+	[#2987](https://github.com/weaveworks/scope/pull/2987)
+- don't exclude NATed connections in mapping to processes
+	[#2978](https://github.com/weaveworks/scope/pull/2978)
+
+Internal improvements and cleanup:
+- refactor: extract common code in endpoint mapping
+	[#3016](https://github.com/weaveworks/scope/pull/3016)
+- refactor: make PropagateSingleMetrics a renderer
+	[#3008](https://github.com/weaveworks/scope/pull/3008)
+- refactor: move RenderContext where it belongs
+	[#3005](https://github.com/weaveworks/scope/pull/3005)
+- render sensible labels for nodes with little/no metadata
+	[#2998](https://github.com/weaveworks/scope/pull/2998)
+- refactor: banish TheInternet
+	[#3003](https://github.com/weaveworks/scope/pull/3003)
+- benchmark report summarization
+	[#3000](https://github.com/weaveworks/scope/pull/3000)
+- refactor: inline summarisation of metadata, metrics, tables
+	[#2999](https://github.com/weaveworks/scope/pull/2999)
+- Upgrade Go to 1.9.2
+	[#2993](https://github.com/weaveworks/scope/pull/2993)
+- simplify `joinResults`
+	[#2994](https://github.com/weaveworks/scope/pull/2994)
+- Suggest how to disable weave errors and warnings
+	[#2990](https://github.com/weaveworks/scope/pull/2990)
+- refactor: drop networks from render.MapFunc
+	[#2991](https://github.com/weaveworks/scope/pull/2991)
+
+Performance improvements:
+- remove Node.Edges
+	[#2992](https://github.com/weaveworks/scope/pull/2992)
+- remove unnecessary metadata propagation
+	[#3007](https://github.com/weaveworks/scope/pull/3007)
+- permit setting `probe.kubernetes.interval` to 0
+	[#3012](https://github.com/weaveworks/scope/pull/3012)
+- Stop fetching ReplicaSets and ReplicationControllers
+	[#3014](https://github.com/weaveworks/scope/pull/3014)
+- optimisation: pre-allocate, and fewer slices during summarisation
+	[#3002](https://github.com/weaveworks/scope/pull/3002)
+- make `Report.Topology(name)` fast
+	[#3001](https://github.com/weaveworks/scope/pull/3001)
+
+Weave Cloud related changes:
+- Bump ui-components to v0.4.18
+	[#3019](https://github.com/weaveworks/scope/pull/3019)
+- Simplifying backgrounds to match lightgray in service-ui and ui-compo…
+	[#3011](https://github.com/weaveworks/scope/pull/3011)
+
+
 ## Release 1.6.7
 
 This is a minor patch release.
