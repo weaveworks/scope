@@ -692,9 +692,6 @@ export function rootReducer(state = initialState, action) {
         pinnedMetricType: action.state.pinnedMetricType
       });
       state = state.set('topologyViewMode', action.state.topologyViewMode);
-      if (action.state.pausedAt) {
-        state = state.set('pausedAt', action.state.pausedAt);
-      }
       if (action.state.gridSortedBy) {
         state = state.set('gridSortedBy', action.state.gridSortedBy);
       }

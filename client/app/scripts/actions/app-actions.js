@@ -788,6 +788,16 @@ export function route(urlState) {
       state: urlState,
       type: ActionTypes.ROUTE_TOPOLOGY
     });
+    // Handle Time Travel state update through separate actions as it's more complex.
+    // This is mostly to handle switching contexts Explore <-> Monitor in WC while
+    // the timestamp keeps changing - e.g. if we were Time Travelling in Scope and
+    // then went live in Monitor, switching back to Explore should properly close
+    // the Time Travel etc, not just update the pausedAt state directly.
+    if (!urlState.pausedAt) {
+      dispatch(resumeTime());
+    } else {
+      dispatch(startTimeTravel(urlState.pausedAt));
+    }
     // update all request workers with new options
     getTopologies(getState, dispatch);
     getNodes(getState, dispatch);
