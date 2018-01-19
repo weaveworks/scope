@@ -12,7 +12,7 @@ import NodeDetailsTableHeaders from './node-details-table-headers';
 import { ipToPaddedString } from '../../utils/string-utils';
 import { moveElement, insertElement } from '../../utils/array-utils';
 import {
-  isIP, isNumber, defaultSortDesc, getTableColumnsStyles
+  isIP, isNumeric, defaultSortDesc, getTableColumnsStyles
 } from '../../utils/node-details-utils';
 
 
@@ -49,7 +49,7 @@ function getNodeValue(node, header) {
       if (isIP(header)) {
         // Format the IPs so that they are sorted numerically.
         return ipToPaddedString(field.value);
-      } else if (isNumber(header)) {
+      } else if (isNumeric(header)) {
         return parseFloat(field.value);
       }
       return field.value;
@@ -81,7 +81,7 @@ function getMetaDataSorters(nodes) {
   return get(nodes, [0, 'metadata'], []).map((field, index) => (node) => {
     const nodeMetadataField = node.metadata && node.metadata[index];
     if (nodeMetadataField) {
-      if (isNumber(nodeMetadataField)) {
+      if (isNumeric(nodeMetadataField)) {
         return parseFloat(nodeMetadataField.value);
       }
       return nodeMetadataField.value;
