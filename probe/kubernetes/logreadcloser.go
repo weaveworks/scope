@@ -84,7 +84,7 @@ func (l *logReadCloser) Read(p []byte) (int, error) {
 
 	// check if there's more data to read, without blocking
 	empty := false
-	for !empty && l.buffer.Len() < len(p) {
+	for !empty && l.buffer.Len() < len(p) && !l.isEOF() {
 		select {
 		case data := <-l.dataChannel:
 			l.buffer.Write(data)
