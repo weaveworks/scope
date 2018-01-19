@@ -84,7 +84,7 @@ func (l *logReadCloser) Read(p []byte) (int, error) {
 
 	// check if there's more data to read, without blocking
 	empty := false
-	for !empty && l.buffer.Len() < len(p) {
+	for !empty && l.buffer.Len() < len(p) && !l.isEOF() {
 		select {
 		case data := <-l.dataChannel:
 			l.buffer.Write(data)
@@ -130,7 +130,6 @@ func (l *logReadCloser) readInput(idx int) {
 			if len(line) > 0 {
 				l.dataChannel <- l.annotateLine(idx, line)
 			}
-			l.eofChannel <- idx
 			break
 		}
 		if err != nil {
@@ -139,6 +138,8 @@ func (l *logReadCloser) readInput(idx int) {
 		}
 		l.dataChannel <- l.annotateLine(idx, line)
 	}
+
+	l.eofChannel <- idx
 }
 
 func (l *logReadCloser) annotateLine(idx int, line []byte) []byte {
