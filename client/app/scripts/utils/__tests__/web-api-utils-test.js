@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { Map as makeMap, OrderedMap as makeOrderedMap } from 'immutable';
 
 import { buildUrlQuery, basePath, getApiPath, getWebsocketUrl } from '../web-api-utils';
@@ -38,7 +37,7 @@ describe('WebApiUtils', () => {
     });
 
     it('should combine multiple options with a timestamp', () => {
-      state = state.set('pausedAt', moment('2015-06-14T21:12:05.275Z'));
+      state = state.set('pausedAt', '2015-06-14T21:12:05.275Z');
       expect(buildUrlQuery(makeOrderedMap([
         ['foo', 2],
         ['bar', 4]

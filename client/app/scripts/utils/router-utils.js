@@ -3,7 +3,6 @@ import { each } from 'lodash';
 
 import { route } from '../actions/app-actions';
 import { storageGet, storageSet } from './storage-utils';
-import { serializeTimestamp } from './web-api-utils';
 
 //
 // page.js won't match the routes below if ":state" has a slash in it, so replace those before we
@@ -51,7 +50,7 @@ export function getUrlState(state) {
   const urlState = {
     controlPipe: cp ? cp.toJS() : null,
     nodeDetails: nodeDetails.toJS(),
-    pausedAt: serializeTimestamp(state.get('pausedAt')),
+    pausedAt: state.get('pausedAt'),
     topologyViewMode: state.get('topologyViewMode'),
     pinnedMetricType: state.get('pinnedMetricType'),
     pinnedSearches: state.get('pinnedSearches').toJS(),

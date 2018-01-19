@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment';
 import { connect } from 'react-redux';
 
 import NodeDetailsHealthItem from './node-details-health-item';
@@ -23,7 +24,7 @@ export function appendTime(url, time) {
     const json = decodeURIComponent(url.substr(pos + cloudLinkPathEnd.length));
     try {
       payload = JSON.parse(json);
-      payload.time = { queryEnd: time.unix() };
+      payload.time = { queryEnd: moment(time).unix() };
     } catch (e) {
       return url;
     }
