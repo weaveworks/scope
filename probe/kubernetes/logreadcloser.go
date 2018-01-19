@@ -130,7 +130,6 @@ func (l *logReadCloser) readInput(idx int) {
 			if len(line) > 0 {
 				l.dataChannel <- l.annotateLine(idx, line)
 			}
-			l.eofChannel <- idx
 			break
 		}
 		if err != nil {
@@ -139,6 +138,8 @@ func (l *logReadCloser) readInput(idx int) {
 		}
 		l.dataChannel <- l.annotateLine(idx, line)
 	}
+
+	l.eofChannel <- idx
 }
 
 func (l *logReadCloser) annotateLine(idx int, line []byte) []byte {
