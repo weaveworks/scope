@@ -21,9 +21,7 @@ import {
 } from '../selectors/topology';
 import { isPausedSelector } from '../selectors/time-travel';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
-import { timestampsEqual } from '../utils/time-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
-import { deserializeTimestamp } from '../utils/web-api-utils';
 import {
   findTopologyById,
   setTopologyUrlsById,
@@ -381,13 +379,13 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.PAUSE_TIME_AT_NOW: {
       state = state.set('showingTimeTravel', false);
       state = state.set('timeTravelTransitioning', false);
-      return state.set('pausedAt', moment().utc());
+      return state.set('pausedAt', moment().utc().format());
     }
 
     case ActionTypes.START_TIME_TRAVEL: {
       state = state.set('showingTimeTravel', true);
       state = state.set('timeTravelTransitioning', false);
-      return state.set('pausedAt', action.timestamp || moment().utc());
+      return state.set('pausedAt', action.timestamp || moment().utc().format());
     }
 
     case ActionTypes.JUMP_TO_TIME: {
@@ -555,7 +553,7 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.RECEIVE_NODE_DETAILS: {
       // Ignore the update if paused and the timestamp didn't change.
       const setTimestamp = state.getIn(['nodeDetails', action.details.id, 'timestamp']);
-      if (isPausedSelector(state) && timestampsEqual(action.requestTimestamp, setTimestamp)) {
+      if (isPausedSelector(state) && action.requestTimestamp === setTimestamp) {
         return state;
       }
 
@@ -695,7 +693,7 @@ export function rootReducer(state = initialState, action) {
       });
       state = state.set('topologyViewMode', action.state.topologyViewMode);
       if (action.state.pausedAt) {
-        state = state.set('pausedAt', deserializeTimestamp(action.state.pausedAt));
+        state = state.set('pausedAt', action.state.pausedAt);
       }
       if (action.state.gridSortedBy) {
         state = state.set('gridSortedBy', action.state.gridSortedBy);
