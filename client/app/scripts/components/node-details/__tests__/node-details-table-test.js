@@ -51,7 +51,7 @@ describe('NodeDetailsTable', () => {
           { id: 'kubernetes_ip', label: 'IP', value: '10.244.253.100' },
           { id: 'kubernetes_namespace', label: 'Namespace', value: '00000' },
           {
-            id: 'uptime', dataType: 'duration', label: 'Uptime', value: '2'
+            id: 'uptime', dataType: 'duration', label: 'Uptime', value: '22222'
           },
         ]
       },
@@ -152,9 +152,9 @@ describe('NodeDetailsTable', () => {
         </Provider>
       ));
 
-      matchColumnValues('uptime', ['1 second', '2 seconds', '4 seconds', '30 seconds']);
+      matchColumnValues('uptime', ['1 second', '4 seconds', '30 seconds', '6 hours']);
       clickColumn('Uptime');
-      matchColumnValues('uptime', ['30 seconds', '4 seconds', '2 seconds', '1 second']);
+      matchColumnValues('uptime', ['6 hours', '30 seconds', '4 seconds', '1 second']);
     });
   });
 });
