@@ -352,7 +352,7 @@ describe('RootReducer', () => {
     expect(activeTopologyOptionsSelector(nextState).has('option1')).toBeTruthy();
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toBeInstanceOf(Array);
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions).toBeUndefined();
 
     // turn on
     nextState = reducer(nextState, ChangeTopologyOptionAction);
@@ -362,17 +362,17 @@ describe('RootReducer', () => {
     // turn off
     nextState = reducer(nextState, ChangeTopologyOptionAction2);
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions).toBeUndefined();
 
     // sub-topology should retain main topo options
     nextState = reducer(nextState, ClickSubTopologyAction);
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions).toBeUndefined();
 
     // other topology w/o options dont return options, but keep in app state
     nextState = reducer(nextState, ClickTopology2Action);
     expect(activeTopologyOptionsSelector(nextState).size).toEqual(0);
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions).toBeUndefined();
   });
 
   it('adds/removes a topology option', () => {
@@ -433,7 +433,7 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopologyAction);
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions).toBeUndefined();
   });
 
   // nodes delta
@@ -479,7 +479,7 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopologyAction);
     nextState = reducer(nextState, ReceiveNodesDeltaAction);
-    expect(getUrlState(nextState).selectedNodeId).toEqual(null);
+    expect(getUrlState(nextState).selectedNodeId).toBeUndefined();
 
     nextState = reducer(nextState, ClickNodeAction);
     expect(getUrlState(nextState).selectedNodeId).toEqual('n1');
@@ -487,7 +487,7 @@ describe('RootReducer', () => {
     // go back in browsing
     RouteAction.state = {topologyId: 'topo1', selectedNodeId: null};
     nextState = reducer(nextState, RouteAction);
-    expect(nextState.get('selectedNodeId')).toBe(null);
+    expect(nextState.get('selectedNodeId')).toBeNull();
     expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
   });
 
@@ -497,7 +497,7 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ClickTopologyAction);
     nextState = reducer(nextState, ReceiveNodesDeltaAction);
 
-    expect(getUrlState(nextState).selectedNodeId).toEqual(null);
+    expect(getUrlState(nextState).selectedNodeId).toBeUndefined();
     expect(getUrlState(nextState).topologyId).toEqual('topo1');
 
     nextState = reducer(nextState, ClickNodeAction);
@@ -505,7 +505,7 @@ describe('RootReducer', () => {
     expect(getUrlState(nextState).topologyId).toEqual('topo1');
 
     nextState = reducer(nextState, ClickSubTopologyAction);
-    expect(getUrlState(nextState).selectedNodeId).toEqual(null);
+    expect(getUrlState(nextState).selectedNodeId).toBeUndefined();
     expect(getUrlState(nextState).topologyId).toEqual('topo1-grouped');
   });
 

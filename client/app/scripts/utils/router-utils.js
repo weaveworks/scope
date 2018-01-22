@@ -1,8 +1,12 @@
 import page from 'page';
-import { each } from 'lodash';
+import { fromJS, is as isDeepEqual } from 'immutable';
+import { each, omit, omitBy, isEmpty } from 'lodash';
 
 import { route } from '../actions/app-actions';
+import { hashDifferenceDeep } from './hash-utils';
 import { storageGet, storageSet } from './storage-utils';
+
+import { getDefaultTopologyOptions, initialState as initialRootState } from '../reducers/root';
 
 //
 // page.js won't match the routes below if ":state" has a slash in it, so replace those before we
@@ -41,11 +45,37 @@ function shouldReplaceState(prevState, nextState) {
   return terminalToTerminal || closingTheTerminal;
 }
 
+function omitDefaultValues(urlState) {
+  // A couple of cases which require special handling because their URL state
+  // default values might be in different format than their Redux defaults.
+  if (!urlState.controlPipe) {
+    urlState = omit(urlState, 'controlPipe');
+  }
+  if (isEmpty(urlState.nodeDetails)) {
+    urlState = omit(urlState, 'nodeDetails');
+  }
+  if (isEmpty(urlState.topologyOptions)) {
+    urlState = omit(urlState, 'topologyOptions');
+  }
+
+  // Omit all the fields which match their initial Redux state values.
+  return omitBy(urlState, (value, key) => (
+    isDeepEqual(fromJS(value), initialRootState.get(key))
+  ));
+}
+
 export function getUrlState(state) {
   const cp = state.get('controlPipes').last();
   const nodeDetails = state.get('nodeDetails').toIndexedSeq().map(details => ({
-    id: details.id, label: details.label, topologyId: details.topologyId
+    id: details.id, topologyId: details.topologyId
   }));
+  // Compress the topologyOptions hash by removing all the default options, to make
+  // the Scope state string smaller. The default options will always be used as a
+  // fallback so they don't need to be explicitly mentioned in the state.
+  const topologyOptionsDiff = hashDifferenceDeep(
+    state.get('topologyOptions').toJS(),
+    getDefaultTopologyOptions(state).toJS(),
+  );
 
   const urlState = {
     controlPipe: cp ? cp.toJS() : null,
@@ -59,7 +89,7 @@ export function getUrlState(state) {
     gridSortedBy: state.get('gridSortedBy'),
     gridSortedDesc: state.get('gridSortedDesc'),
     topologyId: state.get('currentTopologyId'),
-    topologyOptions: state.get('topologyOptions').toJS(), // all options,
+    topologyOptions: topologyOptionsDiff,
     contrastMode: state.get('contrastMode'),
   };
 
@@ -70,7 +100,9 @@ export function getUrlState(state) {
     }
   }
 
-  return urlState;
+  // We can omit all the fields whose values correspond to their Redux initial
+  // state, as that state will be used as fallback anyway when entering routes.
+  return omitDefaultValues(urlState);
 }
 
 export function updateRoute(getState) {
