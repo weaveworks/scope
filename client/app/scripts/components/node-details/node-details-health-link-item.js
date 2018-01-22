@@ -10,7 +10,7 @@ import { trackAnalyticsEvent } from '../../utils/tracking-utils';
 
 /**
  * @param {string} url
- * @param {Moment} time
+ * @param {string} time
  * @returns {string}
  */
 export function appendTime(url, time) {
@@ -19,12 +19,13 @@ export function appendTime(url, time) {
   // rudimentary check whether we have a cloud link
   const cloudLinkPathEnd = 'notebook/new/';
   const pos = url.indexOf(cloudLinkPathEnd);
+  const timeUnix = moment(time).unix();
   if (pos !== -1) {
     let payload;
     const json = decodeURIComponent(url.substr(pos + cloudLinkPathEnd.length));
     try {
       payload = JSON.parse(json);
-      payload.time = { queryEnd: moment(time).unix() };
+      payload.time = { queryEnd: timeUnix };
     } catch (e) {
       return url;
     }
@@ -33,9 +34,9 @@ export function appendTime(url, time) {
   }
 
   if (url.indexOf('?') !== -1) {
-    return `${url}&time=${time.unix()}`;
+    return `${url}&time=${timeUnix}`;
   }
-  return `${url}?time=${time.unix()}`;
+  return `${url}?time=${timeUnix}`;
 }
 
 class NodeDetailsHealthLinkItem extends React.Component {
