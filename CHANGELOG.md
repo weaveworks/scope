@@ -1,3 +1,30 @@
+## Release 1.7.1
+
+Highlights:
+- A bug was introduced in 1.7.0 when closing the pod log terminal panel that causes the probe to spin,
+  therefore saturating a cpu. This has been fixed in #3034.
+- Fix issue that would cause the probe not to report certain kubernetes resources if, at start up,
+  it failed to successfully connect to kubernetes' API.
+
+Bug fixes and minor improvements:
+- logReadCloser: ensure EOF after `Close()`
+	[#3034](https://github.com/weaveworks/scope/pull/3034)
+- Check if k8s resources are supported in `runReflectorUntil`
+	[#3037](https://github.com/weaveworks/scope/pull/3037)
+- Stop page router on App unmount
+	[#3025](https://github.com/weaveworks/scope/pull/3025)
+- client: Fix uptime sort in table view
+	[#3038](https://github.com/weaveworks/scope/pull/3038)
+
+Internal improvements and cleanup:
+- Remove default values from URL state hash
+	[#3030](https://github.com/weaveworks/scope/pull/3030)
+- Correctly handle Time Travel resuming in Monitor
+	[#3028](https://github.com/weaveworks/scope/pull/3028)
+- Change pausedAt format from moment() back to ISO string
+	[#3036](https://github.com/weaveworks/scope/pull/3036)
+
+
 ## Release 1.7.0
 
 Highlights:
