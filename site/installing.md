@@ -218,7 +218,7 @@ Weave Cloud hosts the Scope UI for you, provides secure access control for your 
 
 Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a token. Replace `<token>` with your token by running this on the master node or on whatever machine that has `kubectl` configured to authenticate to your Kubernetes cluster:
 
-    kubectl apply --namespace kube-system -f "https://cloud.weave.works/k8s/scope.yaml?service-token=<token>&k8s-version=$(kubectl version | base64 | tr -d '\n')"
+    kubectl apply --namespace weave -f "https://cloud.weave.works/k8s/scope.yaml?service-token=<token>&k8s-version=$(kubectl version | base64 | tr -d '\n')"
 
 **SECURITY NOTE: This allows control of your Kubernetes cluster from Weave Cloud, which is a hosted service.**
 
@@ -226,7 +226,7 @@ Sign up for a [Weave Cloud account](https://cloud.weave.works/) and obtain a tok
 
 The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is by running the following:
 
-    kubectl apply --namespace kube-system -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+    kubectl apply --namespace weave -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 
 This runs a recent Scope image from Dockerhub and launches a probe onto every node as well as a single Scope app. Once launched, Scope doesn’t require any other configuration.
 
@@ -238,7 +238,7 @@ Allowable parameters for the launcher URL:
 
 **Open Scope in Your Browser**
 
-    kubectl port-forward -n kube-system "$(kubectl get -n kube-system pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}')" 4040
+    kubectl port-forward -n weave "$(kubectl get -n weave pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}')" 4040
 
 The URL is: http://localhost:4040.
 
@@ -258,8 +258,8 @@ Next, create a dedicated project for Weave Scope then apply policy changes neede
     # Scope app has an init daemon that has to run as UID 0, so grant 'anyuid' SCC for 'default' service account
     oc adm policy add-scc-to-user anyuid -z default
 
-The installation method for Scope on OpenShift is very similar to the one described above for Kubernetes, but instead of `kubectl apply -n kube-system ...` you need to use
-`oc apply ...` and install it into the namespace of the `weave-scope` project you have just created, and not the `kube-system` namesapce, i.e.:
+The installation method for Scope on OpenShift is very similar to the one described above for Kubernetes, but instead of `kubectl apply -n weave ...` you need to use
+`oc apply ...` and install it into the namespace of the `weave-scope` project you have just created, and not the `weave` namespace, i.e.:
 
 If you are to use Weave Cloud run this command:
 
