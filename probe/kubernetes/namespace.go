@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"github.com/weaveworks/scope/report"
 
-	apiv1 "k8s.io/client-go/pkg/api/v1"
+	apiv1 "k8s.io/api/core/v1"
 )
 
 // NamespaceResource represents a Kubernetes namespace

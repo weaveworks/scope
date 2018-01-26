@@ -5,10 +5,10 @@ import (
 
 	"github.com/weaveworks/scope/report"
 
+	apiv1 "k8s.io/api/core/v1"
+	apiv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	apiv1 "k8s.io/client-go/pkg/api/v1"
-	apiv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 )
 
 // These constants are keys used in node metadata

@@ -1,5 +1,5 @@
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ type ClusterRoleBindingListerExpansion interface{}
 type RoleListerExpansion interface{}
 
 // RoleNamespaceListerExpansion allows custom methods to be added to
-// RoleNamespaeLister.
+// RoleNamespaceLister.
 type RoleNamespaceListerExpansion interface{}
 
 // RoleBindingListerExpansion allows custom methods to be added to
@@ -39,5 +39,5 @@ type RoleNamespaceListerExpansion interface{}
 type RoleBindingListerExpansion interface{}
 
 // RoleBindingNamespaceListerExpansion allows custom methods to be added to
-// RoleBindingNamespaeLister.
+// RoleBindingNamespaceLister.
 type RoleBindingNamespaceListerExpansion interface{}
