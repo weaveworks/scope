@@ -1,5 +1,5 @@
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,12 +18,20 @@ limitations under the License.
 
 package v1beta1
 
+// ControllerRevisionListerExpansion allows custom methods to be added to
+// ControllerRevisionLister.
+type ControllerRevisionListerExpansion interface{}
+
+// ControllerRevisionNamespaceListerExpansion allows custom methods to be added to
+// ControllerRevisionNamespaceLister.
+type ControllerRevisionNamespaceListerExpansion interface{}
+
 // DeploymentListerExpansion allows custom methods to be added to
 // DeploymentLister.
 type DeploymentListerExpansion interface{}
 
 // DeploymentNamespaceListerExpansion allows custom methods to be added to
-// DeploymentNamespaeLister.
+// DeploymentNamespaceLister.
 type DeploymentNamespaceListerExpansion interface{}
 
 // ScaleListerExpansion allows custom methods to be added to
@@ -31,5 +39,5 @@ type DeploymentNamespaceListerExpansion interface{}
 type ScaleListerExpansion interface{}
 
 // ScaleNamespaceListerExpansion allows custom methods to be added to
-// ScaleNamespaeLister.
+// ScaleNamespaceLister.
 type ScaleNamespaceListerExpansion interface{}

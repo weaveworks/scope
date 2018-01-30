@@ -1,5 +1,5 @@
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ package v1beta1
 type IngressListerExpansion interface{}
 
 // IngressNamespaceListerExpansion allows custom methods to be added to
-// IngressNamespaeLister.
+// IngressNamespaceLister.
 type IngressNamespaceListerExpansion interface{}
 
 // PodSecurityPolicyListerExpansion allows custom methods to be added to
@@ -35,9 +35,5 @@ type PodSecurityPolicyListerExpansion interface{}
 type ScaleListerExpansion interface{}
 
 // ScaleNamespaceListerExpansion allows custom methods to be added to
-// ScaleNamespaeLister.
+// ScaleNamespaceLister.
 type ScaleNamespaceListerExpansion interface{}
-
-// ThirdPartyResourceListerExpansion allows custom methods to be added to
-// ThirdPartyResourceLister.
-type ThirdPartyResourceListerExpansion interface{}

@@ -21,14 +21,15 @@ import (
 	"math/rand"
 	"time"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/clock"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/pkg/api/v1"
 	restclient "k8s.io/client-go/rest"
-	"k8s.io/client-go/util/clock"
+	ref "k8s.io/client-go/tools/reference"
 
 	"net/http"
 
@@ -254,7 +255,7 @@ type recorderImpl struct {
 }
 
 func (recorder *recorderImpl) generateEvent(object runtime.Object, timestamp metav1.Time, eventtype, reason, message string) {
-	ref, err := v1.GetReference(recorder.scheme, object)
+	ref, err := ref.GetReference(recorder.scheme, object)
 	if err != nil {
 		glog.Errorf("Could not construct reference to: '%#v' due to: '%v'. Will not report event: '%v' '%v' '%v'", object, err, eventtype, reason, message)
 		return

@@ -9,8 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ugorji/go/codec"
+	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apiv1 "k8s.io/client-go/pkg/api/v1"
 
 	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/app"

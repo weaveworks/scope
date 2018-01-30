@@ -3,9 +3,9 @@ package kubernetes
 import (
 	"fmt"
 
+	apiv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	apiv1beta1 "k8s.io/client-go/pkg/apis/extensions/v1beta1"
 
 	"github.com/weaveworks/scope/report"
 )

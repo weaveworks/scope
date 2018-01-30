@@ -1,5 +1,5 @@
 /*
-Copyright 2017 The Kubernetes Authors.
+Copyright 2018 The Kubernetes Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,5 +23,5 @@ package v1beta1
 type EvictionListerExpansion interface{}
 
 // EvictionNamespaceListerExpansion allows custom methods to be added to
-// EvictionNamespaeLister.
+// EvictionNamespaceLister.
 type EvictionNamespaceListerExpansion interface{}
