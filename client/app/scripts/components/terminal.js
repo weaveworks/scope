@@ -9,7 +9,7 @@ import Term from 'xterm';
 import { clickCloseTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
-import { getPipeStatus, doResizeTty, getWebsocketUrl, basePath } from '../utils/web-api-utils';
+import { getPipeStatus, deletePipe, doResizeTty, getWebsocketUrl, basePath } from '../utils/web-api-utils';
 
 const log = debug('scope:terminal');
 
@@ -86,6 +86,7 @@ class Terminal extends React.Component {
 
     this.state = {
       connected: false,
+      detached: false,
       rows: DEFAULT_ROWS,
       cols: DEFAULT_COLS,
       characterWidth: 0,
@@ -213,6 +214,10 @@ class Terminal extends React.Component {
       this.term = null;
     }
 
+    if (!this.state.detached) {
+      deletePipe(this.getPipeId());
+    }
+
     if (this.socket) {
       log('close socket');
       this.socket.close();
@@ -235,13 +240,14 @@ class Terminal extends React.Component {
 
   handleCloseClick(ev) {
     ev.preventDefault();
-    this.props.dispatch(clickCloseTerminal(this.getPipeId(), true));
+    this.props.dispatch(clickCloseTerminal(this.getPipeId()));
   }
 
   handlePopoutTerminal(ev) {
     ev.preventDefault();
     const paramString = JSON.stringify(this.props);
     this.props.dispatch(clickCloseTerminal(this.getPipeId()));
+    this.setState({detached: true});
 
     const bcr = this.node.getBoundingClientRect();
     const minWidth = (this.state.characterWidth * 80) + (8 * 2);

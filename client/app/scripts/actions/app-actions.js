@@ -234,15 +234,12 @@ export function clickCloseDetails(nodeId) {
   };
 }
 
-export function clickCloseTerminal(pipeId, closePipe) {
+export function clickCloseTerminal(pipeId) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.CLICK_CLOSE_TERMINAL,
       pipeId
     });
-    if (closePipe) {
-      deletePipe(pipeId, dispatch);
-    }
     updateRoute(getState);
   };
 }
