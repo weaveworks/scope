@@ -4,8 +4,7 @@ menu_order: 20
 search_type: Documentation
 ---
 
-
-Weave Scope consists of three parts: the probe, the app and the user interface.  Scope can be deployed in either a standalone configuration, where you run everything yourself, or you can use Weave Cloud.
+Weave Scope consists of three parts: the probe, the app and the user interface.  Scope can be deployed in either a standalone configuration, where you run everything yourself, or you can use Weave Cloud, in which case only the probes run in your environment, and the app and UI are hosted by Weave Cloud.
 
 The following topics are discussed:
 
