@@ -40,7 +40,7 @@ Cloud, [sign up for a free trial](https://cloud.weave.works/).
 
 ### <a name="docker-single-node"></a>Single-node
 
-To install Scope in stand-alone mode, run the following commands:
+To install Scope on a single node, run the following commands:
 
     sudo curl -L git.io/scope -o /usr/local/bin/scope
     sudo chmod a+x /usr/local/bin/scope
@@ -101,7 +101,7 @@ Hostnames will be regularly resolved as A records, and each answer used as a tar
 
 ### <a name="docker-compose"></a>Using Docker Compose
 
-To install Scope on your local Docker machine in Standalone Mode using Docker Compose, copy the contents of one of the two fragments below into a file `docker-compose.yml` and run
+To install Scope on your local Docker machine using Docker Compose, copy the contents of one of the two fragments below into a file `docker-compose.yml` and run
 
     docker-compose up -d
 
@@ -189,7 +189,7 @@ The installation method for Scope on OpenShift is very similar to the one descri
 
     oc apply -f 'https://cloud.weave.works/k8s/scope.yaml'
 
-To access standalone Scope app from the browser, please refer to Kubernetes instructions above.
+To access the Scope app from the browser, please refer to Kubernetes instructions above.
 
 ### <a name="ecs"></a>Amazon ECS
 
