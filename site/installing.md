@@ -142,6 +142,11 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
 
 ## <a name="k8s"></a>Installing Scope on Kubernetes
 
+If your cluster is on GKE, first you need to grant permissions for the
+installation with:
+
+    kubectl create clusterrolebinding "cluster-admin-$(whoami)" --clusterrole=cluster-admin --user="$(gcloud config get-value core/account)"
+
 To install Weave Scope on your Kubernetes cluster, run
 
     kubectl apply -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')"
