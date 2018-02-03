@@ -142,11 +142,11 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
 
 ## <a name="k8s"></a>Installing Scope on Kubernetes
 
-The simplest way to get the latest release of Scope deployed onto a Kubernetes cluster is by running the following:
+To install Weave Scope on your Kubernetes cluster, run
 
     kubectl apply -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')"
 
-This runs a recent Scope image from Dockerhub and launches a probe onto every node as well as a single Scope app. Once launched, Scope doesn’t require any other configuration.
+This downloads a recent Scope image from Dockerhub and launches a probe onto every node as well as a single Scope app. Once launched, Scope doesn’t require any other configuration.
 
 Allowable parameters for the launcher URL:
 
