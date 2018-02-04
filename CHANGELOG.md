@@ -1,3 +1,23 @@
+## Release 1.7.2
+
+Highlights:
+- eBPF tracker working on GKE: this makes connection tracking more efficient and accurate
+
+New features and enhancements:
+- vendor: bump tcptracer-bpf
+	[#3042](https://github.com/weaveworks/scope/pull/3042)
+
+Bug fixes and minor improvements:
+- Close terminal pipe, when closing the pod panel
+	[#3045](https://github.com/weaveworks/scope/pull/3045)
+- Fetch cronjobs from 'batch/v1beta1'. This fixes a bug which caused CronJobs in recent k8s not to appear in Scope.
+	[#3044](https://github.com/weaveworks/scope/pull/3044)
+
+Documentation:
+- Update install instructions to use weave namespace
+	[#3041](https://github.com/weaveworks/scope/pull/3041)
+
+
 ## Release 1.7.1
 
 Highlights:
