@@ -39,8 +39,8 @@ class NodeDetailsImageStatus extends React.PureComponent {
   }
 
   shouldRender() {
-    const { pseudo, currentTopologyId } = this.props;
-    return !pseudo && currentTopologyId && topologyWhitelist.includes(currentTopologyId);
+    const { pseudo, topologyId } = this.props;
+    return !pseudo && topologyId && topologyWhitelist.includes(topologyId);
   }
 
   renderImages() {
@@ -118,7 +118,6 @@ function mapStateToProps({ scope }, { metadata, name }) {
   return {
     isFetching,
     errors,
-    currentTopologyId: scope.get('currentTopologyId'),
     containers,
     serviceId
   };
