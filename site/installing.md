@@ -184,12 +184,12 @@ Next, create a dedicated project for Weave Scope then apply policy changes neede
     # Scope app has an init daemon that has to run as UID 0, so grant 'anyuid' SCC for 'default' service account
     oc adm policy add-scc-to-user anyuid -z default
 
-The installation method for Scope on OpenShift is very similar to the one described above for Kubernetes, but instead of `kubectl apply ...` you need to use
+The installation method for Scope on OpenShift is very similar to the one described [above](#k8s) for Kubernetes, but instead of `kubectl apply ...` you need to use
 `oc apply ...` and install it into the namespace of the `weave-scope` project you have just created, and not the `weave` namespace, i.e.:
 
     oc apply -f 'https://cloud.weave.works/k8s/scope.yaml'
 
-To access the Scope app from the browser, please refer to Kubernetes instructions above.
+To access the Scope app from the browser, please refer to Kubernetes instructions [above](#k8s).
 
 ### <a name="ecs"></a>Amazon ECS
 
