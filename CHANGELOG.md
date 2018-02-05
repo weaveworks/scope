@@ -1,3 +1,10 @@
+## Release 1.7.3
+
+Bug fixes and minor improvements:
+- Fixes the problem where, if the api server was unreachable at start up, no kubernetes resources would be reported.
+	[#3050](https://github.com/weaveworks/scope/pull/3050)
+
+
 ## Release 1.7.2
 
 Highlights:
