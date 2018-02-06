@@ -71,8 +71,8 @@ var (
 			// NB: Pods need to be labeled and selected by their respective Service name, meaning:
 			// - The Service's `spec.selector` needs to select on `name`
 			// - The Service's `metadata.name` needs to be the same value as `spec.selector.name`
-			docker.CPUTotalUsage: `namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{label}}",namespace="{{namespace}}"}`,
-			docker.MemoryUsage:   `namespace_label_name:container_memory_usage_bytes:sum{label_name="{{label}}",namespace="{{namespace}}"}`,
+			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
+			docker.MemoryUsage:   `sum(rate(container_memory_usage_bytes{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
 		},
 	}
 )
