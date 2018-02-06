@@ -12,7 +12,8 @@ const TimeTravelContainer = styled.div`
   transition: all .15s ease-in-out;
   position: relative;
   overflow: hidden;
-  height: 0;
+  height: 100px;
+  margin-top: 0px;
 
   ${props => props.visible && `
     height: 105px;
