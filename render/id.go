@@ -3,7 +3,6 @@ package render
 import (
 	"strings"
 
-	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -62,13 +61,13 @@ func NewDerivedPseudoNode(id string, node report.Node) report.Node {
 	return output
 }
 
-func pseudoNodeID(n report.Node, local report.Networks) (string, bool) {
+func pseudoNodeID(rpt report.Report, n report.Node, local report.Networks) (string, bool) {
 	_, addr, _, ok := report.ParseEndpointNodeID(n.ID)
 	if !ok {
 		return "", false
 	}
 
-	if id, ok := externalNodeID(n, addr, local); ok {
+	if id, ok := externalNodeID(rpt, n, addr, local); ok {
 		return id, ok
 	}
 
@@ -78,11 +77,11 @@ func pseudoNodeID(n report.Node, local report.Networks) (string, bool) {
 }
 
 // figure out if a node should be considered external and returns an ID which can be used to create a pseudo node
-func externalNodeID(n report.Node, addr string, local report.Networks) (string, bool) {
+func externalNodeID(rpt report.Report, n report.Node, addr string, local report.Networks) (string, bool) {
 	// First, check if it's a known service and emit a a specific node if it
 	// is. This needs to be done before checking IPs since known services can
 	// live in the same network, see https://github.com/weaveworks/scope/issues/2163
-	if hostname, found := DNSFirstMatch(n, isKnownService); found {
+	if hostname, found := rpt.DNS.FirstMatch(n.ID, isKnownService); found {
 		return ServiceNodeIDPrefix + hostname, true
 	}
 
@@ -99,27 +98,5 @@ func externalNodeID(n report.Node, addr string, local report.Networks) (string, 
 	}
 
 	// The node is not external
-	return "", false
-}
-
-// DNSFirstMatch returns the first DNS name where match() returns
-// true, from a prioritized list of snooped and reverse-resolved DNS
-// names associated with node n.
-func DNSFirstMatch(n report.Node, match func(name string) bool) (string, bool) {
-	// we rely on Sets being sorted, to make selection for display more
-	// deterministic
-	// prioritize snooped names
-	snoopedNames, _ := n.Sets.Lookup(endpoint.SnoopedDNSNames)
-	for _, hostname := range snoopedNames {
-		if match(hostname) {
-			return hostname, true
-		}
-	}
-	reverseNames, _ := n.Sets.Lookup(endpoint.ReverseDNSNames)
-	for _, hostname := range reverseNames {
-		if match(hostname) {
-			return hostname, true
-		}
-	}
 	return "", false
 }
