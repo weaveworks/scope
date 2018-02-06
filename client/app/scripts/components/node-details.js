@@ -260,6 +260,7 @@ class NodeDetails extends React.Component {
               name={details.label}
               metadata={details.metadata}
               pseudo={details.pseudo}
+              topologyId={topologyId}
             />
           </CloudFeature>
         </div>
