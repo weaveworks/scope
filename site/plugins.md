@@ -546,7 +546,7 @@ Metadata templates are not placed within nodes but in the `metadata_templates` s
 
 - `id` is a string identifying the particular metadata template (here `traffic-control-pktloss`) and is also used as a key to the template value.
 - `label` contains the label used by the Scope UI.
-- `dataType` specifies the type of data, and determines how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime" and "" for strings.
+- `dataType` specifies the type of data, and determines how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime", "link" and "" for strings.
 - `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If omitted, the UI displays it last.
 - `from` indicates where to look for the metadata. The possible values are:
   - `latest`
@@ -601,7 +601,7 @@ In order to display tabular data with multiple columns, additional fields are ne
 - `columns` defines the table's columns
   - `id` the column id
   - `label` the column header
-  - `dataType`: specifies the column type. Can be "" (for a string), "number" or "ip". Defaults to string if absent.
+  - `dataType`: specifies the column type. Can be "" (for a string), "number", "link", or "ip". Defaults to string if absent.
 
 Values are placed in their respective columns and rows by specially formatting the entries in latest (`prefix`{unique row id}___`column-id`). _**Note:** that's 3 underscores._
 
