@@ -154,7 +154,7 @@ func MakeNodeSummary(rc RenderContext, n report.Node) (NodeSummary, bool) {
 			summary.Tables = topology.TableTemplates.Tables(n)
 		}
 	}
-	return RenderMetricURLs(summary, n, rc.MetricsGraphURL), true
+	return RenderMetricURLs(summary, n, rc.Report, rc.MetricsGraphURL), true
 }
 
 // SummarizeMetrics returns a copy of the NodeSummary where the metrics are
