@@ -4,7 +4,8 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
-import { pauseTimeAtNow, resumeTime, startTimeTravel } from '../actions/app-actions';
+import { pauseTimeAtNow, resumeTime } from '../actions/app-actions';
+import { isPausedSelector, timeTravelSupportedSelector } from '../selectors/time-travel';
 
 
 const className = isSelected => (
@@ -17,7 +18,6 @@ class TimeControl extends React.Component {
 
     this.handleNowClick = this.handleNowClick.bind(this);
     this.handlePauseClick = this.handlePauseClick.bind(this);
-    this.handleTravelClick = this.handleTravelClick.bind(this);
     this.getTrackingMetadata = this.getTrackingMetadata.bind(this);
   }
 
@@ -50,70 +50,43 @@ class TimeControl extends React.Component {
     this.props.pauseTimeAtNow();
   }
 
-  handleTravelClick() {
-    if (!this.props.showingTimeTravel) {
-      trackAnalyticsEvent('scope.time.travel.click', this.getTrackingMetadata({ open: true }));
-      this.props.startTimeTravel();
-    } else {
-      trackAnalyticsEvent('scope.time.travel.click', this.getTrackingMetadata({ open: false }));
-      this.props.resumeTime();
-    }
-  }
-
   render() {
-    const {
-      showingTimeTravel, pausedAt, timeTravelTransitioning, topologiesLoaded,
-      hasHistoricReports
-    } = this.props;
+    const { isPaused, pausedAt, topologiesLoaded } = this.props;
 
-    const isPausedNow = pausedAt && !showingTimeTravel;
-    const isTimeTravelling = showingTimeTravel;
-    const isRunningNow = !pausedAt;
-
-    if (!topologiesLoaded) return null;
+    // If Time Travel is supported, show an empty placeholder div instead
+    // of this control, since time will be controlled through the timeline.
+    // We return <div /> instead of null so that selector controls would
+    // be aligned the same way between WC Explore and Scope standalone.
+    if (this.props.timeTravelSupported) return <div />;
 
     return (
       <div className="time-control">
         <div className="time-control-controls">
-          <div className="time-control-spinner">
-            {timeTravelTransitioning && <span className="fa fa-circle-o-notch fa-spin" />}
-          </div>
           <div className="time-control-wrapper">
             <span
-              className={className(isRunningNow)}
+              className={className(!isPaused)}
               onClick={this.handleNowClick}
+              disabled={!topologiesLoaded}
               title="Show live state of the system">
-              {isRunningNow && <span className="fa fa-play" />}
+              {!isPaused && <span className="fa fa-play" />}
               <span className="label">Live</span>
             </span>
             <span
-              className={className(isPausedNow)}
-              onClick={!isTimeTravelling ? this.handlePauseClick : null}
-              disabled={isTimeTravelling}
+              className={className(isPaused)}
+              onClick={this.handlePauseClick}
+              disabled={!topologiesLoaded}
               title="Pause updates (freezes the nodes in their current layout)">
-              {isPausedNow && <span className="fa fa-pause" />}
-              <span className="label">{isPausedNow ? 'Paused' : 'Pause'}</span>
+              {isPaused && <span className="fa fa-pause" />}
+              <span className="label">{isPaused ? 'Paused' : 'Pause'}</span>
             </span>
-            {hasHistoricReports &&
-              <span
-                className={className(isTimeTravelling)}
-                onClick={this.handleTravelClick}
-                title="Travel back in time">
-                {isTimeTravelling && <span className="fa fa-clock-o" />}
-                <span className="label">Time Travel</span>
-              </span>
-            }
           </div>
         </div>
-        {(isPausedNow || isTimeTravelling) &&
+        {isPaused &&
           <span
             className="time-control-info"
             title={moment(pausedAt).toISOString()}>
             Showing state from {moment(pausedAt).fromNow()}
           </span>
-        }
-        {isRunningNow && timeTravelTransitioning &&
-          <span className="time-control-info">Resuming the live state</span>
         }
       </div>
     );
@@ -122,12 +95,11 @@ class TimeControl extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    hasHistoricReports: state.getIn(['capabilities', 'historic_reports']),
+    isPaused: isPausedSelector(state),
+    timeTravelSupported: timeTravelSupportedSelector(state),
     topologyViewMode: state.get('topologyViewMode'),
     topologiesLoaded: state.get('topologiesLoaded'),
     currentTopology: state.get('currentTopology'),
-    showingTimeTravel: state.get('showingTimeTravel'),
-    timeTravelTransitioning: state.get('timeTravelTransitioning'),
     pausedAt: state.get('pausedAt'),
   };
 }
@@ -137,6 +109,5 @@ export default connect(
   {
     resumeTime,
     pauseTimeAtNow,
-    startTimeTravel,
   }
 )(TimeControl);

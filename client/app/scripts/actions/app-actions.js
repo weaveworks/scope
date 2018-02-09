@@ -339,14 +339,15 @@ export function clickNode(nodeId, label, origin, topologyId = null) {
 
 export function pauseTimeAtNow() {
   return (dispatch, getState) => {
+    const getScopeState = () => getState().scope || getState();
     dispatch({
       type: ActionTypes.PAUSE_TIME_AT_NOW
     });
-    updateRoute(getState);
-    if (!getState().get('nodesLoaded')) {
-      getNodes(getState, dispatch);
-      if (isResourceViewModeSelector(getState())) {
-        getResourceViewNodesSnapshot(getState(), dispatch);
+    updateRoute(getScopeState);
+    if (!getScopeState().get('nodesLoaded')) {
+      getNodes(getScopeState, dispatch);
+      if (isResourceViewModeSelector(getScopeState())) {
+        getResourceViewNodesSnapshot(getScopeState(), dispatch);
       }
     }
   };
@@ -549,7 +550,8 @@ export function receiveNodeDetails(details, requestTimestamp) {
 
 export function receiveNodesDelta(delta) {
   return (dispatch, getState) => {
-    if (!isPausedSelector(getState())) {
+    const getScopeState = () => getState().scope || getState();
+    if (!isPausedSelector(getScopeState())) {
       // Allow css-animation to run smoothly by scheduling it to run on the
       // next tick after any potentially expensive canvas re-draws have been
       // completed.
@@ -559,7 +561,7 @@ export function receiveNodesDelta(delta) {
       // only when the first batch of nodes delta has been received. We
       // do that because we want to keep the previous state blurred instead
       // of transitioning over an empty state like when switching topologies.
-      if (getState().get('timeTravelTransitioning')) {
+      if (getScopeState().get('timeTravelTransitioning')) {
         dispatch({ type: ActionTypes.FINISH_TIME_TRAVEL_TRANSITION });
       }
 
@@ -576,16 +578,17 @@ export function receiveNodesDelta(delta) {
 
 export function resumeTime() {
   return (dispatch, getState) => {
-    if (isPausedSelector(getState())) {
+    const getScopeState = () => getState().scope || getState();
+    if (isPausedSelector(getScopeState())) {
       dispatch({
         type: ActionTypes.RESUME_TIME
       });
-      updateRoute(getState);
+      updateRoute(getScopeState);
       // After unpausing, all of the following calls will re-activate polling.
-      getTopologies(getState, dispatch);
-      getNodes(getState, dispatch, true);
-      if (isResourceViewModeSelector(getState())) {
-        getResourceViewNodesSnapshot(getState(), dispatch);
+      getTopologies(getScopeState, dispatch);
+      getNodes(getScopeState, dispatch, true);
+      if (isResourceViewModeSelector(getScopeState())) {
+        getResourceViewNodesSnapshot(getScopeState(), dispatch);
       }
     }
   };

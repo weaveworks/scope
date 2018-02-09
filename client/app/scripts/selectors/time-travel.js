@@ -7,3 +7,5 @@ export const isPausedSelector = createSelector(
   ],
   pausedAt => !!pausedAt
 );
+
+export const timeTravelSupportedSelector = state => state.getIn(['capabilities', 'historic_reports']);

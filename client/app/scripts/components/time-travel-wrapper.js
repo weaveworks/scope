@@ -1,27 +1,17 @@
 import React from 'react';
 import moment from 'moment';
-import styled from 'styled-components';
 import { connect } from 'react-redux';
 import { TimeTravel } from 'weaveworks-ui-components';
 
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
-import { jumpToTime } from '../actions/app-actions';
+import { jumpToTime, resumeTime, pauseTimeAtNow } from '../actions/app-actions';
 
-
-const TimeTravelContainer = styled.div`
-  transition: all .15s ease-in-out;
-  position: relative;
-  overflow: hidden;
-  height: 0;
-
-  ${props => props.visible && `
-    height: 105px;
-  `}
-`;
 
 class TimeTravelWrapper extends React.Component {
   constructor(props, context) {
     super(props, context);
+
+    this.handleLiveModeChange = this.handleLiveModeChange.bind(this);
 
     this.trackTimestampEdit = this.trackTimestampEdit.bind(this);
     this.trackTimelinePanButtonClick = this.trackTimelinePanButtonClick.bind(this);
@@ -71,20 +61,29 @@ class TimeTravelWrapper extends React.Component {
     });
   }
 
+  handleLiveModeChange(showingLive) {
+    if (showingLive) {
+      this.props.resumeTime();
+    } else {
+      this.props.pauseTimeAtNow();
+    }
+  }
+
   render() {
     return (
-      <TimeTravelContainer visible={this.props.visible}>
-        <TimeTravel
-          timestamp={this.props.timestamp}
-          earliestTimestamp={this.props.earliestTimestamp}
-          onChangeTimestamp={this.props.jumpToTime}
-          onTimestampInputEdit={this.trackTimestampEdit}
-          onTimelinePanButtonClick={this.trackTimelinePanButtonClick}
-          onTimelineLabelClick={this.trackTimelineLabelClick}
-          onTimelineZoom={this.trackTimelineZoom}
-          onTimelinePan={this.trackTimelinePan}
-        />
-      </TimeTravelContainer>
+      <TimeTravel
+        hasLiveMode
+        showingLive={this.props.showingLive}
+        onChangeLiveMode={this.handleLiveModeChange}
+        timestamp={this.props.timestamp}
+        earliestTimestamp={this.props.earliestTimestamp}
+        onChangeTimestamp={this.props.jumpToTime}
+        onTimestampInputEdit={this.trackTimestampEdit}
+        onTimelinePanButtonClick={this.trackTimelinePanButtonClick}
+        onTimelineLabelClick={this.trackTimelineLabelClick}
+        onTimelineZoom={this.trackTimelineZoom}
+        onTimelinePan={this.trackTimelinePan}
+      />
     );
   }
 }
@@ -102,7 +101,7 @@ function mapStateToProps(state, { params }) {
   }
 
   return {
-    visible: scopeState.get('showingTimeTravel'),
+    showingLive: !scopeState.get('pausedAt'),
     topologyViewMode: scopeState.get('topologyViewMode'),
     currentTopology: scopeState.get('currentTopology'),
     earliestTimestamp: firstSeenConnectedAt,
@@ -112,5 +111,5 @@ function mapStateToProps(state, { params }) {
 
 export default connect(
   mapStateToProps,
-  { jumpToTime },
+  { jumpToTime, resumeTime, pauseTimeAtNow },
 )(TimeTravelWrapper);

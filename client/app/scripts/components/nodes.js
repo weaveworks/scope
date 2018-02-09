@@ -86,7 +86,6 @@ function mapStateToProps(state) {
     topologyNodeCountZero: isTopologyNodeCountZero(state),
     nodesDisplayEmpty: isNodesDisplayEmpty(state),
     nodesLoaded: nodesLoadedSelector(state),
-    timeTravelTransitioning: state.get('timeTravelTransitioning'),
     currentTopology: state.get('currentTopology'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),

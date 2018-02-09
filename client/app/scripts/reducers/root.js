@@ -75,7 +75,6 @@ export const initialState = makeMap({
   selectedNetwork: null,
   selectedNodeId: null,
   showingHelp: false,
-  showingTimeTravel: false,
   showingTroubleshootingMenu: false,
   showingNetworks: false,
   timeTravelTransitioning: false,
@@ -369,18 +368,15 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.RESUME_TIME: {
       state = state.set('timeTravelTransitioning', true);
-      state = state.set('showingTimeTravel', false);
       return state.set('pausedAt', null);
     }
 
     case ActionTypes.PAUSE_TIME_AT_NOW: {
-      state = state.set('showingTimeTravel', false);
       state = state.set('timeTravelTransitioning', false);
       return state.set('pausedAt', moment().utc().format());
     }
 
     case ActionTypes.START_TIME_TRAVEL: {
-      state = state.set('showingTimeTravel', true);
       state = state.set('timeTravelTransitioning', false);
       return state.set('pausedAt', action.timestamp || moment().utc().format());
     }
