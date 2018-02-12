@@ -9,7 +9,7 @@ import { shownNodesSelector } from '../selectors/node-filters';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { TABLE_VIEW_MODE } from '../constants/naming';
 
-import { canvasMarginsSelector, canvasHeightSelector } from '../selectors/canvas';
+import { windowHeightSelector } from '../selectors/canvas';
 import { searchNodeMatchesSelector } from '../selectors/search';
 import { getNodeColor } from '../utils/color-utils';
 
@@ -86,6 +86,7 @@ class NodesGrid extends React.Component {
 
     this.onClickRow = this.onClickRow.bind(this);
     this.onSortChange = this.onSortChange.bind(this);
+    this.saveTableRef = this.saveTableRef.bind(this);
   }
 
   onClickRow(ev, node) {
@@ -101,16 +102,20 @@ class NodesGrid extends React.Component {
     this.props.sortOrderChanged(sortedBy, sortedDesc);
   }
 
+  saveTableRef(ref) {
+    this.tableRef = ref;
+  }
+
   render() {
     const {
-      nodes, height, gridSortedBy, gridSortedDesc, canvasMargins,
-      searchNodeMatches, searchQuery
+      nodes, gridSortedBy, gridSortedDesc, searchNodeMatches, searchQuery, windowHeight
     } = this.props;
+    const height =
+      this.tableRef ? windowHeight - this.tableRef.getBoundingClientRect().top - 30 : 0;
     const cmpStyle = {
       height,
-      marginTop: canvasMargins.top,
-      paddingLeft: canvasMargins.left,
-      paddingRight: canvasMargins.right,
+      paddingLeft: 40,
+      paddingRight: 40,
     };
     // TODO: What are 24 and 18? Use a comment or extract into constants.
     const tbodyHeight = height - 24 - 18;
@@ -130,7 +135,7 @@ class NodesGrid extends React.Component {
     };
 
     return (
-      <div className="nodes-grid">
+      <div className="nodes-grid" ref={this.saveTableRef}>
         {nodes.size > 0 && <NodeDetailsTable
           style={cmpStyle}
           className={className}
@@ -154,8 +159,6 @@ class NodesGrid extends React.Component {
 function mapStateToProps(state) {
   return {
     nodes: shownNodesSelector(state),
-    canvasMargins: canvasMarginsSelector(state),
-    height: canvasHeightSelector(state),
     gridSortedBy: state.get('gridSortedBy'),
     gridSortedDesc: state.get('gridSortedDesc'),
     currentTopology: state.get('currentTopology'),
@@ -163,6 +166,7 @@ function mapStateToProps(state) {
     searchNodeMatches: searchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId'),
+    windowHeight: windowHeightSelector(state),
   };
 }
 
