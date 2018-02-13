@@ -198,7 +198,7 @@ a {
 
   &.time-travel-open {
     .details-wrapper {
-      margin-top: $timeline-height + 15px;
+      margin-top: $timeline-height + 50px;
     }
   }
 }
@@ -391,6 +391,10 @@ a {
     color: $text-secondary-color;
     width: 33%;
     height: 550px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 
     .heading {
       font-size: 125%;
