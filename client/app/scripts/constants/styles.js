@@ -39,13 +39,13 @@ export const EDGE_WAYPOINTS_CAP = 10;
 
 export const CANVAS_MARGINS = {
   [GRAPH_VIEW_MODE]: {
-    top: 160, left: 80, right: 80, bottom: 150
+    top: 220, left: 80, right: 80, bottom: 150
   },
   [TABLE_VIEW_MODE]: {
     top: 220, left: 40, right: 40, bottom: 30
   },
   [RESOURCE_VIEW_MODE]: {
-    top: 140, left: 210, right: 40, bottom: 150
+    top: 200, left: 210, right: 40, bottom: 150
   },
 };
 

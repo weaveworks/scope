@@ -44,6 +44,7 @@ import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-t
 import { getRouter, getUrlState } from '../utils/router-utils';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { availableNetworksSelector } from '../selectors/node-networks';
+import { timeTravelSupportedSelector } from '../selectors/time-travel';
 import {
   isResourceViewModeSelector,
   isTableViewModeSelector,
@@ -177,10 +178,10 @@ class App extends React.Component {
     const {
       isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails,
       showingHelp, showingNetworkSelector, showingTroubleshootingMenu,
-      timeTravelTransitioning, showingTimeTravel
+      timeTravelTransitioning, timeTravelSupported
     } = this.props;
 
-    const className = classNames('scope-app', { 'time-travel-open': showingTimeTravel });
+    const className = classNames('scope-app', { 'time-travel-open': timeTravelSupported });
     const isIframe = window !== window.top;
 
     return (
@@ -195,9 +196,11 @@ class App extends React.Component {
           {showingDetails && <Details />}
 
           <div className="header">
-            <CloudFeature alwaysShow>
-              <TimeTravelWrapper />
-            </CloudFeature>
+            {timeTravelSupported && (
+              <CloudFeature alwaysShow>
+                <TimeTravelWrapper />
+              </CloudFeature>
+            )}
 
             <div className="selectors">
               <div className="logo">
@@ -244,11 +247,11 @@ function mapStateToProps(state) {
     searchQuery: state.get('searchQuery'),
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
-    showingTimeTravel: state.get('showingTimeTravel'),
     showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
     topologyViewMode: state.get('topologyViewMode'),
+    timeTravelSupported: timeTravelSupportedSelector(state),
     timeTravelTransitioning: state.get('timeTravelTransitioning'),
     urlState: getUrlState(state)
   };
