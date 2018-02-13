@@ -7,6 +7,17 @@ import {
 } from '../constants/styles';
 
 
+// Listens in on viewport height state for window height updates.
+// Window height is useful as it includes the whole app viewport,
+// including e.g. top nav bar in Weave Cloud which is outside of
+// Scope app viewport.
+export const windowHeightSelector = createSelector(
+  [
+    state => state.getIn(['viewport', 'height']),
+  ],
+  () => window.innerHeight,
+);
+
 export const canvasMarginsSelector = createSelector(
   [
     state => state.get('topologyViewMode'),

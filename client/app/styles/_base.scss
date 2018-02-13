@@ -103,7 +103,7 @@ a {
   font-size: 0.7rem;
   justify-content: center;
   padding: 5px;
-  position: absolute;
+  position: fixed;
   bottom: 11px;
 
   button {
@@ -2001,10 +2001,6 @@ a {
 //
 
 .nodes-grid {
-  // TODO: Would be good to have relative positioning here.
-  position: absolute;
-  top: 0;
-
   tr {
     border-radius: 6px;
   }
