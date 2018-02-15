@@ -25,8 +25,9 @@ class ViewModeSelector extends React.Component {
   }
 
   renderItem(icons, label, viewMode, setViewModeAction, isEnabled = true) {
+    if (label === 'Table') console.log('render table view action');
     const isSelected = (this.props.topologyViewMode === viewMode);
-    const className = classNames('view-mode-selector-action', {
+    const className = classNames(`view-mode-selector-action view-${label}-action`, {
       'view-mode-selector-action-selected': isSelected,
     });
     const onClick = () => {
