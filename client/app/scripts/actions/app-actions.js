@@ -869,3 +869,10 @@ export function getImagesForService(orgId, serviceId) {
       });
   };
 }
+
+export function setMonitorState(monitor) {
+  return {
+    type: ActionTypes.MONITOR_STATE,
+    monitor
+  };
+}

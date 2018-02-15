@@ -28,6 +28,7 @@ import {
   unpinMetric,
   toggleHelp,
   setGraphView,
+  setMonitorState,
   setTableView,
   setResourceView,
   shutdown,
@@ -62,6 +63,8 @@ const keyPressLog = debug('scope:app-key-press');
 class App extends React.Component {
   constructor(props, context) {
     super(props, context);
+
+    this.props.dispatch(setMonitorState(this.props.monitor));
 
     this.setViewportDimensions = this.setViewportDimensions.bind(this);
     this.handleResize = debounce(this.setViewportDimensions, VIEWPORT_RESIZE_DEBOUNCE_INTERVAL);
@@ -256,5 +259,9 @@ function mapStateToProps(state) {
     urlState: getUrlState(state)
   };
 }
+
+App.defaultProps = {
+  monitor: false
+};
 
 export default connect(mapStateToProps)(App);
