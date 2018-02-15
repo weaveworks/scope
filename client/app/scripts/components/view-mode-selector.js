@@ -1,9 +1,8 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
 
+import ViewModeButton from './view-mode-button';
 import MetricSelector from './metric-selector';
-import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { setGraphView, setTableView, setResourceView } from '../actions/app-actions';
 import { availableMetricsSelector } from '../selectors/node-metric';
 import {
@@ -24,45 +23,29 @@ class ViewModeSelector extends React.Component {
     }
   }
 
-  renderItem(icons, label, viewMode, setViewModeAction, isEnabled = true) {
-    if (label === 'Table') console.log('render table view action');
-    const isSelected = (this.props.topologyViewMode === viewMode);
-    const className = classNames(`view-mode-selector-action view-${label}-action`, {
-      'view-mode-selector-action-selected': isSelected,
-    });
-    const onClick = () => {
-      trackAnalyticsEvent('scope.layout.selector.click', {
-        layout: viewMode,
-        topologyId: this.props.currentTopology.get('id'),
-        parentTopologyId: this.props.currentTopology.get('parentId'),
-      });
-      setViewModeAction();
-    };
-
-    return (
-      <div
-        className={className}
-        disabled={!isEnabled}
-        onClick={isEnabled ? onClick : undefined}
-        title={`View ${label.toLowerCase()}`}>
-        <span className={icons} style={{ fontSize: 12 }} />
-        <span className="label">{label}</span>
-      </div>
-    );
-  }
-
   render() {
-    const { hasResourceView } = this.props;
-
     return (
       <div className="view-mode-selector">
         <div className="view-mode-selector-wrapper">
-          {this.renderItem('fa fa-share-alt', 'Graph', GRAPH_VIEW_MODE, this.props.setGraphView)}
-          {this.renderItem('fa fa-table', 'Table', TABLE_VIEW_MODE, this.props.setTableView)}
-          {this.renderItem(
-'fa fa-bar-chart', 'Resources', RESOURCE_VIEW_MODE,
-            this.props.setResourceView, hasResourceView
-)}
+          <ViewModeButton
+            label="Graph"
+            icons="fa fa-share-alt"
+            viewMode={GRAPH_VIEW_MODE}
+            onClick={this.props.setGraphView}
+          />
+          <ViewModeButton
+            label="Table"
+            icons="fa fa-table"
+            viewMode={TABLE_VIEW_MODE}
+            onClick={this.props.setTableView}
+          />
+          <ViewModeButton
+            label="Resources"
+            icons="fa fa-bar-chart"
+            viewMode={RESOURCE_VIEW_MODE}
+            onClick={this.props.setResourceView}
+            disabled={!this.props.hasResourceView}
+          />
         </div>
         <MetricSelector />
       </div>
