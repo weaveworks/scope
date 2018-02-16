@@ -768,6 +768,10 @@ export function rootReducer(state = initialState, action) {
       });
     }
 
+    case ActionTypes.MONITOR_STATE: {
+      return state.set('monitor', action.monitor);
+    }
+
     default: {
       return state;
     }
