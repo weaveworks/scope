@@ -99,6 +99,12 @@ class App extends React.Component {
     this.router.stop();
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.monitor !== this.props.monitor) {
+      this.props.dispatch(setMonitorState(nextProps.monitor));
+    }
+  }
+
   onKeyUp(ev) {
     const { showingTerminal } = this.props;
     keyPressLog('onKeyUp', 'keyCode', ev.keyCode, ev);
