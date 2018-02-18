@@ -121,11 +121,11 @@ func (e MetadataTemplates) Copy() MetadataTemplates {
 // Merge merges two sets of MetadataTemplates so far just ignores based
 // on duplicate id key
 func (e MetadataTemplates) Merge(other MetadataTemplates) MetadataTemplates {
-	if e == nil && other == nil {
-		return nil
-	}
 	if len(other) > len(e) {
 		e, other = other, e
+	}
+	if len(other) == 0 {
+		return e
 	}
 	result := e.Copy()
 	for k, v := range other {

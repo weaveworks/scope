@@ -22,6 +22,9 @@ func (m Metrics) Merge(other Metrics) Metrics {
 	if len(other) > len(m) {
 		m, other = other, m
 	}
+	if len(other) == 0 {
+		return m
+	}
 	result := m.Copy()
 	for k, v := range other {
 		if rv, ok := result[k]; ok {
