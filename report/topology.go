@@ -113,6 +113,16 @@ func (t Topology) AddNode(node Node) Topology {
 	return t
 }
 
+// ReplaceNode adds node to the topology under key nodeID; if a
+// node already exists for this key, node replaces that node.
+// The same topology is returned to enable chaining.
+// This method is similar to AddNode
+// in that it mutates the Topology, to solve issues of GC pressure.
+func (t Topology) ReplaceNode(node Node) Topology {
+	t.Nodes[node.ID] = node
+	return t
+}
+
 // GetShape returns the current topology shape, or the default if there isn't one.
 func (t Topology) GetShape() string {
 	if t.Shape == "" {

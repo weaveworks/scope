@@ -33,7 +33,7 @@ func (t Tagger) Tag(r report.Report) (report.Report, error) {
 	// and as such do their own host tagging.
 	for _, topology := range []report.Topology{r.Process, r.Container, r.ContainerImage, r.Host, r.Pod} {
 		for _, node := range topology.Nodes {
-			topology.AddNode(node.WithLatests(metadata).WithParents(parents))
+			topology.ReplaceNode(node.WithLatests(metadata).WithParents(parents))
 		}
 	}
 	return r, nil
