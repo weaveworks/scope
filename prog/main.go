@@ -302,7 +302,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.probe.dockerBridge, "probe.docker.bridge", "docker0", "the docker bridge name")
 
 	// K8s
-	flag.BoolVar(&flags.probe.kubernetesEnabled, "probe.kubernetes", false, "collect kubernetes-related attributes for containers, should only be enabled on the master node")
+	flag.BoolVar(&flags.probe.kubernetesEnabled, "probe.kubernetes", false, "collect kubernetes-related attributes for containers")
 	flag.DurationVar(&flags.probe.kubernetesClientConfig.Interval, "probe.kubernetes.interval", 10*time.Second, "how often to do a full resync of the kubernetes data")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.Server, "probe.kubernetes.api", "", "The address and port of the Kubernetes API server (deprecated in favor of equivalent probe.kubernetes.server)")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.CertificateAuthority, "probe.kubernetes.certificate-authority", "", "Path to a cert. file for the certificate authority")
@@ -426,6 +426,11 @@ func main() {
 		if err != nil {
 			log.Fatalf("Invalid targets: %v", err)
 		}
+	}
+
+	// Node name may be set by environment variable, e.g. from the Kubernetes downward API
+	if flags.probe.kubernetesNodeName == "" {
+		flags.probe.kubernetesNodeName = os.Getenv("KUBERNETES_NODENAME")
 	}
 
 	if flags.dryRun {
