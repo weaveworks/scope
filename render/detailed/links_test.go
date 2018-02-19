@@ -61,7 +61,7 @@ func TestRenderMetricURLs_Pod(t *testing.T) {
 	result := detailed.RenderMetricURLs(s, samplePodNode, report.MakeReport(), sampleMetricsGraphURL)
 
 	checkURL(t, result.Metrics[0].URL, sampleMetricsGraphURL,
-		[]string{"container_memory_usage_bytes", `pod_name=\"foo\"`, `namespace=\"noospace\"`})
+		[]string{"container_memory_rss", `pod_name=\"foo\"`, `namespace=\"noospace\"`})
 	checkURL(t, result.Metrics[1].URL, sampleMetricsGraphURL,
 		[]string{"container_cpu_usage_seconds", `pod_name=\"foo\"`, `namespace=\"noospace\"`})
 }
@@ -71,7 +71,7 @@ func TestRenderMetricURLs_Container(t *testing.T) {
 	result := detailed.RenderMetricURLs(s, sampleContainerNode, report.MakeReport(), sampleMetricsGraphURL)
 
 	checkURL(t, result.Metrics[0].URL, sampleMetricsGraphURL,
-		[]string{"container_memory_usage_bytes", `name=\"cooname\"`})
+		[]string{"container_memory_rss", `name=\"cooname\"`})
 	checkURL(t, result.Metrics[1].URL, sampleMetricsGraphURL,
 		[]string{"container_cpu_usage_seconds", `name=\"cooname\"`})
 }
@@ -109,7 +109,7 @@ func TestRenderMetricURLs_QueryReplacement(t *testing.T) {
 	result := detailed.RenderMetricURLs(s, samplePodNode, report.MakeReport(), "http://example.test/?q=:query")
 
 	checkURL(t, result.Metrics[0].URL, "http://example.test/?q=",
-		[]string{"container_memory_usage_bytes", `pod_name="foo"`, `namespace="noospace"`})
+		[]string{"container_memory_rss", `pod_name="foo"`, `namespace="noospace"`})
 	checkURL(t, result.Metrics[1].URL, "http://example.test/?q=",
 		[]string{"container_cpu_usage_seconds", `pod_name="foo"`, `namespace="noospace"`})
 }
