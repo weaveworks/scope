@@ -182,6 +182,9 @@ func (n Nodes) Merge(other Nodes) Nodes {
 	if len(other) > len(n) {
 		n, other = other, n
 	}
+	if len(other) == 0 {
+		return n
+	}
 	cp := n.Copy()
 	for k, v := range other {
 		if n, ok := cp[k]; ok { // don't overwrite

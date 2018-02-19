@@ -134,3 +134,17 @@ func TestCmdlineRemoval(t *testing.T) {
 	}
 	testReporter(t, true, test)
 }
+
+func BenchmarkReporter(t *testing.B) {
+	walker := &mockWalker{processes: processes}
+	getDeltaTotalJiffies := func() (uint64, float64, error) { return 0, 0., nil }
+	reporter := process.NewReporter(walker, "", getDeltaTotalJiffies, false)
+	t.ResetTimer()
+
+	for i := 0; i < t.N; i++ {
+		_, err := reporter.Report()
+		if err != nil {
+			t.Error(err)
+		}
+	}
+}
