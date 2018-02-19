@@ -278,7 +278,7 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 		services = []Service{}
 	)
 	err := r.client.WalkServices(func(s Service) error {
-		result = result.AddNode(s.GetNode())
+		result.AddNode(s.GetNode())
 		services = append(services, s)
 		return nil
 	})
@@ -308,9 +308,11 @@ func (r *Reporter) hostTopology(services []Service) report.Topology {
 	if serviceNetwork == nil {
 		return report.MakeTopology()
 	}
-	return report.MakeTopology().AddNode(
+	t := report.MakeTopology()
+	t.AddNode(
 		report.MakeNode(report.MakeHostNodeID(r.hostID)).
 			WithSets(report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(serviceNetwork.String()))))
+	return t
 }
 
 func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deployment, error) {
@@ -324,7 +326,7 @@ func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deploy
 	result.Controls.AddControls(ScalingControls)
 
 	err := r.client.WalkDeployments(func(d Deployment) error {
-		result = result.AddNode(d.GetNode(probeID))
+		result.AddNode(d.GetNode(probeID))
 		deployments = append(deployments, d)
 		return nil
 	})
@@ -338,7 +340,7 @@ func (r *Reporter) daemonSetTopology() (report.Topology, []DaemonSet, error) {
 		WithMetricTemplates(DaemonSetMetricTemplates).
 		WithTableTemplates(TableTemplates)
 	err := r.client.WalkDaemonSets(func(d DaemonSet) error {
-		result = result.AddNode(d.GetNode())
+		result.AddNode(d.GetNode())
 		daemonSets = append(daemonSets, d)
 		return nil
 	})
@@ -352,7 +354,7 @@ func (r *Reporter) statefulSetTopology() (report.Topology, []StatefulSet, error)
 		WithMetricTemplates(StatefulSetMetricTemplates).
 		WithTableTemplates(TableTemplates)
 	err := r.client.WalkStatefulSets(func(s StatefulSet) error {
-		result = result.AddNode(s.GetNode())
+		result.AddNode(s.GetNode())
 		statefulSets = append(statefulSets, s)
 		return nil
 	})
@@ -366,7 +368,7 @@ func (r *Reporter) cronJobTopology() (report.Topology, []CronJob, error) {
 		WithMetricTemplates(CronJobMetricTemplates).
 		WithTableTemplates(TableTemplates)
 	err := r.client.WalkCronJobs(func(c CronJob) error {
-		result = result.AddNode(c.GetNode())
+		result.AddNode(c.GetNode())
 		cronJobs = append(cronJobs, c)
 		return nil
 	})
@@ -490,7 +492,7 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 		for _, selector := range selectors {
 			selector(p)
 		}
-		pods = pods.AddNode(p.GetNode(r.probeID))
+		pods.AddNode(p.GetNode(r.probeID))
 		return nil
 	})
 	return pods, err
@@ -499,7 +501,7 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 func (r *Reporter) namespaceTopology() (report.Topology, error) {
 	result := report.MakeTopology()
 	err := r.client.WalkNamespaces(func(ns NamespaceResource) error {
-		result = result.AddNode(ns.GetNode())
+		result.AddNode(ns.GetNode())
 		return nil
 	})
 	return result, err

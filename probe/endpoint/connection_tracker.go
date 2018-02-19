@@ -217,8 +217,8 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 		fromNode = t.makeEndpointNode(namespaceID, ft.fromAddr, ft.fromPort, extraFromNode)
 		toNode   = t.makeEndpointNode(namespaceID, ft.toAddr, ft.toPort, extraToNode)
 	)
-	rpt.Endpoint = rpt.Endpoint.AddNode(fromNode.WithAdjacent(toNode.ID))
-	rpt.Endpoint = rpt.Endpoint.AddNode(toNode)
+	rpt.Endpoint.AddNode(fromNode.WithAdjacent(toNode.ID))
+	rpt.Endpoint.AddNode(toNode)
 }
 
 func (t *connectionTracker) makeEndpointNode(namespaceID string, addr string, port uint16, extra map[string]string) report.Node {

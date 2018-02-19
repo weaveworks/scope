@@ -301,7 +301,9 @@ func (r *Reporter) overlayTopology() report.Topology {
 	// since we treat container IPs as local
 	node := report.MakeNode(report.MakeOverlayNodeID(report.DockerOverlayPeerPrefix, r.hostID)).WithSets(
 		report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(subnets...)))
-	return report.MakeTopology().AddNode(node)
+	t := report.MakeTopology()
+	t.AddNode(node)
+	return t
 }
 
 func (r *Reporter) swarmServiceTopology() report.Topology {
