@@ -428,6 +428,11 @@ func main() {
 		}
 	}
 
+	// Node name may be set by environment variable, e.g. from the Kubernetes downward API
+	if flags.probe.kubernetesNodeName == "" {
+		flags.probe.kubernetesNodeName = os.Getenv("KUBERNETES_NODENAME")
+	}
+
 	if flags.dryRun {
 		return
 	}
