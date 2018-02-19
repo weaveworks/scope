@@ -111,6 +111,13 @@ func (t Topology) AddNode(node Node) {
 	t.Nodes[node.ID] = node
 }
 
+// ReplaceNode adds node to the topology under key nodeID; if a
+// node already exists for this key, node replaces that node.
+// Like AddNode, it mutates the Topology
+func (t Topology) ReplaceNode(node Node) {
+	t.Nodes[node.ID] = node
+}
+
 // GetShape returns the current topology shape, or the default if there isn't one.
 func (t Topology) GetShape() string {
 	if t.Shape == "" {
