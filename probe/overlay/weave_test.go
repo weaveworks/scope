@@ -41,11 +41,11 @@ func TestContainerTopologyTagging(t *testing.T) {
 	test := func(w *overlay.Weave) {
 		// Container nodes should be tagged with their overlay info
 		nodeID := report.MakeContainerNodeID(weave.MockContainerID)
-		have, err := w.Tag(report.Report{
-			Container: report.MakeTopology().AddNode(report.MakeNodeWith(nodeID, map[string]string{
-				docker.ContainerID: weave.MockContainerID,
-			})),
-		})
+		topology := report.MakeTopology()
+		topology.AddNode(report.MakeNodeWith(nodeID, map[string]string{
+			docker.ContainerID: weave.MockContainerID,
+		}))
+		have, err := w.Tag(report.Report{Container: topology})
 		if err != nil {
 			t.Fatal(err)
 		}

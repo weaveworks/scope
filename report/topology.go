@@ -102,15 +102,13 @@ func (t Topology) WithLabel(label, labelPlural string) Topology {
 
 // AddNode adds node to the topology under key nodeID; if a
 // node already exists for this key, nmd is merged with that node.
-// The same topology is returned to enable chaining.
 // This method is different from all the other similar methods
 // in that it mutates the Topology, to solve issues of GC pressure.
-func (t Topology) AddNode(node Node) Topology {
+func (t Topology) AddNode(node Node) {
 	if existing, ok := t.Nodes[node.ID]; ok {
 		node = node.Merge(existing)
 	}
 	t.Nodes[node.ID] = node
-	return t
 }
 
 // GetShape returns the current topology shape, or the default if there isn't one.

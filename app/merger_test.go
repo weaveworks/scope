@@ -23,10 +23,9 @@ func TestMerger(t *testing.T) {
 		report1, report2, report3,
 	}
 	want := report.MakeReport()
-	want.Endpoint.
-		AddNode(report.MakeNode("foo")).
-		AddNode(report.MakeNode("bar")).
-		AddNode(report.MakeNode("baz"))
+	want.Endpoint.AddNode(report.MakeNode("foo"))
+	want.Endpoint.AddNode(report.MakeNode("bar"))
+	want.Endpoint.AddNode(report.MakeNode("baz"))
 
 	for _, merger := range []app.Merger{app.MakeDumbMerger(), app.NewSmartMerger()} {
 		// Test the empty list case
