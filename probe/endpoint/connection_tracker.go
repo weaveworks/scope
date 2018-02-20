@@ -219,21 +219,31 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 	)
 	rpt.Endpoint.AddNode(fromNode.WithAdjacent(toNode.ID))
 	rpt.Endpoint.AddNode(toNode)
+	t.addDNS(rpt, ft.fromAddr)
+	t.addDNS(rpt, ft.toAddr)
 }
 
 func (t *connectionTracker) makeEndpointNode(namespaceID string, addr string, port uint16, extra map[string]string) report.Node {
 	portStr := strconv.Itoa(int(port))
 	node := report.MakeNodeWith(report.MakeEndpointNodeID(t.conf.HostID, namespaceID, addr, portStr), nil)
-	if names := t.conf.DNSSnooper.CachedNamesForIP(addr); len(names) > 0 {
-		node = node.WithSet(SnoopedDNSNames, report.MakeStringSet(names...))
-	}
-	if names, err := t.reverseResolver.get(addr); err == nil && len(names) > 0 {
-		node = node.WithSet(ReverseDNSNames, report.MakeStringSet(names...))
-	}
 	if extra != nil {
 		node = node.WithLatests(extra)
 	}
 	return node
+}
+
+// Add DNS record for address to report, if not already there
+func (t *connectionTracker) addDNS(rpt *report.Report, addr string) {
+	if _, found := rpt.DNS[addr]; !found {
+		forward := t.conf.DNSSnooper.CachedNamesForIP(addr)
+		record := report.DNSRecord{
+			Forward: report.MakeStringSet(forward...),
+		}
+		if names, err := t.reverseResolver.get(addr); err == nil && len(names) > 0 {
+			record.Reverse = report.MakeStringSet(names...)
+		}
+		rpt.DNS[addr] = record
+	}
 }
 
 func (t *connectionTracker) Stop() error {

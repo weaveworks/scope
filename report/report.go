@@ -151,6 +151,8 @@ type Report struct {
 	// their status endpoints. Edges are present.
 	Overlay Topology
 
+	DNS DNSRecords
+
 	// Sampling data for this report.
 	Sampling Sampling
 
@@ -242,6 +244,8 @@ func MakeReport() Report {
 			WithShape(Heptagon).
 			WithLabel("service", "services"),
 
+		DNS: DNSRecords{},
+
 		Sampling: Sampling{},
 		Window:   0,
 		Plugins:  xfer.MakePluginSpecs(),
@@ -252,6 +256,7 @@ func MakeReport() Report {
 // Copy returns a value copy of the report.
 func (r Report) Copy() Report {
 	newReport := Report{
+		DNS:      r.DNS.Copy(),
 		Sampling: r.Sampling,
 		Window:   r.Window,
 		Plugins:  r.Plugins.Copy(),
@@ -267,6 +272,7 @@ func (r Report) Copy() Report {
 // original is not modified.
 func (r Report) Merge(other Report) Report {
 	newReport := r.Copy()
+	newReport.DNS = newReport.DNS.Merge(other.DNS)
 	newReport.Sampling = newReport.Sampling.Merge(other.Sampling)
 	newReport.Window = newReport.Window + other.Window
 	newReport.Plugins = newReport.Plugins.Merge(other.Plugins)
@@ -371,7 +377,7 @@ func (r Report) Validate() error {
 //
 // This for now creates node's LatestControls from Controls.
 func (r Report) Upgrade() Report {
-	return r.upgradeLatestControls().upgradePodNodes().upgradeNamespaces()
+	return r.upgradeLatestControls().upgradePodNodes().upgradeNamespaces().upgradeDNSRecords()
 }
 
 func (r Report) upgradeLatestControls() Report {
@@ -466,6 +472,33 @@ func (r Report) upgradeNamespaces() Report {
 	}
 	r.Namespace.Nodes = nodes
 
+	return r
+}
+
+func (r Report) upgradeDNSRecords() Report {
+	if len(r.DNS) > 0 {
+		return r
+	}
+	dns := make(DNSRecords)
+	for endpointID, endpoint := range r.Endpoint.Nodes {
+		_, addr, _, ok := ParseEndpointNodeID(endpointID)
+		snoopedNames, foundS := endpoint.Sets.Lookup(SnoopedDNSNames)
+		reverseNames, foundR := endpoint.Sets.Lookup(ReverseDNSNames)
+		if ok && (foundS || foundR) {
+			// Add address and names to report-level map
+			if existing, found := dns[addr]; found {
+				// Optimise the expected case that they are equal
+				if existing.Forward.Equal(snoopedNames) && existing.Reverse.Equal(reverseNames) {
+					continue
+				}
+				// Not equal - merge this node's data into existing data,
+				snoopedNames = snoopedNames.Merge(existing.Forward)
+				reverseNames = reverseNames.Merge(existing.Reverse)
+			}
+			dns[addr] = DNSRecord{Forward: snoopedNames, Reverse: reverseNames}
+		}
+	}
+	r.DNS = dns
 	return r
 }
 

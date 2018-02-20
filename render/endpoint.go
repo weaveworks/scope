@@ -36,7 +36,7 @@ func (e mapEndpoints) Render(rpt report.Report) Nodes {
 		// Nodes without a hostid are mapped to pseudo nodes, if
 		// possible.
 		if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
-			if id, ok := pseudoNodeID(n, local); ok {
+			if id, ok := pseudoNodeID(rpt, n, local); ok {
 				ret.addChild(n, id, Pseudo)
 				continue
 			}

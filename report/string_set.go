@@ -50,6 +50,19 @@ func (s StringSet) Intersection(b StringSet) StringSet {
 	return result
 }
 
+// Equal returns true if a and b have the same contents
+func (s StringSet) Equal(b StringSet) bool {
+	if len(s) != len(b) {
+		return false
+	}
+	for i := range s {
+		if s[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // Add adds the strings to the StringSet. Add is the only valid way to grow a
 // StringSet. Add returns the StringSet to enable chaining.
 func (s StringSet) Add(strs ...string) StringSet {
