@@ -114,46 +114,44 @@ export default class NodeDetailsTableRow extends React.Component {
     // is most likely a details panel popping open.
     //
     this.state = { focused: false };
-    this.mouseDragOrigin = [0, 0];
-
-    this.onMouseDown = this.onMouseDown.bind(this);
-    this.onMouseUp = this.onMouseUp.bind(this);
-    this.onMouseEnter = this.onMouseEnter.bind(this);
-    this.onMouseLeave = this.onMouseLeave.bind(this);
+    this.mouseDrag = {};
   }
 
-  onMouseEnter() {
+  onMouseEnter = () => {
     this.setState({ focused: true });
     if (this.props.onMouseEnter) {
       this.props.onMouseEnter(this.props.index, this.props.node);
     }
   }
 
-  onMouseLeave() {
+  onMouseLeave = () => {
     this.setState({ focused: false });
     if (this.props.onMouseLeave) {
       this.props.onMouseLeave();
     }
   }
 
-  onMouseDown(ev) {
-    const { pageX, pageY } = ev;
-    this.mouseDragOrigin = [pageX, pageY];
+  onMouseDown = (ev) => {
+    this.mouseDrag = {
+      originX: ev.pageX,
+      originY: ev.pageY,
+    };
   }
 
-  onMouseUp(ev) {
-    const [originX, originY] = this.mouseDragOrigin;
-    const { pageX, pageY } = ev;
+  onClick = (ev) => {
     const thresholdPx = 2;
+    const { pageX, pageY } = ev;
+    const { originX, originY } = this.mouseDrag;
     const movedTheMouseTooMuch = (
       Math.abs(originX - pageX) > thresholdPx ||
       Math.abs(originY - pageY) > thresholdPx
     );
-    if (movedTheMouseTooMuch) {
+    if (movedTheMouseTooMuch && originX && originY) {
       return;
     }
 
     this.props.onClick(ev, this.props.node);
+    this.mouseDrag = {};
   }
 
   render() {
@@ -171,8 +169,8 @@ export default class NodeDetailsTableRow extends React.Component {
 
     return (
       <tr
+        onClick={onClick && this.onClick}
         onMouseDown={onClick && this.onMouseDown}
-        onMouseUp={onClick && this.onMouseUp}
         onMouseEnter={this.onMouseEnter}
         onMouseLeave={this.onMouseLeave}
         className={className}>

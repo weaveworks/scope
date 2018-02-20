@@ -371,10 +371,10 @@ a {
 
 .nodes-chart-overlay {
   pointer-events: none;
-  opacity: 0;
+  opacity: $node-elements-in-background-opacity;
 
-  &.active {
-    opacity: $node-elements-in-background-opacity;
+  &:not(.active) {
+    display: none;
   }
 }
 

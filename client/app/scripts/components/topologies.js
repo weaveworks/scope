@@ -39,7 +39,7 @@ class Topologies extends React.Component {
     const isActive = subTopology === this.props.currentTopology;
     const searchMatchCount = this.props.searchMatchCountByTopology.get(topologyId) || 0;
     const title = basicTopologyInfo(subTopology, searchMatchCount);
-    const className = classnames('topologies-sub-item', {
+    const className = classnames(`topologies-sub-item topologies-item-${topologyId}`, {
       // Don't show matches in the resource view as searching is not supported there yet.
       'topologies-sub-item-matched': !this.props.isResourceViewMode && searchMatchCount,
       'topologies-sub-item-active': isActive,
@@ -60,14 +60,14 @@ class Topologies extends React.Component {
   }
 
   renderTopology(topology) {
+    const topologyId = topology.get('id');
     const isActive = topology === this.props.currentTopology;
     const searchMatchCount = this.props.searchMatchCountByTopology.get(topology.get('id')) || 0;
-    const className = classnames('topologies-item-main', {
+    const className = classnames(`topologies-item-main topologies-item-${topologyId}`, {
       // Don't show matches in the resource view as searching is not supported there yet.
       'topologies-item-main-matched': !this.props.isResourceViewMode && searchMatchCount,
       'topologies-item-main-active': isActive,
     });
-    const topologyId = topology.get('id');
     const title = basicTopologyInfo(topology, searchMatchCount);
 
     return (
