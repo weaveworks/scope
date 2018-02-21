@@ -1,13 +1,12 @@
-# Weave Scope - Troubleshooting & Monitoring for Docker & Kubernetes
+# OpenEBS Scope - Troubleshooting & Monitoring for Docker & Kubernetes
 
 [![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master)
 [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope)
 [![Go Report Card](https://goreportcard.com/badge/github.com/weaveworks/scope)](https://goreportcard.com/report/github.com/weaveworks/scope)
-[![Slack Status](https://slack.weave.works/badge.svg)](https://slack.weave.works)
 [![Docker Pulls](https://img.shields.io/docker/pulls/weaveworks/scope.svg?maxAge=604800)](https://hub.docker.com/r/weaveworks/scope/)
 [![GoDoc](https://godoc.org/github.com/weaveworks/scope?status.svg)](https://godoc.org/github.com/weaveworks/scope)
 
-Weave Scope automatically generates a map of your application, enabling you to
+OpenEBS Scope automatically generates a map of your application, enabling you to
 intuitively understand, monitor, and control your containerized, microservices based application.
 
 ### Understand your Docker containers in real-time
@@ -44,18 +43,5 @@ This script downloads and runs a recent Scope image from Docker Hub.
 Now, open your web browser to **http://localhost:4040**. (If you're using
 boot2docker, replace localhost with the output of `boot2docker ip`.)
 
-For instructions on installing Scope on [Kubernetes](https://www.weave.works/docs/scope/latest/installing/#k8s), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos) or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
-
-## <a name="help"></a>Getting help
-
-If you have any questions about, feedback for or problems with Scope:
-
-- Read [the Weave Scope docs](https://www.weave.works/docs/scope/latest/introducing/).
-- Invite yourself to the <a href="https://weaveworks.github.io/community-slack/" target="_blank"> #weave-community </a> slack channel.
-- Ask a question on the <a href="https://weave-community.slack.com/messages/general/"> #weave-community</a> slack channel.
-- Join the <a href="https://www.meetup.com/pro/Weave/"> Weave User Group </a> and get invited to online talks, hands-on training and meetups in your area.
-- Send an email to <a href="mailto:weave-users@weave.works">weave-users@weave.works</a>
-- <a href="https://github.com/weaveworks/scope/issues/new">File an issue.</a>
-
-Your feedback is always welcome!
+**YAML** for installing Scope on [Kubernetes](https://github.com/openebs/scope/blob/master/scope_k8s.yaml), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos) or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 
