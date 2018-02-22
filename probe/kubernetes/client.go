@@ -48,7 +48,6 @@ type Client interface {
 
 type client struct {
 	quit             chan struct{}
-	resyncPeriod     time.Duration
 	client           *kubernetes.Clientset
 	podStore         cache.Store
 	serviceStore     cache.Store
@@ -66,7 +65,6 @@ type client struct {
 
 // ClientConfig establishes the configuration for the kubernetes client
 type ClientConfig struct {
-	Interval             time.Duration
 	CertificateAuthority string
 	ClientCertificate    string
 	ClientKey            string
@@ -129,9 +127,8 @@ func NewClient(config ClientConfig) (Client, error) {
 	}
 
 	result := &client{
-		quit:         make(chan struct{}),
-		resyncPeriod: config.Interval,
-		client:       c,
+		quit:   make(chan struct{}),
+		client: c,
 	}
 
 	result.podStore = NewEventStore(result.triggerPodWatches, cache.MetaNamespaceKeyFunc)
@@ -225,7 +222,7 @@ func (c *client) runReflectorUntil(resource string, store cache.Store) {
 				return true, nil
 			}
 			lw := cache.NewListWatchFromClient(kclient, resource, metav1.NamespaceAll, fields.Everything())
-			r = cache.NewReflector(lw, itemType, store, c.resyncPeriod)
+			r = cache.NewReflector(lw, itemType, store, 0)
 		}
 
 		select {
