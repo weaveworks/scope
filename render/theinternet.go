@@ -19,6 +19,7 @@ var (
 		// for finer grained details
 		`amazonaws\.com`,
 		`googleapis\.com`,
+		`weave\.works`,             // Weave Cloud
 		`core\.windows\.net`,       // Azure Storage - Blob, Tables, Files & Queues
 		`servicebus\.windows\.net`, // Azure Service Bus
 		`azure-api\.net`,           // Azure API Management
