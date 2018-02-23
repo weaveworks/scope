@@ -111,7 +111,7 @@ func renderParents(childTopology string, parentTopologies []string, noParentsPse
 
 // MapPod2IP maps pod nodes to their IP address.  This allows pods to
 // be joined directly with the endpoint topology.
-func MapPod2IP(m report.Node) []string {
+func MapPod2IP(_ report.Report, m report.Node) []string {
 	// if this pod belongs to the host's networking namespace
 	// we cannot use its IP to attribute connections
 	// (they could come from any other process on the host or DNAT-ed IPs)
