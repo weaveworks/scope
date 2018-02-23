@@ -162,7 +162,7 @@ export default class NodeDetailsTableRow extends React.Component {
     const values = renderValues(node, columns, columnStyles, timestamp, topologyId);
     const nodeId = node[nodeIdKey];
 
-    const className = classNames('node-details-table-node', {
+    const className = classNames('tour-step-anchor node-details-table-node', {
       selected: this.props.selected,
       focused: this.state.focused,
     });

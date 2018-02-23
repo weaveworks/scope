@@ -71,19 +71,21 @@ class TimeTravelWrapper extends React.Component {
 
   render() {
     return (
-      <TimeTravel
-        hasLiveMode
-        showingLive={this.props.showingLive}
-        onChangeLiveMode={this.handleLiveModeChange}
-        timestamp={this.props.timestamp}
-        earliestTimestamp={this.props.earliestTimestamp}
-        onChangeTimestamp={this.props.jumpToTime}
-        onTimestampInputEdit={this.trackTimestampEdit}
-        onTimelinePanButtonClick={this.trackTimelinePanButtonClick}
-        onTimelineLabelClick={this.trackTimelineLabelClick}
-        onTimelineZoom={this.trackTimelineZoom}
-        onTimelinePan={this.trackTimelinePan}
-      />
+      <div className="tour-step-anchor time-travel-wrapper">
+        <TimeTravel
+          hasLiveMode
+          showingLive={this.props.showingLive}
+          onChangeLiveMode={this.handleLiveModeChange}
+          timestamp={this.props.timestamp}
+          earliestTimestamp={this.props.earliestTimestamp}
+          onChangeTimestamp={this.props.jumpToTime}
+          onTimestampInputEdit={this.trackTimestampEdit}
+          onTimelinePanButtonClick={this.trackTimelinePanButtonClick}
+          onTimelineLabelClick={this.trackTimelineLabelClick}
+          onTimelineZoom={this.trackTimelineZoom}
+          onTimelinePan={this.trackTimelinePan}
+        />
+      </div>
     );
   }
 }
