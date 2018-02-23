@@ -287,6 +287,9 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 	// here, and provide foreign key links from nodes to networks.
 	networks := make([]string, 0, len(c.container.NetworkSettings.Networks))
 	for name, settings := range c.container.NetworkSettings.Networks {
+		if name == "none" {
+			continue
+		}
 		networks = append(networks, name)
 		if settings.IPAddress != "" {
 			ips = append(ips, settings.IPAddress)
@@ -303,11 +306,20 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 	// Treat all Docker IPs as local scoped.
 	ipsWithScopes := addScopeToIPs(c.hostID, ipv4s)
 
-	return report.MakeSets().
-		Add(ContainerNetworks, report.MakeStringSet(networks...)).
-		Add(ContainerPorts, c.ports(localAddrs)).
-		Add(ContainerIPs, report.MakeStringSet(ipv4s...)).
-		Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...))
+	s := report.MakeSets()
+	if len(networks) > 0 {
+		s = s.Add(ContainerNetworks, report.MakeStringSet(networks...))
+	}
+	if len(c.container.NetworkSettings.Ports) > 0 {
+		s = s.Add(ContainerPorts, c.ports(localAddrs))
+	}
+	if len(ipv4s) > 0 {
+		s = s.Add(ContainerIPs, report.MakeStringSet(ipv4s...))
+	}
+	if len(ipsWithScopes) > 0 {
+		s = s.Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...))
+	}
+	return s
 }
 
 func (c *container) memoryUsageMetric(stats []docker.Stats) report.Metric {
