@@ -31,6 +31,13 @@ Interact with your containers directly: pause, restart and stop containers. Laun
 
 Add custom details or interactions for your hosts, containers and/or processes by creating Scope plugins; or just choose from some that others have already written at the Github [Weaveworks Scope Plugins](https://github.com/weaveworks-plugins/) organization.
 
+### Help and shortcuts for UI
+
+<img src="imgs/scope-help.png" width="200" alt="Shortcuts for using scope" align="right">
+
+By clicking on `?` in the UI (bottom right) or pressing `Shift+?` , you can access the `Help` toolkit. It tells you how to use the search bar of Scope and also different shortcuts are defined like how to switch to different views or activating the search field via keyboard and more. 
+
+
 ## <a name="getting-started"></a>Getting started
 
 ```
