@@ -120,7 +120,7 @@ func MapPod2IP(_ report.Report, m report.Node) []string {
 	}
 
 	ip, ok := m.Latest.Lookup(kubernetes.IP)
-	if !ok {
+	if !ok || ip == "" {
 		return nil
 	}
 	return []string{report.MakeScopedEndpointNodeID("", ip, "")}
