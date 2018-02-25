@@ -208,7 +208,11 @@ func MapContainer2IP(rpt report.Report, m report.Node) []string {
 	// we cannot use its IP to attribute connections
 	// (they could come from any other process on the host or DNAT-ed IPs)
 	_, isInHostNetwork := m.Latest.Lookup(docker.IsInHostNetwork)
-	if doesntMakeConnections || isInHostNetwork {
+	// mapping IPs for containers that are not running can confuse the display
+	state, stateFound := m.Latest.Lookup(docker.ContainerState)
+	notRunning := stateFound && state != docker.StateRunning
+
+	if doesntMakeConnections || isInHostNetwork || notRunning {
 		return nil
 	}
 
