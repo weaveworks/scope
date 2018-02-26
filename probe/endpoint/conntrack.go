@@ -2,16 +2,13 @@ package endpoint
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
-	"unicode"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -24,15 +21,9 @@ const (
 
 	timeWait    = "TIME_WAIT"
 	tcpProto    = "tcp"
-	newType     = "[NEW]"
-	updateType  = "[UPDATE]"
-	destroyType = "[DESTROY]"
-)
-
-var (
-	destroyTypeB = []byte(destroyType)
-	assured      = []byte("[ASSURED] ")
-	unreplied    = []byte("[UNREPLIED] ")
+	newType     = "NEW"
+	updateType  = "UPDATE"
+	destroyType = "DESTROY"
 )
 
 type layer3 struct {
@@ -210,7 +201,7 @@ func (c *conntrackWalker) run() {
 	c.cmd = cmd
 	c.Unlock()
 
-	scanner := bufio.NewScanner(bufio.NewReader(stdout))
+	scanner := NewScanner(bufio.NewReader(stdout))
 	defer log.Infof("conntrack exiting")
 
 	// Loop on the output stream
@@ -224,130 +215,112 @@ func (c *conntrackWalker) run() {
 	}
 }
 
-// Get a line without [ASSURED]/[UNREPLIED] tags (it simplifies parsing)
-func getUntaggedLine(scanner *bufio.Scanner) ([]byte, error) {
-	success := scanner.Scan()
-	if !success {
-		if err := scanner.Err(); err != nil {
-			return nil, err
-		}
-		return nil, io.EOF
-	}
-	line := scanner.Bytes()
-	// Remove [ASSURED]/[UNREPLIED] tags
-	line = removeInplace(line, assured)
-	line = removeInplace(line, unreplied)
-	return line, nil
-}
-
-func removeInplace(s, sep []byte) []byte {
-	// TODO: See if we can get better performance
-	//       removing multiple substrings at once (with index/suffixarray New()+Lookup())
-	//       Probably not worth it for only two substrings occurring once.
-	index := bytes.Index(s, sep)
-	if index < 0 {
-		return s
-	}
-	copy(s[index:], s[index+len(sep):])
-	return s[:len(s)-len(sep)]
-}
-
 // decodeFlowKeyValues parses the key-values from a conntrack line and updates the flow
 // It only considers the following key-values:
 // src=127.0.0.1 dst=127.0.0.1 sport=58958 dport=6784 src=127.0.0.1 dst=127.0.0.1 sport=6784 dport=58958 id=1595499776
 // Keys can be present twice, so the order is important.
 // Conntrack could add other key-values such as secctx=, packets=, bytes=. Those are ignored.
-func decodeFlowKeyValues(line []byte, f *flow) error {
-	var err error
-	for _, field := range strings.FieldsFunc(string(line), func(c rune) bool { return unicode.IsSpace(c) }) {
-		kv := strings.SplitN(field, "=", 2)
-		if len(kv) != 2 {
+func decodeFlowKeyValues(s *Scanner, f *flow) error {
+	for {
+		var err error
+		key := keyNone
+		tok := s.scan()
+		if tok == NEWLINE || tok == EOF {
+			break
+		} else if tok == IDENT {
+			key = s.lastKeyType()
+		}
+		if key == keyNone {
+			s.skipToWhitespace()
 			continue
 		}
-		key := kv[0]
-		value := kv[1]
+		if err := s.mustBe(EQUALS); err != nil {
+			return err
+		}
+		if tok = s.scan(); tok != NUMERIC && tok != IDENT {
+			return s.errorExpected(IDENT, tok)
+		}
+
 		firstTupleSet := f.Original.Layer4.DstPort != 0
-		switch {
-		case key == "src":
+		switch key {
+		case keySrc:
 			if !firstTupleSet {
-				f.Original.Layer3.SrcIP = value
+				f.Original.Layer3.SrcIP = s.lastValue()
 			} else {
-				f.Reply.Layer3.SrcIP = value
+				f.Reply.Layer3.SrcIP = s.lastValue()
 			}
 
-		case key == "dst":
+		case keyDst:
 			if !firstTupleSet {
-				f.Original.Layer3.DstIP = value
+				f.Original.Layer3.DstIP = s.lastValue()
 			} else {
-				f.Reply.Layer3.DstIP = value
+				f.Reply.Layer3.DstIP = s.lastValue()
 			}
 
-		case key == "sport":
+		case keySport:
 			if !firstTupleSet {
-				f.Original.Layer4.SrcPort, err = strconv.Atoi(value)
+				f.Original.Layer4.SrcPort, err = s.lastInt()
 			} else {
-				f.Reply.Layer4.SrcPort, err = strconv.Atoi(value)
+				f.Reply.Layer4.SrcPort, err = s.lastInt()
 			}
 
-		case key == "dport":
+		case keyDport:
 			if !firstTupleSet {
-				f.Original.Layer4.DstPort, err = strconv.Atoi(value)
+				f.Original.Layer4.DstPort, err = s.lastInt()
 			} else {
-				f.Reply.Layer4.DstPort, err = strconv.Atoi(value)
+				f.Reply.Layer4.DstPort, err = s.lastInt()
 			}
 
-		case key == "id":
-			f.Independent.ID, err = strconv.ParseInt(value, 10, 64)
+		case keyID:
+			f.Independent.ID, err = s.lastInt64()
+		}
+		if err != nil {
+			return err
 		}
 	}
-
-	return err
+	return nil
 }
 
-func decodeStreamedFlow(scanner *bufio.Scanner) (flow, error) {
-	var (
-		// Use ints for parsing unused fields since their allocations
-		// are almost for free
-		unused [2]int
-		f      flow
-	)
-
+func decodeStreamedFlow(s *Scanner) (flow, error) {
+	var f flow
 	// Examples:
 	// " [UPDATE] udp      17 29 src=192.168.2.100 dst=192.168.2.1 sport=57767 dport=53 src=192.168.2.1 dst=192.168.2.100 sport=53 dport=57767"
 	// "    [NEW] tcp      6 120 SYN_SENT src=127.0.0.1 dst=127.0.0.1 sport=58958 dport=6784 [UNREPLIED] src=127.0.0.1 dst=127.0.0.1 sport=6784 dport=58958 id=1595499776"
 	// " [UPDATE] tcp      6 120 TIME_WAIT src=10.0.2.15 dst=10.0.2.15 sport=51154 dport=4040 src=10.0.2.15 dst=10.0.2.15 sport=4040 dport=51154 [ASSURED] id=3663628160"
 	// " [DESTROY] tcp      6 src=172.17.0.1 dst=172.17.0.1 sport=34078 dport=53 src=172.17.0.1 dst=10.0.2.15 sport=53 dport=34078 id=3668417984" (note how the timeout and state field is missing)
 
-	// Remove tags since they are optional and make parsing harder
-	line, err := getUntaggedLine(scanner)
-	if err != nil {
-		return flow{}, err
+	// First token should be a square bracket for the protocol.
+	tok := s.scan()
+	if tok == EOF {
+		return f, io.EOF
+	} else if tok != LSQUARE {
+		return f, s.errorExpected(LSQUARE, tok)
+	}
+	if err := s.mustBe(IDENT); err != nil {
+		return f, err
+	}
+	f.Type = s.lastSymbol()
+	if err := s.mustBe(RSQUARE); err != nil {
+		return f, err
 	}
 
-	line = bytes.TrimLeft(line, " ")
-	if bytes.HasPrefix(line, destroyTypeB) {
-		// Destroy events don't have a timeout or state field
-		_, err = fmt.Sscanf(string(line), "%s %s %d",
-			&f.Type,
-			&f.Original.Layer4.Proto,
-			&unused[0],
-		)
-	} else {
-		_, err = fmt.Sscanf(string(line), "%s %s %d %d %s",
-			&f.Type,
-			&f.Original.Layer4.Proto,
-			&unused[0],
-			&unused[1],
-			&f.Independent.State,
-		)
+	if err := s.mustBe(IDENT); err != nil {
+		return f, err
 	}
-	if err != nil {
-		return flow{}, fmt.Errorf("Error parsing streamed flow %q: %v ", line, err)
+	f.Original.Layer4.Proto = s.lastSymbol()
+
+	s.scan() // unused
+	if f.Type != destroyType {
+		s.scan() // unused
+		if err := s.mustBe(IDENT); err != nil {
+			return f, err
+		}
+		f.Independent.State = s.lastSymbol()
 	}
 
-	err = decodeFlowKeyValues(line, &f)
+	err := decodeFlowKeyValues(s, &f)
 	if err != nil {
-		return flow{}, fmt.Errorf("Error parsing streamed flow %q: %v ", line, err)
+		return flow{}, fmt.Errorf("Error parsing streamed flow: %v ", err)
 	}
 
 	f.Reply.Layer4.Proto = f.Original.Layer4.Proto
@@ -370,7 +343,7 @@ func existingConnections(conntrackWalkerArgs []string) ([]flow, error) {
 		}
 	}()
 
-	scanner := bufio.NewScanner(bufio.NewReader(stdout))
+	scanner := NewScanner(bufio.NewReader(stdout))
 	var result []flow
 	for {
 		f, err := decodeDumpedFlow(scanner)
@@ -386,13 +359,9 @@ func existingConnections(conntrackWalkerArgs []string) ([]flow, error) {
 	return result, nil
 }
 
-func decodeDumpedFlow(scanner *bufio.Scanner) (flow, error) {
-	var (
-		// Use ints for parsing unused fields since allocations
-		// are almost for free
-		unused [4]int
-		f      flow
-	)
+func decodeDumpedFlow(s *Scanner) (flow, error) {
+	var f flow
+	var tok Token
 
 	// Examples with different formats:
 	// With SELinux, there is a "secctx="
@@ -402,21 +371,27 @@ func decodeDumpedFlow(scanner *bufio.Scanner) (flow, error) {
 	// "tcp      6 431998 ESTABLISHED src=10.0.2.2 dst=10.0.2.15 sport=49911 dport=22 src=10.0.2.15 dst=10.0.2.2 sport=22 dport=49911 [ASSURED] mark=0 use=1 id=2993966208"
 	// "tcp      6 108 ESTABLISHED src=172.17.0.5 dst=172.17.0.2 sport=47010 dport=80 src=172.17.0.2 dst=172.17.0.5 sport=80 dport=47010 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 use=1 id=4001098880"
 	// "tcp      6 431970 ESTABLISHED src=192.168.35.116 dst=216.58.213.227 sport=49862 dport=443 packets=11 bytes=1337 src=216.58.213.227 dst=192.168.35.116 sport=443 dport=49862 packets=8 bytes=716 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 use=1 id=943643840"
-
-	// remove tags since they are optional and make parsing harder
-	line, err := getUntaggedLine(scanner)
-	if err != nil {
-		return flow{}, err
+	// First token should be the protocol.
+	tok = s.scan()
+	if tok == EOF {
+		return f, io.EOF
+	} else if tok != IDENT {
+		return f, s.errorExpected(IDENT, tok)
 	}
+	f.Original.Layer4.Proto = s.lastSymbol()
 
-	_, err = fmt.Sscanf(string(line), "%s %d %d %s", &f.Original.Layer4.Proto, &unused[0], &unused[1], &f.Independent.State)
-	if err != nil {
-		return flow{}, fmt.Errorf("Error parsing dumped flow %q: %v ", line, err)
+	// two unused fields
+	s.scan()
+	s.scan()
+
+	if err := s.mustBe(IDENT); err != nil {
+		return f, err
 	}
+	f.Independent.State = s.lastSymbol()
 
-	err = decodeFlowKeyValues(line, &f)
+	err := decodeFlowKeyValues(s, &f)
 	if err != nil {
-		return flow{}, fmt.Errorf("Error parsing dumped flow %q: %v ", line, err)
+		return flow{}, fmt.Errorf("Error parsing dumped flow: %v ", err)
 	}
 
 	f.Reply.Layer4.Proto = f.Original.Layer4.Proto

@@ -1,7 +1,6 @@
 package endpoint
 
 import (
-	"bufio"
 	"io"
 	"strings"
 	"testing"
@@ -134,8 +133,8 @@ var wantStreamedFlows = []flow{
 	},
 }
 
-func testFlowDecoding(t *testing.T, source string, want []flow, decoder func(scanner *bufio.Scanner) (flow, error)) {
-	scanner := bufio.NewScanner(strings.NewReader(source))
+func testFlowDecoding(t *testing.T, source string, want []flow, decoder func(scanner *Scanner) (flow, error)) {
+	scanner := NewScanner(strings.NewReader(source))
 	d := time.Millisecond * 100
 	for _, wantFlow := range want {
 		haveFlow, err := decoder(scanner)
