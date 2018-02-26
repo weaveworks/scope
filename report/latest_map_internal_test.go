@@ -168,6 +168,36 @@ func BenchmarkLatestMapDecode(b *testing.B) {
 	}
 }
 
+func TestLatestMapDecoding(t *testing.T) {
+	ts, _ := time.Parse(time.RFC3339Nano, "2018-02-26T09:50:43Z")
+	want := MakeStringLatestMap().
+		Set("foo", ts, "bar").
+		Set("bar", ts, "baz").
+		Set("emptyval", ts, "")
+	// The following string is carefully constructed to have 'emptyval' not in alphabetical order
+	data := `
+{
+  "bar": {
+    "timestamp": "2018-02-26T09:50:43Z",
+    "value": "baz"
+  },
+  "foo": {
+    "timestamp": "2018-02-26T09:50:43Z",
+    "value": "bar"
+  },
+  "emptyval": {
+    "timestamp": "2018-02-26T09:50:43Z"
+  }
+}`
+	h := &codec.JsonHandle{}
+	decoder := codec.NewDecoder(bytes.NewBufferString(data), h)
+	have := MakeStringLatestMap()
+	have.CodecDecodeSelf(decoder)
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
 func TestLatestMapEncoding(t *testing.T) {
 	now := time.Now()
 	want := MakeStringLatestMap().
@@ -188,7 +218,6 @@ func TestLatestMapEncoding(t *testing.T) {
 			t.Error(test.Diff(want, have))
 		}
 	}
-
 }
 
 func TestLatestMapEncodingNil(t *testing.T) {

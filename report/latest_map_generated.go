@@ -111,6 +111,7 @@ func (m *StringLatestMap) locate(key string) int {
 	if i == len(*m) || (*m)[i].key != key {
 		*m = append(*m, stringLatestEntry{})
 		copy((*m)[i+1:], (*m)[i:])
+		(*m)[i] = stringLatestEntry{}
 	}
 	return i
 }
@@ -332,6 +333,7 @@ func (m *NodeControlDataLatestMap) locate(key string) int {
 	if i == len(*m) || (*m)[i].key != key {
 		*m = append(*m, nodeControlDataLatestEntry{})
 		copy((*m)[i+1:], (*m)[i:])
+		(*m)[i] = nodeControlDataLatestEntry{}
 	}
 	return i
 }

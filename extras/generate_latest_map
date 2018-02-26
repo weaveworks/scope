@@ -143,6 +143,7 @@ function generate_latest_map() {
         if i == len(*m) || (*m)[i].key != key {
             *m = append(*m, ${entry_type}{})
             copy((*m)[i+1:], (*m)[i:])
+            (*m)[i] = ${entry_type}{}
         }
         return i
     }
