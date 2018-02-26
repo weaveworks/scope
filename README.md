@@ -57,3 +57,16 @@ boot2docker, replace localhost with the output of `boot2docker ip`.)
 
 **YAML** for installing Scope on [Kubernetes](https://github.com/openebs/scope/blob/master/scope_k8s.yaml), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos) or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 
+Signing commits in git
+
+Everytime you commit your work you need to sign your commit so that everyone can know who is the author.To enable future commits to auto enable DCO(developer certificate of Origin)follow the steps
+1. Open a terminal and install ruby
+   sudo apt install ruby
+2. Install dco
+   sudo gem install dco
+3. Go to the directory where you have cloned the project
+   cd /your-directory
+4. Enable dco for all future commits for this project
+   dco enable
+Now you do not need to specifically sign your commits with any other commands the commits will be autosigned
+
