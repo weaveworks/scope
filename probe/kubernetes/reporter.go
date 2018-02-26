@@ -23,6 +23,8 @@ const (
 	Replicas           = report.KubernetesReplicas
 	DesiredReplicas    = report.KubernetesDesiredReplicas
 	NodeType           = report.KubernetesNodeType
+	Type               = report.KubernetesType
+	Ports              = report.KubernetesPorts
 )
 
 // Exposed for testing
@@ -44,6 +46,8 @@ var (
 		PublicIP:   {ID: PublicIP, Label: "Public IP", From: report.FromLatest, Datatype: report.IP, Priority: 4},
 		IP:         {ID: IP, Label: "Internal IP", From: report.FromLatest, Datatype: report.IP, Priority: 5},
 		report.Pod: {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
+		Type:       {ID: Type, Label: "Type", From: report.FromLatest, Priority: 7},
+		Ports:      {ID: Ports, Label: "Ports", From: report.FromLatest, Priority: 8},
 	}
 
 	ServiceMetricTemplates = PodMetricTemplates

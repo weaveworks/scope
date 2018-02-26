@@ -70,6 +70,8 @@ const (
 	KubernetesLastScheduled        = "kubernetes_last_scheduled"
 	KubernetesActiveJobs           = "kubernetes_active_jobs"
 	KubernetesStateDeleted         = "deleted"
+	KubernetesType                 = "kubernetes_type"
+	KubernetesPorts                = "kubernetes_ports"
 	// probe/awsecs
 	ECSCluster             = "ecs_cluster"
 	ECSCreatedAt           = "ecs_created_at"
@@ -173,6 +175,8 @@ var commonKeys = map[string]string{
 	KubernetesSuspended:            KubernetesSuspended,
 	KubernetesLastScheduled:        KubernetesLastScheduled,
 	KubernetesActiveJobs:           KubernetesActiveJobs,
+	KubernetesType:                 KubernetesType,
+	KubernetesPorts:                KubernetesPorts,
 
 	ECSCluster:             ECSCluster,
 	ECSCreatedAt:           ECSCreatedAt,
