@@ -23,10 +23,6 @@ func (m *mockProcessTree) GetParent(pid int) (int, error) {
 	return parent, nil
 }
 
-func (m *mockProcessTree) GetChildren(int) ([]int, error) {
-	panic("Not implemented")
-}
-
 func TestTagger(t *testing.T) {
 	mtime.NowForce(time.Now())
 	defer mtime.NowReset()
