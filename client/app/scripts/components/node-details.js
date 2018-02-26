@@ -31,18 +31,12 @@ function getTruncationText(count) {
 }
 
 class NodeDetails extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-    this.handleClickClose = this.handleClickClose.bind(this);
-    this.handleShowTopologyForNode = this.handleShowTopologyForNode.bind(this);
-  }
-
-  handleClickClose(ev) {
+  handleClickClose = (ev) => {
     ev.preventDefault();
     this.props.clickCloseDetails(this.props.nodeId);
   }
 
-  handleShowTopologyForNode(ev) {
+  handleShowTopologyForNode = (ev) => {
     ev.preventDefault();
     this.props.clickShowTopologyForNode(this.props.topologyId, this.props.nodeId);
   }
@@ -176,7 +170,7 @@ class NodeDetails extends React.Component {
     };
 
     return (
-      <div className="node-details">
+      <div className="tour-step-anchor node-details">
         {tools}
         <div className="node-details-header" style={styles.header}>
           <div className="node-details-header-wrapper">
@@ -192,7 +186,7 @@ class NodeDetails extends React.Component {
         </div>
 
         {showControls &&
-          <div className="node-details-controls-wrapper" style={styles.controls}>
+          <div className="tour-step-anchor node-details-controls-wrapper" style={styles.controls}>
             <NodeDetailsControls
               nodeId={this.props.nodeId}
               controls={details.controls}

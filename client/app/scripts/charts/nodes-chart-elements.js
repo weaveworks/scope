@@ -251,7 +251,7 @@ class NodesChartElements extends React.Component {
     ]).flatten(true);
 
     return (
-      <g className="nodes-chart-elements">
+      <g className="tour-step-anchor nodes-chart-elements">
         {orderedElements.map(this.renderElement)}
       </g>
     );
