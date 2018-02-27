@@ -16,10 +16,17 @@ This will start a webpack-dev-server that serves the UI and proxies API requests
 
 This will start a webpack-dev-server that serves the UI from the UI build container and proxies API requests to the weavescope container.
 
+## Getting Started (using minikube)
+
+- You need to install this [YAML](https://github.com/openebs/scope/blob/master/scope_k8s.yaml "scope_k8s.yaml") in your minikube cluster
+- Develop: `BACKEND_HOST=<cluster-ip> BACKEND_PORT=32160 yarn start` and then open `http://localhost:4042`
+
+This will start a webpack-dev-server that serves the UI and proxies API requests to the minikube cluster.
+
 ## Test Production Bundles Locally
 
 - Build: `yarn run build`, output will be in `build/`
-- Serve files from `build/`: `BACKEND_HOST=<dockerhost-ip> yarn run start-production` and then open `http://localhost:4042/`
+- Serve files from `build/`: `BACKEND_HOST=<cluster-ip> BACKEND_PORT=32160 yarn run start-production` and then open `http://localhost:4042/`
 
 ## Coding
 
