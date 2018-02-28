@@ -6,8 +6,10 @@ import { debounce } from 'lodash';
 
 import { ThemeProvider } from 'styled-components';
 import theme from 'weaveworks-ui-components/lib/theme';
-
-import Logo from './logo';
+import Img from 'react-image';
+import LogoMaya from '../../images/mulescope_2-01.svg';
+import LogoBot from '../../images/Mayaview-01.svg';
+// import Logo from './logo';
 import Footer from './footer';
 import Sidebar from './sidebar';
 import HelpPanel from './help-panel';
@@ -16,6 +18,9 @@ import TroubleshootingMenu from './troubleshooting-menu';
 import Search from './search';
 import Status from './status';
 import Topologies from './topologies';
+// -----------------
+// import PVC from './pvc'; Line 218
+// ----------------
 import TopologyOptions from './topology-options';
 import Overlay from './overlay';
 import { getApiDetails } from '../utils/web-api-utils';
@@ -57,7 +62,16 @@ import {
 } from '../constants/key-codes';
 
 const keyPressLog = debug('scope:app-key-press');
-
+const logoStyle = {
+  paddingTop: '20px',
+  width: '100%',
+  height: '100%',
+};
+const botStyle = {
+  paddingTop: '20px',
+  width: '50%',
+  // height: '100%',
+};
 
 class App extends React.Component {
   constructor(props, context) {
@@ -182,7 +196,7 @@ class App extends React.Component {
     } = this.props;
 
     const className = classNames('scope-app', { 'time-travel-open': timeTravelSupported });
-    const isIframe = window !== window.top;
+    // const isIframe = window !== window.top;
 
     return (
       <ThemeProvider theme={theme}>
@@ -204,11 +218,8 @@ class App extends React.Component {
 
             <div className="selectors">
               <div className="logo">
-                {!isIframe &&
-                  <svg width="100%" height="100%" viewBox="0 0 1089 217">
-                    <Logo />
-                  </svg>
-                }
+                <Img src={LogoMaya} style={logoStyle} />
+                <Img src={LogoBot} style={botStyle} />
               </div>
               <Search />
               <Topologies />
