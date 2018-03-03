@@ -57,3 +57,13 @@ boot2docker, replace localhost with the output of `boot2docker ip`.)
 
 **YAML** for installing Scope on [Kubernetes](https://github.com/openebs/scope/blob/master/scope_k8s.yaml), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos) or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 
+### Build MayaView
+
+```
+cd scope
+
+make realclean
+
+make
+
+```
