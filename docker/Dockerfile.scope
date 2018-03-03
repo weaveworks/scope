@@ -1,4 +1,4 @@
-FROM weaveworks/cloud-agent
+FROM openebs/cloud-agent
 RUN apk add --update runit && \
 	rm -rf /var/cache/apk/*
 ADD ./demo.json /
