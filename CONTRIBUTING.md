@@ -21,6 +21,8 @@ Steps to generate Pull Request
 3. After that create a clone of the project from you forked repository bytyping the command :
  git clone https://github.com/USER-NAME/scope.git        (Forked repo)
 4. After cloning ,work on the project make some neccesary changes or add new things and submit that changes to your forked project.
+	git add -A (To add all changes made since clone)
+	git commit -m "Commit message here" (Sign your work in the commit message. For more details refer below)
 	git push https://github.com/USER-NAME/scope.git master
    5.Now click on New pull request.Now the authors of the project will review your changes and if valid then pull request will be accepted.Great!! you contributed to Scope.
 Raising Issues
