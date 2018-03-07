@@ -1,13 +1,12 @@
-# Weave Scope - Troubleshooting & Monitoring for Docker & Kubernetes
+# OpenEBS Scope - Troubleshooting & Monitoring for Docker & Kubernetes
 
 [![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master)
 [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope)
 [![Go Report Card](https://goreportcard.com/badge/github.com/weaveworks/scope)](https://goreportcard.com/report/github.com/weaveworks/scope)
-[![Slack Status](https://slack.weave.works/badge.svg)](https://slack.weave.works)
 [![Docker Pulls](https://img.shields.io/docker/pulls/weaveworks/scope.svg?maxAge=604800)](https://hub.docker.com/r/weaveworks/scope/)
 [![GoDoc](https://godoc.org/github.com/weaveworks/scope?status.svg)](https://godoc.org/github.com/weaveworks/scope)
 
-Weave Scope automatically generates a map of your application, enabling you to
+OpenEBS Scope automatically generates a map of your application, enabling you to
 intuitively understand, monitor, and control your containerized, microservices based application.
 
 ### Understand your Docker containers in real-time
@@ -32,6 +31,13 @@ Interact with your containers directly: pause, restart and stop containers. Laun
 
 Add custom details or interactions for your hosts, containers and/or processes by creating Scope plugins; or just choose from some that others have already written at the Github [Weaveworks Scope Plugins](https://github.com/weaveworks-plugins/) organization.
 
+### Help and shortcuts for UI
+
+<img src="imgs/scope-help.png" width="200" alt="Shortcuts for using scope" align="right">
+
+By clicking on `?` in the UI (bottom right) or pressing `Shift+?` , you can access the `Help` toolkit. It tells you how to use the search bar of Scope and also different shortcuts are defined like how to switch to different views or activating the search field via keyboard and more. 
+
+
 ## <a name="getting-started"></a>Getting started
 
 ```
@@ -44,18 +50,35 @@ This script downloads and runs a recent Scope image from Docker Hub.
 Now, open your web browser to **http://localhost:4040**. (If you're using
 boot2docker, replace localhost with the output of `boot2docker ip`.)
 
-For instructions on installing Scope on [Kubernetes](https://www.weave.works/docs/scope/latest/installing/#k8s), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos) or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
+### For Hosted UI 
 
-## <a name="help"></a>Getting help
+- `cd client`
+- [Read more](https://github.com/openebs/scope/blob/master/client/README.md). 
 
-If you have any questions about, feedback for or problems with Scope:
+**YAML** for installing Scope on [Kubernetes](https://github.com/openebs/scope/blob/master/scope_k8s.yaml), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos) or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 
-- Read [the Weave Scope docs](https://www.weave.works/docs/scope/latest/introducing/).
-- Invite yourself to the <a href="https://weaveworks.github.io/community-slack/" target="_blank"> #weave-community </a> slack channel.
-- Ask a question on the <a href="https://weave-community.slack.com/messages/general/"> #weave-community</a> slack channel.
-- Join the <a href="https://www.meetup.com/pro/Weave/"> Weave User Group </a> and get invited to online talks, hands-on training and meetups in your area.
-- Send an email to <a href="mailto:weave-users@weave.works">weave-users@weave.works</a>
-- <a href="https://github.com/weaveworks/scope/issues/new">File an issue.</a>
 
-Your feedback is always welcome!
 
+Signing commits in git
+
+Everytime you commit your work you need to sign your commit so that everyone can know who is the author.To enable future commits to auto enable DCO(developer certificate of Origin)follow the steps
+1. Open a terminal and install ruby
+   sudo apt install ruby
+2. Install dco
+   sudo gem install dco
+3. Go to the directory where you have cloned the project
+   cd /your-directory
+4. Enable dco for all future commits for this project
+   dco enable
+Now you do not need to specifically sign your commits with any other commands the commits will be autosigned
+
+### Build MayaView
+
+```
+cd scope
+
+make realclean
+
+make
+
+```
