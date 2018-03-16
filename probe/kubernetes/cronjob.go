@@ -26,7 +26,7 @@ const (
 type CronJob interface {
 	Meta
 	Selectors() ([]labels.Selector, error)
-	GetNode() report.Node
+	GetNode(probeID string) report.Node
 }
 
 type cronJob struct {
@@ -74,12 +74,13 @@ func (cj *cronJob) Selectors() ([]labels.Selector, error) {
 	return selectors, nil
 }
 
-func (cj *cronJob) GetNode() report.Node {
+func (cj *cronJob) GetNode(probeID string) report.Node {
 	latest := map[string]string{
-		NodeType:   "CronJob",
-		Schedule:   cj.Spec.Schedule,
-		Suspended:  fmt.Sprint(cj.Spec.Suspend != nil && *cj.Spec.Suspend), // nil -> false
-		ActiveJobs: fmt.Sprint(len(cj.jobs)),
+		NodeType:              "CronJob",
+		Schedule:              cj.Spec.Schedule,
+		Suspended:             fmt.Sprint(cj.Spec.Suspend != nil && *cj.Spec.Suspend), // nil -> false
+		ActiveJobs:            fmt.Sprint(len(cj.jobs)),
+		report.ControlProbeID: probeID,
 	}
 	if cj.Status.LastScheduleTime != nil {
 		latest[LastScheduled] = cj.Status.LastScheduleTime.Format(time.RFC3339Nano)
