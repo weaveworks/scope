@@ -250,7 +250,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	deploymentTopology, deployments, err := r.deploymentTopology(r.probeID)
+	deploymentTopology, deployments, err := r.deploymentTopology()
 	if err != nil {
 		return result, err
 	}
@@ -319,7 +319,7 @@ func (r *Reporter) hostTopology(services []Service) report.Topology {
 	return t
 }
 
-func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deployment, error) {
+func (r *Reporter) deploymentTopology() (report.Topology, []Deployment, error) {
 	var (
 		result = report.MakeTopology().
 			WithMetadataTemplates(DeploymentMetadataTemplates).
@@ -330,7 +330,7 @@ func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deploy
 	result.Controls.AddControls(ScalingControls)
 
 	err := r.client.WalkDeployments(func(d Deployment) error {
-		result.AddNode(d.GetNode(probeID))
+		result.AddNode(d.GetNode(r.probeID))
 		deployments = append(deployments, d)
 		return nil
 	})
