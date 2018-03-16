@@ -235,9 +235,6 @@ func (r *Reporter) Report() (report.Report, error) {
 		return result, err
 	}
 	hostTopology := r.hostTopology(services)
-	if err != nil {
-		return result, err
-	}
 	daemonSetTopology, daemonSets, err := r.daemonSetTopology()
 	if err != nil {
 		return result, err
