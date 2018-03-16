@@ -235,9 +235,6 @@ func (r *Reporter) Report() (report.Report, error) {
 		return result, err
 	}
 	hostTopology := r.hostTopology(services)
-	if err != nil {
-		return result, err
-	}
 	daemonSetTopology, daemonSets, err := r.daemonSetTopology()
 	if err != nil {
 		return result, err
@@ -250,7 +247,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	deploymentTopology, deployments, err := r.deploymentTopology(r.probeID)
+	deploymentTopology, deployments, err := r.deploymentTopology()
 	if err != nil {
 		return result, err
 	}
@@ -282,7 +279,7 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 		services = []Service{}
 	)
 	err := r.client.WalkServices(func(s Service) error {
-		result.AddNode(s.GetNode())
+		result.AddNode(s.GetNode(r.probeID))
 		services = append(services, s)
 		return nil
 	})
@@ -319,7 +316,7 @@ func (r *Reporter) hostTopology(services []Service) report.Topology {
 	return t
 }
 
-func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deployment, error) {
+func (r *Reporter) deploymentTopology() (report.Topology, []Deployment, error) {
 	var (
 		result = report.MakeTopology().
 			WithMetadataTemplates(DeploymentMetadataTemplates).
@@ -330,7 +327,7 @@ func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deploy
 	result.Controls.AddControls(ScalingControls)
 
 	err := r.client.WalkDeployments(func(d Deployment) error {
-		result.AddNode(d.GetNode(probeID))
+		result.AddNode(d.GetNode(r.probeID))
 		deployments = append(deployments, d)
 		return nil
 	})
@@ -344,7 +341,7 @@ func (r *Reporter) daemonSetTopology() (report.Topology, []DaemonSet, error) {
 		WithMetricTemplates(DaemonSetMetricTemplates).
 		WithTableTemplates(TableTemplates)
 	err := r.client.WalkDaemonSets(func(d DaemonSet) error {
-		result.AddNode(d.GetNode())
+		result.AddNode(d.GetNode(r.probeID))
 		daemonSets = append(daemonSets, d)
 		return nil
 	})
@@ -358,7 +355,7 @@ func (r *Reporter) statefulSetTopology() (report.Topology, []StatefulSet, error)
 		WithMetricTemplates(StatefulSetMetricTemplates).
 		WithTableTemplates(TableTemplates)
 	err := r.client.WalkStatefulSets(func(s StatefulSet) error {
-		result.AddNode(s.GetNode())
+		result.AddNode(s.GetNode(r.probeID))
 		statefulSets = append(statefulSets, s)
 		return nil
 	})
@@ -372,7 +369,7 @@ func (r *Reporter) cronJobTopology() (report.Topology, []CronJob, error) {
 		WithMetricTemplates(CronJobMetricTemplates).
 		WithTableTemplates(TableTemplates)
 	err := r.client.WalkCronJobs(func(c CronJob) error {
-		result.AddNode(c.GetNode())
+		result.AddNode(c.GetNode(r.probeID))
 		cronJobs = append(cronJobs, c)
 		return nil
 	})

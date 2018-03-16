@@ -17,7 +17,7 @@ const (
 // Service represents a Kubernetes service
 type Service interface {
 	Meta
-	GetNode() report.Node
+	GetNode(probeID string) report.Node
 	Selector() labels.Selector
 	ClusterIP() string
 }
@@ -47,10 +47,11 @@ func servicePortString(p apiv1.ServicePort) string {
 	return fmt.Sprintf("%d:%d/%s", p.Port, p.NodePort, p.Protocol)
 }
 
-func (s *service) GetNode() report.Node {
+func (s *service) GetNode(probeID string) report.Node {
 	latest := map[string]string{
 		IP:   s.Spec.ClusterIP,
 		Type: string(s.Spec.Type),
+		report.ControlProbeID: probeID,
 	}
 	if s.Spec.LoadBalancerIP != "" {
 		latest[PublicIP] = s.Spec.LoadBalancerIP
