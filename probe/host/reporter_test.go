@@ -57,7 +57,7 @@ func TestReporter(t *testing.T) {
 	host.GetLocalNetworks = func() ([]*net.IPNet, error) { return []*net.IPNet{ipnet}, nil }
 
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, err := host.NewReporter(hostID, hostname, "", "", nil, hr).Report()
+	rpt, err := host.NewReporter(hostID, hostname, "probe-id", "", nil, hr).Report()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,6 +77,7 @@ func TestReporter(t *testing.T) {
 		{host.OS, runtime.GOOS},
 		{host.Uptime, uptime},
 		{host.KernelVersion, kernel},
+		{report.ControlProbeID, "probe-id"},
 	} {
 		if have, ok := node.Latest.Lookup(tuple.key); !ok || have != tuple.want {
 			t.Errorf("Expected %s %q, got %q", tuple.key, tuple.want, have)

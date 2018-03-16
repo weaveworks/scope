@@ -194,7 +194,7 @@ func TestReporter(t *testing.T) {
 	pod2ID := report.MakePodNodeID(pod2UID)
 	serviceID := report.MakeServiceNodeID(serviceUID)
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", "foo", nil, hr, "", 0).Report()
+	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "probe-id", "foo", nil, hr, "", 0).Report()
 
 	// Reporter should have added the following pods
 	for _, pod := range []struct {
@@ -246,6 +246,31 @@ func TestReporter(t *testing.T) {
 			}
 		}
 	}
+
+	// Reporter should allow controls for k8s topologies by providing a probe ID
+	{
+		for _, topologyName := range []string{
+			report.Container,
+			report.CronJob,
+			report.DaemonSet,
+			report.Deployment,
+			report.Pod,
+			report.Service,
+			report.StatefulSet,
+		} {
+			topology, ok := rpt.Topology(topologyName)
+			if !ok {
+				// TODO: this mock report doesn't have nodes for all the topologies yet, so don't fail for now.
+				// t.Errorf("Expected report to have nodes in topology %q, but none found", topology)
+			}
+			for _, n := range topology.Nodes {
+				if probeID, ok := n.Latest.Lookup(report.ControlProbeID); !ok || probeID != "probe-id" {
+					t.Errorf("Expected node %q to have probeID, but not found", n.ID)
+				}
+			}
+		}
+	}
+
 }
 
 func TestTagger(t *testing.T) {
