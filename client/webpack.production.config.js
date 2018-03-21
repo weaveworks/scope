@@ -7,6 +7,8 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
 
+const { themeColorsAsScss } = require('./webpack-common');
+
 const GLOBALS = {
   'process.env': {NODE_ENV: '"production"'}
 };
@@ -133,6 +135,7 @@ module.exports = {
             loader: 'sass-loader',
             options: {
               minimize: true,
+              data: themeColorsAsScss(),
               includePaths: [
                 path.resolve(__dirname, './node_modules/xterm'),
                 path.resolve(__dirname, './node_modules/font-awesome'),

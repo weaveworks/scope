@@ -5,6 +5,9 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const SassLintPlugin = require('sasslint-webpack-plugin');
 const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
+
+const { themeColorsAsScss } = require('./webpack-common');
+
 /**
  * This is the Webpack configuration file for local development.
  * It contains local-specific configuration which includes:
@@ -129,6 +132,7 @@ module.exports = {
           }, {
             loader: 'sass-loader',
             options: {
+              data: themeColorsAsScss(),
               includePaths: [
                 path.resolve(__dirname, './node_modules/xterm'),
                 path.resolve(__dirname, './node_modules/font-awesome'),
