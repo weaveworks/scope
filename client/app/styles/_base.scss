@@ -96,7 +96,7 @@ a {
 
 .overlay-wrapper {
   align-items: center;
-  background-color: fade-out($background-color, 0.1);
+  background-color: transparentize($background-color, 0.1);
   border-radius: 4px;
   color: $text-tertiary-color;
   display: flex;
@@ -527,7 +527,7 @@ a {
     }
 
     .match {
-      background-color: lighten(transparentize($color-weaveblue, 0.5), 30%);
+      background-color: transparentize($color-anakiwa, 0.5);
       border: 1px solid $color-weaveblue;
     }
   }
@@ -639,7 +639,7 @@ a {
       display: inline-block;
       margin: 1px;
       padding: 2px 4px;
-      background-color: fade-out($color-weaveblue, .9);
+      background-color: transparentize($color-weaveblue, 0.9);
     }
 
     &-label {
@@ -651,7 +651,7 @@ a {
   &-more {
     text-transform: uppercase;
     font-size: 0.7em;
-    color: darken($color-weaveblue, 10%);
+    color: $color-cerulean;
     margin-top: -2px;
   }
 }
@@ -1058,7 +1058,7 @@ a {
       line-height: 1.5;
 
       &:hover, &.selected {
-        background-color: lighten($background-color, 5%);
+        background-color: $color-white;
       }
 
       > * {
@@ -1207,7 +1207,7 @@ a {
 .details-wrapper .node-details-table {
   &-node {
     &:hover, &.selected {
-      background-color: lighten($background-color, 5%);
+      background-color: $color-white;
     }
   }
 }
@@ -1748,7 +1748,7 @@ a {
 }
 
 .search-item {
-  background-color: fade-out($color-weaveblue, .2);
+  background-color: transparentize($color-weaveblue, 0.2);
   border-radius: $border-radius / 2;
   margin: 1px 0 1px 1.5em;
   display: inline-block;

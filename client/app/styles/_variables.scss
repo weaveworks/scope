@@ -7,14 +7,14 @@ $mono-font: "Menlo", "DejaVu Sans Mono", "Liberation Mono", monospace;
 $base-ease: ease-in-out;
 
 $background-color: $color-lightgray;
-$background-lighter-color: lighten($color-lightgray, 8%);
-$background-darker-color: darken($color-lightgray, 16%);
-$background-darker-secondary-color: darken($color-lightgray, 8%);
+$background-lighter-color: $color-white;
+$background-darker-color: $color-silver;
+$background-darker-secondary-color: $color-mercury;
 $background-dark-color: $color-primary-charcoal;
-$text-color: lighten($color-primary-charcoal, 5%);
-$text-secondary-color: lighten($color-primary-charcoal, 20%);
-$text-tertiary-color: lighten($color-primary-charcoal, 35%);
-$border-light-color: lighten($color-primary-charcoal, 65%);
+$text-color: $color-gunpowder;
+$text-secondary-color: $color-comet;
+$text-tertiary-color: $color-lavender;
+$border-light-color: $color-mischka;
 $text-darker-color: $color-primary-charcoal;
 
 $details-window-width: 420px;
@@ -51,4 +51,4 @@ $timeline-height: 55px;
 
 /* specific elements */
 $body-background-color: $color-lightgray;
-$label-background-color: fade-out($color-lightgray, .3);
+$label-background-color: transparentize($color-lightgray, 0.3);
