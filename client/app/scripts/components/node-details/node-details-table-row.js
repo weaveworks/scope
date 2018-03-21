@@ -59,7 +59,8 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null, t
                 rel="noopener noreferrer"
                 target="_blank"
                 className="node-details-table-node-link"
-                href={value}>{value}</a> :
+                href={value}>{value}
+              </a> :
               value}
           </td>
         );
