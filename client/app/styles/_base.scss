@@ -66,11 +66,11 @@ a {
 }
 
 .shadow-2 {
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16), 0 3px 10px rgba(0, 0, 0, 0.23);
+  box-shadow: 0 3px 10px transparentize($color-black, 0.84), 0 3px 10px transparentize($color-black, 0.77);
 }
 
 .shadow-3 {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 6px 10px rgba(0, 0, 0, 0.23);
+  box-shadow: 0 10px 30px transparentize($color-black, 0.81), 0 6px 10px transparentize($color-black, 0.77);
 }
 
 .overlay {
@@ -172,7 +172,7 @@ a {
 
   * {
     box-sizing: border-box;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -webkit-tap-highlight-color: transparent;
   }
   *:before,
   *:after {
@@ -527,7 +527,7 @@ a {
     }
 
     .match {
-      background-color: lighten(rgba(0, 210, 255, 0.5), 30%);
+      background-color: lighten(transparentize($color-weaveblue, 0.5), 30%);
       border: 1px solid $color-weaveblue;
     }
   }
@@ -671,7 +671,7 @@ a {
 .node-details {
   height: 100%;
   width: $details-window-width;
-  background-color: rgba(255, 255, 255, 0.86);
+  background-color: transparentize($color-white, 0.14);
   display: flex;
   flex-flow: column;
   margin-bottom: 12px;
@@ -708,7 +708,7 @@ a {
       font-size: 110%;
       color: $color-white;
       cursor: pointer;
-      border: 1px solid rgba(255, 255, 255, 0);
+      border: 1px solid transparent;
       border-radius: 4px;
 
       span {
@@ -724,13 +724,13 @@ a {
       }
 
       &:hover {
-        border-color: rgba(255, 255, 255, 0.6);
+        border-color: transparentize($color-white, 0.4);
       }
     }
   }
 
   .match {
-    background-color: fade-out($color-weaveblue, .7);
+    background-color: transparentize($color-weaveblue, 0.7);
     border: 1px solid $color-weaveblue;
   }
 
@@ -1170,10 +1170,10 @@ a {
   &-metric-box {
     @extend .palable;
     cursor: pointer;
-    fill: rgba(150, 150, 150, 0.4);
+    fill: transparentize($color-dusty-gray, 0.6);
 
     &-info {
-      background-color: rgba(white, 0.6);
+      background-color: transparentize($color-white, 0.4);
       border-radius: 2px;
       cursor: inherit;
       padding: 5px;
@@ -1188,7 +1188,7 @@ a {
   }
 
   &-layer-topology {
-    background-color: rgba(#eee, 0.95);
+    background-color: transparentize($color-gallery, 0.05);
     border: 1px solid $color-silver;
     color: $text-tertiary-color;
     font-size: 16px;
@@ -1219,14 +1219,14 @@ a {
   font-size: 110%;
   color: $text-secondary-color;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0);
+  border: 1px solid transparent;
   border-radius: 10%;
   &:hover {
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: transparentize($color-white, 0.4);
   }
   &-pending, &-pending:hover {
     opacity: 0.2;
-    border-color: rgba(255, 255, 255, 0);
+    border-color: transparent;
     cursor: not-allowed;
   }
 }
@@ -1290,7 +1290,7 @@ a {
         color: $color-white;
         cursor: pointer;
         opacity: 0.7;
-        border: 1px solid rgba(255, 255, 255, 0);
+        border: 1px solid transparent;
         border-radius: 10%;
 
         font-size: 0.8em;
@@ -1299,7 +1299,7 @@ a {
 
         &:hover {
           opacity: 1;
-          border-color: rgba(255, 255, 255, 0.6);
+          border-color: transparentize($color-white, 0.4);
         }
       }
 
@@ -1828,11 +1828,11 @@ a {
       font-size: 110%;
       color: $color-lavender;
       cursor: pointer;
-      border: 1px solid rgba(131, 131, 172, 0);
+      border: 1px solid transparent;
       border-radius: 10%;
 
       &:hover {
-        border-color: rgba(131, 131, 172, 0.6);
+        border-color: transparentize($color-lavender, 0.4);
       }
     }
 
@@ -1850,7 +1850,7 @@ a {
       font-size: 125%;
       color: $color-lavender;
       padding: 4px 0;
-      border-bottom: 1px solid rgba(131, 131, 172, 0.1);
+      border-bottom: 1px solid transparentize($color-lavender, 0.9);
     }
 
     h3 {
@@ -2061,10 +2061,6 @@ a {
       background-color: $color-link-water;
       border: 1px solid $color-weaveblue;
     }
-
-    tbody tr.selected {
-      // box-shadow: 0 4px 2px -2px rgba(0, 0, 0, 0.16);
-    }
   }
 
   .scroll-body {
@@ -2095,7 +2091,7 @@ a {
     }
 
     thead {
-      box-shadow: 0 4px 2px -2px rgba(0, 0, 0, 0.16);
+      box-shadow: 0 4px 2px -2px transparentize($color-black, 0.84);
       border-bottom: 1px solid $color-gray;
     }
 
