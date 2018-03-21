@@ -1070,6 +1070,7 @@ a {
         text-decoration: underline;
         cursor: pointer;
         opacity: $link-opacity-default;
+        color: $text-color;
       }
 
       &-value, &-metric {
