@@ -1,16 +1,16 @@
 @import "variables";
-$background-color: lighten($primary-color, 75%);
-$background-lighter-color: lighten($background-color, 10%);
-$background-darker-color: darken($background-color, 20%);
-$background-darker-secondary-color: darken($background-color, 15%);
-$background-dark-color: $primary-color;
-$text-color: black;
-$text-secondary-color: lighten($text-color, 10%);
-$text-tertiary-color: lighten($text-color, 20%);
-$border-light-color: lighten($text-color, 50%);
+
+$background-color: lighten($color-primary-charcoal, 75%);
+$background-lighter-color: lighten($color-primary-charcoal, 85%);
+$background-darker-color: lighten($color-primary-charcoal, 55%);
+$background-darker-secondary-color: lighten($color-primary-charcoal, 60%);
+$background-dark-color: $color-primary-charcoal;
+$text-color: $color-black;
+$text-secondary-color: lighten($color-black, 10%);
+$text-tertiary-color: lighten($color-black, 20%);
+$border-light-color: lighten($color-black, 50%);
 $text-darker-color: darken($text-color, 20%);
-$white: white;
-$edge-color: black;
+$edge-color: $color-black;
 
 $node-elements-in-background-opacity: 0.4;
 
@@ -30,9 +30,9 @@ $btn-opacity-disabled: 0.4;
 
 $link-opacity-default: 1;
 
-$search-border-color: $background-darker-color;
+$search-border-color: lighten($color-primary-charcoal, 55%);
 $search-border-width: 2px;
 
 /* specific elements */
-$body-background-color: #FFF;
-$label-background-color: #FFF;
+$body-background-color: $color-white;
+$label-background-color: $color-white;

@@ -358,7 +358,7 @@ a {
     }
 
     &-matched {
-      border-color: $weave-blue;
+      border-color: $color-weaveblue;
     }
 
   }
@@ -528,7 +528,7 @@ a {
 
     .match {
       background-color: lighten(rgba(0, 210, 255, 0.5), 30%);
-      border: 1px solid $weave-blue;
+      border: 1px solid $color-weaveblue;
     }
   }
 
@@ -539,7 +539,7 @@ a {
     }
     .shadow {
       fill: none;
-      stroke: $weave-blue;
+      stroke: $color-weaveblue;
       stroke-opacity: 0;
     }
     &.highlighted {
@@ -566,7 +566,7 @@ a {
 
     .highlight-border {
       fill: none;
-      stroke: $weave-blue;
+      stroke: $color-weaveblue;
       stroke-width: 0.7 + $node-highlight-stroke-width * 2;
       stroke-opacity: $node-highlight-stroke-opacity;
     }
@@ -639,7 +639,7 @@ a {
       display: inline-block;
       margin: 1px;
       padding: 2px 4px;
-      background-color: fade-out($weave-blue, .9);
+      background-color: fade-out($color-weaveblue, .9);
     }
 
     &-label {
@@ -651,7 +651,7 @@ a {
   &-more {
     text-transform: uppercase;
     font-size: 0.7em;
-    color: darken($weave-blue, 10%);
+    color: darken($color-weaveblue, 10%);
     margin-top: -2px;
   }
 }
@@ -706,7 +706,7 @@ a {
       padding: 4px 5px;
       margin-left: 2px;
       font-size: 110%;
-      color: $white;
+      color: $color-white;
       cursor: pointer;
       border: 1px solid rgba(255, 255, 255, 0);
       border-radius: 4px;
@@ -730,8 +730,8 @@ a {
   }
 
   .match {
-    background-color: fade-out($weave-blue, .7);
-    border: 1px solid $weave-blue;
+    background-color: fade-out($color-weaveblue, .7);
+    border: 1px solid $color-weaveblue;
   }
 
   &-header {
@@ -763,7 +763,7 @@ a {
   &-relatives {
     margin-top: 4px;
     font-size: 120%;
-    color: $white;
+    color: $color-white;
 
     &-link {
       @extend .truncate;
@@ -798,12 +798,12 @@ a {
     }
 
     .node-control-button {
-      color: $white;
+      color: $color-white;
     }
 
     &-spinner {
       @extend .hideable;
-      color: $white;
+      color: $color-white;
       margin-left: 8px;
     }
 
@@ -813,7 +813,7 @@ a {
       width: 55%;
       padding-top: 6px;
       text-align: left;
-      color: $white;
+      color: $color-white;
 
       &-icon {
         @extend .blinkable;
@@ -1134,7 +1134,7 @@ a {
     }
 
     .new-image {
-      color: $success-green;
+      color: $color-japanese-laurel;
     }
 
     a {
@@ -1266,7 +1266,7 @@ a {
 
   &-header {
     @extend .truncate;
-    color: $white;
+    color: $color-white;
     height: $terminal-header-height;
     padding: 8px 24px;
     background-color: $text-color;
@@ -1287,7 +1287,7 @@ a {
       &-item, &-item-icon {
         @extend .palable;
         padding: 4px 5px;
-        color: $white;
+        color: $color-white;
         cursor: pointer;
         opacity: 0.7;
         border: 1px solid rgba(255, 255, 255, 0);
@@ -1343,7 +1343,7 @@ a {
 
     &-message {
       margin: 4px 0;
-      color: $white;
+      color: $color-white;
     }
 
     .link {
@@ -1742,13 +1742,13 @@ a {
   }
 
   &-matched &-input {
-    border-color: $weave-blue;
+    border-color: $color-weaveblue;
   }
 
 }
 
 .search-item {
-  background-color: fade-out($weave-blue, .2);
+  background-color: fade-out($color-weaveblue, .2);
   border-radius: $border-radius / 2;
   margin: 1px 0 1px 1.5em;
   display: inline-block;
@@ -1805,7 +1805,7 @@ a {
   }
 
   &-header {
-    background-color: $weave-blue;
+    background-color: $color-weaveblue;
     padding: 12px 24px;
     color: white;
 
@@ -2059,7 +2059,7 @@ a {
     // visual and row locking logic that happens on hover.
     tbody tr.selected, tbody tr.focused {
       background-color: #d7ecf5;
-      border: 1px solid $weave-blue;
+      border: 1px solid $color-weaveblue;
     }
 
     tbody tr.selected {
@@ -2121,7 +2121,7 @@ a {
 
   &-content {
     position: relative;
-    background-color: $white;
+    background-color: $color-white;
     padding: 20px;
     @extend .shadow-2;
     z-index: 2048;
@@ -2140,7 +2140,7 @@ a {
   }
 
   button, a {
-    color: $weave-charcoal-blue;
+    color: $color-primary-charcoal;
 
     &:hover {
       color: $text-color;
