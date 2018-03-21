@@ -94,7 +94,10 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /node_modules|vendor/,
-        loader: 'eslint-loader',
+        loaders: [
+          'eslint-loader',
+          'stylelint-custom-processor-loader',
+        ],
         enforce: 'pre'
       },
       {
