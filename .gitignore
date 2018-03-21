@@ -54,6 +54,7 @@ extras/copyreport/copyreport
 *sublime-project
 *sublime-workspace
 *npm-debug.log
+*yarn-error.log
 app/static.go
 vendor/github.com/ugorji/go/codec/codecgen/bin/*
 *.codecgen.go

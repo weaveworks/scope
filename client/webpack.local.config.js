@@ -3,6 +3,7 @@ const autoprefixer = require('autoprefixer');
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const SassLintPlugin = require('sasslint-webpack-plugin');
 const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
 /**
  * This is the Webpack configuration file for local development.
@@ -58,6 +59,10 @@ module.exports = {
     new webpack.NoEmitOnErrorsPlugin(),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
     new ExtractTextPlugin('style-[name]-[chunkhash].css'),
+    new SassLintPlugin({
+      context: 'app/styles',
+      ignorePlugins: ['html-webpack-plugin', 'extract-text-webpack-plugin'],
+    }),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'terminal-app'],
       template: 'app/html/index.html',
