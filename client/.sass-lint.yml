@@ -1,0 +1,7 @@
+options:
+  merge-default-rules: false
+files:
+  include: 'app/styles/*.s+(a|c)ss'
+rules:
+  no-important: 1
+  no-color-literals: 2

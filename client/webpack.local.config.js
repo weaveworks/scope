@@ -3,7 +3,11 @@ const autoprefixer = require('autoprefixer');
 const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const SassLintPlugin = require('sasslint-webpack-plugin');
 const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
+
+const { themeColorsAsScss } = require('./webpack-common');
+
 /**
  * This is the Webpack configuration file for local development.
  * It contains local-specific configuration which includes:
@@ -58,6 +62,10 @@ module.exports = {
     new webpack.NoEmitOnErrorsPlugin(),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
     new ExtractTextPlugin('style-[name]-[chunkhash].css'),
+    new SassLintPlugin({
+      context: 'app/styles',
+      ignorePlugins: ['html-webpack-plugin', 'extract-text-webpack-plugin'],
+    }),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'terminal-app'],
       template: 'app/html/index.html',
@@ -86,7 +94,10 @@ module.exports = {
       {
         test: /\.js$/,
         exclude: /node_modules|vendor/,
-        loader: 'eslint-loader',
+        loaders: [
+          'eslint-loader',
+          'stylelint-custom-processor-loader',
+        ],
         enforce: 'pre'
       },
       {
@@ -124,6 +135,7 @@ module.exports = {
           }, {
             loader: 'sass-loader',
             options: {
+              data: themeColorsAsScss(),
               includePaths: [
                 path.resolve(__dirname, './node_modules/xterm'),
                 path.resolve(__dirname, './node_modules/font-awesome'),

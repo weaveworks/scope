@@ -1,28 +1,19 @@
 $fa-font-path: "~font-awesome/fonts";
-/* weave company colours */
-$weave-gray-blue: rgb(85,105,145);
-$weave-blue: rgb(0,210,255);
-$weave-orange: rgb(255,75,25);
-$weave-charcoal-blue: rgb(50,50,75); // #32324B
-$success-green: green;
-
 $base-font: "Roboto", sans-serif;
 $mono-font: "Menlo", "DejaVu Sans Mono", "Liberation Mono", monospace;
 
 $base-ease: ease-in-out;
-$primary-color: $weave-charcoal-blue;
 
-$background-color: #f8f8f8;
-$background-lighter-color: lighten($background-color, 8%);
-$background-darker-color: darken($background-color, 16%);
-$background-darker-secondary-color: darken($background-color, 8%);
-$background-dark-color: $primary-color;
-$text-color: lighten($primary-color, 5%);
-$text-secondary-color: lighten($text-color, 15%);
-$text-tertiary-color: lighten($text-color, 30%);
-$border-light-color: lighten($text-color, 60%);
-$text-darker-color: $primary-color;
-$white: $background-lighter-color;
+$background-color: $color-lightgray;
+$background-lighter-color: $color-white;
+$background-darker-color: $color-silver;
+$background-darker-secondary-color: $color-mercury;
+$background-dark-color: $color-primary-charcoal;
+$text-color: $color-gunpowder;
+$text-secondary-color: $color-comet;
+$text-tertiary-color: $color-lavender;
+$border-light-color: $color-mischka;
+$text-darker-color: $color-primary-charcoal;
 
 $details-window-width: 420px;
 $details-window-padding-left: 30px;
@@ -42,7 +33,7 @@ $node-text-scale: 2;
 $edge-highlight-opacity: 0.1;
 $edge-opacity-blurred: 0.2;
 $edge-opacity: 0.5;
-$edge-color: rgb(110, 110, 156);
+$edge-color: $color-kimberly-dark;
 
 $btn-opacity-default: 0.7;
 $btn-opacity-hover: 1;
@@ -57,5 +48,5 @@ $search-border-width: 1px;
 $timeline-height: 55px;
 
 /* specific elements */
-$body-background-color: $background-color;
-$label-background-color: fade-out($background-color, .3);
+$body-background-color: $color-lightgray;
+$label-background-color: transparentize($color-lightgray, 0.3);
