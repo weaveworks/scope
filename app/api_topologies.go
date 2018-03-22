@@ -60,6 +60,17 @@ func namespaceFilters(namespaces []string, noneLabel string) APITopologyOptionGr
 	return options
 }
 
+// labelFilters generates a label selector option group based on the given labels
+func labelFilters(labels []string, noneLabel string) APITopologyOptionGroup {
+	options := APITopologyOptionGroup{ID: "label", Default: "", SelectType: "union", NoneLabel: noneLabel}
+	for _, label := range labels {
+		options.Options = append(options.Options, APITopologyOption{
+			Value: label, Label: label, filter: render.IsLabel(label), filterPseudo: false,
+		})
+	}
+	return options
+}
+
 // updateFilters updates the available filters based on the current report.
 func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
 	topologies = updateKubeFilters(rpt, topologies)
@@ -107,15 +118,51 @@ func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITop
 		return topologies
 	}
 	sort.Strings(ns)
+
+	labels := map[string][]string{
+		podsID:            getLabelsForNodes(rpt.Pod.Nodes),
+		servicesID:        getLabelsForNodes(rpt.Service.Nodes),
+		kubeControllersID: getLabelsForNodes(report.Nodes{}.Merge(rpt.Deployment.Nodes).Merge(rpt.DaemonSet.Nodes).Merge(rpt.StatefulSet.Nodes).Merge(rpt.CronJob.Nodes)),
+	}
+
 	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
 	for i, t := range topologies {
 		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == kubeControllersID {
 			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
 				namespaceFilters(ns, "All Namespaces"),
 			})
+			topologies[i] = addLabelFilters(topologies[i], labels)
 		}
 	}
 	return topologies
+}
+
+// getLabelsForNodes returns k8s labels for given nodes
+func getLabelsForNodes(nodes report.Nodes) []string {
+	labelsMap := make(map[string]bool)
+	for _, n := range nodes {
+		n.Latest.ForEach(func(key string, _ time.Time, value string) {
+			if strings.HasPrefix(key, kubernetes.LabelPrefix) {
+				k := strings.TrimPrefix(key, kubernetes.LabelPrefix)
+				// do not include k8s default labels
+				if k != "controller-revision-hash" && k != "pod-template-generation" && k != "pod-template-hash" {
+					item := fmt.Sprintf("%s=%s", k, value)
+					_, exist := labelsMap[item]
+					if !exist {
+						labelsMap[item] = true
+					}
+				}
+			}
+		})
+	}
+	labels := make([]string, len(labelsMap))
+	i := 0
+	for k := range labelsMap {
+		labels[i] = k
+		i++
+	}
+	sort.Strings(labels)
+	return labels
 }
 
 // mergeTopologyFilters recursively merges in new options on a topology description
@@ -126,6 +173,20 @@ func mergeTopologyFilters(t APITopologyDesc, options []APITopologyOptionGroup) A
 		newSubTopologies[i] = mergeTopologyFilters(sub, options)
 	}
 	t.SubTopologies = newSubTopologies
+	return t
+}
+
+// addLabelFilters recursively adds in label filters on a topology description according to topology id
+func addLabelFilters(t APITopologyDesc, labels map[string][]string) APITopologyDesc {
+	v, exist := labels[t.id]
+	if exist {
+		t.Options = append(append([]APITopologyOptionGroup{}, t.Options...), labelFilters(v, "All Labels"))
+		newSubTopologies := make([]APITopologyDesc, len(t.SubTopologies))
+		for i, sub := range t.SubTopologies {
+			newSubTopologies[i] = addLabelFilters(sub, labels)
+		}
+		t.SubTopologies = newSubTopologies
+	}
 	return t
 }
 

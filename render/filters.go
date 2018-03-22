@@ -1,6 +1,7 @@
 package render
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/weaveworks/common/mtime"
@@ -289,6 +290,20 @@ func IsNamespace(namespace string) FilterFunc {
 			return true
 		}
 		return namespace == gotNamespace
+	}
+}
+
+// IsLabel checks if the node has specific k8s label
+func IsLabel(label string) FilterFunc {
+	return func(n report.Node) bool {
+		s := strings.Split(label, "=")
+		labelKey, labelValue := s[0], s[1]
+		gotApp := ""
+		lookupKey := fmt.Sprintf("%s%s", kubernetes.LabelPrefix, labelKey)
+		if value, ok := n.Latest.Lookup(lookupKey); ok {
+			gotApp = value
+		}
+		return labelValue == gotApp
 	}
 }
 
