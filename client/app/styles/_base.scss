@@ -1325,6 +1325,23 @@ a {
 .topology-option {
   font-size: $font-size-small;
 
+  &-wrapper {
+    display: inline-flex;
+    flex-wrap: wrap;
+    overflow: hidden;
+    max-height: 27px;
+    transition: max-height 0.5s 0s $base-ease;
+    &:hover {
+      height: auto;
+      max-height: calc((13px * 1.5 + 3px + 3px) * 8); // expand to display 8 rows
+      overflow: auto;
+      transition: max-height 0.5s 0s $base-ease;
+    }
+    .topology-option-action {
+      flex: 1 1 auto;
+      text-align: center;
+    }
+  }
   &-action {
     &-selected {
       cursor: default;
@@ -1390,6 +1407,7 @@ a {
   border-radius: $border-radius-soft;
   border: 1px solid transparent;
   pointer-events: none;
+  max-width: 50%;
 }
 
 .sidebar-gridmode {
