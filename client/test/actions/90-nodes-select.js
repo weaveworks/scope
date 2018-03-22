@@ -36,7 +36,6 @@ function deselectNode(browser) {
 
 
 module.exports = function(cfg) {
-
   var startUrl = 'http://' + cfg.host + '/';
   // cfg - The configuration object. args, from the example above.
   return function(browser) {
@@ -44,6 +43,7 @@ module.exports = function(cfg) {
     // More info about wd at https://github.com/admc/wd
     return browser.get('http://' + cfg.host + '/')
       .then(function() {
+        debugger; cfg;
         debug('starting run ' + cfg.run);
         return browser.sleep(2000);
       })

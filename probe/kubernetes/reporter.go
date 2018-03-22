@@ -31,14 +31,14 @@ var (
 		IP:               {ID: IP, Label: "IP", From: report.FromLatest, Priority: 3},
 		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: "number", Priority: 4},
 		Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 5},
-		Created:          {ID: Created, Label: "Created", From: report.FromLatest, Priority: 6},
+		Created:          {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 6},
 	}
 
 	PodMetricTemplates = docker.ContainerMetricTemplates
 
 	ServiceMetadataTemplates = report.MetadataTemplates{
 		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:    {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
+		Created:    {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
 		PublicIP:   {ID: PublicIP, Label: "Public IP", From: report.FromLatest, Priority: 4},
 		IP:         {ID: IP, Label: "Internal IP", From: report.FromLatest, Priority: 5},
 		report.Pod: {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
@@ -48,7 +48,7 @@ var (
 
 	DeploymentMetadataTemplates = report.MetadataTemplates{
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
+		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
 		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
 		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
 		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
@@ -59,7 +59,7 @@ var (
 
 	ReplicaSetMetadataTemplates = report.MetadataTemplates{
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
+		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: "datetime", Priority: 3},
 		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
 		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
 		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},

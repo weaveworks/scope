@@ -85,7 +85,11 @@
     "lint": "eslint app",
     "clean": "rm build/app.js",
     "noprobe": "../scope stop && ../scope launch --no-probe --app.window 8760h",
-    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d"
+    "loadreport": "npm run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d",
+    "perf:setup" : "npm run build && docker-compose build scope && docker-compose up -d && sleep 10",
+    "perf:run" : " . test/run-jankie.sh",
+    "perf:cleanup" : "docker-compose down",
+    "perf" : "npm run perf:setup && npm run perf:run && npm run perf:cleanup"
   },
   "jest": {
     "scriptPreprocessor": "<rootDir>/node_modules/babel-jest",

@@ -1,4 +1,5 @@
 node_modules
 build/
 coverage/
-test/*png
+*.png
+test/perfjankie/data

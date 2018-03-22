@@ -2,6 +2,7 @@ import React from 'react';
 import filesize from 'filesize';
 import d3 from 'd3';
 import LCP from 'lcp';
+import moment from 'moment';
 
 const formatLargeValue = d3.format('s');
 
@@ -72,4 +73,23 @@ export function slugify(label) {
 
 export function longestCommonPrefix(strArr) {
   return (new LCP(strArr)).lcp();
+}
+
+// Formats metadata values. Add a key to the `formatters` obj
+// that matches the `dataType` of the field. You must return an Object
+// with the keys `value` and `title` defined.
+export function formatDataType(field) {
+  const formatters = {
+    datetime(dateString) {
+      const date = moment(new Date(dateString));
+      return {
+        value: date.fromNow(),
+        title: date.format('YYYY-MM-DD HH:mm:ss.SSS')
+      };
+    }
+  };
+  const format = formatters[field.dataType];
+  return format
+    ? format(field.value)
+    : {value: field.value, title: field.value};
 }

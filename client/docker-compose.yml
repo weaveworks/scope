@@ -1,0 +1,45 @@
+version : '2'
+services:
+  scope:
+    container_name: 'scope-perf'
+    build: '.'
+    ports:
+      - '4042:4042'
+    command: ['npm', 'run', 'start-production']
+    environment:
+      - BACKEND_HOST=probe
+    links:
+      - probe
+    volumes:
+      - ./build:/home/weave/build
+  probe:
+    container_name: 'scope-perf-probe'
+    image: weaveworks/scope
+    pid: "host"
+    privileged: true
+    labels:
+      - "works.weave.role=system"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:rw"
+    command:
+      - "--probe.docker"
+      - "true"
+  selenium:
+    container_name: 'selenium'
+    image: 'selenium/standalone-chrome:3.0.0-dubnium'
+    links:
+      - scope
+    ports:
+      - '4444:4444'
+    environment:
+      - TZ='US/Pacific'
+    volumes:
+      - /dev/shm:/dev/shm
+  couchdb:
+    container_name: 'couchdb'
+    image: 'couchdb:1.6'
+    ports:
+      - '5984:5984'
+    volumes:
+      - ./test/perfjankie/data:/usr/local/var/lib/couchdb
+      - ./test/perfjankie/local.ini:/usr/local/etc/couchdb/local.ini

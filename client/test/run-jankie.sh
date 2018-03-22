@@ -36,5 +36,4 @@ echo "Testing $COMMIT on $DATE"
 # make SUDO= -C ../..
 # ../../scope launch
 # sleep 5
-
-COMMIT="$COMMIT" DATE=$DATE HOST=$HOST DEBUG=scope* node ./perfjankie/main.js
+COMMIT="$COMMIT" DATE=$DATE HOST=$HOST DEBUG=scope* node test/perfjankie/main.js
