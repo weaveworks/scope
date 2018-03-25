@@ -259,6 +259,7 @@ func (r Report) Copy() Report {
 		DNS:      r.DNS.Copy(),
 		Sampling: r.Sampling,
 		Window:   r.Window,
+		Shortcut: r.Shortcut,
 		Plugins:  r.Plugins.Copy(),
 		ID:       fmt.Sprintf("%d", rand.Int63()),
 	}
