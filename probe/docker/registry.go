@@ -373,11 +373,9 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 	}
 
 	// Trigger anyone watching for updates
-	if err != nil {
-		node := c.GetNode()
-		for _, f := range r.watchers {
-			f(node)
-		}
+	node := c.GetNode()
+	for _, f := range r.watchers {
+		f(node)
 	}
 
 	// And finally, ensure we gather stats for it
