@@ -5,8 +5,7 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const SassLintPlugin = require('sasslint-webpack-plugin');
 const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
-
-const { themeColorsAsScss } = require('./webpack-common');
+const { themeColorsAsScss } = require('weaveworks-ui-components/lib/theme');
 
 /**
  * This is the Webpack configuration file for local development.

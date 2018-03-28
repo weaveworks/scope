@@ -7591,9 +7591,9 @@ wd@^0.4.0:
     underscore.string "~3.0.3"
     vargs "~0.1.0"
 
-weaveworks-ui-components@0.4.42:
-  version "0.4.42"
-  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.4.42.tgz#e2e4f22ebe9ac3f8c562e41a79b2cf29f628fbe6"
+weaveworks-ui-components@0.4.49:
+  version "0.4.49"
+  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.4.49.tgz#3aa1c014d6a93d2f3bc370b84268f7289bdfc0fb"
   dependencies:
     classnames "2.2.5"
     d3-drag "1.2.1"
