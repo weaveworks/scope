@@ -43,7 +43,7 @@
     "reselect": "3.0.1",
     "reselect-map": "1.0.3",
     "styled-components": "2.2.4",
-    "weaveworks-ui-components": "0.4.42",
+    "weaveworks-ui-components": "0.4.48",
     "whatwg-fetch": "2.0.3",
     "xterm": "2.9.2"
   },

@@ -6,8 +6,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
-
-const { themeColorsAsScss } = require('./webpack-common');
+const { themeColorsAsScss } = require('weaveworks-ui-components/lib/theme');
 
 const GLOBALS = {
   'process.env': {NODE_ENV: '"production"'}
