@@ -56,8 +56,6 @@ const (
 
 	LabelPrefix = "docker_label_"
 	EnvPrefix   = "docker_env_"
-
-	stopTimeout = 10
 )
 
 // These 'constants' are used for node states.
