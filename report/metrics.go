@@ -199,23 +199,6 @@ func (m Metric) Merge(other Metric) Metric {
 	}
 }
 
-// Div returns a new copy of the metric, with each value divided by n.
-func (m Metric) Div(n float64) Metric {
-	samplesOut := make([]Sample, len(m.Samples), len(m.Samples))
-
-	for i := range m.Samples {
-		samplesOut[i].Value = m.Samples[i].Value / n
-		samplesOut[i].Timestamp = m.Samples[i].Timestamp
-	}
-	return Metric{
-		Samples: samplesOut,
-		Max:     m.Max / n,
-		Min:     m.Min / n,
-		First:   m.First,
-		Last:    m.Last,
-	}
-}
-
 // LastSample obtains the last sample of the metric
 func (m Metric) LastSample() (Sample, bool) {
 	if m.Samples == nil {
