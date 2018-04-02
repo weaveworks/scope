@@ -69,7 +69,6 @@ const (
 	KubernetesSuspended            = "kubernetes_suspended"
 	KubernetesLastScheduled        = "kubernetes_last_scheduled"
 	KubernetesActiveJobs           = "kubernetes_active_jobs"
-	KubernetesStateDeleted         = "deleted"
 	KubernetesType                 = "kubernetes_type"
 	KubernetesPorts                = "kubernetes_ports"
 	// probe/awsecs

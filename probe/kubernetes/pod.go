@@ -13,9 +13,10 @@ const (
 	State           = report.KubernetesState
 	IsInHostNetwork = report.KubernetesIsInHostNetwork
 	RestartCount    = report.KubernetesRestartCount
-
-	StateDeleted = "deleted"
 )
+
+// Pod states we handle specially
+const StateDeleted = "deleted"
 
 // Pod represents a Kubernetes pod
 type Pod interface {

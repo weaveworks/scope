@@ -454,7 +454,7 @@ func (r Report) upgradeNamespaces() Report {
 	namespaces := map[string]struct{}{}
 	for _, t := range []Topology{r.Pod, r.Service, r.Deployment, r.DaemonSet, r.StatefulSet, r.CronJob} {
 		for _, n := range t.Nodes {
-			if state, ok := n.Latest.Lookup(KubernetesState); ok && state == KubernetesStateDeleted {
+			if state, ok := n.Latest.Lookup(KubernetesState); ok && state == "deleted" {
 				continue
 			}
 			if namespace, ok := n.Latest.Lookup(KubernetesNamespace); ok {
