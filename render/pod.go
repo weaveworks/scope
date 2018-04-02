@@ -46,7 +46,7 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 	MakeFilter(
 		func(n report.Node) bool {
 			state, ok := n.Latest.Lookup(kubernetes.State)
-			return (!ok || state != kubernetes.StateDeleted)
+			return !ok || !(state == kubernetes.StateDeleted || state == kubernetes.StateFailed)
 		},
 		MakeReduce(
 			PropagateSingleMetrics(report.Container,

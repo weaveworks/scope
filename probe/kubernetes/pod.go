@@ -16,7 +16,10 @@ const (
 )
 
 // Pod states we handle specially
-const StateDeleted = "deleted"
+const (
+	StateDeleted = "deleted"
+	StateFailed  = "Failed"
+)
 
 // Pod represents a Kubernetes pod
 type Pod interface {
