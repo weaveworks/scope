@@ -52,8 +52,6 @@ const (
 	CPUUsageInKernelmode = "docker_cpu_usage_in_kernelmode"
 	CPUSystemCPUUsage    = "docker_cpu_system_cpu_usage"
 
-	NetworkModeHost = "host"
-
 	LabelPrefix = "docker_label_"
 	EnvPrefix   = "docker_env_"
 )

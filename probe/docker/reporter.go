@@ -236,7 +236,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 			networkMode, ok := container.NetworkMode()
 			if ok && strings.HasPrefix(networkMode, "container:") {
 				return networkInfo(networkMode[10:])
-			} else if ok && networkMode == NetworkModeHost {
+			} else if ok && networkMode == "host" {
 				return hostNetworkInfo, true
 			}
 
