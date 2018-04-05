@@ -22,6 +22,16 @@ export const UNIT_CLOUD_PATH = 'M-1.25 0.233Q-1.25 0.44-1.104 0.587-0.957 0.733-
   + '0.003-0.036 0.003-0.056 0-0.276-0.196-0.472-0.195-0.195-0.471-0.195-0.206 0-0.373 0.115-0.167'
   + ' 0.115-0.244 0.299-0.091-0.081-0.216-0.081-0.138 0-0.236 0.098-0.098 0.098-0.098 0.236 0 0.098'
   + ' 0.054 0.179-0.168 0.039-0.278 0.175-0.109 0.136-0.109 0.312z';
+
+// Node Cylinder shape
+export const UNIT_CYLINDER_PATH = 'm -1 -1.25' // this line is responsible for adjusting place of the shape with respect to dot
+  + 'a 1 0.4 0 0 0 2 0'
+  + 'm -2 0'
+  + 'v 1.8'
+  + 'a 1 0.4 0 0 0 2 0'
+  + 'v -1.8'
+  + 'a 1 0.4 0 0 0 -2 0';
+
 // NOTE: This value represents the node unit radius (in pixels). Since zooming is
 // controlled at the top level now, this renormalization would be obsolete (i.e.
 // value 1 could be used instead), if it wasn't for the following factors:
