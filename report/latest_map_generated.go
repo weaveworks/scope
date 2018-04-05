@@ -149,7 +149,7 @@ func (m StringLatestMap) ForEach(fn func(k string, timestamp time.Time, v string
 func (m StringLatestMap) String() string {
 	buf := bytes.NewBufferString("{")
 	for _, val := range m {
-		fmt.Fprintf(buf, "%s: %s,\n", val.key, val)
+		fmt.Fprintf(buf, "%s: %v,\n", val.key, val)
 	}
 	fmt.Fprintf(buf, "}")
 	return buf.String()
@@ -371,7 +371,7 @@ func (m NodeControlDataLatestMap) ForEach(fn func(k string, timestamp time.Time,
 func (m NodeControlDataLatestMap) String() string {
 	buf := bytes.NewBufferString("{")
 	for _, val := range m {
-		fmt.Fprintf(buf, "%s: %s,\n", val.key, val)
+		fmt.Fprintf(buf, "%s: %v,\n", val.key, val)
 	}
 	fmt.Fprintf(buf, "}")
 	return buf.String()
