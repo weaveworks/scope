@@ -35,6 +35,7 @@ const (
 	ecsTasksID             = "ecs-tasks"
 	ecsServicesID          = "ecs-services"
 	swarmServicesID        = "swarm-services"
+	persistentVolumesID    = "persistent-volumes"
 )
 
 var (
@@ -246,6 +247,14 @@ func MakeRegistry() *Registry {
 			renderer:    render.PodServiceRenderer,
 			Name:        "services",
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
+			HideIfEmpty: true,
+		},
+		APITopologyDesc{
+			id:          persistentVolumesID,
+			parent:      podsID,
+			renderer:    render.PersistentVolumeRenderer,
+			Name:        "persistent volumes",
+			Options:     []APITopologyOptionGroup{},
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{

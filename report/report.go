@@ -12,33 +12,37 @@ import (
 
 // Names of the various topologies.
 const (
-	Endpoint       = "endpoint"
-	Process        = "process"
-	Container      = "container"
-	Pod            = "pod"
-	Service        = "service"
-	Deployment     = "deployment"
-	ReplicaSet     = "replica_set"
-	DaemonSet      = "daemon_set"
-	StatefulSet    = "stateful_set"
-	CronJob        = "cron_job"
-	Namespace      = "namespace"
-	ContainerImage = "container_image"
-	Host           = "host"
-	Overlay        = "overlay"
-	ECSService     = "ecs_service"
-	ECSTask        = "ecs_task"
-	SwarmService   = "swarm_service"
+	Endpoint              = "endpoint"
+	Process               = "process"
+	Container             = "container"
+	Pod                   = "pod"
+	Service               = "service"
+	Deployment            = "deployment"
+	ReplicaSet            = "replica_set"
+	DaemonSet             = "daemon_set"
+	StatefulSet           = "stateful_set"
+	CronJob               = "cron_job"
+	Namespace             = "namespace"
+	ContainerImage        = "container_image"
+	Host                  = "host"
+	Overlay               = "overlay"
+	ECSService            = "ecs_service"
+	ECSTask               = "ecs_task"
+	SwarmService          = "swarm_service"
+	PersistentVolume      = "persistent_volume"
+	PersistentVolumeClaim = "persistent_volume_claim"
 
 	// Shapes used for different nodes
-	Circle   = "circle"
-	Triangle = "triangle"
-	Square   = "square"
-	Pentagon = "pentagon"
-	Hexagon  = "hexagon"
-	Heptagon = "heptagon"
-	Octagon  = "octagon"
-	Cloud    = "cloud"
+	Circle         = "circle"
+	Triangle       = "triangle"
+	Square         = "square"
+	Pentagon       = "pentagon"
+	Hexagon        = "hexagon"
+	Heptagon       = "heptagon"
+	Octagon        = "octagon"
+	Cloud          = "cloud"
+	Cylinder       = "cylinder"
+	DottedCylinder = "dottedcylinder"
 
 	// Used when counting the number of containers
 	ContainersKey = "containers"
@@ -63,6 +67,8 @@ var topologyNames = []string{
 	ECSTask,
 	ECSService,
 	SwarmService,
+	PersistentVolume,
+	PersistentVolumeClaim,
 }
 
 // Report is the core data type. It's produced by probes, and consumed and
@@ -150,6 +156,14 @@ type Report struct {
 	// overlaid on the infrastructure. The information is scraped by polling
 	// their status endpoints. Edges are present.
 	Overlay Topology
+
+	// Persistent Volume nodes represent all Kubernetes Persistent Volumes running on hosts running probes.
+	// Metadata is limited for now, more to come later.
+	PersistentVolume Topology
+
+	// Persistent Volume Claim nodes represent all Kubernetes Persistent Volume Claims running on hosts running probes.
+	// Metadata is limited for now, more to come later.
+	PersistentVolumeClaim Topology
 
 	DNS DNSRecords
 
@@ -243,6 +257,14 @@ func MakeReport() Report {
 		SwarmService: MakeTopology().
 			WithShape(Heptagon).
 			WithLabel("service", "services"),
+
+		PersistentVolume: MakeTopology().
+			WithShape(Cylinder).
+			WithLabel("persistent volume", "persistent volumes"),
+
+		PersistentVolumeClaim: MakeTopology().
+			WithShape(DottedCylinder).
+			WithLabel("persistent volume claim", "persistent volume claims"),
 
 		DNS: DNSRecords{},
 
@@ -345,6 +367,10 @@ func (r *Report) topology(name string) *Topology {
 		return &r.ECSService
 	case SwarmService:
 		return &r.SwarmService
+	case PersistentVolume:
+		return &r.PersistentVolume
+	case PersistentVolumeClaim:
+		return &r.PersistentVolumeClaim
 	}
 	return nil
 }
