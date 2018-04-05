@@ -3,6 +3,7 @@ package expected
 import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -16,6 +17,7 @@ var (
 	heptagon = "heptagon"
 	hexagon  = "hexagon"
 	cloud    = "cloud"
+	cylinder = "cylinder"
 
 	// Helper to make a report.node with some common options
 	node = func(topology string) func(id string, adjacent ...string) report.Node {
@@ -37,6 +39,8 @@ var (
 	pod                   = node(report.Pod)
 	service               = node(report.Service)
 	hostNode              = node(report.Host)
+	persistentVolume      = node(report.PersistentVolume)
+	persistentVolumeClaim = node(report.PersistentVolumeClaim)
 
 	UnknownPseudoNode1ID = render.MakePseudoNodeID(fixture.UnknownClient1IP)
 	UnknownPseudoNode2ID = render.MakePseudoNodeID(fixture.UnknownClient3IP)
@@ -322,6 +326,28 @@ var (
 		// UnknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerHostNodeID),
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerHostNodeID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
+	}
+
+	RenderedPersistentVolume = report.Nodes{
+		fixture.PersistentVolumeClaimNodeID: persistentVolumeClaim(fixture.PersistentVolumeClaimNodeID, fixture.PersistentVolumeNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:             "pvc-6124",
+				kubernetes.Namespace:        "ping",
+				kubernetes.Status:           "bound",
+				kubernetes.VolumeName:       "pongvolume",
+				kubernetes.AccessModes:      "ReadWriteOnce",
+				kubernetes.StorageClassName: "standard",
+			}).WithChild(report.MakeNode(fixture.PersistentVolumeNodeID).WithTopology(report.PersistentVolume)),
+
+		fixture.PersistentVolumeNodeID: persistentVolume(fixture.PersistentVolumeNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:             "pongvolume",
+				kubernetes.Namespace:        "ping",
+				kubernetes.Status:           "bound",
+				kubernetes.VolumeClaim:      "pvc-6124",
+				kubernetes.AccessModes:      "ReadWriteOnce",
+				kubernetes.StorageClassName: "standard",
+			}),
 	}
 )
 

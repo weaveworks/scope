@@ -93,14 +93,18 @@ var (
 	ClientContainerImageName   = "image/client"
 	ServerContainerImageName   = "image/server"
 
-	KubernetesNamespace = "ping"
-	ClientPodUID        = "5d4c3b2a1"
-	ServerPodUID        = "i9h8g7f6e"
-	ClientPodNodeID     = report.MakePodNodeID(ClientPodUID)
-	ServerPodNodeID     = report.MakePodNodeID(ServerPodUID)
-	ServiceName         = "pongservice"
-	ServiceUID          = "service1234"
-	ServiceNodeID       = report.MakeServiceNodeID(ServiceUID)
+	KubernetesNamespace         = "ping"
+	ClientPodUID                = "5d4c3b2a1"
+	ServerPodUID                = "i9h8g7f6e"
+	ClientPodNodeID             = report.MakePodNodeID(ClientPodUID)
+	ServerPodNodeID             = report.MakePodNodeID(ServerPodUID)
+	ServiceName                 = "pongservice"
+	ServiceUID                  = "service1234"
+	ServiceNodeID               = report.MakeServiceNodeID(ServiceUID)
+	PersistentVolumeUID         = "pv1234"
+	PersistentVolumeNodeID      = report.MakePersistentVolumeNodeID(PersistentVolumeUID)
+	PersistentVolumeClaimUID    = "pvc1234"
+	PersistentVolumeClaimNodeID = report.MakePersistentVolumeClaimNodeID(PersistentVolumeClaimUID)
 
 	ClientProcess1CPUMetric    = report.MakeSingletonMetric(Now.Add(-1*time.Second), 0.01)
 	ClientProcess1MemoryMetric = report.MakeSingletonMetric(Now.Add(-2*time.Second), 0.02)
@@ -348,6 +352,36 @@ var (
 					WithTopology(report.Service),
 			},
 		}.WithShape(report.Heptagon).WithLabel("service", "services"),
+		PersistentVolumeClaim: report.Topology{
+			Nodes: report.Nodes{
+				PersistentVolumeClaimNodeID: report.MakeNodeWith(
+
+					PersistentVolumeClaimNodeID, map[string]string{
+						kubernetes.Name:             "pvc-6124",
+						kubernetes.Namespace:        "ping",
+						kubernetes.Status:           "bound",
+						kubernetes.VolumeName:       "pongvolume",
+						kubernetes.AccessModes:      "ReadWriteOnce",
+						kubernetes.StorageClassName: "standard",
+					}).
+					WithTopology(report.PersistentVolumeClaim),
+			},
+		}.WithShape(report.Cylinder).WithLabel("persistent volume claim", "persistent volume claims"),
+		PersistentVolume: report.Topology{
+			Nodes: report.Nodes{
+				PersistentVolumeNodeID: report.MakeNodeWith(
+
+					PersistentVolumeNodeID, map[string]string{
+						kubernetes.Name:             "pongvolume",
+						kubernetes.Namespace:        "ping",
+						kubernetes.Status:           "bound",
+						kubernetes.VolumeClaim:      "pvc-6124",
+						kubernetes.AccessModes:      "ReadWriteOnce",
+						kubernetes.StorageClassName: "standard",
+					}).
+					WithTopology(report.PersistentVolume),
+			},
+		}.WithShape(report.Cylinder).WithLabel("persistent volume", "persistent volumes"),
 		Sampling: report.Sampling{
 			Count: 1024,
 			Total: 4096,

@@ -8,11 +8,17 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
+const (
+	// BetaStorageClassAnnotation is the annotation for default storage class
+	BetaStorageClassAnnotation = "volume.beta.kubernetes.io/storage-class"
+)
+
 // PersistentVolumeClaim represents kubernetes PVC interface
 type PersistentVolumeClaim interface {
 	Meta
 	Selector() (labels.Selector, error)
 	GetNode(probeID string) report.Node
+	GetStorageClass() string
 }
 
 // persistentVolumeClaim represents kubernetes Persistent Volume Claims
@@ -26,15 +32,30 @@ func NewPersistentVolumeClaim(p *apiv1.PersistentVolumeClaim) PersistentVolumeCl
 	return &persistentVolumeClaim{PersistentVolumeClaim: p, Meta: meta{p.ObjectMeta}}
 }
 
+// GetStorageClass will fetch storage class name from given PVC
+func (p *persistentVolumeClaim) GetStorageClass() string {
+
+	// Use Beta storage class annotation first
+	storageClassName := p.Annotations[BetaStorageClassAnnotation]
+	if storageClassName != "" {
+		return storageClassName
+	}
+	if p.Spec.StorageClassName != nil {
+		storageClassName = *p.Spec.StorageClassName
+	}
+
+	return storageClassName
+}
+
 // GetNode returns Persistent Volume Claim as Node
 func (p *persistentVolumeClaim) GetNode(probeID string) report.Node {
 	return p.MetaNode(report.MakePersistentVolumeClaimNodeID(p.UID())).WithLatests(map[string]string{
 		report.ControlProbeID: probeID,
 		NodeType:              "Persistent Volume Claim",
-		Namespace:             p.GetNamespace(),
 		Status:                string(p.Status.Phase),
 		VolumeName:            p.Spec.VolumeName,
 		AccessModes:           string(p.Spec.AccessModes[0]),
+		StorageClassName:      p.GetStorageClass(),
 	})
 }
 

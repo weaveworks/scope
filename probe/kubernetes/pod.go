@@ -75,12 +75,24 @@ func (p *pod) RestartCount() uint {
 	return count
 }
 
+func (p *pod) VolumeClaimName() string {
+	claimName := ""
+	for _, volume := range p.Spec.Volumes {
+		if volume.VolumeSource.PersistentVolumeClaim != nil {
+			claimName = volume.VolumeSource.PersistentVolumeClaim.ClaimName
+			break
+		}
+	}
+	return claimName
+}
+
 func (p *pod) GetNode(probeID string) report.Node {
 	latests := map[string]string{
 		State: p.State(),
 		IP:    p.Status.PodIP,
 		report.ControlProbeID: probeID,
 		RestartCount:          strconv.FormatUint(uint64(p.RestartCount()), 10),
+		VolumeClaim:           p.VolumeClaimName(),
 	}
 
 	if p.Pod.Spec.HostNetwork {
