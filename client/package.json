@@ -24,6 +24,7 @@
     "filter-invalid-dom-props": "2.0.0",
     "font-awesome": "4.7.0",
     "immutable": "3.8.2",
+    "json-stable-stringify": "1.0.1",
     "lcp": "1.1.0",
     "lodash": "4.17.4",
     "materialize-css": "0.98.1",
