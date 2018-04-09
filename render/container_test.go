@@ -43,7 +43,7 @@ type testcase struct {
 }
 
 func testMap(t *testing.T, f render.MapFunc, input testcase) {
-	if have := f(input.n); input.ok != (len(have) > 0) {
+	if have := f(input.n); input.ok != (have.ID != "") {
 		name := input.name
 		if name == "" {
 			name = fmt.Sprintf("%v", input.n)

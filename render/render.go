@@ -5,10 +5,10 @@ import (
 )
 
 // MapFunc is anything which can take an arbitrary Node and
-// return a set of other Nodes.
+// return another Node.
 //
-// If the output is empty, the node shall be omitted from the rendered topology.
-type MapFunc func(report.Node) report.Nodes
+// If the output ID is blank, the node shall be omitted from the rendered topology.
+type MapFunc func(report.Node) report.Node
 
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
@@ -107,7 +107,8 @@ func (m Map) Render(rpt report.Report) Nodes {
 
 	// Rewrite all the nodes according to the map function
 	for _, inRenderable := range input.Nodes {
-		for _, outRenderable := range m.MapFunc(inRenderable) {
+		outRenderable := m.MapFunc(inRenderable)
+		if outRenderable.ID != "" {
 			if existing, ok := output[outRenderable.ID]; ok {
 				outRenderable = outRenderable.Merge(existing)
 			}
