@@ -335,7 +335,6 @@ a {
 
   .topologies-item-main,
   .topologies-sub-item {
-    // border: 1px solid $background-darker-secondary-color;
     pointer-events: all;
 
     color: $text-secondary-color;
@@ -358,7 +357,7 @@ a {
     }
 
     &-matched {
-      border-color: $color-weaveblue;
+      border-color: $color-accent-blue;
     }
 
   }
@@ -527,8 +526,8 @@ a {
     }
 
     .match {
-      background-color: transparentize($color-anakiwa, 0.5);
-      border: 1px solid $color-weaveblue;
+      background-color: transparentize($color-accent-blue, 0.25);
+      border: 1px solid $color-accent-blue;
     }
   }
 
@@ -539,7 +538,7 @@ a {
     }
     .shadow {
       fill: none;
-      stroke: $color-weaveblue;
+      stroke: $color-accent-blue;
       stroke-opacity: 0;
     }
     &.highlighted {
@@ -566,7 +565,7 @@ a {
 
     .highlight-border {
       fill: none;
-      stroke: $color-weaveblue;
+      stroke: $color-accent-blue;
       stroke-width: 0.7 + $node-highlight-stroke-width * 2;
       stroke-opacity: $node-highlight-stroke-opacity;
     }
@@ -639,7 +638,7 @@ a {
       display: inline-block;
       margin: 1px;
       padding: 2px 4px;
-      background-color: transparentize($color-weaveblue, 0.9);
+      background-color: transparentize($color-accent-blue, 0.9);
     }
 
     &-label {
@@ -651,7 +650,7 @@ a {
   &-more {
     text-transform: uppercase;
     font-size: 0.7em;
-    color: $color-cerulean;
+    color: $color-turquoise;
     margin-top: -2px;
   }
 }
@@ -730,8 +729,8 @@ a {
   }
 
   .match {
-    background-color: transparentize($color-weaveblue, 0.7);
-    border: 1px solid $color-weaveblue;
+    background-color: transparentize($color-accent-blue, 0.7);
+    border: 1px solid $color-accent-blue;
   }
 
   &-header {
@@ -1743,13 +1742,13 @@ a {
   }
 
   &-matched &-input {
-    border-color: $color-weaveblue;
+    border-color: $color-accent-blue;
   }
 
 }
 
 .search-item {
-  background-color: transparentize($color-weaveblue, 0.2);
+  background-color: transparentize($color-accent-blue, 0.2);
   border-radius: $border-radius / 2;
   margin: 1px 0 1px 1.5em;
   display: inline-block;
@@ -1806,7 +1805,7 @@ a {
   }
 
   &-header {
-    background-color: $color-weaveblue;
+    background-color: $color-accent-blue;
     padding: 12px 24px;
     color: $color-white;
 
@@ -2060,7 +2059,7 @@ a {
     // visual and row locking logic that happens on hover.
     tbody tr.selected, tbody tr.focused {
       background-color: $color-link-water;
-      border: 1px solid $color-weaveblue;
+      border: 1px solid $color-accent-blue;
     }
   }
 
