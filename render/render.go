@@ -8,6 +8,7 @@ import (
 // return another Node.
 //
 // If the output ID is blank, the node shall be omitted from the rendered topology.
+// (we chose not to return an extra bool because it adds clutter)
 type MapFunc func(report.Node) report.Node
 
 // Renderer is something that can render a report to a set of Nodes.
