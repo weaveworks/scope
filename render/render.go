@@ -5,10 +5,11 @@ import (
 )
 
 // MapFunc is anything which can take an arbitrary Node and
-// return a set of other Nodes.
+// return another Node.
 //
-// If the output is empty, the node shall be omitted from the rendered topology.
-type MapFunc func(report.Node) report.Nodes
+// If the output ID is blank, the node shall be omitted from the rendered topology.
+// (we chose not to return an extra bool because it adds clutter)
+type MapFunc func(report.Node) report.Node
 
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
@@ -99,37 +100,19 @@ func MakeMap(f MapFunc, r Renderer) Renderer {
 // using a map function
 func (m Map) Render(rpt report.Report) Nodes {
 	var (
-		input       = m.Renderer.Render(rpt)
-		output      = report.Nodes{}
-		mapped      = map[string]report.IDList{} // input node ID -> output node IDs
-		adjacencies = map[string]report.IDList{} // output node ID -> input node Adjacencies
+		input  = m.Renderer.Render(rpt)
+		output = newJoinResults(nil)
 	)
 
 	// Rewrite all the nodes according to the map function
 	for _, inRenderable := range input.Nodes {
-		for _, outRenderable := range m.MapFunc(inRenderable) {
-			if existing, ok := output[outRenderable.ID]; ok {
-				outRenderable = outRenderable.Merge(existing)
-			}
-
-			output[outRenderable.ID] = outRenderable
-			mapped[inRenderable.ID] = mapped[inRenderable.ID].Add(outRenderable.ID)
-			adjacencies[outRenderable.ID] = adjacencies[outRenderable.ID].Merge(inRenderable.Adjacency)
+		outRenderable := m.MapFunc(inRenderable)
+		if outRenderable.ID != "" {
+			output.add(inRenderable.ID, outRenderable)
 		}
 	}
 
-	// Rewrite Adjacency for new node IDs.
-	for outNodeID, inAdjacency := range adjacencies {
-		outAdjacency := report.MakeIDList()
-		for _, inAdjacent := range inAdjacency {
-			outAdjacency = outAdjacency.Merge(mapped[inAdjacent])
-		}
-		outNode := output[outNodeID]
-		outNode.Adjacency = outAdjacency
-		output[outNodeID] = outNode
-	}
-
-	return Nodes{Nodes: output}
+	return output.result(input)
 }
 
 func propagateLatest(key string, from, to report.Node) report.Node {
@@ -182,6 +165,15 @@ func (ret *joinResults) mapChild(from, to string) {
 	} else {
 		ret.multi[from] = append(ret.multi[from], to)
 	}
+}
+
+// Add m into the results as a top-level node, mapped from original ID
+func (ret *joinResults) add(from string, m report.Node) {
+	if existing, ok := ret.nodes[m.ID]; ok {
+		m = m.Merge(existing)
+	}
+	ret.nodes[m.ID] = m
+	ret.mapChild(from, m.ID)
 }
 
 // Add m as a child of the node at id, creating a new result node in

@@ -50,16 +50,14 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 		},
 		MakeReduce(
 			PropagateSingleMetrics(report.Container,
-				MakeMap(
-					Map2Parent([]string{report.Pod}, UnmanagedID),
-					MakeFilter(
+				Map2Parent{topologies: []string{report.Pod}, noParentsPseudoID: UnmanagedID,
+					chainRenderer: MakeFilter(
 						ComposeFilterFuncs(
 							IsRunning,
 							Complement(isPauseContainer),
 						),
 						ContainerWithImageNameRenderer,
-					),
-				),
+					)},
 			),
 			ConnectionJoin(MapPod2IP, report.Pod),
 		),
@@ -101,10 +99,8 @@ func renderParents(childTopology string, parentTopologies []string, noParentsPse
 	return MakeReduce(append(
 		selectors,
 		PropagateSingleMetrics(childTopology,
-			MakeMap(
-				Map2Parent(parentTopologies, noParentsPseudoID),
-				childRenderer,
-			),
+			Map2Parent{topologies: parentTopologies, noParentsPseudoID: noParentsPseudoID,
+				chainRenderer: childRenderer},
 		),
 	)...)
 }
@@ -126,46 +122,52 @@ func MapPod2IP(m report.Node) []string {
 	return []string{report.MakeScopedEndpointNodeID("", ip, "")}
 }
 
-// Map2Parent returns a MapFunc which maps Nodes to some parent grouping.
-func Map2Parent(
+// Map2Parent is a Renderer which maps Nodes to some parent grouping.
+type Map2Parent struct {
+	// Renderer to chain from
+	chainRenderer Renderer
 	// The topology IDs to look for parents in
-	topologies []string,
+	topologies []string
 	// Either the ID prefix of the pseudo node to use for nodes without
 	// any parents in the group, eg. UnmanagedID, or "" to drop nodes without any parents.
-	noParentsPseudoID string,
-) MapFunc {
-	return func(n report.Node) report.Nodes {
+	noParentsPseudoID string
+}
+
+// Render implements Renderer
+func (m Map2Parent) Render(rpt report.Report) Nodes {
+	input := m.chainRenderer.Render(rpt)
+	ret := newJoinResults(nil)
+
+	for _, n := range input.Nodes {
 		// Uncontained becomes Unmanaged/whatever if noParentsPseudoID is set
-		if noParentsPseudoID != "" && strings.HasPrefix(n.ID, UncontainedIDPrefix) {
-			id := MakePseudoNodeID(noParentsPseudoID, n.ID[len(UncontainedIDPrefix):])
-			node := NewDerivedPseudoNode(id, n)
-			return report.Nodes{id: node}
+		if m.noParentsPseudoID != "" && strings.HasPrefix(n.ID, UncontainedIDPrefix) {
+			id := MakePseudoNodeID(m.noParentsPseudoID, n.ID[len(UncontainedIDPrefix):])
+			ret.addChildAndChildren(n, id, Pseudo)
+			continue
 		}
 
 		// Propagate all pseudo nodes
 		if n.Topology == Pseudo {
-			return report.Nodes{n.ID: n}
+			ret.passThrough(n)
+			continue
 		}
 
+		added := false
 		// For each topology, map to any parents we can find
-		result := report.Nodes{}
-		for _, topology := range topologies {
+		for _, topology := range m.topologies {
 			if groupIDs, ok := n.Parents.Lookup(topology); ok {
 				for _, id := range groupIDs {
-					node := NewDerivedNode(id, n).WithTopology(topology)
-					node.Counters = node.Counters.Add(n.Topology, 1)
-					result[id] = node
+					ret.addChildAndChildren(n, id, topology)
+					added = true
 				}
 			}
 		}
 
-		if len(result) == 0 && noParentsPseudoID != "" {
+		if !added && m.noParentsPseudoID != "" {
 			// Map to pseudo node
-			id := MakePseudoNodeID(noParentsPseudoID, report.ExtractHostID(n))
-			node := NewDerivedPseudoNode(id, n)
-			result[id] = node
+			id := MakePseudoNodeID(m.noParentsPseudoID, report.ExtractHostID(n))
+			ret.addChildAndChildren(n, id, Pseudo)
 		}
-
-		return result
 	}
+	return ret.result(input)
 }
