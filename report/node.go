@@ -39,8 +39,8 @@ func MakeNode(id string) Node {
 }
 
 // MakeNodeWith creates a new Node with the supplied map.
-func MakeNodeWith(id string, m map[string]string) Node {
-	return MakeNode(id).WithLatests(m)
+func MakeNodeWith(id string, m ...string) Node {
+	return MakeNode(id).WithLatests(m...)
 }
 
 // WithID returns a fresh copy of n, with ID changed.
@@ -70,12 +70,9 @@ func (n Node) After(other Node) bool {
 	return other.Topology < n.Topology || (other.Topology == n.Topology && other.ID < n.ID)
 }
 
-// WithLatests returns a fresh copy of n, with Metadata m merged in.
-func (n Node) WithLatests(m map[string]string) Node {
-	ts := mtime.Now()
-	for k, v := range m {
-		n.Latest = n.Latest.Set(k, ts, v)
-	}
+// WithLatests returns a fresh copy of n, with Metadata m (pairs of key,value) merged in.
+func (n Node) WithLatests(m ...string) Node {
+	n.Latest = n.Latest.SetMulti(mtime.Now(), m...)
 	return n
 }
 
