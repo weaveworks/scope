@@ -115,9 +115,9 @@ func TestRendererForTopologyWithFiltering(t *testing.T) {
 	}
 
 	input := fixture.Report.Copy()
-	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
-		docker.LabelPrefix + "works.weave.role": "system",
-	})
+	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(
+		docker.LabelPrefix+"works.weave.role", "system",
+	)
 	have := utils.Prune(render.Render(input, renderer, filter).Nodes)
 	want := utils.Prune(expected.RenderedContainers.Copy())
 	delete(want, fixture.ClientContainerNodeID)
@@ -146,9 +146,9 @@ func TestRendererForTopologyNoFiltering(t *testing.T) {
 	}
 
 	input := fixture.Report.Copy()
-	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
-		docker.LabelPrefix + "works.weave.role": "system",
-	})
+	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(
+		docker.LabelPrefix+"works.weave.role", "system",
+	)
 	have := utils.Prune(render.Render(input, renderer, filter).Nodes)
 	want := utils.Prune(expected.RenderedContainers.Copy())
 	delete(want, render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID))

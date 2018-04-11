@@ -29,8 +29,8 @@ var (
 func TestMapProcess2Container(t *testing.T) {
 	for _, input := range []testcase{
 		{"empty", report.MakeNode("empty"), true},
-		{"basic process", report.MakeNodeWith("basic", map[string]string{process.PID: "201", docker.ContainerID: "a1b2c3"}), true},
-		{"uncontained", report.MakeNodeWith("uncontained", map[string]string{process.PID: "201", report.HostNodeID: report.MakeHostNodeID("foo")}), true},
+		{"basic process", report.MakeNodeWith("basic", process.PID, "201", docker.ContainerID, "a1b2c3"), true},
+		{"uncontained", report.MakeNodeWith("uncontained", process.PID, "201", report.HostNodeID, report.MakeHostNodeID("foo")), true},
 	} {
 		testMap(t, render.MapProcess2Container, input)
 	}
@@ -64,9 +64,9 @@ func TestContainerFilterRenderer(t *testing.T) {
 	// tag on of the containers in the topology and ensure
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
-	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
-		docker.LabelPrefix + "works.weave.role": "system",
-	})
+	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(
+		docker.LabelPrefix+"works.weave.role", "system",
+	)
 	have := utils.Prune(render.Render(input, render.ContainerWithImageNameRenderer, filterApplication).Nodes)
 	want := utils.Prune(expected.RenderedContainers.Copy())
 	delete(want, fixture.ClientContainerNodeID)

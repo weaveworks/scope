@@ -70,19 +70,19 @@ func TestContainer(t *testing.T) {
 			docker.StartContainer:   {Dead: true},
 			docker.RemoveContainer:  {Dead: true},
 		}
-		want := report.MakeNodeWith("ping;<container>", map[string]string{
-			"docker_container_command":     "ping foo.bar.local",
-			"docker_container_created":     "0001-01-01T00:00:00Z",
-			"docker_container_id":          "ping",
-			"docker_container_name":        "pong",
-			"docker_image_id":              "baz",
-			"docker_label_foo1":            "bar1",
-			"docker_label_foo2":            "bar2",
-			"docker_container_state":       "running",
-			"docker_container_state_human": c.Container().State.String(),
-			"docker_container_uptime":      strconv.Itoa(uptimeSeconds),
-			"docker_env_FOO":               "secret-bar",
-		}).WithLatestControls(
+		want := report.MakeNodeWith("ping;<container>",
+			"docker_container_command", "ping foo.bar.local",
+			"docker_container_created", "0001-01-01T00:00:00Z",
+			"docker_container_id", "ping",
+			"docker_container_name", "pong",
+			"docker_image_id", "baz",
+			"docker_label_foo1", "bar1",
+			"docker_label_foo2", "bar2",
+			"docker_container_state", "running",
+			"docker_container_state_human", c.Container().State.String(),
+			"docker_container_uptime", strconv.Itoa(uptimeSeconds),
+			"docker_env_FOO", "secret-bar",
+		).WithLatestControls(
 			controls,
 		).WithMetrics(report.Metrics{
 			"docker_cpu_total_usage": report.MakeMetric(nil),

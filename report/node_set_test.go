@@ -51,10 +51,10 @@ func TestMakeNodeSet(t *testing.T) {
 func BenchmarkMakeNodeSet(b *testing.B) {
 	nodes := []report.Node{}
 	for i := 1000; i >= 0; i-- {
-		nodes = append(nodes, report.MakeNodeWith(fmt.Sprint(i), map[string]string{
-			"a": "1",
-			"b": "2",
-		}))
+		nodes = append(nodes, report.MakeNodeWith(fmt.Sprint(i),
+			"a", "1",
+			"b", "2",
+		))
 	}
 
 	b.ResetTimer()
@@ -149,17 +149,17 @@ func BenchmarkNodeSetAdd(b *testing.B) {
 	n := report.MakeNodeSet()
 	for i := 0; i < 600; i++ {
 		n = n.Add(
-			report.MakeNodeWith(fmt.Sprint(i), map[string]string{
-				"a": "1",
-				"b": "2",
-			}),
+			report.MakeNodeWith(fmt.Sprint(i),
+				"a", "1",
+				"b", "2",
+			),
 		)
 	}
 
-	node := report.MakeNodeWith("401.5", map[string]string{
-		"a": "1",
-		"b": "2",
-	})
+	node := report.MakeNodeWith("401.5",
+		"a", "1",
+		"b", "2",
+	)
 
 	b.ResetTimer()
 
@@ -283,19 +283,19 @@ func BenchmarkNodeSetMerge(b *testing.B) {
 	n, other := report.NodeSet{}, report.NodeSet{}
 	for i := 0; i < 600; i++ {
 		n = n.Add(
-			report.MakeNodeWith(fmt.Sprint(i), map[string]string{
-				"a": "1",
-				"b": "2",
-			}),
+			report.MakeNodeWith(fmt.Sprint(i),
+				"a", "1",
+				"b", "2",
+			),
 		)
 	}
 
 	for i := 400; i < 1000; i++ {
 		other = other.Add(
-			report.MakeNodeWith(fmt.Sprint(i), map[string]string{
-				"c": "1",
-				"d": "2",
-			}),
+			report.MakeNodeWith(fmt.Sprint(i),
+				"c", "1",
+				"d", "2",
+			),
 		)
 	}
 

@@ -21,10 +21,10 @@ var (
 	sampleUnknownNode = report.MakeNode("???").WithTopology("foo")
 	samplePodNode     = report.MakeNode("noo").
 				WithTopology(report.Pod).
-				WithLatests(map[string]string{kubernetes.Namespace: "noospace"})
+				WithLatests(kubernetes.Namespace, "noospace")
 	sampleContainerNode = report.MakeNode("coo").
 				WithTopology(report.Container).
-				WithLatests(map[string]string{docker.ContainerName: "cooname"})
+				WithLatests(docker.ContainerName, "cooname")
 	sampleMetrics = []report.MetricRow{
 		{ID: docker.MemoryUsage},
 		{ID: docker.CPUTotalUsage},

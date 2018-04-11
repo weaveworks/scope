@@ -284,9 +284,9 @@ func TestReporter(t *testing.T) {
 
 func TestTagger(t *testing.T) {
 	rpt := report.MakeReport()
-	rpt.Container.AddNode(report.MakeNodeWith("container1", map[string]string{
-		docker.LabelPrefix + "io.kubernetes.pod.uid": "123456",
-	}))
+	rpt.Container.AddNode(report.MakeNodeWith("container1",
+		docker.LabelPrefix+"io.kubernetes.pod.uid", "123456",
+	))
 
 	hr := controls.NewDefaultHandlerRegistry()
 	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil, hr, "", 0).Tag(rpt)
