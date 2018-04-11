@@ -125,15 +125,15 @@ func (r *Reporter) Report() (report.Report, error) {
 	metrics[MemoryUsage] = report.MakeSingletonMetric(now, memoryUsage).WithMax(max)
 
 	rep.Host.AddNode(
-		report.MakeNodeWith(report.MakeHostNodeID(r.hostID), map[string]string{
-			report.ControlProbeID: r.probeID,
-			Timestamp:             mtime.Now().UTC().Format(time.RFC3339Nano),
-			HostName:              r.hostName,
-			OS:                    runtime.GOOS,
-			KernelVersion:         kernel,
-			Uptime:                strconv.Itoa(int(uptime / time.Second)), // uptime in seconds
-			ScopeVersion:          r.version,
-		}).
+		report.MakeNodeWith(report.MakeHostNodeID(r.hostID),
+			report.ControlProbeID, r.probeID,
+			Timestamp, mtime.Now().UTC().Format(time.RFC3339Nano),
+			HostName, r.hostName,
+			OS, runtime.GOOS,
+			KernelVersion, kernel,
+			Uptime, strconv.Itoa(int(uptime/time.Second)), // uptime in seconds
+			ScopeVersion, r.version,
+		).
 			WithSets(report.MakeSets().
 				Add(LocalNetworks, report.MakeStringSet(localCIDRs...)),
 			).

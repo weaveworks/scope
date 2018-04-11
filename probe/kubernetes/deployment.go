@@ -51,15 +51,15 @@ func (d *deployment) GetNode(probeID string) report.Node {
 	if d.Spec.Replicas != nil {
 		desiredReplicas = int(*d.Spec.Replicas)
 	}
-	return d.MetaNode(report.MakeDeploymentNodeID(d.UID())).WithLatests(map[string]string{
-		ObservedGeneration:    fmt.Sprint(d.Status.ObservedGeneration),
-		DesiredReplicas:       fmt.Sprint(desiredReplicas),
-		Replicas:              fmt.Sprint(d.Status.Replicas),
-		UpdatedReplicas:       fmt.Sprint(d.Status.UpdatedReplicas),
-		AvailableReplicas:     fmt.Sprint(d.Status.AvailableReplicas),
-		UnavailableReplicas:   fmt.Sprint(d.Status.UnavailableReplicas),
-		Strategy:              string(d.Spec.Strategy.Type),
-		report.ControlProbeID: probeID,
-		NodeType:              "Deployment",
-	}).WithLatestActiveControls(ScaleUp, ScaleDown)
+	return d.MetaNode(report.MakeDeploymentNodeID(d.UID())).WithLatests(
+		ObservedGeneration, fmt.Sprint(d.Status.ObservedGeneration),
+		DesiredReplicas, fmt.Sprint(desiredReplicas),
+		Replicas, fmt.Sprint(d.Status.Replicas),
+		UpdatedReplicas, fmt.Sprint(d.Status.UpdatedReplicas),
+		AvailableReplicas, fmt.Sprint(d.Status.AvailableReplicas),
+		UnavailableReplicas, fmt.Sprint(d.Status.UnavailableReplicas),
+		Strategy, string(d.Spec.Strategy.Type),
+		report.ControlProbeID, probeID,
+		NodeType, "Deployment",
+	).WithLatestActiveControls(ScaleUp, ScaleDown)
 }

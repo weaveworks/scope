@@ -75,17 +75,17 @@ func (cj *cronJob) Selectors() ([]labels.Selector, error) {
 }
 
 func (cj *cronJob) GetNode(probeID string) report.Node {
-	latest := map[string]string{
-		NodeType:              "CronJob",
-		Schedule:              cj.Spec.Schedule,
-		Suspended:             fmt.Sprint(cj.Spec.Suspend != nil && *cj.Spec.Suspend), // nil -> false
-		ActiveJobs:            fmt.Sprint(len(cj.jobs)),
-		report.ControlProbeID: probeID,
+	latest := []string{
+		NodeType, "CronJob",
+		Schedule, cj.Spec.Schedule,
+		Suspended, fmt.Sprint(cj.Spec.Suspend != nil && *cj.Spec.Suspend), // nil -> false
+		ActiveJobs, fmt.Sprint(len(cj.jobs)),
+		report.ControlProbeID, probeID,
 	}
 	if cj.Status.LastScheduleTime != nil {
-		latest[LastScheduled] = cj.Status.LastScheduleTime.Format(time.RFC3339Nano)
+		latest = append(latest, LastScheduled, cj.Status.LastScheduleTime.Format(time.RFC3339Nano))
 	}
-	return cj.MetaNode(report.MakeCronJobNodeID(cj.UID())).WithLatests(latest)
+	return cj.MetaNode(report.MakeCronJobNodeID(cj.UID())).WithLatests(latest...)
 }
 
 func upgradeCronJob(legacy *batchv2alpha1.CronJob) *batchv1beta1.CronJob {

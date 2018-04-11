@@ -203,7 +203,7 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 		rpt.Pod.AddNode(
 			report.MakeNodeWith(
 				report.MakePodNodeID(pod.UID()),
-				map[string]string{State: StateDeleted},
+				State, StateDeleted,
 			),
 		)
 		r.probe.Publish(rpt)

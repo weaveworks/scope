@@ -68,10 +68,10 @@ func (t *Tagger) Tag(r report.Report) (report.Report, error) {
 		}
 
 		nodeID := report.MakeSwarmServiceNodeID(serviceID)
-		node := report.MakeNodeWith(nodeID, map[string]string{
-			ServiceName:    serviceName,
-			StackNamespace: stackNamespace,
-		})
+		node := report.MakeNodeWith(nodeID,
+			ServiceName, serviceName,
+			StackNamespace, stackNamespace,
+		)
 		r.SwarmService.AddNode(node)
 
 		r.Container.Nodes[containerID] = container.WithParents(container.Parents.Add(report.SwarmService, report.MakeStringSet(nodeID)))

@@ -512,7 +512,7 @@ func (r Report) upgradeNamespaces() Report {
 		// Probes did not use to report namespace ids, but since creating a report node requires an id,
 		// the namespace name, which is unique, is passed to `MakeNamespaceNodeID`
 		namespaceID := MakeNamespaceNodeID(ns)
-		nodes[namespaceID] = MakeNodeWith(namespaceID, map[string]string{KubernetesName: ns})
+		nodes[namespaceID] = MakeNodeWith(namespaceID, KubernetesName, ns)
 	}
 	r.Namespace.Nodes = nodes
 

@@ -87,11 +87,11 @@ func (p *pod) VolumeClaimName() string {
 }
 
 func (p *pod) GetNode(probeID string) report.Node {
-	latests := map[string]string{
-		State: p.State(),
-		IP:    p.Status.PodIP,
-		report.ControlProbeID: probeID,
-		RestartCount:          strconv.FormatUint(uint64(p.RestartCount()), 10),
+	latests := []string{
+		State, p.State(),
+		IP, p.Status.PodIP,
+		report.ControlProbeID, probeID,
+		RestartCount, strconv.FormatUint(uint64(p.RestartCount()), 10),
 	}
 
 	if p.VolumeClaimName() != "" {
@@ -99,10 +99,10 @@ func (p *pod) GetNode(probeID string) report.Node {
 	}
 
 	if p.Pod.Spec.HostNetwork {
-		latests[IsInHostNetwork] = "true"
+		latests = append(latests, IsInHostNetwork, "true")
 	}
 
-	return p.MetaNode(report.MakePodNodeID(p.UID())).WithLatests(latests).
+	return p.MetaNode(report.MakePodNodeID(p.UID())).WithLatests(latests...).
 		WithParents(p.parents).
 		WithLatestActiveControls(GetLogs, DeletePod)
 }

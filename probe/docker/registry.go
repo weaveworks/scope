@@ -340,10 +340,10 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 		}
 
 		if intendedState != nil {
-			node := report.MakeNodeWith(report.MakeContainerNodeID(containerID), map[string]string{
-				ContainerID:    containerID,
-				ContainerState: *intendedState,
-			})
+			node := report.MakeNodeWith(report.MakeContainerNodeID(containerID),
+				ContainerID, containerID,
+				ContainerState, *intendedState,
+			)
 			// Trigger anyone watching for updates
 			for _, f := range r.watchers {
 				f(node)
