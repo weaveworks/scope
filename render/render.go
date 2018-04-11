@@ -1,6 +1,8 @@
 package render
 
 import (
+	"time"
+
 	"github.com/weaveworks/scope/report"
 )
 
@@ -115,10 +117,18 @@ func (m Map) Render(rpt report.Report) Nodes {
 	return output.result(input)
 }
 
-func propagateLatest(key string, from, to report.Node) report.Node {
-	if value, timestamp, ok := from.Latest.LookupEntry(key); ok {
-		to.Latest = to.Latest.Set(key, timestamp, value)
+func propagateLatests(from, to report.Node, keys ...string) report.Node {
+	var pairs []string
+	var ts time.Time
+	for _, key := range keys {
+		if value, timestamp, ok := from.Latest.LookupEntry(key); ok {
+			pairs = append(pairs, key, value)
+			if ts.Before(timestamp) {
+				ts = timestamp
+			}
+		}
 	}
+	to.Latest = to.Latest.SetMulti(ts, pairs...)
 	return to
 }
 
