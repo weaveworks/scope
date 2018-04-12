@@ -67,13 +67,17 @@ func benchmarkMerger(b *testing.B, merger app.Merger) {
 	for i := 0; i < numHosts*5; i++ {
 		reports = append(reports, makeReport())
 	}
+	replacements := []report.Report{}
+	for i := 0; i < numHosts/3; i++ {
+		replacements = append(replacements, makeReport())
+	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// replace 1/3 of hosts work of reports & merge them all
-		for i := 0; i < numHosts/3; i++ {
-			reports[rand.Intn(len(reports))] = makeReport()
+		for i := 0; i < len(replacements); i++ {
+			reports[rand.Intn(len(reports))] = replacements[i]
 		}
 
 		merger.Merge(reports)
