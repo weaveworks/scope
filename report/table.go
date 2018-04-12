@@ -10,55 +10,33 @@ import (
 	"github.com/weaveworks/common/mtime"
 )
 
-// MaxTableRows sets the limit on the table size to render
-// TODO: this won't be needed once we send reports incrementally
 const (
-	MaxTableRows           = 20
 	TableEntryKeySeparator = "___"
 	TruncationCountPrefix  = "table_truncation_count_"
 	MulticolumnTableType   = "multicolumn-table"
 	PropertyListType       = "property-list"
 )
 
-// withTableTruncationInformation appends table truncation info to the node, returning the new node.
-func (node Node) withTableTruncationInformation(prefix string, totalRowsCount int, now time.Time) Node {
-	if totalRowsCount > MaxTableRows {
-		truncationCount := fmt.Sprintf("%d", totalRowsCount-MaxTableRows)
-		node = node.WithLatest(TruncationCountPrefix+prefix, now, truncationCount)
-	}
-	return node
-}
-
 // AddPrefixMulticolumnTable appends arbitrary rows to the Node, returning a new node.
 func (node Node) AddPrefixMulticolumnTable(prefix string, rows []Row) Node {
 	now := mtime.Now()
-	addedRowsCount := 0
 	for _, row := range rows {
-		if addedRowsCount >= MaxTableRows {
-			break
-		}
 		// Add all the row values as separate entries
 		for columnID, value := range row.Entries {
 			key := strings.Join([]string{row.ID, columnID}, TableEntryKeySeparator)
 			node = node.WithLatest(prefix+key, now, value)
 		}
-		addedRowsCount++
 	}
-	return node.withTableTruncationInformation(prefix, len(rows), now)
+	return node
 }
 
 // AddPrefixPropertyList appends arbitrary key-value pairs to the Node, returning a new node.
 func (node Node) AddPrefixPropertyList(prefix string, propertyList map[string]string) Node {
 	now := mtime.Now()
-	addedPropertiesCount := 0
 	for label, value := range propertyList {
-		if addedPropertiesCount >= MaxTableRows {
-			break
-		}
 		node = node.WithLatest(prefix+label, now, value)
-		addedPropertiesCount++
 	}
-	return node.withTableTruncationInformation(prefix, len(propertyList), now)
+	return node
 }
 
 // WithoutPrefix returns the string with trimmed prefix and a
@@ -137,7 +115,12 @@ func (node Node) ExtractPropertyList(template TableTemplate) (rows []Row) {
 	return rows
 }
 
-// ExtractTable returns the rows to build either a property list or a generic table from this node
+// ExtractTable returns the rows to build either a property list or a
+// generic table from this node. It also returns the number of rows,
+// if any, that were truncated. The probes used to limit the number of
+// labels, env vars and Weave Net connections they report, but this
+// logic has since been removed. So the code here dealing with
+// truncation is only retained in order to handle legacy reports.
 func (node Node) ExtractTable(template TableTemplate) (rows []Row, truncationCount int) {
 	switch template.Type {
 	case MulticolumnTableType:

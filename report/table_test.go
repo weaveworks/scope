@@ -1,7 +1,6 @@
 package report_test
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -129,70 +128,6 @@ func TestFixedPropertyLists(t *testing.T) {
 
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
-	}
-}
-
-func TestPropertyListTruncation(t *testing.T) {
-	wantTruncationCount := 1
-	propertyList := map[string]string{}
-	for i := 0; i < report.MaxTableRows+wantTruncationCount; i++ {
-		key := fmt.Sprintf("key%d", i)
-		value := fmt.Sprintf("value%d", i)
-		propertyList[key] = value
-	}
-
-	nmd := report.MakeNode("foo1")
-	nmd = nmd.AddPrefixPropertyList("foo_", propertyList)
-
-	template := report.TableTemplate{
-		Type:   report.PropertyListType,
-		Prefix: "foo_",
-	}
-
-	_, truncationCount := nmd.ExtractTable(template)
-
-	if truncationCount != wantTruncationCount {
-		t.Error(
-			"Property list should had been truncated by",
-			wantTruncationCount,
-			"and not",
-			truncationCount,
-		)
-	}
-}
-
-func TestMulticolumnTableTruncation(t *testing.T) {
-	wantTruncationCount := 1
-	rows := []report.Row{}
-	for i := 0; i < report.MaxTableRows+wantTruncationCount; i++ {
-		rowID := fmt.Sprintf("row%d", i)
-		colID := fmt.Sprintf("col%d", i)
-		value := fmt.Sprintf("value%d", i)
-		rows = append(rows, report.Row{
-			ID: rowID,
-			Entries: map[string]string{
-				colID: value,
-			},
-		})
-	}
-
-	nmd := report.MakeNode("foo1")
-	nmd = nmd.AddPrefixMulticolumnTable("foo_", rows)
-
-	template := report.TableTemplate{
-		Type:   report.MulticolumnTableType,
-		Prefix: "foo_",
-	}
-
-	_, truncationCount := nmd.ExtractTable(template)
-
-	if truncationCount != wantTruncationCount {
-		t.Error(
-			"Property list should had been truncated by",
-			wantTruncationCount,
-			"and not",
-			truncationCount,
-		)
 	}
 }
 
