@@ -10,11 +10,15 @@ import (
 	"github.com/weaveworks/common/mtime"
 )
 
+// Table types
 const (
-	TableEntryKeySeparator = "___"
-	TruncationCountPrefix  = "table_truncation_count_"
-	MulticolumnTableType   = "multicolumn-table"
-	PropertyListType       = "property-list"
+	MulticolumnTableType = "multicolumn-table"
+	PropertyListType     = "property-list"
+)
+
+const (
+	tableEntryKeySeparator = "___"
+	truncationCountPrefix  = "table_truncation_count_"
 )
 
 // AddPrefixMulticolumnTable appends arbitrary rows to the Node, returning a new node.
@@ -23,7 +27,7 @@ func (node Node) AddPrefixMulticolumnTable(prefix string, rows []Row) Node {
 	for _, row := range rows {
 		// Add all the row values as separate entries
 		for columnID, value := range row.Entries {
-			key := strings.Join([]string{row.ID, columnID}, TableEntryKeySeparator)
+			key := strings.Join([]string{row.ID, columnID}, tableEntryKeySeparator)
 			node = node.WithLatest(prefix+key, now, value)
 		}
 	}
@@ -59,7 +63,7 @@ func (node Node) ExtractMulticolumnTable(template TableTemplate) (rows []Row) {
 	// methods should be enough to implement ForEachWithPrefix(prefix) straightforwardly.
 	node.Latest.ForEach(func(key string, _ time.Time, value string) {
 		if keyWithoutPrefix, ok := WithoutPrefix(key, template.Prefix); ok {
-			ids := strings.Split(keyWithoutPrefix, TableEntryKeySeparator)
+			ids := strings.Split(keyWithoutPrefix, tableEntryKeySeparator)
 			rowID, columnID := ids[0], ids[1]
 			// If the row with the given ID doesn't yet exist, we create an empty one.
 			if _, ok := rowsMapByID[rowID]; !ok {
@@ -130,7 +134,7 @@ func (node Node) ExtractTable(template TableTemplate) (rows []Row, truncationCou
 	}
 
 	truncationCount = 0
-	if str, ok := node.Latest.Lookup(TruncationCountPrefix + template.Prefix); ok {
+	if str, ok := node.Latest.Lookup(truncationCountPrefix + template.Prefix); ok {
 		if n, err := fmt.Sscanf(str, "%d", &truncationCount); n != 1 || err != nil {
 			log.Warn("Unexpected truncation count format %q", str)
 		}
