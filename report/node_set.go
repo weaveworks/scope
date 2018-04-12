@@ -24,8 +24,24 @@ func MakeNodeSet(nodes ...Node) NodeSet {
 	return emptyNodeSet.Add(nodes...)
 }
 
-// Add adds the nodes to the NodeSet. Add is the only valid way to grow a
-// NodeSet. Add returns the NodeSet to enable chaining.
+// Copy returns a value copy of the Nodes.
+func (n NodeSet) Copy() NodeSet {
+	result := ps.NewMap()
+	n.ForEach(func(node Node) {
+		result = result.UnsafeMutableSet(node.ID, node)
+	})
+	return NodeSet{result}
+}
+
+// UnsafeAdd adds a node to the NodeSet. Only call this if n has one owner.
+func (n *NodeSet) UnsafeAdd(node Node) {
+	if n.psMap == nil {
+		n.psMap = ps.NewMap()
+	}
+	n.psMap = n.psMap.UnsafeMutableSet(node.ID, node)
+}
+
+// Add adds the nodes to the NodeSet, and returns the NodeSet to enable chaining.
 func (n NodeSet) Add(nodes ...Node) NodeSet {
 	if len(nodes) == 0 {
 		return n
