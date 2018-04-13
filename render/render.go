@@ -153,7 +153,8 @@ type joinResults struct {
 func newJoinResults(inputNodes report.Nodes) joinResults {
 	nodes := make(report.Nodes, len(inputNodes))
 	for id, n := range inputNodes {
-		n.Adjacency = nil // result() assumes all nodes start with no adjacencies
+		n.Adjacency = nil              // result() assumes all nodes start with no adjacencies
+		n.Children = n.Children.Copy() // so we can do unsafe adds
 		nodes[id] = n
 	}
 	return joinResults{nodes: nodes, mapped: map[string]string{}, multi: map[string][]string{}}
@@ -183,7 +184,7 @@ func (ret *joinResults) addUnmappedChild(m report.Node, id string, topology stri
 	if !exists {
 		result = report.MakeNode(id).WithTopology(topology)
 	}
-	result.Children = result.Children.Add(m)
+	result.Children.UnsafeAdd(m)
 	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
 		result.Counters = result.Counters.Add(m.Topology, 1)
 	}
@@ -211,6 +212,7 @@ func (ret *joinResults) addChildAndChildren(m report.Node, id string, topology s
 func (ret *joinResults) passThrough(n report.Node) {
 	n.Adjacency = nil // result() assumes all nodes start with no adjacencies
 	ret.nodes[n.ID] = n
+	n.Children = n.Children.Copy() // so we can do unsafe adds
 	ret.mapChild(n.ID, n.ID)
 }
 
