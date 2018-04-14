@@ -23,11 +23,9 @@ type Nodes struct {
 }
 
 // Merge merges the results of Rendering
-func (r Nodes) Merge(o Nodes) Nodes {
-	return Nodes{
-		Nodes:    r.Nodes.Merge(o.Nodes),
-		Filtered: r.Filtered + o.Filtered,
-	}
+func (r *Nodes) UnsafeMerge(o Nodes) {
+	r.Nodes = r.Nodes.UnsafeMerge(o.Nodes)
+	r.Filtered = r.Filtered + o.Filtered
 }
 
 // Transformer is something that transforms one set of Nodes to
@@ -78,7 +76,8 @@ func (r Reduce) Render(rpt report.Report) Nodes {
 	for ; l > 1; l-- {
 		left, right := <-c, <-c
 		go func() {
-			c <- left.Merge(right)
+			left.UnsafeMerge(right)
+			c <- left
 		}()
 	}
 	return <-c

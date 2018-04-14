@@ -196,6 +196,21 @@ func (n Nodes) Merge(other Nodes) Nodes {
 	return cp
 }
 
+// UnsafeMerge merges two Nodes objects, altering the larger, and returning the combined set
+func (n Nodes) UnsafeMerge(other Nodes) Nodes {
+	if len(other) > len(n) {
+		n, other = other, n
+	}
+	for k, v := range other {
+		if existing, ok := n[k]; ok { // don't overwrite
+			n[k] = v.Merge(existing)
+		} else {
+			n[k] = v
+		}
+	}
+	return n
+}
+
 // Validate checks the topology for various inconsistencies.
 func (t Topology) Validate() error {
 	errs := []string{}
