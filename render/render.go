@@ -169,6 +169,7 @@ func (ret *joinResults) mapChild(from, to string) {
 }
 
 // Add m into the results as a top-level node, mapped from original ID
+// Note it is not safe to mix calls to add() with addChild(), addChildAndChildren() or addUnmappedChild()
 func (ret *joinResults) add(from string, m report.Node) {
 	if existing, ok := ret.nodes[m.ID]; ok {
 		m = m.Merge(existing)
