@@ -169,6 +169,7 @@ func (ret *joinResults) mapChild(from, to string) {
 }
 
 // Add m into the results as a top-level node, mapped from original ID
+// Note it is not safe to mix calls to add() with addChild(), addChildAndChildren() or addUnmappedChild()
 func (ret *joinResults) add(from string, m report.Node) {
 	if existing, ok := ret.nodes[m.ID]; ok {
 		m = m.Merge(existing)
@@ -203,7 +204,7 @@ func (ret *joinResults) addChild(m report.Node, id string, topology string) {
 func (ret *joinResults) addChildAndChildren(m report.Node, id string, topology string) {
 	ret.addUnmappedChild(m, id, topology)
 	result := ret.nodes[id]
-	result.Children = result.Children.Merge(m.Children)
+	result.Children.UnsafeMerge(m.Children)
 	ret.nodes[id] = result
 	ret.mapChild(m.ID, id)
 }
