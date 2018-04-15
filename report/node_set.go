@@ -72,6 +72,13 @@ func (n NodeSet) Delete(ids ...string) NodeSet {
 	return NodeSet{result}
 }
 
+// UnsafeMerge combines the two NodeSets, altering n
+func (n *NodeSet) UnsafeMerge(other NodeSet) {
+	other.psMap.ForEach(func(key string, otherVal interface{}) {
+		n.psMap = n.psMap.UnsafeMutableSet(key, otherVal)
+	})
+}
+
 // Merge combines the two NodeSets and returns a new result.
 func (n NodeSet) Merge(other NodeSet) NodeSet {
 	nSize, otherSize := n.Size(), other.Size()
