@@ -849,10 +849,10 @@
 		},
 		{
 			"importpath": "github.com/k-sone/critbitgo",
-			"repository": "https://github.com/k-sone/critbitgo",
+			"repository": "https://github.com/weaveworks/critbitgo",
 			"vcs": "git",
-			"revision": "327359a051d71948cb756142d112c7df283fac4d",
-			"branch": "master",
+			"revision": "aa814e9447366a571819e37affacbdc60e3af218",
+			"branch": "contained",
 			"notests": true
 		},
 		{

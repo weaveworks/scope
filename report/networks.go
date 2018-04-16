@@ -34,8 +34,8 @@ func (n Networks) AddCIDR(cidr string) error {
 
 // Contains returns true if IP is in Networks.
 func (n Networks) Contains(ip net.IP) bool {
-	network, _, _ := n.MatchIP(ip)
-	return network != nil
+	contained, _ := n.ContainedIP(ip)
+	return contained
 }
 
 // LocalAddresses returns a list of the local IP addresses.
