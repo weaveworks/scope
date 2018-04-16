@@ -1,3 +1,45 @@
+## Release 1.8.1
+
+New plugin features:
+
+- Render http links in tables
+	[#3105](https://github.com/weaveworks/scope/pull/3105)
+- Support plugin controls in K8s Service, DaemonSet, StatefulSet, Cronjob.
+	[#3110](https://github.com/weaveworks/scope/pull/3110)
+
+Bug fixes and minor improvements:
+
+- Work around Ubuntu kernel crash
+	[#3141](https://github.com/weaveworks/scope/pull/3141)
+- Stop truncating tables; disable reporting Docker env vars by default
+	[#3139](https://github.com/weaveworks/scope/pull/3139)
+- Don't show Failed pods
+	[#3126](https://github.com/weaveworks/scope/pull/3126)
+- Make scope start with Docker for Mac again.
+	[#3140](https://github.com/weaveworks/scope/pull/3140)
+- Fix browser history when deep linking into node details with time context
+	[#3134](https://github.com/weaveworks/scope/pull/3134)
+- Move to more consistent colour theme
+	[#3116](https://github.com/weaveworks/scope/pull/3116)
+	[#3124](https://github.com/weaveworks/scope/pull/3124)
+	[#3136](https://github.com/weaveworks/scope/pull/3136)
+- Fix format string only used in debugging
+	[#3129](https://github.com/weaveworks/scope/pull/3129)
+- Fix docs for OpenShift installation
+	[#3128](https://github.com/weaveworks/scope/pull/3128)
+
+Performance:
+
+-  Use unsafe merge in joinResults.addChildAndChildren()
+	[#3143](https://github.com/weaveworks/scope/pull/3143)
+- Use single-owner code path to accumulate children when rendering
+	[#3138](https://github.com/weaveworks/scope/pull/3138)
+- Simplify Map.Render()
+	[#3135](https://github.com/weaveworks/scope/pull/3135)
+- Let probe send smaller 'shortcut' reports to update the UI faster
+	[#3121](https://github.com/weaveworks/scope/pull/3121)
+
+
 ## Release 1.8.0
 
 Highlights:
