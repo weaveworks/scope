@@ -1826,13 +1826,13 @@ a {
       padding: 4px 5px;
       margin-left: 2px;
       font-size: 110%;
-      color: $color-lavender;
+      color: $color-primary-lavender;
       cursor: pointer;
       border: 1px solid transparent;
       border-radius: 10%;
 
       &:hover {
-        border-color: transparentize($color-lavender, 0.4);
+        border-color: transparentize($color-primary-lavender, 0.4);
       }
     }
 
@@ -1848,15 +1848,15 @@ a {
       text-transform: uppercase;
       line-height: 150%;
       font-size: 125%;
-      color: $color-lavender;
+      color: $color-primary-lavender;
       padding: 4px 0;
-      border-bottom: 1px solid transparentize($color-lavender, 0.9);
+      border-bottom: 1px solid transparentize($color-primary-lavender, 0.9);
     }
 
     h3 {
       text-transform: uppercase;
       font-size: 90%;
-      color: $color-lavender;
+      color: $color-primary-lavender;
       padding: 4px 0;
     }
 
@@ -1919,7 +1919,7 @@ a {
 
     &-current-topology {
       text-transform: uppercase;
-      color: $color-lavender;
+      color: $color-primary-lavender;
     }
 
     &-fields {
