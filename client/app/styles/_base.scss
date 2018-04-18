@@ -584,7 +584,6 @@ a {
 
     .metric-fill {
       stroke: none;
-      fill: $color-olivine;
       fill-opacity: 0.7;
     }
 
@@ -1621,7 +1620,7 @@ a {
 }
 
 .sidebar-gridmode {
-  background-color: $color-athens-gray-dark;
+  background-color: $color-athens-gray;
   border-color: $background-darker-color;
   opacity: 0.9;
 }
@@ -2058,7 +2057,7 @@ a {
     // because we want consistent behaviour between the
     // visual and row locking logic that happens on hover.
     tbody tr.selected, tbody tr.focused {
-      background-color: $color-link-water;
+      background-color: transparentize($color-accent-blue, 0.85);
       border: 1px solid $color-accent-blue;
     }
   }
