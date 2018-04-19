@@ -146,6 +146,9 @@ var (
 	// ParseNamespaceNodeID parses a namespace set node ID
 	ParseNamespaceNodeID = parseSingleComponentID("namespace")
 
+	// MakePersistentVolumeClaimNodeID produces a Persistent Volume Claim node ID from its composite parts.
+	MakePersistentVolumeClaimNodeID = makeSingleComponentID("persistent_volume_claim")
+
 	// MakeECSTaskNodeID produces a ECSTask node ID from its composite parts.
 	MakeECSTaskNodeID = makeSingleComponentID("ecs_task")
 

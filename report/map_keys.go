@@ -71,6 +71,13 @@ const (
 	KubernetesActiveJobs           = "kubernetes_active_jobs"
 	KubernetesType                 = "kubernetes_type"
 	KubernetesPorts                = "kubernetes_ports"
+	KubernetesVolumeClaim          = "kubernetes_volume_claim"
+	KubernetesStorageClassName     = "kubernetes_storage_class_name"
+	KubernetesAccessModes          = "kubernetes_access_modes"
+	KubernetesReclaimPolicy        = "kubernetes_reclaim_policy"
+	KubernetesStatus               = "kubernetes_status"
+	KubernetesMessage              = "kubernetes_message"
+	KubernetesVolumeName           = "kubernetes_volume_name"
 	// probe/awsecs
 	ECSCluster             = "ecs_cluster"
 	ECSCreatedAt           = "ecs_created_at"

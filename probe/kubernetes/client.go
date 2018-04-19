@@ -37,6 +37,8 @@ type Client interface {
 	WalkStatefulSets(f func(StatefulSet) error) error
 	WalkCronJobs(f func(CronJob) error) error
 	WalkNamespaces(f func(NamespaceResource) error) error
+	WalkPersistentVolumes(f func(PersistentVolume) error) error
+	WalkPersistentVolumeClaims(f func(PersistentVolumeClaim) error) error
 
 	WatchPods(f func(Event, Pod))
 
@@ -47,17 +49,19 @@ type Client interface {
 }
 
 type client struct {
-	quit             chan struct{}
-	client           *kubernetes.Clientset
-	podStore         cache.Store
-	serviceStore     cache.Store
-	deploymentStore  cache.Store
-	daemonSetStore   cache.Store
-	statefulSetStore cache.Store
-	jobStore         cache.Store
-	cronJobStore     cache.Store
-	nodeStore        cache.Store
-	namespaceStore   cache.Store
+	quit                       chan struct{}
+	client                     *kubernetes.Clientset
+	podStore                   cache.Store
+	serviceStore               cache.Store
+	deploymentStore            cache.Store
+	daemonSetStore             cache.Store
+	statefulSetStore           cache.Store
+	jobStore                   cache.Store
+	cronJobStore               cache.Store
+	nodeStore                  cache.Store
+	namespaceStore             cache.Store
+	persistentVolumeStore      cache.Store
+	persistentVolumeClaimStore cache.Store
 
 	podWatchesMutex sync.Mutex
 	podWatches      []func(Event, Pod)
@@ -142,6 +146,8 @@ func NewClient(config ClientConfig) (Client, error) {
 	result.jobStore = result.setupStore("jobs")
 	result.statefulSetStore = result.setupStore("statefulsets")
 	result.cronJobStore = result.setupStore("cronjobs")
+	result.persistentVolumeStore = result.setupStore("persistentvolumes")
+	result.persistentVolumeClaimStore = result.setupStore("persistentvolumeclaims")
 
 	return result, nil
 }
@@ -180,6 +186,10 @@ func (c *client) clientAndType(resource string) (rest.Interface, interface{}, er
 		return c.client.CoreV1().RESTClient(), &apiv1.Node{}, nil
 	case "namespaces":
 		return c.client.CoreV1().RESTClient(), &apiv1.Namespace{}, nil
+	case "persistentvolumes":
+		return c.client.CoreV1().RESTClient(), &apiv1.PersistentVolume{}, nil
+	case "persistentvolumeclaims":
+		return c.client.CoreV1().RESTClient(), &apiv1.PersistentVolumeClaim{}, nil
 	case "deployments":
 		return c.client.ExtensionsV1beta1().RESTClient(), &apiextensionsv1beta1.Deployment{}, nil
 	case "daemonsets":
@@ -256,6 +266,26 @@ func (c *client) WalkPods(f func(Pod) error) error {
 	for _, m := range c.podStore.List() {
 		pod := m.(*apiv1.Pod)
 		if err := f(NewPod(pod)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *client) WalkPersistentVolumes(f func(PersistentVolume) error) error {
+	for _, m := range c.persistentVolumeStore.List() {
+		pv := m.(*apiv1.PersistentVolume)
+		if err := f(NewPersistentVolume(pv)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *client) WalkPersistentVolumeClaims(f func(PersistentVolumeClaim) error) error {
+	for _, m := range c.persistentVolumeClaimStore.List() {
+		pvc := m.(*apiv1.PersistentVolumeClaim)
+		if err := f(NewPersistentVolumeClaim(pvc)); err != nil {
 			return err
 		}
 	}

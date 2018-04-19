@@ -25,6 +25,13 @@ const (
 	NodeType           = report.KubernetesNodeType
 	Type               = report.KubernetesType
 	Ports              = report.KubernetesPorts
+	VolumeClaim        = report.KubernetesVolumeClaim
+	StorageClassName   = report.KubernetesStorageClassName
+	AccessModes        = report.KubernetesAccessModes
+	ReclaimPolicy      = report.KubernetesReclaimPolicy
+	Status             = report.KubernetesStatus
+	Message            = report.KubernetesMessage
+	VolumeName         = report.KubernetesVolumeName
 )
 
 // Exposed for testing
@@ -251,6 +258,10 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
+	persistentVolumeClaimTopology, _, err := r.persistentVolumeClaimTopology()
+	if err != nil {
+		return result, err
+	}
 	podTopology, err := r.podTopology(services, deployments, daemonSets, statefulSets, cronJobs)
 	if err != nil {
 		return result, err
@@ -267,6 +278,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.CronJob = result.CronJob.Merge(cronJobTopology)
 	result.Deployment = result.Deployment.Merge(deploymentTopology)
 	result.Namespace = result.Namespace.Merge(namespaceTopology)
+	result.PersistentVolumeClaim = result.PersistentVolumeClaim.Merge(persistentVolumeClaimTopology)
 	return result, nil
 }
 
@@ -374,6 +386,27 @@ func (r *Reporter) cronJobTopology() (report.Topology, []CronJob, error) {
 		return nil
 	})
 	return result, cronJobs, err
+}
+
+func (r *Reporter) persistentVolumeClaimTopology() (report.Topology, []PersistentVolumeClaim, error) {
+	persistentVolumeClaims := []PersistentVolumeClaim{}
+	result := report.MakeTopology().
+		// fixme WithMetadataTemplates(PersistentVolumeClaimMetadataTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkPersistentVolumeClaims(func(p PersistentVolumeClaim) error {
+		result.AddNode(p.GetNode(r.probeID))
+		persistentVolumeClaims = append(persistentVolumeClaims, p)
+		return nil
+	})
+
+	err = r.client.WalkPersistentVolumes(func(p PersistentVolume) error {
+		for _, claim := range persistentVolumeClaims {
+			match(claim.Namespace(), claim.Selector(), report.PersistentVolumeClaim, "fooID")
+		}
+		return nil
+	})
+
+	return result, persistentVolumeClaims, err
 }
 
 type labelledChild interface {
