@@ -146,6 +146,9 @@ var (
 	// ParseNamespaceNodeID parses a namespace set node ID
 	ParseNamespaceNodeID = parseSingleComponentID("namespace")
 
+	// MakePersistentVolumeNodeID produces a Persistent Volume node ID from its composite parts.
+	MakePersistentVolumeNodeID = makeSingleComponentID("persistent_volume")
+
 	// MakePersistentVolumeClaimNodeID produces a Persistent Volume Claim node ID from its composite parts.
 	MakePersistentVolumeClaimNodeID = makeSingleComponentID("persistent_volume_claim")
 
