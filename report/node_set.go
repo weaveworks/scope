@@ -74,7 +74,7 @@ func (n NodeSet) Delete(ids ...string) NodeSet {
 
 // UnsafeMerge combines the two NodeSets, altering n
 func (n *NodeSet) UnsafeMerge(other NodeSet) {
-	if other.psMap == nil {
+	if other.psMap == nil || other.psMap.Size() == 0 {
 		return
 	}
 	if n.psMap == nil {
