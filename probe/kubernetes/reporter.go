@@ -429,7 +429,7 @@ func (r *Reporter) persistentVolumeTopology() (report.Topology, []PersistentVolu
 		WithMetadataTemplates(PersistentVolumeMetadataTemplates).
 		WithTableTemplates(TableTemplates)
 	err := r.client.WalkPersistentVolumes(func(p PersistentVolume) error {
-		result.AddNode(p.GetNode(r.probeID))
+		result.AddNode(p.GetNode())
 		persistentVolumes = append(persistentVolumes, p)
 		return nil
 	})
@@ -442,7 +442,7 @@ func (r *Reporter) persistentVolumeClaimTopology() (report.Topology, []Persisten
 		WithMetadataTemplates(PersistentVolumeClaimMetadataTemplates).
 		WithTableTemplates(TableTemplates)
 	err := r.client.WalkPersistentVolumeClaims(func(p PersistentVolumeClaim) error {
-		result.AddNode(p.GetNode(r.probeID))
+		result.AddNode(p.GetNode())
 		persistentVolumeClaims = append(persistentVolumeClaims, p)
 		return nil
 	})
@@ -455,7 +455,7 @@ func (r *Reporter) storageClassTopology() (report.Topology, []StorageClass, erro
 		WithMetadataTemplates(StorageClassMetadataTemplates).
 		WithTableTemplates(TableTemplates)
 	err := r.client.WalkStorageClasses(func(p StorageClass) error {
-		result.AddNode(p.GetNode(r.probeID))
+		result.AddNode(p.GetNode())
 		storageClasses = append(storageClasses, p)
 		return nil
 	})

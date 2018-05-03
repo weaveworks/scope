@@ -105,6 +105,8 @@ var (
 	PersistentVolumeNodeID      = report.MakePersistentVolumeNodeID(PersistentVolumeUID)
 	PersistentVolumeClaimUID    = "pvc1234"
 	PersistentVolumeClaimNodeID = report.MakePersistentVolumeClaimNodeID(PersistentVolumeClaimUID)
+	StorageClassUID             = "sc1234"
+	StorageClassNodeID          = report.MakeStorageClassNodeID(StorageClassUID)
 
 	ClientProcess1CPUMetric    = report.MakeSingletonMetric(Now.Add(-1*time.Second), 0.01)
 	ClientProcess1MemoryMetric = report.MakeSingletonMetric(Now.Add(-2*time.Second), 0.02)
@@ -366,7 +368,7 @@ var (
 					}).
 					WithTopology(report.PersistentVolumeClaim),
 			},
-		}.WithShape(report.Cylinder).WithLabel("persistent volume claim", "persistent volume claims"),
+		}.WithShape(report.DottedCylinder).WithLabel("persistent volume claim", "persistent volume claims"),
 		PersistentVolume: report.Topology{
 			Nodes: report.Nodes{
 				PersistentVolumeNodeID: report.MakeNodeWith(
@@ -382,6 +384,17 @@ var (
 					WithTopology(report.PersistentVolume),
 			},
 		}.WithShape(report.Cylinder).WithLabel("persistent volume", "persistent volumes"),
+		StorageClass: report.Topology{
+			Nodes: report.Nodes{
+				StorageClassNodeID: report.MakeNodeWith(
+
+					StorageClassNodeID, map[string]string{
+						kubernetes.Name:        "standard",
+						kubernetes.Provisioner: "pong",
+					}).
+					WithTopology(report.StorageClass),
+			},
+		}.WithShape(report.StorageSheet).WithLabel("storage class", "storage classes"),
 		Sampling: report.Sampling{
 			Count: 1024,
 			Total: 4096,

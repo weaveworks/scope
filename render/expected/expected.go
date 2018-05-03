@@ -12,12 +12,14 @@ import (
 
 // Exported for testing.
 var (
-	circle   = "circle"
-	square   = "square"
-	heptagon = "heptagon"
-	hexagon  = "hexagon"
-	cloud    = "cloud"
-	cylinder = "cylinder"
+	circle         = "circle"
+	square         = "square"
+	heptagon       = "heptagon"
+	hexagon        = "hexagon"
+	cloud          = "cloud"
+	cylinder       = "cylinder"
+	dottedcylinder = "dottedcylinder"
+	storagesheet   = "storagesheet"
 
 	// Helper to make a report.node with some common options
 	node = func(topology string) func(id string, adjacent ...string) report.Node {
@@ -41,6 +43,7 @@ var (
 	hostNode              = node(report.Host)
 	persistentVolume      = node(report.PersistentVolume)
 	persistentVolumeClaim = node(report.PersistentVolumeClaim)
+	StorageClass          = node(report.StorageClass)
 
 	UnknownPseudoNode1ID = render.MakePseudoNodeID(fixture.UnknownClient1IP)
 	UnknownPseudoNode2ID = render.MakePseudoNodeID(fixture.UnknownClient3IP)
@@ -269,6 +272,32 @@ var (
 				RenderedContainers[fixture.ServerContainerNodeID],
 			)),
 
+		fixture.PersistentVolumeClaimNodeID: persistentVolumeClaim(fixture.PersistentVolumeClaimNodeID, fixture.PersistentVolumeNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:             "pvc-6124",
+				kubernetes.Namespace:        "ping",
+				kubernetes.Status:           "bound",
+				kubernetes.VolumeName:       "pongvolume",
+				kubernetes.AccessModes:      "ReadWriteOnce",
+				kubernetes.StorageClassName: "standard",
+			}).WithChild(report.MakeNode(fixture.PersistentVolumeNodeID).WithTopology(report.PersistentVolume)),
+
+		fixture.PersistentVolumeNodeID: persistentVolume(fixture.PersistentVolumeNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:             "pongvolume",
+				kubernetes.Namespace:        "ping",
+				kubernetes.Status:           "bound",
+				kubernetes.VolumeClaim:      "pvc-6124",
+				kubernetes.AccessModes:      "ReadWriteOnce",
+				kubernetes.StorageClassName: "standard",
+			}),
+
+		fixture.StorageClassNodeID: StorageClass(fixture.StorageClassNodeID, fixture.PersistentVolumeClaimNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:        "standard",
+				kubernetes.Provisioner: "pong",
+			}).WithChild(report.MakeNode(fixture.PersistentVolumeClaimNodeID).WithTopology(report.PersistentVolumeClaim)),
+
 		UnmanagedServerID:         unmanagedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerPodNodeID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
@@ -326,36 +355,6 @@ var (
 		// UnknownPseudoNode2ID:      unknownPseudoNode2(fixture.ServerHostNodeID),
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerHostNodeID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
-	}
-
-	RenderedPersistentVolume = report.Nodes{
-		fixture.ClientPodNodeID: pod(fixture.ClientPodNodeID, fixture.PersistentVolumeClaimNodeID, fixture.ServerPodNodeID).
-			WithLatests(map[string]string{
-				kubernetes.Name:        "pong-a",
-				kubernetes.Namespace:   "ping",
-				kubernetes.State:       "running",
-				kubernetes.VolumeClaim: "pvc-6124",
-			}).WithChild(report.MakeNode(fixture.PersistentVolumeClaimNodeID).WithTopology(report.Pod)),
-
-		fixture.PersistentVolumeClaimNodeID: persistentVolumeClaim(fixture.PersistentVolumeClaimNodeID, fixture.PersistentVolumeNodeID).
-			WithLatests(map[string]string{
-				kubernetes.Name:             "pvc-6124",
-				kubernetes.Namespace:        "ping",
-				kubernetes.Status:           "bound",
-				kubernetes.VolumeName:       "pongvolume",
-				kubernetes.AccessModes:      "ReadWriteOnce",
-				kubernetes.StorageClassName: "standard",
-			}).WithChild(report.MakeNode(fixture.PersistentVolumeNodeID).WithTopology(report.PersistentVolume)),
-
-		fixture.PersistentVolumeNodeID: persistentVolume(fixture.PersistentVolumeNodeID).
-			WithLatests(map[string]string{
-				kubernetes.Name:             "pongvolume",
-				kubernetes.Namespace:        "ping",
-				kubernetes.Status:           "bound",
-				kubernetes.VolumeClaim:      "pvc-6124",
-				kubernetes.AccessModes:      "ReadWriteOnce",
-				kubernetes.StorageClassName: "standard",
-			}),
 	}
 )
 

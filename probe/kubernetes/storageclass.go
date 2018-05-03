@@ -8,7 +8,7 @@ import (
 // StorageClass represent kubernetes StorageClass interface
 type StorageClass interface {
 	Meta
-	GetNode(probeID string) report.Node
+	GetNode() report.Node
 }
 
 // storageClass represents kubernetes storage classes
@@ -23,11 +23,10 @@ func NewStorageClass(p *storagev1.StorageClass) StorageClass {
 }
 
 // GetNode returns StorageClass as Node
-func (p *storageClass) GetNode(probeID string) report.Node {
+func (p *storageClass) GetNode() report.Node {
 	return p.MetaNode(report.MakeStorageClassNodeID(p.UID())).WithLatests(map[string]string{
-		report.ControlProbeID: probeID,
-		NodeType:              "Storage Class",
-		Name:                  p.GetName(),
-		Provisioner:           p.Provisioner,
+		NodeType:    "Storage Class",
+		Name:        p.GetName(),
+		Provisioner: p.Provisioner,
 	})
 }

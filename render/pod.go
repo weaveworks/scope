@@ -65,22 +65,7 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 				),
 			),
 			ConnectionJoin(MapPod2IP, report.Pod),
-			ConnectionStorageJoin(
-				Map2PVName,
-				report.PersistentVolumeClaim,
-			),
-			ConnectionStorageJoin(
-				Map2PVCName,
-				report.Pod,
-			),
-			MapStorageEndpoints(
-				Map2PVNode,
-				report.PersistentVolume,
-			),
-			MapStorageEndpoints(
-				Map2PVNode,
-				report.StorageClass,
-			),
+			KubernetesVolumesRenderer,
 		),
 	),
 ))

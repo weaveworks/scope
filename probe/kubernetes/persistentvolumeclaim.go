@@ -17,7 +17,7 @@ const (
 type PersistentVolumeClaim interface {
 	Meta
 	Selector() (labels.Selector, error)
-	GetNode(probeID string) report.Node
+	GetNode() report.Node
 	GetStorageClass() string
 }
 
@@ -48,14 +48,12 @@ func (p *persistentVolumeClaim) GetStorageClass() string {
 }
 
 // GetNode returns Persistent Volume Claim as Node
-func (p *persistentVolumeClaim) GetNode(probeID string) report.Node {
+func (p *persistentVolumeClaim) GetNode() report.Node {
 	return p.MetaNode(report.MakePersistentVolumeClaimNodeID(p.UID())).WithLatests(map[string]string{
-		report.ControlProbeID: probeID,
-		NodeType:              "Persistent Volume Claim",
-		Status:                string(p.Status.Phase),
-		VolumeName:            p.Spec.VolumeName,
-		AccessModes:           string(p.Spec.AccessModes[0]),
-		StorageClassName:      p.GetStorageClass(),
+		NodeType:         "Persistent Volume Claim",
+		Status:           string(p.Status.Phase),
+		VolumeName:       p.Spec.VolumeName,
+		StorageClassName: p.GetStorageClass(),
 	})
 }
 

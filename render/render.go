@@ -251,29 +251,6 @@ func (ret *joinResults) rewriteAdjacency(outID string, adjacency report.IDList) 
 	ret.nodes[outID] = out
 }
 
-// storageAdjacency sets adjacency for the given node ID
-func (ret *joinResults) storageAdjacency(outID string, adjacency string) {
-	out := ret.nodes[outID]
-	out.Adjacency = out.Adjacency.Add(adjacency)
-	ret.nodes[outID] = out
-}
-
-// storageResult returns Nodes for after adding adjacencies
-func (ret *joinResults) storageResult(input Nodes) Nodes {
-	for _, n := range input.Nodes {
-		outID, ok := ret.mapped[n.ID]
-		if !ok {
-			continue
-		}
-		// Since PV and PVC will have only single adjacency
-		ret.storageAdjacency(outID, n.ID)
-		for _, outID := range ret.multi[n.ID] {
-			ret.storageAdjacency(outID, n.ID)
-		}
-	}
-	return Nodes{Nodes: ret.nodes}
-}
-
 // ResetCache blows away the rendered node cache, and known service
 // cache.
 func ResetCache() {
