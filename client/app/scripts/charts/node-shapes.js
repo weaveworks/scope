@@ -20,7 +20,8 @@ import {
   octagonShapeProps,
   cloudShapeProps,
   cylinderShapeProps,
-  dottedCylinderShapeProps
+  dottedCylinderShapeProps,
+  sheetShapeProps
 } from '../utils/node-shape-utils';
 import { encodeIdAttribute } from '../utils/dom-utils';
 
@@ -87,3 +88,4 @@ export const NodeShapeOctagon = props => NodeShape('octagon', pathElement, octag
 export const NodeShapeCloud = props => NodeShape('cloud', pathElement, cloudShapeProps, props);
 export const NodeShapeCylinder = props => NodeShape('cylinder', pathElement, cylinderShapeProps, props);
 export const NodeShapeDottedCylinder = props => NodeShape('dottedcylinder', pathElement, dottedCylinderShapeProps, props);
+export const NodeShapeSheet = props => NodeShape('sheet', pathElement, sheetShapeProps, props);

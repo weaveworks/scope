@@ -199,6 +199,13 @@ var nodeSummaryGroupSpecs = []struct {
 			Columns: []Column{},
 		},
 	},
+	{
+		topologyID: report.StorageClass,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label:   "Storage Classes",
+			Columns: []Column{},
+		},
+	},
 }
 
 func children(rc RenderContext, n report.Node) []NodeSummaryGroup {

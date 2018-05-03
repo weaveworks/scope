@@ -31,6 +31,7 @@ const (
 	SwarmService          = "swarm_service"
 	PersistentVolume      = "persistent_volume"
 	PersistentVolumeClaim = "persistent_volume_claim"
+	StorageClass          = "storage_class"
 
 	// Shapes used for different nodes
 	Circle         = "circle"
@@ -43,6 +44,7 @@ const (
 	Cloud          = "cloud"
 	Cylinder       = "cylinder"
 	DottedCylinder = "dottedcylinder"
+	StorageSheet   = "storagesheet"
 
 	// Used when counting the number of containers
 	ContainersKey = "containers"
@@ -69,6 +71,7 @@ var topologyNames = []string{
 	SwarmService,
 	PersistentVolume,
 	PersistentVolumeClaim,
+	StorageClass,
 }
 
 // Report is the core data type. It's produced by probes, and consumed and
@@ -164,6 +167,10 @@ type Report struct {
 	// Persistent Volume Claim nodes represent all Kubernetes Persistent Volume Claims running on hosts running probes.
 	// Metadata is limited for now, more to come later.
 	PersistentVolumeClaim Topology
+
+	// Storage Class represent all kubernetes Storage Classes on hosts running probes.
+	// Metadata is limited for now, more to come later.
+	StorageClass Topology
 
 	DNS DNSRecords
 
@@ -265,6 +272,10 @@ func MakeReport() Report {
 		PersistentVolumeClaim: MakeTopology().
 			WithShape(DottedCylinder).
 			WithLabel("persistent volume claim", "persistent volume claims"),
+
+		StorageClass: MakeTopology().
+			WithShape(StorageSheet).
+			WithLabel("storage class", "storage classes"),
 
 		DNS: DNSRecords{},
 
@@ -371,6 +382,8 @@ func (r *Report) topology(name string) *Topology {
 		return &r.PersistentVolume
 	case PersistentVolumeClaim:
 		return &r.PersistentVolumeClaim
+	case StorageClass:
+		return &r.StorageClass
 	}
 	return nil
 }

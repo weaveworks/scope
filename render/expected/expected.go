@@ -329,6 +329,14 @@ var (
 	}
 
 	RenderedPersistentVolume = report.Nodes{
+		fixture.ClientPodNodeID: pod(fixture.ClientPodNodeID, fixture.PersistentVolumeClaimNodeID, fixture.ServerPodNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:        "pong-a",
+				kubernetes.Namespace:   "ping",
+				kubernetes.State:       "running",
+				kubernetes.VolumeClaim: "pvc-6124",
+			}).WithChild(report.MakeNode(fixture.PersistentVolumeClaimNodeID).WithTopology(report.Pod)),
+
 		fixture.PersistentVolumeClaimNodeID: persistentVolumeClaim(fixture.PersistentVolumeClaimNodeID, fixture.PersistentVolumeNodeID).
 			WithLatests(map[string]string{
 				kubernetes.Name:             "pvc-6124",

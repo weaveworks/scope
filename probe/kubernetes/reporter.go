@@ -32,6 +32,7 @@ const (
 	Status             = report.KubernetesStatus
 	Message            = report.KubernetesMessage
 	VolumeName         = report.KubernetesVolumeName
+	Provisioner        = report.KubernetesProvisioner
 )
 
 // Exposed for testing
@@ -121,6 +122,12 @@ var (
 		Status:      {ID: Status, Label: "Status", From: report.FromLatest, Priority: 3},
 		VolumeName:  {ID: VolumeName, Label: "Volume", From: report.FromLatest, Priority: 4},
 		AccessModes: {ID: AccessModes, Label: "Access Modes", From: report.FromLatest, Priority: 5},
+	}
+
+	StorageClassMetadataTemplates = report.MetadataTemplates{
+		NodeType:    {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Name:        {ID: Name, Label: "Name", From: report.FromLatest, Priority: 2},
+		Provisioner: {ID: Provisioner, Label: "Provisioner", From: report.FromLatest, Priority: 3},
 	}
 
 	TableTemplates = report.TableTemplates{
@@ -292,6 +299,10 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
+	storageClassTopology, _, err := r.storageClassTopology()
+	if err != nil {
+		return result, err
+	}
 	result.Pod = result.Pod.Merge(podTopology)
 	result.Service = result.Service.Merge(serviceTopology)
 	result.Host = result.Host.Merge(hostTopology)
@@ -302,6 +313,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.Namespace = result.Namespace.Merge(namespaceTopology)
 	result.PersistentVolume = result.PersistentVolume.Merge(persistentVolumeTopology)
 	result.PersistentVolumeClaim = result.PersistentVolumeClaim.Merge(persistentVolumeClaimTopology)
+	result.StorageClass = result.StorageClass.Merge(storageClassTopology)
 	return result, nil
 }
 
@@ -435,6 +447,19 @@ func (r *Reporter) persistentVolumeClaimTopology() (report.Topology, []Persisten
 		return nil
 	})
 	return result, persistentVolumeClaims, err
+}
+
+func (r *Reporter) storageClassTopology() (report.Topology, []StorageClass, error) {
+	storageClasses := []StorageClass{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(StorageClassMetadataTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkStorageClasses(func(p StorageClass) error {
+		result.AddNode(p.GetNode(r.probeID))
+		storageClasses = append(storageClasses, p)
+		return nil
+	})
+	return result, storageClasses, err
 }
 
 type labelledChild interface {

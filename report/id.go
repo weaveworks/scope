@@ -169,6 +169,12 @@ var (
 
 	// ParsePersistentVolumeClaimNodeID parses a Persistent Volume Claim node ID
 	ParsePersistentVolumeClaimNodeID = parseSingleComponentID("persistent_volume_claim")
+
+	// MakeStorageClassNodeID produces a storage class node ID from its composite parts.
+	MakeStorageClassNodeID = makeSingleComponentID("storage_class")
+
+	// ParseStorageClassNodeID parses a storage class node ID
+	ParseStorageClassNodeID = parseSingleComponentID("storage_class")
 )
 
 // makeSingleComponentID makes a single-component node id encoder

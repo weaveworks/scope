@@ -78,6 +78,7 @@ const (
 	KubernetesStatus               = "kubernetes_status"
 	KubernetesMessage              = "kubernetes_message"
 	KubernetesVolumeName           = "kubernetes_volume_name"
+	KubernetesProvisioner          = "kubernetes_provisioner"
 	// probe/awsecs
 	ECSCluster             = "ecs_cluster"
 	ECSCreatedAt           = "ecs_created_at"
@@ -112,6 +113,7 @@ var commonKeys = map[string]string{
 	SwarmService:          SwarmService,
 	PersistentVolume:      PersistentVolume,
 	PersistentVolumeClaim: PersistentVolumeClaim,
+	StorageClass:          StorageClass,
 
 	HostNodeID:             HostNodeID,
 	ControlProbeID:         ControlProbeID,

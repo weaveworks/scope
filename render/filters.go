@@ -131,6 +131,35 @@ func IsConnected(node report.Node) bool {
 	return ok
 }
 
+// IsStorageComponent check whether given node is PV, PVC, SC or not
+func IsStorageComponent(node report.Node) bool {
+	var storageComponent bool
+	if node.Topology == "persistent_volume" || node.Topology == "persistent_volume_claim" || node.Topology == "storage_class" {
+		storageComponent = true
+	}
+	if node.Topology == "pod" {
+		volumeClaim, ok := node.Latest.Lookup(kubernetes.VolumeClaim)
+		if !ok {
+			storageComponent = false
+		} else if volumeClaim == "" {
+			storageComponent = false
+		} else {
+			storageComponent = true
+		}
+	}
+	return storageComponent
+}
+
+// IsNotStorageComponent check whether given node is PV, PVC, SC or not
+func IsNotStorageComponent(node report.Node) bool {
+	var ok bool
+	ok = true
+	if node.Topology == "persistent_volume" || node.Topology == "persistent_volume_claim" || node.Topology == "storage_class" {
+		ok = false
+	}
+	return ok
+}
+
 // connected returns the node ids of nodes which have edges to/from
 // them, excluding edges to/from themselves.
 func connected(nodes report.Nodes) map[string]struct{} {

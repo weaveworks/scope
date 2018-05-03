@@ -533,9 +533,19 @@ a {
   }
 
   .edge {
-    .link {
+    .link-none {
+      fill: none;
+      display: none;
+    }
+    .link-storage {
       fill: none;
       stroke: $edge-color;
+      stroke-dasharray: 1, 30;
+      stroke-linecap: round;
+    }
+    .link {
+      fill: none;
+      stroke: $edge-color
     }
     .shadow {
       fill: none;

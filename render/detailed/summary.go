@@ -82,6 +82,7 @@ var renderers = map[string]func(BasicNodeSummary, report.Node) BasicNodeSummary{
 	report.Endpoint:              nil, // Do not render
 	report.PersistentVolume:      persistentVolumeNodeSummary,
 	report.PersistentVolumeClaim: persistentVolumeClaimNodeSummary,
+	report.StorageClass:          storageClassNodeSummary,
 }
 
 // For each report.Topology, map to a 'primary' API topology. This can then be used in a variety of places.
@@ -99,8 +100,9 @@ var primaryAPITopology = map[string]string{
 	report.ECSService:            "ecs-services",
 	report.SwarmService:          "swarm-services",
 	report.Host:                  "hosts",
-	report.PersistentVolume:      "persistent-volumes",
-	report.PersistentVolumeClaim: "persistent-volumes",
+	report.PersistentVolume:      "pods",
+	report.PersistentVolumeClaim: "pods",
+	report.StorageClass:          "pods",
 }
 
 // MakeBasicNodeSummary returns a basic summary of a node, if
@@ -381,6 +383,11 @@ func persistentVolumeNodeSummary(base BasicNodeSummary, n report.Node) BasicNode
 }
 
 func persistentVolumeClaimNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
+}
+
+func storageClassNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base = addKubernetesLabelAndRank(base, n)
 	return base
 }

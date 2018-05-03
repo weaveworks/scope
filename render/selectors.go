@@ -34,4 +34,5 @@ var (
 	SelectOverlay               = TopologySelector(report.Overlay)
 	SelectPersistentVolume      = TopologySelector(report.PersistentVolume)
 	SelectPersistentVolumeClaim = TopologySelector(report.PersistentVolumeClaim)
+	SelectStorageClass          = TopologySelector(report.StorageClass)
 )

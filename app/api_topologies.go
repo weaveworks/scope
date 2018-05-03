@@ -48,6 +48,14 @@ var (
 			{Value: "hide", Label: "Hide Unmanaged", filter: render.IsNotPseudo, filterPseudo: true},
 		},
 	}
+	storageFilter = APITopologyOptionGroup{
+		ID:      "storage",
+		Default: "hide",
+		Options: []APITopologyOption{
+			{Value: "show", Label: "Show Storage", filter: render.IsStorageComponent, filterPseudo: false},
+			{Value: "hide", Label: "Hide Storage", filter: render.IsNotStorageComponent, filterPseudo: false},
+		},
+	}
 )
 
 // namespaceFilters generates a namespace selector option group based on the given namespaces
@@ -230,7 +238,7 @@ func MakeRegistry() *Registry {
 			renderer:    render.PodRenderer,
 			Name:        "Pods",
 			Rank:        3,
-			Options:     []APITopologyOptionGroup{unmanagedFilter},
+			Options:     []APITopologyOptionGroup{storageFilter, unmanagedFilter},
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
@@ -247,14 +255,6 @@ func MakeRegistry() *Registry {
 			renderer:    render.PodServiceRenderer,
 			Name:        "services",
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
-			HideIfEmpty: true,
-		},
-		APITopologyDesc{
-			id:          persistentVolumesID,
-			parent:      podsID,
-			renderer:    render.PersistentVolumeRenderer,
-			Name:        "persistent volumes",
-			Options:     []APITopologyOptionGroup{},
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{

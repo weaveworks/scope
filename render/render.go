@@ -267,6 +267,9 @@ func (ret *joinResults) storageResult(input Nodes) Nodes {
 		}
 		// Since PV and PVC will have only single adjacency
 		ret.storageAdjacency(outID, n.ID)
+		for _, outID := range ret.multi[n.ID] {
+			ret.storageAdjacency(outID, n.ID)
+		}
 	}
 	return Nodes{Nodes: ret.nodes}
 }
