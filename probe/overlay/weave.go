@@ -63,11 +63,11 @@ var (
 		WeaveProtocol:        {ID: WeaveProtocol, Label: "Protocol", From: report.FromLatest, Priority: 2},
 		WeavePeerName:        {ID: WeavePeerName, Label: "Name", From: report.FromLatest, Priority: 3},
 		WeaveEncryption:      {ID: WeaveEncryption, Label: "Encryption", From: report.FromLatest, Priority: 4},
-		WeavePeerDiscovery:   {ID: WeavePeerDiscovery, Label: "Peer Discovery", From: report.FromLatest, Priority: 5},
+		WeavePeerDiscovery:   {ID: WeavePeerDiscovery, Label: "Peer discovery", From: report.FromLatest, Priority: 5},
 		WeaveTargetCount:     {ID: WeaveTargetCount, Label: "Targets", From: report.FromLatest, Priority: 6},
 		WeaveConnectionCount: {ID: WeaveConnectionCount, Label: "Connections", From: report.FromLatest, Priority: 8},
 		WeavePeerCount:       {ID: WeavePeerCount, Label: "Peers", From: report.FromLatest, Priority: 7},
-		WeaveTrustedSubnets:  {ID: WeaveTrustedSubnets, Label: "Trusted Subnets", From: report.FromSets, Priority: 9},
+		WeaveTrustedSubnets:  {ID: WeaveTrustedSubnets, Label: "Trusted subnets", From: report.FromSets, Priority: 9},
 	}
 
 	weaveTableTemplates = report.TableTemplates{
@@ -78,7 +78,7 @@ var (
 			FixedRows: map[string]string{
 				WeaveIPAMStatus:        "Status",
 				WeaveIPAMRange:         "Range",
-				WeaveIPAMDefaultSubnet: "Default Subnet",
+				WeaveIPAMDefaultSubnet: "Default subnet",
 			},
 		},
 		WeaveDNSTableID: {
@@ -107,7 +107,7 @@ var (
 			Type:  report.PropertyListType,
 			FixedRows: map[string]string{
 				WeavePluginStatus: "Status",
-				WeavePluginDriver: "Driver Name",
+				WeavePluginDriver: "Driver name",
 			},
 		},
 		WeaveConnectionsMulticolumnTablePrefix: {

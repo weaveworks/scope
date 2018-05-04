@@ -43,8 +43,8 @@ var (
 		ID:      "pseudo",
 		Default: "hide",
 		Options: []APITopologyOption{
-			{Value: "show", Label: "Show Unmanaged", filter: nil, filterPseudo: false},
-			{Value: "hide", Label: "Hide Unmanaged", filter: render.IsNotPseudo, filterPseudo: true},
+			{Value: "show", Label: "Show unmanaged", filter: nil, filterPseudo: false},
+			{Value: "hide", Label: "Hide unmanaged", filter: render.IsNotPseudo, filterPseudo: true},
 		},
 	}
 )
@@ -151,8 +151,8 @@ func MakeRegistry() *Registry {
 			Default: "application",
 			Options: []APITopologyOption{
 				{Value: "all", Label: "All", filter: nil, filterPseudo: false},
-				{Value: "system", Label: "System Containers", filter: render.IsSystem, filterPseudo: false},
-				{Value: "application", Label: "Application Containers", filter: render.IsApplication, filterPseudo: false}},
+				{Value: "system", Label: "System containers", filter: render.IsSystem, filterPseudo: false},
+				{Value: "application", Label: "Application containers", filter: render.IsApplication, filterPseudo: false}},
 		},
 		{
 			ID:      "stopped",
@@ -167,8 +167,8 @@ func MakeRegistry() *Registry {
 			ID:      "pseudo",
 			Default: "hide",
 			Options: []APITopologyOption{
-				{Value: "show", Label: "Show Uncontained", filter: nil, filterPseudo: false},
-				{Value: "hide", Label: "Hide Uncontained", filter: render.IsNotPseudo, filterPseudo: true},
+				{Value: "show", Label: "Show uncontained", filter: nil, filterPseudo: false},
+				{Value: "hide", Label: "Hide uncontained", filter: render.IsNotPseudo, filterPseudo: true},
 			},
 		},
 	}
@@ -178,8 +178,8 @@ func MakeRegistry() *Registry {
 			ID:      "unconnected",
 			Default: "hide",
 			Options: []APITopologyOption{
-				{Value: "show", Label: "Show Unconnected", filter: nil, filterPseudo: false},
-				{Value: "hide", Label: "Hide Unconnected", filter: render.IsConnected, filterPseudo: false},
+				{Value: "show", Label: "Show unconnected", filter: nil, filterPseudo: false},
+				{Value: "hide", Label: "Hide unconnected", filter: render.IsConnected, filterPseudo: false},
 			},
 		},
 	}
@@ -236,7 +236,7 @@ func MakeRegistry() *Registry {
 			id:          kubeControllersID,
 			parent:      podsID,
 			renderer:    render.KubeControllerRenderer,
-			Name:        "controllers",
+			Name:        "Controllers",
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
 		},
@@ -244,7 +244,7 @@ func MakeRegistry() *Registry {
 			id:          servicesID,
 			parent:      podsID,
 			renderer:    render.PodServiceRenderer,
-			Name:        "services",
+			Name:        "Services",
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
 		},
@@ -260,14 +260,14 @@ func MakeRegistry() *Registry {
 			id:          ecsServicesID,
 			parent:      ecsTasksID,
 			renderer:    render.ECSServiceRenderer,
-			Name:        "services",
+			Name:        "Services",
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
 			id:          swarmServicesID,
 			renderer:    render.SwarmServiceRenderer,
-			Name:        "services",
+			Name:        "Services",
 			Rank:        3,
 			Options:     []APITopologyOptionGroup{unmanagedFilter},
 			HideIfEmpty: true,

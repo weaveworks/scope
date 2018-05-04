@@ -2,6 +2,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { List as makeList, Map as makeMap } from 'immutable';
+import capitalize from 'lodash/capitalize';
 
 import NodeDetailsTable from '../components/node-details/node-details-table';
 import { clickNode, sortOrderChanged } from '../actions/app-actions';
@@ -47,7 +48,7 @@ function getColumns(nodes) {
     .toList()
     .flatMap((n) => {
       const metadata = (n.get('parents') || makeList())
-        .map(m => makeMap({ id: m.get('topologyId'), label: m.get('topologyId') }));
+        .map(m => makeMap({ id: m.get('topologyId'), label: capitalize(m.get('topologyId')) }));
       return metadata;
     })
     .toSet()

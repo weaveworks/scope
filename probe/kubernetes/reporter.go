@@ -56,8 +56,8 @@ var (
 		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
 		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
 		Strategy:           {ID: Strategy, Label: "Strategy", From: report.FromLatest, Priority: 7},
 	}
@@ -68,7 +68,7 @@ var (
 		NodeType:        {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:       {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:         {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		DesiredReplicas: {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas: {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 4},
 		report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 5},
 	}
 
@@ -78,8 +78,8 @@ var (
 		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
 		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
 	}
 
@@ -90,7 +90,7 @@ var (
 		Namespace:     {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:       {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
 		Schedule:      {ID: Schedule, Label: "Schedule", From: report.FromLatest, Priority: 4},
-		LastScheduled: {ID: LastScheduled, Label: "Last Scheduled", From: report.FromLatest, Datatype: report.DateTime, Priority: 5},
+		LastScheduled: {ID: LastScheduled, Label: "Last scheduled", From: report.FromLatest, Datatype: report.DateTime, Priority: 5},
 		Suspended:     {ID: Suspended, Label: "Suspended", From: report.FromLatest, Priority: 6},
 		ActiveJobs:    {ID: ActiveJobs, Label: "# Jobs", From: report.FromLatest, Datatype: report.Number, Priority: 7},
 		report.Pod:    {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 8},
@@ -101,7 +101,7 @@ var (
 	TableTemplates = report.TableTemplates{
 		LabelPrefix: {
 			ID:     LabelPrefix,
-			Label:  "Kubernetes Labels",
+			Label:  "Kubernetes labels",
 			Type:   report.PropertyListType,
 			Prefix: LabelPrefix,
 		},
@@ -110,13 +110,13 @@ var (
 	ScalingControls = []report.Control{
 		{
 			ID:    ScaleDown,
-			Human: "Scale Down",
+			Human: "Scale down",
 			Icon:  "fa-minus",
 			Rank:  0,
 		},
 		{
 			ID:    ScaleUp,
-			Human: "Scale Up",
+			Human: "Scale up",
 			Icon:  "fa-plus",
 			Rank:  1,
 		},

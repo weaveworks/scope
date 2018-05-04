@@ -181,7 +181,7 @@ var nodeSummaryGroupSpecs = []struct {
 	{
 		topologyID: report.ContainerImage,
 		NodeSummaryGroup: NodeSummaryGroup{
-			Label:   "Container Images",
+			Label:   "Container images",
 			Columns: []Column{},
 		},
 	},
