@@ -84,7 +84,7 @@ a {
   left: 0;
   opacity: 0;
   pointer-events: none;
-  z-index: 1000;
+  z-index: $layer-modal;
 
   &.faded {
     // NOTE: Not sure if we should block the pointer events here..
@@ -213,11 +213,11 @@ a {
     position: relative;
 
     > * {
-      z-index: 20;
+      z-index: $layer-front;
       flex: 1 1;
     }
 
-    .time-control { z-index: 2001; }
+    .time-control { z-index: $layer-modal; }
 
     .logo {
       margin: -16px 0 0 8px;
@@ -282,8 +282,7 @@ a {
       left: 10px;
       transform: translateX(-50%);
       white-space: nowrap;
-      // above everything
-      z-index: 20000;
+      z-index: $layer-tooltip;
 
       // Adjusted from http://www.cssarrowplease.com/
       &:after {
@@ -658,7 +657,7 @@ a {
   &-wrapper {
     position: fixed;
     display: flex;
-    z-index: 1024;
+    z-index: $layer-front;
     right: $details-window-padding-left;
     top: 100px;
     bottom: 48px;
@@ -678,7 +677,7 @@ a {
   background-color: $color-white;
   @extend .shadow-2;
   // keep node-details above the terminal.
-  z-index: 2;
+  z-index: $layer-front;
 
   &:last-child {
     margin-bottom: 0;
@@ -696,7 +695,7 @@ a {
 
     .close-details {
       position: relative;
-      z-index: 1024;
+      z-index: $layer-front;
     }
 
     > span {
@@ -1667,7 +1666,7 @@ a {
     user-select: none;
     top: 0;
     left: 4px;
-    z-index: 1024;
+    z-index: $layer-front;
     padding: 4px;
     color: $text-secondary-color;
 
@@ -1687,7 +1686,7 @@ a {
     overflow: hidden;
     background: $color-white;
     position: relative;
-    z-index: 1;
+    z-index: $layer-front;
     display: flex;
     border-radius: $border-radius;
     width: 100%;
@@ -1787,7 +1786,7 @@ a {
 //
 
 .help-panel {
-  z-index: 2048;
+  z-index: $layer-modal;
   background-color: $color-white;
   @extend .shadow-2;
   display: flex;
@@ -1975,7 +1974,7 @@ a {
   position: absolute;
   padding: 10px;
   left: 10px;
-  z-index: 10000;
+  z-index: $layer-modal;
 
   opacity: 0.3;
 
@@ -2119,7 +2118,7 @@ a {
     background-color: $color-white;
     padding: 20px;
     @extend .shadow-2;
-    z-index: 2048;
+    z-index: $layer-modal;
   }
 
   &-item {
