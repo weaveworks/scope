@@ -5,3 +5,8 @@ files:
 rules:
   no-important: 1
   no-color-literals: 2
+  variable-for-property:
+    - 2
+    -
+      properties:
+      - 'z-index'
