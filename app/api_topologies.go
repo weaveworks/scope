@@ -328,18 +328,14 @@ type APITopologyOptionGroup struct {
 
 // Get the render filters to use for this option group, if any, or nil otherwise.
 func (g APITopologyOptionGroup) filter(value string) render.FilterFunc {
-	selectType := g.SelectType
-	if selectType == "" {
-		selectType = "one"
-	}
 	var values []string
-	switch selectType {
-	case "one":
+	switch g.SelectType {
+	case "", "one":
 		values = []string{value}
 	case "union":
 		values = strings.Split(value, ",")
 	default:
-		log.Errorf("Invalid select type %s for option group %s, ignoring option", selectType, g.ID)
+		log.Errorf("Invalid select type %s for option group %s, ignoring option", g.SelectType, g.ID)
 		return nil
 	}
 	filters := []render.FilterFunc{}
