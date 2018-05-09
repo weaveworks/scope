@@ -314,7 +314,7 @@ func (a byName) Less(i, j int) bool { return a[i].Name < a[j].Name }
 // APITopologyOptionGroup describes a group of APITopologyOptions
 type APITopologyOptionGroup struct {
 	ID string `json:"id"`
-	// Default value for the UI to adopt. NOT used as the default if the value is omitted, allowing "" as a distinct value.
+	// Default value for the option. Used if the value is omitted; not used if the value is ""
 	Default string              `json:"defaultValue"`
 	Options []APITopologyOption `json:"options,omitempty"`
 	// SelectType describes how options can be picked. Currently defined values:
@@ -518,7 +518,10 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 
 	var filters []render.FilterFunc
 	for _, group := range topology.Options {
-		value := values.Get(group.ID)
+		value := group.Default
+		if vs := values[group.ID]; len(vs) > 0 {
+			value = vs[0]
+		}
 		if filter := group.filter(value); filter != nil {
 			filters = append(filters, filter)
 		}
