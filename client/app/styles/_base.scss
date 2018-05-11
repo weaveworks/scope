@@ -100,7 +100,7 @@ a {
   border-radius: 4px;
   color: $text-tertiary-color;
   display: flex;
-  font-size: 0.7rem;
+  font-size: $font-size-tiny;
   justify-content: center;
   padding: 5px;
   position: fixed;
@@ -118,7 +118,7 @@ a {
     outline: 0;
 
     .fa {
-      font-size: 125%;
+      font-size: $font-size-normal;
       position: relative;
       top: 2px;
     }
@@ -159,7 +159,7 @@ a {
   bottom: 0;
   color: $text-color;
   font-family: $base-font;
-  font-size: 13px;
+  font-size: $font-size-small;
   height: auto;
   left: 0;
   line-height: 150%;
@@ -189,7 +189,7 @@ a {
   }
 
   h2 {
-    font-size: 34px;
+    font-size: $font-size-extra-large;
     line-height: 40px;
     padding-top: 8px;
     margin-bottom: 12px;
@@ -273,7 +273,7 @@ a {
       text-align: center;
       line-height: 22px;
       border-radius: 3px;
-      font-size: 12px;
+      font-size: $font-size-tiny;
       margin-bottom: 25px;
       margin-left: -4px;
       opacity: 0.75;
@@ -317,7 +317,7 @@ a {
     margin: 0px 8px;
 
     &-label {
-      font-size: .8rem;
+      font-size: $font-size-small;
       text-transform: uppercase;
     }
 
@@ -326,7 +326,7 @@ a {
   .topologies-sub {
     &-item {
       &-label {
-        font-size: .7rem;
+        font-size: $font-size-tiny;
         text-transform: uppercase;
       }
     }
@@ -395,13 +395,13 @@ a {
     justify-content: center;
 
     .heading {
-      font-size: 125%;
+      font-size: $font-size-normal;
     }
 
     &-icon {
       text-align: center;
       opacity: 0.25;
-      font-size: 320px;
+      font-size: $overlay-icon-size;
     }
 
     li { padding-top: 5px; }
@@ -474,13 +474,13 @@ a {
 
       cursor: pointer;
       pointer-events: all;
-      font-size: 12px;
+      font-size: $font-size-small;
       width: 100%;
     }
 
     .node-label-minor {
       color: $text-secondary-color;
-      font-size: 0.85em;
+      font-size: $font-size-tiny;
     }
 
     .node-label, .node-label-minor {
@@ -610,7 +610,7 @@ a {
 
     text {
       transform: scale($node-text-scale);
-      font-size: 10px;
+      font-size: $font-size-tiny;
       dominant-baseline: middle;
       text-anchor: middle;
     }
@@ -630,7 +630,7 @@ a {
   text-align: center;
 
   &-match {
-    font-size: 0.8em;
+    font-size: $font-size-small;
 
     &-wrapper {
       display: inline-block;
@@ -647,7 +647,7 @@ a {
 
   &-more {
     text-transform: uppercase;
-    font-size: 0.7em;
+    font-size: $font-size-tiny;
     color: $color-turquoise;
     margin-top: -2px;
   }
@@ -702,7 +702,7 @@ a {
       @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
-      font-size: 110%;
+      font-size: $font-size-normal;
       color: $color-white;
       cursor: pointer;
       border: 1px solid transparent;
@@ -710,11 +710,11 @@ a {
 
       span {
         font-family: $base-font;
-        font-size: 0.9em;
+        font-size: $font-size-small;
         margin-left: 4px;
 
         span {
-          font-size: 1em;
+          font-size: $font-size-normal;
           margin-left: 0;
           text-transform: uppercase;
         }
@@ -759,7 +759,7 @@ a {
 
   &-relatives {
     margin-top: 4px;
-    font-size: 120%;
+    font-size: $font-size-large;
     color: $color-white;
 
     &-link {
@@ -778,7 +778,7 @@ a {
       padding: 0 2px;
       text-transform: uppercase;
       cursor: pointer;
-      font-size: 60%;
+      font-size: $font-size-tiny;
       font-weight: bold;
       display: inline-block;
       position: relative;
@@ -827,7 +827,7 @@ a {
     &-loading {
       margin-top: 48px;
       text-align: center;
-      font-size: 48px;
+      font-size: $font-size-huge;
       color: $text-tertiary-color;
     }
 
@@ -836,7 +836,7 @@ a {
 
       &-header {
         text-transform: uppercase;
-        font-size: 90%;
+        font-size: $font-size-small;
         color: $text-tertiary-color;
         padding: 4px 0;
       }
@@ -872,13 +872,13 @@ a {
 
         &-value {
           color: $text-secondary-color;
-          font-size: 100%;
+          font-size: $font-size-normal;
         }
 
         &-label {
           color: $text-secondary-color;
           text-transform: uppercase;
-          font-size: 60%;
+          font-size: $font-size-tiny;
         }
       }
     }
@@ -893,7 +893,7 @@ a {
       &-label {
         color: $text-secondary-color;
         text-transform: uppercase;
-        font-size: 80%;
+        font-size: $font-size-small;
 
         .fa {
           margin-left: 0.5em;
@@ -905,7 +905,7 @@ a {
       }
 
       &-placeholder {
-        font-size: 200%;
+        font-size: $font-size-extra-large;
         opacity: 0.2;
         margin-bottom: 0.2em;
       }
@@ -942,7 +942,7 @@ a {
         padding: 0 0.5em 0 0;
         white-space: nowrap;
         text-transform: uppercase;
-        font-size: 80%;
+        font-size: $font-size-tiny;
 
         &::after {
           content: ':';
@@ -950,7 +950,7 @@ a {
       }
 
       &-value {
-        font-size: 105%;
+        font-size: $font-size-small;
         flex: 1;
         // Now required (from chrome 48) to get overflow + flexbox behaving:
         min-width: 0;
@@ -975,7 +975,7 @@ a {
         padding: 0 0.5em 0 0;
         white-space: nowrap;
         text-transform: uppercase;
-        font-size: 80%;
+        font-size: $font-size-tiny;
 
         &::after {
           content: ':';
@@ -983,7 +983,7 @@ a {
       }
 
       &-value {
-        font-size: 105%;
+        font-size: $font-size-small;
         flex: 1;
         // Now required (from chrome 48) to get overflow + flexbox behaving:
         min-width: 0;
@@ -1016,7 +1016,7 @@ a {
     &-header {
       text-transform: uppercase;
       color: $text-tertiary-color;
-      font-size: 90%;
+      font-size: $font-size-tiny;
       text-align: right;
       padding: 0;
 
@@ -1051,7 +1051,7 @@ a {
     }
 
     &-node {
-      font-size: 105%;
+      font-size: $font-size-small;
       line-height: 1.5;
 
       &:hover, &.selected {
@@ -1092,7 +1092,7 @@ a {
 
       &-value-minor,
       &-value-unit {
-        font-size: 95%;
+        font-size: $font-size-small;
         color: $text-secondary-color;
       }
 
@@ -1154,7 +1154,7 @@ a {
     .node-details-table-node-label,
     .node-details-table-node-value {
       flex: 1;
-      font-size: 14px;
+      font-size: $font-size-small;
       color: $text-color;
       line-height: 24px;
       text-transform: none;
@@ -1179,8 +1179,8 @@ a {
       .wrapper {
         display: block;
 
-        &.label { font-size: 15px; }
-        &.consumption { font-size: 12px; }
+        &.label { font-size: $font-size-small; }
+        &.consumption { font-size: $font-size-tiny; }
       }
     }
   }
@@ -1189,7 +1189,7 @@ a {
     background-color: transparentize($color-gallery, 0.05);
     border: 1px solid $color-silver;
     color: $text-tertiary-color;
-    font-size: 16px;
+    font-size: $font-size-normal;
     font-weight: bold;
     padding-right: 20px;
     text-align: right;
@@ -1214,7 +1214,7 @@ a {
   @extend .btn-opacity;
   padding: 6px;
   margin-left: 2px;
-  font-size: 110%;
+  font-size: $font-size-normal;
   color: $text-secondary-color;
   cursor: pointer;
   border: 1px solid transparent;
@@ -1269,7 +1269,7 @@ a {
     padding: 8px 24px;
     background-color: $text-color;
     position: relative;
-    font-size: 14px;
+    font-size: $font-size-small;
     line-height: 28px;
     border-radius: 4px 0 0 0;
 
@@ -1291,7 +1291,7 @@ a {
         border: 1px solid transparent;
         border-radius: 10%;
 
-        font-size: 0.8em;
+        font-size: $font-size-tiny;
         font-weight: bold;
         text-transform: uppercase;
 
@@ -1302,7 +1302,7 @@ a {
       }
 
       &-item-icon {
-        font-size: 1em;
+        font-size: $font-size-normal;
       }
     }
   }
@@ -1377,11 +1377,11 @@ a {
   text-transform: uppercase;
   cursor: pointer;
   color: $text-secondary-color;
-  font-size: 90%;
+  font-size: $font-size-small;
 
   &-icon {
     color: $text-tertiary-color;
-    font-size: 120%;
+    font-size: $font-size-large;
     position: relative;
     top: 1px;
   }
@@ -1406,7 +1406,7 @@ a {
   &-plugin-icon {
     top: 1px;
     position: relative;
-    font-size: 120%;
+    font-size: $font-size-large;
     margin-right: 2px;
   }
 
@@ -1428,7 +1428,7 @@ a {
   display: inline-block;
 
   &-icon {
-    font-size: 1rem;
+    font-size: $font-size-normal;
     position: relative;
     top: 0.125rem;
     margin-right: 0.25rem;
@@ -1537,7 +1537,7 @@ a {
 
     .fa {
       color: $text-secondary-color;
-      font-size: 125%;
+      font-size: $font-size-large;
     }
   }
 
@@ -1612,7 +1612,7 @@ a {
   bottom: 11px;
   left: 11px;
   padding: 5px;
-  font-size: .7rem;
+  font-size: $font-size-tiny;
   border-radius: 8px;
   border: 1px solid transparent;
   pointer-events: none;
@@ -1644,7 +1644,7 @@ a {
   }
 
   &-hint {
-    font-size: 0.7rem;
+    font-size: $font-size-tiny;
     position: absolute;
     padding: 0 1em;
     color: $text-tertiary-color;
@@ -1657,7 +1657,7 @@ a {
   &-help-link {
     @extend .btn-opacity;
     cursor: pointer;
-    font-size: 150%;
+    font-size: $font-size-large;
   }
 
   &-label {
@@ -1675,7 +1675,7 @@ a {
     }
 
     &-hint {
-      font-size: 0.8rem;
+      font-size: $font-size-tiny;
       text-transform: uppercase;
       transition: opacity 0.3s 0.5s $base-ease;
       opacity: 1;
@@ -1696,7 +1696,7 @@ a {
     flex-wrap: wrap;
 
     &-field {
-      font-size: 0.8rem;
+      font-size: $font-size-small;
       line-height: 150%;
       position: relative;
       padding: 1px 4px 1px 1.5em;
@@ -1767,7 +1767,7 @@ a {
     @extend .btn-opacity;
     padding: 2px 4px 2px 2px;
     cursor: pointer;
-    font-size: 80%;
+    font-size: $font-size-small;
     position: relative;
     top: -1px;
   }
@@ -1810,7 +1810,7 @@ a {
     h2 {
       margin: 0;
       text-transform: uppercase;
-      font-size: 125%;
+      font-size: $font-size-large;
     }
   }
 
@@ -1823,7 +1823,7 @@ a {
       @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
-      font-size: 110%;
+      font-size: $font-size-normal;
       color: $color-primary-lavender;
       cursor: pointer;
       border: 1px solid transparent;
@@ -1845,7 +1845,7 @@ a {
     h2 {
       text-transform: uppercase;
       line-height: 150%;
-      font-size: 125%;
+      font-size: $font-size-large;
       color: $color-primary-lavender;
       padding: 4px 0;
       border-bottom: 1px solid transparentize($color-primary-lavender, 0.9);
@@ -1853,7 +1853,7 @@ a {
 
     h3 {
       text-transform: uppercase;
-      font-size: 90%;
+      font-size: $font-size-normal;
       color: $color-primary-lavender;
       padding: 4px 0;
     }
@@ -1870,7 +1870,7 @@ a {
       kbd {
         display: inline-block;
         padding: 3px 5px;
-        font-size: 11px;
+        font-size: $font-size-tiny;
         line-height: 10px;
         color: $color-dim-gray;
         vertical-align: middle;
