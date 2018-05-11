@@ -16,6 +16,6 @@
       "ignoreProperties": ["tab-size", "hyphens"],
     }],
     "selector-type-no-unknown": null,
-    "sh-waqar/declaration-use-variable": [["z-index"]],
+    "sh-waqar/declaration-use-variable": [["font-size", "z-index"]],
   },
 }
