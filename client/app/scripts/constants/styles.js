@@ -70,7 +70,7 @@ export const NODE_DETAILS_TABLE_COLUMN_WIDTHS = {
   open_files_count: NODE_DETAILS_TABLE_CW.M,
   pid: NODE_DETAILS_TABLE_CW.S,
   port: NODE_DETAILS_TABLE_CW.S,
-  ppid: NODE_DETAILS_TABLE_CW.S,
+  ppid: NODE_DETAILS_TABLE_CW.M, // Label "Parent PID" needs more space
   process_cpu_usage_percent: NODE_DETAILS_TABLE_CW.M,
   process_memory_usage_bytes: NODE_DETAILS_TABLE_CW.M,
   threads: NODE_DETAILS_TABLE_CW.M,
