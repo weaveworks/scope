@@ -9,4 +9,5 @@ rules:
     - 2
     -
       properties:
+      - 'font-size'
       - 'z-index'
