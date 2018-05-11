@@ -1021,7 +1021,7 @@ a {
       padding: 0;
 
       .node-details-table-header-sortable {
-        padding: 3px 2px;
+        padding: 3px 4px;
         cursor: pointer;
       }
 
@@ -2065,13 +2065,6 @@ a {
 
     table {
       border-bottom: 1px solid $color-silver;
-    }
-
-    thead {
-      // osx scrollbar width: 0
-      // linux scrollbar width: 16
-      // avg scrollbar width: 8
-      padding-right: 8px;
     }
 
     thead, tbody tr {
