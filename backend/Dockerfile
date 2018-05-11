@@ -21,3 +21,10 @@ RUN go get -tags netgo \
 RUN pip install yapf==0.16.2 flake8==3.3.0
 COPY build.sh /
 ENTRYPOINT ["/build.sh"]
+
+ARG revision
+LABEL maintainer="Weaveworks <help@weave.works>" \
+      org.opencontainers.image.title="backend" \
+      org.opencontainers.image.source="https://github.com/weaveworks/scope/tree/master/backend" \
+      org.opencontainers.image.revision="${revision}" \
+      org.opencontainers.image.vendor="Weaveworks"
