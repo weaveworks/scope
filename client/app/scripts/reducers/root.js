@@ -281,7 +281,7 @@ export function rootReducer(state = initialState, action) {
       return closeNodeDetails(state, action.nodeId);
     }
 
-    case ActionTypes.CLICK_CLOSE_TERMINAL: {
+    case ActionTypes.CLOSE_TERMINAL: {
       return state.update('controlPipes', controlPipes => controlPipes.clear());
     }
 

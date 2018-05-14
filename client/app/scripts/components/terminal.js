@@ -4,9 +4,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { debounce } from 'lodash';
-import Term from 'xterm';
+import { Terminal as Term } from 'xterm';
 
-import { clickCloseTerminal } from '../actions/app-actions';
+import { closeTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
 import { getPipeStatus, deletePipe, doResizeTty, getWebsocketUrl, basePath } from '../utils/web-api-utils';
@@ -157,6 +157,10 @@ class Terminal extends React.Component {
     if (this.props.connect !== nextProps.connect && nextProps.connect) {
       this.mountTerminal();
     }
+    // Close the terminal window immediatelly when the pipe is deleted.
+    if (nextProps.pipe.get('status') === 'PIPE_DELETED') {
+      this.props.dispatch(closeTerminal(this.getPipeId()));
+    }
   }
 
   componentDidMount() {
@@ -176,6 +180,8 @@ class Terminal extends React.Component {
     });
 
     this.term.open(this.innerFlex);
+    this.term.focus();
+
     this.term.on('data', (data) => {
       if (this.socket) {
         this.socket.send(data);
@@ -240,13 +246,13 @@ class Terminal extends React.Component {
 
   handleCloseClick(ev) {
     ev.preventDefault();
-    this.props.dispatch(clickCloseTerminal(this.getPipeId()));
+    this.props.dispatch(closeTerminal(this.getPipeId()));
   }
 
   handlePopoutTerminal(ev) {
     ev.preventDefault();
     const paramString = JSON.stringify(this.props);
-    this.props.dispatch(clickCloseTerminal(this.getPipeId()));
+    this.props.dispatch(closeTerminal(this.getPipeId()));
     this.setState({detached: true});
 
     const bcr = this.node.getBoundingClientRect();
@@ -310,18 +316,6 @@ class Terminal extends React.Component {
   }
 
   getStatus() {
-    if (this.props.pipe.get('status') === 'PIPE_DELETED') {
-      return (
-        <div>
-          <h3>Connection Closed</h3>
-          <div className="termina-status-bar-message">
-            The connection to this container has been closed.
-            <div className="link" onClick={this.handleCloseClick}>Close terminal</div>
-          </div>
-        </div>
-      );
-    }
-
     if (!this.state.connected) {
       return (
         <h3>Connecting...</h3>

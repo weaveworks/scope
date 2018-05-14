@@ -234,10 +234,10 @@ export function clickCloseDetails(nodeId) {
   };
 }
 
-export function clickCloseTerminal(pipeId) {
+export function closeTerminal(pipeId) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_CLOSE_TERMINAL,
+      type: ActionTypes.CLOSE_TERMINAL,
       pipeId
     });
     updateRoute(getState);
@@ -491,7 +491,7 @@ export function hitEsc() {
     const controlPipe = state.get('controlPipes').last();
     if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
       dispatch({
-        type: ActionTypes.CLICK_CLOSE_TERMINAL,
+        type: ActionTypes.CLOSE_TERMINAL,
         pipeId: controlPipe.get('id')
       });
       updateRoute(getState);
