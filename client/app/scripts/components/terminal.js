@@ -157,7 +157,7 @@ class Terminal extends React.Component {
     if (this.props.connect !== nextProps.connect && nextProps.connect) {
       this.mountTerminal();
     }
-    // Close the terminal window immediatelly when the pipe is deleted.
+    // Close the terminal window immediately when the pipe is deleted.
     if (nextProps.pipe.get('status') === 'PIPE_DELETED') {
       this.props.dispatch(closeTerminal(this.getPipeId()));
     }
