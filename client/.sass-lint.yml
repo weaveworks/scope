@@ -9,5 +9,10 @@ rules:
     - 2
     -
       properties:
+      - 'border-radius'
+      - 'border-top-left-radius'
+      - 'border-top-right-radius'
+      - 'border-bottom-left-radius'
+      - 'border-bottom-right-radius'
       - 'font-size'
       - 'z-index'

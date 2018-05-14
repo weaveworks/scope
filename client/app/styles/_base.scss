@@ -97,7 +97,7 @@ a {
 .overlay-wrapper {
   align-items: center;
   background-color: transparentize($background-color, 0.1);
-  border-radius: 4px;
+  border-radius: $border-radius-soft;
   color: $text-tertiary-color;
   display: flex;
   font-size: $font-size-tiny;
@@ -110,7 +110,7 @@ a {
     @extend .btn-opacity;
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 4px;
+    border-radius: $border-radius-soft;
     color: $text-secondary-color;
     cursor: pointer;
     line-height: 20px;
@@ -272,7 +272,7 @@ a {
       color: $color-white;
       text-align: center;
       line-height: 22px;
-      border-radius: 3px;
+      border-radius: $border-radius-soft;
       font-size: $font-size-tiny;
       margin-bottom: 25px;
       margin-left: -4px;
@@ -340,7 +340,7 @@ a {
     @extend .btn-opacity;
     cursor: pointer;
     padding: 4px 8px;
-    border-radius: $border-radius;
+    border-radius: $border-radius-soft;
     opacity: 0.9;
     margin-bottom: 3px;
     border: 1px solid transparent;
@@ -485,7 +485,7 @@ a {
 
     .node-label, .node-label-minor {
       span {
-        border-radius: 2px;
+        border-radius: $border-radius-soft;
       }
       span:not(.match) {
         padding: 0 0.25em;
@@ -673,7 +673,7 @@ a {
   flex-flow: column;
   margin-bottom: 12px;
   padding-bottom: 2px;
-  border-radius: 2px;
+  border-radius: $border-radius-soft;
   background-color: $color-white;
   @extend .shadow-2;
   // keep node-details above the terminal.
@@ -706,7 +706,7 @@ a {
       color: $color-white;
       cursor: pointer;
       border: 1px solid transparent;
-      border-radius: 4px;
+      border-radius: $border-radius-soft;
 
       span {
         font-family: $base-font;
@@ -1172,7 +1172,7 @@ a {
 
     &-info {
       background-color: transparentize($color-white, 0.4);
-      border-radius: 2px;
+      border-radius: $border-radius-soft;
       cursor: inherit;
       padding: 5px;
 
@@ -1218,7 +1218,7 @@ a {
   color: $text-secondary-color;
   cursor: pointer;
   border: 1px solid transparent;
-  border-radius: 10%;
+  border-radius: $border-radius-soft;
   &:hover {
     border-color: transparentize($color-white, 0.4);
   }
@@ -1271,7 +1271,7 @@ a {
     position: relative;
     font-size: $font-size-small;
     line-height: 28px;
-    border-radius: 4px 0 0 0;
+    border-top-left-radius: $border-radius-soft;
 
     &-title {
       cursor: default;
@@ -1289,7 +1289,7 @@ a {
         cursor: pointer;
         opacity: 0.7;
         border: 1px solid transparent;
-        border-radius: 10%;
+        border-radius: $border-radius-soft;
 
         font-size: $font-size-tiny;
         font-weight: bold;
@@ -1318,7 +1318,7 @@ a {
     right: 0;
     background-color: $color-black;
     padding: 8px;
-    border-radius: 0 0 0 4px;
+    border-bottom-left-radius: $border-radius-soft;
 
     .terminal {
       background-color: transparent !important;
@@ -1333,7 +1333,7 @@ a {
     width: 50%;
     padding: 16px 16px;
     opacity: 0.8;
-    border-radius: 4px;
+    border-radius: $border-radius-soft;
 
     h3 {
       margin: 4px 0;
@@ -1423,7 +1423,7 @@ a {
 .status {
   text-transform: uppercase;
   padding: 2px 12px;
-  border-radius: $border-radius;
+  border-radius: $border-radius-soft;
   color: $text-secondary-color;
   display: inline-block;
 
@@ -1456,7 +1456,7 @@ a {
 
   &-wrapper {
     pointer-events: all;
-    border-radius: $border-radius;
+    border-radius: $border-radius-soft;
     border: 1px solid $background-darker-color;
     display: inline-block;
     white-space: nowrap;
@@ -1476,13 +1476,13 @@ a {
 
     &:first-child {
       border-left: none;
-      border-top-left-radius: $border-radius;
-      border-bottom-left-radius: $border-radius;
+      border-top-left-radius: $border-radius-soft;
+      border-bottom-left-radius: $border-radius-soft;
     }
 
     &:last-child {
-      border-top-right-radius: $border-radius;
-      border-bottom-right-radius: $border-radius;
+      border-top-right-radius: $border-radius-soft;
+      border-bottom-right-radius: $border-radius-soft;
     }
   }
 }
@@ -1503,7 +1503,7 @@ a {
   &:first-child,
   &:last-child {
     .view-mode-selector-action {
-      border-radius: 0;
+      border-radius: $border-radius-none;
     }
   }
 
@@ -1576,7 +1576,7 @@ a {
   cursor: pointer;
   border: 1px dashed transparent;
   text-transform: none;
-  border-radius: $border-radius;
+  border-radius: $border-radius-soft;
   margin-left: 4px;
 
   &-wrapper {
@@ -1613,7 +1613,7 @@ a {
   left: 11px;
   padding: 5px;
   font-size: $font-size-tiny;
-  border-radius: 8px;
+  border-radius: $border-radius-soft;
   border: 1px solid transparent;
   pointer-events: none;
 }
@@ -1688,7 +1688,7 @@ a {
     position: relative;
     z-index: $layer-front;
     display: flex;
-    border-radius: $border-radius;
+    border-radius: $border-radius-soft;
     width: 100%;
     border: $search-border-width solid $search-border-color;
     padding: 2px 4px;
@@ -1701,7 +1701,7 @@ a {
       position: relative;
       padding: 1px 4px 1px 1.5em;
       border: none;
-      border-radius: 0;
+      border-radius: $border-radius-none;
       background: transparent;
       color: $text-color;
       width: 100px;
@@ -1747,9 +1747,11 @@ a {
 
 .search-item {
   background-color: transparentize($color-accent-blue, 0.2);
-  border-radius: $border-radius / 2;
+  border-radius: $border-radius-soft;
   margin: 1px 0 1px 1.5em;
-  display: inline-block;
+  padding: 2px 4px 2px 6px;
+  display: flex;
+  align-items: center;
 
   & + .search-item {
     margin-left: 4px;
@@ -1760,12 +1762,12 @@ a {
   }
 
   &-label {
-    padding: 2px 4px;
+    margin-right: 4px;
   }
 
   &-icon {
     @extend .btn-opacity;
-    padding: 2px 4px 2px 2px;
+    padding: 2px;
     cursor: pointer;
     font-size: $font-size-small;
     position: relative;
@@ -1827,7 +1829,7 @@ a {
       color: $color-primary-lavender;
       cursor: pointer;
       border: 1px solid transparent;
-      border-radius: 10%;
+      border-radius: $border-radius-soft;
 
       &:hover {
         border-color: transparentize($color-primary-lavender, 0.4);
@@ -1877,7 +1879,7 @@ a {
         background-color: $color-alabaster;
         border: solid 1px $color-silver;
         border-bottom-color: $color-gray;
-        border-radius: 3px;
+        border-radius: $border-radius-soft;
         box-shadow: inset 0 -1px 0 $color-gray;
       }
       div.key {
@@ -2000,7 +2002,7 @@ a {
 
 .nodes-grid {
   tr {
-    border-radius: 6px;
+    border-radius: $border-radius-soft;
   }
 
   &-label-minor {
@@ -2048,7 +2050,7 @@ a {
 
     tbody tr {
       border: 1px solid transparent;
-      border-radius: 4px;
+      border-radius: $border-radius-soft;
       cursor: pointer;
     }
 
