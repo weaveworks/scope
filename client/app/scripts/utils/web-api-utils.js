@@ -48,7 +48,6 @@ let createWebsocketAt = null;
 let firstMessageOnWebsocketAt = null;
 let continuePolling = true;
 
-
 export function buildUrlQuery(params = makeMap(), state) {
   // Attach the time travel timestamp to every request to the backend.
   params = params.set('timestamp', state.get('pausedAt'));
@@ -90,7 +89,9 @@ export function basePathSlash(urlPath) {
 
 export function getApiPath(pathname = window.location.pathname) {
   if (process.env.SCOPE_API_PREFIX) {
-    return basePath(`${process.env.SCOPE_API_PREFIX}${pathname}`);
+    // Flip the current namespaces and instanceName args to match Weave Cloud routes.
+    const [, instanceName, namespace] = pathname.split('/');
+    return basePath(`${process.env.SCOPE_API_PREFIX}/${namespace}/${instanceName}`);
   }
 
   return basePath(pathname);
@@ -104,7 +105,7 @@ function topologiesUrl(state) {
 
 export function getWebsocketUrl(host = window.location.host, pathname = window.location.pathname) {
   const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-  return `${wsProto}://${host}${process.env.SCOPE_API_PREFIX || ''}${basePath(pathname)}`;
+  return `${wsProto}://${host}${getApiPath(pathname)}`;
 }
 
 function buildWebsocketUrl(topologyUrl, topologyOptions = makeMap(), state) {
