@@ -472,13 +472,21 @@ func (r *registry) WalkNetworks(f func(docker_client.Network)) {
 	}
 }
 
-// ImageNameWithoutVersion splits the image name apart, returning the name
-// without the version, if possible
-func ImageNameWithoutVersion(name string) string {
+func ImageNameParts(name string) []string {
 	parts := strings.SplitN(name, "/", 3)
 	if len(parts) == 3 {
 		name = fmt.Sprintf("%s/%s", parts[1], parts[2])
 	}
-	parts = strings.SplitN(name, ":", 2)
-	return parts[0]
+	return strings.SplitN(name, ":", 2)
+}
+
+// ImageNameWithoutVersion splits the image name apart, returning the name
+// without the version, if possible
+func ImageNameWithoutVersion(name string) string {
+	return ImageNameParts(name)[0]
+}
+
+// ImageNameVersion splits the image name apart, returning the version, if possible
+func ImageNameVersion(name string) string {
+	return ImageNameParts(name)[1]
 }

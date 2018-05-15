@@ -16,6 +16,7 @@ const (
 	DockerContainerID            = "docker_container_id"
 	DockerImageID                = "docker_image_id"
 	DockerImageName              = "docker_image_name"
+	DockerImageTag               = "docker_image_tag"
 	DockerImageSize              = "docker_image_size"
 	DockerImageVirtualSize       = "docker_image_virtual_size"
 	DockerIsInHostNetwork        = "docker_is_in_host_network"
@@ -121,6 +122,7 @@ var commonKeys = map[string]string{
 	DockerContainerID:            DockerContainerID,
 	DockerImageID:                DockerImageID,
 	DockerImageName:              DockerImageName,
+	DockerImageTag:               DockerImageTag,
 	DockerImageSize:              DockerImageSize,
 	DockerImageVirtualSize:       DockerImageVirtualSize,
 	DockerIsInHostNetwork:        DockerIsInHostNetwork,

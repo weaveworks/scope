@@ -144,6 +144,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) Nodes {
 		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutVersion)
 
 		c = propagateLatest(docker.ImageName, image, c)
+		c = propagateLatest(docker.ImageTag, image, c)
 		c = propagateLatest(docker.ImageSize, image, c)
 		c = propagateLatest(docker.ImageVirtualSize, image, c)
 		c = propagateLatest(docker.ImageLabelPrefix+"works.weave.role", image, c)
