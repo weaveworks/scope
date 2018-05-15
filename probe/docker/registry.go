@@ -472,6 +472,7 @@ func (r *registry) WalkNetworks(f func(docker_client.Network)) {
 	}
 }
 
+// ImageNameParts returns parts of the full image name (image name, image tag).
 func ImageNameParts(name string) []string {
 	parts := strings.SplitN(name, "/", 3)
 	if len(parts) == 3 {
@@ -488,5 +489,9 @@ func ImageNameWithoutVersion(name string) string {
 
 // ImageNameVersion splits the image name apart, returning the version, if possible
 func ImageNameVersion(name string) string {
-	return ImageNameParts(name)[1]
+	imageNameParts := ImageNameParts(name)
+	if len(imageNameParts) < 2 {
+		return ""
+	}
+	return imageNameParts[1]
 }
