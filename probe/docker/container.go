@@ -467,3 +467,27 @@ func ContainerIsStopped(c Container) bool {
 	state := c.StateString()
 	return (state != StateRunning && state != StateRestarting && state != StatePaused)
 }
+
+// splitImageName returns parts of the full image name (image name, image tag).
+func splitImageName(imageName string) []string {
+	parts := strings.SplitN(imageName, "/", 3)
+	if len(parts) == 3 {
+		imageName = fmt.Sprintf("%s/%s", parts[1], parts[2])
+	}
+	return strings.SplitN(imageName, ":", 2)
+}
+
+// ImageNameWithoutTag splits the image name apart, returning the name
+// without the version, if possible
+func ImageNameWithoutTag(imageName string) string {
+	return splitImageName(imageName)[0]
+}
+
+// ImageNameTag splits the image name apart, returning the version tag, if possible
+func ImageNameTag(imageName string) string {
+	imageNameParts := splitImageName(imageName)
+	if len(imageNameParts) < 2 {
+		return ""
+	}
+	return imageNameParts[1]
+}

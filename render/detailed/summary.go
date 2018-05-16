@@ -250,7 +250,7 @@ func containerNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary
 	base.Label = containerName
 	base.LabelMinor = hostName
 	if imageName != "" {
-		base.Rank = docker.ImageNameWithoutVersion(imageName)
+		base.Rank = docker.ImageNameWithoutTag(imageName)
 	} else if hostName != "" {
 		base.Rank = hostName
 	} else {
@@ -261,12 +261,12 @@ func containerNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary
 
 func containerImageNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	var (
-		imageName, _            = n.Latest.Lookup(docker.ImageName)
-		imageNameWithoutVersion = docker.ImageNameWithoutVersion(imageName)
+		imageName, _        = n.Latest.Lookup(docker.ImageName)
+		imageNameWithoutTag = docker.ImageNameWithoutTag(imageName)
 	)
 	switch {
-	case imageNameWithoutVersion != "" && imageNameWithoutVersion != ImageNameNone:
-		base.Label = imageNameWithoutVersion
+	case imageNameWithoutTag != "" && imageNameWithoutTag != ImageNameNone:
+		base.Label = imageNameWithoutTag
 	case imageName != "" && imageName != ImageNameNone:
 		base.Label = imageName
 	default:

@@ -1,8 +1,6 @@
 package docker
 
 import (
-	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -470,28 +468,4 @@ func (r *registry) WalkNetworks(f func(docker_client.Network)) {
 	for _, network := range r.networks {
 		f(network)
 	}
-}
-
-// ImageNameParts returns parts of the full image name (image name, image tag).
-func ImageNameParts(name string) []string {
-	parts := strings.SplitN(name, "/", 3)
-	if len(parts) == 3 {
-		name = fmt.Sprintf("%s/%s", parts[1], parts[2])
-	}
-	return strings.SplitN(name, ":", 2)
-}
-
-// ImageNameWithoutVersion splits the image name apart, returning the name
-// without the version, if possible
-func ImageNameWithoutVersion(name string) string {
-	return ImageNameParts(name)[0]
-}
-
-// ImageNameVersion splits the image name apart, returning the version, if possible
-func ImageNameVersion(name string) string {
-	imageNameParts := ImageNameParts(name)
-	if len(imageNameParts) < 2 {
-		return ""
-	}
-	return imageNameParts[1]
 }

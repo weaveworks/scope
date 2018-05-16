@@ -283,8 +283,8 @@ func (r *Reporter) containerImageTopology() report.Topology {
 		}
 		if len(image.RepoTags) > 0 {
 			imageFullName := image.RepoTags[0]
-			latests[ImageName] = ImageNameWithoutVersion(imageFullName)
-			latests[ImageTag] = ImageNameVersion(imageFullName)
+			latests[ImageName] = ImageNameWithoutTag(imageFullName)
+			latests[ImageTag] = ImageNameTag(imageFullName)
 		}
 		nodeID := report.MakeContainerImageNodeID(imageID)
 		node := report.MakeNodeWith(nodeID, latests)
