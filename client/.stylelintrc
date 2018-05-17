@@ -22,6 +22,7 @@
       "border-top-right-radius",
       "border-bottom-left-radius",
       "border-bottom-right-radius",
+      "font-family",
       "font-size",
       "z-index"
     ]],
