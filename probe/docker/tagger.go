@@ -123,7 +123,7 @@ func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 		// If we can work out the image name, add a parent tag for it
 		image, ok := t.registry.GetContainerImage(c.Image())
 		if ok && len(image.RepoTags) > 0 {
-			imageName := ImageNameWithoutVersion(image.RepoTags[0])
+			imageName := ImageNameWithoutTag(image.RepoTags[0])
 			node = node.WithParents(report.MakeSets().
 				Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(imageName))),
 			)

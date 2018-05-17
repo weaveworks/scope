@@ -140,10 +140,11 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) Nodes {
 		if !ok {
 			continue
 		}
-		imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
-		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutVersion)
+		imageNameWithoutTag := docker.ImageNameWithoutTag(imageName)
+		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutTag)
 
 		c = propagateLatest(docker.ImageName, image, c)
+		c = propagateLatest(docker.ImageTag, image, c)
 		c = propagateLatest(docker.ImageSize, image, c)
 		c = propagateLatest(docker.ImageVirtualSize, image, c)
 		c = propagateLatest(docker.ImageLabelPrefix+"works.weave.role", image, c)
@@ -323,8 +324,8 @@ func MapContainerImage2Name(n report.Node) report.Node {
 		return report.Node{}
 	}
 
-	imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
-	n.ID = report.MakeContainerImageNodeID(imageNameWithoutVersion)
+	imageNameWithoutTag := docker.ImageNameWithoutTag(imageName)
+	n.ID = report.MakeContainerImageNodeID(imageNameWithoutTag)
 
 	return n
 }
