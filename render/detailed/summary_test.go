@@ -429,13 +429,13 @@ func TestNodeTables(t *testing.T) {
 				{
 					ID:    docker.EnvPrefix,
 					Type:  report.PropertyListType,
-					Label: "Environment Variables",
+					Label: "Environment variables",
 					Rows:  []report.Row{},
 				},
 				{
 					ID:    docker.LabelPrefix,
 					Type:  report.PropertyListType,
-					Label: "Docker Labels",
+					Label: "Docker labels",
 					Rows: []report.Row{
 						{
 							ID: "label_label1",

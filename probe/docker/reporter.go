@@ -24,7 +24,7 @@ const (
 	ImageTableID     = "image_table"
 	ServiceName      = report.DockerServiceName
 	StackNamespace   = report.DockerStackNamespace
-	DefaultNamespace = "No Stack"
+	DefaultNamespace = "No stack"
 )
 
 // Exposed for testing
@@ -63,18 +63,18 @@ var (
 				ImageName:        " Name",
 				ImageTag:         " Tag",
 				ImageSize:        "Size",
-				ImageVirtualSize: "Virtual Size",
+				ImageVirtualSize: "Virtual size",
 			},
 		},
 		LabelPrefix: {
 			ID:     LabelPrefix,
-			Label:  "Docker Labels",
+			Label:  "Docker labels",
 			Type:   report.PropertyListType,
 			Prefix: LabelPrefix,
 		},
 		EnvPrefix: {
 			ID:     EnvPrefix,
-			Label:  "Environment Variables",
+			Label:  "Environment variables",
 			Type:   report.PropertyListType,
 			Prefix: EnvPrefix,
 		},
@@ -83,7 +83,7 @@ var (
 	ContainerImageTableTemplates = report.TableTemplates{
 		ImageLabelPrefix: {
 			ID:     ImageLabelPrefix,
-			Label:  "Docker Labels",
+			Label:  "Docker labels",
 			Type:   report.PropertyListType,
 			Prefix: ImageLabelPrefix,
 		},
@@ -141,8 +141,8 @@ var (
 	}
 
 	SwarmServiceMetadataTemplates = report.MetadataTemplates{
-		ServiceName:    {ID: ServiceName, Label: "Service Name", From: report.FromLatest, Priority: 0},
-		StackNamespace: {ID: StackNamespace, Label: "Stack Namespace", From: report.FromLatest, Priority: 1},
+		ServiceName:    {ID: ServiceName, Label: "Service name", From: report.FromLatest, Priority: 0},
+		StackNamespace: {ID: StackNamespace, Label: "Stack namespace", From: report.FromLatest, Priority: 1},
 	}
 )
 

@@ -25,14 +25,14 @@ const (
 var (
 	taskMetadata = report.MetadataTemplates{
 		Cluster:    {ID: Cluster, Label: "Cluster", From: report.FromLatest, Priority: 0},
-		CreatedAt:  {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: report.DateTime},
+		CreatedAt:  {ID: CreatedAt, Label: "Created at", From: report.FromLatest, Priority: 1, Datatype: report.DateTime},
 		TaskFamily: {ID: TaskFamily, Label: "Family", From: report.FromLatest, Priority: 2},
 	}
 	serviceMetadata = report.MetadataTemplates{
 		Cluster:             {ID: Cluster, Label: "Cluster", From: report.FromLatest, Priority: 0},
-		CreatedAt:           {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: report.DateTime},
-		ServiceDesiredCount: {ID: ServiceDesiredCount, Label: "Desired Tasks", From: report.FromLatest, Priority: 2, Datatype: report.Number},
-		ServiceRunningCount: {ID: ServiceRunningCount, Label: "Running Tasks", From: report.FromLatest, Priority: 3, Datatype: report.Number},
+		CreatedAt:           {ID: CreatedAt, Label: "Created at", From: report.FromLatest, Priority: 1, Datatype: report.DateTime},
+		ServiceDesiredCount: {ID: ServiceDesiredCount, Label: "Desired tasks", From: report.FromLatest, Priority: 2, Datatype: report.Number},
+		ServiceRunningCount: {ID: ServiceRunningCount, Label: "Running tasks", From: report.FromLatest, Priority: 3, Datatype: report.Number},
 	}
 )
 
@@ -212,13 +212,13 @@ func (Reporter) Report() (report.Report, error) {
 	serviceTopology.Controls.AddControls([]report.Control{
 		{
 			ID:    ScaleDown,
-			Human: "Scale Down",
+			Human: "Scale down",
 			Icon:  "fa-minus",
 			Rank:  0,
 		},
 		{
 			ID:    ScaleUp,
-			Human: "Scale Up",
+			Human: "Scale up",
 			Icon:  "fa-plus",
 			Rank:  1,
 		},

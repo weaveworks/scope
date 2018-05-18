@@ -2,11 +2,13 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { List as makeList, Map as makeMap } from 'immutable';
+import capitalize from 'lodash/capitalize';
 
 import NodeDetailsTable from '../components/node-details/node-details-table';
 import { clickNode, sortOrderChanged } from '../actions/app-actions';
 import { shownNodesSelector } from '../selectors/node-filters';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
+import { findTopologyById } from '../utils/topology-utils';
 import { TABLE_VIEW_MODE } from '../constants/naming';
 
 import { windowHeightSelector } from '../selectors/canvas';
@@ -18,7 +20,15 @@ const IGNORED_COLUMNS = ['docker_container_ports', 'docker_container_id', 'docke
   'docker_container_command', 'docker_container_networks'];
 
 
-function getColumns(nodes) {
+function topologyLabel(topologies, id) {
+  const topology = findTopologyById(topologies, id);
+  if (!topology) {
+    return capitalize(id);
+  }
+  return topology.get('fullName');
+}
+
+function getColumns(nodes, topologies) {
   const metricColumns = nodes
     .toList()
     .flatMap((n) => {
@@ -43,11 +53,12 @@ function getColumns(nodes) {
     .toList()
     .sortBy(m => m.get('label'));
 
+
   const relativesColumns = nodes
     .toList()
     .flatMap((n) => {
       const metadata = (n.get('parents') || makeList())
-        .map(m => makeMap({ id: m.get('topologyId'), label: m.get('topologyId') }));
+        .map(m => makeMap({ id: m.get('topologyId'), label: topologyLabel(topologies, m.get('topologyId')) }));
       return metadata;
     })
     .toSet()
@@ -108,7 +119,7 @@ class NodesGrid extends React.Component {
 
   render() {
     const {
-      nodes, gridSortedBy, gridSortedDesc, searchNodeMatches, searchQuery, windowHeight
+      nodes, gridSortedBy, gridSortedDesc, searchNodeMatches, searchQuery, windowHeight, topologies
     } = this.props;
     const height =
       this.tableRef ? windowHeight - this.tableRef.getBoundingClientRect().top - 30 : 0;
@@ -131,7 +142,7 @@ class NodesGrid extends React.Component {
         .toList()
         .filter(n => !(searchQuery && searchNodeMatches.get(n.get('id'), makeMap()).isEmpty()))
         .toJS(),
-      columns: getColumns(nodes)
+      columns: getColumns(nodes, topologies)
     };
 
     return (
@@ -167,6 +178,7 @@ function mapStateToProps(state) {
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId'),
     windowHeight: windowHeightSelector(state),
+    topologies: state.get('topologies'),
   };
 }
 

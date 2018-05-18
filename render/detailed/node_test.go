@@ -65,7 +65,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				},
 				{
 					ID:       "local_networks",
-					Label:    "Local Networks",
+					Label:    "Local networks",
 					Value:    "10.10.10.0/24",
 					Priority: 13,
 				},
@@ -129,7 +129,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Nodes: []detailed.NodeSummary{process1NodeSummary, process2NodeSummary},
 			},
 			{
-				Label:      "Container Images",
+				Label:      "Container images",
 				TopologyID: "containers-by-image",
 				Columns:    []detailed.Column{},
 				Nodes:      []detailed.NodeSummary{containerImageNodeSummary},

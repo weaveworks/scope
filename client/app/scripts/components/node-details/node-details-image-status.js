@@ -91,7 +91,7 @@ class NodeDetailsImageStatus extends React.PureComponent {
     return (
       <div className="node-details-content-section image-status">
         <div className="node-details-content-section-header">
-          Container Image Status
+          Container image status
           {containers &&
             <div>
               <a

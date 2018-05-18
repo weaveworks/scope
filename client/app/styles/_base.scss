@@ -245,13 +245,11 @@ a {
   }
 
   &-label, .pause-text {
-    text-transform: uppercase;
     margin: 0 0.25em;
   }
 
   &-versionupdate {
     margin-right: 0.5em;
-    text-transform: uppercase;
   }
 
   &-tools {
@@ -318,7 +316,6 @@ a {
 
     &-label {
       font-size: $font-size-small;
-      text-transform: uppercase;
     }
 
   }
@@ -327,7 +324,6 @@ a {
     &-item {
       &-label {
         font-size: $font-size-tiny;
-        text-transform: uppercase;
       }
     }
   }
@@ -646,7 +642,6 @@ a {
   }
 
   &-more {
-    text-transform: uppercase;
     font-size: $font-size-tiny;
     color: $color-turquoise;
     margin-top: -2px;
@@ -716,7 +711,6 @@ a {
         span {
           font-size: $font-size-normal;
           margin-left: 0;
-          text-transform: uppercase;
         }
       }
 
@@ -776,7 +770,6 @@ a {
     &-more {
       @extend .btn-opacity;
       padding: 0 2px;
-      text-transform: uppercase;
       cursor: pointer;
       font-size: $font-size-tiny;
       font-weight: bold;
@@ -835,7 +828,6 @@ a {
       margin: 16px 0;
 
       &-header {
-        text-transform: uppercase;
         font-size: $font-size-small;
         color: $text-tertiary-color;
         padding: 4px 0;
@@ -877,7 +869,6 @@ a {
 
         &-label {
           color: $text-secondary-color;
-          text-transform: uppercase;
           font-size: $font-size-tiny;
         }
       }
@@ -892,7 +883,6 @@ a {
 
       &-label {
         color: $text-secondary-color;
-        text-transform: uppercase;
         font-size: $font-size-small;
 
         .fa {
@@ -919,10 +909,6 @@ a {
       display: flex;
       color: inherit;
 
-      .label {
-        text-transform: uppercase;
-      }
-
       .node-details-health-item {
         width: auto;
       }
@@ -941,7 +927,6 @@ a {
         color: $text-secondary-color;
         padding: 0 0.5em 0 0;
         white-space: nowrap;
-        text-transform: uppercase;
         font-size: $font-size-tiny;
 
         &::after {
@@ -974,7 +959,6 @@ a {
         color: $text-secondary-color;
         padding: 0 0.5em 0 0;
         white-space: nowrap;
-        text-transform: uppercase;
         font-size: $font-size-tiny;
 
         &::after {
@@ -1014,7 +998,6 @@ a {
     }
 
     &-header {
-      text-transform: uppercase;
       color: $text-tertiary-color;
       font-size: $font-size-tiny;
       text-align: right;
@@ -1030,7 +1013,7 @@ a {
       }
 
       &-sorter {
-        margin: 0 0.25em;
+        margin: 0 0.35em;
       }
 
       &:first-child {
@@ -1193,7 +1176,6 @@ a {
     font-weight: bold;
     padding-right: 20px;
     text-align: right;
-    text-transform: uppercase;
   }
 }
 
@@ -1293,7 +1275,6 @@ a {
 
         font-size: $font-size-tiny;
         font-weight: bold;
-        text-transform: uppercase;
 
         &:hover {
           opacity: 1;
@@ -1345,7 +1326,6 @@ a {
     }
 
     .link {
-      text-transform: uppercase;
       font-weight: bold;
       cursor: pointer;
       float: right;
@@ -1374,7 +1354,6 @@ a {
   padding: 0px 0;
   margin-top: 4px;
   text-align: right;
-  text-transform: uppercase;
   cursor: pointer;
   color: $text-secondary-color;
   font-size: $font-size-small;
@@ -1391,7 +1370,6 @@ a {
   margin-right: 0.5em;
 
   &-label {
-    text-transform: uppercase;
     margin-right: 0.25em;
   }
 
@@ -1421,7 +1399,6 @@ a {
 }
 
 .status {
-  text-transform: uppercase;
   padding: 2px 12px;
   border-radius: $border-radius-soft;
   color: $text-secondary-color;
@@ -1509,7 +1486,6 @@ a {
 
   &-action {
     background-color: transparent;
-    text-transform: uppercase;
 
     &-selected, &:not([disabled]):hover {
       background-color: $background-darker-secondary-color;
@@ -1676,7 +1652,6 @@ a {
 
     &-hint {
       font-size: $font-size-tiny;
-      text-transform: uppercase;
       transition: opacity 0.3s 0.5s $base-ease;
       opacity: 1;
     }
@@ -1811,7 +1786,6 @@ a {
 
     h2 {
       margin: 0;
-      text-transform: uppercase;
       font-size: $font-size-large;
     }
   }
@@ -1845,7 +1819,6 @@ a {
     align-items: stretch;
 
     h2 {
-      text-transform: uppercase;
       line-height: 150%;
       font-size: $font-size-large;
       color: $color-primary-lavender;
@@ -1854,7 +1827,6 @@ a {
     }
 
     h3 {
-      text-transform: uppercase;
       font-size: $font-size-normal;
       color: $color-primary-lavender;
       padding: 4px 0;
@@ -1918,7 +1890,6 @@ a {
     flex-direction: column;
 
     &-current-topology {
-      text-transform: uppercase;
       color: $color-primary-lavender;
     }
 
