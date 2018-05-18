@@ -1303,6 +1303,7 @@ a {
     right: 0;
     background-color: $color-black;
     padding: 8px;
+    box-sizing: content-box;
     border-bottom-left-radius: $border-radius-soft;
 
     .terminal {

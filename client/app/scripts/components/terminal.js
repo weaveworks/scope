@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { debounce } from 'lodash';
 import { Terminal as Term } from 'xterm';
+import * as fit from 'xterm/lib/addons/fit/fit';
 
 import { closeTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
@@ -63,8 +64,6 @@ class Terminal extends React.Component {
       detached: false,
       rows: DEFAULT_ROWS,
       cols: DEFAULT_COLS,
-      characterWidth: 0,
-      characterHeight: 0
     };
 
     this.handleCloseClick = this.handleCloseClick.bind(this);
@@ -145,9 +144,8 @@ class Terminal extends React.Component {
   }
 
   mountTerminal() {
+    Term.applyAddon(fit);
     this.term = new Term({
-      cols: this.state.cols,
-      rows: this.state.rows,
       convertEol: !this.props.pipe.get('raw'),
       cursorBlink: true,
       scrollback: 10000,
@@ -162,19 +160,19 @@ class Terminal extends React.Component {
       }
     });
 
-    this.createWebsocket(this.term);
+    this.term.on('resize', ({ cols, rows }) => {
+      const resizeTtyControl = this.props.pipe.get('resizeTtyControl');
+      if (resizeTtyControl) {
+        doResizeTty(this.getPipeId(), resizeTtyControl, cols, rows);
+      }
+      this.setState({ cols, rows });
+    });
 
-    // Estimate the character width/height.
-    const characterHeight = 17;
-    const characterWidth = 9;
+    this.createWebsocket(this.term);
 
     window.addEventListener('resize', this.handleResizeDebounced);
 
     this.resizeTimeout = setTimeout(() => {
-      this.setState({
-        characterWidth,
-        characterHeight
-      });
       this.handleResize();
     }, 10);
   }
@@ -207,14 +205,7 @@ class Terminal extends React.Component {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    const sizeChanged = (
-      prevState.cols !== this.state.cols ||
-      prevState.rows !== this.state.rows
-    );
-    if (sizeChanged) {
-      this.term.resize(this.state.cols, this.state.rows);
-    }
+  componentDidUpdate() {
     if (!this.isEmbedded()) {
       setDocumentTitle(this.getTitle());
     }
@@ -232,24 +223,11 @@ class Terminal extends React.Component {
     this.setState({detached: true});
 
     const bcr = this.node.getBoundingClientRect();
-    const minWidth = (this.state.characterWidth * 80) + (8 * 2);
-    openNewWindow(`${basePath(window.location.pathname)}/terminal.html#!/state/${paramString}`, bcr, minWidth);
+    openNewWindow(`${basePath(window.location.pathname)}/terminal.html#!/state/${paramString}`, bcr);
   }
 
   handleResize() {
-    // scrollbar === 20px
-    const width = this.innerFlex.clientWidth - (2 * 8) - 20;
-    const height = this.innerFlex.clientHeight - (2 * 8);
-    const cols = Math.floor(width / this.state.characterWidth);
-    const rows = Math.floor(height / this.state.characterHeight);
-
-    const resizeTtyControl = this.props.pipe.get('resizeTtyControl');
-    if (resizeTtyControl) {
-      doResizeTty(this.getPipeId(), resizeTtyControl, cols, rows)
-        .then(() => this.setState({cols, rows}));
-    } else if (!this.props.pipe.get('raw')) {
-      this.setState({cols, rows});
-    }
+    this.term.fit();
   }
 
   isEmbedded() {
@@ -328,9 +306,6 @@ class Terminal extends React.Component {
       opacity: this.state.connected ? 1 : 0.8,
       overflow: 'hidden',
     };
-    const innerStyle = {
-      width: (this.state.cols + 2) * this.state.characterWidth
-    };
     const innerClassName = classNames('terminal-inner hideable', {
       'terminal-inactive': !this.state.connected
     });
@@ -338,9 +313,7 @@ class Terminal extends React.Component {
     return (
       <div className="terminal-wrapper" ref={this.saveNodeRef}>
         {this.isEmbedded() && this.getTerminalHeader()}
-        <div className={innerClassName} style={innerFlexStyle} ref={this.saveInnerFlexRef}>
-          <div style={innerStyle} />
-        </div>
+        <div className={innerClassName} style={innerFlexStyle} ref={this.saveInnerFlexRef} />
         {this.getTerminalStatusBar()}
       </div>
     );
