@@ -1,13 +1,17 @@
-@import '~xterm/dist/xterm.css';
 @import '~font-awesome/scss/font-awesome.scss';
 @import '~rc-slider/dist/rc-slider.css';
 
+/* sass-lint:disable variable-for-property */
 @font-face {
-  font-family: "Roboto";
-  src: url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.woff2"),
-    url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.woff"),
-    url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.ttf");
+  font-family: 'proxima-nova';
+  src: url('../fonts/proximanova-regular.woff');
 }
+
+@font-face {
+  font-family: 'Roboto Mono';
+  src: url('../fonts/robotomono-regular.ttf');
+}
+/* sass-lint:enable variable-for-property */
 
 a {
   text-decoration: none;
@@ -158,7 +162,7 @@ a {
   background: $body-background-color;
   bottom: 0;
   color: $text-color;
-  font-family: $base-font;
+  font-family: $font-family-regular;
   font-size: $font-size-small;
   height: auto;
   left: 0;
@@ -429,7 +433,7 @@ a {
   }
 
   text {
-    font-family: $base-font;
+    font-family: $font-family-regular;
     fill: $text-secondary-color;
   }
 
@@ -704,7 +708,7 @@ a {
       border-radius: $border-radius-soft;
 
       span {
-        font-family: $base-font;
+        font-family: $font-family-regular;
         font-size: $font-size-small;
         margin-left: 4px;
 
@@ -1292,7 +1296,7 @@ a {
   &-app &-inner { top: 0; }
   &-inner {
     cursor: text;
-    font-family: $mono-font;
+    font-family: $font-family-monospace;
     position: absolute;
     bottom: 0;
     left: 0;
@@ -1307,7 +1311,7 @@ a {
   }
 
   &-status-bar {
-    font-family: $base-font;
+    font-family: $font-family-regular;
     position: absolute;
     bottom: 16px;
     right: 16px;
