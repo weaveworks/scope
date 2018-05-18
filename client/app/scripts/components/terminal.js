@@ -30,32 +30,6 @@ function ab2str(buf) {
   return decodedString;
 }
 
-function terminalCellSize(wrapperNode) {
-  // Badly guess the width/height of the row.
-  let characterWidth = 9;
-  let characterHeight = 17;
-
-  // Now try and measure the first row we find.
-  const subjectRow = wrapperNode.querySelector('.terminal .xterm-rows div');
-  if (!subjectRow) {
-    log("ERROR: Couldn't find first row, resizing might not work very well.");
-  } else {
-    const rowDisplay = subjectRow.style.display;
-    const contentBuffer = subjectRow.innerHTML;
-
-    subjectRow.innerHTML = 'W';
-    subjectRow.style.display = 'inline';
-    characterWidth = subjectRow.getBoundingClientRect().width;
-    subjectRow.style.display = rowDisplay;
-    characterHeight = parseInt(subjectRow.offsetHeight, 10);
-    subjectRow.innerHTML = contentBuffer;
-  }
-
-  log('Calculated (charWidth, charHeight) sizes in px: ', characterWidth, characterHeight);
-  return {characterWidth, characterHeight};
-}
-
-
 function openNewWindow(url, bcr, minWidth = 200) {
   const screenLeft = window.screenX || window.screenLeft;
   const screenTop = window.screenY || window.screenTop;
@@ -190,7 +164,9 @@ class Terminal extends React.Component {
 
     this.createWebsocket(this.term);
 
-    const {characterWidth, characterHeight} = terminalCellSize(this.term.element);
+    // Estimate the character width/height.
+    const characterHeight = 17;
+    const characterWidth = 9;
 
     window.addEventListener('resize', this.handleResizeDebounced);
 
