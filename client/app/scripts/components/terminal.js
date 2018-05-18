@@ -32,8 +32,8 @@ function ab2str(buf) {
 
 function terminalCellSize(wrapperNode) {
   // Badly guess the width/height of the row.
-  let characterWidth = 20;
-  let characterHeight = 20;
+  let characterWidth = 9;
+  let characterHeight = 17;
 
   // Now try and measure the first row we find.
   const subjectRow = wrapperNode.querySelector('.terminal .xterm-rows div');
@@ -261,8 +261,8 @@ class Terminal extends React.Component {
   }
 
   handleResize() {
-    // scrollbar === 16px
-    const width = this.innerFlex.clientWidth - (2 * 8) - 16;
+    // scrollbar === 20px
+    const width = this.innerFlex.clientWidth - (2 * 8) - 20;
     const height = this.innerFlex.clientHeight - (2 * 8);
     const cols = Math.floor(width / this.state.characterWidth);
     const rows = Math.floor(height / this.state.characterHeight);
