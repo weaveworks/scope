@@ -319,7 +319,7 @@ a {
     margin: 0px 8px;
 
     &-label {
-      font-size: $font-size-small;
+      font-size: $font-size-normal;
     }
 
   }
@@ -327,7 +327,7 @@ a {
   .topologies-sub {
     &-item {
       &-label {
-        font-size: $font-size-tiny;
+        font-size: $font-size-small;
       }
     }
   }
@@ -713,6 +713,7 @@ a {
         margin-left: 4px;
 
         span {
+          text-transform: capitalize;
           font-size: $font-size-normal;
           margin-left: 0;
         }
@@ -757,7 +758,7 @@ a {
 
   &-relatives {
     margin-top: 4px;
-    font-size: $font-size-large;
+    font-size: $font-size-normal;
     color: $color-white;
 
     &-link {
@@ -832,9 +833,9 @@ a {
       margin: 16px 0;
 
       &-header {
-        font-size: $font-size-small;
+        font-size: $font-size-normal;
         color: $text-tertiary-color;
-        padding: 4px 0;
+        margin-bottom: 10px;
       }
     }
   }
@@ -931,7 +932,7 @@ a {
         color: $text-secondary-color;
         padding: 0 0.5em 0 0;
         white-space: nowrap;
-        font-size: $font-size-tiny;
+        font-size: $font-size-small;
 
         &::after {
           content: ':';
@@ -963,7 +964,7 @@ a {
         color: $text-secondary-color;
         padding: 0 0.5em 0 0;
         white-space: nowrap;
-        font-size: $font-size-tiny;
+        font-size: $font-size-small;
 
         &::after {
           content: ':';
@@ -1003,7 +1004,7 @@ a {
 
     &-header {
       color: $text-tertiary-color;
-      font-size: $font-size-tiny;
+      font-size: $font-size-small;
       text-align: right;
       padding: 0;
 
@@ -1180,6 +1181,7 @@ a {
     font-weight: bold;
     padding-right: 20px;
     text-align: right;
+    text-transform: capitalize;
   }
 }
 
@@ -1364,7 +1366,7 @@ a {
 
   &-icon {
     color: $text-tertiary-color;
-    font-size: $font-size-large;
+    font-size: $font-size-normal;
     position: relative;
     top: 1px;
   }
@@ -1423,6 +1425,7 @@ a {
 }
 
 .topology-option, .metric-selector, .network-selector, .view-mode-selector, .time-control {
+  font-size: $font-size-normal;
   color: $text-secondary-color;
   margin-bottom: 6px;
 
@@ -1469,6 +1472,7 @@ a {
 }
 
 .metric-selector {
+  font-size: $font-size-small;
   margin-top: 6px;
 }
 
@@ -1527,10 +1531,13 @@ a {
     margin-top: 5px;
     text-align: right;
     pointer-events: all;
+    font-size: $font-size-small;
   }
 }
 
 .topology-option {
+  font-size: $font-size-small;
+
   &-action {
     &-selected {
       cursor: default;
@@ -1592,7 +1599,7 @@ a {
   bottom: 11px;
   left: 11px;
   padding: 5px;
-  font-size: $font-size-tiny;
+  font-size: $font-size-small;
   border-radius: $border-radius-soft;
   border: 1px solid transparent;
   pointer-events: none;
@@ -1637,7 +1644,7 @@ a {
   &-help-link {
     @extend .btn-opacity;
     cursor: pointer;
-    font-size: $font-size-large;
+    font-size: $font-size-normal;
   }
 
   &-label {
@@ -1655,7 +1662,7 @@ a {
     }
 
     &-hint {
-      font-size: $font-size-tiny;
+      font-size: $font-size-small;
       transition: opacity 0.3s 0.5s $base-ease;
       opacity: 1;
     }
