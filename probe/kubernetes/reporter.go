@@ -183,8 +183,8 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 // IsPauseImageName indicates whether an image name corresponds to a
 // kubernetes pause container image.
 func IsPauseImageName(imageName string) bool {
-	return strings.Contains(imageName, "google_containers/pause")
-
+	return strings.Contains(imageName, "google_containers/pause") ||
+		strings.Contains(imageName, "k8s.gcr.io/pause")
 }
 
 func isPauseContainer(n report.Node, rpt report.Report) bool {
