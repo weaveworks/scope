@@ -67,8 +67,8 @@ var (
 		report.StatefulSet: podIDHashQueries,
 		report.CronJob:     podIDHashQueries,
 		report.Service: {
-			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
-			docker.MemoryUsage:   `sum(rate(container_memory_usage_bytes{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
+			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="kubernetes-cadvisor",container_name!="POD"}[5m]))`,
+			docker.MemoryUsage:   `sum(rate(container_memory_usage_bytes{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="kubernetes-cadvisor",container_name!="POD"}[5m]))`,
 		},
 	}
 )
