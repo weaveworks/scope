@@ -25,7 +25,7 @@ func NewPersistentVolume(p *apiv1.PersistentVolume) PersistentVolume {
 
 // GetNode returns Persistent Volume Claim as Node
 func (p *persistentVolume) GetNode() report.Node {
-	var parents report.Sets
+	var adjacency []string
 	latests := map[string]string{
 		NodeType:         "Persistent Volume",
 		Status:           string(p.Status.Phase),
@@ -35,7 +35,7 @@ func (p *persistentVolume) GetNode() report.Node {
 	if p.Spec.ClaimRef != nil && p.Spec.ClaimRef.Kind == "PersistentVolumeClaim" {
 		latests[VolumeClaim] = p.Spec.ClaimRef.Name
 		id := report.MakePersistentVolumeClaimNodeID(string(p.Spec.ClaimRef.UID))
-		parents = parents.Add(report.PersistentVolumeClaim, report.MakeStringSet(id))
+		adjacency = append(adjacency, id)
 	}
-	return p.MetaNode(report.MakePersistentVolumeNodeID(p.UID())).WithLatests(latests).WithParents(parents)
+	return p.MetaNode(report.MakePersistentVolumeNodeID(p.UID())).WithLatests(latests).WithAdjacent(adjacency...)
 }
