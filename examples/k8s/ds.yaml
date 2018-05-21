@@ -1,0 +1,66 @@
+# borrowed from https://cloud.weave.works/k8s/scope.yaml?k8s-version=1.9.3
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: weave-scope-agent
+  labels:
+    name: weave-scope-agent
+    app: weave-scope
+    weave-cloud-component: scope
+    weave-scope-component: agent
+  namespace: weave
+spec:
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        name: weave-scope-agent
+        app: weave-scope
+        weave-cloud-component: scope
+        weave-scope-component: agent
+    spec:
+      containers:
+        - name: scope-agent
+          args:
+            - '--no-app'
+            - '--probe.docker.bridge=docker0'
+            - '--probe.docker=true'
+            - '--probe.kubernetes=true'
+            - 'weave-scope-app.weave.svc.cluster.local:80'
+          env:
+            - name: KUBERNETES_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          image: weaveworks/scope:1.9.0
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: docker-socket
+              mountPath: /var/run/docker.sock
+            - name: scope-plugins
+              mountPath: /var/run/scope/plugins
+            - name: sys-kernel-debug
+              mountPath: /sys/kernel/debug
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      hostPID: true
+      serviceAccountName: weave-scope
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
+      volumes:
+        - name: docker-socket
+          hostPath:
+            path: /var/run/docker.sock
+        - name: scope-plugins
+          hostPath:
+            path: /var/run/scope/plugins
+        - name: sys-kernel-debug
+          hostPath:
+            path: /sys/kernel/debug
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
