@@ -274,6 +274,11 @@ func TestIsKernelSupported(t *testing.T) {
 			false,
 		},
 		{
+			"4.4.0-127-generic",
+			"#153-Ubuntu SMP Sat May 19 10:58:46 UTC 2018",
+			true,
+		},
+		{
 			"4.4.0-116-generic",
 			"#140-Ubuntu SMP Mon Feb 12 21:23:04 UTC 2018",
 			true,
