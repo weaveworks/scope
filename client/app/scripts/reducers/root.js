@@ -688,7 +688,8 @@ export function rootReducer(state = initialState, action) {
         pinnedMetricType: action.state.pinnedMetricType,
       });
       if (action.state.topologyOptions) {
-        state = state.set('topologyOptions', fromJS(action.state.topologyOptions));
+        const options = getDefaultTopologyOptions(state).mergeDeep(action.state.topologyOptions);
+        state = state.set('topologyOptions', options);
       }
       if (action.state.topologyViewMode) {
         state = state.set('topologyViewMode', action.state.topologyViewMode);
