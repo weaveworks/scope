@@ -28,7 +28,7 @@ We also meet regularly at the [Scope community meeting](https://docs.google.com/
 
 - Fork the repository on GitHub
 - Read the [README](README.md) for getting started as a user and learn how/where to ask for help 
-- Continue reading this document for further development instructions
+- If you want to contribute as a developer, continue reading this document for further instructions
 - Play with the project, submit bugs, submit pull requests!
 
 ## Contribution workflow
@@ -58,7 +58,7 @@ You can run the linting and unit tests by simply doing
 make tests
 ```
 
-There are integration tests for, but unfortunately it's hard to set them up in fork repositories and that setup is not documented. Help is needed to run integration tests in forks: https://github.com/weaveworks/scope/issues/2192
+There are integration tests for Scope, but unfortunately it's hard to set them up in forked repositories and the setup is not documented. Help is needed to improve this situation: https://github.com/weaveworks/scope/issues/2192
 
 # Acceptance policy
 
