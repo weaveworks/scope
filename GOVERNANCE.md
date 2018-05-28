@@ -6,7 +6,7 @@ This document defines project governance for the project. This is (and probably 
 
 Scope's community goals and principles:
 
-1. Transition from a primarily Weaveworks project to a true community-driven project with autonomous governance.
+1. Transition from a primarily Weaveworks project to a true community-driven project with autonomous governance. Weaveworks noticed interest from various actors, and decided to to nurture the communitry and see where it can lead the project.
 2. Fill-in the needs of the community with a chop-wood-and-carry-water attitude: expect to give back before you take if you want to make an impact. Demands and suggestions from community members will be taken into account but actions and help will be more-highly appreciated.
 
 ## Code of Conduct
