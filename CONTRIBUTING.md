@@ -1,6 +1,6 @@
 # How to Contribute
 
-CNI is [Apache 2.0 licensed](LICENSE) and accepts contributions via GitHub
+Scope is [Apache 2.0 licensed](LICENSE) and accepts contributions via GitHub
 pull requests. This document outlines some of the conventions on development
 workflow, commit message formatting, contact points and other resources to make
 it easier to get your contribution accepted.
@@ -16,9 +16,9 @@ contribution. See the [DCO](DCO) file for details.
 
 # Email and Chat
 
-The project uses the the cni-dev email list and IRC chat:
-- Email: [cni-dev](https://groups.google.com/forum/#!forum/cni-dev)
-- IRC: #[containernetworking](irc://irc.freenode.org:6667/#containernetworking) channel on freenode.org
+The project uses the the scope-community email list and Slack:
+- Email: [scope-community](https://groups.google.com/forum/#!forum/scope-community)
+- Chat: Join the [Weave community](https://weaveworks.github.io/community-slack/) Slack workspace and use the [#scope](https://weave-community.slack.com/messages/scope/) channel
 
 Please avoid emailing maintainers found in the MAINTAINERS file directly. They
 are very busy and read the mailing lists.
@@ -26,7 +26,8 @@ are very busy and read the mailing lists.
 ## Getting Started
 
 - Fork the repository on GitHub
-- Read the [README](README.md) for build and test instructions
+- Read the [README](README.md) for getting started as a user and learn how/where to ask for help 
+- Continue reading this document for forther development instructions
 - Play with the project, submit bugs, submit pull requests!
 
 ## Contribution workflow
@@ -38,33 +39,25 @@ This is a rough outline of how to prepare a contribution:
 - Make sure your commit messages are in the proper format (see below).
 - Push your changes to a topic branch in your fork of the repository.
 - If you changed code:
-   - add automated tests to cover your changes, using the [Ginkgo](http://onsi.github.io/ginkgo/) & [Gomega](http://onsi.github.io/gomega/) style
-   - if the package did not previously have any test coverage, add it to the list
-   of `TESTABLE` packages in the `test.sh` script.
-   - run the full test script and ensure it passes
-- Make sure any new code files have a license header (this is now enforced by automated tests)
+   - add automated tests to cover your changes
 - Submit a pull request to the original repository.
 
-## How to run the test suite
-We generally require test coverage of any new features or bug fixes.
-
-Here's how you can run the test suite on any system (even Mac or Windows) using
- [Vagrant](https://www.vagrantup.com/) and a hypervisor of your choice:
+## How to build and run the project
 
 ```bash
-vagrant up
-vagrant ssh
-# you're now in a shell in a virtual machine
-sudo su
-cd /go/src/github.com/containernetworking/cni
-
-# to run the full test suite
-./test.sh
-
-# to focus on a particular test suite
-cd plugins/main/loopback
-go test
+make
+./scope launch
 ```
+
+## How to run the test suite
+
+You can run the linting and unit tests by simply doing
+
+```bash
+make tests
+```
+
+There are integration tests for, but unfortunately it's hard to set them up in fork respositories and that setup is not documented. Help is needed to run integration tests in forks: https://github.com/weaveworks/scope/issues/2192
 
 # Acceptance policy
 
@@ -111,15 +104,9 @@ This allows the message to be easier to read on GitHub as well as in various
 git tools.
 
 ## 3rd party plugins
-So you've built a CNI plugin.  Where should it live?
+So you've built a Scope plugin. Where should it live?
 
-Short answer: We'd be happy to link to it from our [list of 3rd party plugins](README.md#3rd-party-plugins).
-But we'd rather you kept the code in your own repo.
+Until it matures, it should live in your own repo.
 
-Long answer: An advantage of the CNI model is that independent plugins can be
-built, distributed and used without any code changes to this repository.  While
-some widely used plugins (and a few less-popular legacy ones) live in this repo,
-we're reluctant to add more.
-
-If you have a good reason why the CNI maintainers should take custody of your
-plugin, please open an issue or PR.
+If you have a good reason why the Scope maintainers should take custody of your
+plugin, please open an issue so that it can potentially be promoted to the [Scope plugins](https://github.com/weaveworks-plugins/) organization.
