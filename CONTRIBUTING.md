@@ -105,6 +105,7 @@ This allows the message to be easier to read on GitHub as well as in various
 git tools.
 
 ## 3rd party plugins
+
 So you've built a Scope plugin. Where should it live?
 
 Until it matures, it should live in your own repo. You are encouraged to annouce your plugin at the [mailing list](https://groups.google.com/forum/#!forum/scope-community) and to demo it at a [community meetings](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/).
