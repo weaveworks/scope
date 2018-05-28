@@ -6605,6 +6605,12 @@ react-dom@16.1.0:
     object-assign "^4.1.1"
     prop-types "^15.6.0"
 
+react-input-autosize@2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/react-input-autosize/-/react-input-autosize-2.2.1.tgz#ec428fa15b1592994fb5f9aa15bb1eb6baf420f8"
+  dependencies:
+    prop-types "^15.5.8"
+
 react-motion@0.5.2:
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/react-motion/-/react-motion-0.5.2.tgz#0dd3a69e411316567927917c6626551ba0607316"
@@ -8339,9 +8345,9 @@ wd@^0.4.0:
     underscore.string "~3.0.3"
     vargs "~0.1.0"
 
-weaveworks-ui-components@0.4.76:
-  version "0.4.76"
-  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.4.76.tgz#0e0a28f128eb233a28db12397399bac3e395a218"
+weaveworks-ui-components@0.4.82:
+  version "0.4.82"
+  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.4.82.tgz#c09cd529f59d553e2a3d426413e4f59f7e23d6d2"
   dependencies:
     classnames "2.2.5"
     d3-drag "1.2.1"
@@ -8351,6 +8357,7 @@ weaveworks-ui-components@0.4.76:
     d3-shape "1.2.0"
     polished "1.9.0"
     prop-types "15.6.0"
+    react-input-autosize "2.2.1"
     react-motion "0.5.2"
     react-resize-aware "2.7.0"
 
