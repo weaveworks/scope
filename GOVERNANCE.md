@@ -9,8 +9,6 @@ Scope's community goals and principles:
 1. Transition from a primarily Weaveworks project to a true community-driven project with autonomous governance.
 2. Fill-in the needs of the community with a chop-wood-and-carry-water attitude: expect to give back before you take if you want to make an impact. Demands and suggestions from community members will be taken into account but actions and help will be more-highly appreciated.
 
-[Alfonso Acosta](https://github.com/2opremio) will be in charge of ramping up the community: establishing governance, initial maintenance and chairing. Once the community reaches critical mass and sufficient maintainers are designed, the community will be self-managed.
-
 ## Code of Conduct
 
 The Scope community abides by the CNCF [code of conduct](https://github.com/cncf/foundation/blob/master/code-of-conduct.md). Here is an excerpt:
@@ -24,7 +22,7 @@ environment for our contributors and users. We want everyone in the community to
 
 ## Voting
 
-The Scope project employs "organization voting" to ensure no single organization can dominate the project.
+The Scope project aims to employ "organization voting" to ensure no single organization can dominate the project. [Alfonso Acosta](https://github.com/2opremio) will take of the initial maintenance until enough voters join the community. Once the community reaches critical mass and sufficient maintainers are designed, the voting-based governance will start.
 
 Individuals not associated with or employed by a company or organization are allowed one organization vote.
 Each company or organization (regardless of the number of maintainers associated with or employed by that company/organization) receives one organization vote.
@@ -48,9 +46,7 @@ Non-specification-related PRs may be merged after receiving at least two organiz
 
 ## Github Project Administration
 
-Maintainers will be added to the containernetworking GitHub organization and added to the GitHub cni-maintainers team, and made a GitHub maintainer of that team.
-
-After 6 months a maintainer will be made an "owner" of the GitHub organization.
+Maintainers will be given write access to the [weaveworks/scope](https://github.com/weaveworks/scope) GitHub repository.
 
 ## Changes in Governance
 

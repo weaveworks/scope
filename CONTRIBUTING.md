@@ -20,14 +20,13 @@ The project uses the the scope-community email list and Slack:
 - Email: [scope-community](https://groups.google.com/forum/#!forum/scope-community)
 - Chat: Join the [Weave community](https://weaveworks.github.io/community-slack/) Slack workspace and use the [#scope](https://weave-community.slack.com/messages/scope/) channel
 
-Please avoid emailing maintainers found in the MAINTAINERS file directly. They
-are very busy and read the mailing lists.
+When sending email, it's usually best to use the mailing list. The maintainers are usually quite busy and the mailing list will more easily find somebody who can reply quickly. You will also be potentially be helping others who had the same question.
 
 ## Getting Started
 
 - Fork the repository on GitHub
 - Read the [README](README.md) for getting started as a user and learn how/where to ask for help 
-- Continue reading this document for forther development instructions
+- Continue reading this document for further development instructions
 - Play with the project, submit bugs, submit pull requests!
 
 ## Contribution workflow
@@ -57,7 +56,7 @@ You can run the linting and unit tests by simply doing
 make tests
 ```
 
-There are integration tests for, but unfortunately it's hard to set them up in fork respositories and that setup is not documented. Help is needed to run integration tests in forks: https://github.com/weaveworks/scope/issues/2192
+There are integration tests for, but unfortunately it's hard to set them up in fork repositories and that setup is not documented. Help is needed to run integration tests in forks: https://github.com/weaveworks/scope/issues/2192
 
 # Acceptance policy
 
