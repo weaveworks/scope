@@ -14,13 +14,15 @@ Origin (DCO). This document was created by the Linux Kernel community and is a
 simple statement that you, as a contributor, have the legal right to make the
 contribution. See the [DCO](DCO) file for details.
 
-# Email and Chat
+# Email, Chat and Community Meetings
 
 The project uses the the scope-community email list and Slack:
 - Email: [scope-community](https://groups.google.com/forum/#!forum/scope-community)
 - Chat: Join the [Weave community](https://weaveworks.github.io/community-slack/) Slack workspace and use the [#scope](https://weave-community.slack.com/messages/scope/) channel
 
 When sending email, it's usually best to use the mailing list. The maintainers are usually quite busy and the mailing list will more easily find somebody who can reply quickly. You will also be potentially be helping others who had the same question.
+
+We also meet regularly at the [Scope community meeting](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/). Don't feel discouraged to attend the meeting due to not being a developer. Everybody is welcome!
 
 ## Getting Started
 
@@ -105,7 +107,7 @@ git tools.
 ## 3rd party plugins
 So you've built a Scope plugin. Where should it live?
 
-Until it matures, it should live in your own repo.
+Until it matures, it should live in your own repo. You are encouraged to annouce your plugin at the [mailing list](https://groups.google.com/forum/#!forum/scope-community) and to demo it at a [community meetings](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/).
 
 If you have a good reason why the Scope maintainers should take custody of your
 plugin, please open an issue so that it can potentially be promoted to the [Scope plugins](https://github.com/weaveworks-plugins/) organization.
