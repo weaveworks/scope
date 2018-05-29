@@ -44,12 +44,12 @@ const originalNodeID = "original_node_id"
 // ConnectionJoin joins the given topology with connections from the
 // endpoints topology, using the toIPs function to extract IPs from
 // the nodes.
-func ConnectionJoin(toIPs func(report.Node) []string, topology string) Renderer {
+func ConnectionJoin(toIPs func(report.Report, report.Node) []string, topology string) Renderer {
 	return connectionJoin{toIPs: toIPs, topology: topology}
 }
 
 type connectionJoin struct {
-	toIPs    func(report.Node) []string
+	toIPs    func(report.Report, report.Node) []string
 	topology string
 }
 
@@ -58,7 +58,7 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 	// Collect all the IPs we are trying to map to, and which ID they map from
 	var ipNodes = map[string]string{}
 	for _, n := range inputNodes {
-		for _, ip := range c.toIPs(n) {
+		for _, ip := range c.toIPs(rpt, n) {
 			if _, exists := ipNodes[ip]; exists {
 				// If an IP is shared between multiple nodes, we can't reliably
 				// attribute an connection based on its IP
@@ -202,14 +202,18 @@ var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.
 // MapContainer2IP maps container nodes to their IP addresses (outputs
 // multiple nodes).  This allows container to be joined directly with
 // the endpoint topology.
-func MapContainer2IP(m report.Node) []string {
+func MapContainer2IP(rpt report.Report, m report.Node) []string {
 	// if this container doesn't make connections, we can ignore it
 	_, doesntMakeConnections := m.Latest.Lookup(report.DoesNotMakeConnections)
 	// if this container belongs to the host's networking namespace
 	// we cannot use its IP to attribute connections
 	// (they could come from any other process on the host or DNAT-ed IPs)
 	_, isInHostNetwork := m.Latest.Lookup(docker.IsInHostNetwork)
-	if doesntMakeConnections || isInHostNetwork {
+	// mapping IPs for containers that are not running can confuse the display
+	state, stateFound := m.Latest.Lookup(docker.ContainerState)
+	notRunning := stateFound && state != docker.StateRunning
+
+	if doesntMakeConnections || isInHostNetwork || notRunning {
 		return nil
 	}
 
@@ -227,6 +231,19 @@ func MapContainer2IP(m report.Node) []string {
 			}
 			id := report.MakeScopedEndpointNodeID(scope, addr, "")
 			result = append(result, id)
+		}
+	}
+
+	if len(result) == 0 {
+		// See if there is a Kubernetes pod we can get the address from
+		pods, _ := m.Parents.Lookup(report.Pod)
+		for _, podID := range pods {
+			if pod, found := rpt.Pod.Nodes[podID]; found {
+				if addr, ok := pod.Latest.Lookup(report.KubernetesIP); ok {
+					id := report.MakeScopedEndpointNodeID("", addr, "")
+					result = append(result, id)
+				}
+			}
 		}
 	}
 
