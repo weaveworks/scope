@@ -150,9 +150,7 @@ func TestMetricMarshalling(t *testing.T) {
 
 		decoder := codec.NewDecoder(buf, h)
 		var have report.Metric
-		if err := decoder.Decode(&have); err != nil {
-			t.Fatal(err)
-		}
+		decoder.MustDecode(&have)
 
 		if !reflect.DeepEqual(want, have) {
 			t.Error(test.Diff(want, have))
@@ -163,9 +161,7 @@ func TestMetricMarshalling(t *testing.T) {
 		var wire struct {
 			Samples []report.Sample `json:"samples"`
 		}
-		if err := decoder.Decode(&wire); err != nil {
-			t.Error(err)
-		}
+		decoder.MustDecode(&wire)
 		if !reflect.DeepEqual(wantSamples, wire.Samples) {
 			t.Error(test.Diff(wantSamples, wire.Samples))
 		}

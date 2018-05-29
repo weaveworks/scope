@@ -164,7 +164,7 @@ func BenchmarkLatestMapDecode(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		var map1 StringLatestMap
-		codec.NewDecoderBytes(buf.Bytes(), &codec.MsgpackHandle{}).Decode(&map1)
+		codec.NewDecoderBytes(buf.Bytes(), &codec.MsgpackHandle{}).MustDecode(&map1)
 	}
 }
 

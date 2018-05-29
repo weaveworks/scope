@@ -97,7 +97,7 @@ type wireNodeControls struct {
 
 // CodecEncodeSelf implements codec.Selfer
 func (nc *NodeControls) CodecEncodeSelf(encoder *codec.Encoder) {
-	encoder.Encode(wireNodeControls{
+	encoder.MustEncode(wireNodeControls{
 		Timestamp: renderTime(nc.Timestamp),
 		Controls:  nc.Controls,
 	})

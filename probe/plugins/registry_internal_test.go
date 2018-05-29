@@ -506,7 +506,7 @@ func TestRegistryRejectsErroneousPluginResponses(t *testing.T) {
 		{
 			ID:     "nonJSONResponseBody",
 			Label:  "nonJSONResponseBody",
-			Status: "error: decoding error: [pos 4]: json: expecting ull: got otJ",
+			Status: "error: decoding error: json decode error [pos 4]: json: expecting ull: got otJ",
 		},
 		{
 			ID:         "okPlugin",
@@ -556,7 +556,7 @@ func TestRegistryRejectsPluginResponsesWhichAreTooLarge(t *testing.T) {
 
 	r.Report()
 	checkLoadedPlugins(t, r.ForEach, []xfer.PluginSpec{
-		{ID: "foo", Label: "foo", Status: `error: response must be shorter than 50MB`},
+		{ID: "foo", Label: "foo", Status: `error: decoding error: json decode error [pos 128]: response must be shorter than 50MB`},
 	})
 }
 
