@@ -68,7 +68,7 @@ var (
 		report.CronJob:     podIDHashQueries,
 		report.Service: {
 			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
-			docker.MemoryUsage:   `sum(rate(container_memory_usage_bytes{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
+			docker.MemoryUsage:   `sum(rate(container_memory_rss{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
 		},
 	}
 )
@@ -79,7 +79,7 @@ func formatMetricQueries(filter string, ids []string) map[string]string {
 		// All  `container_*`metrics  are provided by cAdvisor in Kubelets
 		switch id {
 		case docker.MemoryUsage:
-			queries[id] = fmt.Sprintf("sum(container_memory_usage_bytes{%s})", filter)
+			queries[id] = fmt.Sprintf("sum(container_memory_rss{%s})", filter)
 		case docker.CPUTotalUsage:
 			queries[id] = fmt.Sprintf(
 				"sum(rate(container_cpu_usage_seconds_total{%s}[1m]))/count(container_cpu_usage_seconds_total{%s})*100",
