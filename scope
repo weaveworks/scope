@@ -174,6 +174,7 @@ docker_args() {
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v /var/run/scope/plugins:/var/run/scope/plugins \
         -v /sys/kernel/debug:/sys/kernel/debug \
+        -v /etc/os-release:/var/run/scope/host-os-release \
         -e CHECKPOINT_DISABLE
 }
 

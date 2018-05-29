@@ -3,6 +3,7 @@ package host
 import (
 	"bytes"
 	"os/exec"
+	"runtime"
 	"regexp"
 	"strconv"
 	"time"
@@ -28,6 +29,11 @@ var GetKernelReleaseAndVersion = func() (string, string, error) {
 	}
 	version = bytes.Trim(version, " \n")
 	return string(release), string(version), nil
+}
+
+// GetPrettyName extracts the PRETTY_NAME from /etc/os-release
+var GetPrettyName = func () (string, error) {
+	return runtime.GOOS, nil
 }
 
 // GetLoad returns the current load averages as metrics.

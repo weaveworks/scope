@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
+	"regexp"
 
 	linuxproc "github.com/c9s/goprocinfo/linux"
 
@@ -29,6 +31,67 @@ var GetKernelReleaseAndVersion = func() (string, string, error) {
 	release := utsname.Release[:bytes.IndexByte(utsname.Release[:], 0)]
 	version := utsname.Version[:bytes.IndexByte(utsname.Version[:], 0)]
 	return string(release), string(version), nil
+}
+
+// GetPrettyName extracts the PRETTY_NAME from host's /etc/os-release
+// SPEC: https://www.freedesktop.org/software/systemd/man/os-release.html
+var GetPrettyName = func () (string, error) {
+
+	var buffer bytes.Buffer
+
+	buf, err := ioutil.ReadFile("/var/run/scope/host-os-release")
+	if err != nil {
+		return runtime.GOOS, nil
+	}
+
+	// If can't find host-os-release, get container's os-release
+	if buf == nil {
+		bufContainer, err := ioutil.ReadFile("/etc/os-release")
+		if err != nil {
+			return runtime.GOOS, nil
+		}
+		buf = bufContainer
+	}
+
+	// Pretty Name Fallback Flow:
+	// 1. $PRETTY_NAME
+	// 2. $NAME $VERSION
+	// 3. $ID $VERSION_ID
+	// 4. runtime.GOOS
+
+	prettyNameParse := regexp.MustCompile("PRETTY_NAME=(.+?)\n")
+	nameParse := regexp.MustCompile("NAME=(.+?)\n")
+	versionParse := regexp.MustCompile("VERSION=(.+?)\n")
+	IDParse := regexp.MustCompile("ID=(.+?)\n")
+	versionIDParse := regexp.MustCompile("VERSION_ID=(.+?)\n")
+
+	prettyName := prettyNameParse.FindStringSubmatch(string(buf))
+	name := nameParse.FindStringSubmatch(string(buf))
+	version := versionParse.FindStringSubmatch(string(buf))
+	prettyID := IDParse.FindStringSubmatch(string(buf))
+	versionID := versionIDParse.FindStringSubmatch(string(buf))
+
+	if prettyName == nil {
+		if name == nil || version == nil {
+			if prettyID == nil || versionID == nil {
+				return runtime.GOOS, nil
+			} else {
+				buffer.WriteString(string(prettyID[1]))
+				buffer.WriteString(" ")
+				buffer.WriteString(string(versionID[1]))
+			}
+		} else {
+			buffer.WriteString(string(name[1]))
+			buffer.WriteString(" ")
+			buffer.WriteString(string(version[1]))
+		}
+	} else {
+		buffer.WriteString(string(prettyName[1]))
+	}
+
+	// Remove quotation marks from return value
+	quoteParse := regexp.MustCompile("\"")
+	return quoteParse.ReplaceAllString(buffer.String(), ""), nil
 }
 
 // GetLoad returns the current load averages as metrics.

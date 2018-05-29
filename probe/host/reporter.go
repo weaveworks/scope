@@ -2,11 +2,9 @@ package host
 
 import (
 	"fmt"
-	"runtime"
 	"strconv"
 	"sync"
 	"time"
-
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
@@ -117,6 +115,13 @@ func (r *Reporter) Report() (report.Report, error) {
 	rep.Host = rep.Host.WithMetadataTemplates(MetadataTemplates)
 	rep.Host = rep.Host.WithMetricTemplates(MetricTemplates)
 
+
+	os, err := GetPrettyName()
+
+	if err != nil {
+		return rep, err
+	}
+
 	now := mtime.Now()
 	metrics := GetLoad(now)
 	cpuUsage, max := GetCPUUsagePercent()
@@ -129,7 +134,7 @@ func (r *Reporter) Report() (report.Report, error) {
 			report.ControlProbeID: r.probeID,
 			Timestamp:             mtime.Now().UTC().Format(time.RFC3339Nano),
 			HostName:              r.hostName,
-			OS:                    runtime.GOOS,
+			OS:                    os,
 			KernelVersion:         kernel,
 			Uptime:                strconv.Itoa(int(uptime / time.Second)), // uptime in seconds
 			ScopeVersion:          r.version,
