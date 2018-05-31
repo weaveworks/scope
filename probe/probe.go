@@ -18,7 +18,7 @@ const (
 // Probe sits there, generating and publishing reports.
 type Probe struct {
 	spyInterval, publishInterval time.Duration
-	publisher                    *appclient.ReportPublisher
+	publisher                    appclient.ReportPublisher
 
 	tickers   []Ticker
 	reporters []Reporter
@@ -67,7 +67,7 @@ type Ticker interface {
 // New makes a new Probe.
 func New(
 	spyInterval, publishInterval time.Duration,
-	publisher appclient.Publisher,
+	publisher appclient.ReportPublisher,
 	noControls bool,
 ) *Probe {
 	result := &Probe{
