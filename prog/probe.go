@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
@@ -125,7 +127,14 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			token = url.User.Username()
 			url.User = nil // erase credentials, as we use a special header
 		}
+
+		if flags.basicAuth {
+			log.Infof("Basic authentication enabled")
+			token = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", flags.username, flags.password)))
+		}
+
 		probeConfig := appclient.ProbeConfig{
+			BasicAuth:    flags.basicAuth,
 			Token:        token,
 			ProbeVersion: version,
 			ProbeID:      probeID,

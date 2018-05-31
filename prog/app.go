@@ -299,6 +299,15 @@ func appMain(flags appFlags) {
 		}.Wrap(handler)
 	}
 
+	if flags.basicAuth {
+		log.Infof("Basic authentication enabled")
+		handler = BasicAuthentication{
+			Realm:    "Restricted",
+			User:     flags.username,
+			Password: flags.password,
+		}.Wrap(handler)
+	}
+
 	server := &graceful.Server{
 		// we want to manage the stop condition ourselves below
 		NoSignalHandling: true,
