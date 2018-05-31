@@ -129,7 +129,6 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		}
 
 		if flags.basicAuth {
-			log.Infof("Basic authentication enabled")
 			token = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", flags.username, flags.password)))
 		}
 

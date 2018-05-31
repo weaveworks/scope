@@ -300,7 +300,6 @@ func appMain(flags appFlags) {
 	}
 
 	if flags.basicAuth {
-		log.Infof("Basic authentication enabled")
 		handler = BasicAuthentication{
 			Realm:    "Restricted",
 			User:     flags.username,
