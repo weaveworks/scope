@@ -26,6 +26,16 @@ func (s *dummySelfer) CodecEncodeSelf(encoder *codec.Encoder) {
 	panic("This shouldn't happen: perhaps something has gone wrong in code generation?")
 }
 
+// StdoutPublisher is useful when debugging
+type StdoutPublisher struct{}
+
+// Publish implements probe.ReportPublisher
+func (StdoutPublisher) Publish(rep Report) error {
+	handle := &codec.JsonHandle{Indent: 2}
+	handle.Canonical = true
+	return codec.NewEncoder(os.Stdout, handle).Encode(rep)
+}
+
 // WriteBinary writes a Report as a gzipped msgpack into a bytes.Buffer
 func (rep Report) WriteBinary() (*bytes.Buffer, error) {
 	w := &bytes.Buffer{}
