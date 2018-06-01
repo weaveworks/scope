@@ -148,6 +148,30 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	}
 	defer resolver.Stop()
 
+	if flags.weaveEnabled && flags.weaveHostname != "" {
+		dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
+		if err != nil {
+			log.Errorf("Error getting docker bridge ip: %v", err)
+		} else {
+			weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
+			weaveTargets, err := appclient.ParseTargets([]string{flags.weaveHostname})
+			if err != nil {
+				log.Errorf("Failed to parse weave targets: %v", err)
+			} else {
+				weaveResolver, err := appclient.NewResolver(appclient.ResolverConfig{
+					Targets: weaveTargets,
+					Lookup:  weaveDNSLookup,
+					Set:     clients.Set,
+				})
+				if err != nil {
+					log.Errorf("Failed to create weave resolver: %v", err)
+				} else {
+					defer weaveResolver.Stop()
+				}
+			}
+		}
+	}
+
 	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
 
 	hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients, handlerRegistry)
@@ -241,30 +265,6 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			defer weave.Stop()
 			p.AddTagger(weave)
 			p.AddReporter(weave)
-
-			if flags.weaveHostname != "" {
-				dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
-				if err != nil {
-					log.Errorf("Error getting docker bridge ip: %v", err)
-				} else {
-					weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
-					weaveTargets, err := appclient.ParseTargets([]string{flags.weaveHostname})
-					if err != nil {
-						log.Errorf("Failed to parse weave targets: %v", err)
-					} else {
-						weaveResolver, err := appclient.NewResolver(appclient.ResolverConfig{
-							Targets: weaveTargets,
-							Lookup:  weaveDNSLookup,
-							Set:     clients.Set,
-						})
-						if err != nil {
-							log.Errorf("Failed to create weave resolver: %v", err)
-						} else {
-							defer weaveResolver.Stop()
-						}
-					}
-				}
-			}
 		}
 	}
 
