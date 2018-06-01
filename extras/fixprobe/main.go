@@ -3,7 +3,6 @@ package main
 
 import (
 	"bytes"
-	"compress/gzip"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -62,8 +61,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	buf := &bytes.Buffer{}
-	err = fixedReport.WriteBinary(buf, gzip.DefaultCompression)
+	buf, err := fixedReport.WriteBinary()
 	if err != nil {
 		log.Fatal(err)
 	}

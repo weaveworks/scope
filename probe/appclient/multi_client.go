@@ -2,7 +2,6 @@ package appclient
 
 import (
 	"bytes"
-	"compress/gzip"
 	"errors"
 	"fmt"
 	"net/url"
@@ -156,18 +155,12 @@ func (c *multiClient) Stop() {
 // Publish implements Publisher by publishing the reader to all of the
 // underlying publishers sequentially. To do that, it needs to drain the
 // reader, and recreate new readers for each publisher. Note that it will
-func serializeReport(r report.Report) (*bytes.Buffer, error) {
-	buf := &bytes.Buffer{}
-	err := r.WriteBinary(buf, gzip.DefaultCompression)
-	return buf, err
-}
-
 // publish to one endpoint for each unique ID. Failed publishes don't count.
 func (c *multiClient) Publish(r report.Report) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	buf, err := serializeReport(r)
+	buf, err := r.WriteBinary()
 	if err != nil {
 		return err
 	}

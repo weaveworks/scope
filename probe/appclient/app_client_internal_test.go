@@ -105,7 +105,7 @@ func TestAppClientPublish(t *testing.T) {
 
 	// First few reports might be dropped as the client is spinning up.
 	for i := 0; i < 10; i++ {
-		buf, _ := serializeReport(rpt)
+		buf, _ := rpt.WriteBinary()
 		if err := p.Publish(buf, false); err != nil {
 			t.Error(err)
 		}
@@ -210,7 +210,7 @@ func TestStop(t *testing.T) {
 		case <-receivedReport:
 			done = true
 		default:
-			buf, _ := serializeReport(rpt)
+			buf, _ := rpt.WriteBinary()
 			if err := p.Publish(buf, false); err != nil {
 				t.Error(err)
 			}
