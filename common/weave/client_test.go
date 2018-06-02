@@ -139,31 +139,6 @@ func TestDNSAdd(t *testing.T) {
 	}
 }
 
-func TestPS(t *testing.T) {
-	oldExecCmd := exec.Command
-	defer func() { exec.Command = oldExecCmd }()
-	exec.Command = func(name string, args ...string) exec.Cmd {
-		return testExec.NewMockCmdString(fmt.Sprintf("%s %s %s/24\n", mockContainerID, mockContainerMAC, mockContainerIP))
-	}
-
-	client := weave.NewClient("")
-	entries, err := client.PS()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	want := map[string]weave.PSEntry{
-		mockContainerID: {
-			ContainerIDPrefix: mockContainerID,
-			MACAddress:        mockContainerMAC,
-			IPs:               []string{mockContainerIP},
-		},
-	}
-	if !reflect.DeepEqual(entries, want) {
-		t.Fatal(test.Diff(entries, want))
-	}
-}
-
 func TestExpose(t *testing.T) {
 	oldExecCmd := exec.Command
 	defer func() { exec.Command = oldExecCmd }()

@@ -150,7 +150,6 @@ type Weave struct {
 
 	mtx         sync.RWMutex
 	statusCache weave.Status
-	psCache     map[string]weave.PSEntry
 
 	backoff   backoff.Interface
 	psBackoff backoff.Interface
@@ -160,18 +159,13 @@ type Weave struct {
 // address. The address should be an IP or FQDN, no port.
 func NewWeave(hostID string, client weave.Client) (*Weave, error) {
 	w := &Weave{
-		client:  client,
-		hostID:  hostID,
-		psCache: map[string]weave.PSEntry{},
+		client: client,
+		hostID: hostID,
 	}
 
 	w.backoff = backoff.New(w.status, "collecting weave status")
 	w.backoff.SetInitialBackoff(5 * time.Second)
 	go w.backoff.Start()
-
-	w.psBackoff = backoff.New(w.ps, "collecting weave ps")
-	w.psBackoff.SetInitialBackoff(10 * time.Second)
-	go w.psBackoff.Start()
 
 	return w, nil
 }
@@ -179,24 +173,9 @@ func NewWeave(hostID string, client weave.Client) (*Weave, error) {
 // Name of this reporter/tagger/ticker, for metrics gathering
 func (*Weave) Name() string { return "Weave" }
 
-// Stop gathering weave ps output.
+// Stop gathering weave status.
 func (w *Weave) Stop() {
 	w.backoff.Stop()
-	w.psBackoff.Stop()
-}
-
-func (w *Weave) ps() (bool, error) {
-	psEntriesByPrefix, err := w.client.PS()
-
-	w.mtx.Lock()
-	defer w.mtx.Unlock()
-
-	if err != nil {
-		w.psCache = map[string]weave.PSEntry{}
-	} else {
-		w.psCache = psEntriesByPrefix
-	}
-	return false, err
 }
 
 func (w *Weave) status() (bool, error) {
@@ -246,20 +225,6 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 		if len(prefix) > maxPrefixSize {
 			prefix = prefix[:maxPrefixSize]
 		}
-		entry, ok := w.psCache[prefix]
-		if !ok {
-			continue
-		}
-
-		ipsWithScope := report.MakeStringSet()
-		for _, ip := range entry.IPs {
-			ipsWithScope = ipsWithScope.Add(report.MakeAddressNodeID("", ip))
-		}
-		node = node.WithSet(docker.ContainerIPs, report.MakeStringSet(entry.IPs...))
-		node = node.WithSet(docker.ContainerIPsWithScopes, ipsWithScope)
-		node = node.WithLatests(map[string]string{
-			WeaveMACAddress: entry.MACAddress,
-		})
 		r.Container.Nodes[id] = node
 	}
 	return r, nil
