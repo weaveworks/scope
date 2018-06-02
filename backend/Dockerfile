@@ -1,4 +1,4 @@
-FROM golang:1.9.2-stretch
+FROM golang:1.10.2-stretch
 ENV SCOPE_SKIP_UI_ASSETS true
 RUN apt-get update && \
 	apt-get install -y libpcap-dev python-requests time file shellcheck git gcc-arm-linux-gnueabihf curl build-essential python-pip && \
