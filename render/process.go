@@ -20,10 +20,8 @@ func renderProcesses(rpt report.Report) bool {
 }
 
 // ProcessRenderer is a Renderer which produces a renderable process
-// graph by merging the endpoint graph and the process topology. It
-// also colors connected nodes, so we can apply a filter to show/hide
-// unconnected nodes depending on user choice.
-var ProcessRenderer = Memoise(ColorConnected(endpoints2Processes{}))
+// graph by merging the endpoint graph and the process topology.
+var ProcessRenderer = Memoise(endpoints2Processes{})
 
 // processWithContainerNameRenderer is a Renderer which produces a process
 // graph enriched with container names where appropriate
@@ -52,17 +50,23 @@ func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
 	return Nodes{Nodes: outputs, Filtered: processes.Filtered}
 }
 
-// ProcessWithContainerNameRenderer is a Renderer which produces a process
-// graph enriched with container names where appropriate
+// ProcessWithContainerNameRenderer is a Renderer which produces a
+// process graph enriched with container names where appropriate.
+//
+// It also colors connected nodes, so we can apply a filter to
+// show/hide unconnected nodes depending on user choice.
 //
 // not memoised
-var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessRenderer}
+var ProcessWithContainerNameRenderer = ColorConnected(processWithContainerNameRenderer{ProcessRenderer})
 
-// ProcessNameRenderer is a Renderer which produces a renderable process
-// name graph by munging the progess graph.
+// ProcessNameRenderer is a Renderer which produces a renderable
+// process name graph by munging the progess graph.
+//
+// It also colors connected nodes, so we can apply a filter to
+// show/hide unconnected nodes depending on user choice.
 //
 // not memoised
-var ProcessNameRenderer = CustomRenderer{RenderFunc: processes2Names, Renderer: ProcessRenderer}
+var ProcessNameRenderer = ColorConnected(CustomRenderer{RenderFunc: processes2Names, Renderer: ProcessRenderer})
 
 // endpoints2Processes joins the endpoint topology to the process
 // topology, matching on hostID and pid.
