@@ -268,15 +268,6 @@ func isIPv4(addr string) bool {
 	return ip != nil && ip.To4() != nil
 }
 
-func contains(strs []string, str string) bool {
-	for _, s := range strs {
-		if s == str {
-			return true
-		}
-	}
-	return false
-}
-
 func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 	c.RLock()
 	defer c.RUnlock()
@@ -292,10 +283,9 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 		log.Debugf("container %s: failed to get addresses: %s", c.container.ID, err)
 	}
 	for _, cidr := range cidrs {
-		ip := cidr.IP.String()
-		if !contains(ips, ip) {
-			ips = append(ips, ip)
-		}
+		// This address can duplicate an address fetched from Docker earlier,
+		// but we eventually turn the lists into sets which will remove duplicates.
+		ips = append(ips, cidr.IP.String())
 	}
 
 	// For now, for the proof-of-concept, we just add networks as a set of
