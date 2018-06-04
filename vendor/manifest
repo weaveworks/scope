@@ -1321,6 +1321,22 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/vishvananda/netlink",
+			"repository": "https://github.com/vishvananda/netlink",
+			"vcs": "git",
+			"revision": "7c0b5944a3036fc8dc9f4cbf2f5c76dedd29af8b",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/vishvananda/netns",
+			"repository": "https://github.com/vishvananda/netns",
+			"vcs": "git",
+			"revision": "be1fbeda19366dea804f00efff2dd73a1642fdcc",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/weaveworks/billing-client",
 			"repository": "https://github.com/weaveworks/billing-client",
 			"vcs": "git",
@@ -1524,7 +1540,7 @@
 			"importpath": "golang.org/x/sys/unix",
 			"repository": "https://go.googlesource.com/sys",
 			"vcs": "git",
-			"revision": "95c6576299259db960f6c5b9b69ea52422860fce",
+			"revision": "c11f84a56e43e20a78cee75a7c034031ecf57d1f",
 			"branch": "master",
 			"path": "/unix",
 			"notests": true
