@@ -200,7 +200,7 @@ ForLoop:
 		}
 	}
 
-	if err := p.publisher.Publish(rpt.BackwardCompatible()); err != nil {
+	if err := p.publisher.Publish(rpt); err != nil {
 		log.Infof("publish: %v", err)
 	}
 }

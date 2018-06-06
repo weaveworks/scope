@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/common/xfer"
 )
 
@@ -501,34 +500,6 @@ func (r Report) upgradeDNSRecords() Report {
 	}
 	r.DNS = dns
 	return r
-}
-
-// BackwardCompatible returns a new backward-compatible report.
-//
-// This for now creates node's Controls from LatestControls.
-func (r Report) BackwardCompatible() Report {
-	now := mtime.Now()
-	cp := r.Copy()
-	cp.WalkTopologies(func(topology *Topology) {
-		n := Nodes{}
-		for name, node := range topology.Nodes {
-			var controls []string
-			node.LatestControls.ForEach(func(k string, _ time.Time, v NodeControlData) {
-				if !v.Dead {
-					controls = append(controls, k)
-				}
-			})
-			if len(controls) > 0 {
-				node.Controls = NodeControls{
-					Timestamp: now,
-					Controls:  MakeStringSet(controls...),
-				}
-			}
-			n[name] = node
-		}
-		topology.Nodes = n
-	})
-	return cp
 }
 
 // Sampling describes how the packet data sources for this report were
