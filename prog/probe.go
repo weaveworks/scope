@@ -100,7 +100,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	defer log.Info("probe exiting")
 
 	if flags.spyProcs && os.Getegid() != 0 {
-		log.Warn("--probe.process=true, but that requires root to find everything")
+		log.Warn("--probe.proc.spy=true, but that requires root to find everything")
 	}
 
 	rand.Seed(time.Now().UnixNano())
