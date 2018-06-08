@@ -26,6 +26,9 @@ func renderKubernetesTopologies(rpt report.Report) bool {
 		&rpt.DaemonSet,
 		&rpt.StatefulSet,
 		&rpt.CronJob,
+		&rpt.PersistentVolume,
+		&rpt.PersistentVolumeClaim,
+		&rpt.StorageClass,
 	}
 	for _, t := range topologies {
 		if len(t.Nodes) > 0 {
@@ -60,6 +63,7 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 					)},
 			),
 			ConnectionJoin(MapPod2IP, report.Pod),
+			KubernetesVolumesRenderer,
 		),
 	),
 ))

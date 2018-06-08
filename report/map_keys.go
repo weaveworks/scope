@@ -72,6 +72,14 @@ const (
 	KubernetesActiveJobs           = "kubernetes_active_jobs"
 	KubernetesType                 = "kubernetes_type"
 	KubernetesPorts                = "kubernetes_ports"
+	KubernetesVolumeClaim          = "kubernetes_volume_claim"
+	KubernetesStorageClassName     = "kubernetes_storage_class_name"
+	KubernetesAccessModes          = "kubernetes_access_modes"
+	KubernetesReclaimPolicy        = "kubernetes_reclaim_policy"
+	KubernetesStatus               = "kubernetes_status"
+	KubernetesMessage              = "kubernetes_message"
+	KubernetesVolumeName           = "kubernetes_volume_name"
+	KubernetesProvisioner          = "kubernetes_provisioner"
 	// probe/awsecs
 	ECSCluster             = "ecs_cluster"
 	ECSCreatedAt           = "ecs_created_at"
@@ -88,22 +96,25 @@ const (
    getting clogged with values that are only used once.
 */
 var commonKeys = map[string]string{
-	Endpoint:       Endpoint,
-	Process:        Process,
-	Container:      Container,
-	Pod:            Pod,
-	Service:        Service,
-	Deployment:     Deployment,
-	ReplicaSet:     ReplicaSet,
-	DaemonSet:      DaemonSet,
-	StatefulSet:    StatefulSet,
-	CronJob:        CronJob,
-	ContainerImage: ContainerImage,
-	Host:           Host,
-	Overlay:        Overlay,
-	ECSService:     ECSService,
-	ECSTask:        ECSTask,
-	SwarmService:   SwarmService,
+	Endpoint:              Endpoint,
+	Process:               Process,
+	Container:             Container,
+	Pod:                   Pod,
+	Service:               Service,
+	Deployment:            Deployment,
+	ReplicaSet:            ReplicaSet,
+	DaemonSet:             DaemonSet,
+	StatefulSet:           StatefulSet,
+	CronJob:               CronJob,
+	ContainerImage:        ContainerImage,
+	Host:                  Host,
+	Overlay:               Overlay,
+	ECSService:            ECSService,
+	ECSTask:               ECSTask,
+	SwarmService:          SwarmService,
+	PersistentVolume:      PersistentVolume,
+	PersistentVolumeClaim: PersistentVolumeClaim,
+	StorageClass:          StorageClass,
 
 	HostNodeID:             HostNodeID,
 	ControlProbeID:         ControlProbeID,

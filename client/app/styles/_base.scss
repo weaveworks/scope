@@ -531,9 +531,19 @@ a {
   }
 
   .edge {
-    .link {
+    .link-none {
+      fill: none;
+      display: none;
+    }
+    .link-storage {
       fill: none;
       stroke: $edge-color;
+      stroke-dasharray: 1, 30;
+      stroke-linecap: round;
+    }
+    .link {
+      fill: none;
+      stroke: $edge-color
     }
     .shadow {
       fill: none;
@@ -613,6 +623,12 @@ a {
       font-size: $font-size-tiny;
       dominant-baseline: middle;
       text-anchor: middle;
+    }
+  }
+
+  .shape-dottedcylinder {
+    .border{
+      stroke-dasharray: 0.07;
     }
   }
 
