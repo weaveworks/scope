@@ -212,6 +212,11 @@ a {
   pointer-events: none;
   width: 100%;
 
+  .time-travel-wrapper {
+    position: relative;
+    z-index: $layer-front;
+  }
+
   .selectors {
     display: flex;
     position: relative;

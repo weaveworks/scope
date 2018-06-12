@@ -2,13 +2,30 @@ import React from 'react';
 import moment from 'moment';
 import { connect } from 'react-redux';
 import { TimeTravel } from 'weaveworks-ui-components';
-import { get, orderBy } from 'lodash';
+import { get, orderBy, debounce } from 'lodash';
 
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
-import { jumpToTime, resumeTime, pauseTimeAtNow } from '../actions/app-actions';
+import { jumpToTime, resumeTime, pauseTimeAtNow, getFluxHistory } from '../actions/app-actions';
 
+// Load deployments in timeline only on zoom levels up to this range.
+const MAX_DEPLOYMENTS_RANGE_SECS = moment.duration(2, 'weeks').asSeconds();
+
+// Reused from Service UI.
+const FLUX_ALL_SERVICES = '<all>';
 
 class TimeTravelWrapper extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      isLoadingDeployments: false,
+      visibleRangeStartAtSec: null,
+      visibleRangeEndAtSec: null,
+    };
+
+    this.debouncedUpdateVisibleRange = debounce(this.updateVisibleRange, 500);
+  }
+
   trackTimestampEdit = () => {
     trackAnalyticsEvent('scope.time.timestamp.edit', {
       layout: this.props.topologyViewMode,
@@ -58,7 +75,42 @@ class TimeTravelWrapper extends React.Component {
     }
   }
 
+
+  updateVisibleRange = ({ startAt, endAt }) => {
+    const { orgId } = this.props.params;
+
+    const visibleRangeEndAtSec = moment(endAt).unix();
+    const visibleRangeStartAtSec = moment(startAt).unix();
+    this.setState({ visibleRangeStartAtSec, visibleRangeEndAtSec });
+
+    // Load deployment annotations only if not zoomed out too much.
+    // See https://github.com/weaveworks/service-ui/issues/1858.
+    const visibleRangeSec = visibleRangeEndAtSec - visibleRangeStartAtSec;
+    if (visibleRangeSec < MAX_DEPLOYMENTS_RANGE_SECS) {
+      this.setState({ isLoadingDeployments: true });
+      this.props
+        .getFluxHistory(orgId, FLUX_ALL_SERVICES, null, endAt, true, startAt)
+        .then(() => {
+          this.setState({ isLoadingDeployments: false });
+        });
+    }
+  }
+
   render() {
+    const {
+      visibleRangeStartAtSec,
+      visibleRangeEndAtSec,
+    } = this.state;
+
+    // Don't pass any deployments that are outside of the timeline visible range.
+    const visibleDeployments = this.props.deployments.filter((deployment) => {
+      const deploymentAtSec = moment(deployment.Stamp).unix();
+      return (
+        visibleRangeStartAtSec <= deploymentAtSec &&
+        deploymentAtSec <= visibleRangeEndAtSec
+      );
+    });
+
     return (
       <div className="tour-step-anchor time-travel-wrapper">
         <TimeTravel
@@ -68,7 +120,9 @@ class TimeTravelWrapper extends React.Component {
           timestamp={this.props.timestamp}
           earliestTimestamp={this.props.earliestTimestamp}
           onChangeTimestamp={this.props.jumpToTime}
-          deployments={this.props.deployments}
+          deployments={visibleDeployments}
+          isLoading={this.state.isLoadingDeployments}
+          onUpdateVisibleRange={this.debouncedUpdateVisibleRange}
           onTimestampInputEdit={this.trackTimestampEdit}
           onTimelinePanButtonClick={this.trackTimelinePanButtonClick}
           onTimelineLabelClick={this.trackTimelineLabelClick}
@@ -92,7 +146,11 @@ function mapStateToProps(state, { params }) {
     }
   }
 
-  const unsortedDeployments = get(state, ['root', 'fluxInstanceHistory', orgId, '<all>'], []);
+  const unsortedDeployments = get(
+    state,
+    ['root', 'fluxInstanceHistory', orgId, FLUX_ALL_SERVICES],
+    []
+  );
 
   return {
     showingLive: !state.scope.get('pausedAt'),
@@ -106,5 +164,7 @@ function mapStateToProps(state, { params }) {
 
 export default connect(
   mapStateToProps,
-  { jumpToTime, resumeTime, pauseTimeAtNow },
+  {
+    jumpToTime, resumeTime, pauseTimeAtNow, getFluxHistory
+  },
 )(TimeTravelWrapper);

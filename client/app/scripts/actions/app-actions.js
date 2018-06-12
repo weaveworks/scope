@@ -870,6 +870,12 @@ export function getImagesForService(orgId, serviceId) {
   };
 }
 
+export function getFluxHistory(...params) {
+  return (dispatch, getState, { actions }) => (
+    dispatch(actions.getFluxHistory(...params))
+  );
+}
+
 export function setMonitorState(monitor) {
   return {
     type: ActionTypes.MONITOR_STATE,
