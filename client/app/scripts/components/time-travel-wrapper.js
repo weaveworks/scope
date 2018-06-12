@@ -2,25 +2,14 @@ import React from 'react';
 import moment from 'moment';
 import { connect } from 'react-redux';
 import { TimeTravel } from 'weaveworks-ui-components';
+import { get, orderBy } from 'lodash';
 
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { jumpToTime, resumeTime, pauseTimeAtNow } from '../actions/app-actions';
 
 
 class TimeTravelWrapper extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-
-    this.handleLiveModeChange = this.handleLiveModeChange.bind(this);
-
-    this.trackTimestampEdit = this.trackTimestampEdit.bind(this);
-    this.trackTimelinePanButtonClick = this.trackTimelinePanButtonClick.bind(this);
-    this.trackTimelineLabelClick = this.trackTimelineLabelClick.bind(this);
-    this.trackTimelineZoom = this.trackTimelineZoom.bind(this);
-    this.trackTimelinePan = this.trackTimelinePan.bind(this);
-  }
-
-  trackTimestampEdit() {
+  trackTimestampEdit = () => {
     trackAnalyticsEvent('scope.time.timestamp.edit', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
@@ -28,7 +17,7 @@ class TimeTravelWrapper extends React.Component {
     });
   }
 
-  trackTimelinePanButtonClick() {
+  trackTimelinePanButtonClick = () => {
     trackAnalyticsEvent('scope.time.timeline.pan.button.click', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
@@ -36,7 +25,7 @@ class TimeTravelWrapper extends React.Component {
     });
   }
 
-  trackTimelineLabelClick() {
+  trackTimelineLabelClick = () => {
     trackAnalyticsEvent('scope.time.timeline.label.click', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
@@ -44,7 +33,7 @@ class TimeTravelWrapper extends React.Component {
     });
   }
 
-  trackTimelinePan() {
+  trackTimelinePan = () => {
     trackAnalyticsEvent('scope.time.timeline.pan', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
@@ -52,7 +41,7 @@ class TimeTravelWrapper extends React.Component {
     });
   }
 
-  trackTimelineZoom(zoomedPeriod) {
+  trackTimelineZoom = (zoomedPeriod) => {
     trackAnalyticsEvent('scope.time.timeline.zoom', {
       layout: this.props.topologyViewMode,
       topologyId: this.props.currentTopology.get('id'),
@@ -61,7 +50,7 @@ class TimeTravelWrapper extends React.Component {
     });
   }
 
-  handleLiveModeChange(showingLive) {
+  handleLiveModeChange = (showingLive) => {
     if (showingLive) {
       this.props.resumeTime();
     } else {
@@ -79,6 +68,7 @@ class TimeTravelWrapper extends React.Component {
           timestamp={this.props.timestamp}
           earliestTimestamp={this.props.earliestTimestamp}
           onChangeTimestamp={this.props.jumpToTime}
+          deployments={this.props.deployments}
           onTimestampInputEdit={this.trackTimestampEdit}
           onTimelinePanButtonClick={this.trackTimelinePanButtonClick}
           onTimelineLabelClick={this.trackTimelineLabelClick}
@@ -91,23 +81,26 @@ class TimeTravelWrapper extends React.Component {
 }
 
 function mapStateToProps(state, { params }) {
-  const scopeState = state.scope || state;
+  const orgId = params && params.orgId;
   let firstSeenConnectedAt;
 
   // If we're in the Weave Cloud context, use firstSeeConnectedAt as the earliest timestamp.
   if (state.root && state.root.instances) {
-    const serviceInstance = state.root.instances[params && params.orgId];
+    const serviceInstance = state.root.instances[orgId];
     if (serviceInstance && serviceInstance.firstSeenConnectedAt) {
       firstSeenConnectedAt = moment(serviceInstance.firstSeenConnectedAt).utc().format();
     }
   }
 
+  const unsortedDeployments = get(state, ['root', 'fluxInstanceHistory', orgId, '<all>'], []);
+
   return {
-    showingLive: !scopeState.get('pausedAt'),
-    topologyViewMode: scopeState.get('topologyViewMode'),
-    currentTopology: scopeState.get('currentTopology'),
+    showingLive: !state.scope.get('pausedAt'),
+    topologyViewMode: state.scope.get('topologyViewMode'),
+    currentTopology: state.scope.get('currentTopology'),
+    deployments: orderBy(unsortedDeployments, ['Stamp'], ['desc']),
     earliestTimestamp: firstSeenConnectedAt,
-    timestamp: scopeState.get('pausedAt'),
+    timestamp: state.scope.get('pausedAt'),
   };
 }
 
