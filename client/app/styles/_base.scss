@@ -208,8 +208,10 @@ a {
 }
 
 .header {
+  z-index: $layer-front;
   padding: 15px 10px 0;
   pointer-events: none;
+  position: relative;
   width: 100%;
 
   .selectors {
@@ -217,11 +219,8 @@ a {
     position: relative;
 
     > * {
-      z-index: $layer-front;
       flex: 1 1;
     }
-
-    .time-control { z-index: $layer-modal; }
 
     .logo {
       margin: -16px 0 0 8px;
