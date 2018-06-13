@@ -240,6 +240,9 @@ requirements.
 AWS_ACCSS_KEY_ID=XXXX AWS_SECRET_ACCESS_KEY=YYYY  ./build-all-amis.sh
 ~~~
 
+(If your account has MFA enabled you should follow [this process](https://aws.amazon.com/premiumsupport/knowledge-center/authenticate-mfa-cli/)
+and also set `AWS_SESSION_TOKEN`)
+
 If building an AMI for a particular region, set the `ONLY_REGION` variable to
 that region when invoking the script:
 
