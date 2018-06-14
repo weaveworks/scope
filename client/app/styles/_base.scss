@@ -100,7 +100,7 @@ a {
 
 .overlay-wrapper {
   align-items: center;
-  background-color: transparentize($background-color, 0.1);
+  background-color: transparentize($color-white-smoke, 0.1);
   border-radius: $border-radius-soft;
   color: $text-tertiary-color;
   display: flex;
@@ -347,7 +347,7 @@ a {
 
     &-active, &:hover {
       color: $text-color;
-      background-color: $background-darker-secondary-color;
+      background-color: $background-darker-color;
     }
 
     &-active {
@@ -1171,7 +1171,7 @@ a {
   &-metric-box {
     @extend .palable;
     cursor: pointer;
-    fill: transparentize($color-dusty-gray, 0.6);
+    fill: transparentize($color-dove-gray, 0.6);
 
     &-info {
       background-color: transparentize($color-white, 0.4);
@@ -1512,7 +1512,7 @@ a {
     background-color: transparent;
 
     &-selected, &:not([disabled]):hover {
-      background-color: $background-darker-secondary-color;
+      background-color: $background-darker-color;
     }
 
     &:not(:last-child) {
@@ -1873,13 +1873,13 @@ a {
         padding: 3px 5px;
         font-size: $font-size-tiny;
         line-height: 10px;
-        color: $color-dim-gray;
+        color: $color-dove-gray;
         vertical-align: middle;
-        background-color: $color-alabaster;
+        background-color: $color-white;
         border: solid 1px $color-silver;
-        border-bottom-color: $color-gray;
+        border-bottom-color: $color-dove-gray;
         border-radius: $border-radius-soft;
-        box-shadow: inset 0 -1px 0 $color-gray;
+        box-shadow: inset 0 -1px 0 $color-dove-gray;
       }
       div.key {
         width: 60px;
@@ -2043,7 +2043,7 @@ a {
     }
 
     tr:nth-child(even) {
-      background: $background-darker-secondary-color;
+      background: $background-darker-color;
     }
 
     tbody tr {
@@ -2083,7 +2083,7 @@ a {
 
     thead {
       box-shadow: 0 4px 2px -2px transparentize($color-black, 0.84);
-      border-bottom: 1px solid $color-gray;
+      border-bottom: 1px solid $color-dove-gray;
     }
 
     tbody {
