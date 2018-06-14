@@ -28,7 +28,7 @@ spec:
             - '--probe.kubernetes=true'
             - 'weave-scope-app.weave.svc.cluster.local:80'
           env:
-            - name: KUBERNETES_HOSTNAME
+            - name: KUBERNETES_NODENAME
               valueFrom:
                 fieldRef:
                   apiVersion: v1
