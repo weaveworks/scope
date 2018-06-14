@@ -100,7 +100,7 @@ a {
 
 .overlay-wrapper {
   align-items: center;
-  background-color: transparentize($background-color, 0.1);
+  background-color: transparentize($color-white-smoke, 0.1);
   border-radius: $border-radius-soft;
   color: $text-tertiary-color;
   display: flex;
@@ -2043,7 +2043,7 @@ a {
     }
 
     tr:nth-child(even) {
-      background: $background-darker-secondary-color;
+      background: $background-darker-color;
     }
 
     tbody tr {
