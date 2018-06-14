@@ -2,10 +2,10 @@ $fa-font-path: "~font-awesome/fonts";
 
 $base-ease: ease-in-out;
 
-$background-color: $color-lightgray;
+$background-color: $color-gallery;
 $background-lighter-color: $color-white;
-$background-darker-color: $color-silver;
-$background-darker-secondary-color: $color-mercury;
+$background-darker-color: transparentize($color-silver, 0.5);
+$background-darker-secondary-color: $color-gallery;
 $background-dark-color: $color-primary-charcoal;
 $text-color: $color-gunpowder;
 $text-secondary-color: $color-comet;
@@ -46,4 +46,4 @@ $timeline-height: 55px;
 
 /* specific elements */
 $body-background-color: $color-white-smoke;
-$label-background-color: transparentize($color-lightgray, 0.3);
+$label-background-color: transparentize($color-gallery, 0.3);
