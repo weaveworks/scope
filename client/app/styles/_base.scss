@@ -100,7 +100,7 @@ a {
 
 .overlay-wrapper {
   align-items: center;
-  background-color: transparentize($color-white-smoke, 0.1);
+  background-color: transparentize($color-purple-25, 0.1);
   border-radius: $border-radius-soft;
   color: $text-tertiary-color;
   display: flex;
@@ -1140,7 +1140,7 @@ a {
 
     a {
       &:hover {
-        background-color: $color-athens-gray;
+        background-color: $color-purple-50;
         cursor: pointer;
       }
     }
@@ -1622,7 +1622,7 @@ a {
 }
 
 .sidebar-gridmode {
-  background-color: $color-athens-gray;
+  background-color: $color-purple-50;
   border-color: $background-darker-color;
   opacity: 0.9;
 }
@@ -1827,13 +1827,13 @@ a {
       padding: 4px 5px;
       margin-left: 2px;
       font-size: $font-size-normal;
-      color: $color-primary-lavender;
+      color: $color-purple-400;
       cursor: pointer;
       border: 1px solid transparent;
       border-radius: $border-radius-soft;
 
       &:hover {
-        border-color: transparentize($color-primary-lavender, 0.4);
+        border-color: transparentize($color-purple-400, 0.4);
       }
     }
 
@@ -1848,14 +1848,14 @@ a {
     h2 {
       line-height: 150%;
       font-size: $font-size-large;
-      color: $color-primary-lavender;
+      color: $color-purple-400;
       padding: 4px 0;
-      border-bottom: 1px solid transparentize($color-primary-lavender, 0.9);
+      border-bottom: 1px solid transparentize($color-purple-400, 0.9);
     }
 
     h3 {
       font-size: $font-size-normal;
-      color: $color-primary-lavender;
+      color: $color-purple-400;
       padding: 4px 0;
     }
 
@@ -1917,7 +1917,7 @@ a {
     flex-direction: column;
 
     &-current-topology {
-      color: $color-primary-lavender;
+      color: $color-purple-400;
     }
 
     &-fields {
@@ -2127,7 +2127,7 @@ a {
   }
 
   button, a {
-    color: $color-primary-charcoal;
+    color: $color-purple-900;
 
     &:hover {
       color: $text-color;
