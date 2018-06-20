@@ -854,7 +854,7 @@ export function getImagesForService(orgId, serviceId) {
     });
 
     // Use the fluxv2 api
-    api.getFluxImages(orgId, serviceId, 2)
+    api.getFluxImages(orgId, serviceId)
       .then((services) => {
         dispatch({
           type: ActionTypes.RECEIVE_SERVICE_IMAGES,
