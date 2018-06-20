@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -60,8 +61,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	rp := appclient.NewReportPublisher(client, false)
+	buf, err := fixedReport.WriteBinary()
+	if err != nil {
+		log.Fatal(err)
+	}
 	for range time.Tick(*publishInterval) {
-		rp.Publish(fixedReport)
+		client.Publish(bytes.NewReader(buf.Bytes()), fixedReport.Shortcut)
 	}
 }

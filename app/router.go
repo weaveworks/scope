@@ -121,13 +121,13 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	post.HandleFunc("/api/report", requestContextDecorator(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		var (
 			rpt    report.Report
-			buf    bytes.Buffer
-			reader = io.TeeReader(r.Body, &buf)
+			buf    = &bytes.Buffer{}
+			reader = io.TeeReader(r.Body, buf)
 		)
 
 		gzipped := strings.Contains(r.Header.Get("Content-Encoding"), "gzip")
 		if !gzipped {
-			reader = io.TeeReader(r.Body, gzip.NewWriter(&buf))
+			reader = io.TeeReader(r.Body, gzip.NewWriter(buf))
 		}
 
 		contentType := r.Header.Get("Content-Type")
@@ -150,8 +150,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 
 		// a.Add(..., buf) assumes buf is gzip'd msgpack
 		if !isMsgpack {
-			buf = bytes.Buffer{}
-			rpt.WriteBinary(&buf, gzip.DefaultCompression)
+			buf, _ = rpt.WriteBinary()
 		}
 
 		if err := a.Add(ctx, rpt, buf.Bytes()); err != nil {
