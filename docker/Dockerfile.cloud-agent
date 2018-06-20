@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine:3.7
 WORKDIR /home/weave
 RUN apk add --update bash conntrack-tools iproute2 util-linux curl && \
 	rm -rf /var/cache/apk/*
