@@ -19,7 +19,7 @@ a {
 
 .browsehappy {
   margin: 0.2em 0;
-  background: $color-silver;
+  background: $color-gray-200;
   color: $color-black;
   padding: 0.2em 0;
 }
@@ -1171,7 +1171,7 @@ a {
   &-metric-box {
     @extend .palable;
     cursor: pointer;
-    fill: transparentize($color-dove-gray, 0.6);
+    fill: transparentize($color-gray-600, 0.6);
 
     &-info {
       background-color: transparentize($color-white, 0.4);
@@ -1189,8 +1189,8 @@ a {
   }
 
   &-layer-topology {
-    background-color: transparentize($color-gallery, 0.05);
-    border: 1px solid $color-silver;
+    background-color: transparentize($color-gray-50, 0.05);
+    border: 1px solid $color-gray-200;
     color: $text-tertiary-color;
     font-size: $font-size-normal;
     font-weight: bold;
@@ -1262,7 +1262,7 @@ a {
     width: 100%;
     height: 100%;
     border: 0px solid $color-black;
-    color: $color-gallery;
+    color: $color-gray-50;
   }
 
   &-header {
@@ -1356,7 +1356,7 @@ a {
 
   &-cursor {
     color: $color-black;
-    background: $color-gallery;
+    background: $color-gray-50;
   }
 }
 
@@ -1873,13 +1873,13 @@ a {
         padding: 3px 5px;
         font-size: $font-size-tiny;
         line-height: 10px;
-        color: $color-dove-gray;
+        color: $color-gray-600;
         vertical-align: middle;
         background-color: $color-white;
-        border: solid 1px $color-silver;
-        border-bottom-color: $color-dove-gray;
+        border: solid 1px $color-gray-200;
+        border-bottom-color: $color-gray-600;
         border-radius: $border-radius-soft;
-        box-shadow: inset 0 -1px 0 $color-dove-gray;
+        box-shadow: inset 0 -1px 0 $color-gray-600;
       }
       div.key {
         width: 60px;
@@ -2043,7 +2043,7 @@ a {
     }
 
     tr:nth-child(even) {
-      background: $background-darker-color;
+      background: $color-gray-100;
     }
 
     tbody tr {
@@ -2064,7 +2064,7 @@ a {
   .scroll-body {
 
     table {
-      border-bottom: 1px solid $color-silver;
+      border-bottom: 1px solid $color-gray-200;
     }
 
     thead, tbody tr {
@@ -2083,7 +2083,7 @@ a {
 
     thead {
       box-shadow: 0 4px 2px -2px transparentize($color-black, 0.84);
-      border-bottom: 1px solid $color-dove-gray;
+      border-bottom: 1px solid $color-gray-600;
     }
 
     tbody {

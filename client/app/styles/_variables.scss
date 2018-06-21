@@ -2,10 +2,10 @@ $fa-font-path: "~font-awesome/fonts";
 
 $base-ease: ease-in-out;
 
-$background-color: $color-gallery;
+$background-color: $color-gray-50;
 $background-lighter-color: $color-white;
-$background-darker-color: transparentize($color-silver, 0.5);
-$background-darker-secondary-color: $color-gallery;
+$background-darker-color: transparentize($color-gray-200, 0.5);
+$background-darker-secondary-color: $color-gray-50;
 $background-dark-color: $color-purple-900;
 $text-color: $color-purple-800;
 $text-secondary-color: $color-purple-600;
