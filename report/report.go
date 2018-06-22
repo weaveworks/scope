@@ -305,14 +305,19 @@ func (r Report) Copy() Report {
 // original is not modified.
 func (r Report) Merge(other Report) Report {
 	newReport := r.Copy()
-	newReport.DNS = newReport.DNS.Merge(other.DNS)
-	newReport.Sampling = newReport.Sampling.Merge(other.Sampling)
-	newReport.Window = newReport.Window + other.Window
-	newReport.Plugins = newReport.Plugins.Merge(other.Plugins)
-	newReport.WalkPairedTopologies(&other, func(ourTopology, theirTopology *Topology) {
-		*ourTopology = ourTopology.Merge(*theirTopology)
-	})
+	newReport.UnsafeMerge(other)
 	return newReport
+}
+
+// UnsafeMerge merges another Report into the receiver. The original is modified.
+func (r *Report) UnsafeMerge(other Report) {
+	r.DNS = r.DNS.Merge(other.DNS)
+	r.Sampling = r.Sampling.Merge(other.Sampling)
+	r.Window = r.Window + other.Window
+	r.Plugins = r.Plugins.Merge(other.Plugins)
+	r.WalkPairedTopologies(&other, func(ourTopology, theirTopology *Topology) {
+		ourTopology.UnsafeMerge(*theirTopology)
+	})
 }
 
 // WalkTopologies iterates through the Topologies of the report,

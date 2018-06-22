@@ -154,7 +154,7 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 		s3:        config.S3Store,
 		userIDer:  config.UserIDer,
 		tableName: config.DynamoTable,
-		merger:    app.NewSmartMerger(),
+		merger:    app.NewFastMerger(),
 		inProcess: newInProcessStore(reportCacheSize, config.Window),
 		memcache:  config.MemcacheClient,
 		window:    config.Window,
