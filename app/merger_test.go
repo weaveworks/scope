@@ -27,7 +27,7 @@ func TestMerger(t *testing.T) {
 	want.Endpoint.AddNode(report.MakeNode("bar"))
 	want.Endpoint.AddNode(report.MakeNode("baz"))
 
-	for _, merger := range []app.Merger{app.MakeDumbMerger(), app.NewSmartMerger()} {
+	for _, merger := range []app.Merger{app.NewFastMerger()} {
 		// Test the empty list case
 		if have := merger.Merge([]report.Report{}); !reflect.DeepEqual(have, report.MakeReport()) {
 			t.Errorf("Bad merge: %s", test.Diff(have, want))
@@ -42,14 +42,6 @@ func TestMerger(t *testing.T) {
 			t.Errorf("Bad merge: %s", test.Diff(have, want))
 		}
 	}
-}
-
-func BenchmarkSmartMerger(b *testing.B) {
-	benchmarkMerger(b, app.NewSmartMerger())
-}
-
-func BenchmarkDumbMerger(b *testing.B) {
-	benchmarkMerger(b, app.MakeDumbMerger())
 }
 
 func BenchmarkFastMerger(b *testing.B) {

@@ -75,7 +75,7 @@ func BenchmarkReportMerge(b *testing.B) {
 func getReport(b *testing.B) report.Report {
 	r := fixture.Report
 	if *benchReportPath != "" {
-		r = NewSmartMerger().Merge(upgradeReports(readReportFiles(b, *benchReportPath)))
+		r = NewFastMerger().Merge(upgradeReports(readReportFiles(b, *benchReportPath)))
 	}
 	return r
 }
