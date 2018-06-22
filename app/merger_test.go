@@ -52,6 +52,10 @@ func BenchmarkDumbMerger(b *testing.B) {
 	benchmarkMerger(b, app.MakeDumbMerger())
 }
 
+func BenchmarkFastMerger(b *testing.B) {
+	benchmarkMerger(b, app.NewFastMerger())
+}
+
 const numHosts = 15
 
 func benchmarkMerger(b *testing.B, merger app.Merger) {

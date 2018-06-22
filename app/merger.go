@@ -60,3 +60,21 @@ func (smartMerger) Merge(reports []report.Report) report.Report {
 	}
 	return <-c
 }
+
+type fastMerger struct{}
+
+// NewFastMerger makes a Merger which merges together reports, mutating the one we are building up
+func NewFastMerger() Merger {
+	return fastMerger{}
+}
+
+func (fastMerger) Merge(reports []report.Report) report.Report {
+	rpt := report.MakeReport()
+	id := murmur3.New64()
+	for _, r := range reports {
+		rpt.UnsafeMerge(r)
+		id.Write([]byte(r.ID))
+	}
+	rpt.ID = fmt.Sprintf("%x", id.Sum64())
+	return rpt
+}

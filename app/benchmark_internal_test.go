@@ -72,6 +72,15 @@ func BenchmarkReportMerge(b *testing.B) {
 	}
 }
 
+func BenchmarkReportFastMerge(b *testing.B) {
+	reports := upgradeReports(readReportFiles(b, *benchReportPath))
+	merger := NewFastMerger()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		merger.Merge(reports)
+	}
+}
+
 func getReport(b *testing.B) report.Report {
 	r := fixture.Report
 	if *benchReportPath != "" {
