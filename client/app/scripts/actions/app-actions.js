@@ -339,15 +339,14 @@ export function clickNode(nodeId, label, origin, topologyId = null) {
 
 export function pauseTimeAtNow() {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
     dispatch({
       type: ActionTypes.PAUSE_TIME_AT_NOW
     });
-    updateRoute(getScopeState);
-    if (!getScopeState().get('nodesLoaded')) {
-      getNodes(getScopeState, dispatch);
-      if (isResourceViewModeSelector(getScopeState())) {
-        getResourceViewNodesSnapshot(getScopeState(), dispatch);
+    updateRoute(getState);
+    if (!getState().get('nodesLoaded')) {
+      getNodes(getState, dispatch);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
       }
     }
   };
@@ -578,17 +577,16 @@ export function receiveNodesDelta(delta) {
 
 export function resumeTime() {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
-    if (isPausedSelector(getScopeState())) {
+    if (isPausedSelector(getState())) {
       dispatch({
         type: ActionTypes.RESUME_TIME
       });
-      updateRoute(getScopeState);
+      updateRoute(getState);
       // After unpausing, all of the following calls will re-activate polling.
-      getTopologies(getScopeState, dispatch);
-      getNodes(getScopeState, dispatch, true);
-      if (isResourceViewModeSelector(getScopeState())) {
-        getResourceViewNodesSnapshot(getScopeState(), dispatch);
+      getTopologies(getState, dispatch);
+      getNodes(getState, dispatch, true);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
       }
     }
   };
@@ -622,16 +620,15 @@ export function receiveNodes(nodes) {
 
 export function jumpToTime(timestamp) {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
     dispatch({
       type: ActionTypes.JUMP_TO_TIME,
       timestamp,
     });
-    updateRoute(getScopeState);
-    getNodes(getScopeState, dispatch);
-    getTopologies(getScopeState, dispatch);
-    if (isResourceViewModeSelector(getScopeState())) {
-      getResourceViewNodesSnapshot(getScopeState(), dispatch);
+    updateRoute(getState);
+    getNodes(getState, dispatch);
+    getTopologies(getState, dispatch);
+    if (isResourceViewModeSelector(getState())) {
+      getResourceViewNodesSnapshot(getState(), dispatch);
     }
   };
 }
@@ -868,12 +865,6 @@ export function getImagesForService(orgId, serviceId) {
         });
       });
   };
-}
-
-export function getFluxHistory(...params) {
-  return (dispatch, getState, { actions }) => (
-    dispatch(actions.getFluxHistory(...params))
-  );
 }
 
 export function setMonitorState(monitor) {
