@@ -35,7 +35,11 @@ func (s Sets) Add(key string, value StringSet) Sets {
 		s = emptySets
 	}
 	if existingValue, ok := s.psMap.Lookup(key); ok {
-		value = value.Merge(existingValue.(StringSet))
+		var unchanged bool
+		value, unchanged = existingValue.(StringSet).Merge(value)
+		if unchanged {
+			return s
+		}
 	}
 	return Sets{
 		psMap: s.psMap.Set(key, value),
@@ -94,7 +98,11 @@ func (s Sets) Merge(other Sets) Sets {
 	iter.ForEach(func(key string, value interface{}) {
 		set := value.(StringSet)
 		if existingSet, ok := result.Lookup(key); ok {
-			set = set.Merge(existingSet.(StringSet))
+			var unchanged bool
+			set, unchanged = existingSet.(StringSet).Merge(set)
+			if unchanged {
+				return
+			}
 		}
 		result = result.Set(key, set)
 	})

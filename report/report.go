@@ -531,13 +531,12 @@ func (r Report) upgradeDNSRecords() Report {
 		if ok && (foundS || foundR) {
 			// Add address and names to report-level map
 			if existing, found := dns[addr]; found {
-				// Optimise the expected case that they are equal
-				if existing.Forward.Equal(snoopedNames) && existing.Reverse.Equal(reverseNames) {
+				var sUnchanged, rUnchanged bool
+				snoopedNames, sUnchanged = snoopedNames.Merge(existing.Forward)
+				reverseNames, rUnchanged = reverseNames.Merge(existing.Reverse)
+				if sUnchanged && rUnchanged {
 					continue
 				}
-				// Not equal - merge this node's data into existing data,
-				snoopedNames = snoopedNames.Merge(existing.Forward)
-				reverseNames = reverseNames.Merge(existing.Reverse)
 			}
 			dns[addr] = DNSRecord{Forward: snoopedNames, Reverse: reverseNames}
 		}
