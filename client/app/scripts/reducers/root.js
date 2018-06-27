@@ -376,11 +376,6 @@ export function rootReducer(state = initialState, action) {
       return state.set('pausedAt', moment().utc().format());
     }
 
-    case ActionTypes.START_TIME_TRAVEL: {
-      state = state.set('timeTravelTransitioning', false);
-      return state.set('pausedAt', action.timestamp || moment().utc().format());
-    }
-
     case ActionTypes.JUMP_TO_TIME: {
       state = state.set('timeTravelTransitioning', true);
       return state.set('pausedAt', action.timestamp);

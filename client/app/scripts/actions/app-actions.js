@@ -549,8 +549,7 @@ export function receiveNodeDetails(details, requestTimestamp) {
 
 export function receiveNodesDelta(delta) {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
-    if (!isPausedSelector(getScopeState())) {
+    if (!isPausedSelector(getState())) {
       // Allow css-animation to run smoothly by scheduling it to run on the
       // next tick after any potentially expensive canvas re-draws have been
       // completed.
@@ -560,7 +559,7 @@ export function receiveNodesDelta(delta) {
       // only when the first batch of nodes delta has been received. We
       // do that because we want to keep the previous state blurred instead
       // of transitioning over an empty state like when switching topologies.
-      if (getScopeState().get('timeTravelTransitioning')) {
+      if (getState().get('timeTravelTransitioning')) {
         dispatch({ type: ActionTypes.FINISH_TIME_TRAVEL_TRANSITION });
       }
 
@@ -592,25 +591,6 @@ export function resumeTime() {
   };
 }
 
-export function startTimeTravel(timestamp = null) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.START_TIME_TRAVEL,
-      timestamp,
-    });
-    updateRoute(getState);
-    if (!getState().get('nodesLoaded')) {
-      getNodes(getState, dispatch);
-      if (isResourceViewModeSelector(getState())) {
-        getResourceViewNodesSnapshot(getState(), dispatch);
-      }
-    } else {
-      // Get most recent details before freezing the state.
-      getNodeDetails(getState, dispatch);
-    }
-  };
-}
-
 export function receiveNodes(nodes) {
   return {
     type: ActionTypes.RECEIVE_NODES,
@@ -625,10 +605,15 @@ export function jumpToTime(timestamp) {
       timestamp,
     });
     updateRoute(getState);
-    getNodes(getState, dispatch);
     getTopologies(getState, dispatch);
-    if (isResourceViewModeSelector(getState())) {
-      getResourceViewNodesSnapshot(getState(), dispatch);
+    if (!getState().get('nodesLoaded')) {
+      getNodes(getState, dispatch);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
+    } else {
+      // Get most recent details before freezing the state.
+      getNodeDetails(getState, dispatch);
     }
   };
 }
@@ -643,15 +628,14 @@ export function receiveNodesForTopology(nodes, topologyId) {
 
 export function receiveTopologies(topologies) {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
-    const firstLoad = !getScopeState().get('topologiesLoaded');
+    const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies
     });
-    getNodes(getScopeState, dispatch);
+    getNodes(getState, dispatch);
     // Populate search matches on first load
-    const state = getScopeState();
+    const state = getState();
     if (firstLoad && state.get('searchQuery')) {
       dispatch(focusSearch());
     }
@@ -684,7 +668,7 @@ export function receiveApiDetails(apiDetails) {
     // we have no prior info on whether time travel would be available.
     if (isFirstTime && pausedAt) {
       if (apiDetails.capabilities && apiDetails.capabilities.historic_reports) {
-        dispatch(startTimeTravel(pausedAt));
+        dispatch(jumpToTime(pausedAt));
       } else {
         dispatch(pauseTimeAtNow());
       }
@@ -793,7 +777,7 @@ export function route(urlState) {
     if (!urlState.pausedAt) {
       dispatch(resumeTime());
     } else {
-      dispatch(startTimeTravel(urlState.pausedAt));
+      dispatch(jumpToTime(urlState.pausedAt));
     }
     // update all request workers with new options
     getTopologies(getState, dispatch);
