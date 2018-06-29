@@ -53,7 +53,7 @@ function generate_latest_map() {
 
     // String returns the StringLatestEntry's string representation.
     func (e *${entry_type}) String() string {
-        return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.String())
+        return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.Format(time.RFC3339))
     }
 
     // Equal returns true if the supplied StringLatestEntry is equal to this one.
@@ -181,7 +181,7 @@ function generate_latest_map() {
     func (m ${latest_map_type}) String() string {
         buf := bytes.NewBufferString("{")
         for _, val := range m {
-            fmt.Fprintf(buf, "%s: %v,\n", val.key, val)
+            fmt.Fprintf(buf, "%s: %s,\n", val.key, val.String())
         }
         fmt.Fprintf(buf, "}")
         return buf.String()

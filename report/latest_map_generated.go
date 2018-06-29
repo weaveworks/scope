@@ -21,7 +21,7 @@ type stringLatestEntry struct {
 
 // String returns the StringLatestEntry's string representation.
 func (e *stringLatestEntry) String() string {
-	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.String())
+	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.Format(time.RFC3339))
 }
 
 // Equal returns true if the supplied StringLatestEntry is equal to this one.
@@ -149,7 +149,7 @@ func (m StringLatestMap) ForEach(fn func(k string, timestamp time.Time, v string
 func (m StringLatestMap) String() string {
 	buf := bytes.NewBufferString("{")
 	for _, val := range m {
-		fmt.Fprintf(buf, "%s: %v,\n", val.key, val)
+		fmt.Fprintf(buf, "%s: %s,\n", val.key, val.String())
 	}
 	fmt.Fprintf(buf, "}")
 	return buf.String()
@@ -243,7 +243,7 @@ type nodeControlDataLatestEntry struct {
 
 // String returns the StringLatestEntry's string representation.
 func (e *nodeControlDataLatestEntry) String() string {
-	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.String())
+	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.Format(time.RFC3339))
 }
 
 // Equal returns true if the supplied StringLatestEntry is equal to this one.
@@ -371,7 +371,7 @@ func (m NodeControlDataLatestMap) ForEach(fn func(k string, timestamp time.Time,
 func (m NodeControlDataLatestMap) String() string {
 	buf := bytes.NewBufferString("{")
 	for _, val := range m {
-		fmt.Fprintf(buf, "%s: %v,\n", val.key, val)
+		fmt.Fprintf(buf, "%s: %s,\n", val.key, val.String())
 	}
 	fmt.Fprintf(buf, "}")
 	return buf.String()
