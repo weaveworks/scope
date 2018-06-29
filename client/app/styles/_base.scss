@@ -1110,59 +1110,6 @@ a {
 
     }
   }
-
-  .image-status {
-
-    .progress-wrapper {
-      position: relative;
-      min-height: 35px;
-    }
-
-    .node-details-content-section-header {
-      display: flex;
-      justify-content: space-between;
-      line-height: 26px;
-    }
-
-    .images .wrapper{
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .weave-circular-progress-wrapper {
-      position: absolute;
-      left: 50%;
-    }
-
-    .new-image {
-      color: $color-blue-600;
-    }
-
-    a {
-      &:hover {
-        background-color: $color-purple-50;
-        cursor: pointer;
-      }
-    }
-
-    .node-details-table-node-link {
-      background-color: transparent;
-      border: 0;
-      cursor: pointer;
-      padding: 0;
-      outline: 0;
-    }
-
-    .node-details-table-node-link,
-    .node-details-table-node-label,
-    .node-details-table-node-value {
-      flex: 1;
-      font-size: $font-size-small;
-      color: $text-color;
-      line-height: 24px;
-      text-transform: none;
-    }
-  }
 }
 
 
