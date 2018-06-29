@@ -1,8 +1,10 @@
 import debug from 'debug';
 import React from 'react';
 import classNames from 'classnames';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
+import { noop } from 'lodash';
 
 import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
@@ -288,6 +290,14 @@ class NodeDetails extends React.Component {
     setDocumentTitle(this.props.details && this.props.details.label);
   }
 }
+
+NodeDetails.propTypes = {
+  renderNodeDetailsExtras: PropTypes.func,
+};
+
+NodeDetails.defaultProps = {
+  renderNodeDetailsExtras: noop,
+};
 
 function mapStateToProps(state, ownProps) {
   const currentTopologyId = state.get('currentTopologyId');
