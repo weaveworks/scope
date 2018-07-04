@@ -6,10 +6,10 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
@@ -61,13 +61,18 @@ func (c byteCounter) Read(p []byte) (n int, err error) {
 	return n, err
 }
 
+// buffer pool to reduce garbage-collection
+var bufferPool = &sync.Pool{
+	New: func() interface{} { return new(bytes.Buffer) },
+}
+
 // ReadBinary reads bytes into a Report.
 //
 // Will decompress the binary if gzipped is true, and will use the given
 // codecHandle to decode it.
 func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handle) error {
 	var err error
-	var compressedSize, uncompressedSize uint64
+	var compressedSize uint64
 
 	// We have historically had trouble with reports being too large. We are
 	// keeping this instrumentation around to help us implement
@@ -82,12 +87,14 @@ func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handl
 		}
 	}
 	// Read everything into memory before decoding: it's faster
-	buf, err := ioutil.ReadAll(r)
+	buf := bufferPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer bufferPool.Put(buf)
+	uncompressedSize, err := buf.ReadFrom(r)
 	if err != nil {
 		return err
 	}
-	uncompressedSize = uint64(len(buf))
-	if err := rep.ReadBytes(buf, codecHandle); err != nil {
+	if err := rep.ReadBytes(buf.Bytes(), codecHandle); err != nil {
 		return err
 	}
 	log.Debugf(
@@ -120,11 +127,13 @@ func MakeFromBytes(buf []byte) (*Report, error) {
 	if err != nil {
 		return nil, err
 	}
-	buf, err = ioutil.ReadAll(r)
+	buffer := bufferPool.Get().(*bytes.Buffer)
+	buffer.Reset()
+	defer bufferPool.Put(buffer)
+	uncompressedSize, err := buffer.ReadFrom(r)
 	if err != nil {
 		return nil, err
 	}
-	uncompressedSize := len(buf)
 	log.Debugf(
 		"Received report sizes: compressed %d bytes, uncompressed %d bytes (%.2f%%)",
 		compressedSize,
@@ -132,7 +141,7 @@ func MakeFromBytes(buf []byte) (*Report, error) {
 		float32(compressedSize)/float32(uncompressedSize)*100,
 	)
 	rep := MakeReport()
-	if err := rep.ReadBytes(buf, &codec.MsgpackHandle{}); err != nil {
+	if err := rep.ReadBytes(buffer.Bytes(), &codec.MsgpackHandle{}); err != nil {
 		return nil, err
 	}
 	return &rep, nil
