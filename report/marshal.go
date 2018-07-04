@@ -6,7 +6,6 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -128,11 +127,13 @@ func MakeFromBytes(buf []byte) (*Report, error) {
 	if err != nil {
 		return nil, err
 	}
-	buf, err = ioutil.ReadAll(r)
+	buffer := bufferPool.Get().(*bytes.Buffer)
+	buffer.Reset()
+	defer bufferPool.Put(buffer)
+	uncompressedSize, err := buffer.ReadFrom(r)
 	if err != nil {
 		return nil, err
 	}
-	uncompressedSize := len(buf)
 	log.Debugf(
 		"Received report sizes: compressed %d bytes, uncompressed %d bytes (%.2f%%)",
 		compressedSize,
@@ -140,7 +141,7 @@ func MakeFromBytes(buf []byte) (*Report, error) {
 		float32(compressedSize)/float32(uncompressedSize)*100,
 	)
 	rep := MakeReport()
-	if err := rep.ReadBytes(buf, &codec.MsgpackHandle{}); err != nil {
+	if err := rep.ReadBytes(buffer.Bytes(), &codec.MsgpackHandle{}); err != nil {
 		return nil, err
 	}
 	return &rep, nil
