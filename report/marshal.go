@@ -39,11 +39,10 @@ func (StdoutPublisher) Publish(rep Report) error {
 // WriteBinary writes a Report as a gzipped msgpack into a bytes.Buffer
 func (rep Report) WriteBinary() (*bytes.Buffer, error) {
 	w := &bytes.Buffer{}
-	gzwriter, err := gzip.NewWriterLevel(w, gzip.DefaultCompression)
-	if err != nil {
-		return nil, err
-	}
-	if err = codec.NewEncoder(gzwriter, &codec.MsgpackHandle{}).Encode(&rep); err != nil {
+	gzwriter := gzipWriterPool.Get().(*gzip.Writer)
+	gzwriter.Reset(w)
+	defer gzipWriterPool.Put(gzwriter)
+	if err := codec.NewEncoder(gzwriter, &codec.MsgpackHandle{}).Encode(&rep); err != nil {
 		return nil, err
 	}
 	gzwriter.Close() // otherwise the content won't get flushed to the output stream
@@ -61,9 +60,13 @@ func (c byteCounter) Read(p []byte) (n int, err error) {
 	return n, err
 }
 
-// buffer pool to reduce garbage-collection
+// buffer pools to reduce garbage-collection
 var bufferPool = &sync.Pool{
 	New: func() interface{} { return new(bytes.Buffer) },
+}
+var gzipWriterPool = &sync.Pool{
+	// NewWriterLevel() only errors if the compression level is invalid, which can't happen here
+	New: func() interface{} { w, _ := gzip.NewWriterLevel(nil, gzip.DefaultCompression); return w },
 }
 
 // ReadBinary reads bytes into a Report.
@@ -169,7 +172,7 @@ func MakeFromFile(path string) (rpt Report, _ error) {
 // WriteToFile writes a Report to a file. The encoding is determined
 // by the file extension (".msgpack" or ".json", with an optional
 // ".gz").
-func (rep *Report) WriteToFile(path string, compressionLevel int) error {
+func (rep *Report) WriteToFile(path string) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return err
@@ -186,10 +189,9 @@ func (rep *Report) WriteToFile(path string, compressionLevel int) error {
 	defer bufwriter.Flush()
 	w = bufwriter
 	if gzipped {
-		gzwriter, err := gzip.NewWriterLevel(w, compressionLevel)
-		if err != nil {
-			return err
-		}
+		gzwriter := gzipWriterPool.Get().(*gzip.Writer)
+		gzwriter.Reset(w)
+		defer gzipWriterPool.Put(gzwriter)
 		defer gzwriter.Close()
 		w = gzwriter
 	}
