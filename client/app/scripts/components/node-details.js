@@ -1,8 +1,10 @@
 import debug from 'debug';
 import React from 'react';
 import classNames from 'classnames';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
+import { noop } from 'lodash';
 
 import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
@@ -19,8 +21,6 @@ import NodeDetailsInfo from './node-details/node-details-info';
 import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import Warning from './warning';
-import CloudFeature from './cloud-feature';
-import NodeDetailsImageStatus from './node-details/node-details-image-status';
 
 
 const log = debug('scope:node-details');
@@ -249,14 +249,7 @@ class NodeDetails extends React.Component {
             return null;
           })}
 
-          <CloudFeature>
-            <NodeDetailsImageStatus
-              name={details.label}
-              metadata={details.metadata}
-              pseudo={details.pseudo}
-              topologyId={topologyId}
-            />
-          </CloudFeature>
+          {this.props.renderNodeDetailsExtras({ topologyId, details })}
         </div>
 
         <Overlay faded={this.props.transitioning} />
@@ -297,6 +290,14 @@ class NodeDetails extends React.Component {
     setDocumentTitle(this.props.details && this.props.details.label);
   }
 }
+
+NodeDetails.propTypes = {
+  renderNodeDetailsExtras: PropTypes.func,
+};
+
+NodeDetails.defaultProps = {
+  renderNodeDetailsExtras: noop,
+};
 
 function mapStateToProps(state, ownProps) {
   const currentTopologyId = state.get('currentTopologyId');

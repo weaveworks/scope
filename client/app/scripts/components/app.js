@@ -201,7 +201,9 @@ class App extends React.Component {
 
           {showingTroubleshootingMenu && <TroubleshootingMenu />}
 
-          {showingDetails && <Details />}
+          {showingDetails && <Details
+            renderNodeDetailsExtras={this.props.renderNodeDetailsExtras}
+          />}
 
           <div className="header">
             {timeTravelSupported && this.props.renderTimeTravel()}
@@ -263,11 +265,13 @@ function mapStateToProps(state) {
 
 App.propTypes = {
   renderTimeTravel: PropTypes.func,
+  renderNodeDetailsExtras: PropTypes.func,
   monitor: PropTypes.bool,
 };
 
 App.defaultProps = {
   renderTimeTravel: () => <TimeTravelWrapper />,
+  renderNodeDetailsExtras: () => null,
   monitor: false,
 };
 

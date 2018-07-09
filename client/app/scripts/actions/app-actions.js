@@ -1,5 +1,4 @@
 import debug from 'debug';
-import { find } from 'lodash';
 import { fromJS } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
@@ -824,30 +823,6 @@ export function shutdown() {
     dispatch({
       type: ActionTypes.SHUTDOWN
     });
-  };
-}
-
-export function getImagesForService(orgId, serviceId) {
-  return (dispatch, getState, { api }) => {
-    dispatch({
-      type: ActionTypes.REQUEST_SERVICE_IMAGES,
-      serviceId
-    });
-
-    // Use the fluxv2 api
-    api.getFluxImages(orgId, serviceId)
-      .then((services) => {
-        dispatch({
-          type: ActionTypes.RECEIVE_SERVICE_IMAGES,
-          service: find(services, s => s.ID === serviceId),
-          serviceId
-        });
-      }, ({ errors }) => {
-        dispatch({
-          type: ActionTypes.RECEIVE_SERVICE_IMAGES,
-          errors
-        });
-      });
   };
 }
 
