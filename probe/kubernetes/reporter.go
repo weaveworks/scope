@@ -33,6 +33,7 @@ const (
 	Message            = report.KubernetesMessage
 	VolumeName         = report.KubernetesVolumeName
 	Provisioner        = report.KubernetesProvisioner
+	StorageDriver      = report.KubernetesStorageDriver
 )
 
 // Exposed for testing
@@ -112,6 +113,7 @@ var (
 		StorageClassName: {ID: StorageClassName, Label: "Storage class", From: report.FromLatest, Priority: 3},
 		AccessModes:      {ID: AccessModes, Label: "Access modes", From: report.FromLatest, Priority: 5},
 		Status:           {ID: Status, Label: "Status", From: report.FromLatest, Priority: 6},
+		StorageDriver:    {ID: StorageDriver, Label: "Storage driver", From: report.FromLatest, Priority: 7},
 	}
 
 	PersistentVolumeClaimMetadataTemplates = report.MetadataTemplates{

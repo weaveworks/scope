@@ -80,6 +80,7 @@ const (
 	KubernetesMessage              = "kubernetes_message"
 	KubernetesVolumeName           = "kubernetes_volume_name"
 	KubernetesProvisioner          = "kubernetes_provisioner"
+	KubernetesStorageDriver        = "kubernetes_storage_driver"
 	// probe/awsecs
 	ECSCluster             = "ecs_cluster"
 	ECSCreatedAt           = "ecs_created_at"

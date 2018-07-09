@@ -290,6 +290,7 @@ var (
 				kubernetes.VolumeClaim:      "pvc-6124",
 				kubernetes.AccessModes:      "ReadWriteOnce",
 				kubernetes.StorageClassName: "standard",
+				kubernetes.StorageDriver:    "iSCSI",
 			}),
 
 		fixture.StorageClassNodeID: StorageClass(fixture.StorageClassNodeID, fixture.PersistentVolumeClaimNodeID).
