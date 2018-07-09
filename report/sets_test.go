@@ -8,6 +8,37 @@ import (
 	"github.com/weaveworks/scope/test/reflect"
 )
 
+func TestSetsAdd(t *testing.T) {
+	for _, testcase := range []struct {
+		a    report.Sets
+		want map[string][]string
+	}{
+		{
+			report.MakeSets().Add("a", report.MakeStringSet("b")),
+			map[string][]string{"a": {"b"}},
+		},
+		{
+			report.MakeSets().Add("a", report.MakeStringSet("b")).Add("a", report.MakeStringSet("c")),
+			map[string][]string{"a": {"b", "c"}},
+		},
+		{
+			report.MakeSets().Add("a", report.MakeStringSet("b", "c")).Add("a", report.MakeStringSet("c")),
+			map[string][]string{"a": {"b", "c"}},
+		},
+		{
+			report.MakeSets().Add("a", report.MakeStringSet("c")).Add("a", report.MakeStringSet("b", "c")),
+			map[string][]string{"a": {"b", "c"}},
+		},
+		{
+			report.MakeSets().Add("a", report.MakeStringSet("1")).Add("b", report.MakeStringSet("2")).
+				Add("c", report.MakeStringSet("3")).Add("b", report.MakeStringSet("3")),
+			map[string][]string{"a": {"1"}, "b": {"2", "3"}, "c": {"3"}},
+		},
+	} {
+		check(t, "Add", testcase.a, testcase.want)
+	}
+}
+
 func TestSetsMerge(t *testing.T) {
 	for _, testcase := range []struct {
 		a, b report.Sets
