@@ -1,6 +1,7 @@
 package report_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/weaveworks/scope/report"
@@ -29,15 +30,19 @@ func TestSetsMerge(t *testing.T) {
 			map[string][]string{"a": {"1"}, "b": {"2", "3"}, "c": {"3"}},
 		},
 	} {
-		haveSets := testcase.a.Merge(testcase.b)
-		have := map[string][]string{}
-		keys := haveSets.Keys()
-		for _, k := range keys {
-			have[k], _ = haveSets.Lookup(k)
-		}
+		check(t, fmt.Sprintf("%+v.Merge(%+v)", testcase.a, testcase.b), testcase.a.Merge(testcase.b), testcase.want)
+		check(t, fmt.Sprintf("%+v.Merge(%+v)", testcase.b, testcase.a), testcase.b.Merge(testcase.a), testcase.want)
+	}
+}
 
-		if !reflect.DeepEqual(testcase.want, have) {
-			t.Errorf("%+v.Merge(%+v): want %+v, have %+v", testcase.a, testcase.b, testcase.want, have)
-		}
+func check(t *testing.T, desc string, haveSets report.Sets, want map[string][]string) {
+	have := map[string][]string{}
+	keys := haveSets.Keys()
+	for _, k := range keys {
+		have[k], _ = haveSets.Lookup(k)
+	}
+
+	if !reflect.DeepEqual(want, have) {
+		t.Errorf("%s: want %+v, have %+v", desc, want, have)
 	}
 }
