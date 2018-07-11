@@ -50,11 +50,11 @@ func TestMetricsCopy(t *testing.T) {
 }
 
 func checkMetric(t *testing.T, metric report.Metric, first, last time.Time, min, max float64) {
-	if !metric.First.Equal(first) {
-		t.Errorf("Expected metric.First == %q, but was: %q", first, metric.First)
+	if !metric.First().Equal(first) {
+		t.Errorf("Expected metric.First == %q, but was: %q", first, metric.First())
 	}
-	if !metric.Last.Equal(last) {
-		t.Errorf("Expected metric.Last == %q, but was: %q", last, metric.Last)
+	if !metric.Last().Equal(last) {
+		t.Errorf("Expected metric.Last == %q, but was: %q", last, metric.Last())
 	}
 	if metric.Min != min {
 		t.Errorf("Expected metric.Min == %f, but was: %f", min, metric.Min)
@@ -65,9 +65,6 @@ func checkMetric(t *testing.T, metric report.Metric, first, last time.Time, min,
 }
 
 func TestMetricFirstLastMinMax(t *testing.T) {
-
-	checkMetric(t, report.MakeMetric(nil), time.Time{}, time.Time{}, 0.0, 0.0)
-
 	t1 := time.Now()
 	t2 := time.Now().Add(1 * time.Minute)
 
@@ -103,18 +100,7 @@ func TestMetricMerge(t *testing.T) {
 	}
 
 	// Check it didn't modify metric1
-	if !metric1.First.Equal(t2) {
-		t.Errorf("Expected metric1.First == %q, but was: %q", t2, metric1.First)
-	}
-	if !metric1.Last.Equal(t3) {
-		t.Errorf("Expected metric1.Last == %q, but was: %q", t3, metric1.Last)
-	}
-	if metric1.Min != 0.2 {
-		t.Errorf("Expected metric1.Min == %f, but was: %f", 0.2, metric1.Min)
-	}
-	if metric1.Max != 0.31 {
-		t.Errorf("Expected metric1.Max == %f, but was: %f", 0.31, metric1.Max)
-	}
+	checkMetric(t, metric1, t2, t3, 0.2, 0.31)
 
 	// Check the result is not the same instance as metric1
 	if &metric1 == &have {
