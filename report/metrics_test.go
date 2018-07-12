@@ -49,13 +49,7 @@ func TestMetricsCopy(t *testing.T) {
 	}
 }
 
-func checkMetric(t *testing.T, metric report.Metric, first, last time.Time, min, max float64) {
-	if !metric.First().Equal(first) {
-		t.Errorf("Expected metric.First == %q, but was: %q", first, metric.First())
-	}
-	if !metric.Last().Equal(last) {
-		t.Errorf("Expected metric.Last == %q, but was: %q", last, metric.Last())
-	}
+func checkMetric(t *testing.T, metric report.Metric, min, max float64) {
 	if metric.Min != min {
 		t.Errorf("Expected metric.Min == %f, but was: %f", min, metric.Min)
 	}
@@ -70,16 +64,16 @@ func TestMetricFirstLastMinMax(t *testing.T) {
 
 	metric1 := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -0.1}, {Timestamp: t2, Value: 0.2}})
 
-	checkMetric(t, metric1, t1, t2, -0.1, 0.2)
-	checkMetric(t, metric1.Merge(metric1), t1, t2, -0.1, 0.2)
+	checkMetric(t, metric1, -0.1, 0.2)
+	checkMetric(t, metric1.Merge(metric1), -0.1, 0.2)
 
 	t3 := time.Now().Add(2 * time.Minute)
 	t4 := time.Now().Add(3 * time.Minute)
 	metric2 := report.MakeMetric([]report.Sample{{Timestamp: t3, Value: 0.31}, {Timestamp: t4, Value: 0.4}})
 
-	checkMetric(t, metric2, t3, t4, 0.31, 0.4)
-	checkMetric(t, metric1.Merge(metric2), t1, t4, -0.1, 0.4)
-	checkMetric(t, metric2.Merge(metric1), t1, t4, -0.1, 0.4)
+	checkMetric(t, metric2, 0.31, 0.4)
+	checkMetric(t, metric1.Merge(metric2), -0.1, 0.4)
+	checkMetric(t, metric2.Merge(metric1), -0.1, 0.4)
 }
 
 func TestMetricMerge(t *testing.T) {
@@ -97,14 +91,6 @@ func TestMetricMerge(t *testing.T) {
 	have := metric1.Merge(metric2)
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("diff: %s", test.Diff(want, have))
-	}
-
-	// Check it didn't modify metric1
-	checkMetric(t, metric1, t2, t3, 0.2, 0.31)
-
-	// Check the result is not the same instance as metric1
-	if &metric1 == &have {
-		t.Errorf("Expected different pointers for metric1 and have, but both were: %p", &have)
 	}
 }
 

@@ -52,12 +52,8 @@ type Metric struct {
 	Min, Max float64
 }
 
-// Following two functions are exported for testing only: make sure there are samples before calling.
-// First gives the timestamp of the first sample
-func (m Metric) First() time.Time { return m.Samples[0].Timestamp }
-
-// Last gives the timestamp of the last sample
-func (m Metric) Last() time.Time { return m.Samples[len(m.Samples)-1].Timestamp }
+func (m Metric) first() time.Time { return m.Samples[0].Timestamp }
+func (m Metric) last() time.Time  { return m.Samples[len(m.Samples)-1].Timestamp }
 
 // Sample is a single datapoint of a metric.
 type Sample struct {
@@ -127,7 +123,7 @@ func (m Metric) Merge(other Metric) Metric {
 		return other
 	case len(other.Samples) == 0:
 		return m
-	case other.First().After(m.Last()):
+	case other.first().After(m.last()):
 		samplesOut := make([]Sample, len(m.Samples)+len(other.Samples))
 		copy(samplesOut, m.Samples)
 		copy(samplesOut[len(m.Samples):], other.Samples)
@@ -136,7 +132,7 @@ func (m Metric) Merge(other Metric) Metric {
 			Max:     math.Max(m.Max, other.Max),
 			Min:     math.Min(m.Min, other.Min),
 		}
-	case m.First().After(other.Last()):
+	case m.first().After(other.last()):
 		samplesOut := make([]Sample, len(m.Samples)+len(other.Samples))
 		copy(samplesOut, other.Samples)
 		copy(samplesOut[len(other.Samples):], m.Samples)
