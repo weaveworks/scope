@@ -34,11 +34,12 @@
 			"path": "/statsd"
 		},
 		{
-			"importpath": "github.com/PuerkitoBio/ghost",
-			"repository": "https://github.com/PuerkitoBio/ghost",
-			"vcs": "",
-			"revision": "a0146f2f931611b8bfe40f07018c97a7c881c76a",
-			"branch": "master"
+			"importpath": "github.com/NYTimes/gziphandler",
+			"repository": "https://github.com/NYTimes/gziphandler",
+			"vcs": "git",
+			"revision": "5032c8878b9dd46cfe8c625c0d9b9f258a560ee8",
+			"branch": "master",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/PuerkitoBio/purell",
