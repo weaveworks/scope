@@ -93,13 +93,6 @@ func TestLatestMapMerge(t *testing.T) {
 			want: MakeStringLatestMap().
 				Set("foo", now, "bar"),
 		},
-		"Empty b": {
-			a: MakeStringLatestMap().
-				Set("foo", now, "bar"),
-			b: MakeStringLatestMap(),
-			want: MakeStringLatestMap().
-				Set("foo", now, "bar"),
-		},
 		"Disjoint a & b": {
 			a: MakeStringLatestMap().
 				Set("foo", now, "bar"),
@@ -117,8 +110,24 @@ func TestLatestMapMerge(t *testing.T) {
 			want: MakeStringLatestMap().
 				Set("foo", now, "bar"),
 		},
+		"Longer": {
+			a: MakeStringLatestMap().
+				Set("PID", now, "23128").
+				Set("Name", now, "curl"),
+			b: MakeStringLatestMap().
+				Set("PID", then, "0").
+				Set("Name", now, "curl").
+				Set("Domain", now, "node-a.local"),
+			want: MakeStringLatestMap().
+				Set("PID", now, "23128").
+				Set("Name", now, "curl").
+				Set("Domain", now, "node-a.local"),
+		},
 	} {
 		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
+			t.Errorf("%s:\n%s", name, test.Diff(c.want, have))
+		}
+		if have := c.b.Merge(c.a); !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s:\n%s", name, test.Diff(c.want, have))
 		}
 	}
