@@ -197,7 +197,7 @@ func MakeRegistry() *Registry {
 	registry.Add(
 		APITopologyDesc{
 			id:          processesID,
-			renderer:    render.ProcessWithContainerNameRenderer,
+			renderer:    render.ConnectedProcessRenderer,
 			Name:        "Processes",
 			Rank:        1,
 			Options:     unconnectedFilter,

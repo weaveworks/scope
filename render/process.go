@@ -1,7 +1,6 @@
 package render
 
 import (
-	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -23,41 +22,12 @@ func renderProcesses(rpt report.Report) bool {
 // graph by merging the endpoint graph and the process topology.
 var ProcessRenderer = Memoise(endpoints2Processes{})
 
-// processWithContainerNameRenderer is a Renderer which produces a process
-// graph enriched with container names where appropriate
-type processWithContainerNameRenderer struct {
-	Renderer
-}
-
-func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
-	processes := r.Renderer.Render(rpt)
-	containers := SelectContainer.Render(rpt)
-
-	outputs := make(report.Nodes, len(processes.Nodes))
-	for id, p := range processes.Nodes {
-		outputs[id] = p
-		containerID, ok := p.Latest.Lookup(docker.ContainerID)
-		if !ok {
-			continue
-		}
-		container, ok := containers.Nodes[report.MakeContainerNodeID(containerID)]
-		if !ok {
-			continue
-		}
-		propagateLatest(docker.ContainerName, container, p)
-		outputs[id] = p
-	}
-	return Nodes{Nodes: outputs, Filtered: processes.Filtered}
-}
-
-// ProcessWithContainerNameRenderer is a Renderer which produces a
-// process graph enriched with container names where appropriate.
-//
-// It also colors connected nodes, so we can apply a filter to
-// show/hide unconnected nodes depending on user choice.
+// ConnectedProcessRenderer is a Renderer which colors
+// connected nodes, so we can apply a filter to show/hide unconnected
+// nodes depending on user choice.
 //
 // not memoised
-var ProcessWithContainerNameRenderer = ColorConnected(processWithContainerNameRenderer{ProcessRenderer})
+var ConnectedProcessRenderer = ColorConnected(ProcessRenderer)
 
 // ProcessNameRenderer is a Renderer which produces a renderable
 // process name graph by munging the progess graph.
