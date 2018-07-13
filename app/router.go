@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PuerkitoBio/ghost/handlers"
+	"github.com/NYTimes/gziphandler"
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/ugorji/go/codec"
@@ -86,32 +86,29 @@ func matchURL(r *http.Request, pattern string) (map[string]string, bool) {
 	return vars, true
 }
 
-func gzipHandler(h http.HandlerFunc) http.HandlerFunc {
-	return handlers.GZIPHandlerFunc(h, nil)
+func gzipHandler(h http.HandlerFunc) http.Handler {
+	return gziphandler.GzipHandler(h)
 }
 
 // RegisterTopologyRoutes registers the various topology routes with a http mux.
 func RegisterTopologyRoutes(router *mux.Router, r Reporter, capabilities map[string]bool) {
 	get := router.Methods("GET").Subrouter()
-	get.HandleFunc("/api",
+	get.Handle("/api",
 		gzipHandler(requestContextDecorator(apiHandler(r, capabilities))))
-	get.HandleFunc("/api/topology",
+	get.Handle("/api/topology",
 		gzipHandler(requestContextDecorator(topologyRegistry.makeTopologyList(r))))
-	get.
-		HandleFunc("/api/topology/{topology}",
-			gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, handleTopology)))).
+	get.Handle("/api/topology/{topology}",
+		gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, handleTopology)))).
 		Name("api_topology_topology")
-	get.
-		HandleFunc("/api/topology/{topology}/ws",
-			requestContextDecorator(captureReporter(r, handleWebsocket))). // NB not gzip!
+	get.Handle("/api/topology/{topology}/ws",
+		requestContextDecorator(captureReporter(r, handleWebsocket))). // NB not gzip!
 		Name("api_topology_topology_ws")
-	get.
-		MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).HandlerFunc(
+	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).Handler(
 		gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, handleNode)))).
 		Name("api_topology_topology_id")
-	get.HandleFunc("/api/report",
+	get.Handle("/api/report",
 		gzipHandler(requestContextDecorator(makeRawReportHandler(r))))
-	get.HandleFunc("/api/probes",
+	get.Handle("/api/probes",
 		gzipHandler(requestContextDecorator(makeProbeHandler(r))))
 }
 

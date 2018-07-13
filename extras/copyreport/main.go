@@ -2,7 +2,6 @@
 package main
 
 import (
-	"compress/gzip"
 	"flag"
 	"log"
 
@@ -20,7 +19,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err = rpt.WriteToFile(flag.Arg(1), gzip.DefaultCompression); err != nil {
+	if err = rpt.WriteToFile(flag.Arg(1)); err != nil {
 		log.Fatal(err)
 	}
 }
