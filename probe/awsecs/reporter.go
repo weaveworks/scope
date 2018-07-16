@@ -182,10 +182,10 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 
 			// parents sets to merge into all matching container nodes
 			parentsSets := report.MakeSets()
-			parentsSets = parentsSets.Add(report.ECSTask, report.MakeStringSet(taskID))
+			parentsSets = parentsSets.AddString(report.ECSTask, taskID)
 			if serviceName, ok := ecsInfo.TaskServiceMap[taskArn]; ok {
 				serviceID := report.MakeECSServiceNodeID(cluster, serviceName)
-				parentsSets = parentsSets.Add(report.ECSService, report.MakeStringSet(serviceID))
+				parentsSets = parentsSets.AddString(report.ECSService, serviceID)
 				// in addition, make service parent of task
 				rpt.ECSTask.Nodes[taskID] = rpt.ECSTask.Nodes[taskID].WithParents(report.MakeSets().Add(report.ECSService, report.MakeStringSet(serviceID)))
 			}

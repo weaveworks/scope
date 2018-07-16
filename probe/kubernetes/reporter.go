@@ -357,7 +357,7 @@ func (r *Reporter) hostTopology(services []Service) report.Topology {
 	t := report.MakeTopology()
 	t.AddNode(
 		report.MakeNode(report.MakeHostNodeID(r.hostID)).
-			WithSets(report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(serviceNetwork.String()))))
+			WithSets(report.MakeSets().AddString(host.LocalNetworks, serviceNetwork.String())))
 	return t
 }
 
