@@ -244,11 +244,11 @@ func TestNodeMetadata(t *testing.T) {
 	}{
 		{
 			name: "container",
-			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
-				docker.ContainerID:            fixture.ClientContainerID,
-				docker.LabelPrefix + "label1": "label1value",
-				docker.ContainerStateHuman:    docker.StateRunning,
-			}).WithTopology(report.Container).WithSets(report.MakeSets().
+			node: report.MakeNodeWith(fixture.ClientContainerNodeID,
+				docker.ContainerID, fixture.ClientContainerID,
+				docker.LabelPrefix+"label1", "label1value",
+				docker.ContainerStateHuman, docker.StateRunning,
+			).WithTopology(report.Container).WithSets(report.MakeSets().
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
 			want: []report.MetadataRow{
@@ -259,9 +259,9 @@ func TestNodeMetadata(t *testing.T) {
 		},
 		{
 			name: "unknown topology",
-			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
-				docker.ContainerID: fixture.ClientContainerID,
-			}).WithTopology("foobar"),
+			node: report.MakeNodeWith(fixture.ClientContainerNodeID,
+				docker.ContainerID, fixture.ClientContainerID,
+			).WithTopology("foobar"),
 			want: nil,
 		},
 	}
@@ -418,11 +418,11 @@ func TestNodeTables(t *testing.T) {
 				Container: report.MakeTopology().
 					WithTableTemplates(docker.ContainerTableTemplates),
 			},
-			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
-				docker.ContainerID:            fixture.ClientContainerID,
-				docker.LabelPrefix + "label1": "label1value",
-				docker.ContainerState:         docker.StateRunning,
-			}).WithTopology(report.Container).WithSets(report.MakeSets().
+			node: report.MakeNodeWith(fixture.ClientContainerNodeID,
+				docker.ContainerID, fixture.ClientContainerID,
+				docker.LabelPrefix+"label1", "label1value",
+				docker.ContainerState, docker.StateRunning,
+			).WithTopology(report.Container).WithSets(report.MakeSets().
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
 			want: []report.Table{
@@ -457,9 +457,9 @@ func TestNodeTables(t *testing.T) {
 		{
 			name: "unknown topology",
 			rpt:  report.MakeReport(),
-			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
-				docker.ContainerID: fixture.ClientContainerID,
-			}).WithTopology("foobar"),
+			node: report.MakeNodeWith(fixture.ClientContainerNodeID,
+				docker.ContainerID, fixture.ClientContainerID,
+			).WithTopology("foobar"),
 			want: nil,
 		},
 	}

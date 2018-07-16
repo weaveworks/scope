@@ -43,14 +43,14 @@ func (s *statefulSet) GetNode(probeID string) report.Node {
 	if s.Spec.Replicas != nil {
 		desiredReplicas = int(*s.Spec.Replicas)
 	}
-	latests := map[string]string{
-		NodeType:              "StatefulSet",
-		DesiredReplicas:       fmt.Sprint(desiredReplicas),
-		Replicas:              fmt.Sprint(s.Status.Replicas),
-		report.ControlProbeID: probeID,
+	latests := []string{
+		NodeType, "StatefulSet",
+		DesiredReplicas, fmt.Sprint(desiredReplicas),
+		Replicas, fmt.Sprint(s.Status.Replicas),
+		report.ControlProbeID, probeID,
 	}
 	if s.Status.ObservedGeneration != nil {
-		latests[ObservedGeneration] = fmt.Sprint(*s.Status.ObservedGeneration)
+		latests = append(latests, ObservedGeneration, fmt.Sprint(*s.Status.ObservedGeneration))
 	}
-	return s.MetaNode(report.MakeStatefulSetNodeID(s.UID())).WithLatests(latests)
+	return s.MetaNode(report.MakeStatefulSetNodeID(s.UID())).WithLatests(latests...)
 }

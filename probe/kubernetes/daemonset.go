@@ -44,11 +44,11 @@ func (d *daemonSet) Selector() (labels.Selector, error) {
 }
 
 func (d *daemonSet) GetNode(probeID string) report.Node {
-	return d.MetaNode(report.MakeDaemonSetNodeID(d.UID())).WithLatests(map[string]string{
-		DesiredReplicas:       fmt.Sprint(d.Status.DesiredNumberScheduled),
-		Replicas:              fmt.Sprint(d.Status.CurrentNumberScheduled),
-		MisscheduledReplicas:  fmt.Sprint(d.Status.NumberMisscheduled),
-		NodeType:              "DaemonSet",
-		report.ControlProbeID: probeID,
-	})
+	return d.MetaNode(report.MakeDaemonSetNodeID(d.UID())).WithLatests(
+		DesiredReplicas, fmt.Sprint(d.Status.DesiredNumberScheduled),
+		Replicas, fmt.Sprint(d.Status.CurrentNumberScheduled),
+		MisscheduledReplicas, fmt.Sprint(d.Status.NumberMisscheduled),
+		NodeType, "DaemonSet",
+		report.ControlProbeID, probeID,
+	)
 }

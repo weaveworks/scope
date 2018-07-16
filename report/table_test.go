@@ -107,10 +107,10 @@ func TestFixedPropertyLists(t *testing.T) {
 		},
 	}
 
-	nmd := report.MakeNodeWith("foo1", map[string]string{
-		"foo2key": "bar2",
-		"foo1key": "bar1",
-	})
+	nmd := report.MakeNodeWith("foo1",
+		"foo2key", "bar2",
+		"foo1key", "bar1",
+	)
 
 	template := report.TableTemplate{
 		Type: report.PropertyListType,
@@ -192,10 +192,10 @@ func TestTables(t *testing.T) {
 		},
 	}
 
-	nmd := report.MakeNodeWith("foo1", map[string]string{
-		"foo3key": "bar3",
-		"foo1key": "bar1",
-	})
+	nmd := report.MakeNodeWith("foo1",
+		"foo3key", "bar3",
+		"foo1key", "bar1",
+	)
 	nmd = nmd.AddPrefixMulticolumnTable("bbb_", []report.Row{
 		{ID: "row1", Entries: map[string]string{"col1": "r1c1"}},
 		{ID: "row2", Entries: map[string]string{"col3": "r2c3"}},

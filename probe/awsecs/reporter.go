@@ -150,12 +150,12 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 		// Create all the services first
 		for serviceName, service := range ecsInfo.Services {
 			serviceID := report.MakeECSServiceNodeID(cluster, serviceName)
-			rpt.ECSService.AddNode(report.MakeNodeWith(serviceID, map[string]string{
-				Cluster:               cluster,
-				ServiceDesiredCount:   fmt.Sprintf("%d", service.DesiredCount),
-				ServiceRunningCount:   fmt.Sprintf("%d", service.RunningCount),
-				report.ControlProbeID: r.probeID,
-			}).WithLatestControls(map[string]report.NodeControlData{
+			rpt.ECSService.AddNode(report.MakeNodeWith(serviceID,
+				Cluster, cluster,
+				ServiceDesiredCount, fmt.Sprintf("%d", service.DesiredCount),
+				ServiceRunningCount, fmt.Sprintf("%d", service.RunningCount),
+				report.ControlProbeID, r.probeID,
+			).WithLatestControls(map[string]report.NodeControlData{
 				ScaleUp: {Dead: false},
 				// We've decided for now to disable ScaleDown when only 1 task is desired,
 				// since scaling down to 0 would cause the service to disappear (#2085)
@@ -173,11 +173,11 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 
 			// new task node
 			taskID := report.MakeECSTaskNodeID(taskArn)
-			node := report.MakeNodeWith(taskID, map[string]string{
-				TaskFamily: info.Family,
-				Cluster:    cluster,
-				CreatedAt:  task.CreatedAt.Format(time.RFC3339Nano),
-			})
+			node := report.MakeNodeWith(taskID,
+				TaskFamily, info.Family,
+				Cluster, cluster,
+				CreatedAt, task.CreatedAt.Format(time.RFC3339Nano),
+			)
 			rpt.ECSTask.AddNode(node)
 
 			// parents sets to merge into all matching container nodes

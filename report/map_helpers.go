@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/ps"
@@ -137,4 +138,59 @@ func mapWrite(m ps.Map, encoder *codec.Encoder, encodeValue func(*codec.Encoder,
 		encodeValue(encoder, val)
 	})
 	z.EncSendContainerState(containerMapEnd)
+}
+
+// Now follow helpers for StringLatestMap
+
+// stringPairs lets us sort a slice of (key,value) strings by key
+type stringPairs []string
+
+func (m stringPairs) Len() int { return len(m) / 2 }
+func (m stringPairs) Swap(i, j int) {
+	m[i*2], m[i*2+1], m[j*2], m[j*2+1] = m[j*2], m[j*2+1], m[i*2], m[i*2+1]
+}
+func (m stringPairs) Less(i, j int) bool { return m[i*2] < m[j*2] }
+
+// SetMulti takes a list of pairs (key, value) and adds them at time t.
+func (m StringLatestMap) SetMulti(t time.Time, n ...string) StringLatestMap {
+	// Optimise the special case of one value
+	if len(n) == 2 {
+		return m.Set(n[0], t, n[1])
+	}
+	if len(n)%2 != 0 {
+		// panic because this is a coding error
+		panic("StringLatestMap.SetMulti must be called with pairs of strings")
+	}
+	// We need values sorted by key so we can do a merge; check first so callers can avoid this step
+	if !sort.IsSorted(stringPairs(n)) {
+		sort.Sort(stringPairs(n))
+	}
+	l := len(m)
+	out := make([]stringLatestEntry, 0, l+len(n)/2)
+
+	// this bit is identical to Merge(), except the j-index moves by two steps each time
+	i, j := 0, 0
+	for i < len(m) {
+		switch {
+		case j >= len(n) || m[i].key < n[j]:
+			out = append(out, m[i])
+			i++
+		case m[i].key == n[j]:
+			if m[i].Timestamp.Before(t) {
+				out = append(out, stringLatestEntry{key: n[j], Value: n[j+1], Timestamp: t})
+			} else {
+				out = append(out, m[i])
+			}
+			i++
+			j += 2
+		default:
+			out = append(out, stringLatestEntry{key: n[j], Value: n[j+1], Timestamp: t})
+			j += 2
+		}
+	}
+	for j < len(n) {
+		out = append(out, stringLatestEntry{key: n[j], Value: n[j+1], Timestamp: t})
+		j += 2
+	}
+	return out
 }

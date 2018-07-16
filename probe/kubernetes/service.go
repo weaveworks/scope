@@ -48,22 +48,22 @@ func servicePortString(p apiv1.ServicePort) string {
 }
 
 func (s *service) GetNode(probeID string) report.Node {
-	latest := map[string]string{
-		IP:   s.Spec.ClusterIP,
-		Type: string(s.Spec.Type),
-		report.ControlProbeID: probeID,
+	latest := []string{
+		IP, s.Spec.ClusterIP,
+		Type, string(s.Spec.Type),
+		report.ControlProbeID, probeID,
 	}
 	if s.Spec.LoadBalancerIP != "" {
-		latest[PublicIP] = s.Spec.LoadBalancerIP
+		latest = append(latest, PublicIP, s.Spec.LoadBalancerIP)
 	}
 	if len(s.Spec.Ports) != 0 {
 		portStr := ""
 		for _, p := range s.Spec.Ports {
 			portStr = portStr + servicePortString(p) + ","
 		}
-		latest[Ports] = portStr[:len(portStr)-1]
+		latest = append(latest, Ports, portStr[:len(portStr)-1])
 	}
-	return s.MetaNode(report.MakeServiceNodeID(s.UID())).WithLatests(latest)
+	return s.MetaNode(report.MakeServiceNodeID(s.UID())).WithLatests(latest...)
 }
 
 func (s *service) ClusterIP() string {

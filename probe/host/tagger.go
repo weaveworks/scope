@@ -25,7 +25,7 @@ func (Tagger) Name() string { return "Host" }
 // Tag implements Tagger.
 func (t Tagger) Tag(r report.Report) (report.Report, error) {
 	var (
-		metadata = map[string]string{report.HostNodeID: t.hostNodeID}
+		metadata = []string{report.HostNodeID, t.hostNodeID}
 		parents  = report.MakeSets().Add(report.Host, report.MakeStringSet(t.hostNodeID))
 	)
 
@@ -33,7 +33,7 @@ func (t Tagger) Tag(r report.Report) (report.Report, error) {
 	// and as such do their own host tagging.
 	for _, topology := range []report.Topology{r.Process, r.Container, r.ContainerImage, r.Host, r.Pod} {
 		for _, node := range topology.Nodes {
-			topology.ReplaceNode(node.WithLatests(metadata).WithParents(parents))
+			topology.ReplaceNode(node.WithLatests(metadata...).WithParents(parents))
 		}
 	}
 	return r, nil

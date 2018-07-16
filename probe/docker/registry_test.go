@@ -67,11 +67,11 @@ func (c *mockContainer) StartGatheringStats(docker.StatsGatherer) error {
 func (c *mockContainer) StopGatheringStats() {}
 
 func (c *mockContainer) GetNode() report.Node {
-	return report.MakeNodeWith(report.MakeContainerNodeID(c.c.ID), map[string]string{
-		docker.ContainerID:   c.c.ID,
-		docker.ContainerName: c.c.Name,
-		docker.ImageID:       c.c.Image,
-	}).WithParents(report.MakeSets().
+	return report.MakeNodeWith(report.MakeContainerNodeID(c.c.ID),
+		docker.ContainerID, c.c.ID,
+		docker.ContainerName, c.c.Name,
+		docker.ImageID, c.c.Image,
+	).WithParents(report.MakeSets().
 		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.c.Image))),
 	)
 }
@@ -502,10 +502,10 @@ func TestRegistryDelete(t *testing.T) {
 
 			mtx.Lock()
 			want := []report.Node{
-				report.MakeNodeWith(report.MakeContainerNodeID("ping"), map[string]string{
-					docker.ContainerID:    "ping",
-					docker.ContainerState: "deleted",
-				}),
+				report.MakeNodeWith(report.MakeContainerNodeID("ping"),
+					docker.ContainerID, "ping",
+					docker.ContainerState, "deleted",
+				),
 			}
 			if !reflect.DeepEqual(want, nodes) {
 				t.Errorf("Didn't get right container updates: %v", commonTest.Diff(want, nodes))

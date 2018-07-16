@@ -212,10 +212,10 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 		WithTableTemplates(ContainerTableTemplates)
 	result.Controls.AddControls(ContainerControls)
 
-	metadata := map[string]string{report.ControlProbeID: r.probeID}
+	metadata := []string{report.ControlProbeID, r.probeID}
 	nodes := []report.Node{}
 	r.registry.WalkContainers(func(c Container) {
-		nodes = append(nodes, c.GetNode().WithLatests(metadata))
+		nodes = append(nodes, c.GetNode().WithLatests(metadata...))
 	})
 
 	// Copy the IP addresses from other containers where they share network
@@ -259,7 +259,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 			// delegation (e.g. NetworkMode="container:foo" where
 			// foo is a container in the host networking namespace)
 			if isInHostNamespace {
-				node = node.WithLatests(map[string]string{IsInHostNetwork: "true"})
+				node = node.WithLatests(IsInHostNetwork, "true")
 			}
 			result.AddNode(node)
 
@@ -276,18 +276,18 @@ func (r *Reporter) containerImageTopology() report.Topology {
 
 	r.registry.WalkImages(func(image docker_client.APIImages) {
 		imageID := trimImageID(image.ID)
-		latests := map[string]string{
-			ImageID:          imageID,
-			ImageSize:        humanize.Bytes(uint64(image.Size)),
-			ImageVirtualSize: humanize.Bytes(uint64(image.VirtualSize)),
+		latests := []string{
+			ImageID, imageID,
+			ImageSize, humanize.Bytes(uint64(image.Size)),
+			ImageVirtualSize, humanize.Bytes(uint64(image.VirtualSize)),
 		}
 		if len(image.RepoTags) > 0 {
 			imageFullName := image.RepoTags[0]
-			latests[ImageName] = ImageNameWithoutTag(imageFullName)
-			latests[ImageTag] = ImageNameTag(imageFullName)
+			latests = append(latests, ImageName, ImageNameWithoutTag(imageFullName),
+				ImageTag, ImageNameTag(imageFullName))
 		}
 		nodeID := report.MakeContainerImageNodeID(imageID)
-		node := report.MakeNodeWith(nodeID, latests)
+		node := report.MakeNodeWith(nodeID, latests...)
 		node = node.AddPrefixPropertyList(ImageLabelPrefix, image.Labels)
 		result.AddNode(node)
 	})

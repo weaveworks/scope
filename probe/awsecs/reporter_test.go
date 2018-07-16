@@ -22,17 +22,17 @@ var (
 	testServiceName       = "test-service"
 	testServiceCount      = 1
 	testContainer         = "test-container"
-	testContainerData     = map[string]string{
-		docker.LabelPrefix + "com.amazonaws.ecs.task-arn":               testTaskARN,
-		docker.LabelPrefix + "com.amazonaws.ecs.cluster":                testCluster,
-		docker.LabelPrefix + "com.amazonaws.ecs.task-definition-family": testFamily,
+	testContainerData     = []string{
+		docker.LabelPrefix + "com.amazonaws.ecs.task-arn", testTaskARN,
+		docker.LabelPrefix + "com.amazonaws.ecs.cluster", testCluster,
+		docker.LabelPrefix + "com.amazonaws.ecs.task-definition-family", testFamily,
 	}
 )
 
 func getTestContainerNode() report.Node {
 	return report.MakeNodeWith(
 		report.MakeContainerNodeID(testContainer),
-		testContainerData,
+		testContainerData...,
 	)
 }
 

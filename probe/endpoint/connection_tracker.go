@@ -153,11 +153,11 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 	}
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
-		var toNodeInfo, fromNodeInfo map[string]string
+		var toNodeInfo, fromNodeInfo []string
 		if conn.Proc.PID > 0 {
-			fromNodeInfo = map[string]string{
-				process.PID:       strconv.FormatUint(uint64(conn.Proc.PID), 10),
-				report.HostNodeID: hostNodeID,
+			fromNodeInfo = []string{
+				process.PID, strconv.FormatUint(uint64(conn.Proc.PID), 10),
+				report.HostNodeID, hostNodeID,
 			}
 		}
 		t.addConnection(rpt, incoming, tuple, namespaceID, fromNodeInfo, toNodeInfo)
@@ -196,11 +196,11 @@ func (t *connectionTracker) getInitialState() {
 
 func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID string) error {
 	t.ebpfTracker.walkConnections(func(e ebpfConnection) {
-		var toNodeInfo, fromNodeInfo map[string]string
+		var toNodeInfo, fromNodeInfo []string
 		if e.pid > 0 {
-			fromNodeInfo = map[string]string{
-				process.PID:       strconv.Itoa(e.pid),
-				report.HostNodeID: hostNodeID,
+			fromNodeInfo = []string{
+				process.PID, strconv.Itoa(e.pid),
+				report.HostNodeID, hostNodeID,
 			}
 		}
 		t.addConnection(rpt, e.incoming, e.tuple, e.networkNamespace, fromNodeInfo, toNodeInfo)
@@ -208,7 +208,7 @@ func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID stri
 	return nil
 }
 
-func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft fourTuple, namespaceID string, extraFromNode, extraToNode map[string]string) {
+func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft fourTuple, namespaceID string, extraFromNode, extraToNode []string) {
 	if incoming {
 		ft = reverse(ft)
 		extraFromNode, extraToNode = extraToNode, extraFromNode
@@ -223,11 +223,11 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 	t.addDNS(rpt, ft.toAddr)
 }
 
-func (t *connectionTracker) makeEndpointNode(namespaceID string, addr string, port uint16, extra map[string]string) report.Node {
+func (t *connectionTracker) makeEndpointNode(namespaceID string, addr string, port uint16, extra []string) report.Node {
 	portStr := strconv.Itoa(int(port))
-	node := report.MakeNodeWith(report.MakeEndpointNodeID(t.conf.HostID, namespaceID, addr, portStr), nil)
+	node := report.MakeNodeWith(report.MakeEndpointNodeID(t.conf.HostID, namespaceID, addr, portStr))
 	if extra != nil {
-		node = node.WithLatests(extra)
+		node = node.WithLatests(extra...)
 	}
 	return node
 }

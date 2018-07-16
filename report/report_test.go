@@ -48,9 +48,9 @@ func TestReportTopology(t *testing.T) {
 
 func TestNode(t *testing.T) {
 	{
-		node := report.MakeNodeWith("foo", map[string]string{
-			"foo": "bar",
-		})
+		node := report.MakeNodeWith("foo",
+			"foo", "bar",
+		)
 
 		if v, _ := node.Latest.Lookup("foo"); v != "bar" {
 			t.Errorf("want foo, have %s", v)
@@ -81,7 +81,7 @@ func TestReportUpgrade(t *testing.T) {
 	namespaceName := "ns"
 	namespaceID := report.MakeNamespaceNodeID(namespaceName)
 	podNode := report.MakeNode("foo").
-		WithLatests(map[string]string{report.KubernetesNamespace: namespaceName}).
+		WithLatests(report.KubernetesNamespace, namespaceName).
 		WithControls("alive").
 		WithParents(report.MakeSets().Add(report.ReplicaSet, report.MakeStringSet("bar")))
 	controls := map[string]report.NodeControlData{
@@ -94,7 +94,7 @@ func TestReportUpgrade(t *testing.T) {
 	rpt.ReplicaSet.AddNode(rsNode)
 	rpt.Pod.AddNode(podNode)
 	namespaceNode := report.MakeNode(namespaceID).
-		WithLatests(map[string]string{report.KubernetesName: namespaceName})
+		WithLatests(report.KubernetesName, namespaceName)
 	expected := report.MakeReport()
 	expected.ReplicaSet.AddNode(rsNode)
 	expected.Pod.AddNode(expectedPodNode)

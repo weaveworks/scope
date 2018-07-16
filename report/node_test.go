@@ -26,107 +26,107 @@ func TestMergeNodes(t *testing.T) {
 		"Empty a": {
 			a: report.Nodes{},
 			b: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345",
+					PID, "23128",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345",
+					PID, "23128",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 		},
 		"Empty b": {
 			a: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345",
+					PID, "23128",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 			b: report.Nodes{},
 			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345",
+					PID, "23128",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 		},
 		"Simple merge": {
 			a: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345",
+					PID, "23128",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 			b: report.Nodes{
-				":192.168.1.2:12345": report.MakeNodeWith(":192.168.1.2:12345", map[string]string{
-					PID:    "42",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.2:12345": report.MakeNodeWith(":192.168.1.2:12345",
+					PID, "42",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
-				":192.168.1.2:12345": report.MakeNodeWith(":192.168.1.2:12345", map[string]string{
-					PID:    "42",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345",
+					PID, "23128",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
+				":192.168.1.2:12345": report.MakeNodeWith(":192.168.1.2:12345",
+					PID, "42",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 		},
 		"Merge conflict with rank difference": {
 			a: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345",
+					PID, "23128",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 			b: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{ // <-- same ID
-					Name:   "curl",
-					Domain: "node-a.local",
-				}).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", // <-- same ID
+					Name, "curl",
+					Domain, "node-a.local",
+				).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
 			},
 			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345",
+					PID, "23128",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 		},
 		"Merge conflict with no rank difference": {
 			a: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345",
+					PID, "23128",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 			b: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{ // <-- same ID
-					Name:   "curl",
-					Domain: "node-a.local",
-				}).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", // <-- same ID
+					Name, "curl",
+					Domain, "node-a.local",
+				).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
 			},
 			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
+				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345",
+					PID, "23128",
+					Name, "curl",
+					Domain, "node-a.local",
+				),
 			},
 		},
 		"Counters": {

@@ -211,7 +211,7 @@ func (w *Weave) Tag(r report.Report) (report.Report, error) {
 			w, _ := node.Latest.Lookup(WeaveDNSHostname)
 			hostnames := report.IDList(strings.Fields(w))
 			hostnames = hostnames.Add(strings.TrimSuffix(entry.Hostname, "."))
-			r.Container.Nodes[nodeID] = node.WithLatests(map[string]string{WeaveDNSHostname: strings.Join(hostnames, " ")})
+			r.Container.Nodes[nodeID] = node.WithLatests(WeaveDNSHostname, strings.Join(hostnames, " "))
 		}
 	}
 
@@ -258,9 +258,9 @@ func (w *Weave) Report() (report.Report, error) {
 // getPeerNode obtains an Overlay topology node for representing a peer in the Weave network
 func (w *Weave) getPeerNode(peer weave.Peer) report.Node {
 	node := report.MakeNode(report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, peer.Name))
-	latests := map[string]string{
-		WeavePeerName:     peer.Name,
-		WeavePeerNickName: peer.NickName,
+	latests := []string{
+		WeavePeerName, peer.Name,
+		WeavePeerNickName, peer.NickName,
 	}
 
 	// Peer corresponding to current host
@@ -274,60 +274,72 @@ func (w *Weave) getPeerNode(peer weave.Peer) report.Node {
 		}
 	}
 
-	return node.WithLatests(latests)
+	return node.WithLatests(latests...)
+}
+
+func enabledDisabled(f bool) string {
+	if f {
+		return "enabled"
+	}
+	return "disabled"
+}
+
+func runningNotRunning(f bool) string {
+	if f {
+		return "running"
+	}
+	return "not running"
+}
+
+func (w *Weave) protocolString() string {
+	if w.statusCache.Router.ProtocolMinVersion == w.statusCache.Router.ProtocolMaxVersion {
+		return fmt.Sprintf("%d", w.statusCache.Router.ProtocolMinVersion)
+	}
+	return fmt.Sprintf("%d..%d", w.statusCache.Router.ProtocolMinVersion, w.statusCache.Router.ProtocolMaxVersion)
 }
 
 // addCurrentPeerInfo adds information exclusive to the Overlay topology node representing current Weave Net peer
 // (i.e. in the same host as the reporting Scope probe)
-func (w *Weave) addCurrentPeerInfo(latests map[string]string, node report.Node) (map[string]string, report.Node) {
-	latests[report.HostNodeID] = w.hostID
-	latests[WeaveVersion] = w.statusCache.Version
-	latests[WeaveEncryption] = "disabled"
-	if w.statusCache.Router.Encryption {
-		latests[WeaveEncryption] = "enabled"
-	}
-	latests[WeavePeerDiscovery] = "disabled"
-	if w.statusCache.Router.PeerDiscovery {
-		latests[WeavePeerDiscovery] = "enabled"
-	}
-	if w.statusCache.Router.ProtocolMinVersion == w.statusCache.Router.ProtocolMaxVersion {
-		latests[WeaveProtocol] = fmt.Sprintf("%d", w.statusCache.Router.ProtocolMinVersion)
-	} else {
-		latests[WeaveProtocol] = fmt.Sprintf("%d..%d", w.statusCache.Router.ProtocolMinVersion, w.statusCache.Router.ProtocolMaxVersion)
-	}
-	latests[WeaveTargetCount] = fmt.Sprintf("%d", len(w.statusCache.Router.Targets))
-	latests[WeaveConnectionCount] = fmt.Sprintf("%d", len(w.statusCache.Router.Connections))
-	latests[WeavePeerCount] = fmt.Sprintf("%d", len(w.statusCache.Router.Peers))
+func (w *Weave) addCurrentPeerInfo(latests []string, node report.Node) ([]string, report.Node) {
+	latests = append(latests,
+		report.HostNodeID, w.hostID,
+		WeaveVersion, w.statusCache.Version,
+		WeaveEncryption, enabledDisabled(w.statusCache.Router.Encryption),
+		WeavePeerDiscovery, enabledDisabled(w.statusCache.Router.PeerDiscovery),
+		WeaveProtocol, w.protocolString(),
+		WeaveTargetCount, fmt.Sprintf("%d", len(w.statusCache.Router.Targets)),
+		WeaveConnectionCount, fmt.Sprintf("%d", len(w.statusCache.Router.Connections)),
+		WeavePeerCount, fmt.Sprintf("%d", len(w.statusCache.Router.Peers)),
+		WeaveProxyStatus, runningNotRunning(w.statusCache.Proxy != nil),
+		WeavePluginStatus, runningNotRunning(w.statusCache.Plugin != nil),
+	)
 	node = node.WithSet(WeaveTrustedSubnets, report.MakeStringSet(w.statusCache.Router.TrustedSubnets...))
 	if w.statusCache.IPAM != nil {
-		latests[WeaveIPAMStatus] = getIPAMStatus(*w.statusCache.IPAM)
-		latests[WeaveIPAMRange] = w.statusCache.IPAM.Range
-		latests[WeaveIPAMDefaultSubnet] = w.statusCache.IPAM.DefaultSubnet
+		latests = append(latests,
+			WeaveIPAMStatus, getIPAMStatus(*w.statusCache.IPAM),
+			WeaveIPAMRange, w.statusCache.IPAM.Range,
+			WeaveIPAMDefaultSubnet, w.statusCache.IPAM.DefaultSubnet)
 	}
 	if w.statusCache.DNS != nil {
-		latests[WeaveDNSDomain] = w.statusCache.DNS.Domain
-		latests[WeaveDNSUpstream] = strings.Join(w.statusCache.DNS.Upstream, ", ")
-		latests[WeaveDNSTTL] = fmt.Sprintf("%d", w.statusCache.DNS.TTL)
 		dnsEntryCount := 0
 		for _, entry := range w.statusCache.DNS.Entries {
 			if entry.Tombstone == 0 {
 				dnsEntryCount++
 			}
 		}
-		latests[WeaveDNSEntryCount] = fmt.Sprintf("%d", dnsEntryCount)
+		latests = append(latests,
+			WeaveDNSDomain, w.statusCache.DNS.Domain,
+			WeaveDNSUpstream, strings.Join(w.statusCache.DNS.Upstream, ", "),
+			WeaveDNSTTL, fmt.Sprintf("%d", w.statusCache.DNS.TTL),
+			WeaveDNSEntryCount, fmt.Sprintf("%d", dnsEntryCount))
 	}
-	latests[WeaveProxyStatus] = "not running"
 	if w.statusCache.Proxy != nil {
-		latests[WeaveProxyStatus] = "running"
-		latests[WeaveProxyAddress] = ""
 		if len(w.statusCache.Proxy.Addresses) > 0 {
-			latests[WeaveProxyAddress] = w.statusCache.Proxy.Addresses[0]
+			latests = append(latests, WeaveProxyAddress, w.statusCache.Proxy.Addresses[0])
 		}
 	}
-	latests[WeavePluginStatus] = "not running"
 	if w.statusCache.Plugin != nil {
-		latests[WeavePluginStatus] = "running"
-		latests[WeavePluginDriver] = w.statusCache.Plugin.DriverName
+		latests = append(latests, WeavePluginDriver, w.statusCache.Plugin.DriverName)
 	}
 	node = node.AddPrefixMulticolumnTable(WeaveConnectionsMulticolumnTablePrefix, getConnectionsTable(w.statusCache.Router))
 	node = node.WithParents(report.MakeSets().Add(report.Host, report.MakeStringSet(w.hostID)))

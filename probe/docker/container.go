@@ -401,13 +401,13 @@ func (c *container) getSanitizedCommand() string {
 }
 
 func (c *container) getBaseNode() report.Node {
-	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{
-		ContainerID:       c.ID(),
-		ContainerCreated:  c.container.Created.Format(time.RFC3339Nano),
-		ContainerCommand:  c.getSanitizedCommand(),
-		ImageID:           c.Image(),
-		ContainerHostname: c.Hostname(),
-	}).WithParents(report.MakeSets().
+	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()),
+		ContainerID, c.ID(),
+		ContainerCreated, c.container.Created.Format(time.RFC3339Nano),
+		ContainerCommand, c.getSanitizedCommand(),
+		ImageID, c.Image(),
+		ContainerHostname, c.Hostname(),
+	).WithParents(report.MakeSets().
 		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
 	)
 	result = result.AddPrefixPropertyList(LabelPrefix, c.container.Config.Labels)
@@ -436,10 +436,10 @@ func (c *container) controlsMap() map[string]report.NodeControlData {
 func (c *container) GetNode() report.Node {
 	c.RLock()
 	defer c.RUnlock()
-	latest := map[string]string{
-		ContainerName:       strings.TrimPrefix(c.container.Name, "/"),
-		ContainerState:      c.StateString(),
-		ContainerStateHuman: c.State(),
+	latest := []string{
+		ContainerName, strings.TrimPrefix(c.container.Name, "/"),
+		ContainerState, c.StateString(),
+		ContainerStateHuman, c.State(),
 	}
 	controls := c.controlsMap()
 
@@ -449,12 +449,13 @@ func (c *container) GetNode() report.Node {
 		if c.container.HostConfig != nil {
 			networkMode = c.container.HostConfig.NetworkMode
 		}
-		latest[ContainerUptime] = strconv.Itoa(uptimeSeconds)
-		latest[ContainerRestartCount] = strconv.Itoa(c.container.RestartCount)
-		latest[ContainerNetworkMode] = networkMode
+		latest = append(latest,
+			ContainerUptime, strconv.Itoa(uptimeSeconds),
+			ContainerRestartCount, strconv.Itoa(c.container.RestartCount),
+			ContainerNetworkMode, networkMode)
 	}
 
-	result := c.baseNode.WithLatests(latest)
+	result := c.baseNode.WithLatests(latest...)
 	result = result.WithLatestControls(controls)
 	result = result.WithMetrics(c.metrics())
 	return result

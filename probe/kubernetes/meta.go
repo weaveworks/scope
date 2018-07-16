@@ -53,11 +53,11 @@ func (m meta) Labels() map[string]string {
 
 // MetaNode gets the node metadata
 func (m meta) MetaNode(id string) report.Node {
-	return report.MakeNodeWith(id, map[string]string{
-		Name:      m.Name(),
-		Namespace: m.Namespace(),
-		Created:   m.Created(),
-	}).AddPrefixPropertyList(LabelPrefix, m.Labels())
+	return report.MakeNodeWith(id,
+		Name, m.Name(),
+		Namespace, m.Namespace(),
+		Created, m.Created(),
+	).AddPrefixPropertyList(LabelPrefix, m.Labels())
 }
 
 type namespaceMeta struct {
@@ -87,8 +87,8 @@ func (m namespaceMeta) Labels() map[string]string {
 // MetaNode gets the node metadata
 // For namespaces, ObjectMeta.Namespace is not set
 func (m namespaceMeta) MetaNode(id string) report.Node {
-	return report.MakeNodeWith(id, map[string]string{
-		Name:    m.Name(),
-		Created: m.Created(),
-	}).AddPrefixPropertyList(LabelPrefix, m.Labels())
+	return report.MakeNodeWith(id,
+		Name, m.Name(),
+		Created, m.Created(),
+	).AddPrefixPropertyList(LabelPrefix, m.Labels())
 }

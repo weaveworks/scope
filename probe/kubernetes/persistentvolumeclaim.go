@@ -49,12 +49,12 @@ func (p *persistentVolumeClaim) GetStorageClass() string {
 
 // GetNode returns Persistent Volume Claim as Node
 func (p *persistentVolumeClaim) GetNode() report.Node {
-	return p.MetaNode(report.MakePersistentVolumeClaimNodeID(p.UID())).WithLatests(map[string]string{
-		NodeType:         "Persistent Volume Claim",
-		Status:           string(p.Status.Phase),
-		VolumeName:       p.Spec.VolumeName,
-		StorageClassName: p.GetStorageClass(),
-	})
+	return p.MetaNode(report.MakePersistentVolumeClaimNodeID(p.UID())).WithLatests(
+		NodeType, "Persistent Volume Claim",
+		Status, string(p.Status.Phase),
+		VolumeName, p.Spec.VolumeName,
+		StorageClassName, p.GetStorageClass(),
+	)
 }
 
 // Selector returns all Persistent Volume Claim selector

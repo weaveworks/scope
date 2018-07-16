@@ -11,7 +11,7 @@ func TestTagger(t *testing.T) {
 	var (
 		hostID         = "foo"
 		endpointNodeID = report.MakeEndpointNodeID(hostID, "", "1.2.3.4", "56789") // hostID ignored
-		node           = report.MakeNodeWith(endpointNodeID, map[string]string{"foo": "bar"})
+		node           = report.MakeNodeWith(endpointNodeID, "foo", "bar")
 	)
 
 	r := report.MakeReport()

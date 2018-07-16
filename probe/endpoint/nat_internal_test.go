@@ -69,16 +69,16 @@ func TestNat(t *testing.T) {
 
 		have := report.MakeReport()
 		originalID := report.MakeEndpointNodeID("host1", "", "10.0.47.1", "80")
-		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
-			"foo": "bar",
-		}))
+		have.Endpoint.AddNode(report.MakeNodeWith(originalID,
+			"foo", "bar",
+		))
 
 		want := have.Copy()
 		wantID := report.MakeEndpointNodeID("host1", "", "1.2.3.4", "80")
-		want.Endpoint.AddNode(report.MakeNodeWith(wantID, map[string]string{
-			CopyOf: originalID,
-			"foo":  "bar",
-		}))
+		want.Endpoint.AddNode(report.MakeNodeWith(wantID,
+			CopyOf, originalID,
+			"foo", "bar",
+		))
 
 		makeNATMapper(ct).applyNAT(have, "host1")
 		if !reflect.DeepEqual(want, have) {
@@ -122,15 +122,15 @@ func TestNat(t *testing.T) {
 
 		have := report.MakeReport()
 		originalID := report.MakeEndpointNodeID("host2", "", "10.0.47.2", "22222")
-		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
-			"foo": "baz",
-		}))
+		have.Endpoint.AddNode(report.MakeNodeWith(originalID,
+			"foo", "baz",
+		))
 
 		want := have.Copy()
-		want.Endpoint.AddNode(report.MakeNodeWith(report.MakeEndpointNodeID("host2", "", "2.3.4.5", "22223"), map[string]string{
-			CopyOf: originalID,
-			"foo":  "baz",
-		}))
+		want.Endpoint.AddNode(report.MakeNodeWith(report.MakeEndpointNodeID("host2", "", "2.3.4.5", "22223"),
+			CopyOf, originalID,
+			"foo", "baz",
+		))
 
 		makeNATMapper(ct).applyNAT(have, "host1")
 		if !reflect.DeepEqual(want, have) {

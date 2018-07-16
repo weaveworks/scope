@@ -24,9 +24,9 @@ func NewStorageClass(p *storagev1.StorageClass) StorageClass {
 
 // GetNode returns StorageClass as Node
 func (p *storageClass) GetNode() report.Node {
-	return p.MetaNode(report.MakeStorageClassNodeID(p.UID())).WithLatests(map[string]string{
-		NodeType:    "Storage Class",
-		Name:        p.GetName(),
-		Provisioner: p.Provisioner,
-	})
+	return p.MetaNode(report.MakeStorageClassNodeID(p.UID())).WithLatests(
+		NodeType, "Storage Class",
+		Name, p.GetName(),
+		Provisioner, p.Provisioner,
+	)
 }

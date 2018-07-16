@@ -13,7 +13,7 @@ import (
 func TestApply(t *testing.T) {
 	var (
 		endpointNodeID = "c"
-		endpointNode   = report.MakeNodeWith(endpointNodeID, map[string]string{"5": "6"})
+		endpointNode   = report.MakeNodeWith(endpointNodeID, "5", "6")
 	)
 
 	p := New(0, 0, nil, false)
@@ -66,7 +66,7 @@ func TestProbe(t *testing.T) {
 	defer mtime.NowReset()
 
 	want := report.MakeReport()
-	node := report.MakeNodeWith("a", map[string]string{"b": "c"})
+	node := report.MakeNodeWith("a", "b", "c")
 
 	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
 	// tags, transforming empty slices into nils. So, we make DeepEqual
