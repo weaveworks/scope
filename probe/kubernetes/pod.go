@@ -95,7 +95,7 @@ func (p *pod) GetNode(probeID string) report.Node {
 	}
 
 	if p.VolumeClaimName() != "" {
-		latests[VolumeClaim] = p.VolumeClaimName()
+		latests = append(latests, VolumeClaim, p.VolumeClaimName())
 	}
 
 	if p.Pod.Spec.HostNetwork {

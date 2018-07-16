@@ -358,14 +358,14 @@ var (
 			Nodes: report.Nodes{
 				PersistentVolumeClaimNodeID: report.MakeNodeWith(
 
-					PersistentVolumeClaimNodeID, map[string]string{
-						kubernetes.Name:             "pvc-6124",
-						kubernetes.Namespace:        "ping",
-						kubernetes.Status:           "bound",
-						kubernetes.VolumeName:       "pongvolume",
-						kubernetes.AccessModes:      "ReadWriteOnce",
-						kubernetes.StorageClassName: "standard",
-					}).
+					PersistentVolumeClaimNodeID,
+					kubernetes.Name, "pvc-6124",
+					kubernetes.Namespace, "ping",
+					kubernetes.Status, "bound",
+					kubernetes.VolumeName, "pongvolume",
+					kubernetes.AccessModes, "ReadWriteOnce",
+					kubernetes.StorageClassName, "standard",
+				).
 					WithTopology(report.PersistentVolumeClaim),
 			},
 		}.WithShape(report.DottedCylinder).WithLabel("persistent volume claim", "persistent volume claims"),
@@ -373,14 +373,14 @@ var (
 			Nodes: report.Nodes{
 				PersistentVolumeNodeID: report.MakeNodeWith(
 
-					PersistentVolumeNodeID, map[string]string{
-						kubernetes.Name:             "pongvolume",
-						kubernetes.Namespace:        "ping",
-						kubernetes.Status:           "bound",
-						kubernetes.VolumeClaim:      "pvc-6124",
-						kubernetes.AccessModes:      "ReadWriteOnce",
-						kubernetes.StorageClassName: "standard",
-					}).
+					PersistentVolumeNodeID,
+					kubernetes.Name, "pongvolume",
+					kubernetes.Namespace, "ping",
+					kubernetes.Status, "bound",
+					kubernetes.VolumeClaim, "pvc-6124",
+					kubernetes.AccessModes, "ReadWriteOnce",
+					kubernetes.StorageClassName, "standard",
+				).
 					WithTopology(report.PersistentVolume),
 			},
 		}.WithShape(report.Cylinder).WithLabel("persistent volume", "persistent volumes"),
@@ -388,10 +388,10 @@ var (
 			Nodes: report.Nodes{
 				StorageClassNodeID: report.MakeNodeWith(
 
-					StorageClassNodeID, map[string]string{
-						kubernetes.Name:        "standard",
-						kubernetes.Provisioner: "pong",
-					}).
+					StorageClassNodeID,
+					kubernetes.Name, "standard",
+					kubernetes.Provisioner, "pong",
+				).
 					WithTopology(report.StorageClass),
 			},
 		}.WithShape(report.StorageSheet).WithLabel("storage class", "storage classes"),

@@ -47,11 +47,11 @@ func (p *persistentVolume) GetVolume() string {
 
 // GetNode returns Persistent Volume as Node
 func (p *persistentVolume) GetNode() report.Node {
-	return p.MetaNode(report.MakePersistentVolumeNodeID(p.UID())).WithLatests(map[string]string{
-		NodeType:         "Persistent Volume",
-		VolumeClaim:      p.GetVolume(),
-		StorageClassName: p.Spec.StorageClassName,
-		Status:           string(p.Status.Phase),
-		AccessModes:      p.GetAccessMode(),
-	})
+	return p.MetaNode(report.MakePersistentVolumeNodeID(p.UID())).WithLatests(
+		NodeType, "Persistent Volume",
+		VolumeClaim, p.GetVolume(),
+		StorageClassName, p.Spec.StorageClassName,
+		Status, string(p.Status.Phase),
+		AccessModes, p.GetAccessMode(),
+	)
 }

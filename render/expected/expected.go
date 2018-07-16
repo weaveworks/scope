@@ -273,30 +273,30 @@ var (
 			)),
 
 		fixture.PersistentVolumeClaimNodeID: persistentVolumeClaim(fixture.PersistentVolumeClaimNodeID, fixture.PersistentVolumeNodeID).
-			WithLatests(map[string]string{
-				kubernetes.Name:             "pvc-6124",
-				kubernetes.Namespace:        "ping",
-				kubernetes.Status:           "bound",
-				kubernetes.VolumeName:       "pongvolume",
-				kubernetes.AccessModes:      "ReadWriteOnce",
-				kubernetes.StorageClassName: "standard",
-			}).WithChild(report.MakeNode(fixture.PersistentVolumeNodeID).WithTopology(report.PersistentVolume)),
+			WithLatests(
+				kubernetes.Name, "pvc-6124",
+				kubernetes.Namespace, "ping",
+				kubernetes.Status, "bound",
+				kubernetes.VolumeName, "pongvolume",
+				kubernetes.AccessModes, "ReadWriteOnce",
+				kubernetes.StorageClassName, "standard",
+			).WithChild(report.MakeNode(fixture.PersistentVolumeNodeID).WithTopology(report.PersistentVolume)),
 
 		fixture.PersistentVolumeNodeID: persistentVolume(fixture.PersistentVolumeNodeID).
-			WithLatests(map[string]string{
-				kubernetes.Name:             "pongvolume",
-				kubernetes.Namespace:        "ping",
-				kubernetes.Status:           "bound",
-				kubernetes.VolumeClaim:      "pvc-6124",
-				kubernetes.AccessModes:      "ReadWriteOnce",
-				kubernetes.StorageClassName: "standard",
-			}),
+			WithLatests(
+				kubernetes.Name, "pongvolume",
+				kubernetes.Namespace, "ping",
+				kubernetes.Status, "bound",
+				kubernetes.VolumeClaim, "pvc-6124",
+				kubernetes.AccessModes, "ReadWriteOnce",
+				kubernetes.StorageClassName, "standard",
+			),
 
 		fixture.StorageClassNodeID: StorageClass(fixture.StorageClassNodeID, fixture.PersistentVolumeClaimNodeID).
-			WithLatests(map[string]string{
-				kubernetes.Name:        "standard",
-				kubernetes.Provisioner: "pong",
-			}).WithChild(report.MakeNode(fixture.PersistentVolumeClaimNodeID).WithTopology(report.PersistentVolumeClaim)),
+			WithLatests(
+				kubernetes.Name, "standard",
+				kubernetes.Provisioner, "pong",
+			).WithChild(report.MakeNode(fixture.PersistentVolumeClaimNodeID).WithTopology(report.PersistentVolumeClaim)),
 
 		UnmanagedServerID:         unmanagedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerPodNodeID),
