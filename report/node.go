@@ -73,9 +73,7 @@ func (n Node) After(other Node) bool {
 // WithLatests returns a fresh copy of n, with Metadata m merged in.
 func (n Node) WithLatests(m map[string]string) Node {
 	ts := mtime.Now()
-	for k, v := range m {
-		n.Latest = n.Latest.Set(k, ts, v)
-	}
+	n.Latest = n.Latest.addMapEntries(ts, m)
 	return n
 }
 
