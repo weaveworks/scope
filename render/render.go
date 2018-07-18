@@ -115,13 +115,6 @@ func (m Map) Render(rpt report.Report) Nodes {
 	return output.result(input)
 }
 
-func propagateLatest(key string, from, to report.Node) report.Node {
-	if value, timestamp, ok := from.Latest.LookupEntry(key); ok {
-		to.Latest = to.Latest.Set(key, timestamp, value)
-	}
-	return to
-}
-
 // Condition is a predecate over the entire report that can evaluate to true or false.
 type Condition func(report.Report) bool
 
