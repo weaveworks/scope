@@ -173,3 +173,16 @@ func (m StringLatestMap) addMapEntries(ts time.Time, n map[string]string) String
 	out.fixup()
 	return out
 }
+
+// Propagate a set of latest values from one set to another.
+func (m StringLatestMap) Propagate(from StringLatestMap, keys ...string) StringLatestMap {
+	out := make(StringLatestMap, len(m), len(m)+len(keys))
+	copy(out, m)
+	for _, k := range keys {
+		if v, ts, ok := from.LookupEntry(k); ok {
+			out = append(out, stringLatestEntry{key: k, Value: v, Timestamp: ts})
+		}
+	}
+	out.fixup()
+	return out
+}
