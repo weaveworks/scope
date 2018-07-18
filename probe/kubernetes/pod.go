@@ -56,7 +56,7 @@ func (p *pod) UID() string {
 }
 
 func (p *pod) AddParent(topology, id string) {
-	p.parents = p.parents.Add(topology, report.MakeStringSet(id))
+	p.parents = p.parents.AddString(topology, id)
 }
 
 func (p *pod) State() string {

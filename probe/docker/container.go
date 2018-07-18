@@ -407,9 +407,7 @@ func (c *container) getBaseNode() report.Node {
 		ContainerCommand:  c.getSanitizedCommand(),
 		ImageID:           c.Image(),
 		ContainerHostname: c.Hostname(),
-	}).WithParents(report.MakeSets().
-		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
-	)
+	}).WithParent(report.ContainerImage, report.MakeContainerImageNodeID(c.Image()))
 	result = result.AddPrefixPropertyList(LabelPrefix, c.container.Config.Labels)
 	if !c.noEnvironmentVariables {
 		result = result.AddPrefixPropertyList(EnvPrefix, c.env())

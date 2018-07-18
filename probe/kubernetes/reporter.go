@@ -249,10 +249,7 @@ func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
 			n = n.WithLatest(report.DoesNotMakeConnections, mtime.Now(), "")
 		}
 
-		rpt.Container.Nodes[id] = n.WithParents(report.MakeSets().Add(
-			report.Pod,
-			report.MakeStringSet(report.MakePodNodeID(uid)),
-		))
+		rpt.Container.Nodes[id] = n.WithParent(report.Pod, report.MakePodNodeID(uid))
 	}
 	return rpt, nil
 }
@@ -357,7 +354,7 @@ func (r *Reporter) hostTopology(services []Service) report.Topology {
 	t := report.MakeTopology()
 	t.AddNode(
 		report.MakeNode(report.MakeHostNodeID(r.hostID)).
-			WithSets(report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(serviceNetwork.String()))))
+			WithSets(report.MakeSets().AddString(host.LocalNetworks, serviceNetwork.String())))
 	return t
 }
 

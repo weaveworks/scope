@@ -46,6 +46,21 @@ func (s Sets) Add(key string, value StringSet) Sets {
 	}
 }
 
+// AddString adds a single string under a key, creating a new StringSet if necessary.
+func (s Sets) AddString(key string, str string) Sets {
+	if s.psMap == nil {
+		s = emptySets
+	}
+	value, found := s.Lookup(key)
+	if found && value.Contains(str) {
+		return s
+	}
+	value = value.Add(str)
+	return Sets{
+		psMap: s.psMap.Set(key, value),
+	}
+}
+
 // Delete the given set from the Sets.
 func (s Sets) Delete(key string) Sets {
 	if s.psMap == nil {

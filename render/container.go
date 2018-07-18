@@ -150,7 +150,7 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) Nodes {
 		c = propagateLatest(docker.ImageLabelPrefix+"works.weave.role", image, c)
 		c.Parents = c.Parents.
 			Delete(report.ContainerImage).
-			Add(report.ContainerImage, report.MakeStringSet(imageNodeID))
+			AddString(report.ContainerImage, imageNodeID)
 		outputs[id] = c
 	}
 	return Nodes{Nodes: outputs, Filtered: containers.Filtered}

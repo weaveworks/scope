@@ -152,6 +152,12 @@ func (n Node) WithLatestControl(control string, ts time.Time, data NodeControlDa
 	return n
 }
 
+// WithParent returns a fresh copy of n, with one parent added
+func (n Node) WithParent(key, parent string) Node {
+	n.Parents = n.Parents.AddString(key, parent)
+	return n
+}
+
 // WithParents returns a fresh copy of n, with sets merged in.
 func (n Node) WithParents(parents Sets) Node {
 	n.Parents = n.Parents.Merge(parents)
