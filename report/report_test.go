@@ -82,14 +82,8 @@ func TestReportUpgrade(t *testing.T) {
 	namespaceID := report.MakeNamespaceNodeID(namespaceName)
 	podNode := report.MakeNode("foo").
 		WithLatests(map[string]string{report.KubernetesNamespace: namespaceName}).
-		WithControls("alive").
 		WithParents(report.MakeSets().Add(report.ReplicaSet, report.MakeStringSet("bar")))
-	controls := map[string]report.NodeControlData{
-		"alive": {
-			Dead: false,
-		},
-	}
-	expectedPodNode := podNode.PruneParents().WithParents(parentsWithDeployment).WithLatestControls(controls)
+	expectedPodNode := podNode.PruneParents().WithParents(parentsWithDeployment)
 	rpt := report.MakeReport()
 	rpt.ReplicaSet.AddNode(rsNode)
 	rpt.Pod.AddNode(podNode)

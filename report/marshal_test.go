@@ -44,7 +44,6 @@ func makeTestReport() report.Report {
 	r.Endpoint.AddNode(report.MakeNode(";172.20.1.168;41582").
 		WithTopology("endpoint").
 		WithSet("snooped_dns_names", report.MakeStringSet("ip-172-20-1-168.ec2.internal")).
-		WithControls("docker_remove_container").
 		WithLatestActiveControls("docker_pause_container").
 		WithLatest("addr", t1, "127.0.0.1"),
 	)
@@ -57,7 +56,6 @@ func makeTestReport() report.Report {
 	r.Pod.WithShape("heptagon").WithLabel("pod", "pods").
 		AddNode(report.MakeNode("fceef9592ec3cf1a8e1d178fdd0de41a;<pod>").
 			WithTopology("pod").
-			WithControls("kubernetes_delete_pod").
 			WithLatestControls(map[string]report.NodeControlData{"kubernetes_get_logs": {Dead: true}}).
 			WithLatest("host_node_id", t1, "ip-172-20-1-168;<host>"))
 	r.Overlay.WithMetadataTemplates(report.MetadataTemplates{

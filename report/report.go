@@ -419,43 +419,8 @@ func (r Report) Validate() error {
 
 // Upgrade returns a new report based on a report received from the old probe.
 //
-// This for now creates node's LatestControls from Controls.
 func (r Report) Upgrade() Report {
-	return r.upgradeLatestControls().upgradePodNodes().upgradeNamespaces().upgradeDNSRecords()
-}
-
-func (r Report) upgradeLatestControls() Report {
-	needUpgrade := false
-	r.WalkTopologies(func(topology *Topology) {
-		for _, node := range topology.Nodes {
-			if node.LatestControls.Size() == 0 && len(node.Controls.Controls) > 0 {
-				needUpgrade = true
-			}
-		}
-	})
-
-	if !needUpgrade {
-		return r
-	}
-
-	cp := r.Copy()
-	ncd := NodeControlData{
-		Dead: false,
-	}
-	cp.WalkTopologies(func(topology *Topology) {
-		n := Nodes{}
-		for name, node := range topology.Nodes {
-			if node.LatestControls.Size() == 0 && len(node.Controls.Controls) > 0 {
-				for _, control := range node.Controls.Controls {
-					node.LatestControls = node.LatestControls.Set(control, node.Controls.Timestamp, ncd)
-				}
-			}
-			n[name] = node
-		}
-		topology.Nodes = n
-	})
-
-	return cp
+	return r.upgradePodNodes().upgradeNamespaces().upgradeDNSRecords()
 }
 
 func (r Report) upgradePodNodes() Report {
