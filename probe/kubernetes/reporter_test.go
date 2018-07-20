@@ -328,8 +328,7 @@ func TestTagger(t *testing.T) {
 		docker.LabelPrefix + "io.kubernetes.pod.uid": "123456",
 	}))
 
-	hr := controls.NewDefaultHandlerRegistry()
-	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil, hr, "", 0).Tag(rpt)
+	rpt, err := (&kubernetes.Tagger{}).Tag(rpt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}

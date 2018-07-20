@@ -273,7 +273,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry, flags.kubernetesNodeName, flags.kubernetesKubeletPort)
 			defer reporter.Stop()
 			p.AddReporter(reporter)
-			p.AddTagger(reporter)
+			p.AddTagger(&kubernetes.Tagger{})
 		} else {
 			log.Errorf("Kubernetes: failed to start client: %v", err)
 			log.Errorf("Kubernetes: make sure to run Scope inside a POD with a service account or provide valid probe.kubernetes.* flags")
