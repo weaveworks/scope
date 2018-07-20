@@ -26,6 +26,7 @@ import (
 	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/controls"
+	"github.com/weaveworks/scope/probe/cri"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
@@ -250,6 +251,15 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			p.AddReporter(docker.NewReporter(registry, hostID, probeID, p))
 		} else {
 			log.Errorf("Docker: failed to start registry: %v", err)
+		}
+	}
+
+	if flags.criEnabled {
+		client, err := cri.NewCRIClient(flags.criEndpoint)
+		if err != nil {
+			log.Errorf("CRI: failed to start registry: %v", err)
+		} else {
+			p.AddReporter(cri.NewReporter(client))
 		}
 	}
 
