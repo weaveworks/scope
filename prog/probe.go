@@ -233,7 +233,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	if flags.dockerEnabled {
 		// Don't add the bridge in Kubernetes since container IPs are global and
 		// shouldn't be scoped
-		if !flags.kubernetesEnabled {
+		if flags.dockerBridge != "" && !flags.kubernetesEnabled {
 			if err := report.AddLocalBridge(flags.dockerBridge); err != nil {
 				log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
 			}
