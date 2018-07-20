@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/ps"
 
 	"github.com/weaveworks/scope/test/reflect"
@@ -145,44 +144,4 @@ func (n NodeSet) String() string {
 // DeepEqual tests equality with other NodeSets
 func (n NodeSet) DeepEqual(o NodeSet) bool {
 	return mapEqual(n.psMap, o.psMap, reflect.DeepEqual)
-}
-
-func (n NodeSet) toIntermediate() []Node {
-	intermediate := make([]Node, 0, n.Size())
-	n.ForEach(func(node Node) {
-		intermediate = append(intermediate, node)
-	})
-	return intermediate
-}
-
-func (n NodeSet) fromIntermediate(nodes []Node) NodeSet {
-	return MakeNodeSet(nodes...)
-}
-
-// CodecEncodeSelf implements codec.Selfer
-func (n *NodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
-	if n.psMap != nil {
-		encoder.Encode(n.toIntermediate())
-	} else {
-		encoder.Encode(nil)
-	}
-}
-
-// CodecDecodeSelf implements codec.Selfer
-func (n *NodeSet) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := []Node{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
-	*n = NodeSet{}.fromIntermediate(in)
-}
-
-// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
-func (NodeSet) MarshalJSON() ([]byte, error) {
-	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
-}
-
-// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
-func (*NodeSet) UnmarshalJSON(b []byte) error {
-	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
