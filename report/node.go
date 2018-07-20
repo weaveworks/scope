@@ -169,14 +169,8 @@ func (n Node) PruneParents() Node {
 }
 
 // WithChildren returns a fresh copy of n, with children merged in.
-func (n Node) WithChildren(children NodeSet) Node {
-	n.Children = n.Children.Merge(children)
-	return n
-}
-
-// WithChild returns a fresh copy of n, with one child merged in.
-func (n Node) WithChild(child Node) Node {
-	n.Children = n.Children.Merge(MakeNodeSet(child))
+func (n Node) WithChildren(children ...Node) Node {
+	n.Children = n.Children.Add(children...)
 	return n
 }
 
