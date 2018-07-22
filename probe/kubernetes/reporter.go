@@ -561,7 +561,7 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 	}
 
 	var localPodUIDs map[string]struct{}
-	if r.nodeName == "" {
+	if r.nodeName == "" && r.kubeletPort != 0 {
 		// We don't know the node name: fall back to obtaining the local pods from kubelet
 		var err error
 		localPodUIDs, err = GetLocalPodUIDs(fmt.Sprintf("127.0.0.1:%d", r.kubeletPort))
