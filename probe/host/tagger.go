@@ -30,7 +30,8 @@ func (t Tagger) Tag(r report.Report) (report.Report, error) {
 
 	// Explicitly don't tag Endpoints, Addresses and Overlay nodes - These topologies include pseudo nodes,
 	// and as such do their own host tagging.
-	for _, topology := range []report.Topology{r.Process, r.Container, r.ContainerImage, r.Host, r.Pod} {
+	// Don't tag Pods so they can be reported centrally.
+	for _, topology := range []report.Topology{r.Process, r.Container, r.ContainerImage, r.Host} {
 		for _, node := range topology.Nodes {
 			topology.ReplaceNode(node.WithLatests(metadata).WithParent(report.Host, t.hostNodeID))
 		}
