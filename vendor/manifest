@@ -1531,44 +1531,175 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/opencontainers/runc/libcontainer/cgroups",
+			"importpath": "github.com/opencontainers/runc/libcontainer",
 			"repository": "https://github.com/opencontainers/runc",
-			"vcs": "",
-			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
-			"branch": "master",
-			"path": "/libcontainer/cgroups"
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "/libcontainer",
+			"notests": true
 		},
 		{
-			"importpath": "github.com/opencontainers/runc/libcontainer/configs",
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/containerd/console",
 			"repository": "https://github.com/opencontainers/runc",
-			"vcs": "",
-			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
-			"branch": "master",
-			"path": "/libcontainer/configs"
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/containerd/console",
+			"notests": true
 		},
 		{
-			"importpath": "github.com/opencontainers/runc/libcontainer/system",
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/coreos/go-systemd/dbus",
 			"repository": "https://github.com/opencontainers/runc",
-			"vcs": "",
-			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
-			"branch": "master",
-			"path": "/libcontainer/system"
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/coreos/go-systemd/dbus",
+			"notests": true
 		},
 		{
-			"importpath": "github.com/opencontainers/runc/libcontainer/user",
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/coreos/go-systemd/util",
 			"repository": "https://github.com/opencontainers/runc",
-			"vcs": "",
-			"revision": "3317785f562b363eb386a2fa4909a55f267088c8",
-			"branch": "master",
-			"path": "/libcontainer/user"
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/coreos/go-systemd/util",
+			"notests": true
 		},
 		{
-			"importpath": "github.com/opencontainers/runc/libcontainer/utils",
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/coreos/pkg/dlopen",
 			"repository": "https://github.com/opencontainers/runc",
-			"vcs": "",
-			"revision": "361f9b7921665b5894faef36fc8430aec573dfa4",
-			"branch": "master",
-			"path": "/libcontainer/utils"
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/coreos/pkg/dlopen",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/cyphar/filepath-securejoin",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/cyphar/filepath-securejoin",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/docker/go-units",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/go-units",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/godbus/dbus",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/godbus/dbus",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/golang/protobuf/proto",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/golang/protobuf/proto",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/mrunalp/fileutils",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/mrunalp/fileutils",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/opencontainers/runtime-spec/specs-go",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/opencontainers/runtime-spec/specs-go",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/opencontainers/selinux/go-selinux",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/opencontainers/selinux/go-selinux",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/pkg/errors",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/pkg/errors",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/seccomp/libseccomp-golang",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/seccomp/libseccomp-golang",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/sirupsen/logrus",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/sirupsen/logrus",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/syndtr/gocapability/capability",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/syndtr/gocapability/capability",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/github.com/vishvananda/netlink",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/github.com/vishvananda/netlink",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/golang.org/x/sys/unix",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/golang.org/x/sys/unix",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/opencontainers/runc/vendor/golang.org/x/sys/windows",
+			"repository": "https://github.com/opencontainers/runc",
+			"vcs": "git",
+			"revision": "4fc53a81fb7c994640722ac585fa9ca548971871",
+			"branch": "HEAD",
+			"path": "vendor/golang.org/x/sys/windows",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/opentracing-contrib/go-stdlib/nethttp",
