@@ -2023,8 +2023,8 @@
 			"importpath": "github.com/weaveworks/promrus",
 			"repository": "https://github.com/weaveworks/promrus",
 			"vcs": "git",
-			"revision": "9791d9bd0e33a0c377d398c44ebde3844c68f430",
-			"branch": "master",
+			"revision": "0599d764e054d4e983bb120e30759179fafe3942",
+			"branch": "HEAD",
 			"notests": true
 		},
 		{
