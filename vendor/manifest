@@ -66,14 +66,6 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/Sirupsen/logrus",
-			"repository": "https://github.com/Sirupsen/logrus",
-			"vcs": "git",
-			"revision": "c108f5553c369120b773da633aca62a8b42b1cf4",
-			"branch": "master",
-			"notests": true
-		},
-		{
 			"importpath": "github.com/VividCortex/gohistogram",
 			"repository": "https://github.com/VividCortex/gohistogram",
 			"vcs": "git",
