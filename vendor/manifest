@@ -1685,8 +1685,8 @@
 			"importpath": "github.com/weaveworks/billing-client",
 			"repository": "https://github.com/weaveworks/billing-client",
 			"vcs": "git",
-			"revision": "694ea14d915e520638b234d9b3ca780c25963435",
-			"branch": "master",
+			"revision": "b2b68b13b5af3bc1c13cf9b065845a1e0d9f81e7",
+			"branch": "HEAD",
 			"notests": true
 		},
 		{
