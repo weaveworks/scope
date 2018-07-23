@@ -1,3 +1,133 @@
+## Release 1.9.1
+
+Highlights:
+
+Scope now displays Kubernetes Storage (PersistentVolume and
+PersistentVolumeClaim) information on the Pods view.
+	[#3132](https://github.com/weaveworks/scope/pull/3132)
+
+Thanks to @satyamz and all at OpenEBS for this contribution!
+
+Also thanks for the example Kubernetes manifests from @tasdikrahman.
+
+Bug fixes and minor improvements:
+
+- Fix 'Unmanaged' nodes showing despite 'Hide Umanaged' filter
+	[#3189](https://github.com/weaveworks/scope/pull/3189)
+- Fixes monospace font overlapping in terminal+linux
+	[#3248](https://github.com/weaveworks/scope/pull/3248)
+- make process-by-name topology show something
+	[#3208](https://github.com/weaveworks/scope/pull/3208)
+- Use the default value for a TopologyOption if omitted
+	[#3165](https://github.com/weaveworks/scope/pull/3165)
+- Adjusted terminal character width/height estimation
+	[#3179](https://github.com/weaveworks/scope/pull/3179)
+- Fix pause image detection for Kubernetes 1.10
+	[#3183](https://github.com/weaveworks/scope/pull/3183)
+- ebpf: update check for known faulty Ubuntu kernels
+	[#3188](https://github.com/weaveworks/scope/pull/3188)
+- Add option to print probe reports to stdout, for debugging
+	[#3204](https://github.com/weaveworks/scope/pull/3204)
+- Fix querier panic introduced in #3143
+	[#3156](https://github.com/weaveworks/scope/pull/3156)
+- Fix rare crash in filter function
+	[#3232](https://github.com/weaveworks/scope/pull/3232)
+- Probe: fix error message to name the correct flag probe.proc.spy
+	[#3216](https://github.com/weaveworks/scope/pull/3216)
+- Remove ProcessWithContainerNameRenderer, it wasn't working
+	[#3263](https://github.com/weaveworks/scope/pull/3263)
+- Close terminal window on exit; update xterm to version 3.3.0
+	[#3172](https://github.com/weaveworks/scope/pull/3172)
+- Add org.opencontainers.image.* labels to Dockerfiles
+	[#3171](https://github.com/weaveworks/scope/pull/3171)
+- Make table header line up with columns when scrollbar appears
+	[#3169](https://github.com/weaveworks/scope/pull/3169)
+- Add command-line flag to set SQS RPC timeout
+	[#3157](https://github.com/weaveworks/scope/pull/3157)
+
+Performance:
+
+A number of small performance improvements have gone into this
+release, reducing memory and CPU usage.
+
+- Probe: remove backwards-compatibility code when publishing reports
+	[#3215](https://github.com/weaveworks/scope/pull/3215)
+- Optimise Node.WithLatests()
+	[#3268](https://github.com/weaveworks/scope/pull/3268)
+- Optimise WithParents() when there is only one parent
+	[#3269](https://github.com/weaveworks/scope/pull/3269)
+- Re-use gzip writers in a pool
+	[#3267](https://github.com/weaveworks/scope/pull/3267)
+- Optimise merge where one side is a subset of the other
+	[#3253](https://github.com/weaveworks/scope/pull/3253)
+- Use a buffer pool in report.ReadBinary() to reduce garbage-collection
+	[#3255](https://github.com/weaveworks/scope/pull/3255)
+- Faster report merging through mutating objects
+	[#3236](https://github.com/weaveworks/scope/pull/3236)
+- Faster path to check an IP address against known networks
+	[#3142](https://github.com/weaveworks/scope/pull/3142)
+- Skip pods with no IP addresses when rendering network connections
+	[#3201](https://github.com/weaveworks/scope/pull/3201)
+- Fetch container IPs directly from the namespace instead of calling 'weave ps'
+	[#3207](https://github.com/weaveworks/scope/pull/3207)
+
+UI:
+
+A number of changes adjusting fonts and colors, and standardising the
+UI through the use of a theme.
+
+- Update fonts - use Proxima Nova as a default font instead of Roboto.
+	[#3177](https://github.com/weaveworks/scope/pull/3177)
+- Adjust font sizes
+	[#3181](https://github.com/weaveworks/scope/pull/3181)
+- Update gray theme colors
+	[#3234](https://github.com/weaveworks/scope/pull/3234)
+- Use new accent theme colors
+	[#3230](https://github.com/weaveworks/scope/pull/3230)
+- Use new purple theme colors
+	[#3229](https://github.com/weaveworks/scope/pull/3229)
+- Use new theme gray colors
+	[#3227](https://github.com/weaveworks/scope/pull/3227)
+- Stop using dropped theme colors
+	[#3148](https://github.com/weaveworks/scope/pull/3148)
+- Merge neutral theme colors
+	[#3146](https://github.com/weaveworks/scope/pull/3146)
+- Slightly lightening background to match the rest of WeaveCloud
+	[#3206](https://github.com/weaveworks/scope/pull/3206)
+- Sentence cased text everywhere
+	[#3166](https://github.com/weaveworks/scope/pull/3166)
+- Show image tag more clearly in node details
+	[#3173](https://github.com/weaveworks/scope/pull/3173)
+- Standardise border radius
+	[#3170](https://github.com/weaveworks/scope/pull/3170)
+- Enforce theme font sizes
+	[#3167](https://github.com/weaveworks/scope/pull/3167)
+- Use only z-index values from the theme
+	[#3159](https://github.com/weaveworks/scope/pull/3159)
+
+Weave Cloud specific
+
+As well as some bug-fixes, refactoring of places where the integration
+of Scope into the hosted Weave Cloud UI complicated the code.
+
+- Correct api.getFluxImages usage
+	[#3233](https://github.com/weaveworks/scope/pull/3233)
+- Show deployments in Time Travel
+	[#3222](https://github.com/weaveworks/scope/pull/3222)
+- Separate API endpoint namespace from URL path part
+	[#3221](https://github.com/weaveworks/scope/pull/3221)
+- Fix scope report download URL in Weave Cloud
+	[#3213](https://github.com/weaveworks/scope/pull/3213)
+- Use common TimestampTag component
+	[#3195](https://github.com/weaveworks/scope/pull/3195)
+- Change URL resolution to accommodate Weave Cloud paths
+	[#3175](https://github.com/weaveworks/scope/pull/3175)
+- Support rendering node details extras
+	[#3244](https://github.com/weaveworks/scope/pull/3244)
+- Support TimeTravel injection
+	[#3239](https://github.com/weaveworks/scope/pull/3239)
+
+
 ## Release 1.9.0
 
 Highlights:
