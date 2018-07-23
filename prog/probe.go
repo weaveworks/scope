@@ -10,12 +10,14 @@ import (
 	"strconv"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/weaveworks/common/logging"
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/common/sanitize"
+	"github.com/weaveworks/common/signals"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/weave"
@@ -32,7 +34,6 @@ import (
 	"github.com/weaveworks/scope/probe/plugins"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/weave/common"
 )
 
 const (
@@ -304,7 +305,8 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	maybeExportProfileData(flags)
 
 	p.Start()
-	defer p.Stop()
-
-	common.SignalHandlerLoop()
+	signals.SignalHandlerLoop(
+		logging.Logrus(log.StandardLogger()),
+		p,
+	)
 }
