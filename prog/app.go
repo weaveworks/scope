@@ -19,6 +19,7 @@ import (
 
 	billing "github.com/weaveworks/billing-client"
 	"github.com/weaveworks/common/aws"
+	"github.com/weaveworks/common/logging"
 	"github.com/weaveworks/common/middleware"
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/common/signals"
@@ -307,10 +308,27 @@ func appMain(flags appFlags) {
 	}()
 
 	// block until INT/TERM
-	signals.SignalHandlerLoop()
+	signals.SignalHandlerLoop(
+		logging.Logrus(log.StandardLogger()),
+		stopper{
+			Server:      server,
+			StopTimeout: flags.stopTimeout,
+		},
+	)
+}
+
+// stopper adapts graceful.Server's interface to signals.SignalReceiver's interface.
+type stopper struct {
+	Server      *graceful.Server
+	StopTimeout time.Duration
+}
+
+// Stop implements signals.SignalReceiver's Stop method.
+func (c stopper) Stop() error {
 	// stop listening, wait for any active connections to finish
-	server.Stop(flags.stopTimeout)
-	<-server.StopChan()
+	c.Server.Stop(c.StopTimeout)
+	<-c.Server.StopChan()
+	return nil
 }
 
 func newWeavePublisher(dockerEndpoint, weaveAddr, weaveHostname, containerName string) (*app.WeavePublisher, error) {

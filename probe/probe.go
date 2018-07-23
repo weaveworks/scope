@@ -110,9 +110,10 @@ func (p *Probe) Start() {
 }
 
 // Stop stops the probe
-func (p *Probe) Stop() {
+func (p *Probe) Stop() error {
 	close(p.quit)
 	p.done.Wait()
+	return nil
 }
 
 // Publish will queue a report for immediate publication,

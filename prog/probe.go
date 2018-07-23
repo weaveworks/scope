@@ -14,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/weaveworks/common/logging"
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/common/sanitize"
 	"github.com/weaveworks/common/signals"
@@ -304,7 +305,8 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	maybeExportProfileData(flags)
 
 	p.Start()
-	defer p.Stop()
-
-	signals.SignalHandlerLoop()
+	signals.SignalHandlerLoop(
+		logging.Logrus(log.StandardLogger()),
+		p,
+	)
 }
