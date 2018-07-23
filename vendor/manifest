@@ -2054,10 +2054,308 @@
 		{
 			"importpath": "github.com/weaveworks/weave/common",
 			"repository": "https://github.com/weaveworks/weave",
-			"vcs": "",
-			"revision": "29f3d711c65121f436a9d191af4633ba4600d0fd",
-			"branch": "master",
-			"path": "/common"
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "/common",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/Azure/go-ansiterm",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/Azure/go-ansiterm",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/Microsoft/go-winio",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/Microsoft/go-winio",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/Nvveen/Gotty",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/Nvveen/Gotty",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/containerd/continuity/pathdriver",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/containerd/continuity/pathdriver",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/api/types",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/api/types",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/opts",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/opts",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/archive",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/archive",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/fileutils",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/fileutils",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/homedir",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/homedir",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/idtools",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/idtools",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/ioutils",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/ioutils",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/jsonmessage",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/jsonmessage",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/longpath",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/longpath",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/mount",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/mount",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/pools",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/pools",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/stdcopy",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/stdcopy",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/system",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/system",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/docker/pkg/term",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/docker/pkg/term",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/go-connections/nat",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/go-connections/nat",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/docker/go-units",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/docker/go-units",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/fsouza/go-dockerclient",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/fsouza/go-dockerclient",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/gogo/protobuf/proto",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/gogo/protobuf/proto",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/opencontainers/go-digest",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/opencontainers/go-digest",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/opencontainers/image-spec/specs-go",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/opencontainers/image-spec/specs-go",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/opencontainers/runc/libcontainer/system",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/opencontainers/runc/libcontainer/system",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/opencontainers/runc/libcontainer/user",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/opencontainers/runc/libcontainer/user",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/pkg/errors",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/pkg/errors",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/sirupsen/logrus",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/sirupsen/logrus",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/github.com/weaveworks/go-odp/odp",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/github.com/weaveworks/go-odp/odp",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/golang.org/x/crypto/ssh/terminal",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/golang.org/x/crypto/ssh/terminal",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/golang.org/x/net/context",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/golang.org/x/net/context",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/golang.org/x/sys/unix",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/golang.org/x/sys/unix",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/weaveworks/weave/vendor/golang.org/x/sys/windows",
+			"repository": "https://github.com/weaveworks/weave",
+			"vcs": "git",
+			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
+			"branch": "HEAD",
+			"path": "vendor/golang.org/x/sys/windows",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/willdonnelly/passwd",
