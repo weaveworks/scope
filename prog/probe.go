@@ -16,6 +16,7 @@ import (
 
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/common/sanitize"
+	"github.com/weaveworks/common/signals"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/weave"
@@ -32,7 +33,6 @@ import (
 	"github.com/weaveworks/scope/probe/plugins"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/weave/common"
 )
 
 const (
@@ -306,5 +306,5 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	p.Start()
 	defer p.Stop()
 
-	common.SignalHandlerLoop()
+	signals.SignalHandlerLoop()
 }
