@@ -12,8 +12,8 @@
 			"importpath": "github.com/Azure/go-ansiterm",
 			"repository": "https://github.com/Azure/go-ansiterm",
 			"vcs": "git",
-			"revision": "fa152c58bc15761d0200cb75fe958b89a9d4888e",
-			"branch": "master",
+			"revision": "d6e3b3328b783f23731bc4d058875b0371ff8109",
+			"branch": "HEAD",
 			"notests": true
 		},
 		{
