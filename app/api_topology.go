@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
+	"context"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/render"

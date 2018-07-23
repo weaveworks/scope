@@ -2442,10 +2442,11 @@
 		{
 			"importpath": "golang.org/x/net/context",
 			"repository": "https://go.googlesource.com/net",
-			"vcs": "",
-			"revision": "2cba614e8ff920c60240d2677bc019af32ee04e5",
+			"vcs": "git",
+			"revision": "a680a1efc54dd51c040b3b5ce4939ea3cf2ea0d1",
 			"branch": "master",
-			"path": "/context"
+			"path": "/context",
+			"notests": true
 		},
 		{
 			"importpath": "golang.org/x/net/html",

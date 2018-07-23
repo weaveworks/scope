@@ -8,10 +8,10 @@ import (
 	"strings"
 	"text/template"
 
+	"context"
 	socks5 "github.com/armon/go-socks5"
 	"github.com/weaveworks/common/mflag"
 	"github.com/weaveworks/common/mflagext"
-	"golang.org/x/net/context"
 )
 
 type pacFileParameters struct {
