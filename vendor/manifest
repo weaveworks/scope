@@ -716,14 +716,6 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/emicklei/go-restful-openapi",
-			"repository": "https://github.com/emicklei/go-restful-openapi",
-			"vcs": "git",
-			"revision": "ca11c31130f54bf8dfaa69dac83d8603b2d4b48e",
-			"branch": "master",
-			"notests": true
-		},
-		{
 			"importpath": "github.com/emicklei/go-restful-swagger12",
 			"repository": "https://github.com/emicklei/go-restful-swagger12",
 			"vcs": "git",
@@ -1845,8 +1837,8 @@
 			"importpath": "github.com/sirupsen/logrus",
 			"repository": "https://github.com/sirupsen/logrus",
 			"vcs": "git",
-			"revision": "c108f5553c369120b773da633aca62a8b42b1cf4",
-			"branch": "master",
+			"revision": "3e01752db0189b9157070a0e1668a620f9a85da2",
+			"branch": "HEAD",
 			"notests": true
 		},
 		{
