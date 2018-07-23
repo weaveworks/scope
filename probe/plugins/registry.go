@@ -14,7 +14,7 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 	"golang.org/x/net/context"
 	"golang.org/x/net/context/ctxhttp"

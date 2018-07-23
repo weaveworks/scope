@@ -5,7 +5,7 @@ import (
 
 	"github.com/ugorji/go/codec"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 func respondWith(w http.ResponseWriter, code int, response interface{}) {

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	billing "github.com/weaveworks/billing-client"
 	"golang.org/x/net/context"
 
