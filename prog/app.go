@@ -282,9 +282,11 @@ func appMain(flags appFlags) {
 	capabilities := map[string]bool{
 		xfer.HistoricReportsCapability: collector.HasHistoricReports(),
 	}
+	logger := logging.Logrus(log.StandardLogger())
 	handler := router(collector, controlRouter, pipeRouter, flags.externalUI, capabilities, flags.metricsGraphURL)
 	if flags.logHTTP {
 		handler = middleware.Log{
+			Log:               logger,
 			LogRequestHeaders: flags.logHTTPHeaders,
 		}.Wrap(handler)
 	}
@@ -309,7 +311,7 @@ func appMain(flags appFlags) {
 
 	// block until INT/TERM
 	signals.SignalHandlerLoop(
-		logging.Logrus(log.StandardLogger()),
+		logger,
 		stopper{
 			Server:      server,
 			StopTimeout: flags.stopTimeout,
