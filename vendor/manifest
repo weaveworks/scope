@@ -543,15 +543,6 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/docker/docker/vendor/github.com/gogo/protobuf/proto",
-			"repository": "https://github.com/docker/docker",
-			"vcs": "git",
-			"revision": "1ef1cc8388165b2b848f9b3f53ec91c87de09f63",
-			"branch": "master",
-			"path": "vendor/github.com/gogo/protobuf/proto",
-			"notests": true
-		},
-		{
 			"importpath": "github.com/docker/docker/vendor/github.com/opencontainers/go-digest",
 			"repository": "https://github.com/docker/docker",
 			"vcs": "git",
@@ -854,37 +845,19 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/gogo/protobuf/gogoproto",
-			"repository": "https://github.com/gogo/protobuf",
-			"vcs": "git",
-			"revision": "636bf0302bc95575d69441b25a2603156ffdddf1",
-			"branch": "master",
-			"path": "/gogoproto",
-			"notests": true
-		},
-		{
 			"importpath": "github.com/gogo/protobuf/proto",
 			"repository": "https://github.com/gogo/protobuf",
 			"vcs": "git",
-			"revision": "26de2f9a7d3b1826f275e7a97c8cad5080589426",
-			"branch": "master",
-			"path": "/proto",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/gogo/protobuf/protoc-gen-gogo/descriptor",
-			"repository": "https://github.com/gogo/protobuf",
-			"vcs": "git",
 			"revision": "636bf0302bc95575d69441b25a2603156ffdddf1",
 			"branch": "master",
-			"path": "protoc-gen-gogo/descriptor",
+			"path": "/proto",
 			"notests": true
 		},
 		{
 			"importpath": "github.com/gogo/protobuf/sortkeys",
 			"repository": "https://github.com/gogo/protobuf",
 			"vcs": "git",
-			"revision": "26de2f9a7d3b1826f275e7a97c8cad5080589426",
+			"revision": "636bf0302bc95575d69441b25a2603156ffdddf1",
 			"branch": "master",
 			"path": "sortkeys",
 			"notests": true
@@ -893,7 +866,7 @@
 			"importpath": "github.com/gogo/protobuf/types",
 			"repository": "https://github.com/gogo/protobuf",
 			"vcs": "git",
-			"revision": "26de2f9a7d3b1826f275e7a97c8cad5080589426",
+			"revision": "636bf0302bc95575d69441b25a2603156ffdddf1",
 			"branch": "master",
 			"path": "types",
 			"notests": true
@@ -924,36 +897,19 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/golang/protobuf/jsonpb",
+			"importpath": "github.com/golang/protobuf/proto",
 			"repository": "https://github.com/golang/protobuf",
 			"vcs": "git",
 			"revision": "427e165155e0a4ff5993a36657c1f733f5b0f782",
 			"branch": "master",
-			"path": "/jsonpb",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/golang/protobuf/proto",
-			"repository": "https://github.com/golang/protobuf",
-			"vcs": "git",
-			"revision": "5a0f697c9ed9d68fef0116532c6e05cfeae00e55",
-			"branch": "master",
-			"path": "/proto"
-		},
-		{
-			"importpath": "github.com/golang/protobuf/protoc-gen-go/descriptor",
-			"repository": "https://github.com/golang/protobuf",
-			"vcs": "git",
-			"revision": "69b215d01a5606c843240eab4937eab3acee6530",
-			"branch": "master",
-			"path": "/protoc-gen-go/descriptor",
+			"path": "/proto",
 			"notests": true
 		},
 		{
 			"importpath": "github.com/golang/protobuf/ptypes",
 			"repository": "https://github.com/golang/protobuf",
 			"vcs": "git",
-			"revision": "5a0f697c9ed9d68fef0116532c6e05cfeae00e55",
+			"revision": "427e165155e0a4ff5993a36657c1f733f5b0f782",
 			"branch": "master",
 			"path": "/ptypes",
 			"notests": true
@@ -1351,10 +1307,11 @@
 		{
 			"importpath": "github.com/matttproud/golang_protobuf_extensions/pbutil",
 			"repository": "https://github.com/matttproud/golang_protobuf_extensions",
-			"vcs": "",
-			"revision": "d0c3fe89de86839aecf2e0579c40ba3bb336a453",
+			"vcs": "git",
+			"revision": "c12348ce28de40eed0136aa2b644d0ee0650e56c",
 			"branch": "master",
-			"path": "/pbutil"
+			"path": "/pbutil",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/mgutz/ansi",
@@ -2239,15 +2196,6 @@
 			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
 			"branch": "HEAD",
 			"path": "vendor/github.com/fsouza/go-dockerclient",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/weaveworks/weave/vendor/github.com/gogo/protobuf/proto",
-			"repository": "https://github.com/weaveworks/weave",
-			"vcs": "git",
-			"revision": "4da998ab4507b6a4852bf341b5df68eb7fca8a57",
-			"branch": "HEAD",
-			"path": "vendor/github.com/gogo/protobuf/proto",
 			"notests": true
 		},
 		{
