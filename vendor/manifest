@@ -58,13 +58,6 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/Sirupsen/logrus",
-			"repository": "https://github.com/Sirupsen/logrus",
-			"vcs": "git",
-			"revision": "5e5dc898656f695e2a086b8e12559febbfc01562",
-			"branch": "master"
-		},
-		{
 			"importpath": "github.com/armon/go-metrics",
 			"repository": "https://github.com/armon/go-metrics",
 			"vcs": "",
