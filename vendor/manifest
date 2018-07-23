@@ -58,6 +58,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/Sirupsen/logrus",
+			"repository": "https://github.com/Sirupsen/logrus",
+			"vcs": "git",
+			"revision": "c108f5553c369120b773da633aca62a8b42b1cf4",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/VividCortex/gohistogram",
 			"repository": "https://github.com/VividCortex/gohistogram",
 			"vcs": "git",
@@ -552,7 +560,7 @@
 			"importpath": "github.com/emicklei/go-restful-openapi",
 			"repository": "https://github.com/emicklei/go-restful-openapi",
 			"vcs": "git",
-			"revision": "0b23be9885ff0876fdf5dc133e5c9def4a7ab3ec",
+			"revision": "ca11c31130f54bf8dfaa69dac83d8603b2d4b48e",
 			"branch": "master",
 			"notests": true
 		},
@@ -1155,6 +1163,14 @@
 			"revision": "32fa128f234d041f196a9f3e0fea5ac9772c08e1",
 			"branch": "master",
 			"path": "/jwriter",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/marccarre/go-restful-openapi",
+			"repository": "https://github.com/marccarre/go-restful-openapi",
+			"vcs": "git",
+			"revision": "129557de7d9f2d2ca4a90cd31c379db90a561ad8",
+			"branch": "HEAD",
 			"notests": true
 		},
 		{
