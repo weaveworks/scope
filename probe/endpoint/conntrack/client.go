@@ -6,15 +6,17 @@ import (
 	"net"
 	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 const (
-	sizeofGenmsg = uint32(unsafe.Sizeof(nfgenmsg{}))
+	sizeofGenmsg = uint32(unsafe.Sizeof(unix.Nfgenmsg{})) // TODO
 )
 
 type ConntrackListReq struct {
 	Header syscall.NlMsghdr
-	Body   nfgenmsg
+	Body   unix.Nfgenmsg
 }
 
 func (c *ConntrackListReq) toWireFormat() []byte {
@@ -25,9 +27,9 @@ func (c *ConntrackListReq) toWireFormat() []byte {
 	*(*uint16)(unsafe.Pointer(&b[6:8][0])) = c.Header.Flags
 	*(*uint32)(unsafe.Pointer(&b[8:12][0])) = c.Header.Seq
 	*(*uint32)(unsafe.Pointer(&b[12:16][0])) = c.Header.Pid
-	b[16] = byte(c.Body.Family)
+	b[16] = byte(c.Body.Nfgen_family)
 	b[17] = byte(c.Body.Version)
-	*(*uint16)(unsafe.Pointer(&b[18:20][0])) = c.Body.ResID
+	*(*uint16)(unsafe.Pointer(&b[18:20][0])) = c.Body.Res_id
 	return b
 }
 
@@ -70,10 +72,10 @@ func Established(bufferSize int) ([]Flow, error) {
 			Pid:   0,
 			Seq:   0,
 		},
-		Body: nfgenmsg{
-			Family:  syscall.AF_INET,
-			Version: NFNETLINK_V0,
-			ResID:   0,
+		Body: unix.Nfgenmsg{
+			Nfgen_family: syscall.AF_INET,
+			Version:      NFNETLINK_V0,
+			Res_id:       0,
 		},
 	}
 	wb := msg.toWireFormat()
@@ -184,12 +186,6 @@ type Layer4 struct {
 type Meta struct {
 	Layer3
 	Layer4
-}
-
-type nfgenmsg struct {
-	Family  uint8  /* AF_xxx */
-	Version uint8  /* nfnetlink version */
-	ResID   uint16 /* resource id */
 }
 
 func parsePayload(b []byte) (*Flow, error) {
