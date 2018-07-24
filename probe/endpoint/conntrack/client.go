@@ -8,36 +8,6 @@ import (
 	"unsafe"
 )
 
-type Layer3 struct {
-	SrcIP net.IP
-	DstIP net.IP
-}
-
-type Layer4 struct {
-	SrcPort uint16
-	DstPort uint16
-	Proto   uint8
-}
-
-type Meta struct {
-	Layer3
-	Layer4
-}
-
-type Flow struct {
-	MsgType  NfConntrackMsg
-	Original Meta
-	Reply    Meta
-	State    TCPState
-	ID       uint32
-}
-
-type nfgenmsg struct {
-	Family  uint8  /* AF_xxx */
-	Version uint8  /* nfnetlink version */
-	ResID   uint16 /* resource id */
-}
-
 const (
 	sizeofGenmsg = uint32(unsafe.Sizeof(nfgenmsg{}))
 )
@@ -190,6 +160,36 @@ func readMsgs(s int, cb func(Flow)) error {
 			cb(*flow)
 		}
 	}
+}
+
+type Flow struct {
+	MsgType  NfConntrackMsg
+	Original Meta
+	Reply    Meta
+	State    TCPState
+	ID       uint32
+}
+
+type Layer3 struct {
+	SrcIP net.IP
+	DstIP net.IP
+}
+
+type Layer4 struct {
+	SrcPort uint16
+	DstPort uint16
+	Proto   uint8
+}
+
+type Meta struct {
+	Layer3
+	Layer4
+}
+
+type nfgenmsg struct {
+	Family  uint8  /* AF_xxx */
+	Version uint8  /* nfnetlink version */
+	ResID   uint16 /* resource id */
 }
 
 func parsePayload(b []byte) (*Flow, error) {
