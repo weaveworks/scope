@@ -1907,10 +1907,11 @@
 		{
 			"importpath": "github.com/ugorji/go/codec",
 			"repository": "https://github.com/ugorji/go",
-			"vcs": "",
-			"revision": "c062049c1793b01a3cc3fe786108edabbaf7756b",
-			"branch": "master",
-			"path": "/codec"
+			"vcs": "git",
+			"revision": "54210f4e076c57f351166f0ed60e67d3fca57a36",
+			"branch": "HEAD",
+			"path": "/codec",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/urfave/negroni",
