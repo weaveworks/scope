@@ -692,6 +692,7 @@ a {
   @extend .shadow-2;
   // keep node-details above the terminal.
   z-index: $layer-front;
+  overflow: hidden;
 
   &:last-child {
     margin-bottom: 0;
