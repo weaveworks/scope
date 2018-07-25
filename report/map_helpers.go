@@ -147,8 +147,8 @@ func (m StringLatestMap) Len() int           { return len(m) }
 func (m StringLatestMap) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 func (m StringLatestMap) Less(i, j int) bool { return m[i].key < m[j].key }
 
-// sort entries and shuffle down any duplicates
-func (m StringLatestMap) fixup() {
+// sort entries and shuffle down any duplicates. NOTE: may modify contents of m.
+func (m StringLatestMap) sortedAndDeduplicated() StringLatestMap {
 	sort.Sort(m)
 	for i := 1; i < len(m); {
 		if m[i-1].key == m[i].key {
@@ -161,6 +161,7 @@ func (m StringLatestMap) fixup() {
 			i++
 		}
 	}
+	return m
 }
 
 // add several entries at the same timestamp
@@ -170,8 +171,7 @@ func (m StringLatestMap) addMapEntries(ts time.Time, n map[string]string) String
 	for k, v := range n {
 		out = append(out, stringLatestEntry{key: k, Value: v, Timestamp: ts})
 	}
-	out.fixup()
-	return out
+	return out.sortedAndDeduplicated()
 }
 
 // Propagate a set of latest values from one set to another.
@@ -183,6 +183,5 @@ func (m StringLatestMap) Propagate(from StringLatestMap, keys ...string) StringL
 			out = append(out, stringLatestEntry{key: k, Value: v, Timestamp: ts})
 		}
 	}
-	out.fixup()
-	return out
+	return out.sortedAndDeduplicated()
 }
