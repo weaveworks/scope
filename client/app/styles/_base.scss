@@ -3,16 +3,35 @@
 
 /* sass-lint:disable variable-for-property */
 @font-face {
-  font-family: 'proxima-nova';
-  src: url('../fonts/proximanova-regular.woff');
+  font-family: "Roboto";
+  src: url("../fonts/Roboto-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
 }
 
 @font-face {
-  font-family: 'Roboto Mono';
-  src: url('../fonts/robotomono-regular.ttf');
+  font-family: "Roboto";
+  src: url("../fonts/Roboto-Bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url("../fonts/Roboto-Italic.ttf") format("truetype");
+  font-weight: normal;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: "Roboto Mono";
+  src: url("../fonts/RobotoMono-Regular.ttf");
 }
 /* sass-lint:enable variable-for-property */
 
+* {
+  font-family: $font-family-regular;
+}
 a {
   text-decoration: none;
 }
