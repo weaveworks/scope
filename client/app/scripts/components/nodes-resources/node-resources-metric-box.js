@@ -1,5 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import theme from 'weaveworks-ui-components/lib/theme';
 
 import NodeResourcesMetricBoxInfo from './node-resources-metric-box-info';
 import { clickNode } from '../../actions/app-actions';
@@ -120,10 +121,22 @@ class NodeResourcesMetricBox extends React.Component {
         className="node-resources-metric-box"
         style={{ opacity }}
         onClick={this.handleClick}
-        ref={this.saveNodeRef}>
+        ref={this.saveNodeRef}
+      >
         <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
-        {showCapacity && <rect className="frame" {...this.defaultRectProps()} />}
-        <rect className="bar" fill={color} {...this.defaultRectProps(relativeConsumption)} />
+        {showCapacity && <rect
+          className="frame"
+          rx={theme.borderRadius.soft}
+          ry={theme.borderRadius.soft}
+          {...this.defaultRectProps()}
+        />}
+        <rect
+          className="bar"
+          fill={color}
+          rx={theme.borderRadius.soft}
+          ry={theme.borderRadius.soft}
+          {...this.defaultRectProps(relativeConsumption)}
+        />
         {showInfo && <NodeResourcesMetricBoxInfo
           label={label}
           metricSummary={metricSummary}
