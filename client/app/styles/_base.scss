@@ -208,6 +208,7 @@ a {
 }
 
 .header {
+  background-color: transparentize($color-purple-25, 0.1);
   z-index: $layer-front;
   padding: 15px 10px 0;
   pointer-events: none;
@@ -334,7 +335,6 @@ a {
   .topologies-item-main,
   .topologies-sub-item {
     pointer-events: all;
-
     color: $text-secondary-color;
     @extend .btn-opacity;
     cursor: pointer;
