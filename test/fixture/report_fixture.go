@@ -380,6 +380,7 @@ var (
 						kubernetes.VolumeClaim:      "pvc-6124",
 						kubernetes.AccessModes:      "ReadWriteOnce",
 						kubernetes.StorageClassName: "standard",
+						kubernetes.StorageDriver:    "iSCSI",
 					}).
 					WithTopology(report.PersistentVolume),
 			},

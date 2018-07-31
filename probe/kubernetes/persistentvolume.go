@@ -1,6 +1,8 @@
 package kubernetes
 
 import (
+	"reflect"
+
 	"github.com/weaveworks/scope/report"
 	apiv1 "k8s.io/api/core/v1"
 )
@@ -11,6 +13,7 @@ type PersistentVolume interface {
 	GetNode() report.Node
 	GetAccessMode() string
 	GetVolume() string
+	GetStorageDriver() string
 }
 
 // persistentVolume represents kubernetes persistent volume
@@ -45,13 +48,34 @@ func (p *persistentVolume) GetVolume() string {
 	return volume
 }
 
+// GetStorageDriver returns the backing driver of Persistent Volume
+func (p *persistentVolume) GetStorageDriver() string {
+	persistentVolumeSource := reflect.ValueOf(p.Spec.PersistentVolumeSource)
+
+	// persistentVolumeSource will have exactly one field which won't be nil,
+	// depending on the type of backing driver used to create the persistent volume
+	// Iterate over the fields and return the non-nil field name
+	for i := 0; i < persistentVolumeSource.NumField(); i++ {
+		if !reflect.ValueOf(persistentVolumeSource.Field(i).Interface()).IsNil() {
+			return persistentVolumeSource.Type().Field(i).Name
+		}
+	}
+	return ""
+}
+
 // GetNode returns Persistent Volume as Node
 func (p *persistentVolume) GetNode() report.Node {
-	return p.MetaNode(report.MakePersistentVolumeNodeID(p.UID())).WithLatests(map[string]string{
+	latests := map[string]string{
 		NodeType:         "Persistent Volume",
 		VolumeClaim:      p.GetVolume(),
 		StorageClassName: p.Spec.StorageClassName,
 		Status:           string(p.Status.Phase),
 		AccessModes:      p.GetAccessMode(),
-	})
+	}
+
+	if p.GetStorageDriver() != "" {
+		latests[StorageDriver] = p.GetStorageDriver()
+	}
+
+	return p.MetaNode(report.MakePersistentVolumeNodeID(p.UID())).WithLatests(latests)
 }
