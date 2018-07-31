@@ -15,7 +15,6 @@ type Node struct {
 	Counters       Counters                 `json:"counters,omitempty"`
 	Sets           Sets                     `json:"sets,omitempty"`
 	Adjacency      IDList                   `json:"adjacency,omitempty"`
-	Controls       NodeControls             `json:"controls,omitempty"`
 	LatestControls NodeControlDataLatestMap `json:"latestControls,omitempty"`
 	Latest         StringLatestMap          `json:"latest,omitempty"`
 	Metrics        Metrics                  `json:"metrics,omitempty" deepequal:"nil==empty"`
@@ -30,7 +29,6 @@ func MakeNode(id string) Node {
 		Counters:       MakeCounters(),
 		Sets:           MakeSets(),
 		Adjacency:      MakeIDList(),
-		Controls:       MakeNodeControls(),
 		LatestControls: MakeNodeControlDataLatestMap(),
 		Latest:         MakeStringLatestMap(),
 		Metrics:        Metrics{},
@@ -120,12 +118,6 @@ func (n Node) WithAdjacent(a ...string) Node {
 	return n
 }
 
-// WithControls returns a fresh copy of n, with cs added to Controls.
-func (n Node) WithControls(cs ...string) Node {
-	n.Controls = n.Controls.Add(cs...)
-	return n
-}
-
 // WithLatestActiveControls returns a fresh copy of n, with active controls cs added to LatestControls.
 func (n Node) WithLatestActiveControls(cs ...string) Node {
 	lcs := map[string]NodeControlData{}
@@ -199,7 +191,6 @@ func (n Node) Merge(other Node) Node {
 		Counters:       n.Counters.Merge(other.Counters),
 		Sets:           n.Sets.Merge(other.Sets),
 		Adjacency:      n.Adjacency.Merge(other.Adjacency),
-		Controls:       n.Controls.Merge(other.Controls),
 		LatestControls: n.LatestControls.Merge(other.LatestControls),
 		Latest:         n.Latest.Merge(other.Latest),
 		Metrics:        n.Metrics.Merge(other.Metrics),
