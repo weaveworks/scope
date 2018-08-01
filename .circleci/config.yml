@@ -1,7 +1,6 @@
 version: 2
 
 defaults: &defaults
-  machine: true
   steps:
     - run:
       name: Setup Environment Variables
@@ -16,6 +15,7 @@ defaults: &defaults
 jobs:
   build:
     <<: *defaults
+    machine: true
     steps:
       - checkout
 
