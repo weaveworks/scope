@@ -15,7 +15,8 @@ defaults: &defaults
 jobs:
   build:
     <<: *defaults
-    machine: true
+    docker:
+      - image: circleci/go:1.9-stretch-node-browsers
     steps:
       - checkout
 
