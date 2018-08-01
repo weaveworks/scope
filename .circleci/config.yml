@@ -1,6 +1,7 @@
 version: 2
 
 defaults: &defaults
+  machine: true
   steps:
     - run:
       name: Setup Environment Variables
