@@ -16,7 +16,7 @@ jobs:
   build:
     <<: *defaults
     docker:
-      - image: circleci/go:1.9-stretch-node-browsers
+      - image: circleci/golang:1.9-stretch-node-browsers
     steps:
       - checkout
 
