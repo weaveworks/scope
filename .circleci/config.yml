@@ -15,17 +15,16 @@ defaults: &defaults
 jobs:
   build:
     <<: *defaults
-    docker:
-      - image: circleci/golang:1.9-stretch-node-browsers
+    machine: true
     steps:
       - checkout
 
+      - run: curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
       - run: pip install --upgrade requests
       - run: |
           sudo apt-get update &&
           sudo apt-get install jq pv &&
           sudo chmod a+wr --recursive /usr/local/go/pkg &&
-          sudo chown ubuntu:ubuntu "$HOME/.bashrc.backup"
           (curl https://sdk.cloud.google.com | bash) &&
           (test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD") &&
           make deps &&
