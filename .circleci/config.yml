@@ -42,8 +42,9 @@ jobs:
       - run: cd $SRCDIR; rm -f prog/scope; make RM=
       - run: cd $SRCDIR/extras; ./build_on_circle.sh
       - run: "test -z \"$SECRET_PASSWORD\" || (cd $SRCDIR/integration; ./gce.sh setup && eval $(./gce.sh hosts); ./setup.sh)"
-      - run: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./run_all.sh)
-          timeout: 300
+      - run:
+          command: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./run_all.sh)
+          no_output_timeout: 5m
       - run: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy)
       - run: test "$CIRCLE_NODE_INDEX" != "0" || (cd $SRCDIR; ./tools/cover/gather_coverage.sh ./coverage $SRCDIR/coverage)
       - run: test "$CIRCLE_NODE_INDEX" != "0" || (goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true)
