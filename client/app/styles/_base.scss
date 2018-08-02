@@ -208,10 +208,9 @@ a {
 }
 
 .header {
-  background-color: transparentize($color-purple-25, 0.1);
+  background-color: transparentize($color-purple-25, 0.2);
   z-index: $layer-front;
   padding: 15px 10px 0;
-  pointer-events: none;
   position: relative;
   width: 100%;
 
