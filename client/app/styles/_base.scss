@@ -1371,9 +1371,11 @@ a {
 
 .status {
   padding: 2px 12px;
+  background-color: $body-background-color;
   border-radius: $border-radius-soft;
   color: $text-secondary-color;
   display: inline-block;
+  opacity: 0.9;
 
   &-icon {
     font-size: $font-size-normal;
