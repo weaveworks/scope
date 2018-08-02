@@ -671,7 +671,7 @@ a {
   &-wrapper {
     position: fixed;
     display: flex;
-    z-index: $layer-front;
+    z-index: $layer-toolbar;
     right: $details-window-padding-left;
     top: 100px;
     bottom: 48px;
