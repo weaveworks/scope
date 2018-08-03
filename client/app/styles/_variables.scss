@@ -4,7 +4,7 @@ $base-ease: ease-in-out;
 
 $background-color: $color-gray-50;
 $background-lighter-color: $color-white;
-$background-darker-color: transparentize($color-gray-200, 0.5);
+$background-darker-color: $color-purple-100;
 $background-darker-secondary-color: $color-gray-50;
 $background-dark-color: $color-purple-900;
 $text-color: $color-purple-800;
@@ -32,7 +32,7 @@ $edge-opacity-blurred: 0.2;
 $edge-opacity: 0.5;
 $edge-color: $color-purple-500;
 
-$btn-opacity-default: 0.7;
+$btn-opacity-default: 0.9;
 $btn-opacity-hover: 1;
 $btn-opacity-selected: 0.9;
 $btn-opacity-disabled: 0.25;

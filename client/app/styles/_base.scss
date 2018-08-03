@@ -208,9 +208,9 @@ a {
 }
 
 .header {
+  background-color: transparentize($color-purple-25, 0.2);
   z-index: $layer-front;
   padding: 15px 10px 0;
-  pointer-events: none;
   position: relative;
   width: 100%;
 
@@ -334,7 +334,6 @@ a {
   .topologies-item-main,
   .topologies-sub-item {
     pointer-events: all;
-
     color: $text-secondary-color;
     @extend .btn-opacity;
     cursor: pointer;
@@ -671,7 +670,7 @@ a {
   &-wrapper {
     position: fixed;
     display: flex;
-    z-index: $layer-front;
+    z-index: $layer-toolbar;
     right: $details-window-padding-left;
     top: 100px;
     bottom: 48px;
@@ -1371,9 +1370,11 @@ a {
 
 .status {
   padding: 2px 12px;
+  background-color: $body-background-color;
   border-radius: $border-radius-soft;
   color: $text-secondary-color;
   display: inline-block;
+  opacity: 0.9;
 
   &-icon {
     font-size: $font-size-normal;
