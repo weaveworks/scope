@@ -12,23 +12,8 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
-// connectionTrackerConfig are the config options for the endpoint tracker.
-type connectionTrackerConfig struct {
-	HostID       string
-	HostName     string
-	SpyProcs     bool
-	UseConntrack bool
-	WalkProc     bool
-	UseEbpfConn  bool
-	ProcRoot     string
-	BufferSize   int
-	ProcessCache *process.CachingWalker
-	Scanner      procspy.ConnectionScanner
-	DNSSnooper   *DNSSnooper
-}
-
 type connectionTracker struct {
-	conf            connectionTrackerConfig
+	conf            ReporterConfig
 	flowWalker      flowWalker // Interface
 	ebpfTracker     *EbpfTracker
 	reverseResolver *reverseResolver
@@ -37,7 +22,7 @@ type connectionTracker struct {
 	ebpfLastFailureTime time.Time
 }
 
-func newConnectionTracker(conf connectionTrackerConfig) connectionTracker {
+func newConnectionTracker(conf ReporterConfig) connectionTracker {
 	ct := connectionTracker{
 		conf:            conf,
 		reverseResolver: newReverseResolver(),

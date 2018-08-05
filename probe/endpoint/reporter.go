@@ -57,21 +57,9 @@ var SpyDuration = prometheus.NewSummaryVec(
 // with process (PID) information.
 func NewReporter(conf ReporterConfig) *Reporter {
 	return &Reporter{
-		conf: conf,
-		connectionTracker: newConnectionTracker(connectionTrackerConfig{
-			HostID:       conf.HostID,
-			HostName:     conf.HostName,
-			SpyProcs:     conf.SpyProcs,
-			UseConntrack: conf.UseConntrack,
-			WalkProc:     conf.WalkProc,
-			UseEbpfConn:  conf.UseEbpfConn,
-			ProcRoot:     conf.ProcRoot,
-			BufferSize:   conf.BufferSize,
-			ProcessCache: conf.ProcessCache,
-			Scanner:      conf.Scanner,
-			DNSSnooper:   conf.DNSSnooper,
-		}),
-		natMapper: makeNATMapper(newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, true /* natOnly */)),
+		conf:              conf,
+		connectionTracker: newConnectionTracker(conf),
+		natMapper:         makeNATMapper(newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, true /* natOnly */)),
 	}
 }
 
