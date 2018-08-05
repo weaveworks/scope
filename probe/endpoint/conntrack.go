@@ -28,7 +28,7 @@ type nilFlowWalker struct{}
 func (n nilFlowWalker) stop()                                  {}
 func (n nilFlowWalker) walkFlows(f func(conntrack.Conn, bool)) {}
 
-// conntrackWalker uses the conntrack command to track network connections and
+// conntrackWalker uses conntrack (via netlink) to track network connections and
 // implement flowWalker.
 type conntrackWalker struct {
 	sync.Mutex
