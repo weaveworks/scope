@@ -1,9 +1,7 @@
 package endpoint
 
 import (
-	"bufio"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"path/filepath"
 	"sync"
@@ -102,20 +100,10 @@ func (c *conntrackWalker) clearFlows() {
 	c.activeFlows = map[uint32]conntrack.Conn{}
 }
 
-func logPipe(prefix string, reader io.Reader) {
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		log.Error(prefix, scanner.Text())
-	}
-	if err := scanner.Err(); err != nil {
-		log.Error(prefix, err)
-	}
-}
-
 func (c *conntrackWalker) run() {
-	existingFlows, err := c.existingConnections()
+	existingFlows, err := conntrack.ConnectionsSize(c.bufferSize)
 	if err != nil {
-		log.Errorf("conntrack existingConnections error: %v", err)
+		log.Errorf("conntrack Connections error: %v", err)
 		return
 	}
 	for _, flow := range existingFlows {
@@ -127,17 +115,6 @@ func (c *conntrackWalker) run() {
 		log.Errorf("conntrack Follow error: %v", err)
 		return
 	}
-
-	c.Lock()
-	// We may have stopped in the mean time,
-	// so check to see if the channel is open
-	// under the lock.
-	select {
-	default:
-	case <-c.quit:
-		return
-	}
-	c.Unlock()
 
 	defer log.Infof("conntrack exiting")
 
@@ -154,14 +131,6 @@ func (c *conntrackWalker) run() {
 			c.handleFlow(f, false)
 		}
 	}
-}
-
-func (c *conntrackWalker) existingConnections() ([]conntrack.Conn, error) {
-	flows, err := conntrack.ConnectionsSize(c.bufferSize)
-	if err != nil {
-		return []conntrack.Conn{}, err
-	}
-	return flows, nil
 }
 
 func (c *conntrackWalker) stop() {
