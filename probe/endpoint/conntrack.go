@@ -14,6 +14,8 @@ import (
 const (
 	// From https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt
 	eventsPath = "sys/net/netfilter/nf_conntrack_events"
+	timeWait   = "TIME_WAIT"
+	tcpProto   = 6
 )
 
 // flowWalker is something that maintains flows, and provides an accessor
@@ -101,6 +103,12 @@ func (c *conntrackWalker) clearFlows() {
 }
 
 func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
+	// For now, we're only interested in tcp connections - there is too much udp
+	// traffic going on (every container talking to dns, for example) to
+	// render nicely. TODO: revisit this.
+	if f.Orig.Proto != tcpProto {
+		return false
+	}
 	return !(c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0)
 }
 
@@ -112,7 +120,7 @@ func (c *conntrackWalker) run() {
 	}
 	c.Lock()
 	for _, flow := range existingFlows {
-		if c.relevant(flow) && flow.TCPState != "TIME_WAIT" {
+		if c.relevant(flow) && flow.TCPState != timeWait {
 			c.activeFlows[flow.CtId] = flow
 		}
 	}
@@ -157,7 +165,7 @@ func (c *conntrackWalker) handleFlow(f conntrack.Conn) {
 	// incomplete or wrong.  See #1462.
 	switch {
 	case f.MsgType == conntrack.NfctMsgUpdate:
-		if f.TCPState != "TIME_WAIT" {
+		if f.TCPState != timeWait {
 			c.activeFlows[f.CtId] = f
 		} else if _, ok := c.activeFlows[f.CtId]; ok {
 			delete(c.activeFlows, f.CtId)
