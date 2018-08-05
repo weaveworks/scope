@@ -169,6 +169,7 @@ type Flow struct {
 	Original Meta
 	Reply    Meta
 	State    TCPState
+	Status   CtStatus
 	ID       uint32
 }
 
@@ -205,6 +206,8 @@ func parsePayload(b []byte) (*Flow, error) {
 			parseProtoinfo(attr.Msg, flow)
 		case CtaId:
 			flow.ID = binary.BigEndian.Uint32(attr.Msg)
+		case CtaStatus:
+			flow.Status = CtStatus(binary.BigEndian.Uint32(attr.Msg))
 		}
 	}
 	return flow, nil

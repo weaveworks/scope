@@ -60,6 +60,30 @@ func (s TCPState) String() string {
 	}[s]
 }
 
+// Taken from include/uapi/linux/netfilter/nf_conntrack_common.h
+type CtStatus uint32
+
+const (
+	IPS_EXPECTED CtStatus = 1 << iota
+	IPS_SEEN_REPLY
+	IPS_ASSURED
+	IPS_CONFIRMED
+	IPS_SRC_NAT
+	IPS_DST_NAT
+	IPS_SEQ_ADJUST
+	IPS_SRC_NAT_DONE
+	IPS_DST_NAT_DONE
+	IPS_DYING
+	IPS_FIXED_TIMEOUT
+	IPS_TEMPLATE
+	IPS_UNTRACKED
+	IPS_HELPER
+	IPS_OFFLOAD
+
+	IPS_NAT_MASK      = (IPS_DST_NAT | IPS_SRC_NAT)
+	IPS_NAT_DONE_MASK = (IPS_DST_NAT_DONE | IPS_SRC_NAT_DONE)
+)
+
 // Taken from libnetfilter_conntrack: git://git.netfilter.org/libnetfilter_conntrack
 // include/libnetfilter_conntrack/linux_nfnetlink_conntrack.h
 
