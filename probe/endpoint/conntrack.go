@@ -10,8 +10,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-
-	"github.com/weaveworks/scope/probe/endpoint/conntrack"
+	"github.com/typetypetype/conntrack"
 )
 
 const (
@@ -22,21 +21,21 @@ const (
 // flowWalker is something that maintains flows, and provides an accessor
 // method to walk them.
 type flowWalker interface {
-	walkFlows(f func(conntrack.Flow, bool))
+	walkFlows(f func(conntrack.Conn, bool))
 	stop()
 }
 
 type nilFlowWalker struct{}
 
 func (n nilFlowWalker) stop()                                  {}
-func (n nilFlowWalker) walkFlows(f func(conntrack.Flow, bool)) {}
+func (n nilFlowWalker) walkFlows(f func(conntrack.Conn, bool)) {}
 
 // conntrackWalker uses the conntrack command to track network connections and
 // implement flowWalker.
 type conntrackWalker struct {
 	sync.Mutex
-	activeFlows   map[uint32]conntrack.Flow // active flows in state != TIME_WAIT
-	bufferedFlows []conntrack.Flow          // flows coming out of activeFlows spend 1 walk cycle here
+	activeFlows   map[uint32]conntrack.Conn // active flows in state != TIME_WAIT
+	bufferedFlows []conntrack.Conn          // flows coming out of activeFlows spend 1 walk cycle here
 	bufferSize    int
 	natOnly       bool
 	quit          chan struct{}
@@ -51,7 +50,7 @@ func newConntrackFlowWalker(useConntrack bool, procRoot string, bufferSize int, 
 		return nilFlowWalker{}
 	}
 	result := &conntrackWalker{
-		activeFlows: map[uint32]conntrack.Flow{},
+		activeFlows: map[uint32]conntrack.Conn{},
 		bufferSize:  bufferSize,
 		natOnly:     natOnly,
 		quit:        make(chan struct{}),
@@ -100,7 +99,7 @@ func (c *conntrackWalker) clearFlows() {
 		c.bufferedFlows = append(c.bufferedFlows, f)
 	}
 
-	c.activeFlows = map[uint32]conntrack.Flow{}
+	c.activeFlows = map[uint32]conntrack.Conn{}
 }
 
 func logPipe(prefix string, reader io.Reader) {
@@ -123,9 +122,9 @@ func (c *conntrackWalker) run() {
 		c.handleFlow(flow, true)
 	}
 
-	events, stop, err := conntrack.Follow(c.bufferSize)
+	events, stop, err := conntrack.FollowSize(c.bufferSize, conntrack.NF_NETLINK_CONNTRACK_UPDATE|conntrack.NF_NETLINK_CONNTRACK_DESTROY)
 	if err != nil {
-		log.Errorf("conntract Follow error: %v", err)
+		log.Errorf("conntrack Follow error: %v", err)
 		return
 	}
 
@@ -157,10 +156,10 @@ func (c *conntrackWalker) run() {
 	}
 }
 
-func (c *conntrackWalker) existingConnections() ([]conntrack.Flow, error) {
-	flows, err := conntrack.Established(c.bufferSize)
+func (c *conntrackWalker) existingConnections() ([]conntrack.Conn, error) {
+	flows, err := conntrack.ConnectionsSize(c.bufferSize)
 	if err != nil {
-		return []conntrack.Flow{}, err
+		return []conntrack.Conn{}, err
 	}
 	return flows, nil
 }
@@ -171,7 +170,7 @@ func (c *conntrackWalker) stop() {
 	close(c.quit)
 }
 
-func (c *conntrackWalker) handleFlow(f conntrack.Flow, forceAdd bool) {
+func (c *conntrackWalker) handleFlow(f conntrack.Conn, forceAdd bool) {
 	c.Lock()
 	defer c.Unlock()
 
@@ -183,15 +182,15 @@ func (c *conntrackWalker) handleFlow(f conntrack.Flow, forceAdd bool) {
 	// incomplete or wrong.  See #1462.
 	switch {
 	case forceAdd || f.MsgType == conntrack.NfctMsgUpdate:
-		if f.State != conntrack.TCPStateTimeWait {
-			c.activeFlows[f.ID] = f
-		} else if _, ok := c.activeFlows[f.ID]; ok {
-			delete(c.activeFlows, f.ID)
+		if f.TCPState != "TIME_WAIT" {
+			c.activeFlows[f.CtId] = f
+		} else if _, ok := c.activeFlows[f.CtId]; ok {
+			delete(c.activeFlows, f.CtId)
 			c.bufferedFlows = append(c.bufferedFlows, f)
 		}
 	case f.MsgType == conntrack.NfctMsgDestroy:
-		if active, ok := c.activeFlows[f.ID]; ok {
-			delete(c.activeFlows, f.ID)
+		if active, ok := c.activeFlows[f.CtId]; ok {
+			delete(c.activeFlows, f.CtId)
 			c.bufferedFlows = append(c.bufferedFlows, active)
 		}
 	}
@@ -199,7 +198,7 @@ func (c *conntrackWalker) handleFlow(f conntrack.Flow, forceAdd bool) {
 
 // walkFlows calls f with all active flows and flows that have come and gone
 // since the last call to walkFlows
-func (c *conntrackWalker) walkFlows(f func(conntrack.Flow, bool)) {
+func (c *conntrackWalker) walkFlows(f func(conntrack.Conn, bool)) {
 	c.Lock()
 	defer c.Unlock()
 	for _, flow := range c.activeFlows {

@@ -5,18 +5,19 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/typetypetype/conntrack"
+
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/common/test"
-	"github.com/weaveworks/scope/probe/endpoint/conntrack"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/reflect"
 )
 
 type mockFlowWalker struct {
-	flows []conntrack.Flow
+	flows []conntrack.Conn
 }
 
-func (m *mockFlowWalker) walkFlows(f func(f conntrack.Flow, active bool)) {
+func (m *mockFlowWalker) walkFlows(f func(f conntrack.Conn, active bool)) {
 	for _, flow := range m.flows {
 		f(flow, true)
 	}
@@ -42,35 +43,27 @@ func TestNat(t *testing.T) {
 
 	// from the PoV of host1
 	{
-		f := conntrack.Flow{
+		f := conntrack.Conn{
 			MsgType: conntrack.NfctMsgUpdate,
-			Original: conntrack.Meta{
-				Layer3: conntrack.Layer3{
-					SrcIP: host2,
-					DstIP: host1,
-				},
-				Layer4: conntrack.Layer4{
-					SrcPort: 22222,
-					DstPort: 80,
-					Proto:   syscall.IPPROTO_TCP,
-				},
+			Orig: conntrack.Tuple{
+				Src:     host2,
+				Dst:     host1,
+				SrcPort: 22222,
+				DstPort: 80,
+				Proto:   syscall.IPPROTO_TCP,
 			},
-			Reply: conntrack.Meta{
-				Layer3: conntrack.Layer3{
-					SrcIP: c1,
-					DstIP: host2,
-				},
-				Layer4: conntrack.Layer4{
-					SrcPort: 80,
-					DstPort: 22222,
-					Proto:   syscall.IPPROTO_TCP,
-				},
+			Reply: conntrack.Tuple{
+				Src:     c1,
+				Dst:     host2,
+				SrcPort: 80,
+				DstPort: 22222,
+				Proto:   syscall.IPPROTO_TCP,
 			},
-			ID: 1,
+			CtId: 1,
 		}
 
 		ct := &mockFlowWalker{
-			flows: []conntrack.Flow{f},
+			flows: []conntrack.Conn{f},
 		}
 
 		have := report.MakeReport()
@@ -94,34 +87,26 @@ func TestNat(t *testing.T) {
 
 	// form the PoV of host2
 	{
-		f := conntrack.Flow{
+		f := conntrack.Conn{
 			MsgType: conntrack.NfctMsgUpdate,
-			Original: conntrack.Meta{
-				Layer3: conntrack.Layer3{
-					SrcIP: c2,
-					DstIP: host1,
-				},
-				Layer4: conntrack.Layer4{
-					SrcPort: 22222,
-					DstPort: 80,
-					Proto:   syscall.IPPROTO_TCP,
-				},
+			Orig: conntrack.Tuple{
+				Src:     c2,
+				Dst:     host1,
+				SrcPort: 22222,
+				DstPort: 80,
+				Proto:   syscall.IPPROTO_TCP,
 			},
-			Reply: conntrack.Meta{
-				Layer3: conntrack.Layer3{
-					SrcIP: host1,
-					DstIP: host2,
-				},
-				Layer4: conntrack.Layer4{
-					SrcPort: 80,
-					DstPort: 22223,
-					Proto:   syscall.IPPROTO_TCP,
-				},
+			Reply: conntrack.Tuple{
+				Src:     host1,
+				Dst:     host2,
+				SrcPort: 80,
+				DstPort: 22223,
+				Proto:   syscall.IPPROTO_TCP,
 			},
-			ID: 2,
+			CtId: 2,
 		}
 		ct := &mockFlowWalker{
-			flows: []conntrack.Flow{f},
+			flows: []conntrack.Conn{f},
 		}
 
 		have := report.MakeReport()

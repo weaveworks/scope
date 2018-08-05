@@ -4,7 +4,8 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/weaveworks/scope/probe/endpoint/conntrack"
+	"github.com/typetypetype/conntrack"
+
 	"github.com/weaveworks/scope/report"
 )
 
@@ -27,21 +28,21 @@ func makeNATMapper(fw flowWalker) natMapper {
 	return natMapper{fw}
 }
 
-func toMapping(f conntrack.Flow) *endpointMapping {
+func toMapping(f conntrack.Conn) *endpointMapping {
 	var mapping endpointMapping
-	if f.Original.Layer3.SrcIP.Equal(f.Reply.Layer3.DstIP) {
+	if f.Orig.Src.Equal(f.Reply.Dst) {
 		mapping = endpointMapping{
-			originalIP:    f.Reply.Layer3.SrcIP,
-			originalPort:  f.Reply.Layer4.SrcPort,
-			rewrittenIP:   f.Original.Layer3.DstIP,
-			rewrittenPort: f.Original.Layer4.DstPort,
+			originalIP:    f.Reply.Src,
+			originalPort:  f.Reply.SrcPort,
+			rewrittenIP:   f.Orig.Dst,
+			rewrittenPort: f.Orig.DstPort,
 		}
 	} else {
 		mapping = endpointMapping{
-			originalIP:    f.Original.Layer3.SrcIP,
-			originalPort:  f.Original.Layer4.SrcPort,
-			rewrittenIP:   f.Reply.Layer3.DstIP,
-			rewrittenPort: f.Reply.Layer4.DstPort,
+			originalIP:    f.Orig.Src,
+			originalPort:  f.Orig.SrcPort,
+			rewrittenIP:   f.Reply.Dst,
+			rewrittenPort: f.Reply.DstPort,
 		}
 	}
 
@@ -51,7 +52,7 @@ func toMapping(f conntrack.Flow) *endpointMapping {
 // applyNAT duplicates Nodes in the endpoint topology of a report, based on
 // the NAT table.
 func (n natMapper) applyNAT(rpt report.Report, scope string) {
-	n.flowWalker.walkFlows(func(f conntrack.Flow, _ bool) {
+	n.flowWalker.walkFlows(func(f conntrack.Conn, _ bool) {
 		mapping := toMapping(f)
 
 		realEndpointPort := strconv.Itoa(int(mapping.originalPort))
