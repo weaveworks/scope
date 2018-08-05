@@ -100,15 +100,23 @@ func (c *conntrackWalker) clearFlows() {
 	c.activeFlows = map[uint32]conntrack.Conn{}
 }
 
+func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
+	return !(c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0)
+}
+
 func (c *conntrackWalker) run() {
 	existingFlows, err := conntrack.ConnectionsSize(c.bufferSize)
 	if err != nil {
 		log.Errorf("conntrack Connections error: %v", err)
 		return
 	}
+	c.Lock()
 	for _, flow := range existingFlows {
-		c.handleFlow(flow, true)
+		if c.relevant(flow) && flow.TCPState != "TIME_WAIT" {
+			c.activeFlows[flow.CtId] = flow
+		}
 	}
+	c.Unlock()
 
 	events, stop, err := conntrack.FollowSize(c.bufferSize, conntrack.NF_NETLINK_CONNTRACK_UPDATE|conntrack.NF_NETLINK_CONNTRACK_DESTROY)
 	if err != nil {
@@ -128,7 +136,9 @@ func (c *conntrackWalker) run() {
 			if !ok {
 				return
 			}
-			c.handleFlow(f, false)
+			if c.relevant(f) {
+				c.handleFlow(f)
+			}
 		}
 	}
 }
@@ -139,18 +149,14 @@ func (c *conntrackWalker) stop() {
 	close(c.quit)
 }
 
-func (c *conntrackWalker) handleFlow(f conntrack.Conn, forceAdd bool) {
+func (c *conntrackWalker) handleFlow(f conntrack.Conn) {
 	c.Lock()
 	defer c.Unlock()
-
-	if c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0 {
-		return
-	}
 
 	// Ignore flows for which we never saw an update; they are likely
 	// incomplete or wrong.  See #1462.
 	switch {
-	case forceAdd || f.MsgType == conntrack.NfctMsgUpdate:
+	case f.MsgType == conntrack.NfctMsgUpdate:
 		if f.TCPState != "TIME_WAIT" {
 			c.activeFlows[f.CtId] = f
 		} else if _, ok := c.activeFlows[f.CtId]; ok {
