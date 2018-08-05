@@ -71,7 +71,7 @@ func NewReporter(conf ReporterConfig) *Reporter {
 			Scanner:      conf.Scanner,
 			DNSSnooper:   conf.DNSSnooper,
 		}),
-		natMapper: makeNATMapper(newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, "--any-nat")),
+		natMapper: makeNATMapper(newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, true /* natOnly */)),
 	}
 }
 

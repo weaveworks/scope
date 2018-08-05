@@ -79,7 +79,7 @@ func (t *connectionTracker) useProcfs() {
 		t.conf.Scanner = procspy.NewConnectionScanner(t.conf.ProcessCache, t.conf.SpyProcs)
 	}
 	if t.flowWalker == nil {
-		t.flowWalker = newConntrackFlowWalker(t.conf.UseConntrack, t.conf.ProcRoot, t.conf.BufferSize)
+		t.flowWalker = newConntrackFlowWalker(t.conf.UseConntrack, t.conf.ProcRoot, t.conf.BufferSize, false /* natOnly */)
 	}
 }
 
@@ -136,10 +136,13 @@ func (t *connectionTracker) existingFlows() map[string]fourTuple {
 		// log.Warnf("Not using conntrack: disabled")
 	} else if err := IsConntrackSupported(t.conf.ProcRoot); err != nil {
 		log.Warnf("Not using conntrack: not supported by the kernel: %s", err)
-	} else if existingFlows, err := conntrack.Established(t.conf.BufferSize); err != nil { // TODO: worry about --any-nat
+	} else if existingFlows, err := conntrack.Established(t.conf.BufferSize); err != nil {
 		log.Errorf("conntrack existingConnections error: %v", err)
 	} else {
 		for _, f := range existingFlows {
+			if (f.Status & conntrack.IPS_NAT_MASK) == 0 {
+				continue
+			}
 			tuple := flowToTuple(f)
 			seenTuples[tuple.key()] = tuple
 		}

@@ -38,12 +38,12 @@ type conntrackWalker struct {
 	activeFlows   map[uint32]conntrack.Flow // active flows in state != TIME_WAIT
 	bufferedFlows []conntrack.Flow          // flows coming out of activeFlows spend 1 walk cycle here
 	bufferSize    int
-	args          []string
+	natOnly       bool
 	quit          chan struct{}
 }
 
 // newConntracker creates and starts a new conntracker.
-func newConntrackFlowWalker(useConntrack bool, procRoot string, bufferSize int, args ...string) flowWalker {
+func newConntrackFlowWalker(useConntrack bool, procRoot string, bufferSize int, natOnly bool) flowWalker {
 	if !useConntrack {
 		return nilFlowWalker{}
 	} else if err := IsConntrackSupported(procRoot); err != nil {
@@ -53,7 +53,7 @@ func newConntrackFlowWalker(useConntrack bool, procRoot string, bufferSize int, 
 	result := &conntrackWalker{
 		activeFlows: map[uint32]conntrack.Flow{},
 		bufferSize:  bufferSize,
-		args:        args,
+		natOnly:     natOnly,
 		quit:        make(chan struct{}),
 	}
 	go result.loop()
@@ -174,6 +174,10 @@ func (c *conntrackWalker) stop() {
 func (c *conntrackWalker) handleFlow(f conntrack.Flow, forceAdd bool) {
 	c.Lock()
 	defer c.Unlock()
+
+	if c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0 {
+		return
+	}
 
 	// Ignore flows for which we never saw an update; they are likely
 	// incomplete or wrong.  See #1462.
