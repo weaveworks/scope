@@ -277,15 +277,17 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 		ips = append(ips, c.container.NetworkSettings.IPAddress)
 	}
 
-	// Fetch IP addresses from the container's namespace
-	cidrs, err := namespaceIPAddresses(c.container.State.Pid)
-	if err != nil {
-		log.Debugf("container %s: failed to get addresses: %s", c.container.ID, err)
-	}
-	for _, cidr := range cidrs {
-		// This address can duplicate an address fetched from Docker earlier,
-		// but we eventually turn the lists into sets which will remove duplicates.
-		ips = append(ips, cidr.IP.String())
+	if c.container.State.Running && c.container.State.Pid != 0 {
+		// Fetch IP addresses from the container's namespace
+		cidrs, err := namespaceIPAddresses(c.container.State.Pid)
+		if err != nil {
+			log.Debugf("container %s: failed to get addresses: %s", c.container.ID, err)
+		}
+		for _, cidr := range cidrs {
+			// This address can duplicate an address fetched from Docker earlier,
+			// but we eventually turn the lists into sets which will remove duplicates.
+			ips = append(ips, cidr.IP.String())
+		}
 	}
 
 	// For now, for the proof-of-concept, we just add networks as a set of
