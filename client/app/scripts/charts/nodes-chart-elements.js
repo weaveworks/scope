@@ -148,7 +148,7 @@ class NodesChartElements extends React.Component {
   }
 
   renderNode(node) {
-    const { isAnimated, contrastMode } = this.props;
+    const { isAnimated } = this.props;
     return (
       <NodeContainer
         matches={node.get('matches')}
@@ -157,18 +157,17 @@ class NodesChartElements extends React.Component {
         focused={node.get('focused')}
         highlighted={node.get('highlighted')}
         shape={node.get('shape')}
-        stack={node.get('stack')}
+        stacked={node.get('stack')}
         key={node.get('id')}
         id={node.get('id')}
         label={node.get('label')}
         labelMinor={node.get('labelMinor')}
         pseudo={node.get('pseudo')}
         rank={node.get('rank')}
-        dx={node.get('x')}
-        dy={node.get('y')}
-        scale={node.get('scale')}
+        x={node.get('x')}
+        y={node.get('y')}
+        size={100 * node.get('scale')}
         isAnimated={isAnimated}
-        contrastMode={contrastMode}
       />
     );
   }
