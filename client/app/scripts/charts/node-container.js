@@ -1,10 +1,16 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { List as makeList } from 'immutable';
 import { GraphNode } from 'weaveworks-ui-components';
 
+import {
+  getMetricValue,
+  getMetricColor,
+} from '../utils/metric-utils';
 import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { getNodeColor } from '../utils/color-utils';
+import MatchedResults from '../components/matched-results';
 import { GRAPH_VIEW_MODE } from '../constants/naming';
 
 class NodeContainer extends React.Component {
@@ -22,9 +28,21 @@ class NodeContainer extends React.Component {
     this.props.clickNode(nodeId, this.props.label, this.ref.getBoundingClientRect());
   };
 
+  renderAppendedInfo = () => {
+    const matchedMetadata = this.props.matches.get('metadata', makeList());
+    const matchedParents = this.props.matches.get('parents', makeList());
+    const matchedDetails = matchedMetadata.concat(matchedParents);
+    return (
+      <MatchedResults matches={matchedDetails} />
+    );
+  };
+
   render() {
-    const { rank, label, pseudo } = this.props;
-    console.log('rerender');
+    const {
+      rank, label, pseudo, metric
+    } = this.props;
+    const { hasMetric, height, formattedValue } = getMetricValue(metric);
+    const metricFormattedValue = !pseudo && hasMetric ? formattedValue : '';
 
     return (
       <GraphNode
@@ -39,7 +57,12 @@ class NodeContainer extends React.Component {
         isAnimated={this.props.isAnimated}
         contrastMode={this.props.contrastMode}
         forceSvg={this.props.exportingGraph}
+        searchTerms={this.props.searchTerms}
+        metricColor={getMetricColor(metric)}
+        metricFormattedValue={metricFormattedValue}
+        metricNumericValue={height}
         graphNodeRef={this.saveRef}
+        renderAppendedInfo={this.renderAppendedInfo}
         onMouseEnter={this.props.enterNode}
         onMouseLeave={this.props.leaveNode}
         onClick={this.handleMouseClick}
@@ -52,6 +75,7 @@ class NodeContainer extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    searchTerms: [state.get('searchQuery')],
     exportingGraph: state.get('exportingGraph'),
     showingNetworks: state.get('showingNetworks'),
     currentTopology: state.get('currentTopology'),
