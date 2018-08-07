@@ -13,6 +13,8 @@ import { getNodeColor } from '../utils/color-utils';
 import MatchedResults from '../components/matched-results';
 import { GRAPH_VIEW_MODE } from '../constants/naming';
 
+import NodeNetworksOverlay from './node-networks-overlay';
+
 class NodeContainer extends React.Component {
   saveRef = (ref) => {
     this.ref = ref;
@@ -28,6 +30,15 @@ class NodeContainer extends React.Component {
     this.props.clickNode(nodeId, this.props.label, this.ref.getBoundingClientRect());
   };
 
+  renderPrependedInfo = () => {
+    const { showingNetworks, networks } = this.props;
+    if (!showingNetworks) return null;
+
+    return (
+      <NodeNetworksOverlay networks={networks} />
+    );
+  };
+
   renderAppendedInfo = () => {
     const matchedMetadata = this.props.matches.get('metadata', makeList());
     const matchedParents = this.props.matches.get('parents', makeList());
@@ -39,10 +50,11 @@ class NodeContainer extends React.Component {
 
   render() {
     const {
-      rank, label, pseudo, metric
+      rank, label, pseudo, metric, showingNetworks, networks
     } = this.props;
     const { hasMetric, height, formattedValue } = getMetricValue(metric);
     const metricFormattedValue = !pseudo && hasMetric ? formattedValue : '';
+    const labelOffset = (showingNetworks && networks) ? 10 : 0;
 
     return (
       <GraphNode
@@ -50,6 +62,7 @@ class NodeContainer extends React.Component {
         shape={this.props.shape}
         label={this.props.label}
         labelMinor={this.props.labelMinor}
+        labelOffset={labelOffset}
         stacked={this.props.stacked}
         highlighted={this.props.highlighted}
         color={getNodeColor(rank, label, pseudo)}
@@ -61,11 +74,12 @@ class NodeContainer extends React.Component {
         metricColor={getMetricColor(metric)}
         metricFormattedValue={metricFormattedValue}
         metricNumericValue={height}
-        graphNodeRef={this.saveRef}
+        renderPrependedInfo={this.renderPrependedInfo}
         renderAppendedInfo={this.renderAppendedInfo}
         onMouseEnter={this.props.enterNode}
         onMouseLeave={this.props.leaveNode}
         onClick={this.handleMouseClick}
+        graphNodeRef={this.saveRef}
         x={this.props.x}
         y={this.props.y}
       />
