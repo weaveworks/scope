@@ -39,7 +39,7 @@ spec:
           securityContext:
             privileged: true
           volumeMounts:
-            - name: crio-socket
+            - name: cri-socket
               mountPath: /var/run/crio/crio.sock
             - name: scope-plugins
               mountPath: /var/run/scope/plugins
