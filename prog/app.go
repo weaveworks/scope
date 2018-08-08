@@ -23,6 +23,7 @@ import (
 	"github.com/weaveworks/common/middleware"
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/common/signals"
+	"github.com/weaveworks/common/tracing"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/app/multitenant"
@@ -201,6 +202,9 @@ func appMain(flags appFlags) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 	runtime.SetBlockProfileRate(flags.blockProfileRate)
+
+	traceCloser := tracing.NewFromEnv("scope-app")
+	defer traceCloser.Close()
 
 	defer log.Info("app exiting")
 	rand.Seed(time.Now().UnixNano())
