@@ -308,7 +308,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.probe.dockerBridge, "probe.docker.bridge", "docker0", "the docker bridge name")
 
 	// CRI
-	flag.BoolVar(&flags.probe.criEnabled, "probe.cri", true, "collect CRI-related attributes for processes")
+	flag.BoolVar(&flags.probe.criEnabled, "probe.cri", false, "collect CRI-related attributes for processes")
 	flag.StringVar(&flags.probe.criEndpoint, "probe.cri.endpoint", "unix///var/run/dockershim.sock", "The endpoint to connect to the CRI")
 
 	// K8s
