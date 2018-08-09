@@ -1655,7 +1655,7 @@
 			"importpath": "github.com/opentracing/opentracing-go",
 			"repository": "https://github.com/opentracing/opentracing-go",
 			"vcs": "git",
-			"revision": "902ca977fd85455c364050f985eba376b44315f0",
+			"revision": "bd9c3193394760d98b2fa6ebb2291f0cd1d06a7d",
 			"branch": "master",
 			"notests": true
 		},
