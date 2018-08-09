@@ -21,6 +21,7 @@ import {
   layoutEdgesSelector
 } from '../selectors/graph-view/layout';
 
+import { NODE_BASE_SIZE } from '../constants/styles';
 import {
   BLURRED_EDGES_LAYER,
   BLURRED_NODES_LAYER,
@@ -166,7 +167,7 @@ class NodesChartElements extends React.Component {
         rank={node.get('rank')}
         x={node.get('x')}
         y={node.get('y')}
-        size={100 * node.get('scale')}
+        size={node.get('scale') * NODE_BASE_SIZE}
         isAnimated={isAnimated}
       />
     );
