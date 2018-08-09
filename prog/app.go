@@ -203,7 +203,7 @@ func appMain(flags appFlags) {
 	setLogFormatter(flags.logPrefix)
 	runtime.SetBlockProfileRate(flags.blockProfileRate)
 
-	traceCloser := tracing.NewFromEnv("scope-app")
+	traceCloser := tracing.NewFromEnv(fmt.Sprintf("scope-%s", flags.serviceName))
 	defer traceCloser.Close()
 
 	defer log.Info("app exiting")
