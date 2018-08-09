@@ -60,8 +60,7 @@ func (i Instrument) Wrap(next http.Handler) http.Handler {
 //   2. The request matches an unamed gorilla mux router.  Munge the path
 //      template such that templates like '/api/{org}/foo' come out as
 //      'api_org_foo'.
-//   3. The request doesn't match a mux route.  Munge the Path in the same
-//      manner as (2).
+//   3. The request doesn't match a mux route. Return "other"
 // We do all this as we do not wish to emit high cardinality labels to
 // prometheus.
 func (i Instrument) getRouteName(r *http.Request) string {
@@ -74,7 +73,7 @@ func (i Instrument) getRouteName(r *http.Request) string {
 			return MakeLabelValue(tmpl)
 		}
 	}
-	return MakeLabelValue(r.URL.Path)
+	return "other"
 }
 
 var invalidChars = regexp.MustCompile(`[^a-zA-Z0-9]+`)
