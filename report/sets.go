@@ -105,7 +105,29 @@ func (m Sets) Merge(n Sets) Sets {
 	}
 
 	i, j := 0, 0
+loop:
+	for i < len(m) {
+		switch {
+		case j >= len(n):
+			return m
+		case m[i].key == n[j].key:
+			if !m[i].Value.ContainsSet(n[j].Value) {
+				break loop
+			}
+			i++
+			j++
+		case m[i].key < n[j].key:
+			i++
+		default:
+			break loop
+		}
+	}
+	if i >= len(m) && j >= len(n) {
+		return m
+	}
+
 	out := make([]stringSetEntry, i, len(m))
+	copy(out, m[:i])
 
 	for i < len(m) {
 		switch {
