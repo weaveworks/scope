@@ -1725,8 +1725,8 @@
 		{
 			"importpath": "github.com/prometheus/client_golang/prometheus",
 			"repository": "https://github.com/prometheus/client_golang",
-			"vcs": "",
-			"revision": "e51041b3fa41cece0dca035740ba6411905be473",
+			"vcs": "git",
+			"revision": "5b23715facdef1452016bae512489c3cdf82458c",
 			"branch": "master",
 			"path": "/prometheus"
 		},
@@ -1749,8 +1749,8 @@
 		{
 			"importpath": "github.com/prometheus/common/model",
 			"repository": "https://github.com/prometheus/common",
-			"vcs": "",
-			"revision": "369ec0491ce7be15431bd4f23b7fa17308f94190",
+			"vcs": "git",
+			"revision": "c7de2306084e37d54b8be01f3541a8464345e9a5",
 			"branch": "master",
 			"path": "/model"
 		},
