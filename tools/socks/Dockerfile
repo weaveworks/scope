@@ -1,5 +1,5 @@
 FROM gliderlabs/alpine
-LABEL maintainer="Weaveworks Inc <help@weave.works>"
+MAINTAINER Weaveworks Inc <help@weave.works>
 WORKDIR /
 COPY proxy /
 EXPOSE 8000
