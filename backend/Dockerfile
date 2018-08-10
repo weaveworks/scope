@@ -1,7 +1,7 @@
 FROM golang:1.10.2-stretch
 ENV SCOPE_SKIP_UI_ASSETS true
 RUN apt-get update && \
-	apt-get install -y libpcap-dev python-requests time file shellcheck git gcc-arm-linux-gnueabihf curl build-essential python-pip && \
+	apt-get install -y libpcap-dev time file shellcheck git gcc-arm-linux-gnueabihf curl build-essential python-pip && \
 	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN go clean -i net && \
 	go install -tags netgo std && \
@@ -18,7 +18,7 @@ RUN go get -tags netgo \
 		github.com/client9/misspell/cmd/misspell && \
 	chmod a+wr --recursive /usr/local/go && \
 	rm -rf /go/pkg/ /go/src/
-RUN pip install yapf==0.16.2 flake8==3.3.0
+RUN pip install yapf==0.16.2 flake8==3.3.0 requests==2.19.1
 COPY build.sh /
 ENTRYPOINT ["/build.sh"]
 
