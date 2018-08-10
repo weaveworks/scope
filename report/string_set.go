@@ -151,14 +151,15 @@ loop:
 	return result, false
 }
 
-func (v StringSet) CodecEncodeSelf(encoder *codec.Encoder) {
+// CodecEncodeSelf implements codec.Selfer
+func (s StringSet) CodecEncodeSelf(encoder *codec.Encoder) {
 	z, r := codec.GenHelperEncoder(encoder)
-	if v == nil {
+	if s == nil {
 		r.EncodeNil()
 		return
 	}
-	r.EncodeArrayStart(len(v))
-	for _, yyv1 := range v {
+	r.EncodeArrayStart(len(s))
+	for _, yyv1 := range s {
 		z.EncSendContainerState(containerArrayElem)
 		r.EncodeString(cUTF8, yyv1)
 	}
@@ -166,25 +167,24 @@ func (v StringSet) CodecEncodeSelf(encoder *codec.Encoder) {
 }
 
 // CodecDecodeSelf implements codec.Selfer
-func (v *StringSet) CodecDecodeSelf(decoder *codec.Decoder) {
+func (s *StringSet) CodecDecodeSelf(decoder *codec.Decoder) {
 	z, r := codec.GenHelperDecoder(decoder)
 	yyh1, length := z.DecSliceHelperStart()
 	if length == 0 {
-		*v = []string{}
+		*s = []string{}
 		return
 	} else if length < 0 {
-		*v = make([]string, 0, 8)
+		*s = make([]string, 0, 8)
 	} else {
-		*v = make([]string, 0, length)
+		*s = make([]string, 0, length)
 	}
 	for i := 0; length < 0 || i < length; i++ {
 		if length < 0 && r.CheckBreak() {
 			break
 		}
 		yyh1.ElemContainerState(i)
-		b := r.DecodeStringAsBytes()
-		s := string(b)
-		*v = append(*v, s)
+		str := r.DecodeString()
+		*s = append(*s, str)
 	}
 	yyh1.End()
 }
