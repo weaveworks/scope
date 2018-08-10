@@ -7,11 +7,13 @@ import (
 	"os"
 
 	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerprom "github.com/uber/jaeger-lib/metrics/prometheus"
 )
 
 // installJaeger registers Jaeger as the OpenTracing implementation.
 func installJaeger(serviceName string, cfg *jaegercfg.Configuration) io.Closer {
-	closer, err := cfg.InitGlobalTracer(serviceName)
+	metricsFactory := jaegerprom.New()
+	closer, err := cfg.InitGlobalTracer(serviceName, jaegercfg.Metrics(metricsFactory))
 	if err != nil {
 		fmt.Printf("Could not initialize jaeger tracer: %s\n", err.Error())
 		os.Exit(1)

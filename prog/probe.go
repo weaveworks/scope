@@ -18,6 +18,7 @@ import (
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/common/sanitize"
 	"github.com/weaveworks/common/signals"
+	"github.com/weaveworks/common/tracing"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/weave"
@@ -92,6 +93,9 @@ func maybeExportProfileData(flags probeFlags) {
 func probeMain(flags probeFlags, targets []appclient.Target) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
+
+	traceCloser := tracing.NewFromEnv("scope-probe")
+	defer traceCloser.Close()
 
 	// Setup in memory metrics sink
 	inm := metrics.NewInmemSink(time.Minute, 2*time.Minute)

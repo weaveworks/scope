@@ -1655,7 +1655,7 @@
 			"importpath": "github.com/opentracing/opentracing-go",
 			"repository": "https://github.com/opentracing/opentracing-go",
 			"vcs": "git",
-			"revision": "902ca977fd85455c364050f985eba376b44315f0",
+			"revision": "bd9c3193394760d98b2fa6ebb2291f0cd1d06a7d",
 			"branch": "master",
 			"notests": true
 		},
@@ -1725,8 +1725,8 @@
 		{
 			"importpath": "github.com/prometheus/client_golang/prometheus",
 			"repository": "https://github.com/prometheus/client_golang",
-			"vcs": "",
-			"revision": "e51041b3fa41cece0dca035740ba6411905be473",
+			"vcs": "git",
+			"revision": "5b23715facdef1452016bae512489c3cdf82458c",
 			"branch": "master",
 			"path": "/prometheus"
 		},
@@ -1749,8 +1749,8 @@
 		{
 			"importpath": "github.com/prometheus/common/model",
 			"repository": "https://github.com/prometheus/common",
-			"vcs": "",
-			"revision": "369ec0491ce7be15431bd4f23b7fa17308f94190",
+			"vcs": "git",
+			"revision": "c7de2306084e37d54b8be01f3541a8464345e9a5",
 			"branch": "master",
 			"path": "/model"
 		},
@@ -1949,7 +1949,7 @@
 			"importpath": "github.com/weaveworks/common",
 			"repository": "https://github.com/weaveworks/common",
 			"vcs": "git",
-			"revision": "4d96fd8dcf2c7b417912c6219b310112cb4a4626",
+			"revision": "54b7e30527f846e1515fb5a85d0ff5674f05a267",
 			"branch": "HEAD",
 			"notests": true
 		},
