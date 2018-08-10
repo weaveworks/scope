@@ -2,6 +2,7 @@
 
 Included in this repo are tools shared by weave.git and scope.git.  They include
 
+- ```bazel-rules```: Bazel build rules used in our projects
 - ```build```: a set of docker base-images for building weave
   projects. These should be used instead of giving each project its
   own build image.
@@ -32,7 +33,11 @@ Included in this repo are tools shared by weave.git and scope.git.  They include
 ## Requirements
 
 - ```lint``` requires shfmt to lint sh files; get shfmt with
-  ```go get -u gopkg.in/mvdan/sh.v1/cmd/shfmt```
+```
+curl -fsSLo shfmt https://github.com/mvdan/sh/releases/download/v1.3.0/shfmt_v1.3.0_linux_amd64
+chmod +x shfmt
+```
+  (we pin that version, and it doesn't build from the source repo any more)
 
 ## Using build-tools.git
 
@@ -50,3 +55,14 @@ To update the code in build-tools.git, the process is therefore:
 - PR into build-tools.git, go through normal review process etc.
 - Do `git subtree pull --prefix tools https://github.com/weaveworks/build-tools.git master --squash`
   in your repo, and PR that.
+
+## <a name="help"></a>Getting Help
+
+If you have any questions about, feedback for or problems with `build-tools`:
+
+- Invite yourself to the <a href="https://weaveworks.github.io/community-slack/" target="_blank"> #weave-community </a> slack channel.
+- Ask a question on the <a href="https://weave-community.slack.com/messages/general/"> #weave-community</a> slack channel.
+- Send an email to <a href="mailto:weave-users@weave.works">weave-users@weave.works</a>
+- <a href="https://github.com/weaveworks/build-tools/issues/new">File an issue.</a>
+
+Your feedback is always welcome!

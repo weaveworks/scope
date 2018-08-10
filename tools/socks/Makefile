@@ -2,6 +2,7 @@
 
 IMAGE_TAR=image.tar
 IMAGE_NAME=weaveworks/socksproxy
+GIT_REVISION := $(shell git rev-parse HEAD)
 PROXY_EXE=proxy
 NETGO_CHECK=@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	rm $@; \
@@ -15,7 +16,7 @@ NETGO_CHECK=@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 all: $(IMAGE_TAR)
 
 $(IMAGE_TAR): Dockerfile $(PROXY_EXE)
-	docker build -t $(IMAGE_NAME) .
+	docker build --build-arg=revision=$(GIT_REVISION) -t $(IMAGE_NAME) .
 	docker save $(IMAGE_NAME):latest > $@
 
 $(PROXY_EXE): *.go
