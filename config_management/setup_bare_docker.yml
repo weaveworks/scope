@@ -1,9 +1,9 @@
 ---
 ################################################################################
-# Install Docker from Docker's official repository and Weave Net.
+# Install Docker from Docker's official repository
 ################################################################################
 
-- name: install docker and weave net for development
+- name: install docker
   hosts: all
   gather_facts: false  # required in case Python is not available on the host
   become: true
@@ -13,9 +13,4 @@
     - include: library/setup_ansible_dependencies.yml
 
   roles:
-    - setup-apt
-    - dev-tools
-    - golang-from-tarball
     - docker-install
-    # Do not run this role when building with Vagrant, as sources have been already checked out:
-    - { role: weave-net-sources, when: "ansible_user != 'vagrant'" }
