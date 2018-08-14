@@ -167,11 +167,11 @@ export function getRouter(dispatch, initialState) {
   page('/state/:state', (ctx) => {
     const state = JSON.parse(decodeURL(ctx.params.state));
     const dirtyOptions = detectOldOptions(state.topologyOptions);
-    if (dirtyOptions) {
-      dispatch(route(initialState));
-    } else {
-      dispatch(route(state));
-    }
+    const nextState = dirtyOptions ? initialState : state;
+
+    // back up state in storage and redirect
+    storageSet(STORAGE_STATE_KEY, encodeURL(stableStringify(state)));
+    dispatch(route(nextState));
   });
 
   return page;
