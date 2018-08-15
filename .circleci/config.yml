@@ -1,16 +1,14 @@
 version: 2
 
 defaults: &defaults
-  steps:
-    - run:
-      name: Setup Environment Variables
-      command: |
-        echo 'export GOPATH="/home/ubuntu"' >> $BASH_ENV
-        echo 'export SRCDIR="/home/ubuntu/src/github.com/weaveworks/scope"' >> $BASH_ENV
-        echo 'export PATH="$PATH:$HOME/.local/bin"' >> $BASH_ENV
-        echo 'export CLOUDSDK_CORE_DISABLE_PROMPTS="1"' >> $BASH_ENV
-        echo 'export SCOPE_UI_BUILD="$HOME/docker/scope_ui_build.tar"' >> $BASH_ENV
-        echo 'export IMAGES="scope cloud-agent"' >> $BASH_ENV
+  environment:
+    GOPATH: /home/ubuntu
+    SRCDIR: /home/ubuntu/src/github.com/weaveworks/scope
+    PATH: $PATH:$HOME/.local/bin
+    CLOUDSDK_CORE_DISABLE_PROMPTS: 1
+    SCOPE_UI_BUILD: $HOME/docker/scope_ui_build.tar
+    IMAGES: scope cloud-agent
+
 jobs:
   build:
     <<: *defaults
@@ -56,42 +54,44 @@ jobs:
     #   services:
     #     - docker
 
-    deploy:
-      <<: *defaults
-      steps:
-        - checkout
-        - run: |
-            test -z "${DOCKER_USER}" || (
-              docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
-              (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" = "weaveworks" || (
-                for IMAGE in $IMAGES; do
-                  docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest &&
-                  docker tag weaveworks/$IMAGE:$(./tools/image-tag) ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
-                done
-              )) &&
+  deploy:
+    <<: *defaults
+    machine: true
+    steps:
+      - checkout
+      - run: |
+          test -z "${DOCKER_USER}" || (
+            docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
+            (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" = "weaveworks" || (
               for IMAGE in $IMAGES; do
-                docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE &&
-                docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
+                docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest &&
+                docker tag weaveworks/$IMAGE:$(./tools/image-tag) ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
               done
-            )
-        - run: |
-            test -z "${QUAY_USER}" || (
-              docker login -e '.' -u "$QUAY_USER" -p "$QUAY_PASSWORD" quay.io &&
-              docker tag weaveworks/scope:$(./tools/image-tag) "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)" &&
-              docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
-            )
-        - run: test -z "${UI_BUCKET_KEY_ID}" || (cd $SRCDIR && make ui-upload && make ui-pkg-upload)
+            )) &&
+            for IMAGE in $IMAGES; do
+              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE &&
+              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
+            done
+          )
+      - run: |
+          test -z "${QUAY_USER}" || (
+            docker login -e '.' -u "$QUAY_USER" -p "$QUAY_PASSWORD" quay.io &&
+            docker tag weaveworks/scope:$(./tools/image-tag) "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)" &&
+            docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
+          )
+      - run: test -z "${UI_BUCKET_KEY_ID}" || (cd $SRCDIR && make ui-upload && make ui-pkg-upload)
 
-    deploy-dev:
-      <<: *defaults
-      steps:
-        - checkout
-        - run: >
-            test -z "${DEPLOY_BRANCH}" || test -z "${DOCKER_USER}" || (
-              docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
-              docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-} &&
-              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-}
-            )
+  deploy-dev:
+    <<: *defaults
+    machine: true
+    steps:
+      - checkout
+      - run: >
+          test -z "${DEPLOY_BRANCH}" || test -z "${DOCKER_USER}" || (
+            docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
+            docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-} &&
+            docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-}
+          )
 workflows:
   version: 2
   test_and_deploy:
