@@ -150,6 +150,10 @@ class NodesChartElements extends React.Component {
 
   renderNode(node) {
     const { isAnimated } = this.props;
+    // old versions of scope reports have a node shape of `storagesheet`
+    // if so, normalise to `sheet`
+    const shape = node.get('shape') === 'storagesheet' ? 'sheet' : node.get('shape');
+
     return (
       <NodeContainer
         matches={node.get('matches')}
@@ -157,7 +161,7 @@ class NodesChartElements extends React.Component {
         metric={node.get('metric')}
         focused={node.get('focused')}
         highlighted={node.get('highlighted')}
-        shape={node.get('shape')}
+        shape={shape}
         stacked={node.get('stack')}
         key={node.get('id')}
         id={node.get('id')}
