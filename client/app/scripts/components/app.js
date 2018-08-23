@@ -31,6 +31,7 @@ import {
   setMonitorState,
   setTableView,
   setResourceView,
+  setStoreViewState,
   shutdown,
   setViewportDimensions,
   getTopologiesWithInitialPoll,
@@ -64,6 +65,7 @@ class App extends React.Component {
     super(props, context);
 
     this.props.dispatch(setMonitorState(this.props.monitor));
+    this.props.dispatch(setStoreViewState(!this.props.disableStoreViewState));
 
     this.setViewportDimensions = this.setViewportDimensions.bind(this);
     this.handleResize = debounce(this.setViewportDimensions, VIEWPORT_RESIZE_DEBOUNCE_INTERVAL);
@@ -79,7 +81,7 @@ class App extends React.Component {
     window.addEventListener('keypress', this.onKeyPress);
     window.addEventListener('keyup', this.onKeyUp);
 
-    this.router = getRouter(this.props.dispatch, this.props.urlState);
+    this.router = this.props.dispatch(getRouter(this.props.urlState));
     this.router.start({ hashbang: true });
 
     if (!this.props.routeSet || process.env.WEAVE_CLOUD) {
@@ -101,6 +103,9 @@ class App extends React.Component {
   componentWillReceiveProps(nextProps) {
     if (nextProps.monitor !== this.props.monitor) {
       this.props.dispatch(setMonitorState(nextProps.monitor));
+    }
+    if (nextProps.disableStoreViewState !== this.props.disableStoreViewState) {
+      this.props.dispatch(setStoreViewState(!nextProps.disableStoreViewState));
     }
   }
 
@@ -267,12 +272,14 @@ App.propTypes = {
   renderTimeTravel: PropTypes.func,
   renderNodeDetailsExtras: PropTypes.func,
   monitor: PropTypes.bool,
+  disableStoreViewState: PropTypes.bool,
 };
 
 App.defaultProps = {
   renderTimeTravel: () => <TimeTravelWrapper />,
   renderNodeDetailsExtras: () => null,
   monitor: false,
+  disableStoreViewState: false,
 };
 
 export default connect(mapStateToProps)(App);

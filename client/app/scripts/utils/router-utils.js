@@ -37,6 +37,14 @@ export function parseHashState(hash = window.location.hash) {
   return JSON.parse(decodeURL(urlStateString));
 }
 
+export function clearStoredViewState() {
+  storageSet(STORAGE_STATE_KEY, '');
+}
+
+function isStoreViewStateEnabled(state) {
+  return state.get('storeViewState');
+}
+
 function shouldReplaceState(prevState, nextState) {
   // Opening a new terminal while an existing one is open.
   const terminalToTerminal = (prevState.controlPipe && nextState.controlPipe);
@@ -116,7 +124,9 @@ export function updateRoute(getState) {
   if (stateUrl === prevStateUrl) return;
 
   // back up state in storage as well
-  storageSet(STORAGE_STATE_KEY, stateUrl);
+  if (isStoreViewStateEnabled(getState())) {
+    storageSet(STORAGE_STATE_KEY, stateUrl);
+  }
 
   if (shouldReplaceState(prevState, state)) {
     // Replace the top of the history rather than pushing on a new item.
@@ -141,38 +151,43 @@ function detectOldOptions(topologyOptions) {
 }
 
 
-export function getRouter(dispatch, initialState) {
-  // strip any trailing '/'s.
-  page.base(window.location.pathname.replace(/\/$/, ''));
+export function getRouter(initialState) {
+  return (dispatch, getState) => {
+    // strip any trailing '/'s.
+    page.base(window.location.pathname.replace(/\/$/, ''));
 
-  page('/', () => {
-    // recover from storage state on empty URL
-    const storageState = storageGet(STORAGE_STATE_KEY);
-    if (storageState) {
-      const parsedState = JSON.parse(decodeURL(storageState));
-      const dirtyOptions = detectOldOptions(parsedState.topologyOptions);
-      if (dirtyOptions) {
-        dispatch(route(initialState));
+    page('/', () => {
+      // recover from storage state on empty URL
+      const storageState = storageGet(STORAGE_STATE_KEY);
+      if (storageState && isStoreViewStateEnabled(getState())) {
+        const parsedState = JSON.parse(decodeURL(storageState));
+        const dirtyOptions = detectOldOptions(parsedState.topologyOptions);
+        if (dirtyOptions) {
+          dispatch(route(initialState));
+        } else {
+          const mergedState = Object.assign(initialState, parsedState);
+          // push storage state to URL
+          window.location.hash = `!/state/${stableStringify(mergedState)}`;
+          dispatch(route(mergedState));
+        }
       } else {
-        const mergedState = Object.assign(initialState, parsedState);
-        // push storage state to URL
-        window.location.hash = `!/state/${stableStringify(mergedState)}`;
-        dispatch(route(mergedState));
+        dispatch(route(initialState));
       }
-    } else {
-      dispatch(route(initialState));
-    }
-  });
+    });
 
-  page('/state/:state', (ctx) => {
-    const state = JSON.parse(decodeURL(ctx.params.state));
-    const dirtyOptions = detectOldOptions(state.topologyOptions);
-    const nextState = dirtyOptions ? initialState : state;
+    page('/state/:state', (ctx) => {
+      const state = JSON.parse(decodeURL(ctx.params.state));
+      const dirtyOptions = detectOldOptions(state.topologyOptions);
+      const nextState = dirtyOptions ? initialState : state;
 
-    // back up state in storage and redirect
-    storageSet(STORAGE_STATE_KEY, encodeURL(stableStringify(state)));
-    dispatch(route(nextState));
-  });
+      // back up state in storage and redirect
+      if (isStoreViewStateEnabled(getState())) {
+        storageSet(STORAGE_STATE_KEY, encodeURL(stableStringify(state)));
+      }
 
-  return page;
+      dispatch(route(nextState));
+    });
+
+    return page;
+  };
 }

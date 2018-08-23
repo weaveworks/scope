@@ -70,6 +70,7 @@ export const initialState = makeMap({
   plugins: makeList(),
   pinnedSearches: makeList(), // list of node filters
   routeSet: false,
+  storeViewState: true,
   searchFocused: false,
   searchQuery: '',
   selectedNetwork: null,
@@ -750,6 +751,10 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.MONITOR_STATE: {
       return state.set('monitor', action.monitor);
+    }
+
+    case ActionTypes.SET_STORE_VIEW_STATE: {
+      return state.set('storeViewState', action.storeViewState);
     }
 
     default: {
