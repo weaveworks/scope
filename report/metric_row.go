@@ -82,8 +82,6 @@ func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
 		Samples:    in.Samples,
 		Min:        in.Min,
 		Max:        in.Max,
-		First:      in.First,
-		Last:       in.Last,
 	})
 }
 
@@ -95,8 +93,6 @@ func (m *MetricRow) CodecDecodeSelf(decoder *codec.Decoder) {
 		Samples: in.Samples,
 		Min:     in.Min,
 		Max:     in.Max,
-		First:   in.First,
-		Last:    in.Last,
 	}
 	metric := w.FromIntermediate()
 	*m = MetricRow{
