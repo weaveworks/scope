@@ -1,4 +1,4 @@
-FROM node:8.4.0
+FROM node:8.11
 WORKDIR /home/weave
 COPY package.json yarn.lock /home/weave/
 ENV NPM_CONFIG_LOGLEVEL=warn NPM_CONFIG_PROGRESS=false
