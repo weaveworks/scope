@@ -195,10 +195,12 @@ endif
 
 $(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
 	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) client
+	$(SUDO) docker tag $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_UI_BUILD_IMAGE):$(IMAGE_TAG)
 	touch $@
 
 $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	$(SUDO) docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) backend
+	$(SUDO) docker tag $(SCOPE_BACKEND_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE):$(IMAGE_TAG)
 	touch $@
 
 ui-upload: client/build-external/index.html
