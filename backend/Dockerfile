@@ -35,6 +35,13 @@ RUN go get -tags netgo \
 	chmod a+wr --recursive /usr/local/go && \
 	rm -rf /go/pkg/ /go/src/
 RUN pip install yapf==0.16.2 flake8==3.3.0 requests==2.19.1
+
+# Install Docker (client only)
+ENV DOCKERVERSION=17.03.2-ce
+RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
+    tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
+    rm docker-${DOCKERVERSION}.tgz
+
 COPY build.sh /
 ENTRYPOINT ["/build.sh"]
 
