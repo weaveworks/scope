@@ -6,7 +6,7 @@ defaults: &defaults
     - image: weaveworks/scope-backend-build:circle-2.0-2885645
 
 client-defaults: &client-defaults
-  working_directory: /home/weave
+  working_directory: /home/weave/scope
   docker:
     - image: weaveworks/scope-ui-build:circle-2.0-2885645
 
@@ -16,15 +16,19 @@ workflows:
     jobs:
       - lint
       - unit-test
-      - client-lint
-      - client-test
+      - client-build
+      - client-test:
+          requires:
+            - client-build
       - arm-build:
           requires:
             - build
       - darwin-build:
           requires:
             - build
-      - build
+      - build:
+          requires:
+            - client-build
       - integration-tests:
           requires:
             - lint
@@ -39,7 +43,6 @@ workflows:
             branches:
               only: master
           requires:
-            - client-lint
             - client-test
             - integration-tests
 
@@ -61,17 +64,30 @@ jobs:
           paths:
           - coverage
 
-  client-lint:
+  # Create client/build/index.html
+  client-build:
     <<: *client-defaults
     steps:
       - checkout
-      - run: make BUILD_IN_CONTAINER=false client-lint
+      # Convoluted set of steps here to mimic Makefile actions of bind-mounting different dirs into container
+      - run: |
+          mv client/app /home/weave/
+          cd /home/weave; mkdir build         ; yarn run build         ; mv build          scope/client
+          cd /home/weave; mkdir build-external; yarn run build-external; mv build-external scope/client
+      - persist_to_workspace:
+          root: /home/weave/scope
+          paths:
+          - client/build/
+          - client/build-external/
 
   client-test:
     <<: *client-defaults
     steps:
       - checkout
-      - run: make BUILD_IN_CONTAINER=false client-test
+      - run: |
+          mv client/app client/test /home/weave/
+          cd /home/weave; yarn run lint
+          cd /home/weave; yarn test
 
   arm-build:
     <<: *defaults
@@ -90,7 +106,9 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
-      - run: make BUILD_IN_CONTAINER=false SUDO= all
+      - attach_workspace:
+          at: .
+      - run: make BUILD_IN_CONTAINER=false SUDO= static all
       - run: cd extras; make BUILD_IN_CONTAINER=false
       - persist_to_workspace:
           root: .
