@@ -1,29 +1,43 @@
 version: 2
 
 defaults: &defaults
-  environment:
-    GOPATH: /home/ubuntu
-    SRCDIR: /home/ubuntu/src/github.com/weaveworks/scope
-    CLOUDSDK_CORE_DISABLE_PROMPTS: 1
-    SCOPE_UI_BUILD: $HOME/docker/scope_ui_build.tar
-    IMAGES: scope cloud-agent
+  working_directory: /go/src/github.com/weaveworks/scope
   docker:
-    image: weaveworks/scope-build-image:latest
+    - image: weaveworks/scope-backend-build:circle-2.0-2885645
+
+client-defaults: &client-defaults
+  working_directory: /home/weave
+  docker:
+    - image: weaveworks/scope-ui-build:circle-2.0-2885645
 
 workflows:
   version: 2
   test_and_deploy:
     jobs:
-      - build:
-          filters:
-            branches:
-              ignore: gh-pages
+      - lint
+      - unit-test
+      - client-lint
+      - client-test
+      - arm-build
+      - darwin-build
+      - build
+      - integration-tests:
+          requires:
+            - lint
+            - unit-test
+            - build
+      - gen-coverage:
+          requires:
+            - unit-test
+            - integration-tests
       - deploy:
           filters:
             branches:
               only: master
           requires:
-            - build
+            - client-lint
+            - client-test
+            - integration-tests
       - deploy-dev:
           filters:
             branches:
@@ -32,61 +46,120 @@ workflows:
             - build
 
 jobs:
+  lint:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: make BUILD_IN_CONTAINER=false lint
+
+  unit-test:
+    <<: *defaults
+    parallelism: 1
+    steps:
+      - checkout
+      - run: COVERDIR=./coverage make BUILD_IN_CONTAINER=false CODECGEN_UID=23 tests
+      - persist_to_workspace:
+          root: .
+          paths:
+          - coverage
+
+  client-lint:
+    <<: *client-defaults
+    steps:
+      - checkout
+      - run: make BUILD_IN_CONTAINER=false client-lint
+
+  client-test:
+    <<: *client-defaults
+    steps:
+      - checkout
+      - run: make BUILD_IN_CONTAINER=false client-test
+
+  arm-build:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: GOARCH=arm make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
+
+  darwin-build:
+    <<: *defaults
+    steps:
+      - checkout
+      - run: GOOS=darwin make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
+
   build:
     <<: *defaults
     steps:
       - checkout
-      # PATH must be set here as circle currently does not support string interpolation
-      # for environment
-      # https://discuss.circleci.com/t/bin-sh-mkdir-command-not-found/8710
-      - run: export PATH="$PATH:$HOME/.local/bin"
-      - run: pip install --upgrade requests
-      - run: |
-          sudo apt-get update &&
-          sudo apt-get install jq pv &&
-          sudo chmod a+wr --recursive /usr/local/go/pkg &&
-          (curl https://sdk.cloud.google.com | bash) &&
-          (test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD") &&
-          make deps &&
-          mkdir -p $(dirname $SRCDIR) &&
-          cp -r $(pwd)/ $SRCDIR
-      - run: "cd $SRCDIR/client; ../tools/rebuild-image weaveworks/scope-ui-build . Dockerfile package.json webpack.production.config.js .eslintrc .babelrc && touch $SRCDIR/.scope_ui_build.uptodate"
-      - run: "cd $SRCDIR/backend; ../tools/rebuild-image weaveworks/scope-backend-build . Dockerfile build.sh && touch $SRCDIR/.scope_backend_build.uptodate"
-      - run: sudo apt-get update && sudo apt-get install python-pip && sudo pip install awscli
+      - setup_remote_docker
+      - run: make BUILD_IN_CONTAINER=false SUDO= all
+      - run: cd extras; make BUILD_IN_CONTAINER=false
+      - persist_to_workspace:
+          root: .
+          paths:
+          - scope.tar
+          - cloud-agent.tar
 
+  integration-tests:
+    machine:
+      image: circleci/classic:201709-01
+    working_directory: /home/circleci/src/github.com/weaveworks/scope
+    environment:
+      SRCDIR: /home/circleci/src/github.com/weaveworks/scope
+      CIRCLE_ARTIFACTS: /tmp/artifacts
+      CLOUDSDK_CORE_DISABLE_PROMPTS: 1
+    parallelism: 2
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      # kick off creation of test VMs
+      - run: test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
       - run: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh make_template)
-      - run: cd $SRCDIR; make RM= lint
-      - run: cd $SRCDIR; COVERDIR=./coverage make RM= CODECGEN_UID=23 tests
-      - run: cd $SRCDIR; make RM= client-test static
-      - run: cd $SRCDIR; make RM= client-lint static
-      - run: cd $SRCDIR; rm -f prog/scope; if [ "$CIRCLE_NODE_INDEX" = "0" ]; then GOARCH=arm make GO_BUILD_INSTALL_DEPS= RM= prog/scope; else GOOS=darwin make GO_BUILD_INSTALL_DEPS= RM= prog/scope; fi
-      - run: cd $SRCDIR; rm -f prog/scope; make RM=
-      - run: cd $SRCDIR/extras; ./build_on_circle.sh
-      - run: "test -z \"$SECRET_PASSWORD\" || (cd $SRCDIR/integration; ./gce.sh setup && eval $(./gce.sh hosts); ./setup.sh)"
+      - run: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup && eval $(./gce.sh hosts); ./setup.sh)
       - run:
           command: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./run_all.sh)
           no_output_timeout: 5m
-      - run: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy)
-      - run: test "$CIRCLE_NODE_INDEX" != "0" || (cd $SRCDIR; ./tools/cover/gather_coverage.sh ./coverage $SRCDIR/coverage)
-      - run: test "$CIRCLE_NODE_INDEX" != "0" || (goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true)
-      - run: test "$CIRCLE_NODE_INDEX" != "0" || (cd $SRCDIR; cp */*.codecgen.go $CIRCLE_ARTIFACTS)
+      # Destroy testing VMs:
+      - run:
+          command: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy)
+          background: true
+      - persist_to_workspace:
+          root: .
+          paths:
+          - coverage
 
-    # machine:
-    #   pre:
-    #     - curl -sSL https://s3.amazonaws.com/circle-downloads/install-circleci-docker.sh | bash -s -- 1.10.0
-    #   services:
-    #     - docker
+  gen-coverage:
+    <<: *defaults
+    environment:
+      CIRCLE_ARTIFACTS: /tmp/artifacts
+    steps:
+      - checkout
+      - run: mkdir $CIRCLE_ARTIFACTS
+      - attach_workspace:
+          at: .
+      - run: ./tools/cover/gather_coverage.sh ./coverage $SRCDIR/coverage
+      - run: goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=profile.cov -service=circleci
+      - run: cp coverage.* */*.codecgen.go $CIRCLE_ARTIFACTS
+      - store_artifacts:
+          path: /tmp/artifacts
 
   deploy:
     <<: *defaults
-    machine: true
+    environment:
+      IMAGES: scope cloud-agent
     steps:
       - checkout
+      - setup_remote_docker
+      - attach_workspace:
+          at: .
       # PATH must be set here as circle currently does not support string interpolation
       # for environment
       # https://discuss.circleci.com/t/bin-sh-mkdir-command-not-found/8710
       - run: export PATH="$PATH:$HOME/.local/bin"
       - run: |
+          docker load -i scope.tar
+          docker load -i cloud-agent.tar
           test -z "${DOCKER_USER}" || (
             docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
             (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" = "weaveworks" || (
@@ -110,9 +183,11 @@ jobs:
 
   deploy-dev:
     <<: *defaults
-    machine: true
     steps:
       - checkout
+      - setup_remote_docker
+      - attach_workspace:
+          at: .
       # PATH must be set here as circle currently does not support string interpolation
       # for environment
       # https://discuss.circleci.com/t/bin-sh-mkdir-command-not-found/8710
