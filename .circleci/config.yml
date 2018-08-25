@@ -38,12 +38,6 @@ workflows:
             - client-lint
             - client-test
             - integration-tests
-      - deploy-dev:
-          filters:
-            branches:
-              ignore: master
-          requires:
-            - build
 
 jobs:
   lint:
@@ -180,21 +174,3 @@ jobs:
             docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
           )
       - run: test -z "${UI_BUCKET_KEY_ID}" || (cd $SRCDIR && make ui-upload && make ui-pkg-upload)
-
-  deploy-dev:
-    <<: *defaults
-    steps:
-      - checkout
-      - setup_remote_docker
-      - attach_workspace:
-          at: .
-      # PATH must be set here as circle currently does not support string interpolation
-      # for environment
-      # https://discuss.circleci.com/t/bin-sh-mkdir-command-not-found/8710
-      - run: export PATH="$PATH:$HOME/.local/bin"
-      - run: >
-          test -z "${DEPLOY_BRANCH}" || test -z "${DOCKER_USER}" || (
-            docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
-            docker tag weaveworks/scope:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-} &&
-            docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:${CIRCLE_BRANCH//\//-}
-          )
