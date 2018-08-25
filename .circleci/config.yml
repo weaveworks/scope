@@ -18,8 +18,12 @@ workflows:
       - unit-test
       - client-lint
       - client-test
-      - arm-build
-      - darwin-build
+      - arm-build:
+          requires:
+            - build
+      - darwin-build:
+          requires:
+            - build
       - build
       - integration-tests:
           requires:
