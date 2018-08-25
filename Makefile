@@ -99,7 +99,7 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/staticui/staticui.go prog/extern
 
 else
 
-$(SCOPE_EXE): $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(SCOPE_EXE):
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
 	        rm $@; \
@@ -118,24 +118,24 @@ $(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
 	mkdir -p $(@D)
 	$(GO_HOST) build $(GO_BUILD_FLAGS) -o $@ ./$(CODECGEN_DIR)
 
-$(RUNSVINIT): $(SCOPE_BACKEND_BUILD_UPTODATE)
+$(RUNSVINIT):
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
 
-shell: $(SCOPE_BACKEND_BUILD_UPTODATE)
+shell:
 	/bin/bash
 
-tests: $(SCOPE_BACKEND_BUILD_UPTODATE) $(CODECGEN_TARGETS) prog/staticui/staticui.go prog/externalui/externalui.go
+tests: $(CODECGEN_TARGETS) prog/staticui/staticui.go prog/externalui/externalui.go
 	./tools/test -no-go-get -tags $(GO_BUILD_TAGS)
 
-lint: $(SCOPE_BACKEND_BUILD_UPTODATE)
+lint:
 	./tools/lint
 	./tools/shell-lint tools
 
-prog/staticui/staticui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
+prog/staticui/staticui.go:
 	mkdir -p prog/staticui
 	esc -o $@ -pkg staticui -prefix client/build client/build
 
-prog/externalui/externalui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
+prog/externalui/externalui.go:
 	mkdir -p prog/externalui
 	esc -o $@ -pkg externalui -prefix client/build-external -include '\.html$$' client/build-external
 
