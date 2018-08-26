@@ -123,7 +123,6 @@ jobs:
       image: circleci/classic:201709-01
     working_directory: /home/circleci/src/github.com/weaveworks/scope
     environment:
-      SRCDIR: /home/circleci/src/github.com/weaveworks/scope
       CIRCLE_ARTIFACTS: /tmp/artifacts
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
       GOPATH: /home/circleci/
@@ -139,18 +138,19 @@ jobs:
       - run: mkdir $CIRCLE_ARTIFACTS
       # kick off creation of test VMs
       - run: test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
-      - run: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh make_template)
-      - run: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh setup && eval $(./gce.sh hosts); ./setup.sh)
+      - run: test -z "$SECRET_PASSWORD" || (cd integration; ./gce.sh make_template)
+      - run: test -z "$SECRET_PASSWORD" || (cd integration; ./gce.sh setup && eval $(./gce.sh hosts); ./setup.sh)
       - run: make deps; touch tools/runner/runner
+      # Run all integration tests
       - run:
-          command: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; eval $(./gce.sh hosts); ./run_all.sh)
+          command: test -z "$SECRET_PASSWORD" || (cd integration; eval $(./gce.sh hosts); ./run_all.sh)
           no_output_timeout: 5m
       # Destroy testing VMs:
       - run:
-          command: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy)
+          command: test -z "$SECRET_PASSWORD" || (cd integration; ./gce.sh destroy)
           background: true
       # Code coverage
-      - run: ./tools/cover/gather_coverage.sh ./coverage $SRCDIR/coverage
+      - run: ./tools/cover/gather_coverage.sh ./coverage
       - run: goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=profile.cov -service=circleci
       - run: cp coverage.* */*.codecgen.go $CIRCLE_ARTIFACTS
       - store_artifacts:
@@ -191,4 +191,4 @@ jobs:
             docker tag weaveworks/scope:$(./tools/image-tag) "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)" &&
             docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
           )
-      - run: test -z "${UI_BUCKET_KEY_ID}" || (cd $SRCDIR && make ui-upload && make ui-pkg-upload)
+      - run: test -z "${UI_BUCKET_KEY_ID}" || (make ui-upload && make ui-pkg-upload)
