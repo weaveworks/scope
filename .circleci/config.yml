@@ -34,10 +34,6 @@ workflows:
             - lint
             - unit-test
             - build
-      - gen-coverage:
-          requires:
-            - unit-test
-            - integration-tests
       - deploy:
           filters:
             branches:
@@ -130,6 +126,7 @@ jobs:
       SRCDIR: /home/circleci/src/github.com/weaveworks/scope
       CIRCLE_ARTIFACTS: /tmp/artifacts
       CLOUDSDK_CORE_DISABLE_PROMPTS: 1
+      GOPATH: /home/circleci/
     parallelism: 2
     steps:
       - checkout
@@ -139,6 +136,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install python-pip jq pv
           sudo pip install awscli
+      - run: mkdir $CIRCLE_ARTIFACTS
       # kick off creation of test VMs
       - run: test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
       - run: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh make_template)
@@ -151,20 +149,7 @@ jobs:
       - run:
           command: test -z "$SECRET_PASSWORD" || (cd $SRCDIR/integration; ./gce.sh destroy)
           background: true
-      - persist_to_workspace:
-          root: .
-          paths:
-          - coverage
-
-  gen-coverage:
-    <<: *defaults
-    environment:
-      CIRCLE_ARTIFACTS: /tmp/artifacts
-    steps:
-      - checkout
-      - run: mkdir $CIRCLE_ARTIFACTS
-      - attach_workspace:
-          at: .
+      # Code coverage
       - run: ./tools/cover/gather_coverage.sh ./coverage $SRCDIR/coverage
       - run: goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=profile.cov -service=circleci
       - run: cp coverage.* */*.codecgen.go $CIRCLE_ARTIFACTS
