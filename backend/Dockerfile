@@ -4,9 +4,9 @@ RUN set -eux; \
    export arch_val="$(dpkg --print-architecture)"; \
    apt-get update && \
    if [ "$arch_val" = "amd64" ]; then \
-     apt-get install -y libpcap-dev python-requests time file shellcheck git gcc-arm-linux-gnueabihf curl build-essential python-pip; \
+     apt-get install -y libpcap-dev time file shellcheck git gcc-arm-linux-gnueabihf curl build-essential python-pip; \
    else \
-     apt-get install -y libpcap-dev python-requests time file shellcheck git curl build-essential python-pip; \
+     apt-get install -y libpcap-dev time file shellcheck git curl build-essential python-pip; \
    fi; \
    \
    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
