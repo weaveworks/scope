@@ -16,16 +16,8 @@ RUN go clean -i net && \
    export arch_val="$(dpkg --print-architecture)"; \
    if [ "$arch_val" != "ppc64el" ]; then \
 	go install -race -tags netgo std; \
-   fi;
-RUN export arch_val="$(dpkg --print-architecture)"; \
-   if [ "$arch_val" = "amd64" ]; then \
-     curl -fsSL -o shfmt https://github.com/mvdan/sh/releases/download/v1.3.0/shfmt_v1.3.0_linux_amd64 && \
-     chmod +x shfmt && \
-     mv shfmt /usr/bin; \
-   fi;
-   # Skipped installing shfmt, as the version v1.3.0 isn't supported for ppc64le
-   # and the later version of shfmt doesn't work with the application well
-RUN go get -tags netgo \
+   fi; \
+    go get -tags netgo \
 		github.com/fzipp/gocyclo \
 		github.com/golang/lint/golint \
 		github.com/kisielk/errcheck \
@@ -34,6 +26,16 @@ RUN go get -tags netgo \
 		github.com/client9/misspell/cmd/misspell && \
 	chmod a+wr --recursive /usr/local/go && \
 	rm -rf /go/pkg/ /go/src/
+
+   # Only install shfmt on amd64, as the version v1.3.0 isn't supported for ppc64le
+   # and the later version of shfmt doesn't work with the application well
+RUN export arch_val="$(dpkg --print-architecture)"; \
+   if [ "$arch_val" = "amd64" ]; then \
+     curl -fsSL -o shfmt https://github.com/mvdan/sh/releases/download/v1.3.0/shfmt_v1.3.0_linux_amd64 && \
+     chmod +x shfmt && \
+     mv shfmt /usr/bin; \
+   fi;
+
 RUN pip install yapf==0.16.2 flake8==3.3.0 requests==2.19.1
 
 # Install Docker (client only)
