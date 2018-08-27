@@ -20,10 +20,7 @@ workflows:
       - client-test:
           requires:
             - client-build
-      - arm-build:
-          requires:
-            - build
-      - darwin-build:
+      - xplatform-build:
           requires:
             - build
       - build:
@@ -85,16 +82,11 @@ jobs:
           cd /home/weave; yarn run lint
           cd /home/weave; yarn test
 
-  arm-build:
+  xplatform-build:
     <<: *defaults
     steps:
       - checkout
-      - run: GOARCH=arm make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
-
-  darwin-build:
-    <<: *defaults
-    steps:
-      - checkout
+      - run: GOARCH=arm  make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
       - run: GOOS=darwin make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
 
   build:
