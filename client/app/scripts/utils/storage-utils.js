@@ -10,6 +10,10 @@ export const localSessionStorage = {
     window.sessionStorage.setItem(k, v);
     window.localStorage.setItem(k, v);
   },
+  clear() {
+    window.sessionStorage.clear();
+    window.localStorage.clear();
+  }
 };
 
 export function storageGet(key, defaultValue, storage = localSessionStorage) {
