@@ -70,11 +70,15 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 			uiHandler))
 	router.PathPrefix("/").Name("static").Handler(uiHandler)
 
-	instrument := middleware.Instrument{
-		RouteMatcher: router,
-		Duration:     requestDuration,
-	}
-	return instrument.Wrap(router)
+	middlewares := middleware.Merge(
+		middleware.Instrument{
+			RouteMatcher: router,
+			Duration:     requestDuration,
+		},
+		middleware.Tracer{},
+	)
+
+	return middlewares.Wrap(router)
 }
 
 func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname string,
