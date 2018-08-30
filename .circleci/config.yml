@@ -8,7 +8,7 @@ defaults: &defaults
 client-defaults: &client-defaults
   working_directory: /home/weave/scope
   docker:
-    - image: weaveworks/scope-ui-build:circle-2.0-2885645
+    - image: weaveworks/scope-ui-build:circle-2.0-1734def7
 
 workflows:
   version: 2
