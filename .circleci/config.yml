@@ -63,15 +63,16 @@ jobs:
     steps:
       - checkout
       # Convoluted set of steps here to mimic Makefile actions of bind-mounting different dirs into container
-      - run: |
-          mv client/app /home/weave/
-          cd /home/weave; mkdir build         ; yarn run build         ; mv build          scope/client
-          cd /home/weave; mkdir build-external; yarn run build-external; mv build-external scope/client
+      - run: mv client/app /home/weave/
+      - run: cd /home/weave; mkdir build         ; yarn run build         ; mv build          scope/client
+      - run: cd /home/weave; mkdir build-external; yarn run build-external; mv build-external scope/client
+      - run: cd /home/weave; mkdir tmp           ; yarn run bundle        ; mv tmp            scope
       - persist_to_workspace:
           root: /home/weave/scope
           paths:
           - client/build/
           - client/build-external/
+          - tmp/weave-scope.tgz
 
   client-test:
     <<: *client-defaults
@@ -126,7 +127,6 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install python-pip jq pv
-          sudo pip install awscli
       - run: mkdir $CIRCLE_ARTIFACTS
       # kick off creation of test VMs
       - run: test -z "$SECRET_PASSWORD" || bin/setup-circleci-secrets "$SECRET_PASSWORD"
@@ -157,30 +157,22 @@ jobs:
       - setup_remote_docker
       - attach_workspace:
           at: .
-      # PATH must be set here as circle currently does not support string interpolation
-      # for environment
-      # https://discuss.circleci.com/t/bin-sh-mkdir-command-not-found/8710
-      - run: export PATH="$PATH:$HOME/.local/bin"
       - run: |
+          pip install awscli
           docker load -i scope.tar
           docker load -i cloud-agent.tar
-          test -z "${DOCKER_USER}" || (
-            docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS &&
-            (test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" = "weaveworks" || (
-              for IMAGE in $IMAGES; do
-                docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest &&
-                docker tag weaveworks/$IMAGE:$(./tools/image-tag) ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
-              done
-            )) &&
-            for IMAGE in $IMAGES; do
-              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE &&
-              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
-            done
-          )
       - run: |
-          test -z "${QUAY_USER}" || (
-            docker login -e '.' -u "$QUAY_USER" -p "$QUAY_PASSWORD" quay.io &&
-            docker tag weaveworks/scope:$(./tools/image-tag) "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)" &&
-            docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
-          )
-      - run: test -z "${UI_BUCKET_KEY_ID}" || (make ui-upload && make ui-pkg-upload)
+          test -z "${DOCKER_USER}" && exit 0
+          docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+          for IMAGE in $IMAGES; do
+              test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" = "weaveworks" || docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest
+              docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
+              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest
+              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
+          done
+      - run: |
+          test -z "${QUAY_USER}" && exit 0
+          docker login -e '.' -u "$QUAY_USER" -p "$QUAY_PASSWORD" quay.io
+          docker tag weaveworks/scope:$(./tools/image-tag) "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
+          docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
+      - run: test -z "${UI_BUCKET_KEY_ID}" || (make BUILD_IN_CONTAINER=false ui-upload ui-pkg-upload)
