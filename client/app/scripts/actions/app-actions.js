@@ -3,7 +3,7 @@ import { fromJS } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
-import { updateRoute } from '../utils/router-utils';
+import { clearStoredViewState, updateRoute } from '../utils/router-utils';
 import {
   doControlRequest,
   getAllNodes,
@@ -15,7 +15,6 @@ import {
   teardownWebsockets,
   getNodes,
 } from '../utils/web-api-utils';
-import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
 import { isPausedSelector } from '../selectors/time-travel';
 import {
@@ -794,7 +793,7 @@ export function route(urlState) {
 export function resetLocalViewState() {
   return (dispatch) => {
     dispatch({type: ActionTypes.RESET_LOCAL_VIEW_STATE});
-    storageSet('scopeViewState', '');
+    clearStoredViewState();
     // eslint-disable-next-line prefer-destructuring
     window.location.href = window.location.href.split('#')[0];
   };
@@ -830,5 +829,12 @@ export function setMonitorState(monitor) {
   return {
     type: ActionTypes.MONITOR_STATE,
     monitor
+  };
+}
+
+export function setStoreViewState(storeViewState) {
+  return {
+    type: ActionTypes.SET_STORE_VIEW_STATE,
+    storeViewState
   };
 }
