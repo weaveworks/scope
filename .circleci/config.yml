@@ -3,12 +3,12 @@ version: 2
 defaults: &defaults
   working_directory: /go/src/github.com/weaveworks/scope
   docker:
-    - image: weaveworks/scope-backend-build:circle-2.0-4ad2f14
+    - image: weaveworks/scope-backend-build:master-fda40b83
 
 client-defaults: &client-defaults
   working_directory: /home/weave/scope
   docker:
-    - image: weaveworks/scope-ui-build:circle-2.0-1734def7
+    - image: weaveworks/scope-ui-build:master-fda40b83
 
 workflows:
   version: 2
