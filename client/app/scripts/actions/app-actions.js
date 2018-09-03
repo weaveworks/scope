@@ -171,23 +171,29 @@ export function pinPreviousMetric() {
   };
 }
 
-export function pinSearch() {
+export function updateSearch(searchQuery = '', pinnedSearches = []) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.PIN_SEARCH,
-      query: getState().get('searchQuery'),
+      type: ActionTypes.UPDATE_SEARCH,
+      pinnedSearches,
+      searchQuery,
     });
     updateRoute(getState);
   };
 }
 
-export function unpinSearch(query) {
+export function focusSearch() {
   return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.UNPIN_SEARCH,
-      query
-    });
-    updateRoute(getState);
+    dispatch({ type: ActionTypes.FOCUS_SEARCH });
+    // update nodes cache to allow search across all topologies,
+    // wait a second until animation is over
+    // NOTE: This will cause matching recalculation (and rerendering)
+    // of all the nodes in the topology, instead applying it only on
+    // the nodes delta. The solution would be to implement deeper
+    // search selectors with per-node caching instead of per-topology.
+    setTimeout(() => {
+      getAllNodes(getState(), dispatch);
+    }, 1200);
   };
 }
 
@@ -263,16 +269,6 @@ export function clickForceRelayout() {
         forceRelayout: false
       });
     }, 100);
-  };
-}
-
-export function doSearch(searchQuery) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.DO_SEARCH,
-      searchQuery
-    });
-    updateRoute(getState);
   };
 }
 
@@ -450,38 +446,6 @@ export function enterNode(nodeId) {
   };
 }
 
-export function focusSearch() {
-  return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.FOCUS_SEARCH });
-    // update nodes cache to allow search across all topologies,
-    // wait a second until animation is over
-    // NOTE: This will cause matching recalculation (and rerendering)
-    // of all the nodes in the topology, instead applying it only on
-    // the nodes delta. The solution would be to implement deeper
-    // search selectors with per-node caching instead of per-topology.
-    setTimeout(() => {
-      getAllNodes(getState(), dispatch);
-    }, 1200);
-  };
-}
-
-export function hitBackspace() {
-  return (dispatch, getState) => {
-    const state = getState();
-    // remove last pinned query if search query is empty
-    if (state.get('searchFocused') && !state.get('searchQuery')) {
-      const query = state.get('pinnedSearches').last();
-      if (query) {
-        dispatch({
-          type: ActionTypes.UNPIN_SEARCH,
-          query
-        });
-        updateRoute(getState);
-      }
-    }
-  };
-}
-
 export function hitEsc() {
   return (dispatch, getState) => {
     const state = getState();
@@ -492,13 +456,6 @@ export function hitEsc() {
         pipeId: controlPipe.get('id')
       });
       updateRoute(getState);
-      // Don't deselect node on ESC if there is a controlPipe (keep terminal open)
-    } else if (state.get('searchFocused')) {
-      if (state.get('searchQuery')) {
-        dispatch(doSearch(''));
-      } else {
-        dispatch(blurSearch());
-      }
     } else if (state.get('showingHelp')) {
       dispatch(hideHelp());
     } else if (state.get('nodeDetails').last() && !controlPipe) {
@@ -634,9 +591,6 @@ export function receiveTopologies(topologies) {
     getNodes(getState, dispatch);
     // Populate search matches on first load
     const state = getState();
-    if (firstLoad && state.get('searchQuery')) {
-      dispatch(focusSearch());
-    }
     // Fetch all the relevant nodes once on first load
     if (firstLoad && isResourceViewModeSelector(state)) {
       getResourceViewNodesSnapshot(state, dispatch);

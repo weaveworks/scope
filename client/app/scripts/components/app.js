@@ -23,7 +23,6 @@ import {
   focusSearch,
   pinNextMetric,
   pinPreviousMetric,
-  hitBackspace,
   hitEsc,
   unpinMetric,
   toggleHelp,
@@ -54,7 +53,6 @@ import {
 } from '../selectors/topology';
 import { VIEWPORT_RESIZE_DEBOUNCE_INTERVAL } from '../constants/timer';
 import {
-  BACKSPACE_KEY_CODE,
   ESC_KEY_CODE,
 } from '../constants/key-codes';
 
@@ -116,8 +114,6 @@ class App extends React.Component {
     // don't get esc in onKeyPress
     if (ev.keyCode === ESC_KEY_CODE) {
       this.props.dispatch(hitEsc());
-    } else if (ev.keyCode === BACKSPACE_KEY_CODE) {
-      this.props.dispatch(hitBackspace());
     } else if (ev.code === 'KeyD' && ev.ctrlKey && !showingTerminal) {
       toggleDebugToolbar();
       this.forceUpdate();

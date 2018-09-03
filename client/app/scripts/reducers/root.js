@@ -70,7 +70,6 @@ export const initialState = makeMap({
   plugins: makeList(),
   pinnedSearches: makeList(), // list of node filters
   routeSet: false,
-  storeViewState: true,
   searchFocused: false,
   searchQuery: '',
   selectedNetwork: null,
@@ -78,6 +77,7 @@ export const initialState = makeMap({
   showingHelp: false,
   showingTroubleshootingMenu: false,
   showingNetworks: false,
+  storeViewState: true,
   timeTravelTransitioning: false,
   topologies: makeList(),
   topologiesLoaded: false,
@@ -217,6 +217,10 @@ export function rootReducer(state = initialState, action) {
   switch (action.type) {
     case ActionTypes.BLUR_SEARCH: {
       return state.set('searchFocused', false);
+    }
+
+    case ActionTypes.FOCUS_SEARCH: {
+      return state.set('searchFocused', true);
     }
 
     case ActionTypes.CHANGE_TOPOLOGY_OPTION: {
@@ -466,10 +470,6 @@ export function rootReducer(state = initialState, action) {
       }));
     }
 
-    case ActionTypes.DO_SEARCH: {
-      return state.set('searchQuery', action.searchQuery);
-    }
-
     case ActionTypes.ENTER_EDGE: {
       return state.set('mouseOverEdgeId', action.edgeId);
     }
@@ -499,14 +499,9 @@ export function rootReducer(state = initialState, action) {
       }));
     }
 
-    case ActionTypes.FOCUS_SEARCH: {
-      return state.set('searchFocused', true);
-    }
-
-    case ActionTypes.PIN_SEARCH: {
-      const pinnedSearches = state.get('pinnedSearches');
-      state = state.setIn(['pinnedSearches', pinnedSearches.size], action.query);
-      state = state.set('searchQuery', '');
+    case ActionTypes.UPDATE_SEARCH: {
+      state = state.set('pinnedSearches', makeList(action.pinnedSearches));
+      state = state.set('searchQuery', action.searchQuery || '');
       return applyPinnedSearches(state);
     }
 
@@ -720,12 +715,6 @@ export function rootReducer(state = initialState, action) {
         state = state.update('nodeDetails', nodeDetails => nodeDetails.clear());
       }
       return state;
-    }
-
-    case ActionTypes.UNPIN_SEARCH: {
-      const pinnedSearches = state.get('pinnedSearches').filter(query => query !== action.query);
-      state = state.set('pinnedSearches', pinnedSearches);
-      return applyPinnedSearches(state);
     }
 
     case ActionTypes.DEBUG_TOOLBAR_INTERFERING: {
