@@ -12,7 +12,6 @@ const Match = match => (
         {match.label}:
       </span>
       <MatchedText
-        noBorder
         text={match.text}
         match={match}
         maxLength={MAX_MATCH_LENGTH}
