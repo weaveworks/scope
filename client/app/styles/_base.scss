@@ -1410,152 +1410,10 @@ a {
 }
 
 .search {
-  pointer-events: all;
-
-  display: inline-block;
-  position: relative;
-  width: 10em;
-  transition: width 0.3s 0s $base-ease;
-
   &-wrapper {
     margin: 0 8px;
     min-width: 160px;
     text-align: right;
-  }
-
-  &-disabled {
-    opacity: 0.5;
-    cursor: disabled;
-  }
-
-  &-hint {
-    font-size: $font-size-tiny;
-    position: absolute;
-    padding: 0 1em;
-    color: $text-tertiary-color;
-    top: 0;
-    opacity: 0;
-    transition: transform 0.3s 0s $base-ease, opacity 0.3s 0s $base-ease;
-    text-align: left;
-  }
-
-  &-help-link {
-    @extend .btn-opacity;
-    cursor: pointer;
-    font-size: $font-size-normal;
-  }
-
-  &-label {
-    position: absolute;
-    pointer-events: none;
-    user-select: none;
-    top: 0;
-    left: 4px;
-    z-index: $layer-front;
-    padding: 4px;
-    color: $text-secondary-color;
-
-    &-icon {
-      margin-right: 0.5em;
-    }
-
-    &-hint {
-      font-size: $font-size-small;
-      transition: opacity 0.3s 0.5s $base-ease;
-      opacity: 1;
-    }
-  }
-
-  &-input {
-    overflow: hidden;
-    background: $color-white;
-    position: relative;
-    z-index: $layer-front;
-    display: flex;
-    border-radius: $border-radius-soft;
-    width: 100%;
-    border: $search-border-width solid $search-border-color;
-    padding: 2px 4px;
-    text-align: left;
-    flex-wrap: wrap;
-
-    &-field {
-      font-size: $font-size-small;
-      line-height: 150%;
-      position: relative;
-      padding: 1px 4px 1px 1.5em;
-      border: none;
-      border-radius: $border-radius-none;
-      background: transparent;
-      color: $text-color;
-      width: 100px;
-
-      &:focus {
-        outline: none;
-      }
-    }
-  }
-
-  &-focused &-label-hint,
-  &-pinned &-label-hint,
-  &-filled &-label-hint {
-    transition: opacity 0.1s 0s $base-ease;
-    opacity: 0;
-  }
-
-  &-focused &-hint,
-  &-filled &-hint,
-  &-pinned &-hint {
-    opacity: 1;
-    transform: translate3d(0, 2.75em, 0);
-    transition: transform 0.3s 0.3s $base-ease, opacity 0.3s 0.3s $base-ease;
-  }
-
-  &-focused &-input-field,
-  &-filled &-input-field,
-  &-pinned &-input-field {
-    flex: 1;
-  }
-
-  &-focused,
-  &-filled,
-  &-pinned {
-    width: 100%;
-  }
-
-  &-matched &-input {
-    border-color: $color-blue-400;
-  }
-
-}
-
-.search-item {
-  background-color: transparentize($color-blue-400, 0.2);
-  border-radius: $border-radius-soft;
-  margin: 1px 0 1px 1.5em;
-  padding: 2px 4px 2px 6px;
-  display: flex;
-  align-items: center;
-
-  & + .search-item {
-    margin-left: 4px;
-  }
-
-  & + .search-input-field {
-    padding-left: 4px;
-  }
-
-  &-label {
-    margin-right: 4px;
-  }
-
-  &-icon {
-    @extend .btn-opacity;
-    padding: 2px;
-    cursor: pointer;
-    font-size: $font-size-small;
-    position: relative;
-    top: -1px;
   }
 }
 
@@ -1683,6 +1541,9 @@ a {
       &-term {
         flex: 1;
         color: $text-secondary-color;
+        i {
+          margin-right: 5px;
+        }
       }
 
       &-term-label {

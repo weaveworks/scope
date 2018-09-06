@@ -8401,9 +8401,9 @@ wd@^0.4.0:
     underscore.string "~3.0.3"
     vargs "~0.1.0"
 
-weaveworks-ui-components@0.11.14:
-  version "0.11.14"
-  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.11.14.tgz#5f72f8a5059bc9f28295b91164c17e0780906f9e"
+weaveworks-ui-components@0.11.31:
+  version "0.11.31"
+  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.11.31.tgz#90392fe5aafd6a911d985ef9ef554cb7178474d5"
   dependencies:
     classnames "2.2.5"
     d3-drag "1.2.1"
@@ -8416,6 +8416,7 @@ weaveworks-ui-components@0.11.14:
     react-input-autosize "2.2.1"
     react-motion "0.5.2"
     react-resize-aware "2.7.0"
+    react-router "3.2.0"
 
 webidl-conversions@^3.0.0:
   version "3.0.1"
