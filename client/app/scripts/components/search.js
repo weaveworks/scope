@@ -32,6 +32,7 @@ const SearchHint = styled.div`
   color: ${props => props.theme.colors.purple400};
   transition: transform 0.3s 0s ease-in-out, opacity 0.3s 0s ease-in-out;
   text-align: left;
+  margin-top: 3px;
   padding: 0 1em;
   opacity: 0;
 
