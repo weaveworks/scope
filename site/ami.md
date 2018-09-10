@@ -250,6 +250,12 @@ that region when invoking the script:
 ONLY_REGION=us-east-1 AWS_ACCSS_KEY_ID=XXXX AWS_SECRET_ACCESS_KEY=YYYY  ./build-all-amis.sh
 ~~~
 
+To make an AMI public:
+
+~~~bash
+aws ec2 modify-image-attribute --region=us-east-2 --image-id ami-6a0b350f --launch-permission "{\"Add\": [{\"Group\":\"all\"}]}"
+~~~
+
 ## Further Reading
 
 Read the
