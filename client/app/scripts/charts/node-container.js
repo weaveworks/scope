@@ -44,7 +44,7 @@ class NodeContainer extends React.Component {
     const matchedParents = this.props.matches.get('parents', makeList());
     const matchedDetails = matchedMetadata.concat(matchedParents);
     return (
-      <MatchedResults matches={matchedDetails} />
+      <MatchedResults matches={matchedDetails} searchTerms={this.props.searchTerms} />
     );
   };
 

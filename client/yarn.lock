@@ -4069,6 +4069,10 @@ interpret@^1.0.0:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/interpret/-/interpret-1.0.4.tgz#820cdd588b868ffb191a809506d6c9c8f212b1b0"
 
+intersperse@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/intersperse/-/intersperse-1.0.0.tgz#f2561fb1cfef9f5277cc3347a22886b4351a5181"
+
 invariant@^2.0.0, invariant@^2.2.0, invariant@^2.2.2:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/invariant/-/invariant-2.2.2.tgz#9e1f56ac0acdb6bf303306f338be3b204ae60360"
@@ -8401,9 +8405,9 @@ wd@^0.4.0:
     underscore.string "~3.0.3"
     vargs "~0.1.0"
 
-weaveworks-ui-components@0.11.31:
-  version "0.11.31"
-  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.11.31.tgz#90392fe5aafd6a911d985ef9ef554cb7178474d5"
+weaveworks-ui-components@0.12.2:
+  version "0.12.2"
+  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.12.2.tgz#6eea81c4b1e48ff05743680c343c6c1116156494"
   dependencies:
     classnames "2.2.5"
     d3-drag "1.2.1"
@@ -8411,6 +8415,7 @@ weaveworks-ui-components@0.11.31:
     d3-scale "1.0.7"
     d3-selection "1.2.0"
     d3-shape "1.2.0"
+    intersperse "1.0.0"
     polished "1.9.0"
     prop-types "15.6.0"
     react-input-autosize "2.2.1"

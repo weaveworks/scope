@@ -2,10 +2,8 @@ import React from 'react';
 import { MatchedText } from 'weaveworks-ui-components';
 
 const SHOW_ROW_COUNT = 2;
-const MAX_MATCH_LENGTH = 24;
 
-
-const Match = match => (
+const Match = (searchTerms, match) => (
   <div className="matched-results-match" key={match.label}>
     <div className="matched-results-match-wrapper">
       <span className="matched-results-match-label">
@@ -13,9 +11,7 @@ const Match = match => (
       </span>
       <MatchedText
         text={match.text}
-        match={match}
-        maxLength={MAX_MATCH_LENGTH}
-        truncate={match.truncate}
+        matches={searchTerms}
       />
     </div>
   </div>
@@ -23,7 +19,7 @@ const Match = match => (
 
 export default class MatchedResults extends React.PureComponent {
   render() {
-    const { matches, style } = this.props;
+    const { matches, searchTerms, style } = this.props;
 
     if (!matches) {
       return null;
@@ -41,7 +37,11 @@ export default class MatchedResults extends React.PureComponent {
 
     return (
       <div className="matched-results" style={style}>
-        {matches.keySeq().take(SHOW_ROW_COUNT).map(fieldId => Match(matches.get(fieldId)))}
+        {matches
+          .keySeq()
+          .take(SHOW_ROW_COUNT)
+          .map(fieldId => Match(searchTerms, matches.get(fieldId)))
+        }
         {moreFieldMatches &&
           <div className="matched-results-more" title={moreFieldMatchesTitle}>
             {`${moreFieldMatches.size} more matches`}
