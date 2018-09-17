@@ -3,7 +3,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 
 import { ThemeProvider } from 'styled-components';
 import theme from 'weaveworks-ui-components/lib/theme';
@@ -67,6 +67,7 @@ class App extends React.Component {
 
     this.setViewportDimensions = this.setViewportDimensions.bind(this);
     this.handleResize = debounce(this.setViewportDimensions, VIEWPORT_RESIZE_DEBOUNCE_INTERVAL);
+    this.handleRouteChange = debounce(props.onRouteChange, 50);
 
     this.saveAppRef = this.saveAppRef.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
@@ -104,6 +105,10 @@ class App extends React.Component {
     }
     if (nextProps.disableStoreViewState !== this.props.disableStoreViewState) {
       this.props.dispatch(setStoreViewState(!nextProps.disableStoreViewState));
+    }
+    // Debounce-notify about the route change if the URL state changes its content.
+    if (!isEqual(nextProps.urlState, this.props.urlState)) {
+      this.handleRouteChange(nextProps.urlState);
     }
   }
 
@@ -241,7 +246,6 @@ class App extends React.Component {
   }
 }
 
-
 function mapStateToProps(state) {
   return {
     currentTopology: state.get('currentTopology'),
@@ -267,6 +271,7 @@ function mapStateToProps(state) {
 App.propTypes = {
   renderTimeTravel: PropTypes.func,
   renderNodeDetailsExtras: PropTypes.func,
+  onRouteChange: PropTypes.func,
   monitor: PropTypes.bool,
   disableStoreViewState: PropTypes.bool,
 };
@@ -274,6 +279,7 @@ App.propTypes = {
 App.defaultProps = {
   renderTimeTravel: () => <TimeTravelWrapper />,
   renderNodeDetailsExtras: () => null,
+  onRouteChange: () => null,
   monitor: false,
   disableStoreViewState: false,
 };
