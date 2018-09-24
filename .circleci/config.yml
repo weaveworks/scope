@@ -62,11 +62,19 @@ jobs:
     <<: *client-defaults
     steps:
       - checkout
-      # Convoluted set of steps here to mimic Makefile actions of bind-mounting different dirs into container
-      - run: mv client/app /home/weave/
-      - run: cd /home/weave; mkdir build         ; yarn run build         ; mv build          scope/client
-      - run: cd /home/weave; mkdir build-external; yarn run build-external; mv build-external scope/client
-      - run: cd /home/weave; mkdir tmp           ; yarn run bundle        ; mv tmp            scope
+      - restore_cache:
+          keys:
+          - yarn-cache-{{ checksum "client/yarn.lock" }}
+      - run: cd client; yarn install
+      - save_cache:
+          key: yarn-cache-{{ checksum "client/yarn.lock" }}
+          paths:
+            - "/home/weave/scope/.cache/yarn"
+      - run: |
+          cd client
+          yarn run build
+          yarn run build-external
+          yarn run bundle
       - persist_to_workspace:
           root: /home/weave/scope
           paths:
@@ -74,14 +82,19 @@ jobs:
           - client/build-external/
           - tmp/weave-scope.tgz
 
+
   client-test:
     <<: *client-defaults
     steps:
       - checkout
+      - restore_cache:
+          keys:
+          - yarn-cache-{{ checksum "client/yarn.lock" }}
       - run: |
-          mv client/app client/test /home/weave/
-          cd /home/weave; yarn run lint
-          cd /home/weave; yarn test
+          cd client
+          yarn install
+          yarn run lint
+          yarn test
 
   xplatform-build:
     <<: *defaults

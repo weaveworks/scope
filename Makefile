@@ -146,39 +146,52 @@ ifeq ($(BUILD_IN_CONTAINER),true)
 client/build/index.html: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	mkdir -p client/build
 	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
-		$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
-			-v $(shell pwd)/client/build:/home/weave/build \
-			$(SCOPE_UI_BUILD_IMAGE) yarn run build; \
+		$(SUDO) docker run $(RM) $(RUN_FLAGS) \
+			-v $(shell pwd)/.cache:/home/weave/scope/.cache \
+			-v $(shell pwd)/client:/home/weave/scope/client \
+			-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
+			$(SCOPE_UI_BUILD_IMAGE) sh -c 'yarn install && yarn run build'; \
 	fi
 
 client/build-external/index.html: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	mkdir -p client/build-external
 	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
-		$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
-			-v $(shell pwd)/client/build-external:/home/weave/build-external \
-			$(SCOPE_UI_BUILD_IMAGE) yarn run build-external; \
+		$(SUDO) docker run $(RM) $(RUN_FLAGS) \
+			-v $(shell pwd)/.cache:/home/weave/scope/.cache \
+			-v $(shell pwd)/client:/home/weave/scope/client \
+			-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
+			$(SCOPE_UI_BUILD_IMAGE) sh -c 'yarn install && yarn run build-external'; \
 	fi
 
 client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
-		-v $(shell pwd)/client/test:/home/weave/test \
+	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
+		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
+		-v $(shell pwd)/client/client:/home/weave/scope/client \
+		-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
 		$(SCOPE_UI_BUILD_IMAGE) yarn test
 
 client-lint: $(SCOPE_UI_BUILD_UPTODATE)
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) -v $(shell pwd)/client/app:/home/weave/app \
-		-v $(shell pwd)/client/test:/home/weave/test \
+	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
+		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
+		-v $(shell pwd)/client:/home/weave/scope/client \
+		-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
 		$(SCOPE_UI_BUILD_IMAGE) yarn run lint
 
 client-start: $(SCOPE_UI_BUILD_UPTODATE)
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host -v $(shell pwd)/client/app:/home/weave/app \
-		-v $(shell pwd)/client/build:/home/weave/build -e WEBPACK_SERVER_HOST \
+	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host \
+		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
+		-v $(shell pwd)/client:/home/weave/scope/client \
+		-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
+		-e WEBPACK_SERVER_HOST \
 		$(SCOPE_UI_BUILD_IMAGE) yarn start
 
 tmp/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
 	$(sudo) docker run $(RUN_FLAGS) \
-	-v $(shell pwd)/client/app:/home/weave/app \
-	-v $(shell pwd)/tmp:/home/weave/tmp \
-	$(SCOPE_UI_BUILD_IMAGE) \
+		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
+		-v $(shell pwd)/client:/home/weave/scope/client \
+		-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
+		-v $(shell pwd)/tmp:/home/weave/tmp \
+		$(SCOPE_UI_BUILD_IMAGE) \
 	yarn run bundle
 
 else
