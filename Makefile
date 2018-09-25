@@ -143,64 +143,83 @@ endif
 
 ifeq ($(BUILD_IN_CONTAINER),true)
 
-client/build/index.html: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
+SCOPE_UI_TOOLCHAIN=.cache/build_node_modules
+SCOPE_UI_TOOLCHAIN_UPTODATE=$(SCOPE_UI_TOOLCHAIN)/.uptodate
+
+$(SCOPE_UI_TOOLCHAIN_UPTODATE): client/yarn.lock $(SCOPE_UI_BUILD_UPTODATE)
+	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
+		$(SUDO) docker run $(RM) $(RUN_FLAGS) \
+			-v $(shell pwd)/.cache:/home/weave/scope/.cache \
+			-v $(shell pwd)/client:/home/weave/scope/client \
+			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
+			$(SCOPE_UI_BUILD_IMAGE) yarn install; \
+	fi
+	touch $(SCOPE_UI_TOOLCHAIN_UPTODATE)
+
+client/build/index.html: $(shell find client/app -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	mkdir -p client/build
 	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
 		$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 			-v $(shell pwd)/.cache:/home/weave/scope/.cache \
 			-v $(shell pwd)/client:/home/weave/scope/client \
-			-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
-			$(SCOPE_UI_BUILD_IMAGE) sh -c 'yarn install && yarn run build'; \
+			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
+			$(SCOPE_UI_BUILD_IMAGE) yarn run build; \
 	fi
 
-client/build-external/index.html: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
+client/build-external/index.html: $(shell find client/app -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	mkdir -p client/build-external
 	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
 		$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 			-v $(shell pwd)/.cache:/home/weave/scope/.cache \
 			-v $(shell pwd)/client:/home/weave/scope/client \
-			-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
-			$(SCOPE_UI_BUILD_IMAGE) sh -c 'yarn install && yarn run build-external'; \
+			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
+			$(SCOPE_UI_BUILD_IMAGE) yarn run build-external; \
 	fi
 
-client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_BUILD_UPTODATE)
+client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
 		-v $(shell pwd)/client/client:/home/weave/scope/client \
-		-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
+		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 		$(SCOPE_UI_BUILD_IMAGE) yarn test
 
-client-lint: $(SCOPE_UI_BUILD_UPTODATE)
+client-lint: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
 		-v $(shell pwd)/client:/home/weave/scope/client \
-		-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
+		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 		$(SCOPE_UI_BUILD_IMAGE) yarn run lint
 
-client-start: $(SCOPE_UI_BUILD_UPTODATE)
+client-start: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host \
 		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
 		-v $(shell pwd)/client:/home/weave/scope/client \
-		-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
+		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 		-e WEBPACK_SERVER_HOST \
 		$(SCOPE_UI_BUILD_IMAGE) yarn start
 
-tmp/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_BUILD_UPTODATE)
+tmp/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	$(sudo) docker run $(RUN_FLAGS) \
 		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
 		-v $(shell pwd)/client:/home/weave/scope/client \
-		-v $(shell pwd)/.cache/build_node_modules:/home/weave/scope/client/node_modules \
+		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 		-v $(shell pwd)/tmp:/home/weave/tmp \
-		$(SCOPE_UI_BUILD_IMAGE) \
-	yarn run bundle
+		$(SCOPE_UI_BUILD_IMAGE) yarn run bundle
 
 else
 
-client/build/index.html:
+SCOPE_UI_TOOLCHAIN=client/node_modules
+SCOPE_UI_TOOLCHAIN_UPTODATE=$(SCOPE_UI_TOOLCHAIN)/.uptodate
+
+$(SCOPE_UI_TOOLCHAIN_UPTODATE): client/yarn.lock
+	if test "true" = "$(SCOPE_SKIP_UI_ASSETS)"; then mkdir -p $(SCOPE_UI_TOOLCHAIN); else cd client && yarn install; fi
+	touch $(SCOPE_UI_TOOLCHAIN_UPTODATE)
+
+client/build/index.html: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	mkdir -p client/build
 	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then cd client && yarn run build; fi
 
-client/build-external/index.html:
+client/build-external/index.html: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	mkdir -p client/build-external
 	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then cd client && yarn run build-external; fi
 
@@ -233,7 +252,7 @@ ui-pkg-upload: tmp/weave-scope.tgz
 # rmi'ng images is desirable sometimes. Invoke `realclean` for that.
 clean:
 	$(GO) clean ./...
-	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
+	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_UI_TOOLCHAIN_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
 		$(SCOPE_EXE) $(RUNSVINIT) prog/staticui/staticui.go prog/externalui/externalui.go client/build/*.js client/build-external/*.js docker/weave .pkg \
 		$(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin
 
@@ -249,6 +268,7 @@ clean-codecgen:
 #
 # Doing this is important for release builds.
 realclean: clean
+	rm -rf $(SCOPE_UI_TOOLCHAIN)
 	$(SUDO) docker rmi -f $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) \
 		$(DOCKERHUB_USER)/scope $(DOCKERHUB_USER)/cloud-agent \
 		$(DOCKERHUB_USER)/scope:$(IMAGE_TAG) $(DOCKERHUB_USER)/cloud-agent:$(IMAGE_TAG) \
