@@ -1651,6 +1651,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/openebs/k8s-snapshot-client",
+			"repository": "https://github.com/openebs/k8s-snapshot-client",
+			"vcs": "git",
+			"revision": "a6506305fb16b003487392c8199452b01161866e",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/opentracing-contrib/go-stdlib/nethttp",
 			"repository": "https://github.com/opentracing-contrib/go-stdlib",
 			"vcs": "git",
