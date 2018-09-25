@@ -138,6 +138,14 @@ func IsPodComponent(node report.Node) bool {
 	return ok
 }
 
+// IsNonSnapshotComponent checks whether given node is everything but Volume Snapshot, Volume Snapshot Data
+func IsNonSnapshotComponent(node report.Node) bool {
+	if node.Topology == "volume_snapshot" || node.Topology == "volume_snapshot_data" {
+		return false
+	}
+	return true
+}
+
 // connected returns the node ids of nodes which have edges to/from
 // them, excluding edges to/from themselves.
 func connected(nodes report.Nodes) map[string]struct{} {

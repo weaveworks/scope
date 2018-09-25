@@ -8,6 +8,8 @@ import (
 
 	"github.com/weaveworks/common/backoff"
 
+	snapshotv1 "github.com/openebs/k8s-snapshot-client/snapshot/pkg/apis/volumesnapshot/v1"
+	snapshot "github.com/openebs/k8s-snapshot-client/snapshot/pkg/client/clientset/versioned"
 	log "github.com/sirupsen/logrus"
 	apiappsv1beta1 "k8s.io/api/apps/v1beta1"
 	apibatchv1 "k8s.io/api/batch/v1"
@@ -41,6 +43,8 @@ type Client interface {
 	WalkPersistentVolumes(f func(PersistentVolume) error) error
 	WalkPersistentVolumeClaims(f func(PersistentVolumeClaim) error) error
 	WalkStorageClasses(f func(StorageClass) error) error
+	WalkVolumeSnapshots(f func(VolumeSnapshot) error) error
+	WalkVolumeSnapshotData(f func(VolumeSnapshotData) error) error
 
 	WatchPods(f func(Event, Pod))
 
@@ -53,6 +57,7 @@ type Client interface {
 type client struct {
 	quit                       chan struct{}
 	client                     *kubernetes.Clientset
+	snapshotClient             *snapshot.Clientset
 	podStore                   cache.Store
 	serviceStore               cache.Store
 	deploymentStore            cache.Store
@@ -65,6 +70,8 @@ type client struct {
 	persistentVolumeStore      cache.Store
 	persistentVolumeClaimStore cache.Store
 	storageClassStore          cache.Store
+	volumeSnapshotStore        cache.Store
+	volumeSnapshotDataStore    cache.Store
 
 	podWatchesMutex sync.Mutex
 	podWatches      []func(Event, Pod)
@@ -133,9 +140,15 @@ func NewClient(config ClientConfig) (Client, error) {
 		return nil, err
 	}
 
+	sc, err := snapshot.NewForConfig(restConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	result := &client{
-		quit:   make(chan struct{}),
-		client: c,
+		quit:           make(chan struct{}),
+		client:         c,
+		snapshotClient: sc,
 	}
 
 	result.podStore = NewEventStore(result.triggerPodWatches, cache.MetaNamespaceKeyFunc)
@@ -152,6 +165,8 @@ func NewClient(config ClientConfig) (Client, error) {
 	result.persistentVolumeStore = result.setupStore("persistentvolumes")
 	result.persistentVolumeClaimStore = result.setupStore("persistentvolumeclaims")
 	result.storageClassStore = result.setupStore("storageclasses")
+	result.volumeSnapshotStore = result.setupStore("volumesnapshots")
+	result.volumeSnapshotDataStore = result.setupStore("volumesnapshotdatas")
 
 	return result, nil
 }
@@ -204,6 +219,10 @@ func (c *client) clientAndType(resource string) (rest.Interface, interface{}, er
 		return c.client.BatchV1().RESTClient(), &apibatchv1.Job{}, nil
 	case "statefulsets":
 		return c.client.AppsV1beta1().RESTClient(), &apiappsv1beta1.StatefulSet{}, nil
+	case "volumesnapshots":
+		return c.snapshotClient.VolumesnapshotV1().RESTClient(), &snapshotv1.VolumeSnapshot{}, nil
+	case "volumesnapshotdatas":
+		return c.snapshotClient.VolumesnapshotV1().RESTClient(), &snapshotv1.VolumeSnapshotData{}, nil
 	case "cronjobs":
 		ok, err := c.isResourceSupported(c.client.BatchV1beta1().RESTClient().APIVersion(), resource)
 		if err != nil {
@@ -382,6 +401,26 @@ func (c *client) WalkNamespaces(f func(NamespaceResource) error) error {
 	for _, m := range c.namespaceStore.List() {
 		namespace := m.(*apiv1.Namespace)
 		if err := f(NewNamespace(namespace)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *client) WalkVolumeSnapshots(f func(VolumeSnapshot) error) error {
+	for _, m := range c.volumeSnapshotStore.List() {
+		volumeSnapshot := m.(*snapshotv1.VolumeSnapshot)
+		if err := f(NewVolumeSnapshot(volumeSnapshot)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *client) WalkVolumeSnapshotData(f func(VolumeSnapshotData) error) error {
+	for _, m := range c.volumeSnapshotDataStore.List() {
+		volumeSnapshotData := m.(*snapshotv1.VolumeSnapshotData)
+		if err := f(NewVolumeSnapshotData(volumeSnapshotData)); err != nil {
 			return err
 		}
 	}
