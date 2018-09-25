@@ -162,6 +162,7 @@ class NodesChartElements extends React.Component {
         focused={node.get('focused')}
         highlighted={node.get('highlighted')}
         shape={shape}
+        tag={node.get('tag')}
         stacked={node.get('stack')}
         key={node.get('id')}
         id={node.get('id')}

@@ -60,6 +60,7 @@ class NodeContainer extends React.Component {
       <GraphNode
         id={this.props.id}
         shape={this.props.shape}
+        tag={this.props.tag}
         label={this.props.label}
         labelMinor={this.props.labelMinor}
         labelOffset={labelOffset}

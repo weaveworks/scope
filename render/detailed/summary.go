@@ -49,6 +49,7 @@ type BasicNodeSummary struct {
 	LabelMinor string `json:"labelMinor"`
 	Rank       string `json:"rank"`
 	Shape      string `json:"shape,omitempty"`
+	Tag        string `json:"tag,omitempty"`
 	Stack      bool   `json:"stack,omitempty"`
 	Pseudo     bool   `json:"pseudo,omitempty"`
 }
@@ -115,6 +116,7 @@ func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, boo
 	}
 	if t, ok := r.Topology(n.Topology); ok {
 		summary.Shape = t.GetShape()
+		summary.Tag = t.Tag
 	}
 
 	// Do we have a renderer for the topology?
@@ -399,6 +401,7 @@ func groupNodeSummary(base BasicNodeSummary, r report.Report, n report.Node) Bas
 	if topology, _, ok := render.ParseGroupNodeTopology(n.Topology); ok {
 		if t, ok := r.Topology(topology); ok {
 			base.Shape = t.GetShape()
+			base.Tag = t.Tag
 			if t.Label != "" {
 				base.LabelMinor = pluralize(n.Counters, topology, t.Label, t.LabelPlural)
 			}

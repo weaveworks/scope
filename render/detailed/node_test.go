@@ -48,6 +48,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Rank:       "hostname.com",
 				Pseudo:     false,
 				Shape:      "circle",
+				Tag:        "",
 			},
 			Adjacency: report.MakeIDList(fixture.ServerHostNodeID),
 			Metadata: []report.MetadataRow{
@@ -192,6 +193,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				LabelMinor: "server.hostname.com",
 				Rank:       fixture.ServerContainerImageName,
 				Shape:      "hexagon",
+				Tag:        "",
 				Pseudo:     false,
 			},
 			Metadata: []report.MetadataRow{
@@ -321,6 +323,7 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				LabelMinor: "1 container",
 				Rank:       "ping/pong-b",
 				Shape:      "heptagon",
+				Tag:        "",
 				Pseudo:     false,
 			},
 			Metadata: []report.MetadataRow{
