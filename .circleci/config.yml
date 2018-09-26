@@ -90,7 +90,7 @@ jobs:
           paths:
           - client/build/
           - client/build-external/
-          - tmp/weave-scope.tgz
+          - client/bundle/weave-scope.tgz
 
 
   client-test:

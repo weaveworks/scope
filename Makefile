@@ -204,7 +204,7 @@ client-start: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 		-w /home/weave/scope/client \
 		$(SCOPE_UI_BUILD_IMAGE) yarn start
 
-tmp/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
+client/bundle/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	$(sudo) docker run $(RUN_FLAGS) \
 		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
 		-v $(shell pwd)/client:/home/weave/scope/client \
@@ -247,10 +247,10 @@ ui-upload: client/build-external/index.html
 	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
 	aws s3 cp client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
 
-ui-pkg-upload: tmp/weave-scope.tgz
+ui-pkg-upload: client/bundle/weave-scope.tgz
 	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
 	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
-	aws s3 cp tmp/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/$(shell echo $(SCOPE_VERSION))/weave-scope.tgz
+	aws s3 cp client/bundle/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/$(shell echo $(SCOPE_VERSION))/weave-scope.tgz
 
 # We don't rmi images here; rm'ing the .uptodate files is enough to
 # get the build images rebuilt, and rm'ing the scope exe is enough to
