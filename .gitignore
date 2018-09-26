@@ -63,6 +63,7 @@ client/build-external/*
 prog/staticui/*
 prog/externalui/*
 client/build-pkg
+client/bundle
 
 # Website
 site-build

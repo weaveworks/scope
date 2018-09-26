@@ -102,7 +102,7 @@
     "build-external": "EXTERNAL=true webpack --config webpack.production.config.js",
     "copy-pkg-files": "cp package.json build-pkg/ && cp -R app/styles build-pkg/",
     "build-pkg": "mkdir -p build-pkg && node node_modules/.bin/babel app/scripts --ignore __tests__ --out-dir build-pkg && yarn run copy-pkg-files",
-    "bundle": "mkdir -p tmp && yarn run build-pkg && cd ./build-pkg && yarn pack --filename ../tmp/weave-scope.tgz",
+    "bundle": "mkdir -p bundle && yarn run build-pkg && cd ./build-pkg && yarn pack --filename ../bundle/weave-scope.tgz",
     "start": "node server.js",
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest",
