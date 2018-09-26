@@ -63,13 +63,23 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys:
-          - yarn-cache-{{ checksum "client/yarn.lock" }}
+          name: Restoring Yarn Cache
+          key: yarn-cache-{{ checksum "client/yarn.lock" }}
+      - restore_cache:
+          name: Restoring client/node_modules
+          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
       - run: cd client; yarn install
       - save_cache:
+          name: Saving Yarn Cache
           key: yarn-cache-{{ checksum "client/yarn.lock" }}
           paths:
             - "/home/weave/scope/.cache/yarn"
+      - save_cache:
+          name: Saving client/node_modules
+          # include the CI config in the checksum because it will change when the docker image changes
+          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
+          paths:
+            - "/home/weave/scope/client/node_modules"
       - run: |
           cd client
           yarn run build
@@ -88,8 +98,11 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          keys:
-          - yarn-cache-{{ checksum "client/yarn.lock" }}
+          name: Restoring Yarn Cache
+          key: yarn-cache-{{ checksum "client/yarn.lock" }}
+      - restore_cache:
+          name: Restoring client/node_modules
+          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
       - run: |
           cd client
           yarn install
