@@ -51,3 +51,11 @@ rules:
   verbs:
   - list
   - watch
+- apigroups:
+  - extensions
+  resourcenames:
+  - weave-scope
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
