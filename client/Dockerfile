@@ -5,7 +5,6 @@ FROM node:8.11
 ENV NPM_CONFIG_LOGLEVEL=warn
 ENV NPM_CONFIG_PROGRESS=false
 ENV XDG_CACHE_HOME=/home/weave/scope/.cache
-WORKDIR /home/weave/scope/client
 
 ARG revision
 LABEL maintainer="Weaveworks <help@weave.works>" \
