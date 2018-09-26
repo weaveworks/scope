@@ -10,10 +10,17 @@ const (
 	SnapshotPVName = "SnapshotMetadata-PVName"
 )
 
+// Capacity is the annotation key which provides the storage size
+const (
+	Capacity = "capacity"
+)
+
 // VolumeSnapshot represent kubernetes VolumeSnapshot interface
 type VolumeSnapshot interface {
 	Meta
 	GetNode(probeID string) report.Node
+	GetVolumeName() string
+	GetCapacity() string
 }
 
 // volumeSnapshot represents kubernetes volume snapshots
@@ -27,13 +34,27 @@ func NewVolumeSnapshot(p *snapshotv1.VolumeSnapshot) VolumeSnapshot {
 	return &volumeSnapshot{VolumeSnapshot: p, Meta: meta{p.ObjectMeta}}
 }
 
+// GetVolumeName returns the PVC name for volume snapshot
+func (p *volumeSnapshot) GetVolumeName() string {
+	return p.Spec.PersistentVolumeClaimName
+}
+
+// GetCapacity returns the capacity of the source PVC stored in annotation
+func (p *volumeSnapshot) GetCapacity() string {
+	capacity := p.GetAnnotations()[Capacity]
+	if capacity != "" {
+		return capacity
+	}
+	return ""
+}
+
 // GetNode returns VolumeSnapshot as Node
 func (p *volumeSnapshot) GetNode(probeID string) report.Node {
 	return p.MetaNode(report.MakeVolumeSnapshotNodeID(p.UID())).WithLatests(map[string]string{
 		report.ControlProbeID: probeID,
 		NodeType:              "Volume Snapshot",
-		VolumeClaim:           p.Spec.PersistentVolumeClaimName,
+		VolumeClaim:           p.GetVolumeName(),
 		SnapshotData:          p.Spec.SnapshotDataName,
 		VolumeName:            p.GetLabels()[SnapshotPVName],
-	})
+	}).WithLatestActiveControls(CloneVolumeSnapshot, DeleteVolumeSnapshot)
 }

@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	apiextensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -50,9 +52,11 @@ type Client interface {
 
 	WatchPods(f func(Event, Pod))
 
+	CloneVolumeSnapshot(namespaceID, volumeSnapshotID, persistentVolumeClaimID, capacity string) error
 	CreateVolumeSnapshot(namespaceID, persistentVolumeClaimID, capacity string) error
 	GetLogs(namespaceID, podID string, containerNames []string) (io.ReadCloser, error)
 	DeletePod(namespaceID, podID string) error
+	DeleteVolumeSnapshot(namespaceID, volumeSnapshotID string) error
 	ScaleUp(resource, namespaceID, id string) error
 	ScaleDown(resource, namespaceID, id string) error
 }
@@ -430,6 +434,68 @@ func (c *client) WalkVolumeSnapshotData(f func(VolumeSnapshotData) error) error 
 	return nil
 }
 
+func (c *client) CloneVolumeSnapshot(namespaceID, volumeSnapshotID, persistentVolumeClaimID, capacity string) error {
+	var scName string
+	var claimSize string
+	UID := strings.Split(uuid.New(), "-")
+	scProvisionerName := "volumesnapshot.external-storage.k8s.io/snapshot-promoter"
+	scList, err := c.client.StorageV1().StorageClasses().List(metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+	// Retrieve the first snapshot-promoter storage class
+	for _, sc := range scList.Items {
+		if sc.Provisioner == scProvisionerName {
+			scName = sc.Name
+			break
+		}
+	}
+	if scName == "" {
+		return errors.New("snapshot-promoter storage class is not present")
+	}
+	volumeSnapshot, _ := c.snapshotClient.VolumesnapshotV1().VolumeSnapshots(namespaceID).Get(volumeSnapshotID, metav1.GetOptions{})
+	if volumeSnapshot.Spec.PersistentVolumeClaimName != "" {
+		persistentVolumeClaim, err := c.client.CoreV1().PersistentVolumeClaims(namespaceID).Get(volumeSnapshot.Spec.PersistentVolumeClaimName, metav1.GetOptions{})
+		if err == nil {
+			storage := persistentVolumeClaim.Spec.Resources.Requests[apiv1.ResourceStorage]
+			if storage.String() != "" {
+				claimSize = storage.String()
+			}
+		}
+	}
+	// Set default volume size to the one stored in volume snapshot annotation,
+	// if unable to get PVC size.
+	if claimSize == "" {
+		claimSize = capacity
+	}
+
+	persistentVolumeClaim := &apiv1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "clone-" + persistentVolumeClaimID + "-" + UID[1],
+			Namespace: namespaceID,
+			Annotations: map[string]string{
+				"snapshot.alpha.kubernetes.io/snapshot": volumeSnapshotID,
+			},
+		},
+		Spec: apiv1.PersistentVolumeClaimSpec{
+			StorageClassName: &scName,
+			AccessModes: []apiv1.PersistentVolumeAccessMode{
+				apiv1.ReadWriteOnce,
+			},
+			Resources: apiv1.ResourceRequirements{
+				Requests: apiv1.ResourceList{
+					apiv1.ResourceName(apiv1.ResourceStorage): resource.MustParse(claimSize),
+				},
+			},
+		},
+	}
+	_, err = c.client.CoreV1().PersistentVolumeClaims(namespaceID).Create(persistentVolumeClaim)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) CreateVolumeSnapshot(namespaceID, persistentVolumeClaimID, capacity string) error {
 	UID := strings.Split(uuid.New(), "-")
 	volumeSnapshot := &snapshotv1.VolumeSnapshot{
@@ -477,6 +543,10 @@ func (c *client) GetLogs(namespaceID, podID string, containerNames []string) (io
 
 func (c *client) DeletePod(namespaceID, podID string) error {
 	return c.client.CoreV1().Pods(namespaceID).Delete(podID, &metav1.DeleteOptions{})
+}
+
+func (c *client) DeleteVolumeSnapshot(namespaceID, volumeSnapshotID string) error {
+	return c.snapshotClient.VolumesnapshotV1().VolumeSnapshots(namespaceID).Delete(volumeSnapshotID, &metav1.DeleteOptions{})
 }
 
 func (c *client) ScaleUp(resource, namespaceID, id string) error {
