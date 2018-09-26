@@ -3,6 +3,7 @@ package kubernetes
 import (
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	snapshotv1 "github.com/openebs/k8s-snapshot-client/snapshot/pkg/apis/volumesnapshot/v1"
 	snapshot "github.com/openebs/k8s-snapshot-client/snapshot/pkg/client/clientset/versioned"
+	"github.com/pborman/uuid"
 	log "github.com/sirupsen/logrus"
 	apiappsv1beta1 "k8s.io/api/apps/v1beta1"
 	apibatchv1 "k8s.io/api/batch/v1"
@@ -48,6 +50,7 @@ type Client interface {
 
 	WatchPods(f func(Event, Pod))
 
+	CreateVolumeSnapshot(namespaceID, persistentVolumeClaimID, capacity string) error
 	GetLogs(namespaceID, podID string, containerNames []string) (io.ReadCloser, error)
 	DeletePod(namespaceID, podID string) error
 	ScaleUp(resource, namespaceID, id string) error
@@ -423,6 +426,27 @@ func (c *client) WalkVolumeSnapshotData(f func(VolumeSnapshotData) error) error 
 		if err := f(NewVolumeSnapshotData(volumeSnapshotData)); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (c *client) CreateVolumeSnapshot(namespaceID, persistentVolumeClaimID, capacity string) error {
+	UID := strings.Split(uuid.New(), "-")
+	volumeSnapshot := &snapshotv1.VolumeSnapshot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "snapshot-" + time.Now().Format("20060102150405") + "-" + UID[1],
+			Namespace: namespaceID,
+			Annotations: map[string]string{
+				"capacity": capacity,
+			},
+		},
+		Spec: snapshotv1.VolumeSnapshotSpec{
+			PersistentVolumeClaimName: persistentVolumeClaimID,
+		},
+	}
+	_, err := c.snapshotClient.VolumesnapshotV1().VolumeSnapshots(namespaceID).Create(volumeSnapshot)
+	if err != nil {
+		return err
 	}
 	return nil
 }

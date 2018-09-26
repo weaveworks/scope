@@ -36,6 +36,7 @@ const (
 	StorageDriver      = report.KubernetesStorageDriver
 	VolumeSnapshotName = report.KubernetesVolumeSnapshotName
 	SnapshotData       = report.KubernetesSnapshotData
+	VolumeCapacity     = report.KubernetesVolumeCapacity
 )
 
 // Exposed for testing
@@ -124,6 +125,7 @@ var (
 		Status:           {ID: Status, Label: "Status", From: report.FromLatest, Priority: 3},
 		VolumeName:       {ID: VolumeName, Label: "Volume", From: report.FromLatest, Priority: 4},
 		StorageClassName: {ID: StorageClassName, Label: "Storage class", From: report.FromLatest, Priority: 5},
+		VolumeCapacity:   {ID: VolumeCapacity, Label: "Capacity", From: report.FromLatest, Priority: 6},
 	}
 
 	StorageClassMetadataTemplates = report.MetadataTemplates{
@@ -463,8 +465,14 @@ func (r *Reporter) persistentVolumeClaimTopology() (report.Topology, []Persisten
 	result := report.MakeTopology().
 		WithMetadataTemplates(PersistentVolumeClaimMetadataTemplates).
 		WithTableTemplates(TableTemplates)
+	result.Controls.AddControl(report.Control{
+		ID:    CreateVolumeSnapshot,
+		Human: "Create snapshot",
+		Icon:  "fa-camera",
+		Rank:  0,
+	})
 	err := r.client.WalkPersistentVolumeClaims(func(p PersistentVolumeClaim) error {
-		result.AddNode(p.GetNode())
+		result.AddNode(p.GetNode(r.probeID))
 		persistentVolumeClaims = append(persistentVolumeClaims, p)
 		return nil
 	})

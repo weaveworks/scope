@@ -11,10 +11,11 @@ import (
 
 // Control IDs used by the kubernetes integration.
 const (
-	GetLogs   = report.KubernetesGetLogs
-	DeletePod = report.KubernetesDeletePod
-	ScaleUp   = report.KubernetesScaleUp
-	ScaleDown = report.KubernetesScaleDown
+	CreateVolumeSnapshot = report.KubernetesCreateVolumeSnapshot
+	GetLogs              = report.KubernetesGetLogs
+	DeletePod            = report.KubernetesDeletePod
+	ScaleUp              = report.KubernetesScaleUp
+	ScaleDown            = report.KubernetesScaleDown
 )
 
 // GetLogs is the control to get the logs for a kubernetes pod
@@ -41,6 +42,14 @@ func (r *Reporter) GetLogs(req xfer.Request, namespaceID, podID string, containe
 	return xfer.Response{
 		Pipe: id,
 	}
+}
+
+func (r *Reporter) createVolumeSnapshot(req xfer.Request, namespaceID, persistentVolumeClaimID, capacity string) xfer.Response {
+	err := r.client.CreateVolumeSnapshot(namespaceID, persistentVolumeClaimID, capacity)
+	if err != nil {
+		return xfer.ResponseError(err)
+	}
+	return xfer.Response{}
 }
 
 func (r *Reporter) deletePod(req xfer.Request, namespaceID, podID string, _ []string) xfer.Response {
@@ -95,6 +104,28 @@ func (r *Reporter) CaptureDeployment(f func(xfer.Request, string, string) xfer.R
 	}
 }
 
+// CapturePersistentVolumeClaim will return name, namespace and capacity of PVC
+func (r *Reporter) CapturePersistentVolumeClaim(f func(xfer.Request, string, string, string) xfer.Response) func(xfer.Request) xfer.Response {
+	return func(req xfer.Request) xfer.Response {
+		uid, ok := report.ParsePersistentVolumeClaimNodeID(req.NodeID)
+		if !ok {
+			return xfer.ResponseErrorf("Invalid ID: %s", req.NodeID)
+		}
+		// find persistentVolumeClaim by UID
+		var persistentVolumeClaim PersistentVolumeClaim
+		r.client.WalkPersistentVolumeClaims(func(p PersistentVolumeClaim) error {
+			if p.UID() == uid {
+				persistentVolumeClaim = p
+			}
+			return nil
+		})
+		if persistentVolumeClaim == nil {
+			return xfer.ResponseErrorf("Persistent volume claim not found: %s", uid)
+		}
+		return f(req, persistentVolumeClaim.Namespace(), persistentVolumeClaim.Name(), persistentVolumeClaim.GetCapacity())
+	}
+}
+
 // ScaleUp is the control to scale up a deployment
 func (r *Reporter) ScaleUp(req xfer.Request, namespace, id string) xfer.Response {
 	return xfer.ResponseError(r.client.ScaleUp(report.Deployment, namespace, id))
@@ -107,16 +138,18 @@ func (r *Reporter) ScaleDown(req xfer.Request, namespace, id string) xfer.Respon
 
 func (r *Reporter) registerControls() {
 	controls := map[string]xfer.ControlHandlerFunc{
-		GetLogs:   r.CapturePod(r.GetLogs),
-		DeletePod: r.CapturePod(r.deletePod),
-		ScaleUp:   r.CaptureDeployment(r.ScaleUp),
-		ScaleDown: r.CaptureDeployment(r.ScaleDown),
+		CreateVolumeSnapshot: r.CapturePersistentVolumeClaim(r.createVolumeSnapshot),
+		GetLogs:              r.CapturePod(r.GetLogs),
+		DeletePod:            r.CapturePod(r.deletePod),
+		ScaleUp:              r.CaptureDeployment(r.ScaleUp),
+		ScaleDown:            r.CaptureDeployment(r.ScaleDown),
 	}
 	r.handlerRegistry.Batch(nil, controls)
 }
 
 func (r *Reporter) deregisterControls() {
 	controls := []string{
+		CreateVolumeSnapshot,
 		GetLogs,
 		DeletePod,
 		ScaleUp,

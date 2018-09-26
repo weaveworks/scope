@@ -187,6 +187,9 @@ func (c *mockClient) ScaleUp(resource, namespaceID, id string) error {
 func (c *mockClient) ScaleDown(resource, namespaceID, id string) error {
 	return nil
 }
+func (c *mockClient) CreateVolumeSnapshot(namespaceID, persistentVolumeClaimID, capacity string) error {
+	return nil
+}
 
 type mockPipeClient map[string]xfer.Pipe
 

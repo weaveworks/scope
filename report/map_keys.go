@@ -83,6 +83,8 @@ const (
 	KubernetesStorageDriver        = "kubernetes_storage_driver"
 	KubernetesVolumeSnapshotName   = "kubernetes_volume_snapshot_name"
 	KubernetesSnapshotData         = "kuberneets_snapshot_data"
+	KubernetesCreateVolumeSnapshot = "kubernetes_create_volume_snapshot"
+	KubernetesVolumeCapacity       = "kubernetes_volume_capacity"
 	// probe/awsecs
 	ECSCluster             = "ecs_cluster"
 	ECSCreatedAt           = "ecs_created_at"
