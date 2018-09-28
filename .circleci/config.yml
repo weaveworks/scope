@@ -8,7 +8,7 @@ defaults: &defaults
 client-defaults: &client-defaults
   working_directory: /home/weave/scope
   docker:
-    - image: weaveworks/scope-ui-build:master-fda40b83
+    - image: weaveworks/scope-ui-build:master-c0b60a16
 
 workflows:
   version: 2
@@ -64,14 +64,14 @@ jobs:
       - checkout
       - restore_cache:
           name: Restoring Yarn Cache
-          key: yarn-cache-{{ checksum "client/yarn.lock" }}
+          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
       - restore_cache:
           name: Restoring client/node_modules
           key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
       - run: cd client; yarn install
       - save_cache:
           name: Saving Yarn Cache
-          key: yarn-cache-{{ checksum "client/yarn.lock" }}
+          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
           paths:
             - "/home/weave/scope/.cache/yarn"
       - save_cache:
@@ -99,7 +99,7 @@ jobs:
       - checkout
       - restore_cache:
           name: Restoring Yarn Cache
-          key: yarn-cache-{{ checksum "client/yarn.lock" }}
+          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
       - restore_cache:
           name: Restoring client/node_modules
           key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
