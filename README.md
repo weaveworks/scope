@@ -59,3 +59,4 @@ If you have any questions about, feedback for or problems with Scope:
 - [File an issue](https://github.com/weaveworks/scope/issues/new).
 
 Your feedback is always welcome!
+#cheers
