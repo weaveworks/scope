@@ -320,5 +320,6 @@ case "$COMMAND" in
         echo "Unknown scope command '$COMMAND'" >&2
         usage_and_die
         ;;
+	
 
 esac
