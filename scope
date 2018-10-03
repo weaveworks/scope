@@ -92,6 +92,8 @@ check_docker_version() {
         exit 1
     fi
 
+    echo "Docker version installed: $DOCKER_VERSION"
+
     DOCKER_VERSION_MAJOR=$(echo "$DOCKER_VERSION" | cut -d. -f 1)
     DOCKER_VERSION_MINOR=$(echo "$DOCKER_VERSION" | cut -d. -f 2)
     DOCKER_VERSION_PATCH=$(echo "$DOCKER_VERSION" | cut -d. -f 3)
