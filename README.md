@@ -8,7 +8,7 @@
 [![GoDoc](https://godoc.org/github.com/weaveworks/scope?status.svg)](https://godoc.org/github.com/weaveworks/scope)//comment added
 
 Weave Scope automatically generates a map of your application, enabling you to
-intuitively understand, monitor, and control your containerized, microservices based application.
+intuitively understand, monitor, and control your containerized, microservices based application.//comment added
 
 ### Understand your Docker containers in real-time
 
