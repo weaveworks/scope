@@ -11,7 +11,7 @@ entire license text they are under.
   can be found in the ./vendor/ directory, is under MPL-2.0.
 
 - Pulled in by dependencies are  
-  https://github.com/hashicorp/go-version (MPL-2.0)  
+  https://github.com/hashicorp/go-version (MPL-2.0)//comment added  
   https://github.com/hashicorp/golang-lru (MPL-2.0)
 
 - One file pulled in by a dependency is under CDDL:  
