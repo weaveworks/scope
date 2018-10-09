@@ -1,3 +1,4 @@
+//header added
 # Weave Scope - Troubleshooting & Monitoring for Docker & Kubernetes
 
 [![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master)
@@ -5,16 +6,16 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/weaveworks/scope)](https://goreportcard.com/report/github.com/weaveworks/scope)
 [![Slack Status](https://slack.weave.works/badge.svg)](https://slack.weave.works)
 [![Docker Pulls](https://img.shields.io/docker/pulls/weaveworks/scope.svg?maxAge=604800)](https://hub.docker.com/r/weaveworks/scope/)
-[![GoDoc](https://godoc.org/github.com/weaveworks/scope?status.svg)](https://godoc.org/github.com/weaveworks/scope)
+[![GoDoc](https://godoc.org/github.com/weaveworks/scope?status.svg)](https://godoc.org/github.com/weaveworks/scope)//comment added
 
 Weave Scope automatically generates a map of your application, enabling you to
-intuitively understand, monitor, and control your containerized, microservices based application.
+intuitively understand, monitor, and control your containerized, microservices based application.//comment added
 
 ### Understand your Docker containers in real-time
 
 <img src="imgs/topology.png" width="200" alt="Map you architecture" align="right">
 
-Choose an overview of your container infrastructure, or focus on a specific microservice. Easily identify and correct issues to ensure the stability and performance of your containerized applications.
+Choose an overview of your container infrastructure, or focus on a specific microservice. Easily identify and correct issues to ensure the stability and performance of your containerized applications.//comment added
 
 ### Contextual details and deep linking
 
