@@ -14,7 +14,7 @@ intuitively understand, monitor, and control your containerized, microservices b
 
 <img src="imgs/topology.png" width="200" alt="Map you architecture" align="right">
 
-Choose an overview of your container infrastructure, or focus on a specific microservice. Easily identify and correct issues to ensure the stability and performance of your containerized applications.
+Choose an overview of your container infrastructure, or focus on a specific microservice. Easily identify and correct issues to ensure the stability and performance of your containerized applications.//comment added
 
 ### Contextual details and deep linking
 
