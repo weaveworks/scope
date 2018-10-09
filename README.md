@@ -1,3 +1,4 @@
+//header added
 # Weave Scope - Troubleshooting & Monitoring for Docker & Kubernetes
 
 [![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master)
