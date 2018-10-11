@@ -82,7 +82,7 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 }
 
 func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname string,
-	memcacheConfig multitenant.MemcacheConfig, window time.Duration, createTables bool) (app.Collector, error) {
+	memcacheConfig multitenant.MemcacheConfig, window time.Duration, maxTopNodes int, createTables bool) (app.Collector, error) {
 	if collectorURL == "local" {
 		return app.NewCollector(window), nil
 	}
@@ -124,6 +124,7 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 				NatsHost:       natsHostname,
 				MemcacheClient: memcacheClient,
 				Window:         window,
+				MaxTopNodes:    maxTopNodes,
 			},
 		)
 		if err != nil {
@@ -232,7 +233,7 @@ func appMain(flags appFlags) {
 			Service:          flags.memcachedService,
 			CompressionLevel: flags.memcachedCompressionLevel,
 		},
-		flags.window, flags.awsCreateTables)
+		flags.window, flags.maxTopNodes, flags.awsCreateTables)
 	if err != nil {
 		log.Fatalf("Error creating collector: %v", err)
 		return

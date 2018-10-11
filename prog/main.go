@@ -140,6 +140,7 @@ type probeFlags struct {
 
 type appFlags struct {
 	window         time.Duration
+	maxTopNodes    int
 	listen         string
 	stopTimeout    time.Duration
 	logLevel       string
@@ -342,6 +343,7 @@ func setupFlags(flags *flags) {
 
 	// App flags
 	flag.DurationVar(&flags.app.window, "app.window", 15*time.Second, "window")
+	flag.IntVar(&flags.app.maxTopNodes, "app.max-topology-nodes", 10000, "drop topologies with more than this many nodes (0 to disable)")
 	flag.StringVar(&flags.app.listen, "app.http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
 	flag.DurationVar(&flags.app.stopTimeout, "app.stopTimeout", 5*time.Second, "How long to wait for http requests to finish when shutting down")
 	flag.StringVar(&flags.app.logLevel, "app.log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")

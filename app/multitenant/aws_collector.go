@@ -104,6 +104,7 @@ type AWSCollectorConfig struct {
 	NatsHost       string
 	MemcacheClient *MemcacheClient
 	Window         time.Duration
+	MaxTopNodes    int
 }
 
 type awsCollector struct {
@@ -312,6 +313,9 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 			log.Warningf("Error fetching from cache: %v", err)
 		}
 		for key, report := range found {
+			if c.cfg.MaxTopNodes > 0 {
+				report = report.DropTopologiesOver(c.cfg.MaxTopNodes)
+			}
 			report = report.Upgrade()
 			c.inProcess.StoreReport(key, report)
 			reports = append(reports, report)
