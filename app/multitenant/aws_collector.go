@@ -16,6 +16,7 @@ import (
 	"github.com/bluele/gcache"
 	"github.com/nats-io/nats"
 	opentracing "github.com/opentracing/opentracing-go"
+	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 
@@ -324,6 +325,7 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 			log.Warningf("Error fetching from cache: %v", err)
 		}
 		for key, report := range found {
+			dump(ctx, report)
 			if c.maxNodes > 0 {
 				report = report.DropTopologiesOver(c.maxNodes)
 			}
@@ -340,6 +342,20 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 		return nil, fmt.Errorf("Error fetching from s3, still have missing reports: %v", missing)
 	}
 	return reports, nil
+}
+
+func dump(ctx context.Context, r report.Report) {
+	span := opentracing.SpanFromContext(ctx)
+	if span == nil {
+		return
+	}
+	var fields []otlog.Field
+	r.WalkNamedTopologies(func(name string, topology *report.Topology) {
+		if topology != nil {
+			fields = append(fields, otlog.Int(name, len(topology.Nodes)))
+		}
+	})
+	span.LogFields(fields...)
 }
 
 func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.Report, error) {
