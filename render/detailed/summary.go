@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 
+	opentracing "github.com/opentracing/opentracing-go"
+
 	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/kubernetes"
@@ -448,6 +450,9 @@ type NodeSummaries map[string]NodeSummary
 
 // Summaries converts RenderableNodes into a set of NodeSummaries
 func Summaries(ctx context.Context, rc RenderContext, rns report.Nodes) NodeSummaries {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "detailed.Summaries")
+	defer span.Finish()
+
 	result := NodeSummaries{}
 	for id, node := range rns {
 		if summary, ok := MakeNodeSummary(rc, node); ok {

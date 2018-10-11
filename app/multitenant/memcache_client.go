@@ -9,6 +9,8 @@ import (
 
 	"context"
 	"github.com/bradfitz/gomemcache/memcache"
+	opentracing "github.com/opentracing/opentracing-go"
+	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 
@@ -150,6 +152,8 @@ func memcacheStatusCode(err error) string {
 
 // FetchReports gets reports from memcache.
 func (c *MemcacheClient) FetchReports(ctx context.Context, keys []string) (map[string]report.Report, []string, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Memcache.FetchReports")
+	defer span.Finish()
 	defer memcacheRequests.Add(float64(len(keys)))
 	var found map[string]*memcache.Item
 	err := instrument.TimeRequestHistogramStatus(ctx, "Memcache.GetMulti", memcacheRequestDuration, memcacheStatusCode, func(_ context.Context) error {
@@ -157,6 +161,7 @@ func (c *MemcacheClient) FetchReports(ctx context.Context, keys []string) (map[s
 		found, err = c.client.GetMulti(keys)
 		return err
 	})
+	span.LogFields(otlog.Int("keys", len(keys)), otlog.Int("hits", len(found)))
 	if err != nil {
 		return nil, keys, err
 	}
