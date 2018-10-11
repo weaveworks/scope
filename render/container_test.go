@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -53,7 +54,7 @@ func testMap(t *testing.T, f render.MapFunc, input testcase) {
 }
 
 func TestContainerRenderer(t *testing.T) {
-	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(fixture.Report).Nodes)
+	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(context.Background(), fixture.Report).Nodes)
 	want := utils.Prune(expected.RenderedContainers)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -67,7 +68,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
-	have := utils.Prune(render.Render(input, render.ContainerWithImageNameRenderer, filterApplication).Nodes)
+	have := utils.Prune(render.Render(context.Background(), input, render.ContainerWithImageNameRenderer, filterApplication).Nodes)
 	want := utils.Prune(expected.RenderedContainers.Copy())
 	delete(want, fixture.ClientContainerNodeID)
 	if !reflect.DeepEqual(want, have) {
@@ -76,7 +77,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 }
 
 func TestContainerHostnameRenderer(t *testing.T) {
-	have := utils.Prune(render.Render(fixture.Report, render.ContainerHostnameRenderer, render.Transformers(nil)).Nodes)
+	have := utils.Prune(render.Render(context.Background(), fixture.Report, render.ContainerHostnameRenderer, render.Transformers(nil)).Nodes)
 	want := utils.Prune(expected.RenderedContainerHostnames)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -84,7 +85,7 @@ func TestContainerHostnameRenderer(t *testing.T) {
 }
 
 func TestContainerHostnameFilterRenderer(t *testing.T) {
-	have := utils.Prune(render.Render(fixture.Report, render.ContainerHostnameRenderer, filterSystem).Nodes)
+	have := utils.Prune(render.Render(context.Background(), fixture.Report, render.ContainerHostnameRenderer, filterSystem).Nodes)
 	want := utils.Prune(expected.RenderedContainerHostnames.Copy())
 	delete(want, fixture.ClientContainerHostname)
 	delete(want, fixture.ServerContainerHostname)
@@ -95,7 +96,7 @@ func TestContainerHostnameFilterRenderer(t *testing.T) {
 }
 
 func TestContainerImageRenderer(t *testing.T) {
-	have := utils.Prune(render.Render(fixture.Report, render.ContainerImageRenderer, render.Transformers(nil)).Nodes)
+	have := utils.Prune(render.Render(context.Background(), fixture.Report, render.ContainerImageRenderer, render.Transformers(nil)).Nodes)
 	want := utils.Prune(expected.RenderedContainerImages)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
@@ -103,7 +104,7 @@ func TestContainerImageRenderer(t *testing.T) {
 }
 
 func TestContainerImageFilterRenderer(t *testing.T) {
-	have := utils.Prune(render.Render(fixture.Report, render.ContainerImageRenderer, filterSystem).Nodes)
+	have := utils.Prune(render.Render(context.Background(), fixture.Report, render.ContainerImageRenderer, filterSystem).Nodes)
 	want := utils.Prune(expected.RenderedContainerHostnames.Copy())
 	delete(want, fixture.ClientContainerHostname)
 	delete(want, fixture.ServerContainerHostname)

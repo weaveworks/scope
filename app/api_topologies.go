@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -9,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"context"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
@@ -470,32 +470,32 @@ func (r *Registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
-		respondWith(w, http.StatusOK, r.renderTopologies(report, req))
+		respondWith(w, http.StatusOK, r.renderTopologies(ctx, report, req))
 	}
 }
 
-func (r *Registry) renderTopologies(rpt report.Report, req *http.Request) []APITopologyDesc {
+func (r *Registry) renderTopologies(ctx context.Context, rpt report.Report, req *http.Request) []APITopologyDesc {
 	topologies := []APITopologyDesc{}
 	req.ParseForm()
 	r.walk(func(desc APITopologyDesc) {
 		renderer, filter, _ := r.RendererForTopology(desc.id, req.Form, rpt)
-		desc.Stats = computeStats(rpt, renderer, filter)
+		desc.Stats = computeStats(ctx, rpt, renderer, filter)
 		for i, sub := range desc.SubTopologies {
 			renderer, filter, _ := r.RendererForTopology(sub.id, req.Form, rpt)
-			desc.SubTopologies[i].Stats = computeStats(rpt, renderer, filter)
+			desc.SubTopologies[i].Stats = computeStats(ctx, rpt, renderer, filter)
 		}
 		topologies = append(topologies, desc)
 	})
 	return updateFilters(rpt, topologies)
 }
 
-func computeStats(rpt report.Report, renderer render.Renderer, transformer render.Transformer) topologyStats {
+func computeStats(ctx context.Context, rpt report.Report, renderer render.Renderer, transformer render.Transformer) topologyStats {
 	var (
 		nodes     int
 		realNodes int
 		edges     int
 	)
-	r := render.Render(rpt, renderer, transformer)
+	r := render.Render(ctx, rpt, renderer, transformer)
 	for _, n := range r.Nodes {
 		nodes++
 		if n.Topology != render.Pseudo {

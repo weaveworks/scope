@@ -1,6 +1,7 @@
 package render
 
 import (
+	"context"
 	"strings"
 
 	"github.com/weaveworks/common/mtime"
@@ -23,8 +24,8 @@ type CustomRenderer struct {
 }
 
 // Render implements Renderer
-func (c CustomRenderer) Render(rpt report.Report) Nodes {
-	return c.RenderFunc(c.Renderer.Render(rpt))
+func (c CustomRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
+	return c.RenderFunc(c.Renderer.Render(ctx, rpt))
 }
 
 // FilterFunc is the function type used by Filters
@@ -112,8 +113,8 @@ func MakeFilterPseudo(f FilterFunc, r Renderer) Renderer {
 }
 
 // Render implements Renderer
-func (f Filter) Render(rpt report.Report) Nodes {
-	return f.FilterFunc.Transform(f.Renderer.Render(rpt))
+func (f Filter) Render(ctx context.Context, rpt report.Report) Nodes {
+	return f.FilterFunc.Transform(f.Renderer.Render(ctx, rpt))
 }
 
 // IsConnectedMark is the key added to Node.Metadata by

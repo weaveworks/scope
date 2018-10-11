@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"context"
 	"flag"
 	"io/ioutil"
 	"testing"
@@ -51,7 +52,7 @@ func benchmarkRender(b *testing.B, r render.Renderer) {
 		b.StopTimer()
 		render.ResetCache()
 		b.StartTimer()
-		benchmarkRenderResult = r.Render(report)
+		benchmarkRenderResult = r.Render(context.Background(), report)
 		if len(benchmarkRenderResult.Nodes) == 0 {
 			b.Errorf("Rendered topology contained no nodes")
 		}

@@ -1,6 +1,8 @@
 package render
 
 import (
+	"context"
+
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -43,11 +45,11 @@ var ProcessNameRenderer = ColorConnected(CustomRenderer{RenderFunc: processes2Na
 type endpoints2Processes struct {
 }
 
-func (e endpoints2Processes) Render(rpt report.Report) Nodes {
+func (e endpoints2Processes) Render(ctx context.Context, rpt report.Report) Nodes {
 	if len(rpt.Process.Nodes) == 0 {
 		return Nodes{}
 	}
-	endpoints := SelectEndpoint.Render(rpt).Nodes
+	endpoints := SelectEndpoint.Render(ctx, rpt).Nodes
 	return MapEndpoints(
 		func(n report.Node) string {
 			pid, ok := n.Latest.Lookup(process.PID)
@@ -62,7 +64,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 				return ""
 			}
 			return report.MakeProcessNodeID(hostID, pid)
-		}, report.Process).Render(rpt)
+		}, report.Process).Render(ctx, rpt)
 }
 
 // When there is more than one connection originating from a source
