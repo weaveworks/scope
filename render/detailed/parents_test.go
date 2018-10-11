@@ -1,6 +1,7 @@
 package detailed_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -14,6 +15,7 @@ import (
 )
 
 func TestParents(t *testing.T) {
+	ctx := context.Background()
 	for _, c := range []struct {
 		name string
 		node report.Node
@@ -21,25 +23,25 @@ func TestParents(t *testing.T) {
 	}{
 		{
 			name: "Node accidentally tagged with itself",
-			node: render.HostRenderer.Render(fixture.Report).Nodes[fixture.ClientHostNodeID].WithParents(
+			node: render.HostRenderer.Render(ctx, fixture.Report).Nodes[fixture.ClientHostNodeID].WithParents(
 				report.MakeSets().Add(report.Host, report.MakeStringSet(fixture.ClientHostNodeID)),
 			),
 			want: nil,
 		},
 		{
-			node: render.HostRenderer.Render(fixture.Report).Nodes[fixture.ClientHostNodeID],
+			node: render.HostRenderer.Render(ctx, fixture.Report).Nodes[fixture.ClientHostNodeID],
 			want: nil,
 		},
 		{
 			name: "Container image",
-			node: render.ContainerImageRenderer.Render(fixture.Report).Nodes[expected.ClientContainerImageNodeID],
+			node: render.ContainerImageRenderer.Render(ctx, fixture.Report).Nodes[expected.ClientContainerImageNodeID],
 			want: []detailed.Parent{
 				{ID: fixture.ClientHostNodeID, Label: "client", TopologyID: "hosts"},
 			},
 		},
 		{
 			name: "Container",
-			node: render.ContainerWithImageNameRenderer.Render(fixture.Report).Nodes[fixture.ClientContainerNodeID],
+			node: render.ContainerWithImageNameRenderer.Render(ctx, fixture.Report).Nodes[fixture.ClientContainerNodeID],
 			want: []detailed.Parent{
 				{ID: expected.ClientContainerImageNodeID, Label: fixture.ClientContainerImageName, TopologyID: "containers-by-image"},
 				{ID: fixture.ClientPodNodeID, Label: "pong-a", TopologyID: "pods"},
@@ -47,7 +49,7 @@ func TestParents(t *testing.T) {
 			},
 		},
 		{
-			node: render.ProcessRenderer.Render(fixture.Report).Nodes[fixture.ClientProcess1NodeID],
+			node: render.ProcessRenderer.Render(ctx, fixture.Report).Nodes[fixture.ClientProcess1NodeID],
 			want: []detailed.Parent{
 				{ID: fixture.ClientContainerNodeID, Label: fixture.ClientContainerName, TopologyID: "containers"},
 				{ID: fixture.ClientHostNodeID, Label: "client", TopologyID: "hosts"},

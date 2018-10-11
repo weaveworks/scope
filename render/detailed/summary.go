@@ -1,6 +1,7 @@
 package detailed
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -446,8 +447,7 @@ func (s nodeSummariesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
 type NodeSummaries map[string]NodeSummary
 
 // Summaries converts RenderableNodes into a set of NodeSummaries
-func Summaries(rc RenderContext, rns report.Nodes) NodeSummaries {
-
+func Summaries(ctx context.Context, rc RenderContext, rns report.Nodes) NodeSummaries {
 	result := NodeSummaries{}
 	for id, node := range rns {
 		if summary, ok := MakeNodeSummary(rc, node); ok {

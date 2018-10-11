@@ -1,6 +1,7 @@
 package render
 
 import (
+	"context"
 	"regexp"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -53,8 +54,8 @@ type connectionJoin struct {
 	topology string
 }
 
-func (c connectionJoin) Render(rpt report.Report) Nodes {
-	inputNodes := TopologySelector(c.topology).Render(rpt).Nodes
+func (c connectionJoin) Render(ctx context.Context, rpt report.Report) Nodes {
+	inputNodes := TopologySelector(c.topology).Render(ctx, rpt).Nodes
 	// Collect all the IPs we are trying to map to, and which ID they map from
 	var ipNodes = map[string]string{}
 	for _, n := range inputNodes {
@@ -92,7 +93,7 @@ func (c connectionJoin) Render(rpt report.Report) Nodes {
 			// from ipNodes, which is populated from c.topology, which
 			// is where MapEndpoints will look.
 			return id
-		}, c.topology).Render(rpt)
+		}, c.topology).Render(ctx, rpt)
 }
 
 // FilterEmpty is a Renderer which filters out nodes which have no children
@@ -121,9 +122,9 @@ type containerWithImageNameRenderer struct {
 
 // Render produces a container graph where the the latest metadata contains the
 // container image name, if found.
-func (r containerWithImageNameRenderer) Render(rpt report.Report) Nodes {
-	containers := r.Renderer.Render(rpt)
-	images := SelectContainerImage.Render(rpt)
+func (r containerWithImageNameRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
+	containers := r.Renderer.Render(ctx, rpt)
+	images := SelectContainerImage.Render(ctx, rpt)
 
 	outputs := make(report.Nodes, len(containers.Nodes))
 	for id, c := range containers.Nodes {

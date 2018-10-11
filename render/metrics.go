@@ -1,6 +1,8 @@
 package render
 
 import (
+	"context"
+
 	"github.com/weaveworks/scope/report"
 )
 
@@ -17,8 +19,8 @@ type propagateSingleMetrics struct {
 	r        Renderer
 }
 
-func (p propagateSingleMetrics) Render(rpt report.Report) Nodes {
-	nodes := p.r.Render(rpt)
+func (p propagateSingleMetrics) Render(ctx context.Context, rpt report.Report) Nodes {
+	nodes := p.r.Render(ctx, rpt)
 	outputs := make(report.Nodes, len(nodes.Nodes))
 	for id, n := range nodes.Nodes {
 		var first report.Node

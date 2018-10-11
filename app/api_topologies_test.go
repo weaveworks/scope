@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"bytes"
+	"context"
 	"net/http/httptest"
 	"net/url"
 	"testing"
@@ -118,7 +119,7 @@ func TestRendererForTopologyWithFiltering(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
-	have := utils.Prune(render.Render(input, renderer, filter).Nodes)
+	have := utils.Prune(render.Render(context.Background(), input, renderer, filter).Nodes)
 	want := utils.Prune(expected.RenderedContainers.Copy())
 	delete(want, fixture.ClientContainerNodeID)
 	delete(want, render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID))
@@ -149,7 +150,7 @@ func TestRendererForTopologyNoFiltering(t *testing.T) {
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
 		docker.LabelPrefix + "works.weave.role": "system",
 	})
-	have := utils.Prune(render.Render(input, renderer, filter).Nodes)
+	have := utils.Prune(render.Render(context.Background(), input, renderer, filter).Nodes)
 	want := utils.Prune(expected.RenderedContainers.Copy())
 	delete(want, render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID))
 	delete(want, render.OutgoingInternetID)
@@ -183,7 +184,8 @@ func getTestContainerLabelFilterTopologySummary(t *testing.T, exclude bool) (det
 		return nil, err
 	}
 
-	return detailed.Summaries(detailed.RenderContext{Report: fixture.Report}, render.Render(fixture.Report, renderer, filter).Nodes), nil
+	ctx := context.Background()
+	return detailed.Summaries(ctx, detailed.RenderContext{Report: fixture.Report}, render.Render(ctx, fixture.Report, renderer, filter).Nodes), nil
 }
 
 func TestAPITopologyAddsKubernetes(t *testing.T) {

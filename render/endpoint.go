@@ -1,6 +1,8 @@
 package render
 
 import (
+	"context"
+
 	"github.com/weaveworks/scope/report"
 )
 
@@ -27,10 +29,10 @@ func MapEndpoints(f endpointMapFunc, topology string) Renderer {
 	return mapEndpoints{f: f, topology: topology}
 }
 
-func (e mapEndpoints) Render(rpt report.Report) Nodes {
+func (e mapEndpoints) Render(ctx context.Context, rpt report.Report) Nodes {
 	local := LocalNetworks(rpt)
-	endpoints := SelectEndpoint.Render(rpt)
-	ret := newJoinResults(TopologySelector(e.topology).Render(rpt).Nodes)
+	endpoints := SelectEndpoint.Render(ctx, rpt)
+	ret := newJoinResults(TopologySelector(e.topology).Render(ctx, rpt).Nodes)
 
 	for _, n := range endpoints.Nodes {
 		// Nodes without a hostid are mapped to pseudo nodes, if

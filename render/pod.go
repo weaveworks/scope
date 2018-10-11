@@ -1,6 +1,7 @@
 package render
 
 import (
+	"context"
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -162,8 +163,8 @@ type Map2Parent struct {
 }
 
 // Render implements Renderer
-func (m Map2Parent) Render(rpt report.Report) Nodes {
-	input := m.chainRenderer.Render(rpt)
+func (m Map2Parent) Render(ctx context.Context, rpt report.Report) Nodes {
+	input := m.chainRenderer.Render(ctx, rpt)
 	ret := newJoinResults(nil)
 
 	for _, n := range input.Nodes {

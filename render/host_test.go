@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/weaveworks/common/test"
@@ -12,7 +13,7 @@ import (
 )
 
 func TestHostRenderer(t *testing.T) {
-	have := utils.Prune(render.HostRenderer.Render(fixture.Report).Nodes)
+	have := utils.Prune(render.HostRenderer.Render(context.Background(), fixture.Report).Nodes)
 	want := utils.Prune(expected.RenderedHosts)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))
