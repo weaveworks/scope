@@ -88,10 +88,12 @@ func (p *pod) VolumeClaimName() string {
 
 func (p *pod) GetNode(probeID string) report.Node {
 	latests := map[string]string{
-		State: p.State(),
-		IP:    p.Status.PodIP,
+		State:                 p.State(),
+		IP:                    p.Status.PodIP,
 		report.ControlProbeID: probeID,
 		RestartCount:          strconv.FormatUint(uint64(p.RestartCount()), 10),
+		Reason:                p.Status.Reason,
+		Message:               p.Status.Message,
 	}
 
 	if p.VolumeClaimName() != "" {

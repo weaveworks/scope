@@ -77,6 +77,7 @@ const (
 	KubernetesAccessModes          = "kubernetes_access_modes"
 	KubernetesReclaimPolicy        = "kubernetes_reclaim_policy"
 	KubernetesStatus               = "kubernetes_status"
+	KubernetesReason               = "kubernetes_reason"
 	KubernetesMessage              = "kubernetes_message"
 	KubernetesVolumeName           = "kubernetes_volume_name"
 	KubernetesProvisioner          = "kubernetes_provisioner"
