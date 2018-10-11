@@ -124,7 +124,7 @@ type probeFlags struct {
 	criEndpoint string
 
 	kubernetesEnabled      bool
-	kubernetesTagOnly      bool
+	kubernetesRole         string
 	kubernetesNodeName     string
 	kubernetesClientConfig kubernetes.ClientConfig
 	kubernetesKubeletPort  uint
@@ -315,7 +315,7 @@ func setupFlags(flags *flags) {
 
 	// K8s
 	flag.BoolVar(&flags.probe.kubernetesEnabled, "probe.kubernetes", false, "collect kubernetes-related attributes for containers")
-	flag.BoolVar(&flags.probe.kubernetesTagOnly, "probe.kubernetes-tag", false, "tag containers with kubernetes parents")
+	flag.StringVar(&flags.probe.kubernetesRole, "probe.kubernetes.role", "", "host, cluster or blank for everything")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.Server, "probe.kubernetes.api", "", "The address and port of the Kubernetes API server (deprecated in favor of equivalent probe.kubernetes.server)")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.CertificateAuthority, "probe.kubernetes.certificate-authority", "", "Path to a cert. file for the certificate authority")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.ClientCertificate, "probe.kubernetes.client-certificate", "", "Path to a client certificate file for TLS")

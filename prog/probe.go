@@ -41,6 +41,9 @@ import (
 const (
 	versionCheckPeriod = 6 * time.Hour
 	defaultServiceHost = "https://cloud.weave.works.:443"
+
+	kubernetesRoleHost    = "host"
+	kubernetesRoleCluster = "cluster"
 )
 
 var (
@@ -230,6 +233,17 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	defer endpointReporter.Stop()
 	p.AddReporter(endpointReporter)
 
+	switch flags.kubernetesRole {
+	case "": // nothing special
+	case kubernetesRoleHost:
+		flags.kubernetesEnabled = true
+	case kubernetesRoleCluster:
+		flags.kubernetesKubeletPort = 0
+		flags.kubernetesEnabled = true
+	default:
+		log.Warnf("unrecognized --probe.kubernetes.role: %s", flags.kubernetesRole)
+	}
+
 	if flags.dockerEnabled {
 		// Don't add the bridge in Kubernetes since container IPs are global and
 		// shouldn't be scoped
@@ -267,7 +281,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		}
 	}
 
-	if flags.kubernetesEnabled {
+	if flags.kubernetesEnabled && flags.kubernetesRole != kubernetesRoleHost {
 		if client, err := kubernetes.NewClient(flags.kubernetesClientConfig); err == nil {
 			defer client.Stop()
 			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry, flags.kubernetesNodeName, flags.kubernetesKubeletPort)
@@ -279,7 +293,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		}
 	}
 
-	if flags.kubernetesEnabled || flags.kubernetesTagOnly {
+	if flags.kubernetesEnabled {
 		p.AddTagger(&kubernetes.Tagger{})
 	}
 
