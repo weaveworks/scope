@@ -105,6 +105,7 @@ type AWSCollectorConfig struct {
 	NatsHost       string
 	MemcacheClient *MemcacheClient
 	Window         time.Duration
+	MaxNodes       int
 }
 
 type awsCollector struct {
@@ -116,6 +117,7 @@ type awsCollector struct {
 	inProcess inProcessStore
 	memcache  *MemcacheClient
 	window    time.Duration
+	maxNodes  int
 
 	nats        *nats.Conn
 	waitersLock sync.Mutex
@@ -159,6 +161,7 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 		inProcess: newInProcessStore(reportCacheSize, config.Window),
 		memcache:  config.MemcacheClient,
 		window:    config.Window,
+		maxNodes:  10000, // hack
 		nats:      nc,
 		waiters:   map[watchKey]*nats.Subscription{},
 	}, nil
@@ -321,6 +324,9 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 			log.Warningf("Error fetching from cache: %v", err)
 		}
 		for key, report := range found {
+			if c.maxNodes > 0 {
+				report = report.DropTopologiesOver(c.maxNodes)
+			}
 			report = report.Upgrade()
 			c.inProcess.StoreReport(key, report)
 			reports = append(reports, report)

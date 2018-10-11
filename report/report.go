@@ -423,6 +423,18 @@ func (r Report) Upgrade() Report {
 	return r.upgradePodNodes().upgradeNamespaces().upgradeDNSRecords()
 }
 
+// As a protection against overloading the app server, drop topologies
+// that have really large node counts. In practice we only see this
+// with runaway numbers of zombie processes.
+func (r Report) DropTopologiesOver(limit int) Report {
+	r.WalkNamedTopologies(func(name string, topology *Topology) {
+		if topology != nil && len(topology.Nodes) > limit {
+			topology.Nodes = Nodes{}
+		}
+	})
+	return r
+}
+
 func (r Report) upgradePodNodes() Report {
 	// At the same time the probe stopped reporting replicasets,
 	// it also started reporting deployments as pods' parents
