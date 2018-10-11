@@ -150,6 +150,8 @@ func memcacheStatusCode(err error) string {
 	}
 }
 
+var Parallelism = 8
+
 // FetchReports gets reports from memcache.
 func (c *MemcacheClient) FetchReports(ctx context.Context, keys []string) (map[string]report.Report, []string, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Memcache.FetchReports")
@@ -172,23 +174,43 @@ func (c *MemcacheClient) FetchReports(ctx context.Context, keys []string) (map[s
 		report *report.Report
 	}
 	ch := make(chan result, len(keys))
+	queue := make(chan string, len(keys))
+	// Send all the found reports into the queue
 	var missing []string
 	for _, key := range keys {
-		item, ok := found[key]
+		_, ok := found[key]
 		if !ok {
 			missing = append(missing, key)
 			continue
 		}
-		go func(key string) {
-			rep, err := report.MakeFromBytes(item.Value)
-			if err != nil {
-				log.Warningf("Corrupt report in memcache %v: %v", key, err)
-				ch <- result{key: key}
-				return
-			}
-			ch <- result{key: key, report: rep}
-		}(key)
+		queue <- key
 	}
+	n := len(keys)
+	if n > Parallelism {
+		n = Parallelism
+	}
+	// Run n parallel goroutines fetching reports from the queue
+	for i := 0; i < n; i++ {
+		go func() {
+			sp, _ := opentracing.StartSpanFromContext(ctx, "Memcache.FetchReports-worker")
+			defer sp.Finish()
+			for {
+				key, ok := <-queue
+				if !ok {
+					return
+				}
+				item := found[key]
+				rep, err := report.MakeFromBytes(item.Value)
+				if err != nil {
+					log.Warningf("Corrupt report in memcache %v: %v", key, err)
+					ch <- result{key: key}
+					return
+				}
+				ch <- result{key: key, report: rep}
+			}
+		}()
+	}
+	close(queue)
 
 	reports := map[string]report.Report{}
 	lenFound := len(keys) - len(missing)
