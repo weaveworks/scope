@@ -147,6 +147,7 @@ SCOPE_UI_TOOLCHAIN=.cache/build_node_modules
 SCOPE_UI_TOOLCHAIN_UPTODATE=$(SCOPE_UI_TOOLCHAIN)/.uptodate
 
 $(SCOPE_UI_TOOLCHAIN_UPTODATE): client/yarn.lock $(SCOPE_UI_BUILD_UPTODATE)
+	mkdir -p $(SCOPE_UI_TOOLCHAIN) client/node_modules
 	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
 		$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 			-v $(shell pwd)/.cache:/home/weave/scope/.cache \
