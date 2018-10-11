@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/bluele/gcache"
 	"github.com/nats-io/nats"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 
@@ -336,10 +337,13 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 }
 
 func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.Report, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "awsCollector.Report")
+	defer span.Finish()
 	reportKeys, err := c.getReportKeys(ctx, timestamp)
 	if err != nil {
 		return report.MakeReport(), err
 	}
+	span.LogFields(otlog.Int("keys", len(reportKeys)), otlog.String("timestamp", timestamp.String()))
 	log.Debugf("Fetching %d reports to %v", len(reportKeys), timestamp)
 	reports, err := c.getReports(ctx, reportKeys)
 	if err != nil {

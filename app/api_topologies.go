@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	opentracing "github.com/opentracing/opentracing-go"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -475,6 +476,8 @@ func (r *Registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 }
 
 func (r *Registry) renderTopologies(ctx context.Context, rpt report.Report, req *http.Request) []APITopologyDesc {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "app.renderTopologies")
+	defer span.Finish()
 	topologies := []APITopologyDesc{}
 	req.ParseForm()
 	r.walk(func(desc APITopologyDesc) {
@@ -490,6 +493,8 @@ func (r *Registry) renderTopologies(ctx context.Context, rpt report.Report, req 
 }
 
 func computeStats(ctx context.Context, rpt report.Report, renderer render.Renderer, transformer render.Transformer) topologyStats {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "app.computeStats")
+	defer span.Finish()
 	var (
 		nodes     int
 		realNodes int
