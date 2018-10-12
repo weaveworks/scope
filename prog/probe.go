@@ -108,6 +108,21 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	logCensoredArgs()
 	defer log.Info("probe exiting")
 
+	switch flags.kubernetesRole {
+	case "": // nothing special
+	case kubernetesRoleHost:
+		flags.kubernetesEnabled = true
+	case kubernetesRoleCluster:
+		flags.kubernetesKubeletPort = 0
+		flags.kubernetesEnabled = true
+		flags.spyProcs = false
+		flags.procEnabled = false
+		flags.useConntrack = false
+		flags.useEbpfConn = false
+	default:
+		log.Warnf("unrecognized --probe.kubernetes.role: %s", flags.kubernetesRole)
+	}
+
 	if flags.spyProcs && os.Getegid() != 0 {
 		log.Warn("--probe.proc.spy=true, but that requires root to find everything")
 	}
@@ -232,17 +247,6 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	})
 	defer endpointReporter.Stop()
 	p.AddReporter(endpointReporter)
-
-	switch flags.kubernetesRole {
-	case "": // nothing special
-	case kubernetesRoleHost:
-		flags.kubernetesEnabled = true
-	case kubernetesRoleCluster:
-		flags.kubernetesKubeletPort = 0
-		flags.kubernetesEnabled = true
-	default:
-		log.Warnf("unrecognized --probe.kubernetes.role: %s", flags.kubernetesRole)
-	}
 
 	if flags.dockerEnabled {
 		// Don't add the bridge in Kubernetes since container IPs are global and
