@@ -53,7 +53,7 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 		},
 		MakeReduce(
 			PropagateSingleMetrics(report.Container,
-				MakeMap(propagateHostID,
+				MakeMap(propagatePodHost,
 					Map2Parent{topologies: []string{report.Pod}, noParentsPseudoID: UnmanagedID,
 						chainRenderer: MakeFilter(
 							ComposeFilterFuncs(
@@ -70,21 +70,25 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 	),
 ))
 
-// Pods are not tagged with a Host ID, but their container children are.
-// If n doesn't already have a host ID, copy it from one of the children
-func propagateHostID(n report.Node) report.Node {
-	if _, found := n.Latest.Lookup(report.HostNodeID); found {
+// Pods are not tagged with a Host parent, but their container children are.
+// If n doesn't already have a host, copy it from one of the children
+func propagatePodHost(n report.Node) report.Node {
+	if n.Topology != report.Pod {
+		return n
+	} else if _, found := n.Parents.Lookup(report.Host); found {
 		return n
 	}
-	var first *report.Node
+	done := false
 	n.Children.ForEach(func(child report.Node) {
-		if first == nil {
-			first = &child
+		if !done {
+			if hosts, found := child.Parents.Lookup(report.Host); found {
+				for _, h := range hosts {
+					n = n.WithParent(report.Host, h)
+				}
+				done = true
+			}
 		}
 	})
-	if first != nil {
-		n.Latest = n.Latest.Propagate(first.Latest, report.HostNodeID)
-	}
 	return n
 }
 
