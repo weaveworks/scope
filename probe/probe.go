@@ -1,17 +1,20 @@
 package probe
 
 import (
+	"context"
 	"sync"
 	"time"
 
 	"github.com/armon/go-metrics"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/time/rate"
 
 	"github.com/weaveworks/scope/report"
 )
 
 const (
-	reportBufferSize = 16
+	spiedReportBufferSize    = 16
+	shortcutReportBufferSize = 1024
 )
 
 // ReportPublisher publishes reports, probably to a remote collector.
@@ -23,6 +26,7 @@ type ReportPublisher interface {
 type Probe struct {
 	spyInterval, publishInterval time.Duration
 	publisher                    ReportPublisher
+	rateLimiter                  *rate.Limiter
 	noControls                   bool
 
 	tickers   []Ticker
@@ -79,10 +83,11 @@ func New(
 		spyInterval:     spyInterval,
 		publishInterval: publishInterval,
 		publisher:       publisher,
+		rateLimiter:     rate.NewLimiter(rate.Every(publishInterval)*10, 1),
 		noControls:      noControls,
 		quit:            make(chan struct{}),
-		spiedReports:    make(chan report.Report, reportBufferSize),
-		shortcutReports: make(chan report.Report, reportBufferSize),
+		spiedReports:    make(chan report.Report, spiedReportBufferSize),
+		shortcutReports: make(chan report.Report, shortcutReportBufferSize),
 	}
 	return result
 }
@@ -197,6 +202,7 @@ func (p *Probe) tag(r report.Report) report.Report {
 }
 
 func (p *Probe) drainAndPublish(rpt report.Report, rs chan report.Report) {
+	p.rateLimiter.Wait(context.Background())
 ForLoop:
 	for {
 		select {
