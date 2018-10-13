@@ -19,7 +19,7 @@ RUN go clean -i net && \
    fi; \
     go get -tags netgo \
 		github.com/fzipp/gocyclo \
-		github.com/golang/lint/golint \
+		golang.org/x/lint/golint \
 		github.com/kisielk/errcheck \
 		github.com/fatih/hclfmt \
 		github.com/mjibson/esc \
