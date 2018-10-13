@@ -30,7 +30,7 @@ RUN go get -tags netgo \
 		github.com/gogo/protobuf/gogoproto \
 		github.com/gogo/protobuf/protoc-gen-gogoslick \
 		github.com/golang/dep/... \
-		github.com/golang/lint/golint \
+		golang.org/x/lint/golint \
 		github.com/golang/protobuf/protoc-gen-go \
 		github.com/kisielk/errcheck \
 		github.com/mjibson/esc \
