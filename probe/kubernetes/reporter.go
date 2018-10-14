@@ -193,6 +193,10 @@ func (r *Reporter) Stop() {
 func (Reporter) Name() string { return "K8s" }
 
 func (r *Reporter) podEvent(e Event, pod Pod) {
+	// filter out non-local pods, if we have been given a node name to report on
+	if r.nodeName != "" && pod.NodeName() != r.nodeName {
+		return
+	}
 	switch e {
 	case ADD:
 		rpt := report.MakeReport()
