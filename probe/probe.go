@@ -83,7 +83,7 @@ func New(
 		spyInterval:     spyInterval,
 		publishInterval: publishInterval,
 		publisher:       publisher,
-		rateLimiter:     rate.NewLimiter(rate.Every(publishInterval)*10, 1),
+		rateLimiter:     rate.NewLimiter(rate.Every(publishInterval/100), 1),
 		noControls:      noControls,
 		quit:            make(chan struct{}),
 		spiedReports:    make(chan report.Report, spiedReportBufferSize),
