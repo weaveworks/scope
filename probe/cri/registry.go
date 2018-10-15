@@ -11,7 +11,10 @@ import (
 	client "github.com/weaveworks/scope/cri/runtime"
 )
 
-const unixProtocol = "unix"
+const (
+	unixProtocol = "unix"
+	tcpProtocol  = "tcp"
+)
 
 func dial(addr string, timeout time.Duration) (net.Conn, error) {
 	return net.DialTimeout(unixProtocol, addr, timeout)
@@ -48,17 +51,19 @@ func parseEndpointWithFallbackProtocol(endpoint string, fallbackProtocol string)
 
 func parseEndpoint(endpoint string) (string, string, error) {
 	u, err := url.Parse(endpoint)
+
 	if err != nil {
 		return "", "", err
 	}
 
-	if u.Scheme == "tcp" {
-		return "tcp", u.Host, fmt.Errorf("endpoint was not unix socket %v", u.Scheme)
-	} else if u.Scheme == "unix" {
-		return "unix", u.Path, nil
-	} else if u.Scheme == "" {
+	switch u.Scheme {
+	case tcpProtocol:
+		return tcpProtocol, u.Host, fmt.Errorf("endpoint was not unix socket %v", u.Scheme)
+	case unixProtocol:
+		return unixProtocol, u.Path, nil
+	case "":
 		return "", "", nil
-	} else {
+	default:
 		return u.Scheme, "", fmt.Errorf("protocol %q not supported", u.Scheme)
 	}
 }
