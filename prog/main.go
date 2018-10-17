@@ -460,7 +460,7 @@ func main() {
 	}
 
 	if strings.ToLower(os.Getenv("ENABLE_BASIC_AUTH")) == "false" {
-		log.Infof("Basic authentication disabled.")
+		log.Infof("Basic authentication enabled.")
 		flags.probe.basicAuth = false
 		flags.app.basicAuth = false
 
