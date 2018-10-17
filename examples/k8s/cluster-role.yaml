@@ -51,3 +51,11 @@ rules:
   verbs:
   - list
   - watch
+- apiGroups:
+  - volumesnapshot.external-storage.k8s.io
+  resources:
+  - volumesnapshots
+  - volumesnapshotdatas
+  verbs:
+  - list
+  - watch
