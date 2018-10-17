@@ -360,7 +360,7 @@ func setupFlags(flags *flags) {
 	flag.BoolVar(&flags.app.logHTTPHeaders, "app.log.httpHeaders", false, "Log HTTP headers. Needs app.log.http to be enabled.")
 
 	flag.BoolVar(&flags.app.basicAuth, "app.basicAuth", false, "Enable basic authentication for app")
-	flag.StringVar(&flags.app.username, "app.basicAuth.username", "admin", "Usrname for basic authentication")
+	flag.StringVar(&flags.app.username, "app.basicAuth.username", "admin", "Username for basic authentication")
 	flag.StringVar(&flags.app.password, "app.basicAuth.password", "admin", "Password for basic authentication")
 
 	flag.StringVar(&flags.app.weaveAddr, "app.weave.addr", app.DefaultWeaveURL, "Address on which to contact WeaveDNS")
