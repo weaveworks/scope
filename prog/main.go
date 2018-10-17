@@ -287,7 +287,7 @@ func setupFlags(flags *flags) {
 
 	// Probe flags
 	flag.BoolVar(&flags.probe.printOnStdout, "probe.publish.stdout", false, "Print reports on stdout instead of sending to app, for debugging")
-	flag.BoolVar(&flags.probe.basicAuth, "probe.basicAuth", true, "Use basic authentication to authenticate with app")
+	flag.BoolVar(&flags.probe.basicAuth, "probe.basicAuth", false, "Use basic authentication to authenticate with app")
 	flag.StringVar(&flags.probe.username, "probe.basicAuth.username", "admin", "Username for basic authentication")
 	flag.StringVar(&flags.probe.password, "probe.basicAuth.password", "admin", "Password for basic authentication")
 	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to authenticate with cloud.weave.works")
@@ -359,7 +359,7 @@ func setupFlags(flags *flags) {
 	flag.BoolVar(&flags.app.logHTTP, "app.log.http", false, "Log individual HTTP requests")
 	flag.BoolVar(&flags.app.logHTTPHeaders, "app.log.httpHeaders", false, "Log HTTP headers. Needs app.log.http to be enabled.")
 
-	flag.BoolVar(&flags.app.basicAuth, "app.basicAuth", true, "Enable basic authentication for app")
+	flag.BoolVar(&flags.app.basicAuth, "app.basicAuth", false, "Enable basic authentication for app")
 	flag.StringVar(&flags.app.username, "app.basicAuth.username", "admin", "Usrname for basic authentication")
 	flag.StringVar(&flags.app.password, "app.basicAuth.password", "admin", "Password for basic authentication")
 
@@ -459,19 +459,19 @@ func main() {
 		flags.probe.kubernetesNodeName = os.Getenv("KUBERNETES_NODENAME")
 	}
 
-	if strings.ToLower(os.Getenv("DISABLE_BASICAUTH")) == "true" {
+	if strings.ToLower(os.Getenv("ENABLE_BASIC_AUTH")) == "false" {
 		log.Infof("Basic authentication disabled.")
 		flags.probe.basicAuth = false
 		flags.app.basicAuth = false
 
 	} else {
 		log.Infof("Basic authentication enabled.")
-		username := os.Getenv("BASICAUTH_USERNAME")
+		username := os.Getenv("BASIC_AUTH_USERNAME")
 		if username != "" {
 			flags.probe.username = username
 			flags.app.username = username
 		}
-		password := os.Getenv("BASICAUTH_PASSWORD")
+		password := os.Getenv("BASIC_AUTH_PASSWORD")
 		if password != "" {
 			flags.probe.password = password
 			flags.app.password = password
