@@ -30,6 +30,7 @@ const (
 	AccessModes        = report.KubernetesAccessModes
 	ReclaimPolicy      = report.KubernetesReclaimPolicy
 	Status             = report.KubernetesStatus
+	Reason             = report.KubernetesReason
 	Message            = report.KubernetesMessage
 	VolumeName         = report.KubernetesVolumeName
 	Provisioner        = report.KubernetesProvisioner
@@ -45,6 +46,8 @@ var (
 		Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 5},
 		Created:          {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 6},
 		RestartCount:     {ID: RestartCount, Label: "Restart #", From: report.FromLatest, Priority: 7},
+		Reason:           {ID: Reason, Label: "Reason", From: report.FromLatest, Priority: 8, HideIfEmpty: true},
+		Message:          {ID: Message, Label: "Message", From: report.FromLatest, Priority: 9, HideIfEmpty: true},
 	}
 
 	PodMetricTemplates = docker.ContainerMetricTemplates

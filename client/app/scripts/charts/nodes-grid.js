@@ -18,7 +18,7 @@ import { getNodeColor } from '../utils/color-utils';
 
 
 const IGNORED_COLUMNS = ['docker_container_ports', 'docker_container_id', 'docker_image_id',
-  'docker_container_command', 'docker_container_networks'];
+  'docker_container_command', 'docker_container_networks', 'kubernetes_reason', 'kubernetes_message'];
 
 
 const Icon = styled.span`

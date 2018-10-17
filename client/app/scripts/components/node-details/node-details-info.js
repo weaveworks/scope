@@ -41,6 +41,9 @@ class NodeDetailsInfo extends React.Component {
       <div className="node-details-info">
         {rows.map((field) => {
           const { value, title } = formatDataType(field, timestamp);
+          if (field.hideIfEmpty && value === '') {
+            return null;
+          }
           return (
             <div className="node-details-info-field" key={field.id}>
               <div className="node-details-info-field-label truncate" title={field.label}>

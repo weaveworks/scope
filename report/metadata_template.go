@@ -20,12 +20,13 @@ const (
 
 // MetadataTemplate extracts some metadata rows from a node
 type MetadataTemplate struct {
-	ID       string  `json:"id"`
-	Label    string  `json:"label,omitempty"`    // Human-readable descriptor for this row
-	Truncate int     `json:"truncate,omitempty"` // If > 0, truncate the value to this length.
-	Datatype string  `json:"dataType,omitempty"`
-	Priority float64 `json:"priority,omitempty"`
-	From     string  `json:"from,omitempty"` // Defines how to get the value from a report node
+	ID          string  `json:"id"`
+	Label       string  `json:"label,omitempty"`    // Human-readable descriptor for this row
+	Truncate    int     `json:"truncate,omitempty"` // If > 0, truncate the value to this length.
+	Datatype    string  `json:"dataType,omitempty"`
+	Priority    float64 `json:"priority,omitempty"`
+	From        string  `json:"from,omitempty"`        // Defines how to get the value from a report node
+	HideIfEmpty bool    `json:"hideIfEmpty,omitempty"` // If the value is empty, omit showing the row.
 }
 
 // MetadataRow returns the row for a node
@@ -41,12 +42,13 @@ func (t MetadataTemplate) MetadataRow(n Node) (MetadataRow, bool) {
 	}
 	if val, ok := from(n, t.ID); ok {
 		return MetadataRow{
-			ID:       t.ID,
-			Label:    t.Label,
-			Value:    val,
-			Truncate: t.Truncate,
-			Datatype: t.Datatype,
-			Priority: t.Priority,
+			ID:          t.ID,
+			Label:       t.Label,
+			Value:       val,
+			Truncate:    t.Truncate,
+			Datatype:    t.Datatype,
+			Priority:    t.Priority,
+			HideIfEmpty: t.HideIfEmpty,
 		}, true
 	}
 	return MetadataRow{}, false
@@ -77,12 +79,13 @@ func fromCounters(n Node, key string) (string, bool) {
 
 // MetadataRow is a row for the metadata table.
 type MetadataRow struct {
-	ID       string  `json:"id"`
-	Label    string  `json:"label"`
-	Value    string  `json:"value"`
-	Priority float64 `json:"priority,omitempty"`
-	Datatype string  `json:"dataType,omitempty"`
-	Truncate int     `json:"truncate,omitempty"`
+	ID          string  `json:"id"`
+	Label       string  `json:"label"`
+	Value       string  `json:"value"`
+	Priority    float64 `json:"priority,omitempty"`
+	Datatype    string  `json:"dataType,omitempty"`
+	Truncate    int     `json:"truncate,omitempty"`
+	HideIfEmpty bool    `json:"hideIfEmpty,omitempty"`
 }
 
 // MetadataTemplates is a mergeable set of metadata templates
