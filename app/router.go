@@ -43,7 +43,7 @@ type CtxHandlerFunc func(context.Context, http.ResponseWriter, *http.Request)
 
 func requestContextDecorator(f CtxHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(context.Background(), RequestCtxKey, r)
+		ctx := context.WithValue(r.Context(), RequestCtxKey, r)
 		f(ctx, w, r)
 	}
 }

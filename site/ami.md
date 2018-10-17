@@ -54,8 +54,8 @@ The latest Weave ECS AMIs are based on Amazon's
 [ECS-Optimized Amazon Linux AMI](https://aws.amazon.com/marketplace/pp/B06XS8WHGJ),
 version `2017.03.f` and also includes:
 
-* [Weave Net 2.0.4](https://github.com/weaveworks/weave/blob/master/CHANGELOG.md#release-204)
-* [Weave Scope 1.6.4](https://github.com/weaveworks/scope/blob/master/CHANGELOG.md#release-164)
+* [Weave Net 2.3.0](https://github.com/weaveworks/weave/blob/master/CHANGELOG.md#release-230)
+* [Weave Scope 1.9.0](https://github.com/weaveworks/scope/blob/master/CHANGELOG.md#release-190)
 
 
 ## <a name="deployment-requirements"></a>Deployment Requirements
@@ -248,6 +248,12 @@ that region when invoking the script:
 
 ~~~bash
 ONLY_REGION=us-east-1 AWS_ACCSS_KEY_ID=XXXX AWS_SECRET_ACCESS_KEY=YYYY  ./build-all-amis.sh
+~~~
+
+To make an AMI public:
+
+~~~bash
+aws ec2 modify-image-attribute --region=us-east-2 --image-id ami-6a0b350f --launch-permission "{\"Add\": [{\"Group\":\"all\"}]}"
 ~~~
 
 ## Further Reading

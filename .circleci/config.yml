@@ -8,7 +8,7 @@ defaults: &defaults
 client-defaults: &client-defaults
   working_directory: /home/weave/scope
   docker:
-    - image: weaveworks/scope-ui-build:master-fda40b83
+    - image: weaveworks/scope-ui-build:master-c0b60a16
 
 workflows:
   version: 2
@@ -62,26 +62,52 @@ jobs:
     <<: *client-defaults
     steps:
       - checkout
-      # Convoluted set of steps here to mimic Makefile actions of bind-mounting different dirs into container
-      - run: mv client/app /home/weave/
-      - run: cd /home/weave; mkdir build         ; yarn run build         ; mv build          scope/client
-      - run: cd /home/weave; mkdir build-external; yarn run build-external; mv build-external scope/client
-      - run: cd /home/weave; mkdir tmp           ; yarn run bundle        ; mv tmp            scope
+      - restore_cache:
+          name: Restoring Yarn Cache
+          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
+      - restore_cache:
+          name: Restoring client/node_modules
+          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
+      - run: cd client; yarn install
+      - save_cache:
+          name: Saving Yarn Cache
+          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
+          paths:
+            - "/home/weave/scope/.cache/yarn"
+      - save_cache:
+          name: Saving client/node_modules
+          # include the CI config in the checksum because it will change when the docker image changes
+          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
+          paths:
+            - "/home/weave/scope/client/node_modules"
+      - run: |
+          cd client
+          yarn run build
+          yarn run build-external
+          yarn run bundle
       - persist_to_workspace:
           root: /home/weave/scope
           paths:
           - client/build/
           - client/build-external/
-          - tmp/weave-scope.tgz
+          - client/bundle/weave-scope.tgz
+
 
   client-test:
     <<: *client-defaults
     steps:
       - checkout
+      - restore_cache:
+          name: Restoring Yarn Cache
+          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
+      - restore_cache:
+          name: Restoring client/node_modules
+          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
       - run: |
-          mv client/app client/test /home/weave/
-          cd /home/weave; yarn run lint
-          cd /home/weave; yarn test
+          cd client
+          yarn install
+          yarn run lint
+          yarn test
 
   xplatform-build:
     <<: *defaults

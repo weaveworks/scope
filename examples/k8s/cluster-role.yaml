@@ -51,6 +51,14 @@ rules:
   verbs:
   - list
   - watch
+- apigroups:
+  - extensions
+  resourcenames:
+  - weave-scope
+  resources:
+  - podsecuritypolicies
+  verbs:
+  - use
 - apiGroups:
   - volumesnapshot.external-storage.k8s.io
   resources:
