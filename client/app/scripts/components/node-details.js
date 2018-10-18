@@ -130,9 +130,7 @@ class NodeDetails extends React.Component {
         </div>
         <div className="node-details-content">
           <p className="node-details-content-info">
-            <strong>{this.props.label}</strong> is not visible to Scope when it
-             is not communicating.
-            Details will become available here when it communicates again.
+            <strong>{this.props.label}</strong> passed on!
           </p>
         </div>
         <Overlay faded={this.props.transitioning} />
