@@ -459,23 +459,29 @@ func main() {
 		flags.probe.kubernetesNodeName = os.Getenv("KUBERNETES_NODENAME")
 	}
 
-	if strings.ToLower(os.Getenv("ENABLE_BASIC_AUTH")) == "false" {
-		log.Infof("Basic authentication enabled.")
+	if strings.ToLower(os.Getenv("ENABLE_BASIC_AUTH")) == "true" {
+		flags.probe.basicAuth = true
+		flags.app.basicAuth = true
+	} else if strings.ToLower(os.Getenv("ENABLE_BASIC_AUTH")) == "false" {
 		flags.probe.basicAuth = false
 		flags.app.basicAuth = false
+	}
 
+	username := os.Getenv("BASIC_AUTH_USERNAME")
+	if username != "" {
+		flags.probe.username = username
+		flags.app.username = username
+	}
+	password := os.Getenv("BASIC_AUTH_PASSWORD")
+	if password != "" {
+		flags.probe.password = password
+		flags.app.password = password
+	}
+
+	if flags.basicAuth {
+		log.Infof("Basic authentication enabled")
 	} else {
-		log.Infof("Basic authentication enabled.")
-		username := os.Getenv("BASIC_AUTH_USERNAME")
-		if username != "" {
-			flags.probe.username = username
-			flags.app.username = username
-		}
-		password := os.Getenv("BASIC_AUTH_PASSWORD")
-		if password != "" {
-			flags.probe.password = password
-			flags.app.password = password
-		}
+		log.Infof("Basic authentication disabled")
 	}
 
 	if flags.dryRun {
