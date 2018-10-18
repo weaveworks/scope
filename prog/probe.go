@@ -96,6 +96,12 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 
+	if flags.basicAuth {
+		log.Infof("Basic authentication enabled")
+	} else {
+		log.Infof("Basic authentication disabled")
+	}
+
 	traceCloser := tracing.NewFromEnv("scope-probe")
 	defer traceCloser.Close()
 

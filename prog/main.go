@@ -478,12 +478,6 @@ func main() {
 		flags.app.password = password
 	}
 
-	if flags.basicAuth {
-		log.Infof("Basic authentication enabled")
-	} else {
-		log.Infof("Basic authentication disabled")
-	}
-
 	if flags.dryRun {
 		return
 	}

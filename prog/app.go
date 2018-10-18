@@ -207,6 +207,12 @@ func appMain(flags appFlags) {
 	setLogFormatter(flags.logPrefix)
 	runtime.SetBlockProfileRate(flags.blockProfileRate)
 
+	if flags.basicAuth {
+		log.Infof("Basic authentication enabled")
+	} else {
+		log.Infof("Basic authentication disabled")
+	}
+
 	traceCloser := tracing.NewFromEnv(fmt.Sprintf("scope-%s", flags.serviceName))
 	defer traceCloser.Close()
 
