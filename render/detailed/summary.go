@@ -49,6 +49,7 @@ type BasicNodeSummary struct {
 	LabelMinor string `json:"labelMinor"`
 	Rank       string `json:"rank"`
 	Shape      string `json:"shape,omitempty"`
+	Tag        string `json:"tag,omitempty"`
 	Stack      bool   `json:"stack,omitempty"`
 	Pseudo     bool   `json:"pseudo,omitempty"`
 }
@@ -83,6 +84,8 @@ var renderers = map[string]func(BasicNodeSummary, report.Node) BasicNodeSummary{
 	report.PersistentVolume:      persistentVolumeNodeSummary,
 	report.PersistentVolumeClaim: persistentVolumeClaimNodeSummary,
 	report.StorageClass:          storageClassNodeSummary,
+	report.VolumeSnapshot:        volumeSnapshotNodeSummary,
+	report.VolumeSnapshotData:    volumeSnapshotDataNodeSummary,
 }
 
 // For each report.Topology, map to a 'primary' API topology. This can then be used in a variety of places.
@@ -103,6 +106,8 @@ var primaryAPITopology = map[string]string{
 	report.PersistentVolume:      "pods",
 	report.PersistentVolumeClaim: "pods",
 	report.StorageClass:          "pods",
+	report.VolumeSnapshot:        "pods",
+	report.VolumeSnapshotData:    "pods",
 }
 
 // MakeBasicNodeSummary returns a basic summary of a node, if
@@ -115,6 +120,7 @@ func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, boo
 	}
 	if t, ok := r.Topology(n.Topology); ok {
 		summary.Shape = t.GetShape()
+		summary.Tag = t.Tag
 	}
 
 	// Do we have a renderer for the topology?
@@ -392,6 +398,16 @@ func storageClassNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSumm
 	return base
 }
 
+func volumeSnapshotNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
+}
+
+func volumeSnapshotDataNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
+}
+
 // groupNodeSummary renders the summary for a group node. n.Topology is
 // expected to be of the form: group:container:hostname
 func groupNodeSummary(base BasicNodeSummary, r report.Report, n report.Node) BasicNodeSummary {
@@ -399,6 +415,7 @@ func groupNodeSummary(base BasicNodeSummary, r report.Report, n report.Node) Bas
 	if topology, _, ok := render.ParseGroupNodeTopology(n.Topology); ok {
 		if t, ok := r.Topology(topology); ok {
 			base.Shape = t.GetShape()
+			base.Tag = t.Tag
 			if t.Label != "" {
 				base.LabelMinor = pluralize(n.Counters, topology, t.Label, t.LabelPlural)
 			}

@@ -110,6 +110,7 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: "client.hostname.com (10001)",
 					Rank:       fixture.Client1Name,
 					Shape:      "square",
+					Tag:        "",
 				},
 				Metadata: []report.MetadataRow{
 					{ID: process.PID, Label: "PID", Value: fixture.Client1PID, Priority: 1, Datatype: report.Number},
@@ -128,6 +129,7 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: fixture.ClientHostName,
 					Rank:       fixture.ClientContainerImageName,
 					Shape:      "hexagon",
+					Tag:        "",
 				},
 				Metadata: []report.MetadataRow{
 					{ID: docker.ImageName, Label: "Image name", Value: fixture.ClientContainerImageName, Priority: 2},
@@ -147,6 +149,7 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: "1 container",
 					Rank:       fixture.ClientContainerImageName,
 					Shape:      "hexagon",
+					Tag:        "",
 					Stack:      true,
 				},
 				Metadata: []report.MetadataRow{
@@ -166,6 +169,7 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: "hostname.com",
 					Rank:       "hostname.com",
 					Shape:      "circle",
+					Tag:        "",
 				},
 				Metadata: []report.MetadataRow{
 					{ID: host.HostName, Label: "Hostname", Value: fixture.ClientHostName, Priority: 11},
@@ -184,6 +188,7 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: "1 process",
 					Rank:       "apache",
 					Shape:      "square",
+					Tag:        "",
 					Stack:      true,
 				},
 			},

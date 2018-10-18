@@ -31,6 +31,8 @@ const (
 	PersistentVolume      = "persistent_volume"
 	PersistentVolumeClaim = "persistent_volume_claim"
 	StorageClass          = "storage_class"
+	VolumeSnapshot        = "volume_snapshot"
+	VolumeSnapshotData    = "volume_snapshot_data"
 
 	// Shapes used for different nodes
 	Circle         = "circle"
@@ -44,6 +46,7 @@ const (
 	Cylinder       = "cylinder"
 	DottedCylinder = "dottedcylinder"
 	StorageSheet   = "sheet"
+	Camera         = "camera"
 
 	// Used when counting the number of containers
 	ContainersKey = "containers"
@@ -71,6 +74,8 @@ var topologyNames = []string{
 	PersistentVolume,
 	PersistentVolumeClaim,
 	StorageClass,
+	VolumeSnapshot,
+	VolumeSnapshotData,
 }
 
 // Report is the core data type. It's produced by probes, and consumed and
@@ -170,6 +175,12 @@ type Report struct {
 	// Storage Class represent all kubernetes Storage Classes on hosts running probes.
 	// Metadata is limited for now, more to come later.
 	StorageClass Topology
+
+	// VolumeSnapshot represent all Kubernetes Volume Snapshots on hosts running probes.
+	VolumeSnapshot Topology
+
+	// VolumeSnapshotData represent all Kubernetes Volume Snapshot Data on hosts running probes.
+	VolumeSnapshotData Topology
 
 	DNS DNSRecords
 
@@ -275,6 +286,16 @@ func MakeReport() Report {
 		StorageClass: MakeTopology().
 			WithShape(StorageSheet).
 			WithLabel("storage class", "storage classes"),
+
+		VolumeSnapshot: MakeTopology().
+			WithShape(DottedCylinder).
+			WithTag(Camera).
+			WithLabel("volume snapshot", "volume snapshots"),
+
+		VolumeSnapshotData: MakeTopology().
+			WithShape(Cylinder).
+			WithTag(Camera).
+			WithLabel("volume snapshot data", "volume snapshot data"),
 
 		DNS: DNSRecords{},
 
@@ -388,6 +409,10 @@ func (r *Report) topology(name string) *Topology {
 		return &r.PersistentVolumeClaim
 	case StorageClass:
 		return &r.StorageClass
+	case VolumeSnapshot:
+		return &r.VolumeSnapshot
+	case VolumeSnapshotData:
+		return &r.VolumeSnapshotData
 	}
 	return nil
 }

@@ -17,8 +17,9 @@ const (
 type PersistentVolumeClaim interface {
 	Meta
 	Selector() (labels.Selector, error)
-	GetNode() report.Node
+	GetNode(string) report.Node
 	GetStorageClass() string
+	GetCapacity() string
 }
 
 // persistentVolumeClaim represents kubernetes Persistent Volume Claims
@@ -47,14 +48,32 @@ func (p *persistentVolumeClaim) GetStorageClass() string {
 	return storageClassName
 }
 
+// GetCapacity returns the storage size of PVC
+func (p *persistentVolumeClaim) GetCapacity() string {
+	capacity := p.Spec.Resources.Requests[apiv1.ResourceStorage]
+	if capacity.String() != "" {
+		return capacity.String()
+	}
+	return ""
+}
+
 // GetNode returns Persistent Volume Claim as Node
-func (p *persistentVolumeClaim) GetNode() report.Node {
-	return p.MetaNode(report.MakePersistentVolumeClaimNodeID(p.UID())).WithLatests(map[string]string{
-		NodeType:         "Persistent Volume Claim",
-		Status:           string(p.Status.Phase),
-		VolumeName:       p.Spec.VolumeName,
-		StorageClassName: p.GetStorageClass(),
-	})
+func (p *persistentVolumeClaim) GetNode(probeID string) report.Node {
+	latests := map[string]string{
+		NodeType:              "Persistent Volume Claim",
+		Status:                string(p.Status.Phase),
+		VolumeName:            p.Spec.VolumeName,
+		StorageClassName:      p.GetStorageClass(),
+		report.ControlProbeID: probeID,
+	}
+
+	if p.GetCapacity() != "" {
+		latests[VolumeCapacity] = p.GetCapacity()
+	}
+
+	return p.MetaNode(report.MakePersistentVolumeClaimNodeID(p.UID())).
+		WithLatests(latests).
+		WithLatestActiveControls(CreateVolumeSnapshot)
 }
 
 // Selector returns all Persistent Volume Claim selector

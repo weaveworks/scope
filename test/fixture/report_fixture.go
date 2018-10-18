@@ -107,6 +107,10 @@ var (
 	PersistentVolumeClaimNodeID = report.MakePersistentVolumeClaimNodeID(PersistentVolumeClaimUID)
 	StorageClassUID             = "sc1234"
 	StorageClassNodeID          = report.MakeStorageClassNodeID(StorageClassUID)
+	VolumeSnapshotUID           = "vs1234"
+	VolumeSnapshotNodeID        = report.MakeVolumeSnapshotNodeID(VolumeSnapshotUID)
+	VolumeSnapshotDataUID       = "vsd1234"
+	VolumeSnapshotDataNodeID    = report.MakeVolumeSnapshotDataNodeID(VolumeSnapshotDataUID)
 
 	ClientProcess1CPUMetric    = report.MakeSingletonMetric(Now.Add(-1*time.Second), 0.01)
 	ClientProcess1MemoryMetric = report.MakeSingletonMetric(Now.Add(-2*time.Second), 0.02)
@@ -396,6 +400,34 @@ var (
 					WithTopology(report.StorageClass),
 			},
 		}.WithShape(report.StorageSheet).WithLabel("storage class", "storage classes"),
+		VolumeSnapshot: report.Topology{
+			Nodes: report.Nodes{
+				VolumeSnapshotNodeID: report.MakeNodeWith(
+
+					VolumeSnapshotNodeID, map[string]string{
+						kubernetes.Name:         "vs-1234",
+						kubernetes.Namespace:    "ping",
+						kubernetes.VolumeClaim:  "pvc-6124",
+						kubernetes.SnapshotData: "vsd-1234",
+						kubernetes.VolumeName:   "pongvolume",
+					}).
+					WithTopology(report.VolumeSnapshot),
+			},
+		}.WithShape(report.DottedCylinder).WithLabel("volume snapshot", "volume snapshots").
+			WithTag(report.Camera),
+		VolumeSnapshotData: report.Topology{
+			Nodes: report.Nodes{
+				VolumeSnapshotDataNodeID: report.MakeNodeWith(
+
+					VolumeSnapshotDataNodeID, map[string]string{
+						kubernetes.Name:               "vsd-1234",
+						kubernetes.VolumeName:         "pongvolume",
+						kubernetes.VolumeSnapshotName: "vs-1234",
+					}).
+					WithTopology(report.VolumeSnapshotData),
+			},
+		}.WithShape(report.Cylinder).WithLabel("volume snapshot data", "volume snapshot data").
+			WithTag(report.Camera),
 		Sampling: report.Sampling{
 			Count: 1024,
 			Total: 4096,

@@ -81,6 +81,12 @@ const (
 	KubernetesVolumeName           = "kubernetes_volume_name"
 	KubernetesProvisioner          = "kubernetes_provisioner"
 	KubernetesStorageDriver        = "kubernetes_storage_driver"
+	KubernetesVolumeSnapshotName   = "kubernetes_volume_snapshot_name"
+	KubernetesSnapshotData         = "kuberneets_snapshot_data"
+	KubernetesCreateVolumeSnapshot = "kubernetes_create_volume_snapshot"
+	KubernetesVolumeCapacity       = "kubernetes_volume_capacity"
+	KubernetesCloneVolumeSnapshot  = "kubernetes_clone_volume_snapshot"
+	KubernetesDeleteVolumeSnapshot = "kubernetes_delete_volume_snapshot"
 	// probe/awsecs
 	ECSCluster             = "ecs_cluster"
 	ECSCreatedAt           = "ecs_created_at"
@@ -116,6 +122,8 @@ var commonKeys = map[string]string{
 	PersistentVolume:      PersistentVolume,
 	PersistentVolumeClaim: PersistentVolumeClaim,
 	StorageClass:          StorageClass,
+	VolumeSnapshot:        VolumeSnapshot,
+	VolumeSnapshotData:    VolumeSnapshotData,
 
 	HostNodeID:             HostNodeID,
 	ControlProbeID:         ControlProbeID,

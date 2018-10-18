@@ -44,6 +44,8 @@ var (
 	persistentVolume      = node(report.PersistentVolume)
 	persistentVolumeClaim = node(report.PersistentVolumeClaim)
 	StorageClass          = node(report.StorageClass)
+	volumeSnapshot        = node(report.VolumeSnapshot)
+	volumeSnapshotData    = node(report.VolumeSnapshotData)
 
 	UnknownPseudoNode1ID = render.MakePseudoNodeID(fixture.UnknownClient1IP)
 	UnknownPseudoNode2ID = render.MakePseudoNodeID(fixture.UnknownClient3IP)
@@ -282,7 +284,7 @@ var (
 				kubernetes.StorageClassName: "standard",
 			}).WithChild(report.MakeNode(fixture.PersistentVolumeNodeID).WithTopology(report.PersistentVolume)),
 
-		fixture.PersistentVolumeNodeID: persistentVolume(fixture.PersistentVolumeNodeID).
+		fixture.PersistentVolumeNodeID: persistentVolume(fixture.PersistentVolumeNodeID, fixture.VolumeSnapshotNodeID).
 			WithLatests(map[string]string{
 				kubernetes.Name:             "pongvolume",
 				kubernetes.Namespace:        "ping",
@@ -291,13 +293,29 @@ var (
 				kubernetes.AccessModes:      "ReadWriteOnce",
 				kubernetes.StorageClassName: "standard",
 				kubernetes.StorageDriver:    "iSCSI",
-			}),
+			}).WithChild(report.MakeNode(fixture.VolumeSnapshotNodeID).WithTopology(report.VolumeSnapshot)),
 
 		fixture.StorageClassNodeID: StorageClass(fixture.StorageClassNodeID, fixture.PersistentVolumeClaimNodeID).
 			WithLatests(map[string]string{
 				kubernetes.Name:        "standard",
 				kubernetes.Provisioner: "pong",
 			}).WithChild(report.MakeNode(fixture.PersistentVolumeClaimNodeID).WithTopology(report.PersistentVolumeClaim)),
+
+		fixture.VolumeSnapshotNodeID: volumeSnapshot(fixture.VolumeSnapshotNodeID, fixture.VolumeSnapshotDataNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:         "vs-1234",
+				kubernetes.Namespace:    "ping",
+				kubernetes.VolumeClaim:  "pvc-6124",
+				kubernetes.SnapshotData: "vsd-1234",
+				kubernetes.VolumeName:   "pongvolume",
+			}).WithChild(report.MakeNode(fixture.VolumeSnapshotDataNodeID).WithTopology(report.VolumeSnapshotData)),
+
+		fixture.VolumeSnapshotDataNodeID: volumeSnapshotData(fixture.VolumeSnapshotDataNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:               "vsd-1234",
+				kubernetes.VolumeName:         "pongvolume",
+				kubernetes.VolumeSnapshotName: "vs-1234",
+			}),
 
 		UnmanagedServerID:         unmanagedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerPodNodeID),

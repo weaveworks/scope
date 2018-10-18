@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
@@ -53,6 +54,14 @@ var (
 		Options: []APITopologyOption{
 			{Value: "show", Label: "Show storage", filter: nil, filterPseudo: false},
 			{Value: "hide", Label: "Hide storage", filter: render.IsPodComponent, filterPseudo: false},
+		},
+	}
+	snapshotFilter = APITopologyOptionGroup{
+		ID:      "snapshot",
+		Default: "hide",
+		Options: []APITopologyOption{
+			{Value: "show", Label: "Show snapshots", filter: nil, filterPseudo: false},
+			{Value: "hide", Label: "Hide snapshots", filter: render.IsNonSnapshotComponent, filterPseudo: false},
 		},
 	}
 )
@@ -237,7 +246,7 @@ func MakeRegistry() *Registry {
 			renderer:    render.PodRenderer,
 			Name:        "Pods",
 			Rank:        3,
-			Options:     []APITopologyOptionGroup{storageFilter, unmanagedFilter},
+			Options:     []APITopologyOptionGroup{snapshotFilter, storageFilter, unmanagedFilter},
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{

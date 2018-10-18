@@ -164,6 +164,12 @@ func (c *mockClient) WalkPersistentVolumeClaims(f func(kubernetes.PersistentVolu
 func (c *mockClient) WalkStorageClasses(f func(kubernetes.StorageClass) error) error {
 	return nil
 }
+func (c *mockClient) WalkVolumeSnapshots(f func(kubernetes.VolumeSnapshot) error) error {
+	return nil
+}
+func (c *mockClient) WalkVolumeSnapshotData(f func(kubernetes.VolumeSnapshotData) error) error {
+	return nil
+}
 func (*mockClient) WatchPods(func(kubernetes.Event, kubernetes.Pod)) {}
 func (c *mockClient) GetLogs(namespaceID, podName string, _ []string) (io.ReadCloser, error) {
 	r, ok := c.logs[namespaceID+";"+podName]
@@ -179,6 +185,15 @@ func (c *mockClient) ScaleUp(resource, namespaceID, id string) error {
 	return nil
 }
 func (c *mockClient) ScaleDown(resource, namespaceID, id string) error {
+	return nil
+}
+func (c *mockClient) CloneVolumeSnapshot(namespaceID, VolumeSnapshotID, persistentVolumeClaimID, capacity string) error {
+	return nil
+}
+func (c *mockClient) CreateVolumeSnapshot(namespaceID, persistentVolumeClaimID, capacity string) error {
+	return nil
+}
+func (c *mockClient) DeleteVolumeSnapshot(namespaceID, VolumeSnapshotID string) error {
 	return nil
 }
 
