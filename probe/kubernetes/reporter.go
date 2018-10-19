@@ -259,8 +259,15 @@ func isPauseContainer(n report.Node, rpt report.Report) bool {
 	return false
 }
 
+// Tagger adds pod parents to container nodes.
+type Tagger struct {
+}
+
+// Name of this tagger, for metrics gathering
+func (Tagger) Name() string { return "K8s" }
+
 // Tag adds pod parents to container nodes.
-func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
+func (r *Tagger) Tag(rpt report.Report) (report.Report, error) {
 	for id, n := range rpt.Container.Nodes {
 		uid, ok := n.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.uid")
 		if !ok {
@@ -629,7 +636,7 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 	}
 
 	var localPodUIDs map[string]struct{}
-	if r.nodeName == "" {
+	if r.nodeName == "" && r.kubeletPort != 0 {
 		// We don't know the node name: fall back to obtaining the local pods from kubelet
 		var err error
 		localPodUIDs, err = GetLocalPodUIDs(fmt.Sprintf("127.0.0.1:%d", r.kubeletPort))

@@ -53,20 +53,44 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 		},
 		MakeReduce(
 			PropagateSingleMetrics(report.Container,
-				Map2Parent{topologies: []string{report.Pod}, noParentsPseudoID: UnmanagedID,
-					chainRenderer: MakeFilter(
-						ComposeFilterFuncs(
-							IsRunning,
-							Complement(isPauseContainer),
-						),
-						ContainerWithImageNameRenderer,
-					)},
+				MakeMap(propagatePodHost,
+					Map2Parent{topologies: []string{report.Pod}, noParentsPseudoID: UnmanagedID,
+						chainRenderer: MakeFilter(
+							ComposeFilterFuncs(
+								IsRunning,
+								Complement(isPauseContainer),
+							),
+							ContainerWithImageNameRenderer,
+						)},
+				),
 			),
 			ConnectionJoin(MapPod2IP, report.Pod),
 			KubernetesVolumesRenderer,
 		),
 	),
 ))
+
+// Pods are not tagged with a Host parent, but their container children are.
+// If n doesn't already have a host, copy it from one of the children
+func propagatePodHost(n report.Node) report.Node {
+	if n.Topology != report.Pod {
+		return n
+	} else if _, found := n.Parents.Lookup(report.Host); found {
+		return n
+	}
+	done := false
+	n.Children.ForEach(func(child report.Node) {
+		if !done {
+			if hosts, found := child.Parents.Lookup(report.Host); found {
+				for _, h := range hosts {
+					n = n.WithParent(report.Host, h)
+				}
+				done = true
+			}
+		}
+	})
+	return n
+}
 
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
