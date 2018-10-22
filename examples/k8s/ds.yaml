@@ -11,6 +11,9 @@ metadata:
   namespace: weave
 spec:
   minReadySeconds: 5
+  selector:
+    matchLabels:
+      app: weave-scope
   template:
     metadata:
       labels:

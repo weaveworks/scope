@@ -51,9 +51,9 @@ rules:
   verbs:
   - list
   - watch
-- apigroups:
+- apiGroups:
   - extensions
-  resourcenames:
+  resourceNames:
   - weave-scope
   resources:
   - podsecuritypolicies
