@@ -1,6 +1,8 @@
 package render
 
 import (
+	"context"
+
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
@@ -23,7 +25,7 @@ var VolumesRenderer = volumesRenderer{}
 type volumesRenderer struct{}
 
 // Render renders PV & PVC nodes along with adjacency
-func (v volumesRenderer) Render(rpt report.Report) Nodes {
+func (v volumesRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for id, n := range rpt.PersistentVolumeClaim.Nodes {
 		volume, _ := n.Latest.Lookup(kubernetes.VolumeName)
@@ -48,7 +50,7 @@ var PodToVolumeRenderer = podToVolumesRenderer{}
 type podToVolumesRenderer struct{}
 
 // Render renders the Pod nodes having volumes adjacency.
-func (v podToVolumesRenderer) Render(rpt report.Report) Nodes {
+func (v podToVolumesRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for podID, podNode := range rpt.Pod.Nodes {
 		ClaimName, _ := podNode.Latest.Lookup(kubernetes.VolumeClaim)
@@ -72,7 +74,7 @@ var PVCToStorageClassRenderer = pvcToStorageClassRenderer{}
 type pvcToStorageClassRenderer struct{}
 
 // Render renders the PVC & Storage Class nodes with adjacency.
-func (v pvcToStorageClassRenderer) Render(rpt report.Report) Nodes {
+func (v pvcToStorageClassRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for scID, scNode := range rpt.StorageClass.Nodes {
 		storageClass, _ := scNode.Latest.Lookup(kubernetes.Name)
@@ -95,7 +97,7 @@ var PVToSnapshotRenderer = pvToSnapshotRenderer{}
 type pvToSnapshotRenderer struct{}
 
 //Render renders the PV & Snapshot nodes with adjacency.
-func (v pvToSnapshotRenderer) Render(rpt report.Report) Nodes {
+func (v pvToSnapshotRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for pvNodeID, p := range rpt.PersistentVolume.Nodes {
 		volumeName, _ := p.Latest.Lookup(kubernetes.Name)
@@ -119,7 +121,7 @@ type volumeSnapshotRenderer struct{}
 
 // Render renders the volumeSnapshots & volumeSnapshotData with adjacency
 // It checks for the volumeSnapshotData name in volumeSnapshot, adjacency is created by matching the volumeSnapshotData name.
-func (v volumeSnapshotRenderer) Render(rpt report.Report) Nodes {
+func (v volumeSnapshotRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for volumeSnapshotID, volumeSnapshotNode := range rpt.VolumeSnapshot.Nodes {
 		snapshotData, _ := volumeSnapshotNode.Latest.Lookup(kubernetes.SnapshotData)

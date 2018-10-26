@@ -1,6 +1,11 @@
 package render
 
 import (
+	"context"
+
+	opentracing "github.com/opentracing/opentracing-go"
+	otlog "github.com/opentracing/opentracing-go/log"
+
 	"github.com/weaveworks/scope/report"
 )
 
@@ -13,7 +18,7 @@ type MapFunc func(report.Node) report.Node
 
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
-	Render(report.Report) Nodes
+	Render(context.Context, report.Report) Nodes
 }
 
 // Nodes is the result of Rendering
@@ -48,8 +53,10 @@ func (ts Transformers) Transform(nodes Nodes) Nodes {
 }
 
 // Render renders the report and then transforms it
-func Render(rpt report.Report, renderer Renderer, transformer Transformer) Nodes {
-	return transformer.Transform(renderer.Render(rpt))
+func Render(ctx context.Context, rpt report.Report, renderer Renderer, transformer Transformer) Nodes {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Render:"+typeName(renderer))
+	defer span.Finish()
+	return transformer.Transform(renderer.Render(ctx, rpt))
 }
 
 // Reduce renderer is a Renderer which merges together the output of several
@@ -62,7 +69,9 @@ func MakeReduce(renderers ...Renderer) Renderer {
 }
 
 // Render produces a set of Nodes given a Report.
-func (r Reduce) Render(rpt report.Report) Nodes {
+func (r Reduce) Render(ctx context.Context, rpt report.Report) Nodes {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Reduce.Render")
+	defer span.Finish()
 	l := len(r)
 	switch l {
 	case 0:
@@ -72,7 +81,9 @@ func (r Reduce) Render(rpt report.Report) Nodes {
 	for _, renderer := range r {
 		renderer := renderer // Pike!!
 		go func() {
-			c <- renderer.Render(rpt)
+			span, ctx := opentracing.StartSpanFromContext(ctx, typeName(renderer))
+			c <- renderer.Render(ctx, rpt)
+			span.Finish()
 		}()
 	}
 	for ; l > 1; l-- {
@@ -98,9 +109,11 @@ func MakeMap(f MapFunc, r Renderer) Renderer {
 
 // Render transforms a set of Nodes produces by another Renderer.
 // using a map function
-func (m Map) Render(rpt report.Report) Nodes {
+func (m Map) Render(ctx context.Context, rpt report.Report) Nodes {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Map.Render:"+functionName(m.MapFunc))
+	defer span.Finish()
 	var (
-		input  = m.Renderer.Render(rpt)
+		input  = m.Renderer.Render(ctx, rpt)
 		output = newJoinResults(nil)
 	)
 
@@ -111,6 +124,8 @@ func (m Map) Render(rpt report.Report) Nodes {
 			output.add(inRenderable.ID, outRenderable)
 		}
 	}
+	span.LogFields(otlog.Int("input.nodes", len(input.Nodes)),
+		otlog.Int("ouput.nodes", len(output.nodes)))
 
 	return output.result(input)
 }
@@ -129,9 +144,9 @@ func ConditionalRenderer(c Condition, r Renderer) Renderer {
 	return conditionalRenderer{c, r}
 }
 
-func (cr conditionalRenderer) Render(rpt report.Report) Nodes {
+func (cr conditionalRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	if cr.Condition(rpt) {
-		return cr.Renderer.Render(rpt)
+		return cr.Renderer.Render(ctx, rpt)
 	}
 	return Nodes{}
 }

@@ -1,6 +1,8 @@
 package render
 
 import (
+	"context"
+
 	"github.com/weaveworks/scope/report"
 )
 
@@ -9,7 +11,7 @@ import (
 type TopologySelector string
 
 // Render implements Renderer
-func (t TopologySelector) Render(r report.Report) Nodes {
+func (t TopologySelector) Render(ctx context.Context, r report.Report) Nodes {
 	topology, _ := r.Topology(string(t))
 	return Nodes{Nodes: topology.Nodes}
 }

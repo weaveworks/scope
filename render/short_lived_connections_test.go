@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -109,7 +110,7 @@ var (
 )
 
 func TestShortLivedInternetNodeConnections(t *testing.T) {
-	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(rpt).Nodes)
+	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(context.Background(), rpt).Nodes)
 
 	// Conntracked-only connections from the internet should be assigned to the internet pseudonode
 	internet, ok := have[render.IncomingInternetID]
@@ -123,7 +124,7 @@ func TestShortLivedInternetNodeConnections(t *testing.T) {
 }
 
 func TestPauseContainerDiscarded(t *testing.T) {
-	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(rpt).Nodes)
+	have := utils.Prune(render.ContainerWithImageNameRenderer.Render(context.Background(), rpt).Nodes)
 	// There should only be a connection from container1 and the destination should be container2
 	container1, ok := have[container1NodeID]
 	if !ok {
