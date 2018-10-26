@@ -94,6 +94,9 @@ type flags struct {
 
 type probeFlags struct {
 	printOnStdout          bool
+	basicAuth              bool
+	username               string
+	password               string
 	token                  string
 	httpListen             string
 	publishInterval        time.Duration
@@ -147,6 +150,10 @@ type appFlags struct {
 	logPrefix      string
 	logHTTP        bool
 	logHTTPHeaders bool
+
+	basicAuth bool
+	username  string
+	password  string
 
 	weaveEnabled   bool
 	weaveAddr      string
@@ -281,6 +288,9 @@ func setupFlags(flags *flags) {
 
 	// Probe flags
 	flag.BoolVar(&flags.probe.printOnStdout, "probe.publish.stdout", false, "Print reports on stdout instead of sending to app, for debugging")
+	flag.BoolVar(&flags.probe.basicAuth, "probe.basicAuth", false, "Use basic authentication to authenticate with app")
+	flag.StringVar(&flags.probe.username, "probe.basicAuth.username", "admin", "Username for basic authentication")
+	flag.StringVar(&flags.probe.password, "probe.basicAuth.password", "admin", "Password for basic authentication")
 	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.token, probeTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
@@ -350,6 +360,10 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.app.logPrefix, "app.log.prefix", "<app>", "prefix for each log line")
 	flag.BoolVar(&flags.app.logHTTP, "app.log.http", false, "Log individual HTTP requests")
 	flag.BoolVar(&flags.app.logHTTPHeaders, "app.log.httpHeaders", false, "Log HTTP headers. Needs app.log.http to be enabled.")
+
+	flag.BoolVar(&flags.app.basicAuth, "app.basicAuth", false, "Enable basic authentication for app")
+	flag.StringVar(&flags.app.username, "app.basicAuth.username", "admin", "Username for basic authentication")
+	flag.StringVar(&flags.app.password, "app.basicAuth.password", "admin", "Password for basic authentication")
 
 	flag.StringVar(&flags.app.weaveAddr, "app.weave.addr", app.DefaultWeaveURL, "Address on which to contact WeaveDNS")
 	flag.StringVar(&flags.app.weaveHostname, "app.weave.hostname", "", "Hostname to advertise in WeaveDNS")
@@ -445,6 +459,25 @@ func main() {
 	// Node name may be set by environment variable, e.g. from the Kubernetes downward API
 	if flags.probe.kubernetesNodeName == "" {
 		flags.probe.kubernetesNodeName = os.Getenv("KUBERNETES_NODENAME")
+	}
+
+	if strings.ToLower(os.Getenv("ENABLE_BASIC_AUTH")) == "true" {
+		flags.probe.basicAuth = true
+		flags.app.basicAuth = true
+	} else if strings.ToLower(os.Getenv("ENABLE_BASIC_AUTH")) == "false" {
+		flags.probe.basicAuth = false
+		flags.app.basicAuth = false
+	}
+
+	username := os.Getenv("BASIC_AUTH_USERNAME")
+	if username != "" {
+		flags.probe.username = username
+		flags.app.username = username
+	}
+	password := os.Getenv("BASIC_AUTH_PASSWORD")
+	if password != "" {
+		flags.probe.password = password
+		flags.app.password = password
 	}
 
 	if flags.dryRun {
