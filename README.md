@@ -29,7 +29,7 @@ Interact with your containers directly: pause, restart, and stop containers. Lau
 
 ### Extend and customize via plugins
 
-Add custom details or interactions for your hosts, containers, and/or processes by creating Scope plugins. Or, just choose from some that others have already written at the GitHub [Weaveworks Scope Plugins](https://github.com/weaveworks-plugins/) organization.
+Add custom details or interactions for your hosts, containers, and/or processes by creating Scope Plugins. Or, just choose from some that others have already written at the GitHub [Weaveworks Scope Plugins](https://github.com/weaveworks-plugins/) organization.
 
 ## <a name="getting-started"></a>Getting Started
 
