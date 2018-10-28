@@ -130,7 +130,7 @@ class NodeDetails extends React.Component {
         </div>
         <div className="node-details-content">
           <p className="node-details-content-info">
-            <strong>{this.props.label}</strong> passed on!
+            <strong>{this.props.label}</strong> not found!
           </p>
         </div>
         <Overlay faded={this.props.transitioning} />
