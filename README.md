@@ -47,14 +47,21 @@ For instructions on installing Scope on [Kubernetes](https://www.weave.works/doc
 
 ## <a name="help"></a>Getting Help
 
+We are a very friendly community and love questions, help and feedback.
+
 If you have any questions, feedback, or problems with Scope:
 
-- Read [the Weave Scope docs](https://www.weave.works/docs/scope/latest/introducing/).
-- Invite yourself to the <a href="https://weaveworks.github.io/community-slack/" target="_blank">Weave community</a> Slack.
-- Ask a question on the [#scope](https://weave-community.slack.com/messages/scope/) Slack channel.
-- Join the [Weave User Group](https://www.meetup.com/pro/Weave/) and get invited to online talks, hands-on training and meetups in your area.
-- Send an email to [Scope community group](https://groups.google.com/forum/#!forum/scope-community).
-- Join (and read up on) the regular [Scope community meetings](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/edit).
+- Docs
+  - Read [the Weave Scope docs](https://www.weave.works/docs/scope/latest/introducing/)
+  - Find out how to [contribute to Scope](CONTRIBUTING.md)
+  - Learn more about how the [Scope community operates](GOVERNANCE.md)
+- Join the discussion
+  - Invite yourself to the <a href="https://slack.weave.works/" target="_blank">Weave community</a> Slack.
+  - Ask a question on the [#scope](https://weave-community.slack.com/messages/scope/) Slack channel.
+  - Send an email to [Scope community group](https://groups.google.com/forum/#!forum/scope-community).
+- Meetings and events:
+  - Join the [Weave User Group](https://www.meetup.com/pro/Weave/) and get invited to online talks, hands-on training and meetups in your area.
+  - Join (and read up on) the regular [Scope community meetings](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/edit).
 - [File an issue](https://github.com/weaveworks/scope/issues/new).
 
 Your feedback is always welcome!
