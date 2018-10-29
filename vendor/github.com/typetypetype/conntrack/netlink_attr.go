@@ -16,8 +16,7 @@ type Attr struct {
 	IsNetByteorder bool
 }
 
-func parseAttrs(b []byte) ([]Attr, error) {
-	var attrs []Attr
+func parseAttrs(b []byte, attrs []Attr) ([]Attr, error) {
 	for len(b) >= attrHdrLength {
 		var attr Attr
 		attr, b = parseAttr(b)
