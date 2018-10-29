@@ -25,7 +25,7 @@ View contextual metrics, tags, and metadata for your containers.  Effortlessly n
 
 <img src="imgs/terminals.png" width="200" alt="Launch a command line." align="right">
 
-Interact with your containers directly: pause, restart, and stop containers. Launch a command line. All without leaving the scope browser window.
+Interact with your containers directly: pause, restart and stop containers. Launch a command line. All without leaving the scope browser window.
 
 ### Extend and customize via plugins
 
@@ -40,7 +40,7 @@ scope launch
 ```
 
 This script downloads and runs a recent Scope image from Docker Hub.
-Now, open your web browser to **http://localhost:4040**. (If you're using
+Now, open your web browser to **HTTP://localhost:4040**. (If you're using
 boot2docker, replace localhost with the output of `boot2docker ip`.)
 
 For instructions on installing Scope on [Kubernetes](https://www.weave.works/docs/scope/latest/installing/#k8s), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos), or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
