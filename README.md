@@ -53,6 +53,7 @@ If you have any questions, feedback, or problems with Scope:
 
 - Docs
   - Read [the Weave Scope docs](https://www.weave.works/docs/scope/latest/introducing/)
+  - Check out the [frequently asked questions](/site/faq.md)
   - Find out how to [contribute to Scope](CONTRIBUTING.md)
   - Learn more about how the [Scope community operates](GOVERNANCE.md)
 - Join the discussion
