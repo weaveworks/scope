@@ -872,6 +872,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/goji/httpauth",
+			"repository": "https://github.com/goji/httpauth",
+			"vcs": "git",
+			"revision": "2da839ab0f4df05a6db5eb277995589dadbd4fb9",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/golang/glog",
 			"repository": "https://github.com/golang/glog",
 			"vcs": "",
