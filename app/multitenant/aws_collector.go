@@ -106,17 +106,14 @@ type AWSCollectorConfig struct {
 	NatsHost       string
 	MemcacheClient *MemcacheClient
 	Window         time.Duration
+	MaxTopNodes    int
 }
 
 type awsCollector struct {
-	userIDer  UserIDer
+	cfg       AWSCollectorConfig
 	db        *dynamodb.DynamoDB
-	s3        *S3Store
-	tableName string
 	merger    app.Merger
 	inProcess inProcessStore
-	memcache  *MemcacheClient
-	window    time.Duration
 
 	nats        *nats.Conn
 	waitersLock sync.Mutex
@@ -152,14 +149,10 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 	// (window * report rate) * number of hosts per user * number of users
 	reportCacheSize := (int(config.Window.Seconds()) / 3) * 10 * 5
 	return &awsCollector{
+		cfg:       config,
 		db:        dynamodb.New(session.New(config.DynamoDBConfig)),
-		s3:        config.S3Store,
-		userIDer:  config.UserIDer,
-		tableName: config.DynamoTable,
 		merger:    app.NewFastMerger(),
 		inProcess: newInProcessStore(reportCacheSize, config.Window),
-		memcache:  config.MemcacheClient,
-		window:    config.Window,
 		nats:      nc,
 		waiters:   map[watchKey]*nats.Subscription{},
 	}, nil
@@ -175,13 +168,13 @@ func (c *awsCollector) CreateTables() error {
 		return err
 	}
 	for _, s := range resp.TableNames {
-		if *s == c.tableName {
+		if *s == c.cfg.DynamoTable {
 			return nil
 		}
 	}
 
 	params := &dynamodb.CreateTableInput{
-		TableName: aws.String(c.tableName),
+		TableName: aws.String(c.cfg.DynamoTable),
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
 				AttributeName: aws.String(hourField),
@@ -212,7 +205,7 @@ func (c *awsCollector) CreateTables() error {
 			WriteCapacityUnits: aws.Int64(5),
 		},
 	}
-	log.Infof("Creating table %s", c.tableName)
+	log.Infof("Creating table %s", c.cfg.DynamoTable)
 	_, err = c.db.CreateTable(params)
 	return err
 }
@@ -224,7 +217,7 @@ func (c *awsCollector) reportKeysInRange(ctx context.Context, userid string, row
 	err := instrument.TimeRequestHistogram(ctx, "DynamoDB.Query", dynamoRequestDuration, func(_ context.Context) error {
 		var err error
 		resp, err = c.db.Query(&dynamodb.QueryInput{
-			TableName: aws.String(c.tableName),
+			TableName: aws.String(c.cfg.DynamoTable),
 			KeyConditions: map[string]*dynamodb.Condition{
 				hourField: {
 					AttributeValueList: []*dynamodb.AttributeValue{
@@ -270,12 +263,12 @@ func (c *awsCollector) reportKeysInRange(ctx context.Context, userid string, row
 func (c *awsCollector) getReportKeys(ctx context.Context, timestamp time.Time) ([]string, error) {
 	var (
 		end      = timestamp
-		start    = end.Add(-c.window)
+		start    = end.Add(-c.cfg.Window)
 		rowStart = start.UnixNano() / time.Hour.Nanoseconds()
 		rowEnd   = end.UnixNano() / time.Hour.Nanoseconds()
 	)
 
-	userid, err := c.userIDer(ctx)
+	userid, err := c.cfg.UserIDer(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -306,10 +299,10 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 	missing := reportKeys
 
 	stores := []ReportStore{c.inProcess}
-	if c.memcache != nil {
-		stores = append(stores, c.memcache)
+	if c.cfg.MemcacheClient != nil {
+		stores = append(stores, c.cfg.MemcacheClient)
 	}
-	stores = append(stores, c.s3)
+	stores = append(stores, c.cfg.S3Store)
 
 	var reports []report.Report
 	for _, store := range stores {
@@ -322,6 +315,9 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 			log.Warningf("Error fetching from cache: %v", err)
 		}
 		for key, report := range found {
+			if c.cfg.MaxTopNodes > 0 {
+				report = report.DropTopologiesOver(c.cfg.MaxTopNodes)
+			}
 			report = report.Upgrade()
 			c.inProcess.StoreReport(key, report)
 			reports = append(reports, report)
@@ -393,7 +389,7 @@ func (c *awsCollector) putItemInDynamo(rowKey, colKey, reportKey string) (*dynam
 	)
 	for {
 		resp, err = c.db.PutItem(&dynamodb.PutItemInput{
-			TableName: aws.String(c.tableName),
+			TableName: aws.String(c.cfg.DynamoTable),
 			Item: map[string]*dynamodb.AttributeValue{
 				hourField: {
 					S: aws.String(rowKey),
@@ -421,7 +417,7 @@ func (c *awsCollector) putItemInDynamo(rowKey, colKey, reportKey string) (*dynam
 }
 
 func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) error {
-	userid, err := c.userIDer(ctx)
+	userid, err := c.cfg.UserIDer(ctx)
 	if err != nil {
 		return err
 	}
@@ -433,15 +429,15 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return err
 	}
 
-	reportSize, err := c.s3.StoreReportBytes(ctx, reportKey, buf)
+	reportSize, err := c.cfg.S3Store.StoreReportBytes(ctx, reportKey, buf)
 	if err != nil {
 		return err
 	}
 	reportSizeHistogram.Observe(float64(reportSize))
 
 	// third, put it in memcache
-	if c.memcache != nil {
-		_, err = c.memcache.StoreReportBytes(ctx, reportKey, buf)
+	if c.cfg.MemcacheClient != nil {
+		_, err = c.cfg.MemcacheClient.StoreReportBytes(ctx, reportKey, buf)
 		if err != nil {
 			// NOTE: We don't abort here because failing to store in memcache
 			// doesn't actually break anything else -- it's just an
@@ -481,7 +477,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 }
 
 func (c *awsCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
-	userid, err := c.userIDer(ctx)
+	userid, err := c.cfg.UserIDer(ctx)
 	if err != nil {
 		log.Errorf("Error getting user id in WaitOn: %v", err)
 		return
@@ -522,7 +518,7 @@ func (c *awsCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
 }
 
 func (c *awsCollector) UnWait(ctx context.Context, waiter chan struct{}) {
-	userid, err := c.userIDer(ctx)
+	userid, err := c.cfg.UserIDer(ctx)
 	if err != nil {
 		log.Errorf("Error getting user id in WaitOn: %v", err)
 		return
