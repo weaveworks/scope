@@ -213,40 +213,42 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	}
 
 	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
-
-	hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients, handlerRegistry)
-	defer hostReporter.Stop()
-	p.AddReporter(hostReporter)
-	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
-
 	var processCache *process.CachingWalker
-	if flags.procEnabled {
-		processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot, false))
-		p.AddTicker(processCache)
-		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies, flags.noCommandLineArguments))
-	}
 
-	dnsSnooper, err := endpoint.NewDNSSnooper()
-	if err != nil {
-		log.Errorf("Failed to start DNS snooper: nodes for external services will be less accurate: %s", err)
-	} else {
-		defer dnsSnooper.Stop()
-	}
+	if flags.kubernetesRole != kubernetesRoleCluster {
+		hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients, handlerRegistry)
+		defer hostReporter.Stop()
+		p.AddReporter(hostReporter)
+		p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
 
-	endpointReporter := endpoint.NewReporter(endpoint.ReporterConfig{
-		HostID:       hostID,
-		HostName:     hostName,
-		SpyProcs:     flags.spyProcs,
-		UseConntrack: flags.useConntrack,
-		WalkProc:     flags.procEnabled,
-		UseEbpfConn:  flags.useEbpfConn,
-		ProcRoot:     flags.procRoot,
-		BufferSize:   flags.conntrackBufferSize,
-		ProcessCache: processCache,
-		DNSSnooper:   dnsSnooper,
-	})
-	defer endpointReporter.Stop()
-	p.AddReporter(endpointReporter)
+		if flags.procEnabled {
+			processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot, false))
+			p.AddTicker(processCache)
+			p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies, flags.noCommandLineArguments))
+		}
+
+		dnsSnooper, err := endpoint.NewDNSSnooper()
+		if err != nil {
+			log.Errorf("Failed to start DNS snooper: nodes for external services will be less accurate: %s", err)
+		} else {
+			defer dnsSnooper.Stop()
+		}
+
+		endpointReporter := endpoint.NewReporter(endpoint.ReporterConfig{
+			HostID:       hostID,
+			HostName:     hostName,
+			SpyProcs:     flags.spyProcs,
+			UseConntrack: flags.useConntrack,
+			WalkProc:     flags.procEnabled,
+			UseEbpfConn:  flags.useEbpfConn,
+			ProcRoot:     flags.procRoot,
+			BufferSize:   flags.conntrackBufferSize,
+			ProcessCache: processCache,
+			DNSSnooper:   dnsSnooper,
+		})
+		defer endpointReporter.Stop()
+		p.AddReporter(endpointReporter)
+	}
 
 	if flags.dockerEnabled {
 		// Don't add the bridge in Kubernetes since container IPs are global and
