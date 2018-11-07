@@ -31,6 +31,7 @@ func init() {
 
 // ProbeConfig contains all the info needed for a probe to do HTTP requests
 type ProbeConfig struct {
+	BasicAuth    bool
 	Token        string
 	ProbeVersion string
 	ProbeID      string
@@ -38,7 +39,11 @@ type ProbeConfig struct {
 }
 
 func (pc ProbeConfig) authorizeHeaders(headers http.Header) {
-	headers.Set("Authorization", fmt.Sprintf("Scope-Probe token=%s", pc.Token))
+	if pc.BasicAuth {
+		headers.Set("Authorization", fmt.Sprintf("Basic %s", pc.Token))
+	} else {
+		headers.Set("Authorization", fmt.Sprintf("Scope-Probe token=%s", pc.Token))
+	}
 	headers.Set(xfer.ScopeProbeIDHeader, pc.ProbeID)
 	headers.Set(xfer.ScopeProbeVersionHeader, pc.ProbeVersion)
 }

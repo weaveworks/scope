@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/goji/httpauth"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
@@ -298,6 +299,13 @@ func appMain(flags appFlags) {
 			Log:               logger,
 			LogRequestHeaders: flags.logHTTPHeaders,
 		}.Wrap(handler)
+	}
+
+	if flags.basicAuth {
+		log.Infof("Basic authentication enabled")
+		handler = httpauth.SimpleBasicAuth(flags.username, flags.password)(handler)
+	} else {
+		log.Infof("Basic authentication disabled")
 	}
 
 	server := &graceful.Server{

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
@@ -97,6 +99,12 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 
+	if flags.basicAuth {
+		log.Infof("Basic authentication enabled")
+	} else {
+		log.Infof("Basic authentication disabled")
+	}
+
 	traceCloser := tracing.NewFromEnv("scope-probe")
 	defer traceCloser.Close()
 
@@ -143,7 +151,13 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			token = url.User.Username()
 			url.User = nil // erase credentials, as we use a special header
 		}
+
+		if flags.basicAuth {
+			token = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", flags.username, flags.password)))
+		}
+
 		probeConfig := appclient.ProbeConfig{
+			BasicAuth:    flags.basicAuth,
 			Token:        token,
 			ProbeVersion: version,
 			ProbeID:      probeID,
