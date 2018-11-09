@@ -237,7 +237,8 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 // kubernetes pause container image.
 func IsPauseImageName(imageName string) bool {
 	return strings.Contains(imageName, "google_containers/pause") ||
-		strings.Contains(imageName, "k8s.gcr.io/pause")
+		strings.Contains(imageName, "k8s.gcr.io/pause") ||
+		strings.Contains(imageName, "eks/pause")
 }
 
 func isPauseContainer(n report.Node, rpt report.Report) bool {
