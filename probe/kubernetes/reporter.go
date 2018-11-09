@@ -160,13 +160,13 @@ var (
 		{
 			ID:    ScaleDown,
 			Human: "Scale down",
-			Icon:  "fa-minus",
+			Icon:  "fa fa-minus",
 			Rank:  0,
 		},
 		{
 			ID:    ScaleUp,
 			Human: "Scale up",
-			Icon:  "fa-plus",
+			Icon:  "fa fa-plus",
 			Rank:  1,
 		},
 	}
@@ -479,7 +479,7 @@ func (r *Reporter) persistentVolumeClaimTopology() (report.Topology, []Persisten
 	result.Controls.AddControl(report.Control{
 		ID:    CreateVolumeSnapshot,
 		Human: "Create snapshot",
-		Icon:  "fa-camera",
+		Icon:  "fa fa-camera",
 		Rank:  0,
 	})
 	err := r.client.WalkPersistentVolumeClaims(func(p PersistentVolumeClaim) error {
@@ -511,13 +511,13 @@ func (r *Reporter) volumeSnapshotTopology() (report.Topology, []VolumeSnapshot, 
 	result.Controls.AddControl(report.Control{
 		ID:    CloneVolumeSnapshot,
 		Human: "Clone snapshot",
-		Icon:  "fa-clone",
+		Icon:  "far fa-clone",
 		Rank:  0,
 	})
 	result.Controls.AddControl(report.Control{
 		ID:    DeleteVolumeSnapshot,
 		Human: "Delete",
-		Icon:  "fa-trash-o",
+		Icon:  "far fa-trash-alt",
 		Rank:  1,
 	})
 	err := r.client.WalkVolumeSnapshots(func(p VolumeSnapshot) error {
@@ -567,13 +567,13 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 	pods.Controls.AddControl(report.Control{
 		ID:    GetLogs,
 		Human: "Get logs",
-		Icon:  "fa-desktop",
+		Icon:  "fa fa-desktop",
 		Rank:  0,
 	})
 	pods.Controls.AddControl(report.Control{
 		ID:    DeletePod,
 		Human: "Delete",
-		Icon:  "fa-trash-o",
+		Icon:  "far fa-trash-alt",
 		Rank:  1,
 	})
 	for _, service := range services {

@@ -156,13 +156,13 @@ two controls (`ctrl-one` and `ctrl-two`) and two nodes, each with a different co
       "ctrl-one": {
         "id": "ctrl-one",
         "human": "Ctrl One",
-        "icon": "fa-futbol-o",
+        "icon": "far fa-futbol",
         "rank": 1
       },
       "ctrl-two": {
         "id": "ctrl-two",
         "human": "Ctrl Two",
-        "icon": "fa-beer",
+        "icon": "fa fa-beer",
         "rank": 2
       }
     },

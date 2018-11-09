@@ -174,7 +174,7 @@ function HelpPanel({
         <div className="help-panel-tools">
           <span
             title="Close details"
-            className="fa fa-close"
+            className="fa fa-times"
             onClick={onClickClose}
           />
         </div>
