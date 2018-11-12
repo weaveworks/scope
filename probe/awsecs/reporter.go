@@ -213,13 +213,13 @@ func (Reporter) Report() (report.Report, error) {
 		{
 			ID:    ScaleDown,
 			Human: "Scale down",
-			Icon:  "fa fa-minus",
+			Icon:  "fa-minus",
 			Rank:  0,
 		},
 		{
 			ID:    ScaleUp,
 			Human: "Scale up",
-			Icon:  "fa fa-plus",
+			Icon:  "fa-plus",
 			Rank:  1,
 		},
 	})

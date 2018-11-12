@@ -1,4 +1,4 @@
-@import '~@fortawesome/fontawesome-free/css/all.css';
+@import '~font-awesome/scss/font-awesome.scss';
 @import '~rc-slider/dist/rc-slider.css';
 
 /* sass-lint:disable variable-for-property */
@@ -122,7 +122,7 @@ a {
     outline: 0;
 
     .fa {
-      font-size: $font-size-small;
+      font-size: $font-size-normal;
       position: relative;
       top: 2px;
     }
@@ -634,7 +634,6 @@ a {
   &-controls {
     white-space: nowrap;
     padding: 8px 0;
-    font-size: $font-size-small;
 
     &-wrapper {
       padding: 0 36px 0 32px;
@@ -998,7 +997,7 @@ a {
   @extend .btn-opacity;
   padding: 6px;
   margin-left: 2px;
-  font-size: $font-size-small;
+  font-size: $font-size-normal;
   color: $text-secondary-color;
   cursor: pointer;
   border: 1px solid transparent;
@@ -1233,7 +1232,6 @@ a {
   }
 
   .fa {
-    font-size: $font-size-tiny;
     margin-left: 4px;
     color: $color-orange-500;
   }
@@ -1321,7 +1319,7 @@ a {
 
     .fa {
       color: $text-secondary-color;
-      font-size: $font-size-normal;
+      font-size: $font-size-large;
     }
   }
 
@@ -1785,7 +1783,7 @@ a {
     margin-right: 10px;
   }
 
-  .fa-times {
+  .fa-close {
     width: 25px;
   }
 }

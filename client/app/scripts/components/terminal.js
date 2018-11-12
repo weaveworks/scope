@@ -269,7 +269,7 @@ class Terminal extends React.Component {
           </span>
           <span
             title="Close"
-            className="terminal-header-tools-item-icon fa fa-times"
+            className="terminal-header-tools-item-icon fa fa-close"
             onClick={this.handleCloseClick} />
         </div>
         {this.getControlStatusIcon()}
