@@ -41,7 +41,7 @@ class ViewModeSelector extends React.Component {
           />
           <ViewModeButton
             label="Resources"
-            icons="fa fa-chart-bar"
+            icons="fa fa-bar-chart"
             viewMode={RESOURCE_VIEW_MODE}
             onClick={this.props.setResourceView}
             disabled={!this.props.hasResourceView}

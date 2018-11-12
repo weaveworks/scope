@@ -79,7 +79,7 @@ class DebugMenu extends React.Component {
             <div className="help-panel-tools">
               <span
                 title="Close menu"
-                className="fa fa-times"
+                className="fa fa-close"
                 onClick={this.props.toggleTroubleshootingMenu}
               />
             </div>
