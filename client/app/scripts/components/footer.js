@@ -74,7 +74,7 @@ class Footer extends React.Component {
             className="footer-icon"
             onClick={this.handleRelayoutClick}
             title={forceRelayoutTitle}>
-            <span className="fa fa-refresh" />
+            <span className="fa fa-sync" />
           </button>
           <button onClick={this.handleContrastClick} className="footer-icon" title={otherContrastModeTitle}>
             <span className="fa fa-adjust" />
