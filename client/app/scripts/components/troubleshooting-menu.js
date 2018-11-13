@@ -36,7 +36,7 @@ class DebugMenu extends React.Component {
                 download
                 title="Save raw data as JSON"
               >
-                <span className="fa fa-code" />
+                <i className="fa fa-code" />
                 <span className="description">
                   Save raw data as JSON
                 </span>
@@ -48,7 +48,7 @@ class DebugMenu extends React.Component {
                 onClick={this.props.clickDownloadGraph}
                 title="Save canvas as SVG (does not include search highlighting)"
               >
-                <span className="fa fa-download" />
+                <i className="fa fa-download" />
                 <span className="description">
                   Save canvas as SVG (does not include search highlighting)
                 </span>
@@ -60,7 +60,7 @@ class DebugMenu extends React.Component {
                 title="Reset view state"
                 onClick={this.handleClickReset}
               >
-                <span className="fa fa-undo" />
+                <i className="fa fa-undo" />
                 <span className="description">Reset your local view state and reload the page</span>
               </button>
             </div>
@@ -72,12 +72,12 @@ class DebugMenu extends React.Component {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <span className="fa fa-bug" />
+                <i className="fa fa-bug" />
                 <span className="description">Report a bug</span>
               </a>
             </div>
             <div className="help-panel-tools">
-              <span
+              <i
                 title="Close menu"
                 className="fa fa-times"
                 onClick={this.props.toggleTroubleshootingMenu}

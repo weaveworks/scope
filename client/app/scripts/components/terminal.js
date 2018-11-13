@@ -267,7 +267,7 @@ class Terminal extends React.Component {
             onClick={this.handlePopoutTerminal}>
           Pop out
           </span>
-          <span
+          <i
             title="Close"
             className="terminal-header-tools-item-icon fa fa-times"
             onClick={this.handleCloseClick} />
@@ -330,7 +330,7 @@ class Terminal extends React.Component {
   getControlStatusIcon() {
     const icon = this.props.controlStatus && this.props.controlStatus.get('control').icon;
     return (
-      <span
+      <i
         style={{marginRight: '8px', width: '14px'}}
         className={classNames('fa', {[icon]: icon})}
       />

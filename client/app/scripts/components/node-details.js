@@ -57,14 +57,14 @@ class NodeDetails extends React.Component {
       <div className="node-details-tools-wrapper">
         <div className="node-details-tools">
           {showSwitchTopology &&
-            <span
+            <i
               title={topologyTitle}
               className="fa fa-long-arrow-alt-left"
               onClick={this.handleShowTopologyForNode}>
               <span>Show in <span>{this.props.topologyId.replace(/-/g, ' ')}</span></span>
-            </span>
+            </i>
           }
-          <span
+          <i
             title="Close details"
             className="fa fa-times close-details"
             onClick={this.handleClickClose}

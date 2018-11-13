@@ -1,4 +1,5 @@
 @import '~@fortawesome/fontawesome-free/css/all.css';
+@import '~@fortawesome/fontawesome-free/css/v4-shims.css';
 @import '~rc-slider/dist/rc-slider.css';
 
 /* sass-lint:disable variable-for-property */
@@ -121,7 +122,7 @@ a {
     padding: 1px 3px;
     outline: 0;
 
-    .fa {
+    i {
       font-size: $font-size-small;
       position: relative;
       top: 2px;
@@ -544,7 +545,7 @@ a {
       z-index: $layer-front;
     }
 
-    > span {
+    > i {
       @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
@@ -738,6 +739,8 @@ a {
         color: $text-secondary-color;
         font-size: $font-size-small;
 
+        // TODO: remove this in the future you can't count on .fa but I don't
+        // know where label .fa comes from.
         .fa {
           margin-left: 0.5em;
         }
@@ -931,16 +934,6 @@ a {
         font-size: $font-size-small;
         color: $text-secondary-color;
       }
-
-      &-value-sparkline {
-        > div {
-          display: inline-block;
-        }
-        span {
-          margin-left: 1em;
-        }
-      }
-
     }
   }
 }
@@ -1232,7 +1225,7 @@ a {
     margin-bottom: 0;
   }
 
-  .fa {
+  i {
     font-size: $font-size-tiny;
     margin-left: 4px;
     color: $color-orange-500;
@@ -1319,7 +1312,7 @@ a {
     margin-right: 15px;
     margin-top: 3px;
 
-    .fa {
+    i {
       color: $text-secondary-color;
       font-size: $font-size-normal;
     }
@@ -1347,7 +1340,7 @@ a {
 
 .view-mode-selector-wrapper, .time-control-wrapper {
   .label { margin-left: 4px; }
-  .fa {
+  i {
     margin-left: 0;
     color: $text-secondary-color;
   }
@@ -1464,7 +1457,7 @@ a {
     top: 6px;
     right: 8px;
 
-    span {
+    i {
       @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
@@ -1779,13 +1772,13 @@ a {
     }
   }
 
-  .fa {
+  i {
     width: 20px;
     text-align: center;
     margin-right: 10px;
   }
 
-  .fa-times {
+  .fa.fa-times {
     width: 25px;
   }
 }

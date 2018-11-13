@@ -172,7 +172,7 @@ function HelpPanel({
           {renderFieldsPanel(currentTopologyName, searchableFields)}
         </div>
         <div className="help-panel-tools">
-          <span
+          <i
             title="Close details"
             className="fa fa-times"
             onClick={onClickClose}
