@@ -1,3 +1,5 @@
+// +build codegen
+
 package api
 
 import (
@@ -85,5 +87,14 @@ func (p *paginationDefinitions) setup() {
 		} else {
 			panic("unknown operation for paginator " + n)
 		}
+	}
+}
+
+func enableStopOnSameToken(service string) bool {
+	switch service {
+	case "cloudwatchlogs":
+		return true
+	default:
+		return false
 	}
 }

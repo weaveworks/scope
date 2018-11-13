@@ -1,3 +1,5 @@
+// +build go1.5,deprecated
+
 package main
 
 import (

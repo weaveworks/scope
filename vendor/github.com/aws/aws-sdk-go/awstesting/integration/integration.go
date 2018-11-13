@@ -1,3 +1,5 @@
+// +build integration
+
 // Package integration performs initialization and validation for integration
 // tests.
 package integration
@@ -13,7 +15,7 @@ import (
 )
 
 // Session is a shared session for all integration tests to use.
-var Session = session.New()
+var Session = session.Must(session.NewSession())
 
 func init() {
 	logLevel := Session.Config.LogLevel

@@ -1,3 +1,5 @@
+// +build go1.5,deprecated
+
 package rename
 
 import (
@@ -7,10 +9,10 @@ import (
 	"go/format"
 	"go/parser"
 	"go/token"
+	"go/types"
 	"io/ioutil"
 
 	"golang.org/x/tools/go/loader"
-	"golang.org/x/tools/go/types"
 )
 
 var dryRun = flag.Bool("dryrun", false, "Dry run")

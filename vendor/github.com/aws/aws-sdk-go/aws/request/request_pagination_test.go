@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/awstesting"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/route53"
@@ -24,7 +25,7 @@ func TestPaginationQueryPage(t *testing.T) {
 			LastEvaluatedKey: map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key1")}},
 			Count:            aws.Int64(1),
 			Items: []map[string]*dynamodb.AttributeValue{
-				map[string]*dynamodb.AttributeValue{
+				{
 					"key": {S: aws.String("key1")},
 				},
 			},
@@ -33,7 +34,7 @@ func TestPaginationQueryPage(t *testing.T) {
 			LastEvaluatedKey: map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key2")}},
 			Count:            aws.Int64(1),
 			Items: []map[string]*dynamodb.AttributeValue{
-				map[string]*dynamodb.AttributeValue{
+				{
 					"key": {S: aws.String("key2")},
 				},
 			},
@@ -42,7 +43,7 @@ func TestPaginationQueryPage(t *testing.T) {
 			LastEvaluatedKey: map[string]*dynamodb.AttributeValue{},
 			Count:            aws.Int64(1),
 			Items: []map[string]*dynamodb.AttributeValue{
-				map[string]*dynamodb.AttributeValue{
+				{
 					"key": {S: aws.String("key3")},
 				},
 			},
@@ -87,14 +88,14 @@ func TestPaginationQueryPage(t *testing.T) {
 
 	assert.Equal(t,
 		[]map[string]*dynamodb.AttributeValue{
-			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key1")}},
-			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key2")}},
+			{"key": {S: aws.String("key1")}},
+			{"key": {S: aws.String("key2")}},
 		}, tokens)
 	assert.Equal(t,
 		[]map[string]*dynamodb.AttributeValue{
-			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key1")}},
-			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key2")}},
-			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key3")}},
+			{"key": {S: aws.String("key1")}},
+			{"key": {S: aws.String("key2")}},
+			{"key": {S: aws.String("key3")}},
 		}, pages)
 	assert.Equal(t, 3, numPages)
 	assert.True(t, gotToEnd)
@@ -378,6 +379,198 @@ func TestPaginationNilToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"", "second", ""}, idents)
 	assert.Equal(t, []string{"first.example.com.", "second.example.com.", "third.example.com."}, results)
+}
+
+func TestPaginationNilInput(t *testing.T) {
+	// Code generation doesn't have a great way to verify the code is correct
+	// other than being run via unit tests in the SDK. This should be fixed
+	// So code generation can be validated independently.
+
+	client := s3.New(unit.Session)
+	client.Handlers.Validate.Clear()
+	client.Handlers.Send.Clear() // mock sending
+	client.Handlers.Unmarshal.Clear()
+	client.Handlers.UnmarshalMeta.Clear()
+	client.Handlers.ValidateResponse.Clear()
+	client.Handlers.Unmarshal.PushBack(func(r *request.Request) {
+		r.Data = &s3.ListObjectsOutput{}
+	})
+
+	gotToEnd := false
+	numPages := 0
+	err := client.ListObjectsPages(nil, func(p *s3.ListObjectsOutput, last bool) bool {
+		numPages++
+		if last {
+			gotToEnd = true
+		}
+		return true
+	})
+
+	if err != nil {
+		t.Fatalf("expect no error, but got %v", err)
+	}
+	if e, a := 1, numPages; e != a {
+		t.Errorf("expect %d number pages but got %d", e, a)
+	}
+	if !gotToEnd {
+		t.Errorf("expect to of gotten to end, did not")
+	}
+}
+
+func TestPaginationWithContextNilInput(t *testing.T) {
+	// Code generation doesn't have a great way to verify the code is correct
+	// other than being run via unit tests in the SDK. This should be fixed
+	// So code generation can be validated independently.
+
+	client := s3.New(unit.Session)
+	client.Handlers.Validate.Clear()
+	client.Handlers.Send.Clear() // mock sending
+	client.Handlers.Unmarshal.Clear()
+	client.Handlers.UnmarshalMeta.Clear()
+	client.Handlers.ValidateResponse.Clear()
+	client.Handlers.Unmarshal.PushBack(func(r *request.Request) {
+		r.Data = &s3.ListObjectsOutput{}
+	})
+
+	gotToEnd := false
+	numPages := 0
+	ctx := &awstesting.FakeContext{DoneCh: make(chan struct{})}
+	err := client.ListObjectsPagesWithContext(ctx, nil, func(p *s3.ListObjectsOutput, last bool) bool {
+		numPages++
+		if last {
+			gotToEnd = true
+		}
+		return true
+	})
+
+	if err != nil {
+		t.Fatalf("expect no error, but got %v", err)
+	}
+	if e, a := 1, numPages; e != a {
+		t.Errorf("expect %d number pages but got %d", e, a)
+	}
+	if !gotToEnd {
+		t.Errorf("expect to of gotten to end, did not")
+	}
+}
+
+func TestPagination_Standalone(t *testing.T) {
+	type testPageInput struct {
+		NextToken *string
+	}
+	type testPageOutput struct {
+		Value     *string
+		NextToken *string
+	}
+	type testCase struct {
+		Value, PrevToken, NextToken *string
+	}
+
+	type testCaseList struct {
+		StopOnSameToken bool
+		Cases           []testCase
+	}
+
+	cases := []testCaseList{
+		{
+			Cases: []testCase{
+				{aws.String("FirstValue"), aws.String("InitalToken"), aws.String("FirstToken")},
+				{aws.String("SecondValue"), aws.String("FirstToken"), aws.String("SecondToken")},
+				{aws.String("ThirdValue"), aws.String("SecondToken"), nil},
+			},
+			StopOnSameToken: false,
+		},
+		{
+			Cases: []testCase{
+				{aws.String("FirstValue"), aws.String("InitalToken"), aws.String("FirstToken")},
+				{aws.String("SecondValue"), aws.String("FirstToken"), aws.String("SecondToken")},
+				{aws.String("ThirdValue"), aws.String("SecondToken"), aws.String("")},
+			},
+			StopOnSameToken: false,
+		},
+		{
+			Cases: []testCase{
+				{aws.String("FirstValue"), aws.String("InitalToken"), aws.String("FirstToken")},
+				{aws.String("SecondValue"), aws.String("FirstToken"), aws.String("SecondToken")},
+				{nil, aws.String("SecondToken"), aws.String("SecondToken")},
+			},
+			StopOnSameToken: true,
+		},
+		{
+			Cases: []testCase{
+				{aws.String("FirstValue"), aws.String("InitalToken"), aws.String("FirstToken")},
+				{aws.String("SecondValue"), aws.String("FirstToken"), aws.String("SecondToken")},
+				{aws.String("SecondValue"), aws.String("SecondToken"), aws.String("SecondToken")},
+			},
+			StopOnSameToken: true,
+		},
+	}
+
+	for _, testcase := range cases {
+		c := testcase.Cases
+		input := testPageInput{
+			NextToken: c[0].PrevToken,
+		}
+
+		svc := awstesting.NewClient()
+		i := 0
+		p := request.Pagination{
+			EndPageOnSameToken: testcase.StopOnSameToken,
+			NewRequest: func() (*request.Request, error) {
+				r := svc.NewRequest(
+					&request.Operation{
+						Name: "Operation",
+						Paginator: &request.Paginator{
+							InputTokens:  []string{"NextToken"},
+							OutputTokens: []string{"NextToken"},
+						},
+					},
+					&input, &testPageOutput{},
+				)
+				// Setup handlers for testing
+				r.Handlers.Clear()
+				r.Handlers.Build.PushBack(func(req *request.Request) {
+					if e, a := len(c), i+1; a > e {
+						t.Fatalf("expect no more than %d requests, got %d", e, a)
+					}
+					in := req.Params.(*testPageInput)
+					if e, a := aws.StringValue(c[i].PrevToken), aws.StringValue(in.NextToken); e != a {
+						t.Errorf("%d, expect NextToken input %q, got %q", i, e, a)
+					}
+				})
+				r.Handlers.Unmarshal.PushBack(func(req *request.Request) {
+					out := &testPageOutput{
+						Value: c[i].Value,
+					}
+					if c[i].NextToken != nil {
+						next := *c[i].NextToken
+						out.NextToken = aws.String(next)
+					}
+					req.Data = out
+				})
+				return r, nil
+			},
+		}
+
+		for p.Next() {
+			data := p.Page().(*testPageOutput)
+
+			if e, a := aws.StringValue(c[i].Value), aws.StringValue(data.Value); e != a {
+				t.Errorf("%d, expect Value to be %q, got %q", i, e, a)
+			}
+			if e, a := aws.StringValue(c[i].NextToken), aws.StringValue(data.NextToken); e != a {
+				t.Errorf("%d, expect NextToken to be %q, got %q", i, e, a)
+			}
+
+			i++
+		}
+		if e, a := len(c), i; e != a {
+			t.Errorf("expected to process %d pages, did %d", e, a)
+		}
+		if err := p.Err(); err != nil {
+			t.Fatalf("%d, expected no error, got %v", i, err)
+		}
+	}
 }
 
 // Benchmarks

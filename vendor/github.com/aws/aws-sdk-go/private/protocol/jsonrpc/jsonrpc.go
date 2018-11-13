@@ -1,13 +1,13 @@
-// Package jsonrpc provides JSON RPC utilities for serialisation of AWS
+// Package jsonrpc provides JSON RPC utilities for serialization of AWS
 // requests and responses.
 package jsonrpc
 
-//go:generate go run ../../../models/protocol_tests/generate.go ../../../models/protocol_tests/input/json.json build_test.go
-//go:generate go run ../../../models/protocol_tests/generate.go ../../../models/protocol_tests/output/json.json unmarshal_test.go
+//go:generate go run -tags codegen ../../../models/protocol_tests/generate.go ../../../models/protocol_tests/input/json.json build_test.go
+//go:generate go run -tags codegen ../../../models/protocol_tests/generate.go ../../../models/protocol_tests/output/json.json unmarshal_test.go
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -17,6 +17,18 @@ import (
 )
 
 var emptyJSON = []byte("{}")
+
+// BuildHandler is a named request handler for building jsonrpc protocol requests
+var BuildHandler = request.NamedHandler{Name: "awssdk.jsonrpc.Build", Fn: Build}
+
+// UnmarshalHandler is a named request handler for unmarshaling jsonrpc protocol requests
+var UnmarshalHandler = request.NamedHandler{Name: "awssdk.jsonrpc.Unmarshal", Fn: Unmarshal}
+
+// UnmarshalMetaHandler is a named request handler for unmarshaling jsonrpc protocol request metadata
+var UnmarshalMetaHandler = request.NamedHandler{Name: "awssdk.jsonrpc.UnmarshalMeta", Fn: UnmarshalMeta}
+
+// UnmarshalErrorHandler is a named request handler for unmarshaling jsonrpc protocol request errors
+var UnmarshalErrorHandler = request.NamedHandler{Name: "awssdk.jsonrpc.UnmarshalError", Fn: UnmarshalError}
 
 // Build builds a JSON payload for a JSON RPC request.
 func Build(req *request.Request) {
@@ -52,7 +64,11 @@ func Unmarshal(req *request.Request) {
 	if req.DataFilled() {
 		err := jsonutil.UnmarshalJSON(req.Data, req.HTTPResponse.Body)
 		if err != nil {
-			req.Error = awserr.New("SerializationError", "failed decoding JSON RPC response", err)
+			req.Error = awserr.NewRequestFailure(
+				awserr.New("SerializationError", "failed decoding JSON RPC response", err),
+				req.HTTPResponse.StatusCode,
+				req.RequestID,
+			)
 		}
 	}
 	return
@@ -66,22 +82,22 @@ func UnmarshalMeta(req *request.Request) {
 // UnmarshalError unmarshals an error response for a JSON RPC service.
 func UnmarshalError(req *request.Request) {
 	defer req.HTTPResponse.Body.Close()
-	bodyBytes, err := ioutil.ReadAll(req.HTTPResponse.Body)
-	if err != nil {
-		req.Error = awserr.New("SerializationError", "failed reading JSON RPC error response", err)
-		return
-	}
-	if len(bodyBytes) == 0 {
+
+	var jsonErr jsonErrorResponse
+	err := json.NewDecoder(req.HTTPResponse.Body).Decode(&jsonErr)
+	if err == io.EOF {
 		req.Error = awserr.NewRequestFailure(
 			awserr.New("SerializationError", req.HTTPResponse.Status, nil),
 			req.HTTPResponse.StatusCode,
-			"",
+			req.RequestID,
 		)
 		return
-	}
-	var jsonErr jsonErrorResponse
-	if err := json.Unmarshal(bodyBytes, &jsonErr); err != nil {
-		req.Error = awserr.New("SerializationError", "failed decoding JSON RPC error response", err)
+	} else if err != nil {
+		req.Error = awserr.NewRequestFailure(
+			awserr.New("SerializationError", "failed decoding JSON RPC error response", err),
+			req.HTTPResponse.StatusCode,
+			req.RequestID,
+		)
 		return
 	}
 
