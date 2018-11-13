@@ -1,5 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import classNames from 'classnames';
 
 import { trackAnalyticsEvent } from '../../utils/tracking-utils';
 import { doControl } from '../../actions/app-actions';
@@ -11,12 +12,14 @@ class NodeDetailsControlButton extends React.Component {
   }
 
   render() {
-    let className = `tour-step-anchor node-control-button fa ${this.props.control.icon}`;
-    if (this.props.pending) {
-      className += ' node-control-button-pending';
-    }
+    const { icon, human } = this.props.control;
+    const className = classNames('tour-step-anchor node-control-button', icon, {
+      'node-control-button-pending': this.props.pending,
+      // TODO: remove this at some point. This BE will start providing the 'fa ' classname.
+      fa: icon.startsWith('fa-')
+    });
     return (
-      <span className={className} title={this.props.control.human} onClick={this.handleClick} />
+      <span className={className} title={human} onClick={this.handleClick} />
     );
   }
 
