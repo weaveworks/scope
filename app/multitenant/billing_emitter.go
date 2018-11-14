@@ -15,6 +15,10 @@ import (
 	"github.com/weaveworks/scope/report"
 )
 
+const (
+	uptime = "uptime"
+)
+
 // BillingEmitterConfig has everything we need to make a billing emitter
 type BillingEmitterConfig struct {
 	Enabled         bool
@@ -65,9 +69,18 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 		weaveNetCount = 1
 	}
 
+	// because the host structure is re-used to carry other information,
+	// count the number of real hosts in this report - ones with uptime
+	hostCount := 0
+	for _, host := range rep.Host.Nodes {
+		if _, exists := host.Latest.Lookup(uptime); exists {
+			hostCount++
+		}
+	}
+
 	amounts := billing.Amounts{
 		billing.ContainerSeconds: int64(interval/time.Second) * int64(len(rep.Container.Nodes)),
-		billing.NodeSeconds:      int64(interval/time.Second) * int64(len(rep.Host.Nodes)),
+		billing.NodeSeconds:      int64(interval/time.Second) * int64(hostCount),
 		billing.WeaveNetSeconds:  int64(interval/time.Second) * int64(weaveNetCount),
 	}
 	metadata := map[string]string{
