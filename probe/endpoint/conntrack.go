@@ -17,6 +17,7 @@ const (
 	// From https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt
 	eventsPath = "sys/net/netfilter/nf_conntrack_events"
 	timeWait   = "TIME_WAIT"
+	tcpClose   = "CLOSE"
 	tcpProto   = 6
 )
 
@@ -122,7 +123,7 @@ func (c *conntrackWalker) run() {
 	}
 	c.Lock()
 	for _, flow := range existingFlows {
-		if c.relevant(flow) && flow.TCPState != timeWait {
+		if c.relevant(flow) && flow.TCPState != tcpClose && flow.TCPState != timeWait {
 			c.activeFlows[flow.CtId] = flow
 		}
 	}
