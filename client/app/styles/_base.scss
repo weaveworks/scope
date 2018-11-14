@@ -738,12 +738,6 @@ a {
       &-label {
         color: $text-secondary-color;
         font-size: $font-size-small;
-
-        // TODO: remove this in the future you can't count on .fa but I don't
-        // know where label .fa comes from.
-        .fa {
-          margin-left: 0.5em;
-        }
       }
 
       &-sparkline {
