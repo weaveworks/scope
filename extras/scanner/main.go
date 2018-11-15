@@ -95,12 +95,16 @@ func main() {
 	flag.IntVar(&scanner.segments, "segments", 1, "Number of segments to read in parallel")
 	flag.IntVar(&scanner.deleters, "deleters", 1, "Number of deleters to run in parallel")
 	flag.IntVar(&scanner.deleteBatchSize, "delete-batch-size", 25, "Number of delete requests to batch up")
-	flag.StringVar(&scanner.address, "address", "localhost:6060", "Address to listen on, for profiling, etc.")
+	flag.StringVar(&scanner.address, "address", ":6060", "Address to listen on, for profiling, etc.")
 	flag.StringVar(&orgsFile, "delete-orgs-file", "", "File containing IDs of orgs to delete")
 	flag.StringVar(&loglevel, "log-level", "info", "Debug level: debug, info, warning, error")
 	flag.IntVar(&pagesPerDot, "pages-per-dot", 10, "Print a dot per N pages in DynamoDB (0 to disable)")
 
 	flag.Parse()
+
+	level, err := log.ParseLevel(loglevel)
+	checkFatal(err)
+	log.SetLevel(level)
 
 	parsed, err := url.Parse(collectorURL)
 	checkFatal(err)
@@ -262,7 +266,7 @@ func (s summary) print() {
 
 func checkFatal(err error) {
 	if err != nil {
-		log.Error("msg", "fatal error", "err", err)
+		log.Errorf("fatal error: %s", err)
 		os.Exit(1)
 	}
 }
@@ -279,7 +283,7 @@ func (sc *scanner) deleteLoopS3(pending *sync.WaitGroup) {
 		if !ok {
 			return
 		}
-		log.Debug("msg", "S3 delete", "key", aws.StringValue(item.Key))
+		log.Debug("S3 delete ", aws.StringValue(item.Key))
 		err := instrument.TimeRequestHistogram(ctx, "S3.Delete", s3RequestDuration, func(_ context.Context) error {
 			_, err := sc.s3.DeleteObjectWithContext(ctx, item)
 			return err
@@ -294,7 +298,7 @@ func (sc *scanner) deleteLoop(pending *sync.WaitGroup) {
 		if !ok {
 			return
 		}
-		log.Debug("msg", "about to delete", "num_requests", len(batch))
+		log.Debug("about to delete", len(batch))
 		ret, err := sc.dynamoDB.BatchWriteItem(&dynamodb.BatchWriteItemInput{
 			RequestItems: map[string][]*dynamodb.WriteRequest{
 				sc.tableName: batch,
