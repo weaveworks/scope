@@ -112,7 +112,7 @@ func main() {
 	s3Config, err := awscommon.ConfigFromURL(s3Address)
 	checkFatal(err)
 	bucketName := strings.TrimPrefix(s3Address.Path, "/")
-	tableName := strings.TrimPrefix(parsed.Path, "/")
+	scanner.tableName = strings.TrimPrefix(parsed.Path, "/")
 	scanner.s3 = s3.New(session.New(s3Config))
 
 	// HTTP listener for profiling
@@ -164,15 +164,23 @@ func main() {
 
 	for _, org := range orgs {
 		for hour := scanner.startHour; hour <= scanner.stopHour; hour++ {
-			keys, err := reportKeysInRow(ctx, scanner.dynamoDB, tableName, org, int64(hour))
+			keys, err := queryDynamo(ctx, scanner.dynamoDB, scanner.tableName, org, int64(hour))
 			checkFatal(err)
-			fmt.Printf("%s: %d Keys: %d\n", org, hour, len(keys))
 			for _, key := range keys {
+				reportKey := key[reportField].S
+				if reportKey == nil {
+					log.Errorf("Empty row!")
+					continue
+				}
+
 				input := &s3.DeleteObjectInput{
 					Bucket: aws.String(bucketName),
-					Key:    aws.String(key),
+					Key:    reportKey,
 				}
 				scanner.s3chan <- input
+
+				delete(key, reportField)
+				scanner.delete <- key
 			}
 		}
 	}
@@ -191,7 +199,7 @@ func main() {
 	totals.print()
 }
 
-func reportKeysInRow(ctx context.Context, db *dynamodb.DynamoDB, tableName, userid string, row int64) ([]string, error) {
+func queryDynamo(ctx context.Context, db *dynamodb.DynamoDB, tableName, userid string, row int64) ([]map[string]*dynamodb.AttributeValue, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
 	var resp *dynamodb.QueryOutput
 	err := instrument.TimeRequestHistogram(ctx, "DynamoDB.Query", dynamoRequestDuration, func(_ context.Context) error {
@@ -217,19 +225,7 @@ func reportKeysInRow(ctx context.Context, db *dynamodb.DynamoDB, tableName, user
 	if err != nil {
 		return nil, err
 	}
-
-	result := []string{}
-	for _, item := range resp.Items {
-		reportKey := item[reportField].S
-		if reportKey == nil {
-			log.Errorf("Empty row!")
-			continue
-		}
-		dynamoValueSize.WithLabelValues("BatchGetItem").
-			Add(float64(len(*reportKey)))
-		result = append(result, *reportKey)
-	}
-	return result, nil
+	return resp.Items, nil
 }
 
 const (
