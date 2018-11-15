@@ -29,7 +29,7 @@ function selectNode(browser) {
 
 function deselectNode(browser) {
   debug('deselect node');
-  return browser.elementByCssSelector('.fa-close', function(err, el) {
+  return browser.elementByCssSelector('.fa-times', function(err, el) {
     return el.click();
   });
 }

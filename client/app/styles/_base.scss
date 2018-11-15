@@ -1,4 +1,5 @@
-@import '~font-awesome/scss/font-awesome.scss';
+@import '~@fortawesome/fontawesome-free/css/all.css';
+@import '~@fortawesome/fontawesome-free/css/v4-shims.css';
 @import '~rc-slider/dist/rc-slider.css';
 
 /* sass-lint:disable variable-for-property */
@@ -121,8 +122,8 @@ a {
     padding: 1px 3px;
     outline: 0;
 
-    .fa {
-      font-size: $font-size-normal;
+    i {
+      font-size: $font-size-small;
       position: relative;
       top: 2px;
     }
@@ -544,7 +545,7 @@ a {
       z-index: $layer-front;
     }
 
-    > span {
+    > i {
       @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
@@ -634,6 +635,7 @@ a {
   &-controls {
     white-space: nowrap;
     padding: 8px 0;
+    font-size: $font-size-small;
 
     &-wrapper {
       padding: 0 36px 0 32px;
@@ -736,10 +738,6 @@ a {
       &-label {
         color: $text-secondary-color;
         font-size: $font-size-small;
-
-        .fa {
-          margin-left: 0.5em;
-        }
       }
 
       &-sparkline {
@@ -930,16 +928,6 @@ a {
         font-size: $font-size-small;
         color: $text-secondary-color;
       }
-
-      &-value-sparkline {
-        > div {
-          display: inline-block;
-        }
-        span {
-          margin-left: 1em;
-        }
-      }
-
     }
   }
 }
@@ -997,7 +985,7 @@ a {
   @extend .btn-opacity;
   padding: 6px;
   margin-left: 2px;
-  font-size: $font-size-normal;
+  font-size: $font-size-small;
   color: $text-secondary-color;
   cursor: pointer;
   border: 1px solid transparent;
@@ -1231,7 +1219,8 @@ a {
     margin-bottom: 0;
   }
 
-  .fa {
+  i {
+    font-size: $font-size-tiny;
     margin-left: 4px;
     color: $color-orange-500;
   }
@@ -1317,9 +1306,9 @@ a {
     margin-right: 15px;
     margin-top: 3px;
 
-    .fa {
+    i {
       color: $text-secondary-color;
-      font-size: $font-size-large;
+      font-size: $font-size-normal;
     }
   }
 
@@ -1345,7 +1334,7 @@ a {
 
 .view-mode-selector-wrapper, .time-control-wrapper {
   .label { margin-left: 4px; }
-  .fa {
+  i {
     margin-left: 0;
     color: $text-secondary-color;
   }
@@ -1462,7 +1451,7 @@ a {
     top: 6px;
     right: 8px;
 
-    span {
+    i {
       @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
@@ -1777,13 +1766,13 @@ a {
     }
   }
 
-  .fa {
+  i {
     width: 20px;
     text-align: center;
     margin-right: 10px;
   }
 
-  .fa-close {
+  .fa.fa-times {
     width: 25px;
   }
 }

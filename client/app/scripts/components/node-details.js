@@ -57,16 +57,16 @@ class NodeDetails extends React.Component {
       <div className="node-details-tools-wrapper">
         <div className="node-details-tools">
           {showSwitchTopology &&
-            <span
+            <i
               title={topologyTitle}
-              className="fa fa-long-arrow-left"
+              className="fa fa-long-arrow-alt-left"
               onClick={this.handleShowTopologyForNode}>
               <span>Show in <span>{this.props.topologyId.replace(/-/g, ' ')}</span></span>
-            </span>
+            </i>
           }
-          <span
+          <i
             title="Close details"
-            className="fa fa-close close-details"
+            className="fa fa-times close-details"
             onClick={this.handleClickClose}
           />
         </div>
@@ -80,7 +80,7 @@ class NodeDetails extends React.Component {
     // NOTE: If we start the fa-spin animation before the node details panel has been
     // mounted, the spinner is displayed blurred the whole time in Chrome (possibly
     // caused by a bug having to do with animating the details panel).
-    const spinnerClassName = classNames('fa fa-circle-o-notch', { 'fa-spin': this.props.mounted });
+    const spinnerClassName = classNames('fa fa-circle-notch', { 'fa-spin': this.props.mounted });
     const nodeColor = (node ?
       getNodeColorDark(node.get('rank'), label, node.get('pseudo')) :
       getNeutralColor());

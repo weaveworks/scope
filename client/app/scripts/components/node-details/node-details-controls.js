@@ -6,7 +6,7 @@ import NodeDetailsControlButton from './node-details-control-button';
 export default function NodeDetailsControls({
   controls, error, nodeId, pending
 }) {
-  let spinnerClassName = 'fa fa-circle-o-notch fa-spin';
+  let spinnerClassName = 'fa fa-circle-notch fa-spin';
   if (pending) {
     spinnerClassName += ' node-details-controls-spinner';
   } else {
@@ -17,7 +17,7 @@ export default function NodeDetailsControls({
     <div className="node-details-controls">
       {error &&
         <div className="node-details-controls-error" title={error}>
-          <span className="node-details-controls-error-icon fa fa-warning" />
+          <i className="node-details-controls-error-icon fa fa-exclamation-triangle" />
           <span className="node-details-controls-error-messages">{error}</span>
         </div>
       }
