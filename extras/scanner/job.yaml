@@ -1,0 +1,61 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    job-name: bryan-scope-scanner
+    name: bryan-scope-scanner
+  name: bryan-scope-scanner
+  namespace: scope
+spec:
+  backoffLimit: 0
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      labels:
+        job-name: bryan-scope-scanner
+        name: bryan-scope-scanner
+    spec:
+      containers:
+      - args:
+        - --app.collector=dynamodb://us-east-1/prod_reports
+        - --app.collector.s3=s3://us-east-1/weaveworks_prod_reports
+        - -delete-orgs-file=/config/delete-orgs
+        - -start-hour=411000
+        - -stop-hour=412000
+        - -deleters=64
+        # - -log-level=debug
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          value: "redacted"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "redacted"
+        - name: AWS_SESSION_TOKEN
+          value: "redacted"
+        image: quay.io/weaveworks/scope-deleter:latest
+        imagePullPolicy: Always
+        name: scanner
+        ports:
+        - containerPort: 6060
+          protocol: TCP
+        resources:
+          requests:
+            cpu: "2"
+            memory: 1Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /config
+          name: config-volume
+      dnsPolicy: ClusterFirst
+      imagePullSecrets:
+      - name: quay-secret
+      restartPolicy: Never
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: prune-config
+        name: config-volume
