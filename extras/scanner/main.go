@@ -34,6 +34,7 @@ type scanner struct {
 	deleters        int
 	deleteBatchSize int
 	tableName       string
+	bucketName      string
 	address         string
 
 	dynamoDB *dynamodb.DynamoDB
@@ -44,12 +45,10 @@ type scanner struct {
 	retry  chan map[string]*dynamodb.AttributeValue
 	// Deleters read batches of items from this chan
 	batched chan []*dynamodb.WriteRequest
-	// Keys to delete in s3
-	s3chan chan *s3.DeleteObjectInput
 }
 
-var (
-	pagesPerDot int
+const (
+	s3deleteBatchSize = 250
 )
 
 var (
@@ -64,17 +63,17 @@ var (
 		Name:      "dynamo_consumed_capacity_total",
 		Help:      "Total count of capacity units consumed per operation.",
 	}, []string{"method"})
-	dynamoValueSize = promauto.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "scope",
-		Name:      "dynamo_value_size_bytes_total",
-		Help:      "Total size of data read / written from DynamoDB in bytes.",
-	}, []string{"method"})
 	s3RequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "scope",
 		Name:      "s3_request_duration_seconds",
 		Help:      "Time in seconds spent doing S3 requests.",
 		Buckets:   prometheus.DefBuckets,
 	}, []string{"method", "status_code"})
+	s3ItemsDeleted = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "s3_items_deleted",
+		Help:      "Total number of items deleted.",
+	})
 )
 
 func main() {
@@ -98,7 +97,6 @@ func main() {
 	flag.StringVar(&scanner.address, "address", ":6060", "Address to listen on, for profiling, etc.")
 	flag.StringVar(&orgsFile, "delete-orgs-file", "", "File containing IDs of orgs to delete")
 	flag.StringVar(&loglevel, "log-level", "info", "Debug level: debug, info, warning, error")
-	flag.IntVar(&pagesPerDot, "pages-per-dot", 10, "Print a dot per N pages in DynamoDB (0 to disable)")
 
 	flag.Parse()
 
@@ -115,7 +113,7 @@ func main() {
 	checkFatal(err)
 	s3Config, err := awscommon.ConfigFromURL(s3Address)
 	checkFatal(err)
-	bucketName := strings.TrimPrefix(s3Address.Path, "/")
+	scanner.bucketName = strings.TrimPrefix(s3Address.Path, "/")
 	scanner.tableName = strings.TrimPrefix(parsed.Path, "/")
 	scanner.s3 = s3.New(session.New(s3Config))
 
@@ -143,10 +141,9 @@ func main() {
 	scanner.delete = make(chan map[string]*dynamodb.AttributeValue)
 	scanner.retry = make(chan map[string]*dynamodb.AttributeValue, 100)
 	scanner.batched = make(chan []*dynamodb.WriteRequest)
-	scanner.s3chan = make(chan *s3.DeleteObjectInput)
 
 	var deleteGroup sync.WaitGroup
-	deleteGroup.Add(1 + scanner.deleters*2)
+	deleteGroup.Add(1 + scanner.deleters)
 	var pending sync.WaitGroup
 	go func() {
 		scanner.batcher(&pending)
@@ -157,37 +154,20 @@ func main() {
 			scanner.deleteLoop(&pending)
 			deleteGroup.Done()
 		}()
-		go func() {
-			scanner.deleteLoopS3(&pending)
-			deleteGroup.Done()
-		}()
 	}
 
 	totals := newSummary()
-	ctx := context.Background()
+
+	var orgWait sync.WaitGroup
+	orgWait.Add(len(orgs))
 
 	for _, org := range orgs {
-		for hour := scanner.startHour; hour <= scanner.stopHour; hour++ {
-			keys, err := queryDynamo(ctx, scanner.dynamoDB, scanner.tableName, org, int64(hour))
-			checkFatal(err)
-			for _, key := range keys {
-				reportKey := key[reportField].S
-				if reportKey == nil {
-					log.Errorf("Empty row!")
-					continue
-				}
-
-				input := &s3.DeleteObjectInput{
-					Bucket: aws.String(bucketName),
-					Key:    reportKey,
-				}
-				scanner.s3chan <- input
-
-				delete(key, reportField)
-				scanner.delete <- key
-			}
-		}
+		go func(org string) {
+			scanner.processOrg(context.Background(), org)
+			orgWait.Done()
+		}(org)
 	}
+	orgWait.Wait()
 
 	// Ensure that batcher has received all items so it won't call Add() any more
 	scanner.delete <- nil
@@ -196,11 +176,72 @@ func main() {
 	// Close chans to signal deleter(s) and batcher to terminate
 	close(scanner.batched)
 	close(scanner.retry)
-	close(scanner.s3chan)
 	deleteGroup.Wait()
 
 	fmt.Printf("\n")
 	totals.print()
+}
+
+func (sc *scanner) processOrg(ctx context.Context, org string) {
+	deleted := 0
+	for hour := sc.startHour; hour <= sc.stopHour; hour++ {
+		var keys []map[string]*dynamodb.AttributeValue
+		for {
+			var err error
+			keys, err = queryDynamo(ctx, sc.dynamoDB, sc.tableName, org, int64(hour))
+			if throttled(err) {
+				time.Sleep(time.Second)
+				continue
+			}
+			checkFatal(err)
+			break
+		}
+		var wait sync.WaitGroup
+		if len(keys) > 0 {
+			log.Debugf("deleting org: %s hour: %d num: %d", org, hour, len(keys))
+		}
+		for start := 0; start < len(keys); start += s3deleteBatchSize {
+			end := start + s3deleteBatchSize
+			if end > len(keys) {
+				end = len(keys)
+			}
+			wait.Add(1)
+			go func(start, end int) {
+				sc.deleteFromS3AndDynamoDB(ctx, keys[start:end])
+				wait.Done()
+			}(start, end)
+		}
+		wait.Wait()
+		deleted += len(keys)
+		s3ItemsDeleted.Add(float64(len(keys)))
+	}
+	log.Infof("done %s: %d", org, deleted)
+}
+
+func (sc *scanner) deleteFromS3AndDynamoDB(ctx context.Context, keys []map[string]*dynamodb.AttributeValue) {
+	// Build multiple-object delete request for S3
+	d := &s3.Delete{}
+	for _, key := range keys {
+		reportKey := key[reportField].S
+		d.Objects = append(d.Objects, &s3.ObjectIdentifier{Key: reportKey})
+	}
+	input := &s3.DeleteObjectsInput{
+		Bucket: aws.String(sc.bucketName),
+		Delete: d,
+	}
+	// Send batch to S3
+	err := instrument.TimeRequestHistogram(ctx, "S3.Delete", s3RequestDuration, func(_ context.Context) error {
+		_, err := sc.s3.DeleteObjectsWithContext(ctx, input)
+		return err
+	})
+	if err != nil {
+		log.Errorf("S3 delete: err", err)
+	}
+	// Now send to be deleted from DynamoDB
+	for _, key := range keys {
+		delete(key, reportField) // not part of key in dynamoDB
+		sc.delete <- key
+	}
 }
 
 func queryDynamo(ctx context.Context, db *dynamodb.DynamoDB, tableName, userid string, row int64) ([]map[string]*dynamodb.AttributeValue, error) {
@@ -276,22 +317,6 @@ func throttled(err error) bool {
 	return ok && (awsErr.Code() == dynamodb.ErrCodeProvisionedThroughputExceededException)
 }
 
-func (sc *scanner) deleteLoopS3(pending *sync.WaitGroup) {
-	ctx := context.Background()
-	for {
-		item, ok := <-sc.s3chan
-		if !ok {
-			return
-		}
-		log.Debug("S3 delete ", aws.StringValue(item.Key))
-		err := instrument.TimeRequestHistogram(ctx, "S3.Delete", s3RequestDuration, func(_ context.Context) error {
-			_, err := sc.s3.DeleteObjectWithContext(ctx, item)
-			return err
-		})
-		checkFatal(err)
-	}
-}
-
 func (sc *scanner) deleteLoop(pending *sync.WaitGroup) {
 	for {
 		batch, ok := <-sc.batched
@@ -299,11 +324,23 @@ func (sc *scanner) deleteLoop(pending *sync.WaitGroup) {
 			return
 		}
 		log.Debug("about to delete", len(batch))
-		ret, err := sc.dynamoDB.BatchWriteItem(&dynamodb.BatchWriteItemInput{
-			RequestItems: map[string][]*dynamodb.WriteRequest{
-				sc.tableName: batch,
-			},
+		var ret *dynamodb.BatchWriteItemOutput
+		var err error
+		instrument.TimeRequestHistogram(context.Background(), "DynamoDB.Delete", dynamoRequestDuration, func(_ context.Context) error {
+			ret, err = sc.dynamoDB.BatchWriteItem(&dynamodb.BatchWriteItemInput{
+				RequestItems: map[string][]*dynamodb.WriteRequest{
+					sc.tableName: batch,
+				},
+				ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
+			})
+			return err
 		})
+		if ret.ConsumedCapacity != nil {
+			for _, cc := range ret.ConsumedCapacity {
+				dynamoConsumedCapacity.WithLabelValues("BatchWriteItem").
+					Add(float64(*cc.CapacityUnits))
+			}
+		}
 		if err != nil {
 			if throttled(err) {
 				// Send the whole request back into the batcher
