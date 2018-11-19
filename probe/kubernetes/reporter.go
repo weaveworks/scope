@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"fmt"
-	"net"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/labels"
@@ -12,7 +11,6 @@ import (
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -292,7 +290,6 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	hostTopology := r.hostTopology(services)
 	daemonSetTopology, daemonSets, err := r.daemonSetTopology()
 	if err != nil {
 		return result, err
@@ -339,7 +336,6 @@ func (r *Reporter) Report() (report.Report, error) {
 	}
 	result.Pod = result.Pod.Merge(podTopology)
 	result.Service = result.Service.Merge(serviceTopology)
-	result.Host = result.Host.Merge(hostTopology)
 	result.DaemonSet = result.DaemonSet.Merge(daemonSetTopology)
 	result.StatefulSet = result.StatefulSet.Merge(statefulSetTopology)
 	result.CronJob = result.CronJob.Merge(cronJobTopology)
@@ -367,36 +363,6 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 		return nil
 	})
 	return result, services, err
-}
-
-// FIXME: Hideous hack to remove persistent-connection edges to
-// virtual service IPs attributed to the internet. The global
-// service-cluster-ip-range is not exposed by the API server (see
-// https://github.com/kubernetes/kubernetes/issues/25533), so instead
-// we synthesise it by computing the smallest network that contains
-// all service IPs. That network may be smaller than the actual range
-// but that is ok, since in the end all we care about is that it
-// contains all the service IPs.
-//
-// The right way of fixing this is performing DNAT mapping on
-// persistent connections for which we don't have a robust solution
-// (see https://github.com/weaveworks/scope/issues/1491).
-func (r *Reporter) hostTopology(services []Service) report.Topology {
-	serviceIPs := make([]net.IP, 0, len(services))
-	for _, service := range services {
-		if ip := net.ParseIP(service.ClusterIP()).To4(); ip != nil {
-			serviceIPs = append(serviceIPs, ip)
-		}
-	}
-	serviceNetwork := report.ContainingIPv4Network(serviceIPs)
-	if serviceNetwork == nil {
-		return report.MakeTopology()
-	}
-	t := report.MakeTopology()
-	t.AddNode(
-		report.MakeNode(report.MakeHostNodeID(r.hostID)).
-			WithSets(report.MakeSets().AddString(host.LocalNetworks, serviceNetwork.String())))
-	return t
 }
 
 func (r *Reporter) deploymentTopology() (report.Topology, []Deployment, error) {
