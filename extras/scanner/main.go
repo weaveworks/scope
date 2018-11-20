@@ -99,7 +99,7 @@ func main() {
 	flag.Float64Var(&queryRateLimit, "query-rate-limit", 100, "Max rate to query DynamoDB")
 	flag.Float64Var(&writeRateLimit, "write-rate-limit", 100, "Rate-limit on throttling from DynamoDB")
 	flag.IntVar(&scanner.startHour, "start-hour", 406848, "Hour number to start")
-	flag.IntVar(&scanner.stopHour, "stop-hour", 406848, "Hour number to stop (0 for current hour)")
+	flag.IntVar(&scanner.stopHour, "stop-hour", 0, "Hour number to stop (0 for current hour)")
 	flag.IntVar(&scanner.segments, "segments", 1, "Number of segments to read in parallel")
 	flag.IntVar(&scanner.deleters, "deleters", 1, "Number of deleters to run in parallel")
 	flag.IntVar(&scanner.deleteBatchSize, "delete-batch-size", 25, "Number of delete requests to batch up")
