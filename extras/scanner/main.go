@@ -146,6 +146,7 @@ func main() {
 		scanner.stopHour = int(time.Now().Unix() / int64(time.Hour/time.Second))
 	}
 
+	dynamoDBConfig = dynamoDBConfig.WithMaxRetries(0) // We do our own retries, with a rate-limiter
 	session := session.New(dynamoDBConfig)
 	scanner.dynamoDB = dynamodb.New(session)
 
