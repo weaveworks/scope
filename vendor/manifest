@@ -1904,6 +1904,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/typetypetype/conntrack",
+			"repository": "https://github.com/typetypetype/conntrack",
+			"vcs": "git",
+			"revision": "9d9dd841d4eb5f1e151e7af9926a2ddb416c6a79",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/uber-go/tally",
 			"repository": "https://github.com/uber-go/tally",
 			"vcs": "git",
