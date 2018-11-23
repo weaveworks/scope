@@ -1,3 +1,11 @@
+## Release 1.10.1
+
+This is a re-release of 1.10.0 which got hit by an unfortunate build
+error.
+
+- UI Build: stop deleting static ui files when building external ui
+	[#3439](https://github.com/weaveworks/scope/pull/3439)
+
 ## Release 1.10.0
 
 Highlights:
