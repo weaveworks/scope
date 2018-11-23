@@ -44,4 +44,14 @@ OSS Scope has no user concept, this is only available in Weave Cloud. To limit t
 
 - setup a reverse proxy with auth and block access to non admin users,
 - capture the calls with something like Chrome network console to get the endpoints to know which requests to authenticate in the proxy server.
-- you can use Basic HTTP Auth since Scope 1.10.0 - just use the `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD` environment variables.
+- you can use Basic HTTP Auth since Scope 1.10.0 - just use these command line
+  arguments:
+
+  ```cli
+  -app.basicAuth
+        Enable basic authentication for app
+  -app.basicAuth.password string
+        Password for basic authentication (default "admin")
+  -app.basicAuth.username string
+        Username for basic authentication (default "admin")
+  ```
