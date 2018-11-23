@@ -48,7 +48,7 @@ module.exports = {
   },
 
   plugins: [
-    new CleanWebpackPlugin(['build']),
+    new CleanWebpackPlugin([OUTPUT_PATH]),
     new webpack.DefinePlugin(GLOBALS),
     new webpack.optimize.CommonsChunkPlugin({ name: 'vendors', filename: 'vendors.js' }),
     new webpack.optimize.OccurrenceOrderPlugin(true),
