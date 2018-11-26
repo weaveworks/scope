@@ -227,13 +227,14 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	}
 
 	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
+	p.AddTagger(probe.NewTopologyTagger())
 	var processCache *process.CachingWalker
 
 	if flags.kubernetesRole != kubernetesRoleCluster {
 		hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients, handlerRegistry)
 		defer hostReporter.Stop()
 		p.AddReporter(hostReporter)
-		p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
+		p.AddTagger(host.NewTagger(hostID))
 
 		if flags.procEnabled {
 			processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot, false))
