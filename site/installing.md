@@ -234,8 +234,6 @@ Scope can be installed as a DC/OS Package through the open Universe.
 
 DC/OS is short for Datacenter Operating System, a distributed operating system using Apache Mesos as its kernel. The easiest way to get start with DC/OS in the public-cloud is to [deploy it on Amazon Web Services (AWS)](https://mesosphere.com/amazon/).
 
-For more information see, [Deploying Weave Scope on DC/OS](https://www.weave.works/guides/deploy-weave-scope-dcos/)
-
 **See Also**
 
  * [Understanding Weave Scope](/site/how-it-works.md)
