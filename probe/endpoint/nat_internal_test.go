@@ -47,10 +47,11 @@ func TestNat(t *testing.T) {
 	{
 		f := conntrack.Conn{
 			MsgType: conntrack.NfctMsgUpdate,
+			Status:  conntrack.IPS_DST_NAT,
 			Orig: conntrack.Tuple{
 				Src:     host2,
 				Dst:     host1,
-				SrcPort: 22222,
+				SrcPort: 22223,
 				DstPort: 80,
 				Proto:   syscall.IPPROTO_TCP,
 			},
@@ -58,7 +59,7 @@ func TestNat(t *testing.T) {
 				Src:     c1,
 				Dst:     host2,
 				SrcPort: 80,
-				DstPort: 22222,
+				DstPort: 22223,
 				Proto:   syscall.IPPROTO_TCP,
 			},
 			CtId: 1,
@@ -70,15 +71,18 @@ func TestNat(t *testing.T) {
 
 		have := report.MakeReport()
 		originalID := report.MakeEndpointNodeID("host1", "", "10.0.47.1", "80")
-		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
+		originalNode := report.MakeNodeWith(originalID, map[string]string{
 			"foo": "bar",
-		}))
+		})
+		have.Endpoint.AddNode(originalNode)
+		fromID := report.MakeEndpointNodeID("host2", "", "2.3.4.5", "22223")
+		have.Endpoint.AddNode(report.MakeNodeWith(fromID, nil).WithAdjacent(originalID))
 
 		want := have.Copy()
-		wantID := report.MakeEndpointNodeID("host1", "", "1.2.3.4", "80")
-		want.Endpoint.AddNode(report.MakeNodeWith(wantID, map[string]string{
+		// add nat original destination as a copy of nat reply source
+		origDstID := report.MakeEndpointNodeID("host1", "", "1.2.3.4", "80")
+		want.Endpoint.AddNode(originalNode.WithID(origDstID).WithLatests(map[string]string{
 			CopyOf: originalID,
-			"foo":  "bar",
 		}))
 
 		makeNATMapper(ct).applyNAT(have, "host1")
@@ -91,6 +95,7 @@ func TestNat(t *testing.T) {
 	{
 		f := conntrack.Conn{
 			MsgType: conntrack.NfctMsgUpdate,
+			Status:  conntrack.IPS_SRC_NAT,
 			Orig: conntrack.Tuple{
 				Src:     c2,
 				Dst:     host1,
@@ -112,16 +117,19 @@ func TestNat(t *testing.T) {
 		}
 
 		have := report.MakeReport()
-		originalID := report.MakeEndpointNodeID("host2", "", "10.0.47.2", "22222")
-		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
+		fromID := report.MakeEndpointNodeID("host2", "", "10.0.47.2", "22222")
+		toID := report.MakeEndpointNodeID("host1", "", "1.2.3.4", "80")
+		have.Endpoint.AddNode(report.MakeNodeWith(toID, nil))
+		have.Endpoint.AddNode(report.MakeNodeWith(fromID, map[string]string{
 			"foo": "baz",
-		}))
+		}).WithAdjacent(toID))
 
+		// add NAT reply destination as a copy of NAT original source
 		want := have.Copy()
 		want.Endpoint.AddNode(report.MakeNodeWith(report.MakeEndpointNodeID("host2", "", "2.3.4.5", "22223"), map[string]string{
-			CopyOf: originalID,
+			CopyOf: report.MakeEndpointNodeID("host1", "", "10.0.47.2", "22222"),
 			"foo":  "baz",
-		}))
+		}).WithAdjacent(toID))
 
 		makeNATMapper(ct).applyNAT(have, "host1")
 		if !reflect.DeepEqual(want, have) {
