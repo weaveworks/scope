@@ -55,3 +55,24 @@ OSS Scope has no user concept, this is only available in Weave Cloud. To limit t
   -app.basicAuth.username string
         Username for basic authentication (default "admin")
   ```
+
+## ARM Support
+
+- It required patches, @adivyoseph (on [#scope](https://weave-community.slack.com/messages/scope/)) had done some work on this.
+- [#2110](https://github.com/weaveworks/scope/issues/2110) says that scope's CI builds ARM32 (but not ARM64) for test-builds at least.
+- @errordeveloper says: It should be easy to add arm64 in CI, You can try and enable builds in ci on a branch.. In theory, you just need to build for `GOARCH=arm64`.
+
+## Data Storage
+
+OSS Scope reports aren't persistent and the probe keeps the last 15 seconds of metrics in memory.
+
+## API Endpoints
+
+Scope exposes the following endpoints that can be used by external monitoring services.
+
+- `/api` - Scope status and configuration
+- `/api/probes` - basic status of Scope probes
+- `/api/report` - returns a full JSON report
+- `/api/topology` - information on all topologies
+- `/api/topology/[TOPOLOGY]` -  information on all nodes belonging to `TOPOLOGY` topology
+- `/api/topology/[TOPOLOGY]/[NODE_ID]` - information on specific node `NODE_ID` in topology `TOPOLOGY` (currently `NODE_ID` must be an internal Scope node ID obtained from the URL field `selectedNodeId` when selecting that node in the UI - see [#3122](https://github.com/weaveworks/scope/issues/3122) for a proposal of a better solution)
