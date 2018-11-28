@@ -51,7 +51,7 @@ type EbpfTracker struct {
 	debugBPF bool
 
 	openConnections   map[fourTuple]ebpfConnection
-	closedConnections []ebpfConnection
+	closedConnections map[fourTuple]ebpfConnection
 	closedDuringInit  map[fourTuple]struct{}
 }
 
@@ -288,7 +288,13 @@ func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid
 		}
 		if deadConn, ok := t.openConnections[tuple]; ok {
 			delete(t.openConnections, tuple)
-			t.closedConnections = append(t.closedConnections, deadConn)
+			// mask the source port on closed connections so we only report one for each destination
+			if deadConn.incoming {
+				tuple.fromPort = 0
+			} else {
+				tuple.toPort = 0
+			}
+			t.closedConnections[tuple] = deadConn
 		} else {
 			log.Debugf("EbpfTracker: unmatched close event: %s pid=%d netns=%s", tuple, pid, networkNamespace)
 		}
@@ -309,7 +315,7 @@ func (t *EbpfTracker) walkConnections(f func(ebpfConnection)) {
 	for _, connection := range t.closedConnections {
 		f(connection)
 	}
-	t.closedConnections = t.closedConnections[:0]
+	t.closedConnections = map[fourTuple]ebpfConnection{}
 }
 
 func (t *EbpfTracker) feedInitialConnections(conns procspy.ConnIter, seenTuples map[string]fourTuple, processesWaitingInAccept []int, hostNodeID string) {
@@ -375,7 +381,7 @@ func (t *EbpfTracker) restart() error {
 
 	t.openConnections = map[fourTuple]ebpfConnection{}
 	t.closedDuringInit = map[fourTuple]struct{}{}
-	t.closedConnections = []ebpfConnection{}
+	t.closedConnections = map[fourTuple]ebpfConnection{}
 
 	tracer, err := tracer.NewTracer(t)
 	if err != nil {

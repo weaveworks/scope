@@ -19,7 +19,8 @@ func newMockEbpfTracker() *EbpfTracker {
 		ready: true,
 		dead:  false,
 
-		openConnections: map[fourTuple]ebpfConnection{},
+		openConnections:   map[fourTuple]ebpfConnection{},
+		closedConnections: map[fourTuple]ebpfConnection{},
 	}
 }
 
@@ -164,13 +165,13 @@ func TestWalkConnections(t *testing.T) {
 		incoming:         true,
 		pid:              0,
 	}
-	mockEbpfTracker.closedConnections = append(mockEbpfTracker.closedConnections,
+	mockEbpfTracker.closedConnections[inactiveTuple] =
 		ebpfConnection{
 			tuple:            inactiveTuple,
 			networkNamespace: "12345",
 			incoming:         false,
 			pid:              0,
-		})
+		}
 	mockEbpfTracker.walkConnections(func(e ebpfConnection) {
 		cnt++
 	})
