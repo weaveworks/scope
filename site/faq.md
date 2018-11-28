@@ -76,3 +76,8 @@ Scope exposes the following endpoints that can be used by external monitoring se
 - `/api/topology` - information on all topologies
 - `/api/topology/[TOPOLOGY]` -  information on all nodes belonging to `TOPOLOGY` topology
 - `/api/topology/[TOPOLOGY]/[NODE_ID]` - information on specific node `NODE_ID` in topology `TOPOLOGY` (currently `NODE_ID` must be an internal Scope node ID obtained from the URL field `selectedNodeId` when selecting that node in the UI - see [#3122](https://github.com/weaveworks/scope/issues/3122) for a proposal of a better solution)
+
+## Using a different port
+
+You can use `scope launch --app.http.address=127.0.0.1:9000` to run the
+http server on another port (in this case 9000).
