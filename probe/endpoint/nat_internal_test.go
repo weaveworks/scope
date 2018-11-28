@@ -71,18 +71,18 @@ func TestNat(t *testing.T) {
 
 		have := report.MakeReport()
 		originalID := report.MakeEndpointNodeID("host1", "", "10.0.47.1", "80")
-		originalNode := report.MakeNodeWith(originalID, map[string]string{
+		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
 			"foo": "bar",
-		})
-		have.Endpoint.AddNode(originalNode)
-		fromID := report.MakeEndpointNodeID("host2", "", "2.3.4.5", "22223")
+		}))
+		fromID := report.MakeEndpointNodeID("host1", "", "2.3.4.5", "22223")
 		have.Endpoint.AddNode(report.MakeNodeWith(fromID, nil).WithAdjacent(originalID))
 
 		want := have.Copy()
 		// add nat original destination as a copy of nat reply source
-		origDstID := report.MakeEndpointNodeID("host1", "", "1.2.3.4", "80")
-		want.Endpoint.AddNode(originalNode.WithID(origDstID).WithLatests(map[string]string{
+		wantID := report.MakeEndpointNodeID("host1", "", "1.2.3.4", "80")
+		want.Endpoint.AddNode(report.MakeNodeWith(wantID, map[string]string{
 			CopyOf: originalID,
+			"foo":  "bar",
 		}))
 
 		makeNATMapper(ct).applyNAT(have, "host1")
@@ -91,7 +91,7 @@ func TestNat(t *testing.T) {
 		}
 	}
 
-	// form the PoV of host2
+	// from the PoV of host2
 	{
 		f := conntrack.Conn{
 			MsgType: conntrack.NfctMsgUpdate,
@@ -117,21 +117,21 @@ func TestNat(t *testing.T) {
 		}
 
 		have := report.MakeReport()
-		fromID := report.MakeEndpointNodeID("host2", "", "10.0.47.2", "22222")
-		toID := report.MakeEndpointNodeID("host1", "", "1.2.3.4", "80")
+		originalID := report.MakeEndpointNodeID("host2", "", "10.0.47.2", "22222")
+		toID := report.MakeEndpointNodeID("host2", "", "1.2.3.4", "80")
 		have.Endpoint.AddNode(report.MakeNodeWith(toID, nil))
-		have.Endpoint.AddNode(report.MakeNodeWith(fromID, map[string]string{
+		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
 			"foo": "baz",
 		}).WithAdjacent(toID))
 
 		// add NAT reply destination as a copy of NAT original source
 		want := have.Copy()
 		want.Endpoint.AddNode(report.MakeNodeWith(report.MakeEndpointNodeID("host2", "", "2.3.4.5", "22223"), map[string]string{
-			CopyOf: report.MakeEndpointNodeID("host1", "", "10.0.47.2", "22222"),
+			CopyOf: originalID,
 			"foo":  "baz",
 		}).WithAdjacent(toID))
 
-		makeNATMapper(ct).applyNAT(have, "host1")
+		makeNATMapper(ct).applyNAT(have, "host2")
 		if !reflect.DeepEqual(want, have) {
 			t.Fatal(test.Diff(want, have))
 		}
