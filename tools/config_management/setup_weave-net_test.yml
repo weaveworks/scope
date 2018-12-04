@@ -13,6 +13,7 @@
     - include: library/setup_ansible_dependencies.yml
 
   roles:
+    - setup-apt
     - docker-install
     - weave-net-utilities
     - kubernetes-install

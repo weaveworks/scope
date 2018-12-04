@@ -1,14 +1,30 @@
-FROM golang:1.10.2-stretch
+FROM golang:1.10.2
 ENV SCOPE_SKIP_UI_ASSETS true
-RUN apt-get update && \
-	apt-get install -y libpcap-dev python-requests time file shellcheck git gcc-arm-linux-gnueabihf curl build-essential python-pip && \
-	rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN set -eux; \
+   export arch_val="$(dpkg --print-architecture)"; \
+   apt-get update && \
+   if [ "$arch_val" = "amd64" ]; then \
+     apt-get install -y libpcap-dev python-requests time file shellcheck git gcc-arm-linux-gnueabihf curl build-essential python-pip; \
+   else \
+     apt-get install -y libpcap-dev python-requests time file shellcheck git curl build-essential python-pip; \
+   fi; \
+   \
+   rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 RUN go clean -i net && \
 	go install -tags netgo std && \
-	go install -race -tags netgo std
-RUN curl -fsSL -o shfmt https://github.com/mvdan/sh/releases/download/v1.3.0/shfmt_v1.3.0_linux_amd64 && \
-    chmod +x shfmt && \
-    mv shfmt /usr/bin
+   export arch_val="$(dpkg --print-architecture)"; \
+   if [ "$arch_val" != "ppc64el" ]; then \
+	go install -race -tags netgo std; \
+   fi;
+RUN export arch_val="$(dpkg --print-architecture)"; \
+   if [ "$arch_val" = "amd64" ]; then \
+     curl -fsSL -o shfmt https://github.com/mvdan/sh/releases/download/v1.3.0/shfmt_v1.3.0_linux_amd64 && \
+     chmod +x shfmt && \
+     mv shfmt /usr/bin; \
+   fi;
+   # Skipped installing shfmt, as the version v1.3.0 isn't supported for ppc64le
+   # and the later version of shfmt doesn't work with the application well
 RUN go get -tags netgo \
 		github.com/fzipp/gocyclo \
 		github.com/golang/lint/golint \
@@ -18,7 +34,7 @@ RUN go get -tags netgo \
 		github.com/client9/misspell/cmd/misspell && \
 	chmod a+wr --recursive /usr/local/go && \
 	rm -rf /go/pkg/ /go/src/
-RUN pip install yapf==0.16.2 flake8==3.3.0
+RUN pip install yapf==0.16.2 flake8==3.3.0 requests==2.19.1
 COPY build.sh /
 ENTRYPOINT ["/build.sh"]
 

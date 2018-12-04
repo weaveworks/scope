@@ -53,9 +53,9 @@ func (cfg *Config) RegisterFlags(f *flag.FlagSet) {
 	f.IntVar(&cfg.HTTPListenPort, "server.http-listen-port", 80, "HTTP server listen port.")
 	f.IntVar(&cfg.GRPCListenPort, "server.grpc-listen-port", 9095, "gRPC server listen port.")
 	f.BoolVar(&cfg.RegisterInstrumentation, "server.register-instrumentation", true, "Register the intrumentation handlers (/metrics etc).")
-	f.DurationVar(&cfg.ServerGracefulShutdownTimeout, "server.graceful-shutdown-timeout", 5*time.Second, "Timeout for graceful shutdowns")
-	f.DurationVar(&cfg.HTTPServerReadTimeout, "server.http-read-timeout", 5*time.Second, "Read timeout for HTTP server")
-	f.DurationVar(&cfg.HTTPServerWriteTimeout, "server.http-write-timeout", 5*time.Second, "Write timeout for HTTP server")
+	f.DurationVar(&cfg.ServerGracefulShutdownTimeout, "server.graceful-shutdown-timeout", 30*time.Second, "Timeout for graceful shutdowns")
+	f.DurationVar(&cfg.HTTPServerReadTimeout, "server.http-read-timeout", 30*time.Second, "Read timeout for HTTP server")
+	f.DurationVar(&cfg.HTTPServerWriteTimeout, "server.http-write-timeout", 30*time.Second, "Write timeout for HTTP server")
 	f.DurationVar(&cfg.HTTPServerIdleTimeout, "server.http-idle-timeout", 120*time.Second, "Idle timeout for HTTP server")
 	cfg.LogLevel.RegisterFlags(f)
 }
@@ -178,17 +178,48 @@ func RegisterInstrumentation(router *mux.Router) {
 	router.PathPrefix("/debug/pprof").Handler(http.DefaultServeMux)
 }
 
-// Run the server; blocks until SIGTERM is received.
-func (s *Server) Run() {
-	go s.httpServer.Serve(s.httpListener)
+// Run the server; blocks until SIGTERM or an error is received.
+func (s *Server) Run() error {
+	errChan := make(chan error)
+
+	// Wait for a signal
+	go func() {
+		s.handler.Loop()
+		select {
+		case errChan <- nil:
+		default:
+		}
+	}()
+
+	go func() {
+		err := s.httpServer.Serve(s.httpListener)
+		if err == http.ErrServerClosed {
+			err = nil
+		}
+
+		select {
+		case errChan <- err:
+		default:
+		}
+	}()
 
 	// Setup gRPC server
 	// for HTTP over gRPC, ensure we don't double-count the middleware
 	httpgrpc.RegisterHTTPServer(s.GRPC, httpgrpc_server.NewServer(s.HTTP))
-	go s.GRPC.Serve(s.grpcListener)
 
-	// Wait for a signal
-	s.handler.Loop()
+	go func() {
+		err := s.GRPC.Serve(s.grpcListener)
+		if err == grpc.ErrServerStopped {
+			err = nil
+		}
+
+		select {
+		case errChan <- err:
+		default:
+		}
+	}()
+
+	return <-errChan
 }
 
 // Stop unblocks Run().

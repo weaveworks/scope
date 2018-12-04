@@ -8,26 +8,27 @@ import (
 	"strings"
 	"text/template"
 
-	"context"
 	socks5 "github.com/armon/go-socks5"
 	"github.com/weaveworks/common/mflag"
 	"github.com/weaveworks/common/mflagext"
+	"golang.org/x/net/context"
 )
 
 type pacFileParameters struct {
-	HostMatch string
-	Aliases   map[string]string
+	HostMatch        string
+	SocksDestination string
+	Aliases          map[string]string
 }
 
 const (
 	pacfile = `
 function FindProxyForURL(url, host) {
 	if(shExpMatch(host, "{{.HostMatch}}")) {
-		return "SOCKS5 localhost:8000";
+		return "SOCKS5 {{.SocksDestination}}";
 	}
 	{{range $key, $value := .Aliases}}
 	if (host == "{{$key}}") {
-		return "SOCKS5 localhost:8000";
+		return "SOCKS5 {{.SocksDestination}}";
 	}
 	{{end}}
 	return "DIRECT";
@@ -37,11 +38,13 @@ function FindProxyForURL(url, host) {
 
 func main() {
 	var (
-		as        []string
-		hostMatch string
+		as               []string
+		hostMatch        string
+		socksDestination string
 	)
 	mflagext.ListVar(&as, []string{"a", "-alias"}, []string{}, "Specify hostname aliases in the form alias:hostname.  Can be repeated.")
 	mflag.StringVar(&hostMatch, []string{"h", "-host-match"}, "*.weave.local", "Specify main host shExpMatch expression in pacfile")
+	mflag.StringVar(&socksDestination, []string{"d", "-socks-destination"}, "localhost:8000", "Specify destination host:port in pacfile")
 	mflag.Parse()
 
 	var aliases = map[string]string{}
@@ -60,7 +63,7 @@ func main() {
 	t := template.Must(template.New("pacfile").Parse(pacfile))
 	http.HandleFunc("/proxy.pac", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/x-ns-proxy-autoconfig")
-		t.Execute(w, pacFileParameters{hostMatch, aliases})
+		t.Execute(w, pacFileParameters{hostMatch, socksDestination, aliases})
 	})
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {

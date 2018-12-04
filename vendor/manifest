@@ -1170,16 +1170,8 @@
 			"importpath": "github.com/json-iterator/go",
 			"repository": "https://github.com/json-iterator/go",
 			"vcs": "git",
-			"revision": "358cfc39298cc7d6c9101444e19df5f6dc01f540",
+			"revision": "1624edc4454b8682399def8740d46db5e4362ba4",
 			"branch": "master",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/juju/ratelimit",
-			"repository": "https://github.com/juju/ratelimit",
-			"vcs": "git",
-			"revision": "59fac5042749a5afb9af70e813da1dd5474f0167",
-			"branch": "HEAD",
 			"notests": true
 		},
 		{
@@ -1341,6 +1333,22 @@
 			"repository": "https://github.com/mjibson/appstats",
 			"vcs": "git",
 			"revision": "0542d5f0e87ea3a8fa4174322b9532f5d04f9fa8",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/modern-go/concurrent",
+			"repository": "https://github.com/modern-go/concurrent",
+			"vcs": "git",
+			"revision": "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/modern-go/reflect2",
+			"repository": "https://github.com/modern-go/reflect2",
+			"vcs": "git",
+			"revision": "94122c33edd36123c84d5368cfb2b69df93a0ec8",
 			"branch": "master",
 			"notests": true
 		},
@@ -1655,7 +1663,7 @@
 			"importpath": "github.com/opentracing/opentracing-go",
 			"repository": "https://github.com/opentracing/opentracing-go",
 			"vcs": "git",
-			"revision": "902ca977fd85455c364050f985eba376b44315f0",
+			"revision": "bd9c3193394760d98b2fa6ebb2291f0cd1d06a7d",
 			"branch": "master",
 			"notests": true
 		},
@@ -1725,8 +1733,8 @@
 		{
 			"importpath": "github.com/prometheus/client_golang/prometheus",
 			"repository": "https://github.com/prometheus/client_golang",
-			"vcs": "",
-			"revision": "e51041b3fa41cece0dca035740ba6411905be473",
+			"vcs": "git",
+			"revision": "5b23715facdef1452016bae512489c3cdf82458c",
 			"branch": "master",
 			"path": "/prometheus"
 		},
@@ -1749,8 +1757,8 @@
 		{
 			"importpath": "github.com/prometheus/common/model",
 			"repository": "https://github.com/prometheus/common",
-			"vcs": "",
-			"revision": "369ec0491ce7be15431bd4f23b7fa17308f94190",
+			"vcs": "git",
+			"revision": "c7de2306084e37d54b8be01f3541a8464345e9a5",
 			"branch": "master",
 			"path": "/model"
 		},
@@ -1949,7 +1957,7 @@
 			"importpath": "github.com/weaveworks/common",
 			"repository": "https://github.com/weaveworks/common",
 			"vcs": "git",
-			"revision": "4d96fd8dcf2c7b417912c6219b310112cb4a4626",
+			"revision": "54b7e30527f846e1515fb5a85d0ff5674f05a267",
 			"branch": "HEAD",
 			"notests": true
 		},
@@ -2613,6 +2621,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "golang.org/x/time",
+			"repository": "https://go.googlesource.com/time",
+			"vcs": "git",
+			"revision": "fbb02b2291d28baffd63558aa44b4b56f178d650",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "golang.org/x/tools/cover",
 			"repository": "https://go.googlesource.com/tools",
 			"vcs": "git",
@@ -2764,15 +2780,15 @@
 		{
 			"importpath": "gopkg.in/yaml.v2",
 			"repository": "https://gopkg.in/yaml.v2",
-			"vcs": "",
-			"revision": "53feefa2559fb8dfa8d81baad31be332c97d6c77",
+			"vcs": "git",
+			"revision": "5420a8b6744d3b0345ab293f6fcba19c978f1183",
 			"branch": "v2"
 		},
 		{
 			"importpath": "k8s.io/api",
 			"repository": "https://github.com/kubernetes/api",
 			"vcs": "git",
-			"revision": "006a217681ae70cbacdd66a5e2fca1a61a8ff28e",
+			"revision": "072894a440bdee3a891dea811fe42902311cd2a3",
 			"branch": "HEAD",
 			"notests": true
 		},
@@ -2780,7 +2796,7 @@
 			"importpath": "k8s.io/apimachinery",
 			"repository": "https://github.com/kubernetes/apimachinery",
 			"vcs": "git",
-			"revision": "68f9c3a1feb3140df59c67ced62d3a5df8e6c9c2",
+			"revision": "103fd098999dc9c0c88536f5c9ad2e5da39373ae",
 			"branch": "HEAD",
 			"notests": true
 		},
@@ -2788,7 +2804,7 @@
 			"importpath": "k8s.io/client-go",
 			"repository": "https://github.com/kubernetes/client-go",
 			"vcs": "git",
-			"revision": "9389c055a838d4f208b699b3c7c51b70f2368861",
+			"revision": "7d04d0e2a0a1a4d4a1cd6baa432a2301492e4e65",
 			"branch": "HEAD",
 			"notests": true
 		},

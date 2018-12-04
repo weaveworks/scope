@@ -43,7 +43,7 @@ const (
 	Cloud          = "cloud"
 	Cylinder       = "cylinder"
 	DottedCylinder = "dottedcylinder"
-	StorageSheet   = "storagesheet"
+	StorageSheet   = "sheet"
 
 	// Used when counting the number of containers
 	ContainersKey = "containers"

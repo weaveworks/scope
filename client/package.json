@@ -26,7 +26,7 @@
     "immutable": "3.8.2",
     "json-stable-stringify": "1.0.1",
     "lcp": "1.1.0",
-    "lodash": "4.17.4",
+    "lodash": "4.17.10",
     "materialize-css": "0.98.1",
     "moment": "2.21.0",
     "page": "1.7.1",
@@ -44,7 +44,7 @@
     "reselect": "3.0.1",
     "reselect-map": "1.0.3",
     "styled-components": "2.2.4",
-    "weaveworks-ui-components": "0.11.8",
+    "weaveworks-ui-components": "0.11.14",
     "whatwg-fetch": "2.0.3",
     "xterm": "3.3.0"
   },

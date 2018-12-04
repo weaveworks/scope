@@ -1,4 +1,4 @@
-FROM golang:1.8.0-stretch
+FROM golang:1.10.0-stretch
 RUN apt-get update && \
     apt-get install -y \
       curl \
@@ -11,9 +11,10 @@ RUN apt-get update && \
       python-pip \
       python-requests \
       python-yaml \
+      shellcheck \
       unzip && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-RUN pip install attrs pyhcl
+RUN pip install attrs pyhcl yapf==0.16.2 flake8==3.3.0
 RUN curl -fsSLo shfmt https://github.com/mvdan/sh/releases/download/v1.3.0/shfmt_v1.3.0_linux_amd64 && \
 	echo "b1925c2c405458811f0c227266402cf1868b4de529f114722c2e3a5af4ac7bb2  shfmt" | sha256sum -c && \
 	chmod +x shfmt && \
@@ -47,3 +48,10 @@ RUN mkdir -p /var/run/secrets/kubernetes.io/serviceaccount && \
 		touch /var/run/secrets/kubernetes.io/serviceaccount/token
 COPY build.sh /
 ENTRYPOINT ["/build.sh"]
+
+ARG revision
+LABEL maintainer="Weaveworks <help@weave.works>" \
+      org.opencontainers.image.title="golang" \
+      org.opencontainers.image.source="https://github.com/weaveworks/build-tools/tree/master/build/golang" \
+      org.opencontainers.image.revision="${revision}" \
+      org.opencontainers.image.vendor="Weaveworks"

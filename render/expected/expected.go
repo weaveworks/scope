@@ -19,7 +19,7 @@ var (
 	cloud          = "cloud"
 	cylinder       = "cylinder"
 	dottedcylinder = "dottedcylinder"
-	storagesheet   = "storagesheet"
+	storagesheet   = "sheet"
 
 	// Helper to make a report.node with some common options
 	node = func(topology string) func(id string, adjacent ...string) report.Node {
