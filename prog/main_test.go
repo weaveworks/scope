@@ -4,7 +4,7 @@ import (
 	"flag"
 	"testing"
 
-	"github.com/Sirupsen/logrus/hooks/test"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
 )
 

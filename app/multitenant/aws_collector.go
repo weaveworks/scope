@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"context"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -16,7 +16,7 @@ import (
 	"github.com/bluele/gcache"
 	"github.com/nats-io/nats"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/context"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/common/instrument"
 	"github.com/weaveworks/scope/app"
@@ -154,7 +154,7 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 		s3:        config.S3Store,
 		userIDer:  config.UserIDer,
 		tableName: config.DynamoTable,
-		merger:    app.NewSmartMerger(),
+		merger:    app.NewFastMerger(),
 		inProcess: newInProcessStore(reportCacheSize, config.Window),
 		memcache:  config.MemcacheClient,
 		window:    config.Window,

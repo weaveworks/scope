@@ -6,6 +6,7 @@ import {
   resetLocalViewState,
   clickDownloadGraph
 } from '../actions/app-actions';
+import { getApiPath } from '../utils/web-api-utils';
 
 class DebugMenu extends React.Component {
   constructor(props, context) {
@@ -21,7 +22,7 @@ class DebugMenu extends React.Component {
 
   render() {
     const reportDownloadUrl = process.env.WEAVE_CLOUD
-      ? `${window.location.origin}/api${window.location.pathname}/api/report`
+      ? `${getApiPath()}/api/report`
       : 'api/report';
     return (
       <div className="troubleshooting-menu-wrapper">

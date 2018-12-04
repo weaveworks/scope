@@ -1,15 +1,18 @@
 /* eslint react/jsx-no-bind: "off", no-multi-comp: "off" */
 import React from 'react';
+import styled from 'styled-components';
 import { connect } from 'react-redux';
 import { List as makeList, Map as makeMap } from 'immutable';
+import capitalize from 'lodash/capitalize';
 
 import NodeDetailsTable from '../components/node-details/node-details-table';
 import { clickNode, sortOrderChanged } from '../actions/app-actions';
 import { shownNodesSelector } from '../selectors/node-filters';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
+import { findTopologyById } from '../utils/topology-utils';
 import { TABLE_VIEW_MODE } from '../constants/naming';
 
-import { canvasMarginsSelector, canvasHeightSelector } from '../selectors/canvas';
+import { windowHeightSelector } from '../selectors/canvas';
 import { searchNodeMatchesSelector } from '../selectors/search';
 import { getNodeColor } from '../utils/color-utils';
 
@@ -18,7 +21,24 @@ const IGNORED_COLUMNS = ['docker_container_ports', 'docker_container_id', 'docke
   'docker_container_command', 'docker_container_networks'];
 
 
-function getColumns(nodes) {
+const Icon = styled.span`
+  border-radius: ${props => props.theme.borderRadius.soft};
+  background-color: ${props => props.color};
+  margin-top: 3px;
+  display: block;
+  height: 12px;
+  width: 12px;
+`;
+
+function topologyLabel(topologies, id) {
+  const topology = findTopologyById(topologies, id);
+  if (!topology) {
+    return capitalize(id);
+  }
+  return topology.get('fullName');
+}
+
+function getColumns(nodes, topologies) {
   const metricColumns = nodes
     .toList()
     .flatMap((n) => {
@@ -43,11 +63,12 @@ function getColumns(nodes) {
     .toList()
     .sortBy(m => m.get('label'));
 
+
   const relativesColumns = nodes
     .toList()
     .flatMap((n) => {
       const metadata = (n.get('parents') || makeList())
-        .map(m => makeMap({ id: m.get('topologyId'), label: m.get('topologyId') }));
+        .map(m => makeMap({ id: m.get('topologyId'), label: topologyLabel(topologies, m.get('topologyId')) }));
       return metadata;
     })
     .toSet()
@@ -63,29 +84,25 @@ function renderIdCell({
 }) {
   const showSubLabel = Boolean(pseudo) && labelMinor;
   const title = showSubLabel ? `${label} (${labelMinor})` : label;
-  const iconStyle = {
-    width: 16,
-    flex: 'none',
-    color: getNodeColor(rank, label)
-  };
 
   return (
     <div title={title} className="nodes-grid-id-column">
-      <div style={iconStyle}><i className="fa fa-square" /></div>
+      <div style={{ width: 16, flex: 'none' }}>
+        <Icon color={getNodeColor(rank, label)} />
+      </div>
       <div className="truncate">
         {label} {showSubLabel && <span className="nodes-grid-label-minor">{labelMinor}</span>}
       </div>
     </div>
   );
 }
-
-
 class NodesGrid extends React.Component {
   constructor(props, context) {
     super(props, context);
 
     this.onClickRow = this.onClickRow.bind(this);
     this.onSortChange = this.onSortChange.bind(this);
+    this.saveTableRef = this.saveTableRef.bind(this);
   }
 
   onClickRow(ev, node) {
@@ -101,20 +118,24 @@ class NodesGrid extends React.Component {
     this.props.sortOrderChanged(sortedBy, sortedDesc);
   }
 
+  saveTableRef(ref) {
+    this.tableRef = ref;
+  }
+
   render() {
     const {
-      nodes, height, gridSortedBy, gridSortedDesc, canvasMargins,
-      searchNodeMatches, searchQuery
+      nodes, gridSortedBy, gridSortedDesc, searchNodeMatches, searchQuery, windowHeight, topologies
     } = this.props;
+    const height =
+      this.tableRef ? windowHeight - this.tableRef.getBoundingClientRect().top - 30 : 0;
     const cmpStyle = {
       height,
-      marginTop: canvasMargins.top,
-      paddingLeft: canvasMargins.left,
-      paddingRight: canvasMargins.right,
+      paddingLeft: 40,
+      paddingRight: 40,
     };
     // TODO: What are 24 and 18? Use a comment or extract into constants.
     const tbodyHeight = height - 24 - 18;
-    const className = 'scroll-body';
+    const className = 'tour-step-anchor scroll-body';
     const tbodyStyle = {
       height: `${tbodyHeight}px`,
     };
@@ -126,11 +147,11 @@ class NodesGrid extends React.Component {
         .toList()
         .filter(n => !(searchQuery && searchNodeMatches.get(n.get('id'), makeMap()).isEmpty()))
         .toJS(),
-      columns: getColumns(nodes)
+      columns: getColumns(nodes, topologies)
     };
 
     return (
-      <div className="nodes-grid">
+      <div className="nodes-grid" ref={this.saveTableRef}>
         {nodes.size > 0 && <NodeDetailsTable
           style={cmpStyle}
           className={className}
@@ -154,8 +175,6 @@ class NodesGrid extends React.Component {
 function mapStateToProps(state) {
   return {
     nodes: shownNodesSelector(state),
-    canvasMargins: canvasMarginsSelector(state),
-    height: canvasHeightSelector(state),
     gridSortedBy: state.get('gridSortedBy'),
     gridSortedDesc: state.get('gridSortedDesc'),
     currentTopology: state.get('currentTopology'),
@@ -163,6 +182,8 @@ function mapStateToProps(state) {
     searchNodeMatches: searchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId'),
+    windowHeight: windowHeightSelector(state),
+    topologies: state.get('topologies'),
   };
 }
 

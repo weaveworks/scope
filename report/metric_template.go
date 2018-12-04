@@ -76,6 +76,9 @@ func (e MetricTemplates) Merge(other MetricTemplates) MetricTemplates {
 	if len(other) > len(e) {
 		e, other = other, e
 	}
+	if len(other) == 0 {
+		return e
+	}
 	result := e.Copy()
 	for k, v := range other {
 		if existing, ok := result[k]; !ok || existing.Priority < v.Priority {

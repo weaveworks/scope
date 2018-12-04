@@ -18,7 +18,8 @@ function decrypt() {
         echo >&2 "Failed to decode and decrypt $2: no secret key was provided."
         return 1
     fi
-    echo "$3" | openssl base64 -d | openssl enc -d -aes256 -pass "pass:$1"
+    # Set md5 because existing keys were encrypted that way and openssl default changed
+    echo "$3" | openssl base64 -d | openssl enc -md md5 -d -aes256 -pass "pass:$1"
 }
 
 function ssh_private_key() {

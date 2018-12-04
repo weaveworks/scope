@@ -1,8 +1,9 @@
 import debug from 'debug';
 import React from 'react';
+import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 
 import { ThemeProvider } from 'styled-components';
 import theme from 'weaveworks-ui-components/lib/theme';
@@ -11,7 +12,6 @@ import Logo from './logo';
 import Footer from './footer';
 import Sidebar from './sidebar';
 import HelpPanel from './help-panel';
-import CloudFeature from './cloud-feature';
 import TroubleshootingMenu from './troubleshooting-menu';
 import Search from './search';
 import Status from './status';
@@ -23,13 +23,14 @@ import {
   focusSearch,
   pinNextMetric,
   pinPreviousMetric,
-  hitBackspace,
   hitEsc,
   unpinMetric,
   toggleHelp,
   setGraphView,
+  setMonitorState,
   setTableView,
   setResourceView,
+  setStoreViewState,
   shutdown,
   setViewportDimensions,
   getTopologiesWithInitialPoll,
@@ -44,6 +45,7 @@ import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-t
 import { getRouter, getUrlState } from '../utils/router-utils';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { availableNetworksSelector } from '../selectors/node-networks';
+import { timeTravelSupportedSelector } from '../selectors/time-travel';
 import {
   isResourceViewModeSelector,
   isTableViewModeSelector,
@@ -51,19 +53,21 @@ import {
 } from '../selectors/topology';
 import { VIEWPORT_RESIZE_DEBOUNCE_INTERVAL } from '../constants/timer';
 import {
-  BACKSPACE_KEY_CODE,
   ESC_KEY_CODE,
 } from '../constants/key-codes';
 
 const keyPressLog = debug('scope:app-key-press');
 
-
 class App extends React.Component {
   constructor(props, context) {
     super(props, context);
 
+    this.props.dispatch(setMonitorState(this.props.monitor));
+    this.props.dispatch(setStoreViewState(!this.props.disableStoreViewState));
+
     this.setViewportDimensions = this.setViewportDimensions.bind(this);
     this.handleResize = debounce(this.setViewportDimensions, VIEWPORT_RESIZE_DEBOUNCE_INTERVAL);
+    this.handleRouteChange = debounce(props.onRouteChange, 50);
 
     this.saveAppRef = this.saveAppRef.bind(this);
     this.onKeyPress = this.onKeyPress.bind(this);
@@ -76,7 +80,7 @@ class App extends React.Component {
     window.addEventListener('keypress', this.onKeyPress);
     window.addEventListener('keyup', this.onKeyUp);
 
-    this.router = getRouter(this.props.dispatch, this.props.urlState);
+    this.router = this.props.dispatch(getRouter(this.props.urlState));
     this.router.start({ hashbang: true });
 
     if (!this.props.routeSet || process.env.WEAVE_CLOUD) {
@@ -95,6 +99,19 @@ class App extends React.Component {
     this.router.stop();
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (nextProps.monitor !== this.props.monitor) {
+      this.props.dispatch(setMonitorState(nextProps.monitor));
+    }
+    if (nextProps.disableStoreViewState !== this.props.disableStoreViewState) {
+      this.props.dispatch(setStoreViewState(!nextProps.disableStoreViewState));
+    }
+    // Debounce-notify about the route change if the URL state changes its content.
+    if (!isEqual(nextProps.urlState, this.props.urlState)) {
+      this.handleRouteChange(nextProps.urlState);
+    }
+  }
+
   onKeyUp(ev) {
     const { showingTerminal } = this.props;
     keyPressLog('onKeyUp', 'keyCode', ev.keyCode, ev);
@@ -102,8 +119,6 @@ class App extends React.Component {
     // don't get esc in onKeyPress
     if (ev.keyCode === ESC_KEY_CODE) {
       this.props.dispatch(hitEsc());
-    } else if (ev.keyCode === BACKSPACE_KEY_CODE) {
-      this.props.dispatch(hitBackspace());
     } else if (ev.code === 'KeyD' && ev.ctrlKey && !showingTerminal) {
       toggleDebugToolbar();
       this.forceUpdate();
@@ -177,10 +192,10 @@ class App extends React.Component {
     const {
       isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails,
       showingHelp, showingNetworkSelector, showingTroubleshootingMenu,
-      timeTravelTransitioning, showingTimeTravel
+      timeTravelTransitioning, timeTravelSupported
     } = this.props;
 
-    const className = classNames('scope-app', { 'time-travel-open': showingTimeTravel });
+    const className = classNames('scope-app', { 'time-travel-open': timeTravelSupported });
     const isIframe = window !== window.top;
 
     return (
@@ -192,12 +207,12 @@ class App extends React.Component {
 
           {showingTroubleshootingMenu && <TroubleshootingMenu />}
 
-          {showingDetails && <Details />}
+          {showingDetails && <Details
+            renderNodeDetailsExtras={this.props.renderNodeDetailsExtras}
+          />}
 
           <div className="header">
-            <CloudFeature alwaysShow>
-              <TimeTravelWrapper />
-            </CloudFeature>
+            {timeTravelSupported && this.props.renderTimeTravel()}
 
             <div className="selectors">
               <div className="logo">
@@ -231,7 +246,6 @@ class App extends React.Component {
   }
 }
 
-
 function mapStateToProps(state) {
   return {
     currentTopology: state.get('currentTopology'),
@@ -244,14 +258,30 @@ function mapStateToProps(state) {
     searchQuery: state.get('searchQuery'),
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
-    showingTimeTravel: state.get('showingTimeTravel'),
     showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
     topologyViewMode: state.get('topologyViewMode'),
+    timeTravelSupported: timeTravelSupportedSelector(state),
     timeTravelTransitioning: state.get('timeTravelTransitioning'),
     urlState: getUrlState(state)
   };
 }
+
+App.propTypes = {
+  renderTimeTravel: PropTypes.func,
+  renderNodeDetailsExtras: PropTypes.func,
+  onRouteChange: PropTypes.func,
+  monitor: PropTypes.bool,
+  disableStoreViewState: PropTypes.bool,
+};
+
+App.defaultProps = {
+  renderTimeTravel: () => <TimeTravelWrapper />,
+  renderNodeDetailsExtras: () => null,
+  onRouteChange: () => null,
+  monitor: false,
+  disableStoreViewState: false,
+};
 
 export default connect(mapStateToProps)(App);

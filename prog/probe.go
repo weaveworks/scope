@@ -10,12 +10,15 @@ import (
 	"strconv"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/weaveworks/common/logging"
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/common/sanitize"
+	"github.com/weaveworks/common/signals"
+	"github.com/weaveworks/common/tracing"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/weave"
@@ -24,6 +27,7 @@ import (
 	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/controls"
+	"github.com/weaveworks/scope/probe/cri"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
@@ -32,7 +36,6 @@ import (
 	"github.com/weaveworks/scope/probe/plugins"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/weave/common"
 )
 
 const (
@@ -91,6 +94,9 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 
+	traceCloser := tracing.NewFromEnv("scope-probe")
+	defer traceCloser.Close()
+
 	// Setup in memory metrics sink
 	inm := metrics.NewInmemSink(time.Minute, 2*time.Minute)
 	sig := metrics.DefaultInmemSignal(inm)
@@ -100,7 +106,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	defer log.Info("probe exiting")
 
 	if flags.spyProcs && os.Getegid() != 0 {
-		log.Warn("--probe.process=true, but that requires root to find everything")
+		log.Warn("--probe.proc.spy=true, but that requires root to find everything")
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -130,23 +136,63 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			xfer.ControlHandlerFunc(handlerRegistry.HandleControlRequest),
 		)
 	}
-	clients := appclient.NewMultiAppClient(clientFactory, flags.noControls)
-	defer clients.Stop()
 
-	dnsLookupFn := net.LookupIP
-	if flags.resolver != "" {
-		dnsLookupFn = appclient.LookupUsing(flags.resolver)
+	var clients interface {
+		probe.ReportPublisher
+		controls.PipeClient
 	}
-	resolver, err := appclient.NewResolver(appclient.ResolverConfig{
-		Targets: targets,
-		Lookup:  dnsLookupFn,
-		Set:     clients.Set,
-	})
-	if err != nil {
-		log.Fatalf("Failed to create resolver: %v", err)
-		return
+	if flags.printOnStdout {
+		if len(targets) > 0 {
+			log.Warnf("Dumping to stdout only: targets %v will be ignored", targets)
+		}
+		clients = new(struct {
+			report.StdoutPublisher
+			controls.DummyPipeClient
+		})
+	} else {
+		multiClients := appclient.NewMultiAppClient(clientFactory, flags.noControls)
+		defer multiClients.Stop()
+
+		dnsLookupFn := net.LookupIP
+		if flags.resolver != "" {
+			dnsLookupFn = appclient.LookupUsing(flags.resolver)
+		}
+		resolver, err := appclient.NewResolver(appclient.ResolverConfig{
+			Targets: targets,
+			Lookup:  dnsLookupFn,
+			Set:     multiClients.Set,
+		})
+		if err != nil {
+			log.Fatalf("Failed to create resolver: %v", err)
+			return
+		}
+		defer resolver.Stop()
+
+		if flags.weaveEnabled && flags.weaveHostname != "" {
+			dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
+			if err != nil {
+				log.Errorf("Error getting docker bridge ip: %v", err)
+			} else {
+				weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
+				weaveTargets, err := appclient.ParseTargets([]string{flags.weaveHostname})
+				if err != nil {
+					log.Errorf("Failed to parse weave targets: %v", err)
+				} else {
+					weaveResolver, err := appclient.NewResolver(appclient.ResolverConfig{
+						Targets: weaveTargets,
+						Lookup:  weaveDNSLookup,
+						Set:     multiClients.Set,
+					})
+					if err != nil {
+						log.Errorf("Failed to create weave resolver: %v", err)
+					} else {
+						defer weaveResolver.Stop()
+					}
+				}
+			}
+		}
+		clients = multiClients
 	}
-	defer resolver.Stop()
 
 	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
 
@@ -212,6 +258,15 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		}
 	}
 
+	if flags.criEnabled {
+		client, err := cri.NewCRIClient(flags.criEndpoint)
+		if err != nil {
+			log.Errorf("CRI: failed to start registry: %v", err)
+		} else {
+			p.AddReporter(cri.NewReporter(client))
+		}
+	}
+
 	if flags.kubernetesEnabled {
 		if client, err := kubernetes.NewClient(flags.kubernetesClientConfig); err == nil {
 			defer client.Stop()
@@ -241,30 +296,6 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			defer weave.Stop()
 			p.AddTagger(weave)
 			p.AddReporter(weave)
-
-			if flags.weaveHostname != "" {
-				dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
-				if err != nil {
-					log.Errorf("Error getting docker bridge ip: %v", err)
-				} else {
-					weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
-					weaveTargets, err := appclient.ParseTargets([]string{flags.weaveHostname})
-					if err != nil {
-						log.Errorf("Failed to parse weave targets: %v", err)
-					} else {
-						weaveResolver, err := appclient.NewResolver(appclient.ResolverConfig{
-							Targets: weaveTargets,
-							Lookup:  weaveDNSLookup,
-							Set:     clients.Set,
-						})
-						if err != nil {
-							log.Errorf("Failed to create weave resolver: %v", err)
-						} else {
-							defer weaveResolver.Stop()
-						}
-					}
-				}
-			}
 		}
 	}
 
@@ -288,7 +319,8 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	maybeExportProfileData(flags)
 
 	p.Start()
-	defer p.Stop()
-
-	common.SignalHandlerLoop()
+	signals.SignalHandlerLoop(
+		logging.Logrus(log.StandardLogger()),
+		p,
+	)
 }

@@ -73,7 +73,7 @@ func newConnectionCounters() *connectionCounters {
 	return &connectionCounters{counted: map[string]struct{}{}, counts: map[connection]int{}}
 }
 
-func (c *connectionCounters) add(outgoing bool, localNode, remoteNode, localEndpoint, remoteEndpoint report.Node) {
+func (c *connectionCounters) add(dns report.DNSRecords, outgoing bool, localNode, remoteNode, localEndpoint, remoteEndpoint report.Node) {
 	// We identify connections by their source endpoint, pre-NAT, to
 	// ensure we only count them once.
 	srcEndpoint, dstEndpoint := remoteEndpoint, localEndpoint
@@ -94,10 +94,10 @@ func (c *connectionCounters) add(outgoing bool, localNode, remoteNode, localEndp
 		return
 	}
 	// For internet nodes we break out individual addresses
-	if conn.remoteAddr, ok = internetAddr(remoteNode, remoteEndpoint); !ok {
+	if conn.remoteAddr, ok = internetAddr(dns, remoteNode, remoteEndpoint); !ok {
 		return
 	}
-	if conn.localAddr, ok = internetAddr(localNode, localEndpoint); !ok {
+	if conn.localAddr, ok = internetAddr(dns, localNode, localEndpoint); !ok {
 		return
 	}
 
@@ -105,7 +105,7 @@ func (c *connectionCounters) add(outgoing bool, localNode, remoteNode, localEndp
 	c.counts[conn]++
 }
 
-func internetAddr(node report.Node, ep report.Node) (string, bool) {
+func internetAddr(dns report.DNSRecords, node report.Node, ep report.Node) (string, bool) {
 	if !render.IsInternetNode(node) {
 		return "", true
 	}
@@ -113,7 +113,7 @@ func internetAddr(node report.Node, ep report.Node) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	if name, found := render.DNSFirstMatch(ep, func(string) bool { return true }); found {
+	if name, found := dns.FirstMatch(ep.ID, func(string) bool { return true }); found {
 		// we show the "most important" name only, since we don't have
 		// space for more
 		addr = fmt.Sprintf("%s (%s)", name, addr)
@@ -171,7 +171,7 @@ func incomingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		for _, remoteEndpoint := range endpointChildrenOf(node) {
 			for _, localEndpointID := range remoteEndpoint.Adjacency.Intersection(localEndpointIDs) {
 				localEndpointID = canonicalEndpointID(localEndpointIDCopies, localEndpointID)
-				counts.add(false, n, node, r.Endpoint.Nodes[localEndpointID], remoteEndpoint)
+				counts.add(r.DNS, false, n, node, r.Endpoint.Nodes[localEndpointID], remoteEndpoint)
 			}
 		}
 	}
@@ -203,7 +203,7 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		for _, localEndpoint := range localEndpoints {
 			for _, remoteEndpointID := range localEndpoint.Adjacency.Intersection(remoteEndpointIDs) {
 				remoteEndpointID = canonicalEndpointID(remoteEndpointIDCopies, remoteEndpointID)
-				counts.add(true, n, node, localEndpoint, r.Endpoint.Nodes[remoteEndpointID])
+				counts.add(r.DNS, true, n, node, localEndpoint, r.Endpoint.Nodes[remoteEndpointID])
 			}
 		}
 	}

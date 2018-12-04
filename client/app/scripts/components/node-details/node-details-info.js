@@ -47,10 +47,19 @@ class NodeDetailsInfo extends React.Component {
                 {field.label}
               </div>
               <div className="node-details-info-field-value truncate" title={title}>
-                <MatchedText
-                  text={value}
-                  truncate={field.truncate}
-                  match={matches.get(field.id)} />
+                {field.dataType === 'link' ?
+                  <a
+                    rel="noopener noreferrer"
+                    target="_blank"
+                    className="truncate node-details-table-node-link"
+                    href={value}>
+                    {value}
+                  </a> :
+                  <MatchedText
+                    text={value}
+                    truncate={field.truncate}
+                    match={matches.get(field.id)} />
+                }
               </div>
             </div>
           );

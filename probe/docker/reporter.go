@@ -16,6 +16,7 @@ import (
 const (
 	ImageID          = report.DockerImageID
 	ImageName        = report.DockerImageName
+	ImageTag         = report.DockerImageTag
 	ImageSize        = report.DockerImageSize
 	ImageVirtualSize = report.DockerImageVirtualSize
 	IsInHostNetwork  = report.DockerIsInHostNetwork
@@ -23,22 +24,23 @@ const (
 	ImageTableID     = "image_table"
 	ServiceName      = report.DockerServiceName
 	StackNamespace   = report.DockerStackNamespace
-	DefaultNamespace = "No Stack"
+	DefaultNamespace = "No stack"
 )
 
 // Exposed for testing
 var (
 	ContainerMetadataTemplates = report.MetadataTemplates{
-		ImageName:             {ID: ImageName, Label: "Image", From: report.FromLatest, Priority: 1},
-		ContainerCommand:      {ID: ContainerCommand, Label: "Command", From: report.FromLatest, Priority: 2},
-		ContainerStateHuman:   {ID: ContainerStateHuman, Label: "State", From: report.FromLatest, Priority: 3},
-		ContainerUptime:       {ID: ContainerUptime, Label: "Uptime", From: report.FromLatest, Priority: 4, Datatype: report.Duration},
-		ContainerRestartCount: {ID: ContainerRestartCount, Label: "Restart #", From: report.FromLatest, Priority: 5},
-		ContainerNetworks:     {ID: ContainerNetworks, Label: "Networks", From: report.FromSets, Priority: 6},
-		ContainerIPs:          {ID: ContainerIPs, Label: "IPs", From: report.FromSets, Priority: 7},
-		ContainerPorts:        {ID: ContainerPorts, Label: "Ports", From: report.FromSets, Priority: 8},
-		ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 9},
-		ContainerID:           {ID: ContainerID, Label: "ID", From: report.FromLatest, Truncate: 12, Priority: 10},
+		ImageTag:              {ID: ImageTag, Label: "Image tag", From: report.FromLatest, Priority: 1},
+		ImageName:             {ID: ImageName, Label: "Image name", From: report.FromLatest, Priority: 2},
+		ContainerCommand:      {ID: ContainerCommand, Label: "Command", From: report.FromLatest, Priority: 3},
+		ContainerStateHuman:   {ID: ContainerStateHuman, Label: "State", From: report.FromLatest, Priority: 4},
+		ContainerUptime:       {ID: ContainerUptime, Label: "Uptime", From: report.FromLatest, Priority: 5, Datatype: report.Duration},
+		ContainerRestartCount: {ID: ContainerRestartCount, Label: "Restart #", From: report.FromLatest, Priority: 6},
+		ContainerNetworks:     {ID: ContainerNetworks, Label: "Networks", From: report.FromSets, Priority: 7},
+		ContainerIPs:          {ID: ContainerIPs, Label: "IPs", From: report.FromSets, Priority: 8},
+		ContainerPorts:        {ID: ContainerPorts, Label: "Ports", From: report.FromSets, Priority: 9},
+		ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 10},
+		ContainerID:           {ID: ContainerID, Label: "ID", From: report.FromLatest, Truncate: 12, Priority: 11},
 	}
 
 	ContainerMetricTemplates = report.MetricTemplates{
@@ -56,21 +58,23 @@ var (
 			Label: "Image",
 			Type:  report.PropertyListType,
 			FixedRows: map[string]string{
-				ImageID:          "ID",
-				ImageName:        "Name",
+				// Prepend spaces as a hack to keep at the top when sorted.
+				ImageID:          " ID",
+				ImageName:        " Name",
+				ImageTag:         " Tag",
 				ImageSize:        "Size",
-				ImageVirtualSize: "Virtual Size",
+				ImageVirtualSize: "Virtual size",
 			},
 		},
 		LabelPrefix: {
 			ID:     LabelPrefix,
-			Label:  "Docker Labels",
+			Label:  "Docker labels",
 			Type:   report.PropertyListType,
 			Prefix: LabelPrefix,
 		},
 		EnvPrefix: {
 			ID:     EnvPrefix,
-			Label:  "Environment Variables",
+			Label:  "Environment variables",
 			Type:   report.PropertyListType,
 			Prefix: EnvPrefix,
 		},
@@ -79,7 +83,7 @@ var (
 	ContainerImageTableTemplates = report.TableTemplates{
 		ImageLabelPrefix: {
 			ID:     ImageLabelPrefix,
-			Label:  "Docker Labels",
+			Label:  "Docker labels",
 			Type:   report.PropertyListType,
 			Prefix: ImageLabelPrefix,
 		},
@@ -137,8 +141,8 @@ var (
 	}
 
 	SwarmServiceMetadataTemplates = report.MetadataTemplates{
-		ServiceName:    {ID: ServiceName, Label: "Service Name", From: report.FromLatest, Priority: 0},
-		StackNamespace: {ID: StackNamespace, Label: "Stack Namespace", From: report.FromLatest, Priority: 1},
+		ServiceName:    {ID: ServiceName, Label: "Service name", From: report.FromLatest, Priority: 0},
+		StackNamespace: {ID: StackNamespace, Label: "Stack namespace", From: report.FromLatest, Priority: 1},
 	}
 )
 
@@ -236,7 +240,7 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 			networkMode, ok := container.NetworkMode()
 			if ok && strings.HasPrefix(networkMode, "container:") {
 				return networkInfo(networkMode[10:])
-			} else if ok && networkMode == NetworkModeHost {
+			} else if ok && networkMode == "host" {
 				return hostNetworkInfo, true
 			}
 
@@ -278,7 +282,9 @@ func (r *Reporter) containerImageTopology() report.Topology {
 			ImageVirtualSize: humanize.Bytes(uint64(image.VirtualSize)),
 		}
 		if len(image.RepoTags) > 0 {
-			latests[ImageName] = image.RepoTags[0]
+			imageFullName := image.RepoTags[0]
+			latests[ImageName] = ImageNameWithoutTag(imageFullName)
+			latests[ImageTag] = ImageNameTag(imageFullName)
 		}
 		nodeID := report.MakeContainerImageNodeID(imageID)
 		node := report.MakeNodeWith(nodeID, latests)
@@ -301,7 +307,9 @@ func (r *Reporter) overlayTopology() report.Topology {
 	// since we treat container IPs as local
 	node := report.MakeNode(report.MakeOverlayNodeID(report.DockerOverlayPeerPrefix, r.hostID)).WithSets(
 		report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(subnets...)))
-	return report.MakeTopology().AddNode(node)
+	t := report.MakeTopology()
+	t.AddNode(node)
+	return t
 }
 
 func (r *Reporter) swarmServiceTopology() report.Topology {

@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
+	"context"
 	"github.com/gorilla/mux"
 	"github.com/ugorji/go/codec"
-	"golang.org/x/net/context"
 
 	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/app"

@@ -13,6 +13,7 @@
     - include: library/setup_ansible_dependencies.yml
 
   roles:
+    - setup-apt
     - dev-tools
     - golang-from-tarball
     - docker-install

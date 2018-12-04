@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	apiv1 "k8s.io/api/core/v1"
+	apiv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -111,9 +112,10 @@ func newMockClient() *mockClient {
 }
 
 type mockClient struct {
-	pods     []kubernetes.Pod
-	services []kubernetes.Service
-	logs     map[string]io.ReadCloser
+	pods        []kubernetes.Pod
+	services    []kubernetes.Service
+	deployments []kubernetes.Deployment
+	logs        map[string]io.ReadCloser
 }
 
 func (c *mockClient) Stop() {}
@@ -143,9 +145,23 @@ func (c *mockClient) WalkCronJobs(f func(kubernetes.CronJob) error) error {
 	return nil
 }
 func (c *mockClient) WalkDeployments(f func(kubernetes.Deployment) error) error {
+	for _, deployment := range c.deployments {
+		if err := f(deployment); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 func (c *mockClient) WalkNamespaces(f func(kubernetes.NamespaceResource) error) error {
+	return nil
+}
+func (c *mockClient) WalkPersistentVolumes(f func(kubernetes.PersistentVolume) error) error {
+	return nil
+}
+func (c *mockClient) WalkPersistentVolumeClaims(f func(kubernetes.PersistentVolumeClaim) error) error {
+	return nil
+}
+func (c *mockClient) WalkStorageClasses(f func(kubernetes.StorageClass) error) error {
 	return nil
 }
 func (*mockClient) WatchPods(func(kubernetes.Event, kubernetes.Pod)) {}
@@ -194,7 +210,7 @@ func TestReporter(t *testing.T) {
 	pod2ID := report.MakePodNodeID(pod2UID)
 	serviceID := report.MakeServiceNodeID(serviceUID)
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", "foo", nil, hr, "", 0).Report()
+	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "probe-id", "foo", nil, hr, "", 0).Report()
 
 	// Reporter should have added the following pods
 	for _, pod := range []struct {
@@ -245,6 +261,64 @@ func TestReporter(t *testing.T) {
 				t.Errorf("Expected service %s latest %q: %q, got %q", serviceID, k, want, have)
 			}
 		}
+	}
+
+	// Reporter should allow controls for k8s topologies by providing a probe ID
+	{
+		for _, topologyName := range []string{
+			report.Container,
+			report.CronJob,
+			report.DaemonSet,
+			report.Deployment,
+			report.Pod,
+			report.Service,
+			report.StatefulSet,
+		} {
+			topology, ok := rpt.Topology(topologyName)
+			if !ok {
+				// TODO: this mock report doesn't have nodes for all the topologies yet, so don't fail for now.
+				// t.Errorf("Expected report to have nodes in topology %q, but none found", topology)
+			}
+			for _, n := range topology.Nodes {
+				if probeID, ok := n.Latest.Lookup(report.ControlProbeID); !ok || probeID != "probe-id" {
+					t.Errorf("Expected node %q to have probeID, but not found", n.ID)
+				}
+			}
+		}
+	}
+
+}
+
+func BenchmarkReporter(b *testing.B) {
+	hr := controls.NewDefaultHandlerRegistry()
+	mockK8s := newMockClient()
+	// Add more dummy data
+	for i := 0; i < 50; i++ {
+		service := apiService1
+		service.ObjectMeta.UID = types.UID(fmt.Sprintf("service%d", i))
+		mockK8s.services = append(mockK8s.services, kubernetes.NewService(&service))
+		pod := apiPod1
+		pod.ObjectMeta.UID = types.UID(fmt.Sprintf("pod%d", i))
+		mockK8s.pods = append(mockK8s.pods, kubernetes.NewPod(&pod))
+		deployment := apiv1beta1.Deployment{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Deployment",
+				APIVersion: "v1beta1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              fmt.Sprintf("deployment%d", i),
+				UID:               types.UID(fmt.Sprintf("deployment%d", i)),
+				Namespace:         "ping",
+				CreationTimestamp: metav1.Now(),
+			},
+		}
+		mockK8s.deployments = append(mockK8s.deployments, kubernetes.NewDeployment(&deployment))
+	}
+	reporter := kubernetes.NewReporter(mockK8s, nil, "probe-id", "foo", nil, hr, nodeName, 0)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		reporter.Report()
 	}
 }
 

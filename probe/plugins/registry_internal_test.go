@@ -685,7 +685,8 @@ func nodeControls(indices []int) []string {
 func topologyWithControls(label, nodeID string, controlIndices, nodeControlIndices []int) report.Topology {
 	topology := report.MakeTopology().WithLabel(label, "")
 	topology.Controls = topologyControls(controlIndices)
-	return topology.AddNode(report.MakeNode(nodeID).WithLatestActiveControls(nodeControls(nodeControlIndices)...))
+	topology.AddNode(report.MakeNode(nodeID).WithLatestActiveControls(nodeControls(nodeControlIndices)...))
+	return topology
 }
 
 func pluginSpec(ID string, interfaces ...string) xfer.PluginSpec {

@@ -8,7 +8,9 @@ import (
 // Diff diffs two arbitrary data structures, giving human-readable output.
 func Diff(want, have interface{}) string {
 	config := spew.NewDefaultConfig()
-	config.ContinueOnMethod = true
+	// Set ContinueOnMethod to true if you cannot see a difference and
+	// want to look beyond the String() method
+	config.ContinueOnMethod = false
 	config.SortKeys = true
 	config.SpewKeys = true
 	text, _ := difflib.GetUnifiedDiffString(difflib.UnifiedDiff{

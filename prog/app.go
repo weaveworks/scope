@@ -12,22 +12,24 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 
 	billing "github.com/weaveworks/billing-client"
 	"github.com/weaveworks/common/aws"
+	"github.com/weaveworks/common/logging"
 	"github.com/weaveworks/common/middleware"
 	"github.com/weaveworks/common/network"
+	"github.com/weaveworks/common/signals"
+	"github.com/weaveworks/common/tracing"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/app/multitenant"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/weave/common"
 )
 
 const (
@@ -68,11 +70,15 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 			uiHandler))
 	router.PathPrefix("/").Name("static").Handler(uiHandler)
 
-	instrument := middleware.Instrument{
-		RouteMatcher: router,
-		Duration:     requestDuration,
-	}
-	return instrument.Wrap(router)
+	middlewares := middleware.Merge(
+		middleware.Instrument{
+			RouteMatcher: router,
+			Duration:     requestDuration,
+		},
+		middleware.Tracer{},
+	)
+
+	return middlewares.Wrap(router)
 }
 
 func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname string,
@@ -147,7 +153,7 @@ func emitterFactory(collector app.Collector, clientCfg billing.Config, userIDer 
 	)
 }
 
-func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string) (app.ControlRouter, error) {
+func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string, controlRPCTimeout time.Duration) (app.ControlRouter, error) {
 	if controlRouterURL == "local" {
 		return app.NewLocalControlRouter(), nil
 	}
@@ -163,7 +169,7 @@ func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string
 		if err != nil {
 			return nil, err
 		}
-		return multitenant.NewSQSControlRouter(sqsConfig, userIDer, prefix), nil
+		return multitenant.NewSQSControlRouter(sqsConfig, userIDer, prefix, controlRPCTimeout), nil
 	}
 
 	return nil, fmt.Errorf("Invalid control router '%s'", controlRouterURL)
@@ -200,6 +206,9 @@ func appMain(flags appFlags) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 	runtime.SetBlockProfileRate(flags.blockProfileRate)
+
+	traceCloser := tracing.NewFromEnv(fmt.Sprintf("scope-%s", flags.serviceName))
+	defer traceCloser.Close()
 
 	defer log.Info("app exiting")
 	rand.Seed(time.Now().UnixNano())
@@ -239,7 +248,7 @@ func appMain(flags appFlags) {
 		collector = billingEmitter
 	}
 
-	controlRouter, err := controlRouterFactory(userIDer, flags.controlRouterURL)
+	controlRouter, err := controlRouterFactory(userIDer, flags.controlRouterURL, flags.controlRPCTimeout)
 	if err != nil {
 		log.Fatalf("Error creating control router: %v", err)
 		return
@@ -281,9 +290,11 @@ func appMain(flags appFlags) {
 	capabilities := map[string]bool{
 		xfer.HistoricReportsCapability: collector.HasHistoricReports(),
 	}
+	logger := logging.Logrus(log.StandardLogger())
 	handler := router(collector, controlRouter, pipeRouter, flags.externalUI, capabilities, flags.metricsGraphURL)
 	if flags.logHTTP {
 		handler = middleware.Log{
+			Log:               logger,
 			LogRequestHeaders: flags.logHTTPHeaders,
 		}.Wrap(handler)
 	}
@@ -307,10 +318,27 @@ func appMain(flags appFlags) {
 	}()
 
 	// block until INT/TERM
-	common.SignalHandlerLoop()
+	signals.SignalHandlerLoop(
+		logger,
+		stopper{
+			Server:      server,
+			StopTimeout: flags.stopTimeout,
+		},
+	)
+}
+
+// stopper adapts graceful.Server's interface to signals.SignalReceiver's interface.
+type stopper struct {
+	Server      *graceful.Server
+	StopTimeout time.Duration
+}
+
+// Stop implements signals.SignalReceiver's Stop method.
+func (c stopper) Stop() error {
 	// stop listening, wait for any active connections to finish
-	server.Stop(flags.stopTimeout)
-	<-server.StopChan()
+	c.Server.Stop(c.StopTimeout)
+	<-c.Server.StopChan()
+	return nil
 }
 
 func newWeavePublisher(dockerEndpoint, weaveAddr, weaveHostname, containerName string) (*app.WeavePublisher, error) {

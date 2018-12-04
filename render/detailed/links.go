@@ -67,12 +67,8 @@ var (
 		report.StatefulSet: podIDHashQueries,
 		report.CronJob:     podIDHashQueries,
 		report.Service: {
-			// These recording rules must be defined in the prometheus config.
-			// NB: Pods need to be labeled and selected by their respective Service name, meaning:
-			// - The Service's `spec.selector` needs to select on `name`
-			// - The Service's `metadata.name` needs to be the same value as `spec.selector.name`
-			docker.CPUTotalUsage: `namespace_label_name:container_cpu_usage_seconds_total:sum_rate{label_name="{{label}}",namespace="{{namespace}}"}`,
-			docker.MemoryUsage:   `namespace_label_name:container_memory_usage_bytes:sum{label_name="{{label}}",namespace="{{namespace}}"}`,
+			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
+			docker.MemoryUsage:   `sum(rate(container_memory_usage_bytes{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
 		},
 	}
 )
@@ -102,7 +98,7 @@ func formatMetricQueries(filter string, ids []string) map[string]string {
 
 // RenderMetricURLs sets respective URLs for metrics in a node summary. Missing metrics
 // where we have a query for will be appended as an empty metric (no values or samples).
-func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string) NodeSummary {
+func RenderMetricURLs(summary NodeSummary, n report.Node, r report.Report, metricsGraphURL string) NodeSummary {
 	if metricsGraphURL == "" {
 		return summary
 	}
@@ -117,7 +113,7 @@ func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string
 			maxprio = metric.Priority
 		}
 
-		query := metricQuery(summary, n, metric.ID)
+		query := metricQuery(summary, n, r, metric.ID)
 		ms = append(ms, metric)
 
 		if query != "" {
@@ -133,7 +129,7 @@ func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string
 			continue
 		}
 
-		query := metricQuery(summary, n, metadata.ID)
+		query := metricQuery(summary, n, r, metadata.ID)
 		if query == "" {
 			continue
 		}
@@ -155,7 +151,7 @@ func RenderMetricURLs(summary NodeSummary, n report.Node, metricsGraphURL string
 }
 
 // metricQuery returns the query for the given node and metric.
-func metricQuery(summary NodeSummary, n report.Node, metricID string) string {
+func metricQuery(summary NodeSummary, n report.Node, r report.Report, metricID string) string {
 	queries := topologyQueries[n.Topology]
 	if len(queries) == 0 {
 		return ""
@@ -163,12 +159,42 @@ func metricQuery(summary NodeSummary, n report.Node, metricID string) string {
 
 	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
 	name, _ := n.Latest.Lookup(docker.ContainerName)
-	r := strings.NewReplacer(
-		"{{label}}", summary.Label,
+	replacer := strings.NewReplacer(
+		"{{label}}", metricLabel(summary, n, r),
 		"{{namespace}}", namespace,
 		"{{containerName}}", name,
 	)
-	return r.Replace(queries[metricID])
+	return replacer.Replace(queries[metricID])
+}
+
+func metricLabel(summary NodeSummary, n report.Node, r report.Report) string {
+	label := summary.Label
+	if n.Topology == report.Service {
+		deploymentTopology, ok := r.Topology(report.Deployment)
+		if ok {
+			deploymentNames := []string{}
+			for _, pod := range r.Pod.Nodes {
+				serviceParents, serviceOk := pod.Parents.Lookup(report.Service)
+				deploymentParents, deploymentOk := pod.Parents.Lookup(report.Deployment)
+				if serviceOk && deploymentOk && serviceParents.Contains(n.ID) {
+					for _, id := range deploymentParents {
+						deploymentNode, ok := deploymentTopology.Nodes[id]
+						if !ok {
+							continue
+						}
+						if name, ok := deploymentNode.Latest.Lookup(report.KubernetesName); ok {
+							deploymentNames = append(deploymentNames, name)
+						}
+					}
+					break
+				}
+			}
+			if len(deploymentNames) == 1 {
+				label = deploymentNames[0]
+			}
+		}
+	}
+	return label
 }
 
 // metricURL builds the URL by embedding it into the configured `metricsGraphURL`.
