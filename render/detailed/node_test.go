@@ -65,7 +65,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				},
 				{
 					ID:       "local_networks",
-					Label:    "Local Networks",
+					Label:    "Local networks",
 					Value:    "10.10.10.0/24",
 					Priority: 13,
 				},
@@ -129,7 +129,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Nodes: []detailed.NodeSummary{process1NodeSummary, process2NodeSummary},
 			},
 			{
-				Label:      "Container Images",
+				Label:      "Container images",
 				TopologyID: "containers-by-image",
 				Columns:    []detailed.Column{},
 				Nodes:      []detailed.NodeSummary{containerImageNodeSummary},
@@ -195,9 +195,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Pseudo:     false,
 			},
 			Metadata: []report.MetadataRow{
-				{ID: "docker_image_name", Label: "Image", Value: fixture.ServerContainerImageName, Priority: 1},
-				{ID: "docker_container_state_human", Label: "State", Value: "running", Priority: 3},
-				{ID: "docker_container_id", Label: "ID", Value: fixture.ServerContainerID, Priority: 10, Truncate: 12},
+				{ID: "docker_image_name", Label: "Image name", Value: fixture.ServerContainerImageName, Priority: 2},
+				{ID: "docker_container_state_human", Label: "State", Value: "running", Priority: 4},
+				{ID: "docker_container_id", Label: "ID", Value: fixture.ServerContainerID, Priority: 11, Truncate: 12},
 			},
 			Metrics: []report.MetricRow{
 				{

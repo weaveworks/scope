@@ -7,7 +7,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
 
-	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -15,10 +14,16 @@ const (
 	reportBufferSize = 16
 )
 
+// ReportPublisher publishes reports, probably to a remote collector.
+type ReportPublisher interface {
+	Publish(r report.Report) error
+}
+
 // Probe sits there, generating and publishing reports.
 type Probe struct {
 	spyInterval, publishInterval time.Duration
-	publisher                    *appclient.ReportPublisher
+	publisher                    ReportPublisher
+	noControls                   bool
 
 	tickers   []Ticker
 	reporters []Reporter
@@ -67,13 +72,14 @@ type Ticker interface {
 // New makes a new Probe.
 func New(
 	spyInterval, publishInterval time.Duration,
-	publisher appclient.Publisher,
+	publisher ReportPublisher,
 	noControls bool,
 ) *Probe {
 	result := &Probe{
 		spyInterval:     spyInterval,
 		publishInterval: publishInterval,
-		publisher:       appclient.NewReportPublisher(publisher, noControls),
+		publisher:       publisher,
+		noControls:      noControls,
 		quit:            make(chan struct{}),
 		spiedReports:    make(chan report.Report, reportBufferSize),
 		shortcutReports: make(chan report.Report, reportBufferSize),
@@ -200,7 +206,12 @@ ForLoop:
 		}
 	}
 
-	if err := p.publisher.Publish(rpt.BackwardCompatible()); err != nil {
+	if p.noControls {
+		rpt.WalkTopologies(func(t *report.Topology) {
+			t.Controls = report.Controls{}
+		})
+	}
+	if err := p.publisher.Publish(rpt); err != nil {
 		log.Infof("publish: %v", err)
 	}
 }

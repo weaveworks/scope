@@ -5,10 +5,11 @@ import (
 )
 
 // MapFunc is anything which can take an arbitrary Node and
-// return a set of other Nodes.
+// return another Node.
 //
-// If the output is empty, the node shall be omitted from the rendered topology.
-type MapFunc func(report.Node) report.Nodes
+// If the output ID is blank, the node shall be omitted from the rendered topology.
+// (we chose not to return an extra bool because it adds clutter)
+type MapFunc func(report.Node) report.Node
 
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
@@ -99,44 +100,19 @@ func MakeMap(f MapFunc, r Renderer) Renderer {
 // using a map function
 func (m Map) Render(rpt report.Report) Nodes {
 	var (
-		input       = m.Renderer.Render(rpt)
-		output      = report.Nodes{}
-		mapped      = map[string]report.IDList{} // input node ID -> output node IDs
-		adjacencies = map[string]report.IDList{} // output node ID -> input node Adjacencies
+		input  = m.Renderer.Render(rpt)
+		output = newJoinResults(nil)
 	)
 
 	// Rewrite all the nodes according to the map function
 	for _, inRenderable := range input.Nodes {
-		for _, outRenderable := range m.MapFunc(inRenderable) {
-			if existing, ok := output[outRenderable.ID]; ok {
-				outRenderable = outRenderable.Merge(existing)
-			}
-
-			output[outRenderable.ID] = outRenderable
-			mapped[inRenderable.ID] = mapped[inRenderable.ID].Add(outRenderable.ID)
-			adjacencies[outRenderable.ID] = adjacencies[outRenderable.ID].Merge(inRenderable.Adjacency)
+		outRenderable := m.MapFunc(inRenderable)
+		if outRenderable.ID != "" {
+			output.add(inRenderable.ID, outRenderable)
 		}
 	}
 
-	// Rewrite Adjacency for new node IDs.
-	for outNodeID, inAdjacency := range adjacencies {
-		outAdjacency := report.MakeIDList()
-		for _, inAdjacent := range inAdjacency {
-			outAdjacency = outAdjacency.Merge(mapped[inAdjacent])
-		}
-		outNode := output[outNodeID]
-		outNode.Adjacency = outAdjacency
-		output[outNodeID] = outNode
-	}
-
-	return Nodes{Nodes: output}
-}
-
-func propagateLatest(key string, from, to report.Node) report.Node {
-	if value, timestamp, ok := from.Latest.LookupEntry(key); ok {
-		to.Latest = to.Latest.Set(key, timestamp, value)
-	}
-	return to
+	return output.result(input)
 }
 
 // Condition is a predecate over the entire report that can evaluate to true or false.
@@ -170,7 +146,8 @@ type joinResults struct {
 func newJoinResults(inputNodes report.Nodes) joinResults {
 	nodes := make(report.Nodes, len(inputNodes))
 	for id, n := range inputNodes {
-		n.Adjacency = nil // result() assumes all nodes start with no adjacencies
+		n.Adjacency = nil              // result() assumes all nodes start with no adjacencies
+		n.Children = n.Children.Copy() // so we can do unsafe adds
 		nodes[id] = n
 	}
 	return joinResults{nodes: nodes, mapped: map[string]string{}, multi: map[string][]string{}}
@@ -184,6 +161,16 @@ func (ret *joinResults) mapChild(from, to string) {
 	}
 }
 
+// Add m into the results as a top-level node, mapped from original ID
+// Note it is not safe to mix calls to add() with addChild(), addChildAndChildren() or addUnmappedChild()
+func (ret *joinResults) add(from string, m report.Node) {
+	if existing, ok := ret.nodes[m.ID]; ok {
+		m = m.Merge(existing)
+	}
+	ret.nodes[m.ID] = m
+	ret.mapChild(from, m.ID)
+}
+
 // Add m as a child of the node at id, creating a new result node in
 // the specified topology if not already there.
 func (ret *joinResults) addUnmappedChild(m report.Node, id string, topology string) {
@@ -191,7 +178,7 @@ func (ret *joinResults) addUnmappedChild(m report.Node, id string, topology stri
 	if !exists {
 		result = report.MakeNode(id).WithTopology(topology)
 	}
-	result.Children = result.Children.Add(m)
+	result.Children.UnsafeAdd(m)
 	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
 		result.Counters = result.Counters.Add(m.Topology, 1)
 	}
@@ -210,7 +197,7 @@ func (ret *joinResults) addChild(m report.Node, id string, topology string) {
 func (ret *joinResults) addChildAndChildren(m report.Node, id string, topology string) {
 	ret.addUnmappedChild(m, id, topology)
 	result := ret.nodes[id]
-	result.Children = result.Children.Merge(m.Children)
+	result.Children.UnsafeMerge(m.Children)
 	ret.nodes[id] = result
 	ret.mapChild(m.ID, id)
 }
@@ -219,6 +206,7 @@ func (ret *joinResults) addChildAndChildren(m report.Node, id string, topology s
 func (ret *joinResults) passThrough(n report.Node) {
 	n.Adjacency = nil // result() assumes all nodes start with no adjacencies
 	ret.nodes[n.ID] = n
+	n.Children = n.Children.Copy() // so we can do unsafe adds
 	ret.mapChild(n.ID, n.ID)
 }
 

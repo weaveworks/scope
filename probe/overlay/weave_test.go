@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	mockHostID               = "host1"
-	mockContainerIPWithScope = ";" + weave.MockContainerIP
+	mockHostID = "host1"
 )
 
 func runTest(t *testing.T, f func(*overlay.Weave)) {
@@ -58,18 +57,6 @@ func TestContainerTopologyTagging(t *testing.T) {
 		// Should have Weave DNS Hostname
 		if have, ok := node.Latest.Lookup(overlay.WeaveDNSHostname); !ok || have != weave.MockHostname {
 			t.Errorf("Expected weave dns hostname %q, got %q", weave.MockHostname, have)
-		}
-		// Should have Weave MAC Address
-		if have, ok := node.Latest.Lookup(overlay.WeaveMACAddress); !ok || have != weave.MockContainerMAC {
-			t.Errorf("Expected weave mac address %q, got %q", weave.MockContainerMAC, have)
-		}
-		// Should have Weave container ip
-		if have, ok := node.Sets.Lookup(docker.ContainerIPs); !ok || !have.Contains(weave.MockContainerIP) {
-			t.Errorf("Expected container ips to include the weave IP %q, got %q", weave.MockContainerIP, have)
-		}
-		// Should have Weave container ip (with scope)
-		if have, ok := node.Sets.Lookup(docker.ContainerIPsWithScopes); !ok || !have.Contains(mockContainerIPWithScope) {
-			t.Errorf("Expected container ips to include the weave IP (with scope) %q, got %q", mockContainerIPWithScope, have)
 		}
 	}
 

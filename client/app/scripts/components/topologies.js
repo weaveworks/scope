@@ -20,12 +20,7 @@ function basicTopologyInfo(topology, searchMatchCount) {
 }
 
 class Topologies extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-    this.onTopologyClick = this.onTopologyClick.bind(this);
-  }
-
-  onTopologyClick(ev, topology) {
+  onTopologyClick = (ev, topology) => {
     ev.preventDefault();
     trackAnalyticsEvent('scope.topology.selector.click', {
       topologyId: topology.get('id'),
@@ -63,7 +58,7 @@ class Topologies extends React.Component {
     const topologyId = topology.get('id');
     const isActive = topology === this.props.currentTopology;
     const searchMatchCount = this.props.searchMatchCountByTopology.get(topology.get('id')) || 0;
-    const className = classnames(`topologies-item-main topologies-item-${topologyId}`, {
+    const className = classnames(`tour-step-anchor topologies-item-main topologies-item-${topologyId}`, {
       // Don't show matches in the resource view as searching is not supported there yet.
       'topologies-item-main-matched': !this.props.isResourceViewMode && searchMatchCount,
       'topologies-item-main-active': isActive,
@@ -91,7 +86,7 @@ class Topologies extends React.Component {
 
   render() {
     return (
-      <div className="topologies">
+      <div className="tour-step-anchor topologies-selector">
         {this.props.currentTopology && this.props.topologies.map(t => this.renderTopology(t))}
       </div>
     );

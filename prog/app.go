@@ -147,7 +147,7 @@ func emitterFactory(collector app.Collector, clientCfg billing.Config, userIDer 
 	)
 }
 
-func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string) (app.ControlRouter, error) {
+func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string, controlRPCTimeout time.Duration) (app.ControlRouter, error) {
 	if controlRouterURL == "local" {
 		return app.NewLocalControlRouter(), nil
 	}
@@ -163,7 +163,7 @@ func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string
 		if err != nil {
 			return nil, err
 		}
-		return multitenant.NewSQSControlRouter(sqsConfig, userIDer, prefix), nil
+		return multitenant.NewSQSControlRouter(sqsConfig, userIDer, prefix, controlRPCTimeout), nil
 	}
 
 	return nil, fmt.Errorf("Invalid control router '%s'", controlRouterURL)
@@ -239,7 +239,7 @@ func appMain(flags appFlags) {
 		collector = billingEmitter
 	}
 
-	controlRouter, err := controlRouterFactory(userIDer, flags.controlRouterURL)
+	controlRouter, err := controlRouterFactory(userIDer, flags.controlRouterURL, flags.controlRPCTimeout)
 	if err != nil {
 		log.Fatalf("Error creating control router: %v", err)
 		return

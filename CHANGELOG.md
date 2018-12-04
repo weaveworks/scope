@@ -1,3 +1,130 @@
+## Release 1.9.0
+
+Highlights:
+
+- Change in behaviour of table data: Docker labels are now sent in
+full, while Docker environment variables are not reported by default
+- Plugins can now render http links and show controls on more objects
+
+New plugin features:
+
+- Render http links in tables
+	[#3105](https://github.com/weaveworks/scope/pull/3105)
+- Support plugin controls in K8s Service, DaemonSet, StatefulSet, Cronjob.
+	[#3110](https://github.com/weaveworks/scope/pull/3110)
+
+Bug fixes and minor improvements:
+
+- Work around Ubuntu kernel crash
+	[#3141](https://github.com/weaveworks/scope/pull/3141)
+- Stop truncating tables; disable reporting Docker env vars by default
+	[#3139](https://github.com/weaveworks/scope/pull/3139)
+- Don't show Failed pods
+	[#3126](https://github.com/weaveworks/scope/pull/3126)
+- Make scope start with Docker for Mac again.
+	[#3140](https://github.com/weaveworks/scope/pull/3140)
+- Fix browser history when deep linking into node details with time context
+	[#3134](https://github.com/weaveworks/scope/pull/3134)
+- Move to more consistent colour theme
+	[#3116](https://github.com/weaveworks/scope/pull/3116)
+	[#3124](https://github.com/weaveworks/scope/pull/3124)
+	[#3136](https://github.com/weaveworks/scope/pull/3136)
+- Fix format string only used in debugging
+	[#3129](https://github.com/weaveworks/scope/pull/3129)
+- Fix docs for OpenShift installation
+	[#3128](https://github.com/weaveworks/scope/pull/3128)
+
+Performance:
+
+-  Use unsafe merge in joinResults.addChildAndChildren()
+	[#3143](https://github.com/weaveworks/scope/pull/3143)
+- Use single-owner code path to accumulate children when rendering
+	[#3138](https://github.com/weaveworks/scope/pull/3138)
+- Simplify Map.Render()
+	[#3135](https://github.com/weaveworks/scope/pull/3135)
+- Let probe send smaller 'shortcut' reports to update the UI faster
+	[#3121](https://github.com/weaveworks/scope/pull/3121)
+
+
+## Release 1.8.0
+
+Highlights:
+- Many performance improvements
+- A change in the wire protocol (see #3061 below - the new app is
+  compatible with older probes but not vice-versa)
+
+New features and enhancements:
+
+- Add Kubernetes service type and ports to Services display
+	[#3090](https://github.com/weaveworks/scope/pull/3090)
+
+Bug fixes and minor improvements:
+
+- revamp install instructions
+	[#3052](https://github.com/weaveworks/scope/pull/3052)
+- Fix 'Unmanaged' nodes showing despite 'Hide Umanaged' filter
+	[#3097](https://github.com/weaveworks/scope/pull/3097)
+- Remove large gap in between header and table
+	[#3066](https://github.com/weaveworks/scope/pull/3066)
+- Blank out value on LatestMap decode insert
+	[#3095](https://github.com/weaveworks/scope/pull/3095)
+- refactor: don't return receiver in Topology.AddNode()
+	[#3075](https://github.com/weaveworks/scope/pull/3075)
+- Remove unused process tree function GetChildren()
+	[#3094](https://github.com/weaveworks/scope/pull/3094)
+
+Performance improvements:
+
+- Move DNS name mapping from endpoint to report
+	[#3061](https://github.com/weaveworks/scope/pull/3061)
+- Enable setting to stop requesting pod list from kubelet, via environment variable
+	[#3077](https://github.com/weaveworks/scope/pull/3077)
+- Exclude null entries for networks on container nodes in probe report
+	[#3091](https://github.com/weaveworks/scope/pull/3091)
+- Remove flag -probe.kubernetes.interval and stop re-syncing Kubernetes data
+	[#3080](https://github.com/weaveworks/scope/pull/3080)
+- Optimise processTopology()
+	[#3074](https://github.com/weaveworks/scope/pull/3074)
+- More efficient docker Tagger
+	[#3093](https://github.com/weaveworks/scope/pull/3093)
+- Add topology.ReplaceNode() for efficiency
+	[#3073](https://github.com/weaveworks/scope/pull/3073)
+- Set 'omitempty' on Node Adjacency
+	[#3062](https://github.com/weaveworks/scope/pull/3062)
+
+Security:
+
+- Bump JavaScript dependencies to pick up fix for security advisory
+	[#3102](https://github.com/weaveworks/scope/pull/3102)
+
+Build and test:
+
+- Add a test that checks if reports with data round-trip
+	[#2399](https://github.com/weaveworks/scope/pull/2399)
+- Save generated source code as a CI artifact, in case it is needed
+  for troubleshooting.
+	[#3056](https://github.com/weaveworks/scope/pull/3056)
+
+Weave Cloud related changes:
+
+- Disable detail panel link if monitoring is not available.
+	[#3070](https://github.com/weaveworks/scope/pull/3070)
+	[#3072](https://github.com/weaveworks/scope/pull/3072)
+- Add (cloud.)weave.works to the list of known services
+	[#3084](https://github.com/weaveworks/scope/pull/3084)
+- Only modify document title if running standalone
+	[#3071](https://github.com/weaveworks/scope/pull/3071)
+- Fixes bug showing "container image status" on all resource types
+	[#3054](https://github.com/weaveworks/scope/pull/3054)
+- Changes relating to Guided Tours
+	[#3068](https://github.com/weaveworks/scope/pull/3068)
+	[#3088](https://github.com/weaveworks/scope/pull/3088)
+- Show Time Travel at all times in Weave Cloud
+	[#3065](https://github.com/weaveworks/scope/pull/3065)
+- Update service cpu/mem link
+	[#3060](https://github.com/weaveworks/scope/pull/3060)
+
+
 ## Release 1.7.3
 
 Bug fixes and minor improvements:
