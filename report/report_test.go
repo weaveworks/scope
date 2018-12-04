@@ -72,29 +72,6 @@ func TestNode(t *testing.T) {
 	}
 }
 
-func TestReportBackwardCompatibility(t *testing.T) {
-	mtime.NowForce(time.Now())
-	defer mtime.NowReset()
-	rpt := report.MakeReport()
-	controls := map[string]report.NodeControlData{
-		"dead": {
-			Dead: true,
-		},
-		"alive": {
-			Dead: false,
-		},
-	}
-	node := report.MakeNode("foo").WithLatestControls(controls)
-	expectedNode := node.WithControls("alive")
-	rpt.Pod.AddNode(node)
-	expected := report.MakeReport()
-	expected.Pod.AddNode(expectedNode)
-	got := rpt.BackwardCompatible()
-	if !s_reflect.DeepEqual(expected, got) {
-		t.Error(test.Diff(expected, got))
-	}
-}
-
 func TestReportUpgrade(t *testing.T) {
 	mtime.NowForce(time.Now())
 	defer mtime.NowReset()

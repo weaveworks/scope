@@ -23,7 +23,8 @@ func (a IDList) Add(ids ...string) IDList {
 
 // Merge all elements from a and b into a new list
 func (a IDList) Merge(b IDList) IDList {
-	return IDList(StringSet(a).Merge(StringSet(b)))
+	merged, _ := StringSet(a).Merge(StringSet(b))
+	return IDList(merged)
 }
 
 // Contains returns true if id is in the list.

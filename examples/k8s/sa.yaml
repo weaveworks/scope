@@ -1,0 +1,8 @@
+# borrowed from https://cloud.weave.works/k8s/scope.yaml?k8s-version=1.9.3
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: weave-scope
+  labels:
+    name: weave-scope
+  namespace: weave

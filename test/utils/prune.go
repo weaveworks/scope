@@ -18,13 +18,13 @@ func Prune(nodes report.Nodes) report.Nodes {
 // necessary for rendering nodes and edges stripped away. Specifically, that
 // means cutting out parts of the Node.
 func PruneNode(node report.Node) report.Node {
-	prunedChildren := report.MakeNodeSet()
+	prunedChildren := []report.Node{}
 	node.Children.ForEach(func(child report.Node) {
-		prunedChildren = prunedChildren.Add(PruneNode(child))
+		prunedChildren = append(prunedChildren, PruneNode(child))
 	})
 	return report.MakeNode(
 		node.ID).
 		WithTopology(node.Topology).
 		WithAdjacent(node.Adjacency...).
-		WithChildren(prunedChildren)
+		WithChildren(prunedChildren...)
 }

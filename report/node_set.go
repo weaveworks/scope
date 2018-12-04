@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/ps"
 
 	"github.com/weaveworks/scope/test/reflect"
@@ -24,8 +23,24 @@ func MakeNodeSet(nodes ...Node) NodeSet {
 	return emptyNodeSet.Add(nodes...)
 }
 
-// Add adds the nodes to the NodeSet. Add is the only valid way to grow a
-// NodeSet. Add returns the NodeSet to enable chaining.
+// Copy returns a value copy of the Nodes.
+func (n NodeSet) Copy() NodeSet {
+	result := ps.NewMap()
+	n.ForEach(func(node Node) {
+		result = result.UnsafeMutableSet(node.ID, node)
+	})
+	return NodeSet{result}
+}
+
+// UnsafeAdd adds a node to the NodeSet. Only call this if n has one owner.
+func (n *NodeSet) UnsafeAdd(node Node) {
+	if n.psMap == nil {
+		n.psMap = ps.NewMap()
+	}
+	n.psMap = n.psMap.UnsafeMutableSet(node.ID, node)
+}
+
+// Add adds the nodes to the NodeSet, and returns the NodeSet to enable chaining.
 func (n NodeSet) Add(nodes ...Node) NodeSet {
 	if len(nodes) == 0 {
 		return n
@@ -54,6 +69,19 @@ func (n NodeSet) Delete(ids ...string) NodeSet {
 		return emptyNodeSet
 	}
 	return NodeSet{result}
+}
+
+// UnsafeMerge combines the two NodeSets, altering n
+func (n *NodeSet) UnsafeMerge(other NodeSet) {
+	if other.psMap == nil || other.psMap.Size() == 0 {
+		return
+	}
+	if n.psMap == nil {
+		n.psMap = ps.NewMap()
+	}
+	other.psMap.ForEach(func(key string, otherVal interface{}) {
+		n.psMap = n.psMap.UnsafeMutableSet(key, otherVal)
+	})
 }
 
 // Merge combines the two NodeSets and returns a new result.
@@ -116,44 +144,4 @@ func (n NodeSet) String() string {
 // DeepEqual tests equality with other NodeSets
 func (n NodeSet) DeepEqual(o NodeSet) bool {
 	return mapEqual(n.psMap, o.psMap, reflect.DeepEqual)
-}
-
-func (n NodeSet) toIntermediate() []Node {
-	intermediate := make([]Node, 0, n.Size())
-	n.ForEach(func(node Node) {
-		intermediate = append(intermediate, node)
-	})
-	return intermediate
-}
-
-func (n NodeSet) fromIntermediate(nodes []Node) NodeSet {
-	return MakeNodeSet(nodes...)
-}
-
-// CodecEncodeSelf implements codec.Selfer
-func (n *NodeSet) CodecEncodeSelf(encoder *codec.Encoder) {
-	if n.psMap != nil {
-		encoder.Encode(n.toIntermediate())
-	} else {
-		encoder.Encode(nil)
-	}
-}
-
-// CodecDecodeSelf implements codec.Selfer
-func (n *NodeSet) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := []Node{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
-	*n = NodeSet{}.fromIntermediate(in)
-}
-
-// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
-func (NodeSet) MarshalJSON() ([]byte, error) {
-	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
-}
-
-// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
-func (*NodeSet) UnmarshalJSON(b []byte) error {
-	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }

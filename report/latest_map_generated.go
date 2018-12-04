@@ -21,7 +21,7 @@ type stringLatestEntry struct {
 
 // String returns the StringLatestEntry's string representation.
 func (e *stringLatestEntry) String() string {
-	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.String())
+	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.Format(time.RFC3339))
 }
 
 // Equal returns true if the supplied StringLatestEntry is equal to this one.
@@ -42,27 +42,54 @@ func (m StringLatestMap) Size() int {
 	return len(m)
 }
 
-// Merge produces a fresh StringLatestMap containing the keys from both inputs.
+// Merge produces a StringLatestMap containing the keys from both inputs.
 // When both inputs contain the same key, the newer value is used.
+// Tries to return one of its inputs, if that already holds the correct result.
 func (m StringLatestMap) Merge(n StringLatestMap) StringLatestMap {
 	switch {
-	case m == nil:
+	case len(m) == 0:
 		return n
-	case n == nil:
+	case len(n) == 0:
 		return m
 	}
-	l := len(m)
-	if len(n) > l {
-		l = len(n)
+	if len(n) > len(m) {
+		m, n = n, m //swap so m is always at least as long as n
+	} else if len(n) == len(m) && m[0].Timestamp.Before(n[0].Timestamp) {
+		// Optimise common case where we merge two nodes with the same contents
+		// sampled at different times.
+		m, n = n, m // swap equal-length arrays so first element of m is newer
 	}
-	out := make([]stringLatestEntry, 0, l)
 
 	i, j := 0, 0
+loop:
 	for i < len(m) {
 		switch {
-		case j >= len(n) || m[i].key < n[j].key:
-			out = append(out, m[i])
+		case j >= len(n):
+			return m
+		case m[i].key == n[j].key:
+			if m[i].Timestamp.Before(n[j].Timestamp) {
+				break loop
+			}
 			i++
+			j++
+		case m[i].key < n[j].key:
+			i++
+		default:
+			break loop
+		}
+	}
+	if i >= len(m) && j >= len(n) {
+		return m
+	}
+
+	out := make([]stringLatestEntry, i, len(m))
+	copy(out, m[:i])
+
+	for i < len(m) {
+		switch {
+		case j >= len(n):
+			out = append(out, m[i:]...)
+			return out
 		case m[i].key == n[j].key:
 			if m[i].Timestamp.Before(n[j].Timestamp) {
 				out = append(out, n[j])
@@ -71,6 +98,9 @@ func (m StringLatestMap) Merge(n StringLatestMap) StringLatestMap {
 			}
 			i++
 			j++
+		case m[i].key < n[j].key:
+			out = append(out, m[i])
+			i++
 		default:
 			out = append(out, n[j])
 			j++
@@ -111,6 +141,7 @@ func (m *StringLatestMap) locate(key string) int {
 	if i == len(*m) || (*m)[i].key != key {
 		*m = append(*m, stringLatestEntry{})
 		copy((*m)[i+1:], (*m)[i:])
+		(*m)[i] = stringLatestEntry{}
 	}
 	return i
 }
@@ -148,7 +179,7 @@ func (m StringLatestMap) ForEach(fn func(k string, timestamp time.Time, v string
 func (m StringLatestMap) String() string {
 	buf := bytes.NewBufferString("{")
 	for _, val := range m {
-		fmt.Fprintf(buf, "%s: %s,\n", val.key, val)
+		fmt.Fprintf(buf, "%s: %s,\n", val.key, val.String())
 	}
 	fmt.Fprintf(buf, "}")
 	return buf.String()
@@ -242,7 +273,7 @@ type nodeControlDataLatestEntry struct {
 
 // String returns the StringLatestEntry's string representation.
 func (e *nodeControlDataLatestEntry) String() string {
-	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.String())
+	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.Format(time.RFC3339))
 }
 
 // Equal returns true if the supplied StringLatestEntry is equal to this one.
@@ -263,27 +294,54 @@ func (m NodeControlDataLatestMap) Size() int {
 	return len(m)
 }
 
-// Merge produces a fresh NodeControlDataLatestMap containing the keys from both inputs.
+// Merge produces a NodeControlDataLatestMap containing the keys from both inputs.
 // When both inputs contain the same key, the newer value is used.
+// Tries to return one of its inputs, if that already holds the correct result.
 func (m NodeControlDataLatestMap) Merge(n NodeControlDataLatestMap) NodeControlDataLatestMap {
 	switch {
-	case m == nil:
+	case len(m) == 0:
 		return n
-	case n == nil:
+	case len(n) == 0:
 		return m
 	}
-	l := len(m)
-	if len(n) > l {
-		l = len(n)
+	if len(n) > len(m) {
+		m, n = n, m //swap so m is always at least as long as n
+	} else if len(n) == len(m) && m[0].Timestamp.Before(n[0].Timestamp) {
+		// Optimise common case where we merge two nodes with the same contents
+		// sampled at different times.
+		m, n = n, m // swap equal-length arrays so first element of m is newer
 	}
-	out := make([]nodeControlDataLatestEntry, 0, l)
 
 	i, j := 0, 0
+loop:
 	for i < len(m) {
 		switch {
-		case j >= len(n) || m[i].key < n[j].key:
-			out = append(out, m[i])
+		case j >= len(n):
+			return m
+		case m[i].key == n[j].key:
+			if m[i].Timestamp.Before(n[j].Timestamp) {
+				break loop
+			}
 			i++
+			j++
+		case m[i].key < n[j].key:
+			i++
+		default:
+			break loop
+		}
+	}
+	if i >= len(m) && j >= len(n) {
+		return m
+	}
+
+	out := make([]nodeControlDataLatestEntry, i, len(m))
+	copy(out, m[:i])
+
+	for i < len(m) {
+		switch {
+		case j >= len(n):
+			out = append(out, m[i:]...)
+			return out
 		case m[i].key == n[j].key:
 			if m[i].Timestamp.Before(n[j].Timestamp) {
 				out = append(out, n[j])
@@ -292,6 +350,9 @@ func (m NodeControlDataLatestMap) Merge(n NodeControlDataLatestMap) NodeControlD
 			}
 			i++
 			j++
+		case m[i].key < n[j].key:
+			out = append(out, m[i])
+			i++
 		default:
 			out = append(out, n[j])
 			j++
@@ -332,6 +393,7 @@ func (m *NodeControlDataLatestMap) locate(key string) int {
 	if i == len(*m) || (*m)[i].key != key {
 		*m = append(*m, nodeControlDataLatestEntry{})
 		copy((*m)[i+1:], (*m)[i:])
+		(*m)[i] = nodeControlDataLatestEntry{}
 	}
 	return i
 }
@@ -369,7 +431,7 @@ func (m NodeControlDataLatestMap) ForEach(fn func(k string, timestamp time.Time,
 func (m NodeControlDataLatestMap) String() string {
 	buf := bytes.NewBufferString("{")
 	for _, val := range m {
-		fmt.Fprintf(buf, "%s: %s,\n", val.key, val)
+		fmt.Fprintf(buf, "%s: %s,\n", val.key, val.String())
 	}
 	fmt.Fprintf(buf, "}")
 	return buf.String()

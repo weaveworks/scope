@@ -1,7 +1,7 @@
 import React from 'react';
-import moment from 'moment';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
+import { TimestampTag } from 'weaveworks-ui-components';
 
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { pauseTimeAtNow, resumeTime } from '../actions/app-actions';
@@ -13,24 +13,7 @@ const className = isSelected => (
 );
 
 class TimeControl extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-
-    this.handleNowClick = this.handleNowClick.bind(this);
-    this.handlePauseClick = this.handlePauseClick.bind(this);
-    this.getTrackingMetadata = this.getTrackingMetadata.bind(this);
-  }
-
-  componentDidMount() {
-    // Force periodic updates every one second for the paused info.
-    this.timer = setInterval(() => { this.forceUpdate(); }, 1000);
-  }
-
-  componentWillUnmount() {
-    clearInterval(this.timer);
-  }
-
-  getTrackingMetadata(data = {}) {
+  getTrackingMetadata = (data = {}) => {
     const { currentTopology } = this.props;
     return {
       layout: this.props.topologyViewMode,
@@ -40,12 +23,12 @@ class TimeControl extends React.Component {
     };
   }
 
-  handleNowClick() {
+  handleNowClick = () => {
     trackAnalyticsEvent('scope.time.resume.click', this.getTrackingMetadata());
     this.props.resumeTime();
   }
 
-  handlePauseClick() {
+  handlePauseClick = () => {
     trackAnalyticsEvent('scope.time.pause.click', this.getTrackingMetadata());
     this.props.pauseTimeAtNow();
   }
@@ -82,10 +65,8 @@ class TimeControl extends React.Component {
           </div>
         </div>
         {isPaused &&
-          <span
-            className="time-control-info"
-            title={moment(pausedAt).toISOString()}>
-            Showing state from {moment(pausedAt).fromNow()}
+          <span className="time-control-info">
+            Showing state from <TimestampTag inheritStyles relative timestamp={pausedAt} />
           </span>
         }
       </div>

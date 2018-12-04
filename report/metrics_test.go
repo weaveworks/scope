@@ -122,21 +122,6 @@ func TestMetricMerge(t *testing.T) {
 	}
 }
 
-func TestMetricDiv(t *testing.T) {
-	t1 := time.Now()
-	t2 := time.Now().Add(1 * time.Minute)
-
-	want := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -2}, {Timestamp: t2, Value: 2}})
-	beforeDiv := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -2048}, {Timestamp: t2, Value: 2048}})
-	have := beforeDiv.Div(1024)
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf("diff: %s", test.Diff(want, have))
-	}
-
-	// Check the original was unmodified
-	checkMetric(t, beforeDiv, t1, t2, -2048, 2048)
-}
-
 func TestMetricMarshalling(t *testing.T) {
 	t1 := time.Now().UTC()
 	t2 := time.Now().UTC().Add(1 * time.Minute)

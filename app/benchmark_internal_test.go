@@ -2,6 +2,7 @@ package app
 
 import (
 	"flag"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -65,7 +66,10 @@ func BenchmarkReportUpgrade(b *testing.B) {
 
 func BenchmarkReportMerge(b *testing.B) {
 	reports := upgradeReports(readReportFiles(b, *benchReportPath))
-	merger := NewSmartMerger()
+	rand.Shuffle(len(reports), func(i, j int) {
+		reports[i], reports[j] = reports[j], reports[i]
+	})
+	merger := NewFastMerger()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		merger.Merge(reports)
@@ -75,7 +79,7 @@ func BenchmarkReportMerge(b *testing.B) {
 func getReport(b *testing.B) report.Report {
 	r := fixture.Report
 	if *benchReportPath != "" {
-		r = NewSmartMerger().Merge(upgradeReports(readReportFiles(b, *benchReportPath)))
+		r = NewFastMerger().Merge(upgradeReports(readReportFiles(b, *benchReportPath)))
 	}
 	return r
 }

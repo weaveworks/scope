@@ -37,12 +37,12 @@ const (
 // Exposed for testing.
 var (
 	MetadataTemplates = report.MetadataTemplates{
-		KernelVersion: {ID: KernelVersion, Label: "Kernel Version", From: report.FromLatest, Priority: 1},
+		KernelVersion: {ID: KernelVersion, Label: "Kernel version", From: report.FromLatest, Priority: 1},
 		Uptime:        {ID: Uptime, Label: "Uptime", From: report.FromLatest, Priority: 2, Datatype: report.Duration},
 		HostName:      {ID: HostName, Label: "Hostname", From: report.FromLatest, Priority: 11},
 		OS:            {ID: OS, Label: "OS", From: report.FromLatest, Priority: 12},
-		LocalNetworks: {ID: LocalNetworks, Label: "Local Networks", From: report.FromSets, Priority: 13},
-		ScopeVersion:  {ID: ScopeVersion, Label: "Scope Version", From: report.FromLatest, Priority: 14},
+		LocalNetworks: {ID: LocalNetworks, Label: "Local networks", From: report.FromSets, Priority: 13},
+		ScopeVersion:  {ID: ScopeVersion, Label: "Scope version", From: report.FromLatest, Priority: 14},
 	}
 
 	MetricTemplates = report.MetricTemplates{

@@ -3,6 +3,7 @@ package expected
 import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -11,11 +12,14 @@ import (
 
 // Exported for testing.
 var (
-	circle   = "circle"
-	square   = "square"
-	heptagon = "heptagon"
-	hexagon  = "hexagon"
-	cloud    = "cloud"
+	circle         = "circle"
+	square         = "square"
+	heptagon       = "heptagon"
+	hexagon        = "hexagon"
+	cloud          = "cloud"
+	cylinder       = "cylinder"
+	dottedcylinder = "dottedcylinder"
+	storagesheet   = "storagesheet"
 
 	// Helper to make a report.node with some common options
 	node = func(topology string) func(id string, adjacent ...string) report.Node {
@@ -37,34 +41,37 @@ var (
 	pod                   = node(report.Pod)
 	service               = node(report.Service)
 	hostNode              = node(report.Host)
+	persistentVolume      = node(report.PersistentVolume)
+	persistentVolumeClaim = node(report.PersistentVolumeClaim)
+	StorageClass          = node(report.StorageClass)
 
 	UnknownPseudoNode1ID = render.MakePseudoNodeID(fixture.UnknownClient1IP)
 	UnknownPseudoNode2ID = render.MakePseudoNodeID(fixture.UnknownClient3IP)
 
 	unknownPseudoNode1 = func(adjacent ...string) report.Node {
 		return pseudo(UnknownPseudoNode1ID, adjacent...).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.UnknownClient1NodeID],
 				RenderedEndpoints[fixture.UnknownClient2NodeID],
-			))
+			)
 	}
 	unknownPseudoNode2 = func(adjacent ...string) report.Node {
 		return pseudo(UnknownPseudoNode2ID, adjacent...).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.UnknownClient3NodeID],
-			))
+			)
 	}
 
 	theIncomingInternetNode = func(adjacent ...string) report.Node {
 		return pseudo(render.IncomingInternetID, adjacent...).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.RandomClientNodeID],
-			))
+			)
 	}
 
-	theOutgoingInternetNode = pseudo(render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
+	theOutgoingInternetNode = pseudo(render.OutgoingInternetID).WithChildren(
 		RenderedEndpoints[fixture.GoogleEndpointNodeID],
-	))
+	)
 
 	RenderedEndpoints = report.Nodes{
 		fixture.Client54001NodeID:    endpoint(fixture.Client54001NodeID, fixture.Server80NodeID),
@@ -85,24 +92,24 @@ var (
 				process.PID:       fixture.Client1PID,
 				process.Name:      fixture.Client1Name,
 			}).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Client54001NodeID],
-			)),
+			),
 
 		fixture.ClientProcess2NodeID: processNode(fixture.ClientProcess2NodeID, fixture.ServerProcessNodeID).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Client54002NodeID],
-			)),
+			),
 
 		fixture.ServerProcessNodeID: processNode(fixture.ServerProcessNodeID).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Server80NodeID],
-			)),
+			),
 
 		fixture.NonContainerProcessNodeID: processNode(fixture.NonContainerProcessNodeID, render.OutgoingInternetID).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.NonContainerNodeID],
-			)),
+			),
 
 		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
 		// all non-internet pseudo nodes for now.
@@ -116,26 +123,26 @@ var (
 		fixture.Client1Name: processNameNode(fixture.Client1Name, fixture.ServerName).
 			WithLatests(map[string]string{process.Name: fixture.Client1Name}).
 			WithCounters(map[string]int{report.Process: 2}).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],
 				RenderedProcesses[fixture.ClientProcess1NodeID],
 				RenderedProcesses[fixture.ClientProcess2NodeID],
-			)),
+			),
 
 		fixture.ServerName: processNameNode(fixture.ServerName).
 			WithLatests(map[string]string{process.Name: fixture.ServerName}).
 			WithCounters(map[string]int{report.Process: 1}).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
-			)),
+			),
 
 		fixture.NonContainerName: processNameNode(fixture.NonContainerName, render.OutgoingInternetID).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.NonContainerNodeID],
 				RenderedProcesses[fixture.NonContainerProcessNodeID],
-			)),
+			),
 
 		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
 		// all non-internet pseudo nodes for now.
@@ -146,10 +153,10 @@ var (
 	}
 
 	uncontainedServerID   = render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID)
-	uncontainedServerNode = pseudo(uncontainedServerID, render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
+	uncontainedServerNode = pseudo(uncontainedServerID, render.OutgoingInternetID).WithChildren(
 		RenderedEndpoints[fixture.NonContainerNodeID],
 		RenderedProcesses[fixture.NonContainerProcessNodeID],
-	))
+	)
 
 	RenderedContainers = report.Nodes{
 		fixture.ClientContainerNodeID: container(fixture.ClientContainerNodeID, fixture.ServerContainerNodeID).
@@ -159,18 +166,18 @@ var (
 				docker.ContainerName: fixture.ClientContainerName,
 				docker.ImageName:     fixture.ClientContainerImageName,
 			}).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],
 				RenderedProcesses[fixture.ClientProcess1NodeID],
 				RenderedProcesses[fixture.ClientProcess2NodeID],
-			)),
+			),
 
 		fixture.ServerContainerNodeID: container(fixture.ServerContainerNodeID).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
-			)),
+			),
 
 		uncontainedServerID:       uncontainedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerContainerNodeID),
@@ -185,23 +192,23 @@ var (
 			WithCounters(map[string]int{
 				report.Container: 1,
 			}).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],
 				RenderedProcesses[fixture.ClientProcess1NodeID],
 				RenderedProcesses[fixture.ClientProcess2NodeID],
 				RenderedContainers[fixture.ClientContainerNodeID],
-			)),
+			),
 
 		fixture.ServerContainerHostname: containerHostnameNode(fixture.ServerContainerHostname).
 			WithLatests(map[string]string{
 				docker.ContainerHostname: fixture.ServerContainerHostname,
 			}).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
 				RenderedContainers[fixture.ServerContainerNodeID],
-			)),
+			),
 
 		uncontainedServerID:       uncontainedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerContainerHostname),
@@ -221,20 +228,20 @@ var (
 			WithCounters(map[string]int{
 				report.Container: 1,
 			}).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],
 				RenderedProcesses[fixture.ClientProcess1NodeID],
 				RenderedProcesses[fixture.ClientProcess2NodeID],
 				RenderedContainers[fixture.ClientContainerNodeID],
-			)),
+			),
 
 		ServerContainerImageNodeID: containerImage(ServerContainerImageNodeID).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
 				RenderedContainers[fixture.ServerContainerNodeID],
-			)),
+			),
 
 		uncontainedServerID:       uncontainedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(ServerContainerImageNodeID),
@@ -242,28 +249,54 @@ var (
 	}
 
 	UnmanagedServerID   = render.MakePseudoNodeID(render.UnmanagedID, fixture.ServerHostID)
-	unmanagedServerNode = pseudo(UnmanagedServerID, render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
+	unmanagedServerNode = pseudo(UnmanagedServerID, render.OutgoingInternetID).WithChildren(
 		uncontainedServerNode,
 		RenderedEndpoints[fixture.NonContainerNodeID],
 		RenderedProcesses[fixture.NonContainerProcessNodeID],
-	))
+	)
 
 	RenderedPods = report.Nodes{
 		fixture.ClientPodNodeID: pod(fixture.ClientPodNodeID, fixture.ServerPodNodeID).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],
 				RenderedProcesses[fixture.ClientProcess1NodeID],
 				RenderedProcesses[fixture.ClientProcess2NodeID],
 				RenderedContainers[fixture.ClientContainerNodeID],
-			)),
+			),
 
 		fixture.ServerPodNodeID: pod(fixture.ServerPodNodeID).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
 				RenderedContainers[fixture.ServerContainerNodeID],
-			)),
+			),
+
+		fixture.PersistentVolumeClaimNodeID: persistentVolumeClaim(fixture.PersistentVolumeClaimNodeID, fixture.PersistentVolumeNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:             "pvc-6124",
+				kubernetes.Namespace:        "ping",
+				kubernetes.Status:           "bound",
+				kubernetes.VolumeName:       "pongvolume",
+				kubernetes.AccessModes:      "ReadWriteOnce",
+				kubernetes.StorageClassName: "standard",
+			}).WithChildren(report.MakeNode(fixture.PersistentVolumeNodeID).WithTopology(report.PersistentVolume)),
+
+		fixture.PersistentVolumeNodeID: persistentVolume(fixture.PersistentVolumeNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:             "pongvolume",
+				kubernetes.Namespace:        "ping",
+				kubernetes.Status:           "bound",
+				kubernetes.VolumeClaim:      "pvc-6124",
+				kubernetes.AccessModes:      "ReadWriteOnce",
+				kubernetes.StorageClassName: "standard",
+			}),
+
+		fixture.StorageClassNodeID: StorageClass(fixture.StorageClassNodeID, fixture.PersistentVolumeClaimNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:        "standard",
+				kubernetes.Provisioner: "pong",
+			}).WithChildren(report.MakeNode(fixture.PersistentVolumeClaimNodeID).WithTopology(report.PersistentVolumeClaim)),
 
 		UnmanagedServerID:         unmanagedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerPodNodeID),
@@ -272,7 +305,7 @@ var (
 
 	RenderedPodServices = report.Nodes{
 		fixture.ServiceNodeID: service(fixture.ServiceNodeID, fixture.ServiceNodeID).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],
 				RenderedEndpoints[fixture.Server80NodeID],
@@ -283,7 +316,7 @@ var (
 				RenderedContainers[fixture.ServerContainerNodeID],
 				RenderedPods[fixture.ClientPodNodeID],
 				RenderedPods[fixture.ServerPodNodeID],
-			)),
+			),
 
 		UnmanagedServerID:         unmanagedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServiceNodeID),
@@ -295,7 +328,7 @@ var (
 			WithLatests(map[string]string{
 				host.HostName: fixture.ClientHostName,
 			}).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],
 				RenderedProcesses[fixture.ClientProcess1NodeID],
@@ -303,10 +336,10 @@ var (
 				RenderedContainers[fixture.ClientContainerNodeID],
 				RenderedContainerImages[ClientContainerImageNodeID],
 				RenderedPods[fixture.ClientPodNodeID],
-			)),
+			),
 
 		fixture.ServerHostNodeID: hostNode(fixture.ServerHostNodeID, render.OutgoingInternetID).
-			WithChildren(report.MakeNodeSet(
+			WithChildren(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedEndpoints[fixture.NonContainerNodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
@@ -314,7 +347,7 @@ var (
 				RenderedContainers[fixture.ServerContainerNodeID],
 				RenderedContainerImages[ServerContainerImageNodeID],
 				RenderedPods[fixture.ServerPodNodeID],
-			)),
+			),
 
 		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
 		// all non-internet pseudo nodes for now.

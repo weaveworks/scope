@@ -18,7 +18,7 @@ type Node struct {
 	Controls       NodeControls             `json:"controls,omitempty"`
 	LatestControls NodeControlDataLatestMap `json:"latestControls,omitempty"`
 	Latest         StringLatestMap          `json:"latest,omitempty"`
-	Metrics        Metrics                  `json:"metrics,omitempty"`
+	Metrics        Metrics                  `json:"metrics,omitempty" deepequal:"nil==empty"`
 	Parents        Sets                     `json:"parents,omitempty"`
 	Children       NodeSet                  `json:"children,omitempty"`
 }
@@ -73,9 +73,7 @@ func (n Node) After(other Node) bool {
 // WithLatests returns a fresh copy of n, with Metadata m merged in.
 func (n Node) WithLatests(m map[string]string) Node {
 	ts := mtime.Now()
-	for k, v := range m {
-		n.Latest = n.Latest.Set(k, ts, v)
-	}
+	n.Latest = n.Latest.addMapEntries(ts, m)
 	return n
 }
 
@@ -152,6 +150,12 @@ func (n Node) WithLatestControl(control string, ts time.Time, data NodeControlDa
 	return n
 }
 
+// WithParent returns a fresh copy of n, with one parent added
+func (n Node) WithParent(key, parent string) Node {
+	n.Parents = n.Parents.AddString(key, parent)
+	return n
+}
+
 // WithParents returns a fresh copy of n, with sets merged in.
 func (n Node) WithParents(parents Sets) Node {
 	n.Parents = n.Parents.Merge(parents)
@@ -165,14 +169,8 @@ func (n Node) PruneParents() Node {
 }
 
 // WithChildren returns a fresh copy of n, with children merged in.
-func (n Node) WithChildren(children NodeSet) Node {
-	n.Children = n.Children.Merge(children)
-	return n
-}
-
-// WithChild returns a fresh copy of n, with one child merged in.
-func (n Node) WithChild(child Node) Node {
-	n.Children = n.Children.Merge(MakeNodeSet(child))
+func (n Node) WithChildren(children ...Node) Node {
+	n.Children = n.Children.Add(children...)
 	return n
 }
 

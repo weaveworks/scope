@@ -11,7 +11,7 @@ class NodeDetailsControlButton extends React.Component {
   }
 
   render() {
-    let className = `node-control-button fa ${this.props.control.icon}`;
+    let className = `tour-step-anchor node-control-button fa ${this.props.control.icon}`;
     if (this.props.pending) {
       className += ' node-control-button-pending';
     }

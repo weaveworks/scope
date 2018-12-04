@@ -22,7 +22,6 @@ import (
 
 var (
 	longPollTime       = aws.Int64(10)
-	rpcTimeout         = time.Minute
 	sqsRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "scope",
 		Name:      "sqs_request_duration_seconds",
@@ -45,6 +44,7 @@ type sqsControlRouter struct {
 	responseQueueURL *string
 	userIDer         UserIDer
 	prefix           string
+	rpcTimeout       time.Duration
 
 	mtx          sync.Mutex
 	responses    map[string]chan xfer.Response
@@ -63,12 +63,13 @@ type sqsResponseMessage struct {
 }
 
 // NewSQSControlRouter the harbinger of death
-func NewSQSControlRouter(config *aws.Config, userIDer UserIDer, prefix string) app.ControlRouter {
+func NewSQSControlRouter(config *aws.Config, userIDer UserIDer, prefix string, rpcTimeout time.Duration) app.ControlRouter {
 	result := &sqsControlRouter{
 		service:          sqs.New(session.New(config)),
 		responseQueueURL: nil,
 		userIDer:         userIDer,
 		prefix:           prefix,
+		rpcTimeout:       rpcTimeout,
 		responses:        map[string]chan xfer.Response{},
 		probeWorkers:     map[int64]*probeWorker{},
 	}
@@ -257,7 +258,7 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 	select {
 	case response := <-waiter:
 		return response, nil
-	case <-time.After(rpcTimeout):
+	case <-time.After(cr.rpcTimeout):
 		return xfer.Response{}, fmt.Errorf("request timed out")
 	}
 }
