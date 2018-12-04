@@ -4,6 +4,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -43,7 +44,8 @@ func TestControl(t *testing.T) {
 			Value: "foo",
 		}
 	})
-	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, controlHandler)
+	url := url.URL{Scheme: "http", Host: ip + ":" + port}
+	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, url, controlHandler)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,7 +57,11 @@ func TestControl(t *testing.T) {
 	httpClient := http.Client{
 		Timeout: 1 * time.Second,
 	}
-	resp, err := httpClient.Post(server.URL+"/api/control/foo/nodeid/control", "", nil)
+	resp, err := httpClient.Post(
+		server.URL+"/api/control/foo/nodeid/control",
+		"application/json",
+		strings.NewReader("{}"),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}

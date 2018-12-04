@@ -2,10 +2,11 @@ package host_test
 
 import (
 	"fmt"
-	"syscall"
 	"testing"
 
 	"github.com/weaveworks/scope/probe/host"
+
+	"golang.org/x/sys/unix"
 )
 
 func TestUname(t *testing.T) {
@@ -16,25 +17,18 @@ func TestUname(t *testing.T) {
 		release = "rls"
 		version = "ver"
 	)
-	host.Uname = func(uts *syscall.Utsname) error {
-		uts.Release = string2c(release)
-		uts.Version = string2c(version)
+	host.Uname = func(uts *unix.Utsname) error {
+		copy(uts.Release[:], []byte(release))
+		copy(uts.Version[:], []byte(version))
 		return nil
 	}
 
-	have, err := host.GetKernelVersion()
+	haveRelease, haveVersion, err := host.GetKernelReleaseAndVersion()
 	if err != nil {
 		t.Fatal(err)
 	}
+	have := fmt.Sprintf("%s %s", haveRelease, haveVersion)
 	if want := fmt.Sprintf("%s %s", release, version); want != have {
 		t.Errorf("want %q, have %q", want, have)
 	}
-}
-
-func string2c(s string) [65]int8 {
-	var result [65]int8
-	for i, c := range s {
-		result[i] = int8(c)
-	}
-	return result
 }

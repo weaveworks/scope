@@ -1,14 +1,14 @@
 package kubernetes
 
 import (
-	"io/ioutil"
-	"os"
+	"fmt"
+	"net"
 	"strings"
 
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/labels"
+	"k8s.io/apimachinery/pkg/labels"
 
-	"github.com/weaveworks/scope/common/mtime"
+	log "github.com/sirupsen/logrus"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
@@ -18,69 +18,137 @@ import (
 
 // These constants are keys used in node metadata
 const (
-	IP                 = "kubernetes_ip"
-	ObservedGeneration = "kubernetes_observed_generation"
-	Replicas           = "kubernetes_replicas"
-	DesiredReplicas    = "kubernetes_desired_replicas"
+	IP                 = report.KubernetesIP
+	ObservedGeneration = report.KubernetesObservedGeneration
+	Replicas           = report.KubernetesReplicas
+	DesiredReplicas    = report.KubernetesDesiredReplicas
+	NodeType           = report.KubernetesNodeType
+	Type               = report.KubernetesType
+	Ports              = report.KubernetesPorts
+	VolumeClaim        = report.KubernetesVolumeClaim
+	StorageClassName   = report.KubernetesStorageClassName
+	AccessModes        = report.KubernetesAccessModes
+	ReclaimPolicy      = report.KubernetesReclaimPolicy
+	Status             = report.KubernetesStatus
+	Message            = report.KubernetesMessage
+	VolumeName         = report.KubernetesVolumeName
+	Provisioner        = report.KubernetesProvisioner
+	StorageDriver      = report.KubernetesStorageDriver
 )
 
 // Exposed for testing
 var (
 	PodMetadataTemplates = report.MetadataTemplates{
 		State:            {ID: State, Label: "State", From: report.FromLatest, Priority: 2},
-		IP:               {ID: IP, Label: "IP", From: report.FromLatest, Priority: 3},
-		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: "number", Priority: 4},
+		IP:               {ID: IP, Label: "IP", From: report.FromLatest, Datatype: report.IP, Priority: 3},
+		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: report.Number, Priority: 4},
 		Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 5},
-		Created:          {ID: Created, Label: "Created", From: report.FromLatest, Priority: 6},
+		Created:          {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 6},
+		RestartCount:     {ID: RestartCount, Label: "Restart #", From: report.FromLatest, Priority: 7},
 	}
 
 	PodMetricTemplates = docker.ContainerMetricTemplates
 
 	ServiceMetadataTemplates = report.MetadataTemplates{
 		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:    {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
-		PublicIP:   {ID: PublicIP, Label: "Public IP", From: report.FromLatest, Priority: 4},
-		IP:         {ID: IP, Label: "Internal IP", From: report.FromLatest, Priority: 5},
-		report.Pod: {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+		Created:    {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		PublicIP:   {ID: PublicIP, Label: "Public IP", From: report.FromLatest, Datatype: report.IP, Priority: 4},
+		IP:         {ID: IP, Label: "Internal IP", From: report.FromLatest, Datatype: report.IP, Priority: 5},
+		report.Pod: {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
+		Type:       {ID: Type, Label: "Type", From: report.FromLatest, Priority: 7},
+		Ports:      {ID: Ports, Label: "Ports", From: report.FromLatest, Priority: 8},
 	}
 
 	ServiceMetricTemplates = PodMetricTemplates
 
 	DeploymentMetadataTemplates = report.MetadataTemplates{
+		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
-		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
 		Strategy:           {ID: Strategy, Label: "Strategy", From: report.FromLatest, Priority: 7},
 	}
 
-	DeploymentMetricTemplates = ReplicaSetMetricTemplates
+	DeploymentMetricTemplates = PodMetricTemplates
 
-	ReplicaSetMetadataTemplates = report.MetadataTemplates{
-		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: "number", Priority: 5},
-		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: "number", Priority: 6},
+	DaemonSetMetadataTemplates = report.MetadataTemplates{
+		NodeType:        {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Namespace:       {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Created:         {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		DesiredReplicas: {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 5},
 	}
 
-	ReplicaSetMetricTemplates = PodMetricTemplates
+	DaemonSetMetricTemplates = PodMetricTemplates
+
+	StatefulSetMetadataTemplates = report.MetadataTemplates{
+		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
+	}
+
+	StatefulSetMetricTemplates = PodMetricTemplates
+
+	CronJobMetadataTemplates = report.MetadataTemplates{
+		NodeType:      {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Namespace:     {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Created:       {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		Schedule:      {ID: Schedule, Label: "Schedule", From: report.FromLatest, Priority: 4},
+		LastScheduled: {ID: LastScheduled, Label: "Last scheduled", From: report.FromLatest, Datatype: report.DateTime, Priority: 5},
+		Suspended:     {ID: Suspended, Label: "Suspended", From: report.FromLatest, Priority: 6},
+		ActiveJobs:    {ID: ActiveJobs, Label: "# Jobs", From: report.FromLatest, Datatype: report.Number, Priority: 7},
+		report.Pod:    {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 8},
+	}
+
+	CronJobMetricTemplates = PodMetricTemplates
+
+	PersistentVolumeMetadataTemplates = report.MetadataTemplates{
+		NodeType:         {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		VolumeClaim:      {ID: VolumeClaim, Label: "Volume claim", From: report.FromLatest, Priority: 2},
+		StorageClassName: {ID: StorageClassName, Label: "Storage class", From: report.FromLatest, Priority: 3},
+		AccessModes:      {ID: AccessModes, Label: "Access modes", From: report.FromLatest, Priority: 5},
+		Status:           {ID: Status, Label: "Status", From: report.FromLatest, Priority: 6},
+		StorageDriver:    {ID: StorageDriver, Label: "Storage driver", From: report.FromLatest, Priority: 7},
+	}
+
+	PersistentVolumeClaimMetadataTemplates = report.MetadataTemplates{
+		NodeType:         {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Status:           {ID: Status, Label: "Status", From: report.FromLatest, Priority: 3},
+		VolumeName:       {ID: VolumeName, Label: "Volume", From: report.FromLatest, Priority: 4},
+		StorageClassName: {ID: StorageClassName, Label: "Storage class", From: report.FromLatest, Priority: 5},
+	}
+
+	StorageClassMetadataTemplates = report.MetadataTemplates{
+		NodeType:    {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Name:        {ID: Name, Label: "Name", From: report.FromLatest, Priority: 2},
+		Provisioner: {ID: Provisioner, Label: "Provisioner", From: report.FromLatest, Priority: 3},
+	}
 
 	TableTemplates = report.TableTemplates{
-		LabelPrefix: {ID: LabelPrefix, Label: "Kubernetes Labels", Prefix: LabelPrefix},
+		LabelPrefix: {
+			ID:     LabelPrefix,
+			Label:  "Kubernetes labels",
+			Type:   report.PropertyListType,
+			Prefix: LabelPrefix,
+		},
 	}
 
 	ScalingControls = []report.Control{
 		{
 			ID:    ScaleDown,
-			Human: "Scale Down",
+			Human: "Scale down",
 			Icon:  "fa-minus",
 			Rank:  0,
 		},
 		{
 			ID:    ScaleUp,
-			Human: "Scale Up",
+			Human: "Scale up",
 			Icon:  "fa-plus",
 			Rank:  1,
 		},
@@ -95,10 +163,12 @@ type Reporter struct {
 	probe           *probe.Probe
 	hostID          string
 	handlerRegistry *controls.HandlerRegistry
+	nodeName        string
+	kubeletPort     uint
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe, handlerRegistry *controls.HandlerRegistry) *Reporter {
+func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe, handlerRegistry *controls.HandlerRegistry, nodeName string, kubeletPort uint) *Reporter {
 	reporter := &Reporter{
 		client:          client,
 		pipes:           pipes,
@@ -106,6 +176,8 @@ func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostI
 		probe:           probe,
 		hostID:          hostID,
 		handlerRegistry: handlerRegistry,
+		nodeName:        nodeName,
+		kubeletPort:     kubeletPort,
 	}
 	reporter.registerControls()
 	client.WatchPods(reporter.podEvent)
@@ -143,8 +215,8 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 // IsPauseImageName indicates whether an image name corresponds to a
 // kubernetes pause container image.
 func IsPauseImageName(imageName string) bool {
-	return strings.Contains(imageName, "google_containers/pause")
-
+	return strings.Contains(imageName, "google_containers/pause") ||
+		strings.Contains(imageName, "k8s.gcr.io/pause")
 }
 
 func isPauseContainer(n report.Node, rpt report.Report) bool {
@@ -179,10 +251,7 @@ func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
 			n = n.WithLatest(report.DoesNotMakeConnections, mtime.Now(), "")
 		}
 
-		rpt.Container.Nodes[id] = n.WithParents(report.EmptySets.Add(
-			report.Pod,
-			report.EmptyStringSet.Add(report.MakePodNodeID(uid)),
-		))
+		rpt.Container.Nodes[id] = n.WithParent(report.Pod, report.MakePodNodeID(uid))
 	}
 	return rpt, nil
 }
@@ -195,26 +264,53 @@ func (r *Reporter) Report() (report.Report, error) {
 		return result, err
 	}
 	hostTopology := r.hostTopology(services)
+	daemonSetTopology, daemonSets, err := r.daemonSetTopology()
 	if err != nil {
 		return result, err
 	}
-	deploymentTopology, deployments, err := r.deploymentTopology(r.probeID)
+	statefulSetTopology, statefulSets, err := r.statefulSetTopology()
 	if err != nil {
 		return result, err
 	}
-	replicaSetTopology, replicaSets, err := r.replicaSetTopology(r.probeID, deployments)
+	cronJobTopology, cronJobs, err := r.cronJobTopology()
 	if err != nil {
 		return result, err
 	}
-	podTopology, err := r.podTopology(services, replicaSets)
+	deploymentTopology, deployments, err := r.deploymentTopology()
+	if err != nil {
+		return result, err
+	}
+	podTopology, err := r.podTopology(services, deployments, daemonSets, statefulSets, cronJobs)
+	if err != nil {
+		return result, err
+	}
+	namespaceTopology, err := r.namespaceTopology()
+	if err != nil {
+		return result, err
+	}
+	persistentVolumeTopology, _, err := r.persistentVolumeTopology()
+	if err != nil {
+		return result, err
+	}
+	persistentVolumeClaimTopology, _, err := r.persistentVolumeClaimTopology()
+	if err != nil {
+		return result, err
+	}
+	storageClassTopology, _, err := r.storageClassTopology()
 	if err != nil {
 		return result, err
 	}
 	result.Pod = result.Pod.Merge(podTopology)
 	result.Service = result.Service.Merge(serviceTopology)
 	result.Host = result.Host.Merge(hostTopology)
+	result.DaemonSet = result.DaemonSet.Merge(daemonSetTopology)
+	result.StatefulSet = result.StatefulSet.Merge(statefulSetTopology)
+	result.CronJob = result.CronJob.Merge(cronJobTopology)
 	result.Deployment = result.Deployment.Merge(deploymentTopology)
-	result.ReplicaSet = result.ReplicaSet.Merge(replicaSetTopology)
+	result.Namespace = result.Namespace.Merge(namespaceTopology)
+	result.PersistentVolume = result.PersistentVolume.Merge(persistentVolumeTopology)
+	result.PersistentVolumeClaim = result.PersistentVolumeClaim.Merge(persistentVolumeClaimTopology)
+	result.StorageClass = result.StorageClass.Merge(storageClassTopology)
 	return result, nil
 }
 
@@ -227,33 +323,44 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 		services = []Service{}
 	)
 	err := r.client.WalkServices(func(s Service) error {
-		result = result.AddNode(s.GetNode())
+		result.AddNode(s.GetNode(r.probeID))
 		services = append(services, s)
 		return nil
 	})
 	return result, services, err
 }
 
-// FIXME: Hideous hack to remove persistent-connection edges to virtual service
-//        IPs attributed to the internet. We add each service IP as a /32 network
-//        (the global service-cluster-ip-range is not exposed by the API
-//        server so we treat each IP as a /32 network see
-//        https://github.com/kubernetes/kubernetes/issues/25533).
-//        The right way of fixing this is performing DNAT mapping on persistent
-//        connections for which we don't have a robust solution
-//        (see https://github.com/weaveworks/scope/issues/1491)
+// FIXME: Hideous hack to remove persistent-connection edges to
+// virtual service IPs attributed to the internet. The global
+// service-cluster-ip-range is not exposed by the API server (see
+// https://github.com/kubernetes/kubernetes/issues/25533), so instead
+// we synthesise it by computing the smallest network that contains
+// all service IPs. That network may be smaller than the actual range
+// but that is ok, since in the end all we care about is that it
+// contains all the service IPs.
+//
+// The right way of fixing this is performing DNAT mapping on
+// persistent connections for which we don't have a robust solution
+// (see https://github.com/weaveworks/scope/issues/1491).
 func (r *Reporter) hostTopology(services []Service) report.Topology {
-	localNetworks := report.EmptyStringSet
+	serviceIPs := make([]net.IP, 0, len(services))
 	for _, service := range services {
-		localNetworks = localNetworks.Add(service.ClusterIP() + "/32")
+		if ip := net.ParseIP(service.ClusterIP()).To4(); ip != nil {
+			serviceIPs = append(serviceIPs, ip)
+		}
 	}
-	node := report.MakeNode(report.MakeHostNodeID(r.hostID))
-	node = node.WithSets(report.EmptySets.
-		Add(host.LocalNetworks, localNetworks))
-	return report.MakeTopology().AddNode(node)
+	serviceNetwork := report.ContainingIPv4Network(serviceIPs)
+	if serviceNetwork == nil {
+		return report.MakeTopology()
+	}
+	t := report.MakeTopology()
+	t.AddNode(
+		report.MakeNode(report.MakeHostNodeID(r.hostID)).
+			WithSets(report.MakeSets().AddString(host.LocalNetworks, serviceNetwork.String())))
+	return t
 }
 
-func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deployment, error) {
+func (r *Reporter) deploymentTopology() (report.Topology, []Deployment, error) {
 	var (
 		result = report.MakeTopology().
 			WithMetadataTemplates(DeploymentMetadataTemplates).
@@ -264,75 +371,92 @@ func (r *Reporter) deploymentTopology(probeID string) (report.Topology, []Deploy
 	result.Controls.AddControls(ScalingControls)
 
 	err := r.client.WalkDeployments(func(d Deployment) error {
-		result = result.AddNode(d.GetNode(probeID))
+		result.AddNode(d.GetNode(r.probeID))
 		deployments = append(deployments, d)
 		return nil
 	})
 	return result, deployments, err
 }
 
-func (r *Reporter) replicaSetTopology(probeID string, deployments []Deployment) (report.Topology, []ReplicaSet, error) {
-	var (
-		result = report.MakeTopology().
-			WithMetadataTemplates(ReplicaSetMetadataTemplates).
-			WithMetricTemplates(ReplicaSetMetricTemplates).
-			WithTableTemplates(TableTemplates)
-		replicaSets = []ReplicaSet{}
-		selectors   = []func(labelledChild){}
-	)
-	result.Controls.AddControls(ScalingControls)
-
-	for _, deployment := range deployments {
-		selectors = append(selectors, match(
-			deployment.Namespace(),
-			deployment.Selector(),
-			report.Deployment,
-			report.MakeDeploymentNodeID(deployment.UID()),
-		))
-	}
-
-	err := r.client.WalkReplicaSets(func(r ReplicaSet) error {
-		for _, selector := range selectors {
-			selector(r)
-		}
-		result = result.AddNode(r.GetNode(probeID))
-		replicaSets = append(replicaSets, r)
+func (r *Reporter) daemonSetTopology() (report.Topology, []DaemonSet, error) {
+	daemonSets := []DaemonSet{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(DaemonSetMetadataTemplates).
+		WithMetricTemplates(DaemonSetMetricTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkDaemonSets(func(d DaemonSet) error {
+		result.AddNode(d.GetNode(r.probeID))
+		daemonSets = append(daemonSets, d)
 		return nil
 	})
-	if err != nil {
-		return result, replicaSets, err
-	}
-
-	err = r.client.WalkReplicationControllers(func(r ReplicationController) error {
-		for _, selector := range selectors {
-			selector(r)
-		}
-		result = result.AddNode(r.GetNode(probeID))
-		replicaSets = append(replicaSets, ReplicaSet(r))
-		return nil
-	})
-	return result, replicaSets, err
+	return result, daemonSets, err
 }
 
-// GetNodeName return the k8s node name for the current machine.
-// It is exported for testing.
-var GetNodeName = func(r *Reporter) (string, error) {
-	uuidBytes, err := ioutil.ReadFile("/sys/class/dmi/id/product_uuid")
-	if os.IsNotExist(err) {
-		uuidBytes, err = ioutil.ReadFile("/sys/hypervisor/uuid")
-	}
-	if err != nil {
-		return "", err
-	}
-	uuid := strings.Trim(string(uuidBytes), "\n")
-	nodeName := ""
-	err = r.client.WalkNodes(func(node *api.Node) error {
-		if node.Status.NodeInfo.SystemUUID == string(uuid) {
-			nodeName = node.ObjectMeta.Name
-		}
+func (r *Reporter) statefulSetTopology() (report.Topology, []StatefulSet, error) {
+	statefulSets := []StatefulSet{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(StatefulSetMetadataTemplates).
+		WithMetricTemplates(StatefulSetMetricTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkStatefulSets(func(s StatefulSet) error {
+		result.AddNode(s.GetNode(r.probeID))
+		statefulSets = append(statefulSets, s)
 		return nil
 	})
-	return nodeName, err
+	return result, statefulSets, err
+}
+
+func (r *Reporter) cronJobTopology() (report.Topology, []CronJob, error) {
+	cronJobs := []CronJob{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(CronJobMetadataTemplates).
+		WithMetricTemplates(CronJobMetricTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkCronJobs(func(c CronJob) error {
+		result.AddNode(c.GetNode(r.probeID))
+		cronJobs = append(cronJobs, c)
+		return nil
+	})
+	return result, cronJobs, err
+}
+
+func (r *Reporter) persistentVolumeTopology() (report.Topology, []PersistentVolume, error) {
+	persistentVolumes := []PersistentVolume{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(PersistentVolumeMetadataTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkPersistentVolumes(func(p PersistentVolume) error {
+		result.AddNode(p.GetNode())
+		persistentVolumes = append(persistentVolumes, p)
+		return nil
+	})
+	return result, persistentVolumes, err
+}
+
+func (r *Reporter) persistentVolumeClaimTopology() (report.Topology, []PersistentVolumeClaim, error) {
+	persistentVolumeClaims := []PersistentVolumeClaim{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(PersistentVolumeClaimMetadataTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkPersistentVolumeClaims(func(p PersistentVolumeClaim) error {
+		result.AddNode(p.GetNode())
+		persistentVolumeClaims = append(persistentVolumeClaims, p)
+		return nil
+	})
+	return result, persistentVolumeClaims, err
+}
+
+func (r *Reporter) storageClassTopology() (report.Topology, []StorageClass, error) {
+	storageClasses := []StorageClass{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(StorageClassMetadataTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkStorageClasses(func(p StorageClass) error {
+		result.AddNode(p.GetNode())
+		storageClasses = append(storageClasses, p)
+		return nil
+	})
+	return result, storageClasses, err
 }
 
 type labelledChild interface {
@@ -350,7 +474,7 @@ func match(namespace string, selector labels.Selector, topology, id string) func
 	}
 }
 
-func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (report.Topology, error) {
+func (r *Reporter) podTopology(services []Service, deployments []Deployment, daemonSets []DaemonSet, statefulSets []StatefulSet, cronJobs []CronJob) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
@@ -378,28 +502,91 @@ func (r *Reporter) podTopology(services []Service, replicaSets []ReplicaSet) (re
 			report.MakeServiceNodeID(service.UID()),
 		))
 	}
-	for _, replicaSet := range replicaSets {
+	for _, deployment := range deployments {
+		selector, err := deployment.Selector()
+		if err != nil {
+			return pods, err
+		}
 		selectors = append(selectors, match(
-			replicaSet.Namespace(),
-			replicaSet.Selector(),
-			report.ReplicaSet,
-			report.MakeReplicaSetNodeID(replicaSet.UID()),
+			deployment.Namespace(),
+			selector,
+			report.Deployment,
+			report.MakeDeploymentNodeID(deployment.UID()),
 		))
 	}
-
-	thisNodeName, err := GetNodeName(r)
-	if err != nil {
-		return pods, err
+	for _, daemonSet := range daemonSets {
+		selector, err := daemonSet.Selector()
+		if err != nil {
+			return pods, err
+		}
+		selectors = append(selectors, match(
+			daemonSet.Namespace(),
+			selector,
+			report.DaemonSet,
+			report.MakeDaemonSetNodeID(daemonSet.UID()),
+		))
 	}
-	err = r.client.WalkPods(func(p Pod) error {
-		if p.NodeName() != thisNodeName {
-			return nil
+	for _, statefulSet := range statefulSets {
+		selector, err := statefulSet.Selector()
+		if err != nil {
+			return pods, err
+		}
+		selectors = append(selectors, match(
+			statefulSet.Namespace(),
+			selector,
+			report.StatefulSet,
+			report.MakeStatefulSetNodeID(statefulSet.UID()),
+		))
+	}
+	for _, cronJob := range cronJobs {
+		cronJobSelectors, err := cronJob.Selectors()
+		if err != nil {
+			return pods, err
+		}
+		for _, selector := range cronJobSelectors {
+			selectors = append(selectors, match(
+				cronJob.Namespace(),
+				selector,
+				report.CronJob,
+				report.MakeCronJobNodeID(cronJob.UID()),
+			))
+		}
+	}
+
+	var localPodUIDs map[string]struct{}
+	if r.nodeName == "" {
+		// We don't know the node name: fall back to obtaining the local pods from kubelet
+		var err error
+		localPodUIDs, err = GetLocalPodUIDs(fmt.Sprintf("127.0.0.1:%d", r.kubeletPort))
+		if err != nil {
+			log.Warnf("No node name and cannot obtain local pods, reporting all (which may impact performance): %v", err)
+		}
+	}
+	err := r.client.WalkPods(func(p Pod) error {
+		// filter out non-local pods: we only want to report local ones for performance reasons.
+		if r.nodeName != "" {
+			if p.NodeName() != r.nodeName {
+				return nil
+			}
+		} else if localPodUIDs != nil {
+			if _, ok := localPodUIDs[p.UID()]; !ok {
+				return nil
+			}
 		}
 		for _, selector := range selectors {
 			selector(p)
 		}
-		pods = pods.AddNode(p.GetNode(r.probeID))
+		pods.AddNode(p.GetNode(r.probeID))
 		return nil
 	})
 	return pods, err
+}
+
+func (r *Reporter) namespaceTopology() (report.Topology, error) {
+	result := report.MakeTopology()
+	err := r.client.WalkNamespaces(func(ns NamespaceResource) error {
+		result.AddNode(ns.GetNode())
+		return nil
+	})
+	return result, err
 }

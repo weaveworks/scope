@@ -119,6 +119,19 @@ type EncodeOptions struct {
 	// This is opt-in, as there may be a performance hit to checking circular references.
 	CheckCircularRef bool
 
+	// RecursiveEmptyCheck controls whether we descend into interfaces, structs and pointers
+	// when checking if a value is empty.
+	//
+	// Note that this may make OmitEmpty more expensive, as it incurs a lot more reflect calls.
+	RecursiveEmptyCheck bool
+
+	// Raw controls whether we encode Raw values.
+	// This is a "dangerous" option and must be explicitly set.
+	// If set, we blindly encode Raw values as-is, without checking
+	// if they are a correct representation of a value in that format.
+	// If unset, we error out.
+	Raw bool
+
 	// AsSymbols defines what should be encoded as symbols.
 	//
 	// Encoding as symbols can reduce the encoded size significantly.
@@ -222,50 +235,71 @@ type bytesEncWriter struct {
 }
 
 func (z *bytesEncWriter) writeb(s []byte) {
-	if len(s) > 0 {
-		c := z.grow(len(s))
-		copy(z.b[c:], s)
+	if len(s) == 0 {
+		return
 	}
+	oc, a := z.growNoAlloc(len(s))
+	if a {
+		z.growAlloc(len(s), oc)
+	}
+	copy(z.b[oc:], s)
 }
 
 func (z *bytesEncWriter) writestr(s string) {
-	if len(s) > 0 {
-		c := z.grow(len(s))
-		copy(z.b[c:], s)
+	if len(s) == 0 {
+		return
 	}
+	oc, a := z.growNoAlloc(len(s))
+	if a {
+		z.growAlloc(len(s), oc)
+	}
+	copy(z.b[oc:], s)
 }
 
 func (z *bytesEncWriter) writen1(b1 byte) {
-	c := z.grow(1)
-	z.b[c] = b1
+	oc, a := z.growNoAlloc(1)
+	if a {
+		z.growAlloc(1, oc)
+	}
+	z.b[oc] = b1
 }
 
 func (z *bytesEncWriter) writen2(b1 byte, b2 byte) {
-	c := z.grow(2)
-	z.b[c] = b1
-	z.b[c+1] = b2
+	oc, a := z.growNoAlloc(2)
+	if a {
+		z.growAlloc(2, oc)
+	}
+	z.b[oc+1] = b2
+	z.b[oc] = b1
 }
 
 func (z *bytesEncWriter) atEndOfEncode() {
 	*(z.out) = z.b[:z.c]
 }
 
-func (z *bytesEncWriter) grow(n int) (oldcursor int) {
+// have a growNoalloc(n int), which can be inlined.
+// if allocation is needed, then call growAlloc(n int)
+
+func (z *bytesEncWriter) growNoAlloc(n int) (oldcursor int, allocNeeded bool) {
 	oldcursor = z.c
-	z.c = oldcursor + n
+	z.c = z.c + n
 	if z.c > len(z.b) {
 		if z.c > cap(z.b) {
-			// appendslice logic (if cap < 1024, *2, else *1.25): more expensive. many copy calls.
-			// bytes.Buffer model (2*cap + n): much better
-			// bs := make([]byte, 2*cap(z.b)+n)
-			bs := make([]byte, growCap(cap(z.b), 1, n))
-			copy(bs, z.b[:oldcursor])
-			z.b = bs
+			allocNeeded = true
 		} else {
 			z.b = z.b[:cap(z.b)]
 		}
 	}
 	return
+}
+
+func (z *bytesEncWriter) growAlloc(n int, oldcursor int) {
+	// appendslice logic (if cap < 1024, *2, else *1.25): more expensive. many copy calls.
+	// bytes.Buffer model (2*cap + n): much better
+	// bs := make([]byte, 2*cap(z.b)+n)
+	bs := make([]byte, growCap(cap(z.b), 1, n))
+	copy(bs, z.b[:oldcursor])
+	z.b = bs
 }
 
 // ---------------------------------------------
@@ -279,17 +313,21 @@ type encFnInfo struct {
 }
 
 func (f *encFnInfo) builtin(rv reflect.Value) {
-	f.e.e.EncodeBuiltin(f.ti.rtid, rv.Interface())
+	f.e.e.EncodeBuiltin(f.ti.rtid, rv2i(rv))
+}
+
+func (f *encFnInfo) raw(rv reflect.Value) {
+	f.e.raw(rv2i(rv).(Raw))
 }
 
 func (f *encFnInfo) rawExt(rv reflect.Value) {
-	// rev := rv.Interface().(RawExt)
+	// rev := rv2i(rv).(RawExt)
 	// f.e.e.EncodeRawExt(&rev, f.e)
 	var re *RawExt
 	if rv.CanAddr() {
-		re = rv.Addr().Interface().(*RawExt)
+		re = rv2i(rv.Addr()).(*RawExt)
 	} else {
-		rev := rv.Interface().(RawExt)
+		rev := rv2i(rv).(RawExt)
 		re = &rev
 	}
 	f.e.e.EncodeRawExt(re, f.e)
@@ -300,21 +338,21 @@ func (f *encFnInfo) ext(rv reflect.Value) {
 	if k := rv.Kind(); (k == reflect.Struct || k == reflect.Array) && rv.CanAddr() {
 		rv = rv.Addr()
 	}
-	f.e.e.EncodeExt(rv.Interface(), f.xfTag, f.xfFn, f.e)
+	f.e.e.EncodeExt(rv2i(rv), f.xfTag, f.xfFn, f.e)
 }
 
 func (f *encFnInfo) getValueForMarshalInterface(rv reflect.Value, indir int8) (v interface{}, proceed bool) {
 	if indir == 0 {
-		v = rv.Interface()
+		v = rv2i(rv)
 	} else if indir == -1 {
 		// If a non-pointer was passed to Encode(), then that value is not addressable.
-		// Take addr if addresable, else copy value to an addressable value.
+		// Take addr if addressable, else copy value to an addressable value.
 		if rv.CanAddr() {
-			v = rv.Addr().Interface()
+			v = rv2i(rv.Addr())
 		} else {
 			rv2 := reflect.New(rv.Type())
 			rv2.Elem().Set(rv)
-			v = rv2.Interface()
+			v = rv2i(rv2)
 			// fmt.Printf("rv.Type: %v, rv2.Type: %v, v: %v\n", rv.Type(), rv2.Type(), v)
 		}
 	} else {
@@ -325,7 +363,7 @@ func (f *encFnInfo) getValueForMarshalInterface(rv reflect.Value, indir int8) (v
 			}
 			rv = rv.Elem()
 		}
-		v = rv.Interface()
+		v = rv2i(rv)
 	}
 	return v, true
 }
@@ -345,7 +383,7 @@ func (f *encFnInfo) binaryMarshal(rv reflect.Value) {
 
 func (f *encFnInfo) textMarshal(rv reflect.Value) {
 	if v, proceed := f.getValueForMarshalInterface(rv, f.ti.tmIndir); proceed {
-		// debugf(">>>> encoding.TextMarshaler: %T", rv.Interface())
+		// debugf(">>>> encoding.TextMarshaler: %T", rv2i(rv))
 		bs, fnerr := v.(encoding.TextMarshaler).MarshalText()
 		f.e.marshal(bs, fnerr, false, c_UTF8)
 	}
@@ -438,10 +476,10 @@ func (f *encFnInfo) kSlice(rv reflect.Value) {
 			bs := e.b[:0]
 			// do not use range, so that the number of elements encoded
 			// does not change, and encoding does not hang waiting on someone to close chan.
-			// for b := range rv.Interface().(<-chan byte) {
+			// for b := range rv2i(rv).(<-chan byte) {
 			// 	bs = append(bs, b)
 			// }
-			ch := rv.Interface().(<-chan byte)
+			ch := rv2i(rv).(<-chan byte)
 			for i := 0; i < l; i++ {
 				bs = append(bs, <-ch)
 			}
@@ -469,7 +507,7 @@ func (f *encFnInfo) kSlice(rv reflect.Value) {
 		// a concrete type and kInterface will bomb.
 		var fn *encFn
 		if rtelem.Kind() != reflect.Interface {
-			rtelemid := reflect.ValueOf(rtelem).Pointer()
+			rtelemid := rt2id(rtelem)
 			fn = e.getEncFn(rtelemid, rtelem, true, true)
 		}
 		// TODO: Consider perf implication of encoding odd index values as symbols if type is string
@@ -524,20 +562,20 @@ func (f *encFnInfo) kStruct(rv reflect.Value) {
 	}
 	newlen = 0
 	var kv stringRv
+	recur := e.h.RecursiveEmptyCheck
 	for _, si := range tisfi {
 		kv.r = si.field(rv, false)
 		if toMap {
-			if si.omitEmpty && isEmptyValue(kv.r) {
+			if si.omitEmpty && isEmptyValue(kv.r, recur, recur) {
 				continue
 			}
 			kv.v = si.encName
 		} else {
 			// use the zero value.
 			// if a reference or struct, set to nil (so you do not output too much)
-			if si.omitEmpty && isEmptyValue(kv.r) {
+			if si.omitEmpty && isEmptyValue(kv.r, recur, recur) {
 				switch kv.r.Kind() {
-				case reflect.Struct, reflect.Interface, reflect.Ptr, reflect.Array,
-					reflect.Map, reflect.Slice:
+				case reflect.Struct, reflect.Interface, reflect.Ptr, reflect.Array, reflect.Map, reflect.Slice:
 					kv.r = reflect.Value{} //encode as nil
 				}
 			}
@@ -548,7 +586,7 @@ func (f *encFnInfo) kStruct(rv reflect.Value) {
 
 	// debugf(">>>> kStruct: newlen: %v", newlen)
 	// sep := !e.be
-	ee := e.e //don't dereference everytime
+	ee := e.e //don't dereference every time
 
 	if toMap {
 		ee.EncodeMapStart(newlen)
@@ -642,7 +680,7 @@ func (f *encFnInfo) kMap(rv reflect.Value) {
 	ti := f.ti
 	rtkey := ti.rt.Key()
 	rtval := ti.rt.Elem()
-	rtkeyid := reflect.ValueOf(rtkey).Pointer()
+	rtkeyid := rt2id(rtkey)
 	// keyTypeIsString := f.ti.rt.Key().Kind() == reflect.String
 	var keyTypeIsString = rtkeyid == stringTypId
 	if keyTypeIsString {
@@ -652,7 +690,7 @@ func (f *encFnInfo) kMap(rv reflect.Value) {
 			rtkey = rtkey.Elem()
 		}
 		if rtkey.Kind() != reflect.Interface {
-			rtkeyid = reflect.ValueOf(rtkey).Pointer()
+			rtkeyid = rt2id(rtkey)
 			keyFn = e.getEncFn(rtkeyid, rtkey, true, true)
 		}
 	}
@@ -660,7 +698,7 @@ func (f *encFnInfo) kMap(rv reflect.Value) {
 		rtval = rtval.Elem()
 	}
 	if rtval.Kind() != reflect.Interface {
-		rtvalid := reflect.ValueOf(rtval).Pointer()
+		rtvalid := rt2id(rtval)
 		valFn = e.getEncFn(rtvalid, rtval, true, true)
 	}
 	mks := rv.MapKeys()
@@ -935,7 +973,7 @@ func newEncoder(h Handle) *Encoder {
 
 // Reset the Encoder with a new output stream.
 //
-// This accomodates using the state of the Encoder,
+// This accommodates using the state of the Encoder,
 // where it has "cached" information about sub-engines.
 func (e *Encoder) Reset(w io.Writer) {
 	ww, ok := w.(ioEncWriterWriter)
@@ -989,6 +1027,8 @@ func (e *Encoder) ResetBytes(out *[]byte) {
 // However, struct values may encode as arrays. This happens when:
 //    - StructToArray Encode option is set, OR
 //    - the tag on the _struct field sets the "toarray" option
+// Note that omitempty is ignored when encoding struct values as arrays,
+// as an entry must be encoded for each field, to maintain its position.
 //
 // Values with types that implement MapBySlice are encoded as stream maps.
 //
@@ -1015,8 +1055,7 @@ func (e *Encoder) ResetBytes(out *[]byte) {
 //      }
 //
 //      type MyStruct struct {
-//          _struct bool    `codec:",omitempty,toarray"`   //set omitempty for every field
-//                                                         //and encode struct as an array
+//          _struct bool    `codec:",toarray"`   //encode struct as an array
 //      }
 //
 // The mode of encoding is based on the type of the value. When a value is seen:
@@ -1042,20 +1081,6 @@ func (e *Encoder) MustEncode(v interface{}) {
 	e.w.atEndOfEncode()
 }
 
-// comment out these (Must)Write methods. They were only put there to support cbor.
-// However, users already have access to the streams, and can write directly.
-//
-// // Write allows users write to the Encoder stream directly.
-// func (e *Encoder) Write(bs []byte) (err error) {
-// 	defer panicToErr(&err)
-// 	e.w.writeb(bs)
-// 	return
-// }
-// // MustWrite is like write, but panics if unable to Write.
-// func (e *Encoder) MustWrite(bs []byte) {
-// 	e.w.writeb(bs)
-// }
-
 func (e *Encoder) encode(iv interface{}) {
 	// if ics, ok := iv.(Selfer); ok {
 	// 	ics.CodecEncodeSelf(e)
@@ -1067,7 +1092,8 @@ func (e *Encoder) encode(iv interface{}) {
 		e.e.EncodeNil()
 	case Selfer:
 		v.CodecEncodeSelf(e)
-
+	case Raw:
+		e.raw(v)
 	case reflect.Value:
 		e.encodeValue(v, nil)
 
@@ -1190,7 +1216,7 @@ func (e *Encoder) doEncodeValue(rv reflect.Value, fn *encFn, sptr uintptr,
 	}
 	if fn == nil {
 		rt := rv.Type()
-		rtid := reflect.ValueOf(rt).Pointer()
+		rtid := rt2id(rt)
 		// fn = e.getEncFn(rtid, rt, true, true)
 		fn = e.getEncFn(rtid, rt, checkFastpath, checkCodecSelfer)
 	}
@@ -1214,7 +1240,7 @@ func (e *Encoder) encodeValue(rv reflect.Value, fn *encFn) {
 }
 
 func (e *Encoder) getEncFn(rtid uintptr, rt reflect.Type, checkFastpath, checkCodecSelfer bool) (fn *encFn) {
-	// rtid := reflect.ValueOf(rt).Pointer()
+	// rtid := rt2id(rt)
 	var ok bool
 	if useMapForCodecCache {
 		fn, ok = e.f[rtid]
@@ -1252,6 +1278,8 @@ func (e *Encoder) getEncFn(rtid uintptr, rt reflect.Type, checkFastpath, checkCo
 
 	if checkCodecSelfer && ti.cs {
 		fn.f = (*encFnInfo).selferMarshal
+	} else if rtid == rawTypId {
+		fn.f = (*encFnInfo).raw
 	} else if rtid == rawExtTypId {
 		fn.f = (*encFnInfo).rawExt
 	} else if e.e.IsBuiltinType(rtid) {
@@ -1282,7 +1310,7 @@ func (e *Encoder) getEncFn(rtid uintptr, rt reflect.Type, checkFastpath, checkCo
 				} else {
 					rtu = reflect.SliceOf(rt.Elem())
 				}
-				rtuid := reflect.ValueOf(rtu).Pointer()
+				rtuid := rt2id(rtu)
 				if idx := fastpathAV.index(rtuid); idx != -1 {
 					xfnf := fastpathAV[idx].encfn
 					xrt := fastpathAV[idx].rt
@@ -1349,6 +1377,18 @@ func (e *Encoder) marshal(bs []byte, fnerr error, asis bool, c charEncoding) {
 }
 
 func (e *Encoder) asis(v []byte) {
+	if e.as == nil {
+		e.w.writeb(v)
+	} else {
+		e.as.EncodeAsis(v)
+	}
+}
+
+func (e *Encoder) raw(vv Raw) {
+	v := []byte(vv)
+	if !e.h.Raw {
+		e.errorf("Raw values cannot be encoded: %v", v)
+	}
 	if e.as == nil {
 		e.w.writeb(v)
 	} else {

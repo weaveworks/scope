@@ -1,18 +1,18 @@
 package multitenant
 
 import (
-	"bytes"
 	"fmt"
 	"net"
 	"sort"
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"context"
 	"github.com/bradfitz/gomemcache/memcache"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/weaveworks/scope/common/instrument"
+	"github.com/weaveworks/common/instrument"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -149,10 +149,10 @@ func memcacheStatusCode(err error) string {
 }
 
 // FetchReports gets reports from memcache.
-func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, []string, error) {
+func (c *MemcacheClient) FetchReports(ctx context.Context, keys []string) (map[string]report.Report, []string, error) {
 	defer memcacheRequests.Add(float64(len(keys)))
 	var found map[string]*memcache.Item
-	err := instrument.TimeRequestHistogramStatus("Get", memcacheRequestDuration, memcacheStatusCode, func() error {
+	err := instrument.TimeRequestHistogramStatus(ctx, "Memcache.GetMulti", memcacheRequestDuration, memcacheStatusCode, func(_ context.Context) error {
 		var err error
 		found, err = c.client.GetMulti(keys)
 		return err
@@ -175,7 +175,7 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 			continue
 		}
 		go func(key string) {
-			rep, err := report.MakeFromBinary(bytes.NewReader(item.Value))
+			rep, err := report.MakeFromBytes(item.Value)
 			if err != nil {
 				log.Warningf("Corrupt report in memcache %v: %v", key, err)
 				ch <- result{key: key}
@@ -206,8 +206,8 @@ func (c *MemcacheClient) FetchReports(keys []string) (map[string]report.Report, 
 }
 
 // StoreReportBytes stores a report.
-func (c *MemcacheClient) StoreReportBytes(key string, rpt []byte) (int, error) {
-	err := instrument.TimeRequestHistogramStatus("Put", memcacheRequestDuration, memcacheStatusCode, func() error {
+func (c *MemcacheClient) StoreReportBytes(ctx context.Context, key string, rpt []byte) (int, error) {
+	err := instrument.TimeRequestHistogramStatus(ctx, "Memcache.Put", memcacheRequestDuration, memcacheStatusCode, func(_ context.Context) error {
 		item := memcache.Item{Key: key, Value: rpt, Expiration: c.expiration}
 		return c.client.Set(&item)
 	})

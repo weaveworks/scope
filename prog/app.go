@@ -12,25 +12,29 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
-	"github.com/weaveworks/go-checkpoint"
-	"github.com/weaveworks/weave/common"
 
+	billing "github.com/weaveworks/billing-client"
+	"github.com/weaveworks/common/aws"
+	"github.com/weaveworks/common/logging"
+	"github.com/weaveworks/common/middleware"
+	"github.com/weaveworks/common/network"
+	"github.com/weaveworks/common/signals"
+	"github.com/weaveworks/common/tracing"
+	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/app/multitenant"
-	"github.com/weaveworks/scope/common/middleware"
-	"github.com/weaveworks/scope/common/network"
 	"github.com/weaveworks/scope/common/weave"
+	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/docker"
 )
 
 const (
 	memcacheUpdateInterval = 1 * time.Minute
+	httpTimeout            = 90 * time.Second
 )
 
 var (
@@ -44,10 +48,11 @@ var (
 
 func init() {
 	prometheus.MustRegister(requestDuration)
+	billing.MustRegisterMetrics()
 }
 
 // Router creates the mux for all the various app components.
-func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter) http.Handler {
+func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter, externalUI bool, capabilities map[string]bool, metricsGraphURL string) http.Handler {
 	router := mux.NewRouter().SkipClean(true)
 
 	// We pull in the http.DefaultServeMux to get the pprof routes
@@ -57,37 +62,27 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	app.RegisterReportPostHandler(collector, router)
 	app.RegisterControlRoutes(router, controlRouter)
 	app.RegisterPipeRoutes(router, pipeRouter)
-	app.RegisterTopologyRoutes(router, collector)
+	app.RegisterTopologyRoutes(router, app.WebReporter{Reporter: collector, MetricsGraphURL: metricsGraphURL}, capabilities)
 
-	uiHandler := http.FileServer(FS(false))
+	uiHandler := http.FileServer(GetFS(externalUI))
 	router.PathPrefix("/ui").Name("static").Handler(
 		middleware.PathRewrite(regexp.MustCompile("^/ui"), "").Wrap(
 			uiHandler))
 	router.PathPrefix("/").Name("static").Handler(uiHandler)
 
-	instrument := middleware.Instrument{
-		RouteMatcher: router,
-		Duration:     requestDuration,
-	}
-	return instrument.Wrap(router)
+	middlewares := middleware.Merge(
+		middleware.Instrument{
+			RouteMatcher: router,
+			Duration:     requestDuration,
+		},
+		middleware.Tracer{},
+	)
+
+	return middlewares.Wrap(router)
 }
 
-func awsConfigFromURL(url *url.URL) (*aws.Config, error) {
-	if url.User == nil {
-		return nil, fmt.Errorf("Must specify username & password in URL")
-	}
-	password, _ := url.User.Password()
-	creds := credentials.NewStaticCredentials(url.User.Username(), password, "")
-	config := aws.NewConfig().WithCredentials(creds)
-	if strings.Contains(url.Host, ".") {
-		config = config.WithEndpoint(fmt.Sprintf("http://%s", url.Host)).WithRegion("dummy")
-	} else {
-		config = config.WithRegion(url.Host)
-	}
-	return config, nil
-}
-
-func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname, memcachedHostname string, memcachedTimeout time.Duration, memcachedService string, memcachedExpiration time.Duration, memcachedCompressionLevel int, window time.Duration, createTables bool) (app.Collector, error) {
+func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname string,
+	memcacheConfig multitenant.MemcacheConfig, window time.Duration, createTables bool) (app.Collector, error) {
 	if collectorURL == "local" {
 		return app.NewCollector(window), nil
 	}
@@ -99,17 +94,17 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 
 	switch parsed.Scheme {
 	case "file":
-		return app.NewFileCollector(parsed.Path)
+		return app.NewFileCollector(parsed.Path, window)
 	case "dynamodb":
 		s3, err := url.Parse(s3URL)
 		if err != nil {
 			return nil, fmt.Errorf("Valid URL for s3 required: %v", err)
 		}
-		dynamoDBConfig, err := awsConfigFromURL(parsed)
+		dynamoDBConfig, err := aws.ConfigFromURL(parsed)
 		if err != nil {
 			return nil, err
 		}
-		s3Config, err := awsConfigFromURL(s3)
+		s3Config, err := aws.ConfigFromURL(s3)
 		if err != nil {
 			return nil, err
 		}
@@ -117,17 +112,8 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 		tableName := strings.TrimPrefix(parsed.Path, "/")
 		s3Store := multitenant.NewS3Client(s3Config, bucketName)
 		var memcacheClient *multitenant.MemcacheClient
-		if memcachedHostname != "" {
-			memcacheClient = multitenant.NewMemcacheClient(
-				multitenant.MemcacheConfig{
-					Host:             memcachedHostname,
-					Timeout:          memcachedTimeout,
-					Expiration:       memcachedExpiration,
-					UpdateInterval:   memcacheUpdateInterval,
-					Service:          memcachedService,
-					CompressionLevel: memcachedCompressionLevel,
-				},
-			)
+		if memcacheConfig.Host != "" {
+			memcacheClient = multitenant.NewMemcacheClient(memcacheConfig)
 		}
 		awsCollector, err := multitenant.NewAWSCollector(
 			multitenant.AWSCollectorConfig{
@@ -154,7 +140,20 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 	return nil, fmt.Errorf("Invalid collector '%s'", collectorURL)
 }
 
-func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string) (app.ControlRouter, error) {
+func emitterFactory(collector app.Collector, clientCfg billing.Config, userIDer multitenant.UserIDer, emitterCfg multitenant.BillingEmitterConfig) (*multitenant.BillingEmitter, error) {
+	billingClient, err := billing.NewClient(clientCfg)
+	if err != nil {
+		return nil, err
+	}
+	emitterCfg.UserIDer = userIDer
+	return multitenant.NewBillingEmitter(
+		collector,
+		billingClient,
+		emitterCfg,
+	)
+}
+
+func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string, controlRPCTimeout time.Duration) (app.ControlRouter, error) {
 	if controlRouterURL == "local" {
 		return app.NewLocalControlRouter(), nil
 	}
@@ -166,11 +165,11 @@ func controlRouterFactory(userIDer multitenant.UserIDer, controlRouterURL string
 
 	if parsed.Scheme == "sqs" {
 		prefix := strings.TrimPrefix(parsed.Path, "/")
-		sqsConfig, err := awsConfigFromURL(parsed)
+		sqsConfig, err := aws.ConfigFromURL(parsed)
 		if err != nil {
 			return nil, err
 		}
-		return multitenant.NewSQSControlRouter(sqsConfig, userIDer, prefix), nil
+		return multitenant.NewSQSControlRouter(sqsConfig, userIDer, prefix, controlRPCTimeout), nil
 	}
 
 	return nil, fmt.Errorf("Invalid control router '%s'", controlRouterURL)
@@ -208,6 +207,9 @@ func appMain(flags appFlags) {
 	setLogFormatter(flags.logPrefix)
 	runtime.SetBlockProfileRate(flags.blockProfileRate)
 
+	traceCloser := tracing.NewFromEnv(fmt.Sprintf("scope-%s", flags.serviceName))
+	defer traceCloser.Close()
+
 	defer log.Info("app exiting")
 	rand.Seed(time.Now().UnixNano())
 	app.UniqueID = strconv.FormatInt(rand.Int63(), 16)
@@ -221,15 +223,32 @@ func appMain(flags appFlags) {
 	}
 
 	collector, err := collectorFactory(
-		userIDer, flags.collectorURL, flags.s3URL, flags.natsHostname, flags.memcachedHostname,
-		flags.memcachedTimeout, flags.memcachedService, flags.memcachedExpiration, flags.memcachedCompressionLevel,
+		userIDer, flags.collectorURL, flags.s3URL, flags.natsHostname,
+		multitenant.MemcacheConfig{
+			Host:             flags.memcachedHostname,
+			Timeout:          flags.memcachedTimeout,
+			Expiration:       flags.memcachedExpiration,
+			UpdateInterval:   memcacheUpdateInterval,
+			Service:          flags.memcachedService,
+			CompressionLevel: flags.memcachedCompressionLevel,
+		},
 		flags.window, flags.awsCreateTables)
 	if err != nil {
 		log.Fatalf("Error creating collector: %v", err)
 		return
 	}
 
-	controlRouter, err := controlRouterFactory(userIDer, flags.controlRouterURL)
+	if flags.BillingEmitterConfig.Enabled {
+		billingEmitter, err := emitterFactory(collector, flags.BillingClientConfig, userIDer, flags.BillingEmitterConfig)
+		if err != nil {
+			log.Fatalf("Error creating emitter: %v", err)
+			return
+		}
+		defer billingEmitter.Close()
+		collector = billingEmitter
+	}
+
+	controlRouter, err := controlRouterFactory(userIDer, flags.controlRouterURL, flags.controlRPCTimeout)
 	if err != nil {
 		log.Fatalf("Error creating control router: %v", err)
 		return
@@ -245,6 +264,7 @@ func appMain(flags appFlags) {
 	checkpoint.CheckInterval(&checkpoint.CheckParams{
 		Product: "scope-app",
 		Version: app.Version,
+		Flags:   makeBaseCheckpointFlags(),
 	}, versionCheckPeriod, func(r *checkpoint.CheckResponse, err error) {
 		if err != nil {
 			log.Errorf("Error checking version: %v", err)
@@ -255,8 +275,8 @@ func appMain(flags appFlags) {
 		}
 	})
 
-	// Periodically try and register out IP address in WeaveDNS.
-	if flags.weaveEnabled {
+	// Periodically try and register our IP address in WeaveDNS.
+	if flags.weaveEnabled && flags.weaveHostname != "" {
 		weave, err := newWeavePublisher(
 			flags.dockerEndpoint, flags.weaveAddr,
 			flags.weaveHostname, flags.containerName)
@@ -267,17 +287,27 @@ func appMain(flags appFlags) {
 		}
 	}
 
-	handler := router(collector, controlRouter, pipeRouter)
+	capabilities := map[string]bool{
+		xfer.HistoricReportsCapability: collector.HasHistoricReports(),
+	}
+	logger := logging.Logrus(log.StandardLogger())
+	handler := router(collector, controlRouter, pipeRouter, flags.externalUI, capabilities, flags.metricsGraphURL)
 	if flags.logHTTP {
-		handler = middleware.Logging.Wrap(handler)
+		handler = middleware.Log{
+			Log:               logger,
+			LogRequestHeaders: flags.logHTTPHeaders,
+		}.Wrap(handler)
 	}
 
 	server := &graceful.Server{
 		// we want to manage the stop condition ourselves below
 		NoSignalHandling: true,
 		Server: &http.Server{
-			Addr:    flags.listen,
-			Handler: handler,
+			Addr:           flags.listen,
+			Handler:        handler,
+			ReadTimeout:    httpTimeout,
+			WriteTimeout:   httpTimeout,
+			MaxHeaderBytes: 1 << 20,
 		},
 	}
 	go func() {
@@ -288,10 +318,27 @@ func appMain(flags appFlags) {
 	}()
 
 	// block until INT/TERM
-	common.SignalHandlerLoop()
+	signals.SignalHandlerLoop(
+		logger,
+		stopper{
+			Server:      server,
+			StopTimeout: flags.stopTimeout,
+		},
+	)
+}
+
+// stopper adapts graceful.Server's interface to signals.SignalReceiver's interface.
+type stopper struct {
+	Server      *graceful.Server
+	StopTimeout time.Duration
+}
+
+// Stop implements signals.SignalReceiver's Stop method.
+func (c stopper) Stop() error {
 	// stop listening, wait for any active connections to finish
-	server.Stop(flags.stopTimeout)
-	<-server.StopChan()
+	c.Server.Stop(c.StopTimeout)
+	<-c.Server.StopChan()
+	return nil
 }
 
 func newWeavePublisher(dockerEndpoint, weaveAddr, weaveHostname, containerName string) (*app.WeavePublisher, error) {

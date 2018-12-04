@@ -1,33 +1,35 @@
 package main
 
 import (
-	"flag"
-	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"net/url"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
-	"github.com/weaveworks/go-checkpoint"
-	"github.com/weaveworks/weave/common"
+	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/weaveworks/common/logging"
+	"github.com/weaveworks/common/network"
+	"github.com/weaveworks/common/sanitize"
+	"github.com/weaveworks/common/signals"
+	"github.com/weaveworks/common/tracing"
+	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/common/hostname"
-	"github.com/weaveworks/scope/common/network"
-	"github.com/weaveworks/scope/common/sanitize"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/appclient"
+	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/controls"
+	"github.com/weaveworks/scope/probe/cri"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
-	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
@@ -38,36 +40,62 @@ import (
 
 const (
 	versionCheckPeriod = 6 * time.Hour
-	defaultServiceHost = "cloud.weave.works:443"
+	defaultServiceHost = "https://cloud.weave.works.:443"
 )
 
-var pluginAPIVersion = "1"
+var (
+	pluginAPIVersion = "1"
+)
 
-func check(flags map[string]string) {
-	handleResponse := func(r *checkpoint.CheckResponse, err error) {
-		if err != nil {
-			log.Errorf("Error checking version: %v", err)
-		} else if r.Outdated {
-			log.Infof("Scope version %s is available; please update at %s",
-				r.CurrentVersion, r.CurrentDownloadURL)
+func checkNewScopeVersion(flags probeFlags) {
+	checkpointFlags := makeBaseCheckpointFlags()
+	if flags.kubernetesEnabled {
+		checkpointFlags["kubernetes_enabled"] = "true"
+	}
+	if flags.ecsEnabled {
+		checkpointFlags["ecs_enabled"] = "true"
+	}
+
+	go func() {
+		handleResponse := func(r *checkpoint.CheckResponse, err error) {
+			if err != nil {
+				log.Errorf("Error checking version: %v", err)
+			} else if r.Outdated {
+				log.Infof("Scope version %s is available; please update at %s",
+					r.CurrentVersion, r.CurrentDownloadURL)
+			}
 		}
-	}
 
-	// Start background version checking
-	params := checkpoint.CheckParams{
-		Product: "scope-probe",
-		Version: version,
-		Flags:   flags,
+		// Start background version checking
+		params := checkpoint.CheckParams{
+			Product: "scope-probe",
+			Version: version,
+			Flags:   checkpointFlags,
+		}
+		resp, err := checkpoint.Check(&params)
+		handleResponse(resp, err)
+		checkpoint.CheckInterval(&params, versionCheckPeriod, handleResponse)
+	}()
+}
+
+func maybeExportProfileData(flags probeFlags) {
+	if flags.httpListen != "" {
+		go func() {
+			http.Handle("/metrics", prometheus.Handler())
+			log.Infof("Profiling data being exported to %s", flags.httpListen)
+			log.Infof("go tool pprof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
+			log.Infof("Profiling endpoint %s terminated: %v", flags.httpListen, http.ListenAndServe(flags.httpListen, nil))
+		}()
 	}
-	resp, err := checkpoint.Check(&params)
-	handleResponse(resp, err)
-	checkpoint.CheckInterval(&params, versionCheckPeriod, handleResponse)
 }
 
 // Main runs the probe
-func probeMain(flags probeFlags) {
+func probeMain(flags probeFlags, targets []appclient.Target) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
+
+	traceCloser := tracing.NewFromEnv("scope-probe")
+	defer traceCloser.Close()
 
 	// Setup in memory metrics sink
 	inm := metrics.NewInmemSink(time.Minute, 2*time.Minute)
@@ -78,7 +106,7 @@ func probeMain(flags probeFlags) {
 	defer log.Info("probe exiting")
 
 	if flags.spyProcs && os.Getegid() != 0 {
-		log.Warn("--probe.process=true, but that requires root to find everything")
+		log.Warn("--probe.proc.spy=true, but that requires root to find everything")
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -88,46 +116,83 @@ func probeMain(flags probeFlags) {
 		hostID   = hostName // TODO(pb): we should sanitize the hostname
 	)
 	log.Infof("probe starting, version %s, ID %s", version, probeID)
-	checkpointFlags := map[string]string{}
-	if flags.kubernetesEnabled {
-		checkpointFlags["kubernetes_enabled"] = "true"
-	}
-	go check(checkpointFlags)
+	checkNewScopeVersion(flags)
 
-	var targets = []string{}
-	if flags.token != "" {
-		// service mode
-		if len(flag.Args()) == 0 {
-			targets = append(targets, defaultServiceHost)
-		}
-	} else if !flags.noApp {
-		targets = append(targets, fmt.Sprintf("localhost:%d", xfer.AppPort))
-	}
-	targets = append(targets, flag.Args()...)
-	log.Infof("publishing to: %s", strings.Join(targets, ", "))
-
-	probeConfig := appclient.ProbeConfig{
-		Token:        flags.token,
-		ProbeVersion: version,
-		ProbeID:      probeID,
-		Insecure:     flags.insecure,
-	}
 	handlerRegistry := controls.NewDefaultHandlerRegistry()
-	clientFactory := func(hostname, endpoint string) (appclient.AppClient, error) {
+	clientFactory := func(hostname string, url url.URL) (appclient.AppClient, error) {
+		token := flags.token
+		if url.User != nil {
+			token = url.User.Username()
+			url.User = nil // erase credentials, as we use a special header
+		}
+		probeConfig := appclient.ProbeConfig{
+			Token:        token,
+			ProbeVersion: version,
+			ProbeID:      probeID,
+			Insecure:     flags.insecure,
+		}
 		return appclient.NewAppClient(
-			probeConfig, hostname, endpoint,
+			probeConfig, hostname, url,
 			xfer.ControlHandlerFunc(handlerRegistry.HandleControlRequest),
 		)
 	}
-	clients := appclient.NewMultiAppClient(clientFactory, flags.noControls)
-	defer clients.Stop()
 
-	dnsLookupFn := net.LookupIP
-	if flags.resolver != "" {
-		dnsLookupFn = appclient.LookupUsing(flags.resolver)
+	var clients interface {
+		probe.ReportPublisher
+		controls.PipeClient
 	}
-	resolver := appclient.NewResolver(targets, dnsLookupFn, clients.Set)
-	defer resolver.Stop()
+	if flags.printOnStdout {
+		if len(targets) > 0 {
+			log.Warnf("Dumping to stdout only: targets %v will be ignored", targets)
+		}
+		clients = new(struct {
+			report.StdoutPublisher
+			controls.DummyPipeClient
+		})
+	} else {
+		multiClients := appclient.NewMultiAppClient(clientFactory, flags.noControls)
+		defer multiClients.Stop()
+
+		dnsLookupFn := net.LookupIP
+		if flags.resolver != "" {
+			dnsLookupFn = appclient.LookupUsing(flags.resolver)
+		}
+		resolver, err := appclient.NewResolver(appclient.ResolverConfig{
+			Targets: targets,
+			Lookup:  dnsLookupFn,
+			Set:     multiClients.Set,
+		})
+		if err != nil {
+			log.Fatalf("Failed to create resolver: %v", err)
+			return
+		}
+		defer resolver.Stop()
+
+		if flags.weaveEnabled && flags.weaveHostname != "" {
+			dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
+			if err != nil {
+				log.Errorf("Error getting docker bridge ip: %v", err)
+			} else {
+				weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
+				weaveTargets, err := appclient.ParseTargets([]string{flags.weaveHostname})
+				if err != nil {
+					log.Errorf("Failed to parse weave targets: %v", err)
+				} else {
+					weaveResolver, err := appclient.NewResolver(appclient.ResolverConfig{
+						Targets: weaveTargets,
+						Lookup:  weaveDNSLookup,
+						Set:     multiClients.Set,
+					})
+					if err != nil {
+						log.Errorf("Failed to create weave resolver: %v", err)
+					} else {
+						defer weaveResolver.Stop()
+					}
+				}
+			}
+		}
+		clients = multiClients
+	}
 
 	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
 
@@ -137,12 +202,10 @@ func probeMain(flags probeFlags) {
 	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
 
 	var processCache *process.CachingWalker
-	var scanner procspy.ConnectionScanner
 	if flags.procEnabled {
-		processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot))
-		scanner = procspy.NewConnectionScanner(processCache)
+		processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot, false))
 		p.AddTicker(processCache)
-		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies))
+		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies, flags.noCommandLineArguments))
 	}
 
 	dnsSnooper, err := endpoint.NewDNSSnooper()
@@ -158,9 +221,10 @@ func probeMain(flags probeFlags) {
 		SpyProcs:     flags.spyProcs,
 		UseConntrack: flags.useConntrack,
 		WalkProc:     flags.procEnabled,
+		UseEbpfConn:  flags.useEbpfConn,
 		ProcRoot:     flags.procRoot,
 		BufferSize:   flags.conntrackBufferSize,
-		Scanner:      scanner,
+		ProcessCache: processCache,
 		DNSSnooper:   dnsSnooper,
 	})
 	defer endpointReporter.Stop()
@@ -174,7 +238,16 @@ func probeMain(flags probeFlags) {
 				log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
 			}
 		}
-		if registry, err := docker.NewRegistry(flags.dockerInterval, clients, true, hostID, handlerRegistry); err == nil {
+		options := docker.RegistryOptions{
+			Interval:               flags.dockerInterval,
+			Pipes:                  clients,
+			CollectStats:           true,
+			HostID:                 hostID,
+			HandlerRegistry:        handlerRegistry,
+			NoCommandLineArguments: flags.noCommandLineArguments,
+			NoEnvironmentVariables: flags.noEnvironmentVariables,
+		}
+		if registry, err := docker.NewRegistry(options); err == nil {
 			defer registry.Stop()
 			if flags.procEnabled {
 				p.AddTagger(docker.NewTagger(registry, processCache))
@@ -185,10 +258,19 @@ func probeMain(flags probeFlags) {
 		}
 	}
 
+	if flags.criEnabled {
+		client, err := cri.NewCRIClient(flags.criEndpoint)
+		if err != nil {
+			log.Errorf("CRI: failed to start registry: %v", err)
+		} else {
+			p.AddReporter(cri.NewReporter(client))
+		}
+	}
+
 	if flags.kubernetesEnabled {
-		if client, err := kubernetes.NewClient(flags.kubernetesConfig); err == nil {
+		if client, err := kubernetes.NewClient(flags.kubernetesClientConfig); err == nil {
 			defer client.Stop()
-			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry)
+			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry, flags.kubernetesNodeName, flags.kubernetesKubeletPort)
 			defer reporter.Stop()
 			p.AddReporter(reporter)
 			p.AddTagger(reporter)
@@ -198,20 +280,22 @@ func probeMain(flags probeFlags) {
 		}
 	}
 
+	if flags.ecsEnabled {
+		reporter := awsecs.Make(flags.ecsCacheSize, flags.ecsCacheExpiry, flags.ecsClusterRegion, handlerRegistry, probeID)
+		defer reporter.Stop()
+		p.AddReporter(reporter)
+		p.AddTagger(reporter)
+	}
+
 	if flags.weaveEnabled {
 		client := weave.NewClient(sanitize.URL("http://", 6784, "")(flags.weaveAddr))
-		weave := overlay.NewWeave(hostID, client)
-		defer weave.Stop()
-		p.AddTagger(weave)
-		p.AddReporter(weave)
-
-		dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
+		weave, err := overlay.NewWeave(hostID, client)
 		if err != nil {
-			log.Println("Error getting docker bridge ip:", err)
+			log.Errorf("Weave: failed to start client: %v", err)
 		} else {
-			weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
-			weaveResolver := appclient.NewResolver([]string{flags.weaveHostname}, weaveDNSLookup, clients.Set)
-			defer weaveResolver.Stop()
+			defer weave.Stop()
+			p.AddTagger(weave)
+			p.AddReporter(weave)
 		}
 	}
 
@@ -232,16 +316,11 @@ func probeMain(flags probeFlags) {
 		p.AddReporter(pluginRegistry)
 	}
 
-	if flags.httpListen != "" {
-		go func() {
-			log.Infof("Profiling data being exported to %s", flags.httpListen)
-			log.Infof("go tool pprof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
-			log.Infof("Profiling endpoint %s terminated: %v", flags.httpListen, http.ListenAndServe(flags.httpListen, nil))
-		}()
-	}
+	maybeExportProfileData(flags)
 
 	p.Start()
-	defer p.Stop()
-
-	common.SignalHandlerLoop()
+	signals.SignalHandlerLoop(
+		logging.Logrus(log.StandardLogger()),
+		p,
+	)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
@@ -12,13 +13,12 @@ import (
 	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 	"github.com/weaveworks/scope/test/reflect"
 )
 
 func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
-	s, ok := detailed.MakeNodeSummary(fixture.Report, r.Render(fixture.Report, nil)[id])
+	s, ok := detailed.MakeNodeSummary(detailed.RenderContext{Report: fixture.Report}, r.Render(fixture.Report).Nodes[id])
 	if !ok {
 		t.Fatalf("Expected node %s to be summarizable, but wasn't", id)
 	}
@@ -30,27 +30,26 @@ func connectionID(nodeID string, addr string) string {
 }
 
 func TestMakeDetailedHostNode(t *testing.T) {
-	renderableNodes := render.HostRenderer.Render(fixture.Report, nil)
+	renderableNodes := render.HostRenderer.Render(fixture.Report).Nodes
 	renderableNode := renderableNodes[fixture.ClientHostNodeID]
-	have := detailed.MakeNode("hosts", fixture.Report, renderableNodes, renderableNode)
+	have := detailed.MakeNode("hosts", detailed.RenderContext{Report: fixture.Report}, renderableNodes, renderableNode)
 
 	containerImageNodeSummary := child(t, render.ContainerImageRenderer, expected.ClientContainerImageNodeID)
 	containerNodeSummary := child(t, render.ContainerRenderer, fixture.ClientContainerNodeID)
 	process1NodeSummary := child(t, render.ProcessRenderer, fixture.ClientProcess1NodeID)
-	process1NodeSummary.Linkable = true
 	process2NodeSummary := child(t, render.ProcessRenderer, fixture.ClientProcess2NodeID)
-	process2NodeSummary.Linkable = true
 	podNodeSummary := child(t, render.PodRenderer, fixture.ClientPodNodeID)
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
-			ID:         fixture.ClientHostNodeID,
-			Label:      "client",
-			LabelMinor: "hostname.com",
-			Rank:       "hostname.com",
-			Pseudo:     false,
-			Shape:      "circle",
-			Linkable:   true,
-			Adjacency:  report.MakeIDList(fixture.ServerHostNodeID),
+			BasicNodeSummary: detailed.BasicNodeSummary{
+				ID:         fixture.ClientHostNodeID,
+				Label:      "client",
+				LabelMinor: "hostname.com",
+				Rank:       "hostname.com",
+				Pseudo:     false,
+				Shape:      "circle",
+			},
+			Adjacency: report.MakeIDList(fixture.ServerHostNodeID),
 			Metadata: []report.MetadataRow{
 				{
 					ID:       "host_name",
@@ -66,7 +65,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				},
 				{
 					ID:       "local_networks",
-					Label:    "Local Networks",
+					Label:    "Local networks",
 					Value:    "10.10.10.0/24",
 					Priority: 13,
 				},
@@ -105,8 +104,8 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				TopologyID: "pods",
 				Columns: []detailed.Column{
 					{ID: kubernetes.State, Label: "State"},
-					{ID: report.Container, Label: "# Containers", Datatype: "number"},
-					{ID: kubernetes.IP, Label: "IP"},
+					{ID: report.Container, Label: "# Containers", Datatype: report.Number},
+					{ID: kubernetes.IP, Label: "IP", Datatype: report.IP},
 				},
 				Nodes: []detailed.NodeSummary{podNodeSummary},
 			},
@@ -114,8 +113,8 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Label:      "Containers",
 				TopologyID: "containers",
 				Columns: []detailed.Column{
-					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
-					{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
+					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: report.Number},
+					{ID: docker.MemoryUsage, Label: "Memory", Datatype: report.Number},
 				},
 				Nodes: []detailed.NodeSummary{containerNodeSummary},
 			},
@@ -123,19 +122,17 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Label:      "Processes",
 				TopologyID: "processes",
 				Columns: []detailed.Column{
-					{ID: process.PID, Label: "PID", Datatype: "number"},
-					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
-					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
+					{ID: process.PID, Label: "PID", Datatype: report.Number},
+					{ID: process.CPUUsage, Label: "CPU", Datatype: report.Number},
+					{ID: process.MemoryUsage, Label: "Memory", Datatype: report.Number},
 				},
 				Nodes: []detailed.NodeSummary{process1NodeSummary, process2NodeSummary},
 			},
 			{
-				Label:      "Container Images",
+				Label:      "Container images",
 				TopologyID: "containers-by-image",
-				Columns: []detailed.Column{
-					{ID: report.Container, Label: "# Containers", DefaultSort: true, Datatype: "number"},
-				},
-				Nodes: []detailed.NodeSummary{containerImageNodeSummary},
+				Columns:    []detailed.Column{},
+				Nodes:      []detailed.NodeSummary{containerImageNodeSummary},
 			},
 		},
 		Connections: []detailed.ConnectionsSummary{
@@ -153,10 +150,10 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       connectionID(fixture.ServerHostNodeID, ""),
-						NodeID:   fixture.ServerHostNodeID,
-						Label:    "server",
-						Linkable: true,
+						ID:         connectionID(fixture.ServerHostNodeID, ""),
+						NodeID:     fixture.ServerHostNodeID,
+						Label:      "server",
+						LabelMinor: "hostname.com",
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
@@ -179,28 +176,28 @@ func TestMakeDetailedHostNode(t *testing.T) {
 
 func TestMakeDetailedContainerNode(t *testing.T) {
 	id := fixture.ServerContainerNodeID
-	renderableNodes := render.ContainerWithImageNameRenderer.Render(fixture.Report, nil)
+	renderableNodes := render.ContainerWithImageNameRenderer.Render(fixture.Report).Nodes
 	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
 	}
-	have := detailed.MakeNode("containers", fixture.Report, renderableNodes, renderableNode)
+	have := detailed.MakeNode("containers", detailed.RenderContext{Report: fixture.Report}, renderableNodes, renderableNode)
 
 	serverProcessNodeSummary := child(t, render.ProcessRenderer, fixture.ServerProcessNodeID)
-	serverProcessNodeSummary.Linkable = true
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
-			ID:         id,
-			Label:      "server",
-			LabelMinor: "server.hostname.com",
-			Rank:       fixture.ServerContainerImageName,
-			Shape:      "hexagon",
-			Linkable:   true,
-			Pseudo:     false,
+			BasicNodeSummary: detailed.BasicNodeSummary{
+				ID:         id,
+				Label:      "server",
+				LabelMinor: "server.hostname.com",
+				Rank:       fixture.ServerContainerImageName,
+				Shape:      "hexagon",
+				Pseudo:     false,
+			},
 			Metadata: []report.MetadataRow{
-				{ID: "docker_container_id", Label: "ID", Value: fixture.ServerContainerID, Priority: 1, Truncate: 12},
-				{ID: "docker_container_state_human", Label: "State", Value: "running", Priority: 2},
-				{ID: "docker_image_id", Label: "Image ID", Value: fixture.ServerContainerImageID, Priority: 11, Truncate: 12},
+				{ID: "docker_image_name", Label: "Image name", Value: fixture.ServerContainerImageName, Priority: 2},
+				{ID: "docker_container_state_human", Label: "State", Value: "running", Priority: 4},
+				{ID: "docker_container_id", Label: "ID", Value: fixture.ServerContainerID, Priority: 11, Truncate: 12},
 			},
 			Metrics: []report.MetricRow{
 				{
@@ -227,14 +224,14 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 					TopologyID: "containers-by-image",
 				},
 				{
-					ID:         fixture.ServerHostNodeID,
-					Label:      fixture.ServerHostName,
-					TopologyID: "hosts",
-				},
-				{
 					ID:         fixture.ServerPodNodeID,
 					Label:      "pong-b",
 					TopologyID: "pods",
+				},
+				{
+					ID:         fixture.ServerHostNodeID,
+					Label:      "server",
+					TopologyID: "hosts",
 				},
 			},
 		},
@@ -244,9 +241,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Label:      "Processes",
 				TopologyID: "processes",
 				Columns: []detailed.Column{
-					{ID: process.PID, Label: "PID", Datatype: "number"},
-					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
-					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
+					{ID: process.PID, Label: "PID", Datatype: report.Number},
+					{ID: process.CPUUsage, Label: "CPU", Datatype: report.Number},
+					{ID: process.MemoryUsage, Label: "Memory", Datatype: report.Number},
 				},
 				Nodes: []detailed.NodeSummary{serverProcessNodeSummary},
 			},
@@ -259,10 +256,10 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       connectionID(fixture.ClientContainerNodeID, ""),
-						NodeID:   fixture.ClientContainerNodeID,
-						Label:    "client",
-						Linkable: true,
+						ID:         connectionID(fixture.ClientContainerNodeID, ""),
+						NodeID:     fixture.ClientContainerNodeID,
+						Label:      "client",
+						LabelMinor: "client.hostname.com",
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
@@ -275,10 +272,9 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 						},
 					},
 					{
-						ID:       connectionID(render.IncomingInternetID, fixture.RandomClientIP),
-						NodeID:   render.IncomingInternetID,
-						Label:    fixture.RandomClientIP,
-						Linkable: true,
+						ID:     connectionID(render.IncomingInternetID, fixture.RandomClientIP),
+						NodeID: render.IncomingInternetID,
+						Label:  fixture.RandomClientIP,
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
@@ -308,40 +304,40 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 
 func TestMakeDetailedPodNode(t *testing.T) {
 	id := fixture.ServerPodNodeID
-	renderableNodes := render.PodRenderer.Render(fixture.Report, nil)
+	renderableNodes := render.PodRenderer.Render(fixture.Report).Nodes
 	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
 	}
-	have := detailed.MakeNode("pods", fixture.Report, renderableNodes, renderableNode)
+	have := detailed.MakeNode("pods", detailed.RenderContext{Report: fixture.Report}, renderableNodes, renderableNode)
 
 	containerNodeSummary := child(t, render.ContainerWithImageNameRenderer, fixture.ServerContainerNodeID)
 	serverProcessNodeSummary := child(t, render.ProcessRenderer, fixture.ServerProcessNodeID)
-	serverProcessNodeSummary.Linkable = true // Temporary workaround for: https://github.com/weaveworks/scope/issues/1295
 	want := detailed.Node{
 		NodeSummary: detailed.NodeSummary{
-			ID:         id,
-			Label:      "pong-b",
-			LabelMinor: "1 container",
-			Rank:       "ping/pong-b",
-			Shape:      "heptagon",
-			Linkable:   true,
-			Pseudo:     false,
+			BasicNodeSummary: detailed.BasicNodeSummary{
+				ID:         id,
+				Label:      "pong-b",
+				LabelMinor: "1 container",
+				Rank:       "ping/pong-b",
+				Shape:      "heptagon",
+				Pseudo:     false,
+			},
 			Metadata: []report.MetadataRow{
 				{ID: "kubernetes_state", Label: "State", Value: "running", Priority: 2},
-				{ID: "container", Label: "# Containers", Value: "1", Priority: 4, Datatype: "number"},
+				{ID: "container", Label: "# Containers", Value: "1", Priority: 4, Datatype: report.Number},
 				{ID: "kubernetes_namespace", Label: "Namespace", Value: "ping", Priority: 5},
 			},
 			Parents: []detailed.Parent{
 				{
-					ID:         fixture.ServerHostNodeID,
-					Label:      fixture.ServerHostName,
-					TopologyID: "hosts",
-				},
-				{
 					ID:         fixture.ServiceNodeID,
 					Label:      fixture.ServiceName,
 					TopologyID: "services",
+				},
+				{
+					ID:         fixture.ServerHostNodeID,
+					Label:      "server",
+					TopologyID: "hosts",
 				},
 			},
 		},
@@ -351,8 +347,8 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Label:      "Containers",
 				TopologyID: "containers",
 				Columns: []detailed.Column{
-					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: "number"},
-					{ID: docker.MemoryUsage, Label: "Memory", Datatype: "number"},
+					{ID: docker.CPUTotalUsage, Label: "CPU", Datatype: report.Number},
+					{ID: docker.MemoryUsage, Label: "Memory", Datatype: report.Number},
 				},
 				Nodes: []detailed.NodeSummary{containerNodeSummary},
 			},
@@ -360,9 +356,9 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Label:      "Processes",
 				TopologyID: "processes",
 				Columns: []detailed.Column{
-					{ID: process.PID, Label: "PID", Datatype: "number"},
-					{ID: process.CPUUsage, Label: "CPU", Datatype: "number"},
-					{ID: process.MemoryUsage, Label: "Memory", Datatype: "number"},
+					{ID: process.PID, Label: "PID", Datatype: report.Number},
+					{ID: process.CPUUsage, Label: "CPU", Datatype: report.Number},
+					{ID: process.MemoryUsage, Label: "Memory", Datatype: report.Number},
 				},
 				Nodes: []detailed.NodeSummary{serverProcessNodeSummary},
 			},
@@ -375,10 +371,10 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				Columns:    detailed.NormalColumns,
 				Connections: []detailed.Connection{
 					{
-						ID:       connectionID(fixture.ClientPodNodeID, ""),
-						NodeID:   fixture.ClientPodNodeID,
-						Label:    "pong-a",
-						Linkable: true,
+						ID:         connectionID(fixture.ClientPodNodeID, ""),
+						NodeID:     fixture.ClientPodNodeID,
+						Label:      "pong-a",
+						LabelMinor: "1 container",
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",
@@ -391,10 +387,9 @@ func TestMakeDetailedPodNode(t *testing.T) {
 						},
 					},
 					{
-						ID:       connectionID(render.IncomingInternetID, fixture.RandomClientIP),
-						NodeID:   render.IncomingInternetID,
-						Label:    fixture.RandomClientIP,
-						Linkable: true,
+						ID:     connectionID(render.IncomingInternetID, fixture.RandomClientIP),
+						NodeID: render.IncomingInternetID,
+						Label:  fixture.RandomClientIP,
 						Metadata: []report.MetadataRow{
 							{
 								ID:    "port",

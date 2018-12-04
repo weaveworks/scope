@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/test"
 )
 
 func TestBasicWalk(t *testing.T) {
@@ -13,7 +13,7 @@ func TestBasicWalk(t *testing.T) {
 		procRoot = "/proc"
 		procFunc = func(process.Process, process.Process) {}
 	)
-	if err := process.NewWalker(procRoot).Walk(procFunc); err != nil {
+	if err := process.NewWalker(procRoot, false).Walk(procFunc); err != nil {
 		t.Fatal(err)
 	}
 }

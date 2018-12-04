@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"sync"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/weaveworks/scope/common/xfer"
 )
@@ -41,7 +41,7 @@ func (l *localControlRouter) Handle(_ context.Context, probeID string, req xfer.
 	probe, ok := l.probes[probeID]
 	l.Unlock()
 	if !ok {
-		return xfer.Response{}, fmt.Errorf("Probe %s is not connected right now...", probeID)
+		return xfer.Response{}, fmt.Errorf("probe %s is not connected right now", probeID)
 	}
 	return probe.handler(req), nil
 }

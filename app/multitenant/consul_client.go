@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	consul "github.com/hashicorp/consul/api"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -54,7 +54,7 @@ type kv interface {
 }
 
 type consulClient struct {
-	kv
+	kv kv
 }
 
 // Get and deserialise a JSON value from consul.
@@ -66,10 +66,7 @@ func (c *consulClient) Get(key string, out interface{}) error {
 	if kvp == nil {
 		return ErrNotFound
 	}
-	if err := json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out); err != nil {
-		return err
-	}
-	return nil
+	return json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out)
 }
 
 // CAS atomically modify a value in a callback.

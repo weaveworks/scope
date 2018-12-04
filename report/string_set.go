@@ -8,8 +8,7 @@ import (
 // method to add strings.
 type StringSet []string
 
-// EmptyStringSet is an empty string set.
-var EmptyStringSet StringSet
+var emptyStringSet StringSet
 
 // MakeStringSet makes a new StringSet with the given strings.
 func MakeStringSet(strs ...string) StringSet {
@@ -37,7 +36,7 @@ func (s StringSet) Contains(str string) bool {
 
 // Intersection returns the intersections of a and b
 func (s StringSet) Intersection(b StringSet) StringSet {
-	result, i, j := EmptyStringSet, 0, 0
+	result, i, j := emptyStringSet, 0, 0
 	for i < len(s) && j < len(b) {
 		if s[i] == b[j] {
 			result = result.Add(s[i])
@@ -49,6 +48,19 @@ func (s StringSet) Intersection(b StringSet) StringSet {
 		}
 	}
 	return result
+}
+
+// Equal returns true if a and b have the same contents
+func (s StringSet) Equal(b StringSet) bool {
+	if len(s) != len(b) {
+		return false
+	}
+	for i := range s {
+		if s[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // Add adds the strings to the StringSet. Add is the only valid way to grow a
@@ -68,58 +80,55 @@ func (s StringSet) Add(strs ...string) StringSet {
 	return s
 }
 
-// Remove removes the strings from the StringSet. Remove is the only valid way
-// to shrink a StringSet. Remove returns the StringSet to enable chaining.
-func (s StringSet) Remove(strs ...string) StringSet {
-	for _, str := range strs {
-		i := sort.Search(len(s), func(i int) bool { return s[i] >= str })
-		if i >= len(s) || s[i] != str {
-			// The list does not have the element.
-			continue
-		}
-		// has the element, remove it.
-		s = append(s[:i], s[i+1:]...)
-	}
-	return s
-}
-
 // Merge combines the two StringSets and returns a new result.
-func (s StringSet) Merge(other StringSet) StringSet {
+// Second return value is true if the return value is s
+func (s StringSet) Merge(other StringSet) (StringSet, bool) {
 	switch {
 	case len(other) <= 0: // Optimise special case, to avoid allocating
-		return s // (note unit test DeepEquals breaks if we don't do this)
+		return s, true // (note unit test DeepEquals breaks if we don't do this)
 	case len(s) <= 0:
-		return other
+		return other, false
 	}
-	result := make(StringSet, len(s)+len(other))
-	for i, j, k := 0, 0, 0; ; k++ {
+
+	i, j := 0, 0
+loop:
+	for i < len(s) {
 		switch {
-		case i >= len(s):
-			copy(result[k:], other[j:])
-			return result[:k+len(other)-j]
 		case j >= len(other):
-			copy(result[k:], s[i:])
-			return result[:k+len(s)-i]
-		case s[i] < other[j]:
-			result[k] = s[i]
+			return s, true
+		case s[i] == other[j]:
 			i++
-		case s[i] > other[j]:
-			result[k] = other[j]
 			j++
-		default: // equal
-			result[k] = s[i]
+		case s[i] < other[j]:
 			i++
+		default:
+			break loop
+		}
+	}
+	if i >= len(s) && j >= len(other) {
+		return s, true
+	}
+
+	result := make(StringSet, i, len(s)+len(other))
+	copy(result, s[:i])
+
+	for i < len(s) {
+		switch {
+		case j >= len(other):
+			result = append(result, s[i:]...)
+			return result, false
+		case s[i] == other[j]:
+			result = append(result, s[i])
+			i++
+			j++
+		case s[i] < other[j]:
+			result = append(result, s[i])
+			i++
+		default:
+			result = append(result, other[j])
 			j++
 		}
 	}
-}
-
-// Copy returns a value copy of the StringSet.
-func (s StringSet) Copy() StringSet {
-	if s == nil {
-		return s
-	}
-	result := make(StringSet, len(s))
-	copy(result, s)
-	return result
+	result = append(result, other[j:]...)
+	return result, false
 }

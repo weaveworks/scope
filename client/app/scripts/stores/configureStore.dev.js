@@ -1,19 +1,16 @@
 import { createStore, applyMiddleware, compose } from 'redux';
 import thunkMiddleware from 'redux-thunk';
-// import createLogger from 'redux-logger';
 
-import DevTools from '../components/dev-tools';
 import { initialState, rootReducer } from '../reducers/root';
 
 export default function configureStore() {
+  /* eslint-disable no-underscore-dangle */
+  const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+  /* eslint-enable */
   const store = createStore(
     rootReducer,
     initialState,
-    compose(
-      // applyMiddleware(thunkMiddleware, createLogger()),
-      applyMiddleware(thunkMiddleware),
-      DevTools.instrument()
-    )
+    composeEnhancers(applyMiddleware(thunkMiddleware)),
   );
 
   if (module.hot) {

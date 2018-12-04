@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -21,10 +21,6 @@ func (m *mockProcessTree) GetParent(pid int) (int, error) {
 		return -1, fmt.Errorf("Not found %d", pid)
 	}
 	return parent, nil
-}
-
-func (m *mockProcessTree) GetChildren(int) ([]int, error) {
-	panic("Not implemented")
 }
 
 func TestTagger(t *testing.T) {

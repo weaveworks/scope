@@ -1,9 +1,11 @@
 import React from 'react';
-import _ from 'lodash';
+import { sortBy } from 'lodash';
 
 import NodeDetailsControlButton from './node-details-control-button';
 
-export default function NodeDetailsControls({controls, error, nodeId, pending}) {
+export default function NodeDetailsControls({
+  controls, error, nodeId, pending
+}) {
   let spinnerClassName = 'fa fa-circle-o-notch fa-spin';
   if (pending) {
     spinnerClassName += ' node-details-controls-spinner';
@@ -13,15 +15,20 @@ export default function NodeDetailsControls({controls, error, nodeId, pending}) 
 
   return (
     <div className="node-details-controls">
-      {error && <div className="node-details-controls-error" title={error}>
-        <span className="node-details-controls-error-icon fa fa-warning" />
-        <span className="node-details-controls-error-messages">{error}</span>
-      </div>}
+      {error &&
+        <div className="node-details-controls-error" title={error}>
+          <span className="node-details-controls-error-icon fa fa-warning" />
+          <span className="node-details-controls-error-messages">{error}</span>
+        </div>
+      }
       <span className="node-details-controls-buttons">
-        {_.sortBy(controls, 'rank').map(control => <NodeDetailsControlButton
-          nodeId={nodeId} control={control} pending={pending} key={control.id} />)}
+        {sortBy(controls, 'rank').map(control => (<NodeDetailsControlButton
+          nodeId={nodeId}
+          control={control}
+          pending={pending}
+          key={control.id} />))}
       </span>
-      {controls && <span title="Applying..." className={spinnerClassName}></span>}
+      {controls && <span title="Applying..." className={spinnerClassName} />}
     </div>
   );
 }

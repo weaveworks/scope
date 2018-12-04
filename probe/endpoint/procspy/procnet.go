@@ -5,22 +5,23 @@ import (
 	"net"
 )
 
+// Used to check whether we are parsing a header line
+var slHeader = []byte("sl")
+
 // ProcNet is an iterator to parse /proc/net/tcp{,6} files.
 type ProcNet struct {
 	b                       []byte
 	c                       Connection
-	wantedState             uint
 	bytesLocal, bytesRemote [16]byte
 	seen                    map[uint64]struct{}
 }
 
 // NewProcNet gives a new ProcNet parser.
-func NewProcNet(b []byte, wantedState uint) *ProcNet {
+func NewProcNet(b []byte) *ProcNet {
 	return &ProcNet{
-		b:           b,
-		c:           Connection{},
-		wantedState: wantedState,
-		seen:        map[uint64]struct{}{},
+		b:    b,
+		c:    Connection{},
+		seen: map[uint64]struct{}{},
 	}
 }
 
@@ -33,20 +34,23 @@ again:
 	}
 	b := p.b
 
-	if p.b[2] == 's' {
+	var (
+		sl, local, remote, state, inode []byte
+	)
+
+	sl, b = nextField(b) // 'sl' column
+	if bytes.Equal(sl, slHeader) {
 		// Skip header
 		p.b = nextLine(b)
 		goto again
 	}
-
-	var (
-		local, remote, state, inode []byte
-	)
-	_, b = nextField(b) // 'sl' column
 	local, b = nextField(b)
 	remote, b = nextField(b)
 	state, b = nextField(b)
-	if parseHex(state) != p.wantedState {
+	switch parseHex(state) {
+	// Only process established or half-closed connections
+	case tcpEstablished, tcpFinWait1, tcpFinWait2, tcpCloseWait:
+	default:
 		p.b = nextLine(b)
 		goto again
 	}
@@ -59,12 +63,12 @@ again:
 
 	p.c.LocalAddress, p.c.LocalPort = scanAddressNA(local, &p.bytesLocal)
 	p.c.RemoteAddress, p.c.RemotePort = scanAddressNA(remote, &p.bytesRemote)
-	p.c.inode = parseDec(inode)
+	p.c.Inode = parseDec(inode)
 	p.b = nextLine(b)
-	if _, alreadySeen := p.seen[p.c.inode]; alreadySeen {
+	if _, alreadySeen := p.seen[p.c.Inode]; alreadySeen {
 		goto again
 	}
-	p.seen[p.c.inode] = struct{}{}
+	p.seen[p.c.Inode] = struct{}{}
 	return &p.c
 }
 

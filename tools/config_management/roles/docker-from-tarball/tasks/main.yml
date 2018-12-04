@@ -1,0 +1,61 @@
+---
+# Set up Docker
+# See also:
+# - https://docs.docker.com/engine/installation/linux/ubuntulinux/#install
+# - https://github.com/docker/docker/releases
+
+- include_role:
+    name: docker-prerequisites
+
+- name: install daemon
+  package:
+    name: daemon
+    state: present
+
+- name: 'create directory {{ docker_dir }}/{{ docker_version }}'
+  file:
+    path: '{{ docker_dir }}/{{ docker_version }}'
+    state: directory
+    mode: 0755
+
+- name: download and extract docker
+  unarchive:
+    src: 'https://get.docker.com/builds/Linux/x86_64/docker-{{ docker_version }}.tgz'
+    remote_src: yes
+    dest: '{{ docker_dir }}/{{ docker_version }}'
+    extra_opts: '--strip-components=1'
+    mode: 0555
+    creates: '{{ docker_dir }}/{{ docker_version }}/docker'
+
+- name: create symlink to current version
+  file:
+    src: '{{ docker_dir }}/{{ docker_version }}'
+    dest: '{{ docker_dir }}/current'
+    state: link
+    mode: 0555
+
+- name: list all files to symlink
+  find:
+    paths: '{{ docker_dir }}/current'
+    file_type: file
+  register: binaries
+  changed_when: false
+
+- name: create symlinks to all binaries
+  file:
+    src: '{{ item  }}'
+    dest: /usr/bin/{{ item | basename }}
+    state: link
+  with_items: "{{ binaries.files | map(attribute='path') | list }}"
+
+- name: killall docker
+  command: killall docker
+  register: killall
+  failed_when: false
+  changed_when: killall.rc == 0
+
+- name: start dockerd
+  command: daemon -- /usr/bin/dockerd
+
+- include_role:
+    name: docker-configuration

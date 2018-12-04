@@ -11,7 +11,8 @@ import (
 
 	client "github.com/fsouza/go-dockerclient"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
+	commonTest "github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
@@ -21,7 +22,11 @@ import (
 
 func testRegistry() docker.Registry {
 	hr := controls.NewDefaultHandlerRegistry()
-	registry, _ := docker.NewRegistry(10*time.Second, nil, true, "", hr)
+	registry, _ := docker.NewRegistry(docker.RegistryOptions{
+		Interval:        10 * time.Second,
+		CollectStats:    true,
+		HandlerRegistry: hr,
+	})
 	return registry
 }
 
@@ -66,7 +71,7 @@ func (c *mockContainer) GetNode() report.Node {
 		docker.ContainerID:   c.c.ID,
 		docker.ContainerName: c.c.Name,
 		docker.ImageID:       c.c.Image,
-	}).WithParents(report.EmptySets.
+	}).WithParents(report.MakeSets().
 		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.c.Image))),
 	)
 }
@@ -75,7 +80,7 @@ func (c *mockContainer) NetworkMode() (string, bool) {
 	return "", false
 }
 func (c *mockContainer) NetworkInfo([]net.IP) report.Sets {
-	return report.EmptySets
+	return report.MakeSets()
 }
 
 func (c *mockContainer) Container() *client.Container {
@@ -167,6 +172,10 @@ func (m *mockDockerClient) Stats(_ client.StatsOptions) error {
 	return fmt.Errorf("stats")
 }
 
+func (m *mockDockerClient) ResizeExecTTY(id string, height, width int) error {
+	return fmt.Errorf("resizeExecTTY")
+}
+
 type mockCloseWaiter struct{}
 
 func (mockCloseWaiter) Close() error { return nil }
@@ -198,6 +207,10 @@ var (
 		ID:    "ping",
 		Name:  "pong",
 		Image: "baz",
+		Path:  "ping",
+		Args: []string{
+			"foo.bar.local",
+		},
 		State: client.State{
 			Pid:       2,
 			Running:   true,
@@ -221,6 +234,9 @@ var (
 			},
 		},
 		Config: &client.Config{
+			Env: []string{
+				"FOO=secret-bar",
+			},
 			Labels: map[string]string{
 				"foo1": "bar1",
 				"foo2": "bar2",
@@ -289,7 +305,7 @@ func setupStubs(mdc *mockDockerClient, f func()) {
 		return mdc, nil
 	}
 
-	docker.NewContainerStub = func(c *client.Container, _ string) docker.Container {
+	docker.NewContainerStub = func(c *client.Container, _ string, _ bool, _ bool) docker.Container {
 		return &mockContainer{c}
 	}
 
@@ -454,7 +470,7 @@ func TestRegistryDelete(t *testing.T) {
 	setupStubs(mdc, func() {
 		registry := testRegistry()
 		defer registry.Stop()
-		runtime.Gosched()
+		time.Sleep(time.Millisecond * 100) // Allow for goroutines to get started
 
 		// Collect all the events.
 		mtx := sync.Mutex{}
@@ -492,25 +508,10 @@ func TestRegistryDelete(t *testing.T) {
 				}),
 			}
 			if !reflect.DeepEqual(want, nodes) {
-				t.Errorf("Didn't get right container updates: %v", test.Diff(want, nodes))
+				t.Errorf("Didn't get right container updates: %v", commonTest.Diff(want, nodes))
 			}
 			nodes = []report.Node{}
 			mtx.Unlock()
 		}
 	})
-}
-
-func TestDockerImageName(t *testing.T) {
-	for _, input := range []struct{ in, name string }{
-		{"foo/bar", "foo/bar"},
-		{"foo/bar:baz", "foo/bar"},
-		{"reg:123/foo/bar:baz", "foo/bar"},
-		{"docker-registry.domain.name:5000/repo/image1:ver", "repo/image1"},
-		{"foo", "foo"},
-	} {
-		name := docker.ImageNameWithoutVersion(input.in)
-		if name != input.name {
-			t.Fatalf("%s: %s != %s", input.in, name, input.name)
-		}
-	}
 }

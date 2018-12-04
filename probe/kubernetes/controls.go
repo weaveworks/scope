@@ -11,15 +11,15 @@ import (
 
 // Control IDs used by the kubernetes integration.
 const (
-	GetLogs   = "kubernetes_get_logs"
-	DeletePod = "kubernetes_delete_pod"
-	ScaleUp   = "kubernetes_scale_up"
-	ScaleDown = "kubernetes_scale_down"
+	GetLogs   = report.KubernetesGetLogs
+	DeletePod = report.KubernetesDeletePod
+	ScaleUp   = report.KubernetesScaleUp
+	ScaleDown = report.KubernetesScaleDown
 )
 
 // GetLogs is the control to get the logs for a kubernetes pod
-func (r *Reporter) GetLogs(req xfer.Request, namespaceID, podID string) xfer.Response {
-	readCloser, err := r.client.GetLogs(namespaceID, podID)
+func (r *Reporter) GetLogs(req xfer.Request, namespaceID, podID string, containerNames []string) xfer.Response {
+	readCloser, err := r.client.GetLogs(namespaceID, podID, containerNames)
 	if err != nil {
 		return xfer.ResponseError(err)
 	}
@@ -43,7 +43,7 @@ func (r *Reporter) GetLogs(req xfer.Request, namespaceID, podID string) xfer.Res
 	}
 }
 
-func (r *Reporter) deletePod(req xfer.Request, namespaceID, podID string) xfer.Response {
+func (r *Reporter) deletePod(req xfer.Request, namespaceID, podID string, _ []string) xfer.Response {
 	if err := r.client.DeletePod(namespaceID, podID); err != nil {
 		return xfer.ResponseError(err)
 	}
@@ -53,7 +53,7 @@ func (r *Reporter) deletePod(req xfer.Request, namespaceID, podID string) xfer.R
 }
 
 // CapturePod is exported for testing
-func (r *Reporter) CapturePod(f func(xfer.Request, string, string) xfer.Response) func(xfer.Request) xfer.Response {
+func (r *Reporter) CapturePod(f func(xfer.Request, string, string, []string) xfer.Response) func(xfer.Request) xfer.Response {
 	return func(req xfer.Request) xfer.Response {
 		uid, ok := report.ParsePodNodeID(req.NodeID)
 		if !ok {
@@ -70,85 +70,47 @@ func (r *Reporter) CapturePod(f func(xfer.Request, string, string) xfer.Response
 		if pod == nil {
 			return xfer.ResponseErrorf("Pod not found: %s", uid)
 		}
-		return f(req, pod.Namespace(), pod.Name())
+		return f(req, pod.Namespace(), pod.Name(), pod.ContainerNames())
 	}
 }
 
-// CaptureResource is exported for testing
-func (r *Reporter) CaptureResource(f func(xfer.Request, string, string, string) xfer.Response) func(xfer.Request) xfer.Response {
+// CaptureDeployment is exported for testing
+func (r *Reporter) CaptureDeployment(f func(xfer.Request, string, string) xfer.Response) func(xfer.Request) xfer.Response {
 	return func(req xfer.Request) xfer.Response {
-		var resource, uid string
-		for _, parser := range []struct {
-			res string
-			f   func(string) (string, bool)
-		}{
-			{report.Deployment, report.ParseDeploymentNodeID},
-			{report.ReplicaSet, report.ParseReplicaSetNodeID},
-		} {
-			if u, ok := parser.f(req.NodeID); ok {
-				resource, uid = parser.res, u
-				break
-			}
-		}
-		if resource == "" {
+		uid, ok := report.ParseDeploymentNodeID(req.NodeID)
+		if !ok {
 			return xfer.ResponseErrorf("Invalid ID: %s", req.NodeID)
 		}
-
-		switch resource {
-		case report.Deployment:
-			var deployment Deployment
-			r.client.WalkDeployments(func(d Deployment) error {
-				if d.UID() == uid {
-					deployment = d
-				}
-				return nil
-			})
-			if deployment != nil {
-				return f(req, "deployment", deployment.Namespace(), deployment.Name())
+		var deployment Deployment
+		r.client.WalkDeployments(func(d Deployment) error {
+			if d.UID() == uid {
+				deployment = d
 			}
-		case report.ReplicaSet:
-			var replicaSet ReplicaSet
-			var res string
-			r.client.WalkReplicaSets(func(r ReplicaSet) error {
-				if r.UID() == uid {
-					replicaSet = r
-					res = "replicaset"
-				}
-				return nil
-			})
-			if replicaSet == nil {
-				r.client.WalkReplicationControllers(func(r ReplicationController) error {
-					if r.UID() == uid {
-						replicaSet = ReplicaSet(r)
-						res = "replicationcontroller"
-					}
-					return nil
-				})
-			}
-			if replicaSet != nil {
-				return f(req, res, replicaSet.Namespace(), replicaSet.Name())
-			}
+			return nil
+		})
+		if deployment == nil {
+			return xfer.ResponseErrorf("Deployment not found: %s", uid)
 		}
-		return xfer.ResponseErrorf("%s not found: %s", resource, uid)
+		return f(req, deployment.Namespace(), deployment.Name())
 	}
 }
 
 // ScaleUp is the control to scale up a deployment
-func (r *Reporter) ScaleUp(req xfer.Request, resource, namespace, id string) xfer.Response {
-	return xfer.ResponseError(r.client.ScaleUp(resource, namespace, id))
+func (r *Reporter) ScaleUp(req xfer.Request, namespace, id string) xfer.Response {
+	return xfer.ResponseError(r.client.ScaleUp(report.Deployment, namespace, id))
 }
 
 // ScaleDown is the control to scale up a deployment
-func (r *Reporter) ScaleDown(req xfer.Request, resource, namespace, id string) xfer.Response {
-	return xfer.ResponseError(r.client.ScaleDown(resource, namespace, id))
+func (r *Reporter) ScaleDown(req xfer.Request, namespace, id string) xfer.Response {
+	return xfer.ResponseError(r.client.ScaleDown(report.Deployment, namespace, id))
 }
 
 func (r *Reporter) registerControls() {
 	controls := map[string]xfer.ControlHandlerFunc{
 		GetLogs:   r.CapturePod(r.GetLogs),
 		DeletePod: r.CapturePod(r.deletePod),
-		ScaleUp:   r.CaptureResource(r.ScaleUp),
-		ScaleDown: r.CaptureResource(r.ScaleDown),
+		ScaleUp:   r.CaptureDeployment(r.ScaleUp),
+		ScaleDown: r.CaptureDeployment(r.ScaleDown),
 	}
 	r.handlerRegistry.Batch(nil, controls)
 }

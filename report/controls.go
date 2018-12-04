@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/ugorji/go/codec"
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 )
 
 // Controls describe the control tags within the Nodes
@@ -20,6 +20,12 @@ type Control struct {
 
 // Merge merges other with cs, returning a fresh Controls.
 func (cs Controls) Merge(other Controls) Controls {
+	if len(other) > len(cs) {
+		cs, other = other, cs
+	}
+	if len(other) == 0 {
+		return cs
+	}
 	result := cs.Copy()
 	for k, v := range other {
 		result[k] = v
@@ -56,16 +62,11 @@ type NodeControls struct {
 	Controls  StringSet
 }
 
+var emptyNodeControls = NodeControls{Controls: MakeStringSet()}
+
 // MakeNodeControls makes a new NodeControls
 func MakeNodeControls() NodeControls {
-	return NodeControls{
-		Controls: MakeStringSet(),
-	}
-}
-
-// Copy is a noop, as NodeControls is immutable
-func (nc NodeControls) Copy() NodeControls {
-	return nc
+	return emptyNodeControls
 }
 
 // Merge returns the newest of the two NodeControls; it does not take the union
@@ -91,6 +92,7 @@ func (nc NodeControls) Add(ids ...string) NodeControls {
 type wireNodeControls struct {
 	Timestamp string    `json:"timestamp,omitempty"`
 	Controls  StringSet `json:"controls,omitempty"`
+	dummySelfer
 }
 
 // CodecEncodeSelf implements codec.Selfer
@@ -104,9 +106,7 @@ func (nc *NodeControls) CodecEncodeSelf(encoder *codec.Encoder) {
 // CodecDecodeSelf implements codec.Selfer
 func (nc *NodeControls) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := wireNodeControls{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
+	in.CodecDecodeSelf(decoder)
 	*nc = NodeControls{
 		Timestamp: parseTime(in.Timestamp),
 		Controls:  in.Controls,

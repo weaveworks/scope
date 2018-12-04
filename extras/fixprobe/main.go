@@ -2,10 +2,12 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"time"
 
 	"github.com/ugorji/go/codec"
@@ -18,7 +20,7 @@ import (
 
 func main() {
 	var (
-		publish         = flag.String("publish", fmt.Sprintf("localhost:%d", xfer.AppPort), "publish target")
+		publish         = flag.String("publish", fmt.Sprintf("127.0.0.1:%d", xfer.AppPort), "publish target")
 		publishInterval = flag.Duration("publish.interval", 1*time.Second, "publish (output) interval")
 		publishToken    = flag.String("publish.token", "fixprobe", "publish token, for if we are talking to the service")
 		publishID       = flag.String("publish.id", "fixprobe", "publisher ID used to identify publishers")
@@ -45,17 +47,25 @@ func main() {
 		}
 	}
 
-	client, err := appclient.NewAppClient(appclient.ProbeConfig{
-		Token:    *publishToken,
-		ProbeID:  *publishID,
-		Insecure: false,
-	}, *publish, *publish, nil)
+	url, err := url.Parse(fmt.Sprintf("http://%s", *publish))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rp := appclient.NewReportPublisher(client, false)
+	client, err := appclient.NewAppClient(appclient.ProbeConfig{
+		Token:    *publishToken,
+		ProbeID:  *publishID,
+		Insecure: false,
+	}, *publish, *url, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	buf, err := fixedReport.WriteBinary()
+	if err != nil {
+		log.Fatal(err)
+	}
 	for range time.Tick(*publishInterval) {
-		rp.Publish(fixedReport)
+		client.Publish(bytes.NewReader(buf.Bytes()), fixedReport.Shortcut)
 	}
 }

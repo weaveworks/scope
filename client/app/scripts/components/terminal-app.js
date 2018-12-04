@@ -7,13 +7,15 @@ import { receiveControlPipeFromParams, hitEsc } from '../actions/app-actions';
 const ESC_KEY_CODE = 27;
 
 class TerminalApp extends React.Component {
-
   constructor(props, context) {
     super(props, context);
 
     const paramString = window.location.hash.split('/').pop();
     const params = JSON.parse(decodeURIComponent(paramString));
-    this.props.receiveControlPipeFromParams(params.pipe.id, null, params.pipe.raw, false);
+    this.props.receiveControlPipeFromParams(
+      params.pipe.id, params.pipe.raw,
+      params.pipe.resizeTtyControl
+    );
 
     this.state = {
       title: params.title,

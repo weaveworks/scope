@@ -1,65 +1,31 @@
-import _ from 'lodash';
 import React from 'react';
 import classNames from 'classnames';
+import { connect } from 'react-redux';
+import { find, get, union, sortBy, groupBy, concat, debounce } from 'lodash';
+
+import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
+import { TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL } from '../../constants/timer';
 
 import ShowMore from '../show-more';
 import NodeDetailsTableRow from './node-details-table-row';
+import NodeDetailsTableHeaders from './node-details-table-headers';
+import { ipToPaddedString } from '../../utils/string-utils';
+import { moveElement, insertElement } from '../../utils/array-utils';
+import {
+  isIP, isNumeric, defaultSortDesc, getTableColumnsStyles
+} from '../../utils/node-details-utils';
 
 
-function isNumber(data) {
-  return data.dataType && data.dataType === 'number';
-}
-
-const CW = {
-  XS: '32px',
-  S: '50px',
-  M: '70px',
-  L: '120px',
-  XL: '140px',
-  XXL: '170px',
-};
-
-
-const XS_LABEL = {
-  count: '#',
-  // TODO: consider changing the name of this field on the BE
-  container: '#',
-};
-
-
-const COLUMN_WIDTHS = {
-  count: CW.XS,
-  container: CW.XS,
-  docker_container_created: CW.XL,
-  docker_container_restart_count: CW.M,
-  docker_container_state_human: CW.XXL,
-  docker_container_uptime: '85px',
-  docker_cpu_total_usage: CW.M,
-  docker_memory_usage: CW.M,
-  open_files_count: CW.M,
-  pid: CW.S,
-  port: CW.S,
-  ppid: CW.S,
-  process_cpu_usage_percent: CW.M,
-  process_memory_usage_bytes: CW.M,
-  threads: CW.M,
-
-  // e.g. details panel > pods
-  kubernetes_ip: CW.L,
-  kubernetes_state: CW.M,
-};
-
-
-function getDefaultSortBy(columns, nodes) {
+function getDefaultSortedBy(columns, nodes) {
   // default sorter specified by columns
-  const defaultSortColumn = _.find(columns, {defaultSort: true});
+  const defaultSortColumn = find(columns, {defaultSort: true});
   if (defaultSortColumn) {
     return defaultSortColumn.id;
   }
   // otherwise choose first metric
-  const firstNodeWithMetrics = _.find(nodes, n => _.get(n, ['metrics', 0]));
+  const firstNodeWithMetrics = find(nodes, n => get(n, ['metrics', 0]));
   if (firstNodeWithMetrics) {
-    return _.get(firstNodeWithMetrics, ['metrics', 0, 'id']);
+    return get(firstNodeWithMetrics, ['metrics', 0, 'id']);
   }
 
   return 'label';
@@ -77,10 +43,13 @@ function maybeToLower(value) {
 function getNodeValue(node, header) {
   const fieldId = header && header.id;
   if (fieldId !== null) {
-    let field = _.union(node.metrics, node.metadata).find(f => f.id === fieldId);
+    let field = union(node.metrics, node.metadata).find(f => f.id === fieldId);
 
     if (field) {
-      if (isNumber(header)) {
+      if (isIP(header)) {
+        // Format the IPs so that they are sorted numerically.
+        return ipToPaddedString(field.value);
+      } else if (isNumeric(header)) {
         return parseFloat(field.value);
       }
       return field.value;
@@ -102,17 +71,17 @@ function getNodeValue(node, header) {
 }
 
 
-function getValueForSortBy(sortByHeader) {
-  return (node) => maybeToLower(getNodeValue(node, sortByHeader));
+function getValueForSortedBy(sortedByHeader) {
+  return node => maybeToLower(getNodeValue(node, sortedByHeader));
 }
 
 
 function getMetaDataSorters(nodes) {
   // returns an array of sorters that will take a node
-  return _.get(nodes, [0, 'metadata'], []).map((field, index) => node => {
+  return get(nodes, [0, 'metadata'], []).map((field, index) => (node) => {
     const nodeMetadataField = node.metadata && node.metadata[index];
     if (nodeMetadataField) {
-      if (isNumber(nodeMetadataField)) {
+      if (isNumeric(nodeMetadataField)) {
         return parseFloat(nodeMetadataField.value);
       }
       return nodeMetadataField.value;
@@ -123,7 +92,7 @@ function getMetaDataSorters(nodes) {
 
 
 function sortNodes(nodes, getValue, sortedDesc) {
-  const sortedNodes = _.sortBy(
+  const sortedNodes = sortBy(
     nodes,
     getValue,
     getMetaDataSorters(nodes)
@@ -135,67 +104,100 @@ function sortNodes(nodes, getValue, sortedDesc) {
 }
 
 
-function getSortedNodes(nodes, sortByHeader, sortedDesc) {
-  const getValue = getValueForSortBy(sortByHeader);
-  const withAndWithoutValues = _.groupBy(nodes, (n) => {
+function getSortedNodes(nodes, sortedByHeader, sortedDesc) {
+  const getValue = getValueForSortedBy(sortedByHeader);
+  const withAndWithoutValues = groupBy(nodes, (n) => {
+    if (!n || n.valueEmpty) {
+      return 'withoutValues';
+    }
     const v = getValue(n);
     return v !== null && v !== undefined ? 'withValues' : 'withoutValues';
   });
   const withValues = sortNodes(withAndWithoutValues.withValues, getValue, sortedDesc);
   const withoutValues = sortNodes(withAndWithoutValues.withoutValues, getValue, sortedDesc);
 
-  return _.concat(withValues, withoutValues);
+  return concat(withValues, withoutValues);
 }
 
 
-function getColumnWidth(headers, h) {
-  //
-  // More beauty hacking, ports and counts can only get so big, free up WS for other longer
-  // fields like IPs!
-  //
-  return COLUMN_WIDTHS[h.id];
+// By inserting this fake invisible row into the table, with the help of
+// some CSS trickery, we make the inner scrollable content of the table
+// have a minimal height. That prevents auto-scroll under a focus if the
+// number of table rows shrinks.
+function minHeightConstraint(height = 0) {
+  return <tr className="min-height-constraint" style={{height}} />;
 }
 
 
-function getColumnsStyles(headers) {
-  return headers.map((h, i) => ({
-    width: getColumnWidth(headers, h, i),
-    textAlign: h.dataType === 'number' ? 'right' : 'left',
-  }));
-}
-
-
-function defaultSortDesc(header) {
-  return header && header.dataType === 'number';
-}
-
-
-export default class NodeDetailsTable extends React.Component {
-
+class NodeDetailsTable extends React.Component {
   constructor(props, context) {
     super(props, context);
-    this.DEFAULT_LIMIT = 5;
+
     this.state = {
-      limit: props.limit || this.DEFAULT_LIMIT,
+      limit: props.limit,
       sortedDesc: this.props.sortedDesc,
-      sortBy: this.props.sortBy
+      sortedBy: this.props.sortedBy
     };
+    this.focusState = {};
+
+    this.updateSorted = this.updateSorted.bind(this);
     this.handleLimitClick = this.handleLimitClick.bind(this);
+    this.onMouseLeaveRow = this.onMouseLeaveRow.bind(this);
+    this.onMouseEnterRow = this.onMouseEnterRow.bind(this);
+    this.saveTableContentRef = this.saveTableContentRef.bind(this);
+    this.saveTableHeadRef = this.saveTableHeadRef.bind(this);
+    // Use debouncing to prevent event flooding when e.g. crossing fast with mouse cursor
+    // over the whole table. That would be expensive as each focus causes table to rerender.
+    this.debouncedFocusRow = debounce(this.focusRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
+    this.debouncedBlurRow = debounce(this.blurRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
   }
 
-  handleHeaderClick(ev, headerId, currentSortBy, currentSortedDesc) {
-    ev.preventDefault();
-    const header = this.getColumnHeaders().find(h => h.id === headerId);
-    const sortBy = header.id;
-    const sortedDesc = header.id === currentSortBy
-      ? !currentSortedDesc : defaultSortDesc(header);
-    this.setState({sortBy, sortedDesc});
-    this.props.onSortChange(sortBy, sortedDesc);
+  updateSorted(sortedBy, sortedDesc) {
+    this.setState({ sortedBy, sortedDesc });
+    this.props.onSortChange(sortedBy, sortedDesc);
   }
 
   handleLimitClick() {
-    const limit = this.state.limit ? 0 : this.DEFAULT_LIMIT;
-    this.setState({limit});
+    const limit = this.state.limit ? 0 : this.props.limit;
+    this.setState({ limit });
+  }
+
+  focusRow(rowIndex, node) {
+    // Remember the focused row index, the node that was focused and
+    // the table content height so that we can keep the node row fixed
+    // without auto-scrolling happening.
+    // NOTE: It would be ideal to modify the real component state here,
+    // but that would cause whole table to rerender, which becomes to
+    // expensive with the current implementation if the table consists
+    // of 1000+ nodes.
+    this.focusState = {
+      focusedNode: node,
+      focusedRowIndex: rowIndex,
+      tableContentMinHeightConstraint: this.tableContentRef && this.tableContentRef.scrollHeight,
+    };
+  }
+
+  blurRow() {
+    // Reset the focus state
+    this.focusState = {};
+  }
+
+  onMouseEnterRow(rowIndex, node) {
+    this.debouncedBlurRow.cancel();
+    this.debouncedFocusRow(rowIndex, node);
+  }
+
+  onMouseLeaveRow() {
+    this.debouncedFocusRow.cancel();
+    this.debouncedBlurRow();
+  }
+
+  saveTableContentRef(ref) {
+    this.tableContentRef = ref;
+  }
+
+  saveTableHeadRef(ref) {
+    this.tableHeadRef = ref;
   }
 
   getColumnHeaders() {
@@ -203,93 +205,91 @@ export default class NodeDetailsTable extends React.Component {
     return [{id: 'label', label: this.props.label}].concat(columns);
   }
 
-  renderHeaders(sortBy, sortedDesc) {
-    if (this.props.nodes && this.props.nodes.length > 0) {
-      const headers = this.getColumnHeaders();
-      const colStyles = getColumnsStyles(headers);
-
-      return (
-        <tr>
-          {headers.map((header, i) => {
-            const headerClasses = ['node-details-table-header', 'truncate'];
-            const onHeaderClick = ev => {
-              this.handleHeaderClick(ev, header.id, sortBy, sortedDesc);
-            };
-            // sort by first metric by default
-            const isSorted = header.id === sortBy;
-            const isSortedDesc = isSorted && sortedDesc;
-            const isSortedAsc = isSorted && !isSortedDesc;
-
-            if (isSorted) {
-              headerClasses.push('node-details-table-header-sorted');
-            }
-
-            const style = colStyles[i];
-            const label = (style.width === CW.XS && XS_LABEL[header.id]) ?
-              XS_LABEL[header.id] :
-              header.label;
-
-            return (
-              <td className={headerClasses.join(' ')} style={style} onClick={onHeaderClick}
-                title={header.label} key={header.id}>
-                {isSortedAsc
-                  && <span className="node-details-table-header-sorter fa fa-caret-up" />}
-                {isSortedDesc
-                  && <span className="node-details-table-header-sorter fa fa-caret-down" />}
-                {label}
-              </td>
-            );
-          })}
-        </tr>
-      );
-    }
-    return '';
+  componentDidMount() {
+    const scrollbarWidth = this.tableContentRef.offsetWidth - this.tableContentRef.clientWidth;
+    this.tableHeadRef.style.paddingRight = `${scrollbarWidth}px`;
   }
 
   render() {
-    const { nodeIdKey, columns, topologyId, onClickRow, onMouseEnter, onMouseLeave,
-      onMouseEnterRow, onMouseLeaveRow } = this.props;
+    const {
+      nodeIdKey, columns, topologyId, onClickRow,
+      onMouseEnter, onMouseLeave, timestamp
+    } = this.props;
 
-    const sortBy = this.state.sortBy || getDefaultSortBy(columns, this.props.nodes);
-    const sortByHeader = this.getColumnHeaders().find(h => h.id === sortBy);
-    const sortedDesc = this.state.sortedDesc !== null ?
-      this.state.sortedDesc :
-      defaultSortDesc(sortByHeader);
+    const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
+    const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
+    const sortedDesc = (this.state.sortedDesc === null) ?
+      defaultSortDesc(sortedByHeader) : this.state.sortedDesc;
 
-    let nodes = getSortedNodes(this.props.nodes, sortByHeader, sortedDesc);
-    const limited = nodes && this.state.limit > 0 && nodes.length > this.state.limit;
-    const expanded = this.state.limit === 0;
-    const notShown = nodes.length - this.state.limit;
+    let nodes = getSortedNodes(this.props.nodes, sortedByHeader, sortedDesc);
+
+    const { focusedNode, focusedRowIndex, tableContentMinHeightConstraint } = this.focusState;
+    if (Number.isInteger(focusedRowIndex) && focusedRowIndex < nodes.length) {
+      const nodeRowIndex = nodes.findIndex(node => node.id === focusedNode.id);
+      if (nodeRowIndex >= 0) {
+        // If the focused node still exists in the table, we move it
+        // to the hovered row, keeping the rest of the table sorted.
+        nodes = moveElement(nodes, nodeRowIndex, focusedRowIndex);
+      } else {
+        // Otherwise we insert the dead focused node there, pretending
+        // it's still alive. That enables the users to read off all the
+        // info they want and perhaps even open the details panel. Also,
+        // only if we do this, we can guarantee that mouse hover will
+        // always freeze the table row until we focus out.
+        nodes = insertElement(nodes, focusedRowIndex, focusedNode);
+      }
+    }
+
+    // If we are 1 over the limit, we still show the row. We never display
+    // "+1" but only "+2" and up.
+    const limit = this.state.limit > 0 && nodes.length === this.state.limit + 1
+      ? nodes.length
+      : this.state.limit;
+    const limited = nodes && limit > 0 && nodes.length > limit;
+    const expanded = limit === 0;
+    const notShown = nodes.length - limit;
     if (nodes && limited) {
-      nodes = nodes.slice(0, this.state.limit);
+      nodes = nodes.slice(0, limit);
     }
 
     const className = classNames('node-details-table-wrapper-wrapper', this.props.className);
+    const headers = this.getColumnHeaders();
+    const styles = getTableColumnsStyles(headers);
 
     return (
-      <div className={className}
-        style={this.props.style}>
+      <div className={className} style={this.props.style}>
         <div className="node-details-table-wrapper">
           <table className="node-details-table">
-            <thead>
-              {this.renderHeaders(sortBy, sortedDesc)}
+            <thead ref={this.saveTableHeadRef}>
+              {this.props.nodes && this.props.nodes.length > 0 && <NodeDetailsTableHeaders
+                headers={headers}
+                sortedBy={sortedBy}
+                sortedDesc={sortedDesc}
+                onClick={this.updateSorted}
+              />}
             </thead>
-            <tbody style={this.props.tbodyStyle} onMouseEnter={onMouseEnter}
+            <tbody
+              style={this.props.tbodyStyle}
+              ref={this.saveTableContentRef}
+              onMouseEnter={onMouseEnter}
               onMouseLeave={onMouseLeave}>
-              {nodes && nodes.map(node => (
+              {nodes && nodes.map((node, index) => (
                 <NodeDetailsTableRow
                   key={node.id}
                   renderIdCell={this.props.renderIdCell}
                   selected={this.props.selectedNodeId === node.id}
                   node={node}
+                  index={index}
                   nodeIdKey={nodeIdKey}
-                  colStyles={getColumnsStyles(this.getColumnHeaders())}
+                  colStyles={styles}
                   columns={columns}
                   onClick={onClickRow}
-                  onMouseLeaveRow={onMouseLeaveRow}
-                  onMouseEnterRow={onMouseEnterRow}
+                  onMouseEnter={this.onMouseEnterRow}
+                  onMouseLeave={this.onMouseLeaveRow}
+                  timestamp={timestamp}
                   topologyId={topologyId} />
               ))}
+              {minHeightConstraint(tableContentMinHeightConstraint)}
             </tbody>
           </table>
           <ShowMore
@@ -305,8 +305,17 @@ export default class NodeDetailsTable extends React.Component {
 
 
 NodeDetailsTable.defaultProps = {
-  nodeIdKey: 'id',  // key to identify a node in a row (used for topology links)
+  nodeIdKey: 'id', // key to identify a node in a row (used for topology links)
+  limit: NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
   onSortChange: () => {},
   sortedDesc: null,
-  sortBy: null,
+  sortedBy: null,
 };
+
+function mapStateToProps(state) {
+  return {
+    timestamp: state.get('pausedAt'),
+  };
+}
+
+export default connect(mapStateToProps)(NodeDetailsTable);

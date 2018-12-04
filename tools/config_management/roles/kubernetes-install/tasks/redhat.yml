@@ -1,0 +1,30 @@
+---
+# RedHat / CentOS specific:
+
+- name: add kubernetes' yum repository (kubernetes-el{{ ansible_lsb.major_release }}-x86-64)
+  yum_repository:
+    name: kubernetes
+    description: Kubernetes YUM repo
+    file: external_repos
+    baseurl: https://packages.cloud.google.com/yum/repos/kubernetes-el{{ ansible_lsb.major_release }}-x86_64
+    enabled: yes
+    gpgkey: https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+    gpgcheck: yes
+    state: present
+  register: yum_k8s_repo
+
+- name: update yum's cache
+  yum:
+    name: "*"
+    update_cache: yes
+  when: yum_k8s_repo.changed
+
+- name: install kubelet and kubectl
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - kubelet-{{ kubernetes_version }}*
+    - kubectl-{{ kubernetes_version }}*
+    - kubeadm-{{ kubernetes_version }}*
+    - kubernetes-cni-{{ kubernetes_cni_version }}*

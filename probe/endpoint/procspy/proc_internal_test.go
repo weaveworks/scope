@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	fs_hook "github.com/weaveworks/scope/common/fs"
+	fs_hook "github.com/weaveworks/common/fs"
+	"github.com/weaveworks/common/test/fs"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/test/fs"
 )
 
 var mockFS = fs.Dir("",
@@ -62,7 +62,7 @@ func TestWalkProcPid(t *testing.T) {
 	defer fs_hook.Restore()
 
 	buf := bytes.Buffer{}
-	walker := process.NewWalker(procRoot)
+	walker := process.NewWalker(procRoot, false)
 	ticker := time.NewTicker(time.Millisecond)
 	defer ticker.Stop()
 	pWalker := newPidWalker(walker, ticker.C, 1)

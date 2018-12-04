@@ -1,11 +1,7 @@
 package report
 
 import (
-	"bytes"
-	"encoding/gob"
-	"fmt"
 	"reflect"
-	"sort"
 
 	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/ps"
@@ -18,11 +14,11 @@ type Sets struct {
 }
 
 // EmptySets is an empty Sets.  Starts with this.
-var EmptySets = Sets{ps.NewMap()}
+var emptySets = Sets{ps.NewMap()}
 
 // MakeSets returns EmptySets
 func MakeSets() Sets {
-	return EmptySets
+	return emptySets
 }
 
 // Keys returns the keys for this set
@@ -36,11 +32,30 @@ func (s Sets) Keys() []string {
 // Add the given value to the Sets.
 func (s Sets) Add(key string, value StringSet) Sets {
 	if s.psMap == nil {
-		s = EmptySets
+		s = emptySets
 	}
 	if existingValue, ok := s.psMap.Lookup(key); ok {
-		value = value.Merge(existingValue.(StringSet))
+		var unchanged bool
+		value, unchanged = existingValue.(StringSet).Merge(value)
+		if unchanged {
+			return s
+		}
 	}
+	return Sets{
+		psMap: s.psMap.Set(key, value),
+	}
+}
+
+// AddString adds a single string under a key, creating a new StringSet if necessary.
+func (s Sets) AddString(key string, str string) Sets {
+	if s.psMap == nil {
+		s = emptySets
+	}
+	value, found := s.Lookup(key)
+	if found && value.Contains(str) {
+		return s
+	}
+	value = value.Add(str)
 	return Sets{
 		psMap: s.psMap.Set(key, value),
 	}
@@ -49,22 +64,24 @@ func (s Sets) Add(key string, value StringSet) Sets {
 // Delete the given set from the Sets.
 func (s Sets) Delete(key string) Sets {
 	if s.psMap == nil {
-		return EmptySets
+		return emptySets
 	}
-	return Sets{
-		psMap: s.psMap.Delete(key),
+	psMap := s.psMap.Delete(key)
+	if psMap.IsNil() {
+		return emptySets
 	}
+	return Sets{psMap: psMap}
 }
 
 // Lookup returns the sets stored under key.
 func (s Sets) Lookup(key string) (StringSet, bool) {
 	if s.psMap == nil {
-		return EmptyStringSet, false
+		return MakeStringSet(), false
 	}
 	if value, ok := s.psMap.Lookup(key); ok {
 		return value.(StringSet), true
 	}
-	return EmptyStringSet, false
+	return MakeStringSet(), false
 }
 
 // Size returns the number of elements
@@ -96,7 +113,11 @@ func (s Sets) Merge(other Sets) Sets {
 	iter.ForEach(func(key string, value interface{}) {
 		set := value.(StringSet)
 		if existingSet, ok := result.Lookup(key); ok {
-			set = set.Merge(existingSet.(StringSet))
+			var unchanged bool
+			set, unchanged = existingSet.(StringSet).Merge(set)
+			if unchanged {
+				return
+			}
 		}
 		result = result.Set(key, set)
 	})
@@ -104,84 +125,32 @@ func (s Sets) Merge(other Sets) Sets {
 	return Sets{result}
 }
 
-// Copy is a noop
-func (s Sets) Copy() Sets {
-	return s
-}
-
 func (s Sets) String() string {
-	if s.psMap == nil {
-		s = EmptySets
-	}
-	keys := []string{}
-	for _, k := range s.psMap.Keys() {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	buf := bytes.NewBufferString("{")
-	for _, key := range keys {
-		val, _ := s.psMap.Lookup(key)
-		fmt.Fprintf(buf, "%s: %v, ", key, val)
-	}
-	fmt.Fprintf(buf, "}")
-	return buf.String()
+	return mapToString(s.psMap)
 }
 
 // DeepEqual tests equality with other Sets
 func (s Sets) DeepEqual(t Sets) bool {
-	if s.Size() != t.Size() {
-		return false
-	}
-	if s.Size() == 0 {
-		return true
-	}
-
-	equal := true
-	s.psMap.ForEach(func(k string, val interface{}) {
-		if otherValue, ok := t.psMap.Lookup(k); !ok {
-			equal = false
-		} else {
-			equal = equal && reflect.DeepEqual(val, otherValue)
-		}
-	})
-	return equal
-}
-
-func (s Sets) toIntermediate() map[string]StringSet {
-	intermediate := map[string]StringSet{}
-	if s.psMap != nil {
-		s.psMap.ForEach(func(key string, val interface{}) {
-			intermediate[key] = val.(StringSet)
-		})
-	}
-	return intermediate
-}
-
-func (s Sets) fromIntermediate(in map[string]StringSet) Sets {
-	out := ps.NewMap()
-	for k, v := range in {
-		out = out.Set(k, v)
-	}
-	return Sets{out}
+	return mapEqual(s.psMap, t.psMap, reflect.DeepEqual)
 }
 
 // CodecEncodeSelf implements codec.Selfer
 func (s *Sets) CodecEncodeSelf(encoder *codec.Encoder) {
-	if s.psMap != nil {
-		encoder.Encode(s.toIntermediate())
-	} else {
-		encoder.Encode(nil)
-	}
+	mapWrite(s.psMap, encoder, func(encoder *codec.Encoder, val interface{}) {
+		encoder.Encode(val.(StringSet))
+	})
 }
 
 // CodecDecodeSelf implements codec.Selfer
 func (s *Sets) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := map[string]StringSet{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
-	*s = Sets{}.fromIntermediate(in)
+	out := mapRead(decoder, func(isNil bool) interface{} {
+		var value StringSet
+		if !isNil {
+			decoder.Decode(&value)
+		}
+		return value
+	})
+	*s = Sets{out}
 }
 
 // MarshalJSON shouldn't be used, use CodecEncodeSelf instead
@@ -192,21 +161,4 @@ func (Sets) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
 func (*Sets) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
-}
-
-// GobEncode implements gob.Marshaller
-func (s Sets) GobEncode() ([]byte, error) {
-	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(s.toIntermediate())
-	return buf.Bytes(), err
-}
-
-// GobDecode implements gob.Unmarshaller
-func (s *Sets) GobDecode(input []byte) error {
-	in := map[string]StringSet{}
-	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
-	}
-	*s = Sets{}.fromIntermediate(in)
-	return nil
 }

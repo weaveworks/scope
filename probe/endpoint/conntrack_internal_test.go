@@ -2,176 +2,252 @@ package endpoint
 
 import (
 	"bufio"
-	"encoding/xml"
 	"io"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/common/exec"
 	"github.com/weaveworks/scope/test"
-	testexec "github.com/weaveworks/scope/test/exec"
 )
 
-const conntrackCloseTag = "</conntrack>\n"
-const bufferSize = 1024 * 1024
+// Obtained though conntrack -E -p tcp -o id and then tweaked
+const streamedFlowsSource = `[DESTROY] tcp      6 src=10.0.0.1 dst=127.0.0.1 sport=36826 dport=28106 src=10.0.0.2 dst=127.0.0.2 sport=28107 dport=36826 [ASSURED] id=347275904
+    [NEW] tcp      6 120 SYN_SENT src=10.0.0.1 dst=127.0.0.1 sport=36898 dport=28107 [UNREPLIED] src=10.0.0.2 dst=127.0.0.2 sport=28107 dport=36898 id=347275904
+ [UPDATE] tcp      6 60 SYN_RECV src=10.0.0.1 dst=127.0.0.1 sport=36898 dport=28107 src=10.0.0.2 dst=127.0.0.2 sport=28107 dport=36898 id=347275904
+ [UPDATE] tcp      6 432000 ESTABLISHED src=10.0.0.1 dst=127.0.0.1 sport=36898 dport=28107 src=10.0.0.2 dst=127.0.0.2 sport=28107 dport=36898 [ASSURED] id=347275904`
 
-func makeFlow(ty string) flow {
-	return flow{
-		XMLName: xml.Name{
-			Local: "flow",
+var wantStreamedFlows = []flow{
+	{
+		Type: destroyType,
+		Original: meta{
+			Layer3: layer3{
+				SrcIP: "10.0.0.1",
+				DstIP: "127.0.0.1",
+			},
+			Layer4: layer4{
+				SrcPort: 36826,
+				DstPort: 28106,
+				Proto:   "tcp",
+			},
 		},
-		Type: ty,
+		Reply: meta{
+			Layer3: layer3{
+				SrcIP: "10.0.0.2",
+				DstIP: "127.0.0.2",
+			},
+			Layer4: layer4{
+				SrcPort: 28107,
+				DstPort: 36826,
+				Proto:   "tcp",
+			},
+		},
+		Independent: meta{
+			ID: 347275904,
+		},
+	},
+	{
+		Type: newType,
+		Original: meta{
+			Layer3: layer3{
+				SrcIP: "10.0.0.1",
+				DstIP: "127.0.0.1",
+			},
+			Layer4: layer4{
+				SrcPort: 36898,
+				DstPort: 28107,
+				Proto:   "tcp",
+			},
+		},
+		Reply: meta{
+			Layer3: layer3{
+				SrcIP: "10.0.0.2",
+				DstIP: "127.0.0.2",
+			},
+			Layer4: layer4{
+				SrcPort: 28107,
+				DstPort: 36898,
+				Proto:   "tcp",
+			},
+		},
+		Independent: meta{
+			ID:    347275904,
+			State: "SYN_SENT",
+		},
+	},
+	{
+		Type: updateType,
+		Original: meta{
+			Layer3: layer3{
+				SrcIP: "10.0.0.1",
+				DstIP: "127.0.0.1",
+			},
+			Layer4: layer4{
+				SrcPort: 36898,
+				DstPort: 28107,
+				Proto:   "tcp",
+			},
+		},
+		Reply: meta{
+			Layer3: layer3{
+				SrcIP: "10.0.0.2",
+				DstIP: "127.0.0.2",
+			},
+			Layer4: layer4{
+				SrcPort: 28107,
+				DstPort: 36898,
+				Proto:   "tcp",
+			},
+		},
+		Independent: meta{
+			ID:    347275904,
+			State: "SYN_RECV",
+		},
+	},
+	{
+		Type: updateType,
+		Original: meta{
+			Layer3: layer3{
+				SrcIP: "10.0.0.1",
+				DstIP: "127.0.0.1",
+			},
+			Layer4: layer4{
+				SrcPort: 36898,
+				DstPort: 28107,
+				Proto:   "tcp",
+			},
+		},
+		Reply: meta{
+			Layer3: layer3{
+				SrcIP: "10.0.0.2",
+				DstIP: "127.0.0.2",
+			},
+			Layer4: layer4{
+				SrcPort: 28107,
+				DstPort: 36898,
+				Proto:   "tcp",
+			},
+		},
+		Independent: meta{
+			ID:    347275904,
+			State: "ESTABLISHED",
+		},
+	},
+}
+
+func testFlowDecoding(t *testing.T, source string, want []flow, decoder func(scanner *bufio.Scanner) (flow, error)) {
+	scanner := bufio.NewScanner(strings.NewReader(source))
+	d := time.Millisecond * 100
+	for _, wantFlow := range want {
+		haveFlow, err := decoder(scanner)
+		if err != nil {
+			t.Fatalf("Unexpected decoding error: %v", err)
+		}
+		test.Poll(t, d, wantFlow, func() interface{} { return haveFlow })
+	}
+
+	if _, err := decodeStreamedFlow(scanner); err != io.EOF {
+		t.Fatalf("Unexpected error value on empty input: %v", err)
 	}
 }
 
-func addMeta(f *flow, dir, srcIP, dstIP string, srcPort, dstPort int) *meta {
-	meta := meta{
-		XMLName: xml.Name{
-			Local: "meta",
-		},
-		Direction: dir,
-		Layer3: layer3{
-			XMLName: xml.Name{
-				Local: "layer3",
-			},
-			SrcIP: srcIP,
-			DstIP: dstIP,
-		},
-		Layer4: layer4{
-			XMLName: xml.Name{
-				Local: "layer4",
-			},
-			SrcPort: srcPort,
-			DstPort: dstPort,
-			Proto:   tcpProto,
-		},
-	}
-	f.Metas = append(f.Metas, meta)
-	return &meta
+func TestStreamedFlowDecoding(t *testing.T) {
+	testFlowDecoding(t, streamedFlowsSource, wantStreamedFlows, decodeStreamedFlow)
 }
 
-func addIndependant(f *flow, id int64, state string) *meta {
-	meta := meta{
-		XMLName: xml.Name{
-			Local: "meta",
-		},
-		Direction: "independent",
-		ID:        id,
-		State:     state,
-		Layer3: layer3{
-			XMLName: xml.Name{
-				Local: "layer3",
+// Obtained through conntrack -L -p tcp -o id
+// With SELinux, there is a "secctx="
+// After "sudo sysctl net.netfilter.nf_conntrack_acct=1", there is "packets=" and "bytes="
+const dumpedFlowsSource = `tcp      6 431998 ESTABLISHED src=10.0.2.2 dst=10.0.2.15 sport=49911 dport=22 src=10.0.2.15 dst=10.0.2.2 sport=22 dport=49911 [ASSURED] mark=0 use=1 id=2993966208
+tcp      6 108 ESTABLISHED src=172.17.0.5 dst=172.17.0.2 sport=47010 dport=80 src=172.17.0.2 dst=172.17.0.5 sport=80 dport=47010 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 use=1 id=4001098880
+tcp      6 431970 ESTABLISHED src=192.168.35.116 dst=216.58.213.227 sport=49862 dport=443 packets=11 bytes=1337 src=216.58.213.227 dst=192.168.35.116 sport=443 dport=49862 packets=8 bytes=716 [ASSURED] mark=0 secctx=system_u:object_r:unlabeled_t:s0 use=1 id=943643840`
+
+var wantDumpedFlows = []flow{
+	{
+		Original: meta{
+			Layer3: layer3{
+				SrcIP: "10.0.2.2",
+				DstIP: "10.0.2.15",
+			},
+			Layer4: layer4{
+				SrcPort: 49911,
+				DstPort: 22,
+				Proto:   "tcp",
 			},
 		},
-		Layer4: layer4{
-			XMLName: xml.Name{
-				Local: "layer4",
+		Reply: meta{
+			Layer3: layer3{
+				SrcIP: "10.0.2.15",
+				DstIP: "10.0.2.2",
+			},
+			Layer4: layer4{
+				SrcPort: 22,
+				DstPort: 49911,
+				Proto:   "tcp",
 			},
 		},
-	}
-	f.Metas = append(f.Metas, meta)
-	return &meta
+		Independent: meta{
+			ID:    2993966208,
+			State: "ESTABLISHED",
+		},
+	},
+	{
+		Original: meta{
+			Layer3: layer3{
+				SrcIP: "172.17.0.5",
+				DstIP: "172.17.0.2",
+			},
+			Layer4: layer4{
+				SrcPort: 47010,
+				DstPort: 80,
+				Proto:   "tcp",
+			},
+		},
+		Reply: meta{
+			Layer3: layer3{
+				SrcIP: "172.17.0.2",
+				DstIP: "172.17.0.5",
+			},
+			Layer4: layer4{
+				SrcPort: 80,
+				DstPort: 47010,
+				Proto:   "tcp",
+			},
+		},
+		Independent: meta{
+			ID:    4001098880,
+			State: "ESTABLISHED",
+		},
+	},
+	{
+		Original: meta{
+			Layer3: layer3{
+				SrcIP: "192.168.35.116",
+				DstIP: "216.58.213.227",
+			},
+			Layer4: layer4{
+				SrcPort: 49862,
+				DstPort: 443,
+				Proto:   "tcp",
+			},
+		},
+		Reply: meta{
+			Layer3: layer3{
+				SrcIP: "216.58.213.227",
+				DstIP: "192.168.35.116",
+			},
+			Layer4: layer4{
+				SrcPort: 443,
+				DstPort: 49862,
+				Proto:   "tcp",
+			},
+		},
+		Independent: meta{
+			ID:    943643840,
+			State: "ESTABLISHED",
+		},
+	},
 }
 
-func TestConntracker(t *testing.T) {
-	oldExecCmd, oldIsConntrackSupported := exec.Command, IsConntrackSupported
-	defer func() { exec.Command, IsConntrackSupported = oldExecCmd, oldIsConntrackSupported }()
-
-	IsConntrackSupported = func(_ string) error {
-		return nil
-	}
-
-	first := true
-	existingConnectionsReader, existingConnectionsWriter := io.Pipe()
-	reader, writer := io.Pipe()
-	exec.Command = func(name string, args ...string) exec.Cmd {
-		if first {
-			first = false
-			return testexec.NewMockCmd(existingConnectionsReader)
-		}
-		return testexec.NewMockCmd(reader)
-	}
-
-	flowWalker := newConntrackFlowWalker(true, "", bufferSize)
-	defer flowWalker.stop()
-
-	// First write out some empty xml for the existing connections
-	ecbw := bufio.NewWriter(existingConnectionsWriter)
-	if _, err := ecbw.WriteString(xmlHeader); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := ecbw.WriteString(conntrackOpenTag); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := ecbw.WriteString(conntrackCloseTag); err != nil {
-		t.Fatal(err)
-	}
-	if err := ecbw.Flush(); err != nil {
-		t.Fatal(err)
-	}
-
-	// Then write out eventa
-	bw := bufio.NewWriter(writer)
-	if _, err := bw.WriteString(xmlHeader); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := bw.WriteString(conntrackOpenTag); err != nil {
-		t.Fatal(err)
-	}
-	if err := bw.Flush(); err != nil {
-		t.Fatal(err)
-	}
-
-	have := func() interface{} {
-		result := []flow{}
-		flowWalker.walkFlows(func(f flow) {
-			f.Original = nil
-			f.Reply = nil
-			f.Independent = nil
-			result = append(result, f)
-		})
-		return result
-	}
-	ts := 100 * time.Millisecond
-
-	// First, assert we have no flows
-	test.Poll(t, ts, []flow{}, have)
-
-	// Now add some flows
-	xmlEncoder := xml.NewEncoder(bw)
-	writeFlow := func(f flow) {
-		if err := xmlEncoder.Encode(f); err != nil {
-			t.Fatal(err)
-		}
-		if _, err := bw.WriteString("\n"); err != nil {
-			t.Fatal(err)
-		}
-		if err := bw.Flush(); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	flow1 := makeFlow(updateType)
-	addMeta(&flow1, "original", "1.2.3.4", "2.3.4.5", 2, 3)
-	addIndependant(&flow1, 1, "")
-	writeFlow(flow1)
-	test.Poll(t, ts, []flow{flow1}, have)
-
-	// Now check when we remove the flow, we still get it in the next Walk
-	flow2 := makeFlow(destroyType)
-	addMeta(&flow2, "original", "1.2.3.4", "2.3.4.5", 2, 3)
-	addIndependant(&flow2, 1, "")
-	writeFlow(flow2)
-	test.Poll(t, ts, []flow{flow1}, have)
-	test.Poll(t, ts, []flow{}, have)
-
-	// This time we're not going to remove it, but put it in state TIME_WAIT
-	flow1.Type = updateType
-	writeFlow(flow1)
-	test.Poll(t, ts, []flow{flow1}, have)
-
-	flow1.Metas[1].State = timeWait
-	writeFlow(flow1)
-	test.Poll(t, ts, []flow{flow1}, have)
-	test.Poll(t, ts, []flow{}, have)
+func TestDumpedFlowDecoding(t *testing.T) {
+	testFlowDecoding(t, dumpedFlowsSource, wantDumpedFlows, decodeDumpedFlow)
 }

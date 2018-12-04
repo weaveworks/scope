@@ -11,4 +11,3 @@
 # - file >= 5.22
 
 "$(dirname "${BASH_SOURCE[0]}")/files-with-type" text/x-shellscript "$@" | xargs --no-run-if-empty shellcheck
-

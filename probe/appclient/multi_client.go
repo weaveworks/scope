@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
+	"net/url"
 	"strings"
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/report"
@@ -18,7 +17,7 @@ import (
 const maxConcurrentGET = 10
 
 // ClientFactory is a thing thats makes AppClients
-type ClientFactory func(string, string) (AppClient, error)
+type ClientFactory func(string, url.URL) (AppClient, error)
 
 type multiClient struct {
 	clientFactory ClientFactory
@@ -36,21 +35,14 @@ type clientTuple struct {
 	AppClient
 }
 
-// Publisher is something which can send a stream of data somewhere, probably
-// to a remote collector.
-type Publisher interface {
-	Publish(io.Reader) error
-	Stop()
-}
-
 // MultiAppClient maintains a set of upstream apps, and ensures we have an
 // AppClient for each one.
 type MultiAppClient interface {
-	Set(hostname string, endpoints []string)
+	Set(hostname string, urls []url.URL)
 	PipeConnection(appID, pipeID string, pipe xfer.Pipe) error
 	PipeClose(appID, pipeID string) error
 	Stop()
-	Publish(io.Reader) error
+	Publish(r report.Report) error
 }
 
 // NewMultiAppClient creates a new MultiAppClient.
@@ -67,17 +59,17 @@ func NewMultiAppClient(clientFactory ClientFactory, noControls bool) MultiAppCli
 }
 
 // Set the list of endpoints for the given hostname.
-func (c *multiClient) Set(hostname string, endpoints []string) {
+func (c *multiClient) Set(hostname string, urls []url.URL) {
 	wg := sync.WaitGroup{}
-	wg.Add(len(endpoints))
-	clients := make(chan clientTuple, len(endpoints))
-	for _, endpoint := range endpoints {
-		go func(endpoint string) {
+	wg.Add(len(urls))
+	clients := make(chan clientTuple, len(urls))
+	for _, u := range urls {
+		go func(u url.URL) {
 			c.sema.acquire()
 			defer c.sema.release()
 			defer wg.Done()
 
-			client, err := c.clientFactory(hostname, endpoint)
+			client, err := c.clientFactory(hostname, u)
 			if err != nil {
 				log.Errorf("Error creating new app client: %v", err)
 				return
@@ -90,7 +82,7 @@ func (c *multiClient) Set(hostname string, endpoints []string) {
 			}
 
 			clients <- clientTuple{details, client}
-		}(endpoint)
+		}(u)
 	}
 
 	wg.Wait()
@@ -102,7 +94,9 @@ func (c *multiClient) Set(hostname string, endpoints []string) {
 	hostIDs := report.MakeIDList()
 	for tuple := range clients {
 		hostIDs = hostIDs.Add(tuple.ID)
-		if _, ok := c.clients[tuple.ID]; !ok {
+		if client, ok := c.clients[tuple.ID]; ok {
+			client.ReTarget(tuple.AppClient.Target())
+		} else {
 			c.clients[tuple.ID] = tuple.AppClient
 			if !c.noControls {
 				tuple.AppClient.ControlConnection()
@@ -162,17 +156,18 @@ func (c *multiClient) Stop() {
 // underlying publishers sequentially. To do that, it needs to drain the
 // reader, and recreate new readers for each publisher. Note that it will
 // publish to one endpoint for each unique ID. Failed publishes don't count.
-func (c *multiClient) Publish(r io.Reader) error {
-	buf, err := ioutil.ReadAll(r)
+func (c *multiClient) Publish(r report.Report) error {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+
+	buf, err := r.WriteBinary()
 	if err != nil {
 		return err
 	}
 
-	c.mtx.Lock()
-	defer c.mtx.Unlock()
 	errs := []string{}
 	for _, c := range c.clients {
-		if err := c.Publish(bytes.NewReader(buf)); err != nil {
+		if err := c.Publish(bytes.NewReader(buf.Bytes()), r.Shortcut); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

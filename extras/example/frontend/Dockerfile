@@ -1,5 +1,4 @@
 FROM ubuntu
-MAINTAINER Weaveworks Inc <help@weave.works>
 RUN apt-get update && \
   apt-get install -y nginx && \
   rm -rf /var/lib/apt/lists/*
@@ -9,3 +8,10 @@ RUN rm /etc/nginx/sites-available/default && \
 COPY default.conf /etc/nginx/conf.d/
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
+
+ARG revision
+LABEL maintainer="Weaveworks <help@weave.works>" \
+      org.opencontainers.image.title="example-frontend" \
+      org.opencontainers.image.source="https://github.com/weaveworks/scope/tree/master/extras/example/frontend" \
+      org.opencontainers.image.revision="${revision}" \
+      org.opencontainers.image.vendor="Weaveworks"

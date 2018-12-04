@@ -16,13 +16,15 @@ const (
 // MetricRow is a tuple of data used to render a metric as a sparkline and
 // accoutrements.
 type MetricRow struct {
-	ID       string
-	Label    string
-	Format   string
-	Group    string
-	Value    float64
-	Priority float64
-	Metric   *Metric
+	ID         string
+	Label      string
+	Format     string
+	Group      string
+	Value      float64
+	ValueEmpty bool
+	Priority   float64
+	URL        string
+	Metric     *Metric
 }
 
 // Summary returns a copy of the MetricRow, without the samples, just the value if there is one.
@@ -49,17 +51,19 @@ func (*MetricRow) UnmarshalJSON(b []byte) error {
 // Needed to flatten the fields for backwards compatibility with probes
 // (time.Time is encoded in binary in MsgPack)
 type wiredMetricRow struct {
-	ID       string   `json:"id"`
-	Label    string   `json:"label"`
-	Format   string   `json:"format,omitempty"`
-	Group    string   `json:"group,omitempty"`
-	Value    float64  `json:"value"`
-	Priority float64  `json:"priority,omitempty"`
-	Samples  []Sample `json:"samples"`
-	Min      float64  `json:"min"`
-	Max      float64  `json:"max"`
-	First    string   `json:"first,omitempty"`
-	Last     string   `json:"last,omitempty"`
+	ID         string   `json:"id"`
+	Label      string   `json:"label"`
+	Format     string   `json:"format,omitempty"`
+	Group      string   `json:"group,omitempty"`
+	Value      float64  `json:"value"`
+	ValueEmpty bool     `json:"valueEmpty,omitempty"`
+	Priority   float64  `json:"priority,omitempty"`
+	Samples    []Sample `json:"samples"`
+	Min        float64  `json:"min"`
+	Max        float64  `json:"max"`
+	First      string   `json:"first,omitempty"`
+	Last       string   `json:"last,omitempty"`
+	URL        string   `json:"url"`
 }
 
 // CodecEncodeSelf marshals this MetricRow. It takes the basic Metric
@@ -67,17 +71,17 @@ type wiredMetricRow struct {
 func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
 	in := m.Metric.ToIntermediate()
 	encoder.Encode(wiredMetricRow{
-		ID:       m.ID,
-		Label:    m.Label,
-		Format:   m.Format,
-		Group:    m.Group,
-		Value:    m.Value,
-		Priority: m.Priority,
-		Samples:  in.Samples,
-		Min:      in.Min,
-		Max:      in.Max,
-		First:    in.First,
-		Last:     in.Last,
+		ID:         m.ID,
+		Label:      m.Label,
+		Format:     m.Format,
+		Group:      m.Group,
+		Value:      m.Value,
+		ValueEmpty: m.ValueEmpty,
+		Priority:   m.Priority,
+		URL:        m.URL,
+		Samples:    in.Samples,
+		Min:        in.Min,
+		Max:        in.Max,
 	})
 }
 
@@ -89,18 +93,17 @@ func (m *MetricRow) CodecDecodeSelf(decoder *codec.Decoder) {
 		Samples: in.Samples,
 		Min:     in.Min,
 		Max:     in.Max,
-		First:   in.First,
-		Last:    in.Last,
 	}
 	metric := w.FromIntermediate()
 	*m = MetricRow{
-		ID:       in.ID,
-		Label:    in.Label,
-		Format:   in.Format,
-		Group:    in.Group,
-		Value:    in.Value,
-		Priority: in.Priority,
-		Metric:   &metric,
+		ID:         in.ID,
+		Label:      in.Label,
+		Format:     in.Format,
+		Group:      in.Group,
+		Value:      in.Value,
+		ValueEmpty: in.ValueEmpty,
+		Priority:   in.Priority,
+		Metric:     &metric,
 	}
 }
 

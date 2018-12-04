@@ -2,12 +2,14 @@ package docker_test
 
 import (
 	"net"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	client "github.com/fsouza/go-dockerclient"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -40,7 +42,7 @@ func TestContainer(t *testing.T) {
 	defer mtime.NowReset()
 
 	const hostID = "scope"
-	c := docker.NewContainer(container1, hostID)
+	c := docker.NewContainer(container1, hostID, false, false)
 	s := newMockStatsGatherer()
 	err := c.StartGatheringStats(s)
 	if err != nil {
@@ -57,7 +59,7 @@ func TestContainer(t *testing.T) {
 
 	// Now see if we go them
 	{
-		uptime := (now.Sub(startTime) / time.Second) * time.Second
+		uptimeSeconds := int(now.Sub(startTime) / time.Second)
 		controls := map[string]report.NodeControlData{
 			docker.UnpauseContainer: {Dead: true},
 			docker.RestartContainer: {Dead: false},
@@ -69,38 +71,41 @@ func TestContainer(t *testing.T) {
 			docker.RemoveContainer:  {Dead: true},
 		}
 		want := report.MakeNodeWith("ping;<container>", map[string]string{
-			"docker_container_command":     " ",
-			"docker_container_created":     "01 Jan 01 00:00 UTC",
+			"docker_container_command":     "ping foo.bar.local",
+			"docker_container_created":     "0001-01-01T00:00:00Z",
 			"docker_container_id":          "ping",
 			"docker_container_name":        "pong",
 			"docker_image_id":              "baz",
 			"docker_label_foo1":            "bar1",
 			"docker_label_foo2":            "bar2",
 			"docker_container_state":       "running",
-			"docker_container_state_human": "Up 6 years",
-			"docker_container_uptime":      uptime.String(),
+			"docker_container_state_human": c.Container().State.String(),
+			"docker_container_uptime":      strconv.Itoa(uptimeSeconds),
+			"docker_env_FOO":               "secret-bar",
 		}).WithLatestControls(
 			controls,
 		).WithMetrics(report.Metrics{
 			"docker_cpu_total_usage": report.MakeMetric(nil),
 			"docker_memory_usage":    report.MakeSingletonMetric(now, 12345).WithMax(45678),
-		}).WithParents(report.EmptySets.
+		}).WithParents(report.MakeSets().
 			Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID("baz"))),
 		)
 
 		test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 			node := c.GetNode()
-			node.Latest.ForEach(func(k string, _ time.Time, v string) {
-				if v == "0" || v == "" {
-					node.Latest = node.Latest.Delete(k)
+			latest := report.MakeStringLatestMap()
+			node.Latest.ForEach(func(k string, t time.Time, v string) {
+				if v != "0" && v != "" {
+					latest = latest.Set(k, t, v)
 				}
 			})
+			node.Latest = latest
 			return node
 		})
 	}
 
 	{
-		want := report.EmptySets.
+		want := report.MakeSets().
 			Add("docker_container_ports", report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp")).
 			Add("docker_container_networks", nil).
 			Add("docker_container_ips", report.MakeStringSet("1.2.3.4")).
@@ -124,4 +129,40 @@ func TestContainer(t *testing.T) {
 	if have := docker.ExtractContainerIPs(node); !reflect.DeepEqual(have, []string{"1.2.3.4", "5.6.7.8"}) {
 		t.Errorf("%v != %v", have, []string{"1.2.3.4", "5.6.7.8"})
 	}
+}
+
+func TestContainerHidingArgs(t *testing.T) {
+	const hostID = "scope"
+	c := docker.NewContainer(container1, hostID, true, false)
+	node := c.GetNode()
+	node.Latest.ForEach(func(k string, _ time.Time, v string) {
+		if strings.Contains(v, "foo.bar.local") {
+			t.Errorf("Found command line argument in node")
+		}
+	})
+}
+
+func TestContainerHidingEnv(t *testing.T) {
+	const hostID = "scope"
+	c := docker.NewContainer(container1, hostID, false, true)
+	node := c.GetNode()
+	node.Latest.ForEach(func(k string, _ time.Time, v string) {
+		if strings.Contains(v, "secret-bar") {
+			t.Errorf("Found environment variable in node")
+		}
+	})
+}
+
+func TestContainerHidingBoth(t *testing.T) {
+	const hostID = "scope"
+	c := docker.NewContainer(container1, hostID, true, true)
+	node := c.GetNode()
+	node.Latest.ForEach(func(k string, _ time.Time, v string) {
+		if strings.Contains(v, "foo.bar.local") {
+			t.Errorf("Found command line argument in node")
+		}
+		if strings.Contains(v, "secret-bar") {
+			t.Errorf("Found environment variable in node")
+		}
+	})
 }

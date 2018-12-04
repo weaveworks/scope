@@ -1,6 +1,7 @@
 ---
 title: Understanding Weave Scope
 menu_order: 70
+search_type: Documentation
 ---
 
 The following topics are discussed:
@@ -26,7 +27,7 @@ Weave Scope consists of two components: the app and the probe. The components ar
     |  +-----------------+  |
     +-----------------------+
 
-##<a name="stand-alone-mode"></a>Standalone Mode
+## <a name="stand-alone-mode"></a>Standalone Mode
 
 When running Scope in a cluster, each probe sends its reports to a dedicated app. The app merges the reports from its probe into a comprehensive report that is sent to the browser.  To visualize your entire infrastructure and apps running on that infrastructure, Scope must be launched on to every machine you are using.
 
@@ -68,16 +69,13 @@ Scope can also be used to feed reports to Weave Cloud. With Weave Cloud, you can
     |  +-----------------+  |      |  +-----------------+  |
     +-----------------------+      +-----------------------+
 
-To register with the service, go to [https://cloud.weave.works](https://cloud.weave.works), enter your email address and wait for the confirmation email that contains your service token.
+To register with Weave Cloud, go to [https://cloud.weave.works](https://cloud.weave.works), enter your email address and wait for the confirmation email.
 
-![`Weave Cloud` Signup](images/weave-cloud-signup.png)
+The cloud token is accessible from the settings page after you've clicked 'Explore':
 
+![Weave Cloud Token](images/weave-cloud-token.png)
 
-The cloud token is also accessible from the Weave Cloud main page after you've logged in:
-
-![Weave Cloud Configure Your App](images/weave-cloud-main-page.png)
-
-##<a name="disable"></a>Disabling Automatic Updates
+## <a name="disable"></a>Disabling Automatic Updates
 
 Scope periodically checks with our servers to see if a new version is available. You can disable this by setting:
 

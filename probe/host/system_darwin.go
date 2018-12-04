@@ -1,7 +1,7 @@
 package host
 
 import (
-	"fmt"
+	"bytes"
 	"os/exec"
 	"regexp"
 	"strconv"
@@ -11,22 +11,23 @@ import (
 )
 
 var (
-	unameRe  = regexp.MustCompile(`Darwin Kernel Version ([0-9\.]+)\:`)
 	loadRe   = regexp.MustCompile(`load averages: ([0-9\.]+) ([0-9\.]+) ([0-9\.]+)`)
 	uptimeRe = regexp.MustCompile(`up ([0-9]+) day[s]*,[ ]+([0-9]+)\:([0-9][0-9])`)
 )
 
-// GetKernelVersion returns the kernel version as reported by uname.
-var GetKernelVersion = func() (string, error) {
-	out, err := exec.Command("uname", "-v").CombinedOutput()
+// GetKernelReleaseAndVersion returns the kernel version as reported by uname.
+var GetKernelReleaseAndVersion = func() (string, string, error) {
+	release, err := exec.Command("uname", "-r").CombinedOutput()
 	if err != nil {
-		return "Darwin unknown", err
+		return "unknown", "unknown", err
 	}
-	matches := unameRe.FindAllStringSubmatch(string(out), -1)
-	if matches == nil || len(matches) < 1 || len(matches[0]) < 1 {
-		return "Darwin unknown", nil
+	release = bytes.Trim(release, " \n")
+	version, err := exec.Command("uname", "-v").CombinedOutput()
+	if err != nil {
+		return string(release), "unknown", err
 	}
-	return fmt.Sprintf("Darwin %s", matches[0][1]), nil
+	version = bytes.Trim(version, " \n")
+	return string(release), string(version), nil
 }
 
 // GetLoad returns the current load averages as metrics.

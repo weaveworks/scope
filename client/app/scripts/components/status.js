@@ -1,9 +1,14 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { isPausedSelector } from '../selectors/time-travel';
+
+
 class Status extends React.Component {
   render() {
-    const {errorUrl, topologiesLoaded, filteredNodeCount, topology, websocketClosed} = this.props;
+    const {
+      errorUrl, topologiesLoaded, filteredNodeCount, topology, websocketClosed
+    } = this.props;
 
     let title = '';
     let text = 'Trying to reconnect...';
@@ -44,12 +49,11 @@ function mapStateToProps(state) {
   return {
     errorUrl: state.get('errorUrl'),
     filteredNodeCount: state.get('nodes').filter(node => node.get('filtered')).size,
+    showingCurrentState: !isPausedSelector(state),
     topologiesLoaded: state.get('topologiesLoaded'),
     topology: state.get('currentTopology'),
-    websocketClosed: state.get('websocketClosed')
+    websocketClosed: state.get('websocketClosed'),
   };
 }
 
-export default connect(
-  mapStateToProps
-)(Status);
+export default connect(mapStateToProps)(Status);

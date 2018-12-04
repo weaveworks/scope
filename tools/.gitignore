@@ -2,6 +2,9 @@ cover/cover
 socks/proxy
 socks/image.tar
 runner/runner
-cmd/wcloud/wcloud
 *.pyc
 *~
+terraform.tfstate
+terraform.tfstate.backup
+*.retry
+build/**/.uptodate

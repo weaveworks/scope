@@ -10,10 +10,10 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/weaveworks/scope/common/exec"
+	"github.com/weaveworks/common/exec"
+	"github.com/weaveworks/common/test"
+	testExec "github.com/weaveworks/common/test/exec"
 	"github.com/weaveworks/scope/common/weave"
-	"github.com/weaveworks/scope/test"
-	testExec "github.com/weaveworks/scope/test/exec"
 )
 
 const (
@@ -25,6 +25,8 @@ const (
 	mockContainerIP          = "10.0.0.123"
 	mockContainerIPWithScope = ";10.0.0.123"
 	mockHostname             = "hostname.weave.local"
+	mockProxyAddress         = "unix:///foo/bar/weave.sock"
+	mockDriverName           = "weave_mock"
 )
 
 var (
@@ -41,8 +43,16 @@ var (
 				"Hostname": "%s.",
 				"Tombstone": 0
 			}]
-		}
-	}`, mockWeavePeerName, mockWeavePeerNickName, mockContainerID, mockHostname)
+		},
+                "Proxy": {
+                        "Addresses": [
+                                "%s"
+                        ]
+                },
+                "Plugin": {
+                        "DriverName": "%s"
+                }
+	}`, mockWeavePeerName, mockWeavePeerNickName, mockContainerID, mockHostname, mockProxyAddress, mockDriverName)
 	mockIP = net.ParseIP("1.2.3.4")
 )
 
@@ -64,17 +74,14 @@ func TestStatus(t *testing.T) {
 
 	want := weave.Status{
 		Router: weave.Router{
-			Peers: []struct {
-				Name     string
-				NickName string
-			}{
+			Peers: []weave.Peer{
 				{
 					Name:     mockWeavePeerName,
 					NickName: mockWeavePeerNickName,
 				},
 			},
 		},
-		DNS: weave.DNS{
+		DNS: &weave.DNS{
 			Entries: []struct {
 				Hostname    string
 				ContainerID string
@@ -86,6 +93,12 @@ func TestStatus(t *testing.T) {
 					Tombstone:   0,
 				},
 			},
+		},
+		Proxy: &weave.Proxy{
+			Addresses: []string{mockProxyAddress},
+		},
+		Plugin: &weave.Plugin{
+			DriverName: mockDriverName,
 		},
 	}
 	if !reflect.DeepEqual(status, want) {
@@ -123,31 +136,6 @@ func TestDNSAdd(t *testing.T) {
 	}
 	if !reflect.DeepEqual(published, want) {
 		t.Fatal(test.Diff(published, want))
-	}
-}
-
-func TestPS(t *testing.T) {
-	oldExecCmd := exec.Command
-	defer func() { exec.Command = oldExecCmd }()
-	exec.Command = func(name string, args ...string) exec.Cmd {
-		return testExec.NewMockCmdString(fmt.Sprintf("%s %s %s/24\n", mockContainerID, mockContainerMAC, mockContainerIP))
-	}
-
-	client := weave.NewClient("")
-	entries, err := client.PS()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	want := map[string]weave.PSEntry{
-		mockContainerID: {
-			ContainerIDPrefix: mockContainerID,
-			MACAddress:        mockContainerMAC,
-			IPs:               []string{mockContainerIP},
-		},
-	}
-	if !reflect.DeepEqual(entries, want) {
-		t.Fatal(test.Diff(entries, want))
 	}
 }
 

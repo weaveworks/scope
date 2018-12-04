@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"context"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/render"
@@ -28,27 +28,50 @@ type APINode struct {
 	Node detailed.Node `json:"node"`
 }
 
+// RenderContextForReporter creates the rendering context for the given reporter.
+func RenderContextForReporter(rep Reporter, r report.Report) detailed.RenderContext {
+	rc := detailed.RenderContext{Report: r}
+	if wrep, ok := rep.(WebReporter); ok {
+		rc.MetricsGraphURL = wrep.MetricsGraphURL
+	}
+	return rc
+}
+
+type rendererHandler func(context.Context, render.Renderer, render.Transformer, detailed.RenderContext, http.ResponseWriter, *http.Request)
+
 // Full topology.
-func handleTopology(ctx context.Context, renderer render.Renderer, decorator render.Decorator, report report.Report, w http.ResponseWriter, r *http.Request) {
+func handleTopology(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(report, renderer.Render(report, decorator)),
+		Nodes: detailed.Summaries(rc, render.Render(rc.Report, renderer, transformer).Nodes),
 	})
 }
 
 // Individual nodes.
-func handleNode(ctx context.Context, renderer render.Renderer, _ render.Decorator, report report.Report, w http.ResponseWriter, r *http.Request) {
+func handleNode(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
 	var (
 		vars       = mux.Vars(r)
 		topologyID = vars["topology"]
 		nodeID     = vars["id"]
-		rendered   = renderer.Render(report, nil)
-		node, ok   = rendered[nodeID]
 	)
+	// We must not lose the node during filtering. We achieve that by
+	// (1) rendering the report with the base renderer, without
+	// filtering, which gives us the node (if it exists at all), and
+	// then (2) applying the filter separately to that result.  If the
+	// node is lost in the second step, we simply put it back.
+	nodes := renderer.Render(rc.Report)
+	node, ok := nodes.Nodes[nodeID]
 	if !ok {
 		http.NotFound(w, r)
 		return
 	}
-	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, report, rendered, node)})
+	nodes = transformer.Transform(nodes)
+	if filteredNode, ok := nodes.Nodes[nodeID]; ok {
+		node = filteredNode
+	} else { // we've lost the node during filtering; put it back
+		nodes.Nodes[nodeID] = node
+		nodes.Filtered--
+	}
+	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, rc, nodes.Nodes, node)})
 }
 
 // Websocket for the full topology.
@@ -83,7 +106,7 @@ func handleWebsocket(
 		for { // just discard everything the browser sends
 			if _, _, err := c.ReadMessage(); err != nil {
 				if !xfer.IsExpectedWSCloseError(err) {
-					log.Println("err:", err)
+					log.Error("err:", err)
 				}
 				close(quit)
 				break
@@ -92,26 +115,37 @@ func handleWebsocket(
 	}(conn)
 
 	var (
-		previousTopo detailed.NodeSummaries
-		tick         = time.Tick(loop)
-		wait         = make(chan struct{}, 1)
-		topologyID   = mux.Vars(r)["topology"]
+		previousTopo     detailed.NodeSummaries
+		tick             = time.Tick(loop)
+		wait             = make(chan struct{}, 1)
+		topologyID       = mux.Vars(r)["topology"]
+		startReportingAt = deserializeTimestamp(r.Form.Get("timestamp"))
+		channelOpenedAt  = time.Now()
 	)
+
 	rep.WaitOn(ctx, wait)
 	defer rep.UnWait(ctx, wait)
 
 	for {
-		report, err := rep.Report(ctx)
+		// We measure how much time has passed since the channel was opened
+		// and add it to the initial report timestamp to get the timestamp
+		// of the snapshot we want to report right now.
+		// NOTE: Multiplying `timestampDelta` by a constant factor here
+		// would have an effect of fast-forward, which is something we
+		// might be interested in implementing in the future.
+		timestampDelta := time.Since(channelOpenedAt)
+		reportTimestamp := startReportingAt.Add(timestampDelta)
+		re, err := rep.Report(ctx, reportTimestamp)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		renderer, decorator, err := topologyRegistry.rendererForTopology(topologyID, r.Form, report)
+		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, r.Form, re)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(report, renderer.Render(report, decorator))
+		newTopo := detailed.Summaries(RenderContextForReporter(rep, re), render.Render(re, renderer, filter).Nodes)
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

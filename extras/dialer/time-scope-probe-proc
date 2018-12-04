@@ -1,0 +1,38 @@
+#!/bin/bash
+set -eu
+if [ $EUID -ne 0 ]; then
+    echo "You must be root!" >&2
+    exit 1
+fi
+
+readonly interval_num=${1:-60}
+readonly interval_sleep=${2:-10}
+
+TIME_U1=0
+TIME_K1=0
+TIME_T1=0
+TIME_U2=0
+TIME_K2=0
+TIME_T2=0
+
+if [ "$(pidof scope-probe)" == "" ]; then
+    echo "No scope-probe process running - aborting" >&2
+    exit 1
+fi
+
+TIME_U2=$(gawk '{print $14"*10"}' <"/proc/$(pidof scope-probe)/stat" | bc)
+TIME_K2=$(gawk '{print $15"*10"}' <"/proc/$(pidof scope-probe)/stat" | bc)
+TIME_T2=$((TIME_U2 + TIME_K2))
+
+echo "utime;stime;total_time"
+for ((i = 0; i < interval_num; i++)); do
+    sleep "$interval_sleep"
+    TIME_U1=$TIME_U2
+    TIME_K1=$TIME_K2
+    TIME_T1=$TIME_T2
+
+    TIME_U2=$(gawk '{print $14"*10"}' <"/proc/$(pidof scope-probe)/stat" | bc)
+    TIME_K2=$(gawk '{print $15"*10"}' <"/proc/$(pidof scope-probe)/stat" | bc)
+    TIME_T2=$((TIME_U2 + TIME_K2))
+    echo "$((TIME_U2 - TIME_U1));$((TIME_K2 - TIME_K1));$((TIME_T2 - TIME_T1))"
+done

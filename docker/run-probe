@@ -1,3 +1,6 @@
 #!/bin/bash
 
-exec -a scope-probe /home/weave/scope --mode probe $(cat /var/run/weave/scope-probe.args)
+# shellcheck disable=SC1091
+source /var/run/weave/scope-probe.args
+
+exec -a scope-probe /home/weave/scope --mode probe "${ARGS[@]}"

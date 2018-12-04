@@ -1,5 +1,5 @@
 // adapted from https://github.com/NYTimes/svg-crowbar
-import _ from 'lodash';
+import { each } from 'lodash';
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
 const prefix = {
@@ -18,7 +18,7 @@ function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
   function explicitlySetStyle(element, targetEl) {
     const cSSStyleDeclarationComputed = getComputedStyle(element);
     let computedStyleStr = '';
-    _.each(cSSStyleDeclarationComputed, key => {
+    each(cSSStyleDeclarationComputed, (key) => {
       const value = cSSStyleDeclarationComputed.getPropertyValue(key);
       if (value !== emptySvgDeclarationComputed.getPropertyValue(key) && !cssSkipValues[value]) {
         computedStyleStr += `${key}:${value};`;
@@ -55,8 +55,7 @@ function setInlineStyles(svg, target, emptySvgDeclarationComputed) {
   // hardcode computed css styles inside svg
   const allElements = traverse(svg);
   const allTargetElements = traverse(target);
-  let i = allElements.length;
-  while (i--) {
+  for (let i = allElements.length - 1; i >= 0; i -= 1) {
     explicitlySetStyle(allElements[i], allTargetElements[i]);
   }
 
@@ -74,11 +73,12 @@ function download(source, name) {
   if (name) {
     filename = name;
   } else if (window.document.title) {
-    filename = `${window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${(+new Date)}`;
+    filename = `${window.document.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${(+new Date())}`;
   }
 
-  const url = window.URL.createObjectURL(new Blob(source,
-    {type: 'text\/xml'}
+  const url = window.URL.createObjectURL(new Blob(
+    source,
+    { type: 'text/xml' }
   ));
 
   const a = document.createElement('a');
@@ -94,8 +94,12 @@ function download(source, name) {
   }, 10);
 }
 
+function getSVGElement() {
+  return document.getElementById('canvas');
+}
+
 function getSVG(doc, emptySvgDeclarationComputed) {
-  const svg = document.getElementById('nodes-chart-canvas');
+  const svg = getSVGElement();
   const target = svg.cloneNode(true);
 
   target.setAttribute('version', '1.1');
@@ -128,7 +132,7 @@ function cleanup() {
   });
 
   // hide embedded logo
-  const svg = document.getElementById('nodes-chart-canvas');
+  const svg = getSVGElement();
   svg.setAttribute('class', '');
 }
 

@@ -66,3 +66,15 @@ func TestEndpointNodeID(t *testing.T) {
 		}
 	}
 }
+
+func TestECSServiceNodeIDCompat(t *testing.T) {
+	testID := "my-service;<ecs_service>"
+	testName := "my-service"
+	_, name, ok := report.ParseECSServiceNodeID(testID)
+	if !ok {
+		t.Errorf("Failed to parse backwards-compatible id %q", testID)
+	}
+	if name != testName {
+		t.Errorf("Backwards-compatible id %q parsed name to %q, expected %q", testID, name, testName)
+	}
+}

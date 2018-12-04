@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"net/rpc"
 
-	log "github.com/Sirupsen/logrus"
+	"context"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
+	log "github.com/sirupsen/logrus"
+	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/xfer"
 )
@@ -29,14 +30,26 @@ func RegisterControlRoutes(router *mux.Router, cr ControlRouter) {
 func handleControl(cr ControlRouter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		var (
-			vars    = mux.Vars(r)
-			probeID = vars["probeID"]
-			nodeID  = vars["nodeID"]
-			control = vars["control"]
+			vars        = mux.Vars(r)
+			probeID     = vars["probeID"]
+			nodeID      = vars["nodeID"]
+			control     = vars["control"]
+			controlArgs map[string]string
 		)
+
+		if r.ContentLength > 0 {
+			err := codec.NewDecoder(r.Body, &codec.JsonHandle{}).Decode(&controlArgs)
+			defer r.Body.Close()
+			if err != nil {
+				respondWith(w, http.StatusBadRequest, err)
+				return
+			}
+		}
+
 		result, err := cr.Handle(ctx, probeID, xfer.Request{
-			NodeID:  nodeID,
-			Control: control,
+			NodeID:      nodeID,
+			Control:     control,
+			ControlArgs: controlArgs,
 		})
 		if err != nil {
 			respondWith(w, http.StatusBadRequest, err.Error())

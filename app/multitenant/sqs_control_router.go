@@ -8,21 +8,20 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"context"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/context"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/weaveworks/common/instrument"
 	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/common/instrument"
 	"github.com/weaveworks/scope/common/xfer"
 )
 
 var (
 	longPollTime       = aws.Int64(10)
-	rpcTimeout         = time.Minute
 	sqsRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "scope",
 		Name:      "sqs_request_duration_seconds",
@@ -45,6 +44,7 @@ type sqsControlRouter struct {
 	responseQueueURL *string
 	userIDer         UserIDer
 	prefix           string
+	rpcTimeout       time.Duration
 
 	mtx          sync.Mutex
 	responses    map[string]chan xfer.Response
@@ -63,12 +63,13 @@ type sqsResponseMessage struct {
 }
 
 // NewSQSControlRouter the harbinger of death
-func NewSQSControlRouter(config *aws.Config, userIDer UserIDer, prefix string) app.ControlRouter {
+func NewSQSControlRouter(config *aws.Config, userIDer UserIDer, prefix string, rpcTimeout time.Duration) app.ControlRouter {
 	result := &sqsControlRouter{
 		service:          sqs.New(session.New(config)),
 		responseQueueURL: nil,
 		userIDer:         userIDer,
 		prefix:           prefix,
+		rpcTimeout:       rpcTimeout,
 		responses:        map[string]chan xfer.Response{},
 		probeWorkers:     map[int64]*probeWorker{},
 	}
@@ -92,11 +93,11 @@ func (cr *sqsControlRouter) getResponseQueueURL() *string {
 	return cr.responseQueueURL
 }
 
-func (cr *sqsControlRouter) getOrCreateQueue(name string) (*string, error) {
+func (cr *sqsControlRouter) getOrCreateQueue(ctx context.Context, name string) (*string, error) {
 	// CreateQueue creates a queue or if it already exists, returns url of said queue
 	var createQueueRes *sqs.CreateQueueOutput
 	var err error
-	err = instrument.TimeRequestHistogram("CreateQueue", sqsRequestDuration, func() error {
+	err = instrument.TimeRequestHistogram(ctx, "SQS.CreateQueue", sqsRequestDuration, func(_ context.Context) error {
 		createQueueRes, err = cr.service.CreateQueue(&sqs.CreateQueueInput{
 			QueueName: aws.String(name),
 		})
@@ -112,11 +113,12 @@ func (cr *sqsControlRouter) loop() {
 	var (
 		responseQueueURL *string
 		err              error
+		ctx              = context.Background()
 	)
 	for {
 		// This app has a random id and uses this as a return path for all responses from probes.
 		name := fmt.Sprintf("%scontrol-app-%d", cr.prefix, rand.Int63())
-		responseQueueURL, err = cr.getOrCreateQueue(name)
+		responseQueueURL, err = cr.getOrCreateQueue(ctx, name)
 		if err != nil {
 			log.Errorf("Failed to create queue: %v", err)
 			time.Sleep(1 * time.Second)
@@ -129,7 +131,7 @@ func (cr *sqsControlRouter) loop() {
 	for {
 		var res *sqs.ReceiveMessageOutput
 		var err error
-		err = instrument.TimeRequestHistogram("ReceiveMessage", sqsRequestDuration, func() error {
+		err = instrument.TimeRequestHistogram(ctx, "SQS.ReceiveMessage", sqsRequestDuration, func(_ context.Context) error {
 			res, err = cr.service.ReceiveMessage(&sqs.ReceiveMessageInput{
 				QueueUrl:        responseQueueURL,
 				WaitTimeSeconds: longPollTime,
@@ -144,14 +146,14 @@ func (cr *sqsControlRouter) loop() {
 		if len(res.Messages) == 0 {
 			continue
 		}
-		if err := cr.deleteMessages(responseQueueURL, res.Messages); err != nil {
+		if err := cr.deleteMessages(ctx, responseQueueURL, res.Messages); err != nil {
 			log.Errorf("Error deleting message from %s: %v", *responseQueueURL, err)
 		}
 		cr.handleResponses(res)
 	}
 }
 
-func (cr *sqsControlRouter) deleteMessages(queueURL *string, messages []*sqs.Message) error {
+func (cr *sqsControlRouter) deleteMessages(ctx context.Context, queueURL *string, messages []*sqs.Message) error {
 	entries := []*sqs.DeleteMessageBatchRequestEntry{}
 	for _, message := range messages {
 		entries = append(entries, &sqs.DeleteMessageBatchRequestEntry{
@@ -159,7 +161,7 @@ func (cr *sqsControlRouter) deleteMessages(queueURL *string, messages []*sqs.Mes
 			Id:            message.MessageId,
 		})
 	}
-	return instrument.TimeRequestHistogram("DeleteMessageBatch", sqsRequestDuration, func() error {
+	return instrument.TimeRequestHistogram(ctx, "SQS.DeleteMessageBatch", sqsRequestDuration, func(_ context.Context) error {
 		_, err := cr.service.DeleteMessageBatch(&sqs.DeleteMessageBatchInput{
 			QueueUrl: queueURL,
 			Entries:  entries,
@@ -188,14 +190,14 @@ func (cr *sqsControlRouter) handleResponses(res *sqs.ReceiveMessageOutput) {
 	}
 }
 
-func (cr *sqsControlRouter) sendMessage(queueURL *string, message interface{}) error {
+func (cr *sqsControlRouter) sendMessage(ctx context.Context, queueURL *string, message interface{}) error {
 	buf := bytes.Buffer{}
 	if err := json.NewEncoder(&buf).Encode(message); err != nil {
 		return err
 	}
-	log.Infof("sendMessage to %s: %s", *queueURL, buf.String())
+	log.Debugf("sendMessage to %s: %s", *queueURL, buf.String())
 
-	return instrument.TimeRequestHistogram("SendMessage", sqsRequestDuration, func() error {
+	return instrument.TimeRequestHistogram(ctx, "SQS.SendMessage", sqsRequestDuration, func(_ context.Context) error {
 		_, err := cr.service.SendMessage(&sqs.SendMessageInput{
 			QueueUrl:    queueURL,
 			MessageBody: aws.String(buf.String()),
@@ -214,11 +216,11 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 	// Get the queue url for the local (control app) queue, and for the probe.
 	responseQueueURL := cr.getResponseQueueURL()
 	if responseQueueURL == nil {
-		return xfer.Response{}, fmt.Errorf("No SQS queue yet!")
+		return xfer.Response{}, fmt.Errorf("no SQS queue yet")
 	}
 
 	var probeQueueURL *sqs.GetQueueUrlOutput
-	err = instrument.TimeRequestHistogram("GetQueueUrl", sqsRequestDuration, func() error {
+	err = instrument.TimeRequestHistogram(ctx, "SQS.GetQueueUrl", sqsRequestDuration, func(_ context.Context) error {
 		probeQueueName := fmt.Sprintf("%sprobe-%s-%s", cr.prefix, userID, probeID)
 		probeQueueURL, err = cr.service.GetQueueUrl(&sqs.GetQueueUrlInput{
 			QueueName: aws.String(probeQueueName),
@@ -242,8 +244,8 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 	}()
 
 	// Next, send the request to that queue
-	if err := instrument.TimeRequestHistogram("SendMessage", sqsRequestDuration, func() error {
-		return cr.sendMessage(probeQueueURL.QueueUrl, sqsRequestMessage{
+	if err := instrument.TimeRequestHistogram(ctx, "SQS.SendMessage", sqsRequestDuration, func(ctx context.Context) error {
+		return cr.sendMessage(ctx, probeQueueURL.QueueUrl, sqsRequestMessage{
 			ID:               id,
 			Request:          req,
 			ResponseQueueURL: *responseQueueURL,
@@ -256,8 +258,8 @@ func (cr *sqsControlRouter) Handle(ctx context.Context, probeID string, req xfer
 	select {
 	case response := <-waiter:
 		return response, nil
-	case <-time.After(rpcTimeout):
-		return xfer.Response{}, fmt.Errorf("Request timedout.")
+	case <-time.After(cr.rpcTimeout):
+		return xfer.Response{}, fmt.Errorf("request timed out")
 	}
 }
 
@@ -268,13 +270,14 @@ func (cr *sqsControlRouter) Register(ctx context.Context, probeID string, handle
 	}
 
 	name := fmt.Sprintf("%sprobe-%s-%s", cr.prefix, userID, probeID)
-	queueURL, err := cr.getOrCreateQueue(name)
+	queueURL, err := cr.getOrCreateQueue(ctx, name)
 	if err != nil {
 		return 0, err
 	}
 
 	pwID := rand.Int63()
 	pw := &probeWorker{
+		ctx:             ctx,
 		router:          cr,
 		requestQueueURL: queueURL,
 		handler:         handler,
@@ -302,6 +305,7 @@ func (cr *sqsControlRouter) Deregister(_ context.Context, probeID string, id int
 
 // a probeWorker encapsulates a goroutine serving a probe's websocket connection.
 type probeWorker struct {
+	ctx             context.Context
 	router          *sqsControlRouter
 	requestQueueURL *string
 	handler         xfer.ControlHandlerFunc
@@ -315,6 +319,7 @@ func (pw *probeWorker) stop() {
 }
 
 func (pw *probeWorker) loop() {
+	defer pw.done.Done()
 	for {
 		// have we been stopped?
 		select {
@@ -325,7 +330,7 @@ func (pw *probeWorker) loop() {
 
 		var res *sqs.ReceiveMessageOutput
 		var err error
-		err = instrument.TimeRequestHistogram("ReceiveMessage", sqsRequestDuration, func() error {
+		err = instrument.TimeRequestHistogram(pw.ctx, "SQS.ReceiveMessage", sqsRequestDuration, func(_ context.Context) error {
 			res, err = pw.router.service.ReceiveMessage(&sqs.ReceiveMessageInput{
 				QueueUrl:        pw.requestQueueURL,
 				WaitTimeSeconds: longPollTime,
@@ -340,7 +345,7 @@ func (pw *probeWorker) loop() {
 		if len(res.Messages) == 0 {
 			continue
 		}
-		if err := pw.router.deleteMessages(pw.requestQueueURL, res.Messages); err != nil {
+		if err := pw.router.deleteMessages(pw.ctx, pw.requestQueueURL, res.Messages); err != nil {
 			log.Errorf("Error deleting message from %s: %v", *pw.requestQueueURL, err)
 		}
 
@@ -353,7 +358,7 @@ func (pw *probeWorker) loop() {
 
 			response := pw.handler(sqsRequest.Request)
 
-			if err := pw.router.sendMessage(&sqsRequest.ResponseQueueURL, sqsResponseMessage{
+			if err := pw.router.sendMessage(pw.ctx, &sqsRequest.ResponseQueueURL, sqsResponseMessage{
 				ID:       sqsRequest.ID,
 				Response: response,
 			}); err != nil {

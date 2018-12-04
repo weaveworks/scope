@@ -8,17 +8,18 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"context"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/bluele/gcache"
 	"github.com/nats-io/nats"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/context"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/weaveworks/common/instrument"
 	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/common/instrument"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -91,7 +92,7 @@ type AWSCollector interface {
 
 // ReportStore is a thing that we can get reports from.
 type ReportStore interface {
-	FetchReports([]string) (map[string]report.Report, []string, error)
+	FetchReports(context.Context, []string) (map[string]report.Report, []string, error)
 }
 
 // AWSCollectorConfig has everything we need to make an AWS collector.
@@ -153,7 +154,7 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 		s3:        config.S3Store,
 		userIDer:  config.UserIDer,
 		tableName: config.DynamoTable,
-		merger:    app.NewSmartMerger(),
+		merger:    app.NewFastMerger(),
 		inProcess: newInProcessStore(reportCacheSize, config.Window),
 		memcache:  config.MemcacheClient,
 		window:    config.Window,
@@ -214,11 +215,11 @@ func (c *awsCollector) CreateTables() error {
 	return err
 }
 
-// getReportKeys gets the s3 keys for reports in this range
-func (c *awsCollector) getReportKeys(userid string, row int64, start, end time.Time) ([]string, error) {
+// reportKeysInRange returns the s3 keys for reports in the specified range
+func (c *awsCollector) reportKeysInRange(ctx context.Context, userid string, row int64, start, end time.Time) ([]string, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
 	var resp *dynamodb.QueryOutput
-	err := instrument.TimeRequestHistogram("Query", dynamoRequestDuration, func() error {
+	err := instrument.TimeRequestHistogram(ctx, "DynamoDB.Query", dynamoRequestDuration, func(_ context.Context) error {
 		var err error
 		resp, err = c.db.Query(&dynamodb.QueryInput{
 			TableName: aws.String(c.tableName),
@@ -263,7 +264,43 @@ func (c *awsCollector) getReportKeys(userid string, row int64, start, end time.T
 	return result, nil
 }
 
-func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) {
+// getReportKeys returns the S3 for reports in the reporting window ending at timestamp.
+func (c *awsCollector) getReportKeys(ctx context.Context, timestamp time.Time) ([]string, error) {
+	var (
+		end      = timestamp
+		start    = end.Add(-c.window)
+		rowStart = start.UnixNano() / time.Hour.Nanoseconds()
+		rowEnd   = end.UnixNano() / time.Hour.Nanoseconds()
+	)
+
+	userid, err := c.userIDer(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Queries will only every span 2 rows max.
+	var reportKeys []string
+	if rowStart != rowEnd {
+		reportKeys1, err := c.reportKeysInRange(ctx, userid, rowStart, start, end)
+		if err != nil {
+			return nil, err
+		}
+		reportKeys2, err := c.reportKeysInRange(ctx, userid, rowEnd, start, end)
+		if err != nil {
+			return nil, err
+		}
+		reportKeys = append(reportKeys, reportKeys1...)
+		reportKeys = append(reportKeys, reportKeys2...)
+	} else {
+		if reportKeys, err = c.reportKeysInRange(ctx, userid, rowEnd, start, end); err != nil {
+			return nil, err
+		}
+	}
+
+	return reportKeys, nil
+}
+
+func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]report.Report, error) {
 	missing := reportKeys
 
 	stores := []ReportStore{c.inProcess}
@@ -277,12 +314,13 @@ func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) 
 		if store == nil {
 			continue
 		}
-		found, newMissing, err := store.FetchReports(missing)
+		found, newMissing, err := store.FetchReports(ctx, missing)
 		missing = newMissing
 		if err != nil {
 			log.Warningf("Error fetching from cache: %v", err)
 		}
 		for key, report := range found {
+			report = report.Upgrade()
 			c.inProcess.StoreReport(key, report)
 			reports = append(reports, report)
 		}
@@ -297,45 +335,27 @@ func (c *awsCollector) getReports(reportKeys []string) ([]report.Report, error) 
 	return reports, nil
 }
 
-func (c *awsCollector) Report(ctx context.Context) (report.Report, error) {
-	var (
-		now              = time.Now()
-		start            = now.Add(-c.window)
-		rowStart, rowEnd = start.UnixNano() / time.Hour.Nanoseconds(), now.UnixNano() / time.Hour.Nanoseconds()
-		userid, err      = c.userIDer(ctx)
-	)
+func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.Report, error) {
+	reportKeys, err := c.getReportKeys(ctx, timestamp)
+	if err != nil {
+		return report.MakeReport(), err
+	}
+	log.Debugf("Fetching %d reports to %v", len(reportKeys), timestamp)
+	reports, err := c.getReports(ctx, reportKeys)
 	if err != nil {
 		return report.MakeReport(), err
 	}
 
-	// Queries will only every span 2 rows max.
-	var reportKeys []string
-	if rowStart != rowEnd {
-		reportKeys1, err := c.getReportKeys(userid, rowStart, start, now)
-		if err != nil {
-			return report.MakeReport(), err
-		}
+	return c.merger.Merge(reports), nil
+}
 
-		reportKeys2, err := c.getReportKeys(userid, rowEnd, start, now)
-		if err != nil {
-			return report.MakeReport(), err
-		}
+func (c *awsCollector) HasReports(ctx context.Context, timestamp time.Time) (bool, error) {
+	reportKeys, err := c.getReportKeys(ctx, timestamp)
+	return len(reportKeys) > 0, err
+}
 
-		reportKeys = append(reportKeys, reportKeys1...)
-		reportKeys = append(reportKeys, reportKeys2...)
-	} else {
-		if reportKeys, err = c.getReportKeys(userid, rowEnd, start, now); err != nil {
-			return report.MakeReport(), err
-		}
-	}
-
-	log.Debugf("Fetching %d reports from %v to %v", len(reportKeys), start, now)
-	reports, err := c.getReports(reportKeys)
-	if err != nil {
-		return report.MakeReport(), err
-	}
-
-	return c.merger.Merge(reports).Upgrade(), nil
+func (c *awsCollector) HasHistoricReports() bool {
+	return true
 }
 
 // calculateDynamoKeys generates the row & column keys for Dynamo.
@@ -354,43 +374,19 @@ func calculateReportKey(rowKey, colKey string) (string, error) {
 	return fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey), nil
 }
 
-func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) error {
-	userid, err := c.userIDer(ctx)
-	if err != nil {
-		return err
-	}
-
-	// first, put the report on s3
-	rowKey, colKey := calculateDynamoKeys(userid, time.Now())
-	reportKey, err := calculateReportKey(rowKey, colKey)
-	if err != nil {
-		return err
-	}
-
-	reportSize, err := c.s3.StoreReportBytes(reportKey, buf)
-	if err != nil {
-		return err
-	}
-	reportSizeHistogram.Observe(float64(reportSize))
-
-	// third, put it in memcache
-	if c.memcache != nil {
-		_, err = c.memcache.StoreReportBytes(reportKey, buf)
-		if err != nil {
-			// NOTE: We don't abort here because failing to store in memcache
-			// doesn't actually break anything else -- it's just an
-			// optimization.
-			log.Warningf("Could not store %v in memcache: %v", reportKey, err)
-		}
-	}
-
-	// fourth, put the key in dynamodb
-	dynamoValueSize.WithLabelValues("PutItem").
-		Add(float64(len(reportKey)))
-
-	var resp *dynamodb.PutItemOutput
-	err = instrument.TimeRequestHistogram("PutItem", dynamoRequestDuration, func() error {
-		var err error
+func (c *awsCollector) putItemInDynamo(rowKey, colKey, reportKey string) (*dynamodb.PutItemOutput, error) {
+	// Back off on ProvisionedThroughputExceededException
+	const (
+		maxRetries            = 5
+		throuputExceededError = "ProvisionedThroughputExceededException"
+	)
+	var (
+		resp    *dynamodb.PutItemOutput
+		err     error
+		retries = 0
+		backoff = 50 * time.Millisecond
+	)
+	for {
 		resp, err = c.db.PutItem(&dynamodb.PutItemInput{
 			TableName: aws.String(c.tableName),
 			Item: map[string]*dynamodb.AttributeValue{
@@ -406,8 +402,60 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 			},
 			ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
 		})
+		if err != nil && retries < maxRetries {
+			if awsErr, ok := err.(awserr.Error); ok && awsErr.Code() == throuputExceededError {
+				time.Sleep(backoff)
+				retries++
+				backoff *= 2
+				continue
+			}
+		}
+		break
+	}
+	return resp, err
+}
+
+func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) error {
+	userid, err := c.userIDer(ctx)
+	if err != nil {
+		return err
+	}
+
+	// first, put the report on s3
+	rowKey, colKey := calculateDynamoKeys(userid, time.Now())
+	reportKey, err := calculateReportKey(rowKey, colKey)
+	if err != nil {
+		return err
+	}
+
+	reportSize, err := c.s3.StoreReportBytes(ctx, reportKey, buf)
+	if err != nil {
+		return err
+	}
+	reportSizeHistogram.Observe(float64(reportSize))
+
+	// third, put it in memcache
+	if c.memcache != nil {
+		_, err = c.memcache.StoreReportBytes(ctx, reportKey, buf)
+		if err != nil {
+			// NOTE: We don't abort here because failing to store in memcache
+			// doesn't actually break anything else -- it's just an
+			// optimization.
+			log.Warningf("Could not store %v in memcache: %v", reportKey, err)
+		}
+	}
+
+	// fourth, put the key in dynamodb
+	dynamoValueSize.WithLabelValues("PutItem").
+		Add(float64(len(reportKey)))
+
+	var resp *dynamodb.PutItemOutput
+	err = instrument.TimeRequestHistogram(ctx, "DynamoDB.PutItem", dynamoRequestDuration, func(_ context.Context) error {
+		var err error
+		resp, err = c.putItemInDynamo(rowKey, colKey, reportKey)
 		return err
 	})
+
 	if resp.ConsumedCapacity != nil {
 		dynamoConsumedCapacity.WithLabelValues("PutItem").
 			Add(float64(*resp.ConsumedCapacity.CapacityUnits))
@@ -502,7 +550,7 @@ func newInProcessStore(size int, expiration time.Duration) inProcessStore {
 }
 
 // FetchReports retrieves the given reports from the store.
-func (c inProcessStore) FetchReports(keys []string) (map[string]report.Report, []string, error) {
+func (c inProcessStore) FetchReports(_ context.Context, keys []string) (map[string]report.Report, []string, error) {
 	found := map[string]report.Report{}
 	missing := []string{}
 	for _, key := range keys {

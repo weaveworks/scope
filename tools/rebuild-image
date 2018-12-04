@@ -9,56 +9,70 @@ IMAGENAME=$1
 SAVEDNAME=$(echo "$IMAGENAME" | sed "s/[\/\-]/\./g")
 IMAGEDIR=$2
 shift 2
+GIT_REVISION="$(git rev-parse HEAD)"
 
-INPUTFILES=( "$@" )
+INPUTFILES=("$@")
 CACHEDIR=$HOME/docker/
 
 # Rebuild the image
 rebuild() {
     mkdir -p "$CACHEDIR"
     rm "$CACHEDIR/$SAVEDNAME"* || true
-    docker build -t "$IMAGENAME" "$IMAGEDIR"
-	docker save "$IMAGENAME:latest" | gzip - > "$CACHEDIR/$SAVEDNAME-$CIRCLE_SHA1.gz"
+    docker build --build-arg=revision="$GIT_REVISION" -t "$IMAGENAME" "$IMAGEDIR"
+    docker save "$IMAGENAME:latest" | gzip - >"$CACHEDIR/$SAVEDNAME-$CIRCLE_SHA1.gz"
 }
 
 # Get the revision the cached image was build at
 cached_image_rev() {
-	find "$CACHEDIR" -name "$SAVEDNAME-*" -type f | sed -n 's/^[^\-]*\-\([a-z0-9]*\).gz$/\1/p'
+    find "$CACHEDIR" -name "$SAVEDNAME-*" -type f | sed -n 's/^[^\-]*\-\([a-z0-9]*\).gz$/\1/p'
 }
 
 # Have there been any revision between $1 and $2
 has_changes() {
-	local rev1=$1
-	local rev2=$2
-	local changes
-	changes=$(git diff --oneline "$rev1..$rev2" -- "${INPUTFILES[@]}" | wc -l)
-	[ "$changes" -gt 0 ]
+    local rev1=$1
+    local rev2=$2
+    local changes
+    changes=$(git diff --oneline "$rev1..$rev2" -- "${INPUTFILES[@]}" | wc -l)
+    [ "$changes" -gt 0 ]
 }
 
 commit_timestamp() {
-	local rev=$1
-	git show -s --format=%ct "$rev"
+    local rev=$1
+    git show -s --format=%ct "$rev"
+}
+
+# Is the SHA1 actually present in the repo?
+# It could be it isn't, e.g. after a force push
+is_valid_commit() {
+    local rev=$1
+    git rev-parse --quiet --verify "$rev^{commit}" >/dev/null
 }
 
 cached_revision=$(cached_image_rev)
 if [ -z "$cached_revision" ]; then
-	echo ">>> No cached image found; rebuilding"
-	rebuild
-	exit 0
+    echo ">>> No cached image found; rebuilding"
+    rebuild
+    exit 0
+fi
+
+if ! is_valid_commit "$cached_revision"; then
+    echo ">>> Git commit of cached image not found in repo; rebuilding"
+    rebuild
+    exit 0
 fi
 
 echo ">>> Found cached image rev $cached_revision"
-if has_changes "$cached_revision" "$CIRCLE_SHA1" ; then
-	echo ">>> Found changes, rebuilding"
-	rebuild
-	exit 0
+if has_changes "$cached_revision" "$CIRCLE_SHA1"; then
+    echo ">>> Found changes, rebuilding"
+    rebuild
+    exit 0
 fi
 
-IMAGE_TIMEOUT="$(( 3 * 24 * 60 * 60 ))"
+IMAGE_TIMEOUT="$((3 * 24 * 60 * 60))"
 if [ "$(commit_timestamp "$cached_revision")" -lt "${IMAGE_TIMEOUT}" ]; then
-	echo ">>> Image is more the 24hrs old; rebuilding"
-	rebuild
-	exit 0
+    echo ">>> Image is more the 24hrs old; rebuilding"
+    rebuild
+    exit 0
 fi
 
 # we didn't rebuild; import cached version

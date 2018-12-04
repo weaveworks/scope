@@ -1,5 +1,4 @@
 import React from 'react';
-import { connect } from 'react-redux';
 
 const TRUNCATE_CONTEXT = 6;
 const TRUNCATE_ELLIPSIS = '…';
@@ -11,14 +10,14 @@ const TRUNCATE_ELLIPSIS = '…';
  * `('text', {start: 2, length: 1}) => [{text: 'te'}, {text: 'x', match: true}, {text: 't'}]`
  */
 function chunkText(text, { start, length }) {
-  if (text && !isNaN(start) && !isNaN(length)) {
+  if (text && !window.isNaN(start) && !window.isNaN(length)) {
     const chunks = [];
     // text chunk before match
     if (start > 0) {
       chunks.push({text: text.substr(0, start)});
     }
     // matching chunk
-    chunks.push({match: true, text: text.substr(start, length)});
+    chunks.push({match: true, offset: start, text: text.substr(start, length)});
     // text after match
     const remaining = start + length;
     if (remaining < text.length) {
@@ -79,12 +78,13 @@ function truncateChunks(chunks, text, maxLength) {
  * `match` is a text match object of shape `{start, length}`
  * that delimit text matches in `text`. `label` shows the origin of the text.
  */
-class MatchedText extends React.Component {
-
+export default class MatchedText extends React.PureComponent {
   render() {
-    const { match, text, truncate, maxLength } = this.props;
+    const {
+      match, text, truncate, maxLength
+    } = this.props;
 
-    const showFullValue = !truncate || match && match.start + match.length > truncate;
+    const showFullValue = !truncate || (match && (match.start + match.length) > truncate);
     const displayText = showFullValue ? text : text.slice(0, truncate);
 
     if (!match) {
@@ -95,10 +95,10 @@ class MatchedText extends React.Component {
 
     return (
       <span className="matched-text" title={text}>
-        {truncateChunks(chunks, displayText, maxLength).map((chunk, index) => {
+        {truncateChunks(chunks, displayText, maxLength).map((chunk) => {
           if (chunk.match) {
             return (
-              <span className="match" key={index}>
+              <span className="match" key={chunk.offset}>
                 {chunk.text}
               </span>
             );
@@ -109,5 +109,3 @@ class MatchedText extends React.Component {
     );
   }
 }
-
-export default connect()(MatchedText);

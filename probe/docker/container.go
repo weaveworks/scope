@@ -9,28 +9,28 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	docker "github.com/fsouza/go-dockerclient"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
 )
 
 // These constants are keys used in node metadata
 const (
-	ContainerName          = "docker_container_name"
-	ContainerCommand       = "docker_container_command"
-	ContainerPorts         = "docker_container_ports"
-	ContainerCreated       = "docker_container_created"
-	ContainerNetworks      = "docker_container_networks"
-	ContainerIPs           = "docker_container_ips"
-	ContainerHostname      = "docker_container_hostname"
-	ContainerIPsWithScopes = "docker_container_ips_with_scopes"
-	ContainerState         = "docker_container_state"
-	ContainerStateHuman    = "docker_container_state_human"
-	ContainerUptime        = "docker_container_uptime"
-	ContainerRestartCount  = "docker_container_restart_count"
-	ContainerNetworkMode   = "docker_container_network_mode"
+	ContainerName          = report.DockerContainerName
+	ContainerCommand       = report.DockerContainerCommand
+	ContainerPorts         = report.DockerContainerPorts
+	ContainerCreated       = report.DockerContainerCreated
+	ContainerNetworks      = report.DockerContainerNetworks
+	ContainerIPs           = report.DockerContainerIPs
+	ContainerHostname      = report.DockerContainerHostname
+	ContainerIPsWithScopes = report.DockerContainerIPsWithScopes
+	ContainerState         = report.DockerContainerState
+	ContainerStateHuman    = report.DockerContainerStateHuman
+	ContainerUptime        = report.DockerContainerUptime
+	ContainerRestartCount  = report.DockerContainerRestartCount
+	ContainerNetworkMode   = report.DockerContainerNetworkMode
 
 	NetworkRxDropped = "network_rx_dropped"
 	NetworkRxBytes   = "network_rx_bytes"
@@ -52,12 +52,8 @@ const (
 	CPUUsageInKernelmode = "docker_cpu_usage_in_kernelmode"
 	CPUSystemCPUUsage    = "docker_cpu_system_cpu_usage"
 
-	NetworkModeHost = "host"
-
 	LabelPrefix = "docker_label_"
 	EnvPrefix   = "docker_env_"
-
-	stopTimeout = 10
 )
 
 // These 'constants' are used for node states.
@@ -98,20 +94,24 @@ type Container interface {
 
 type container struct {
 	sync.RWMutex
-	container    *docker.Container
-	stopStats    chan<- bool
-	latestStats  docker.Stats
-	pendingStats [60]docker.Stats
-	numPending   int
-	hostID       string
-	baseNode     report.Node
+	container              *docker.Container
+	stopStats              chan<- bool
+	latestStats            docker.Stats
+	pendingStats           [60]docker.Stats
+	numPending             int
+	hostID                 string
+	baseNode               report.Node
+	noCommandLineArguments bool
+	noEnvironmentVariables bool
 }
 
 // NewContainer creates a new Container
-func NewContainer(c *docker.Container, hostID string) Container {
+func NewContainer(c *docker.Container, hostID string, noCommandLineArguments bool, noEnvironmentVariables bool) Container {
 	result := &container{
-		container: c,
-		hostID:    hostID,
+		container:              c,
+		hostID:                 hostID,
+		noCommandLineArguments: noCommandLineArguments,
+		noEnvironmentVariables: noEnvironmentVariables,
 	}
 	result.baseNode = result.getBaseNode()
 	return result
@@ -277,12 +277,28 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 		ips = append(ips, c.container.NetworkSettings.IPAddress)
 	}
 
+	if c.container.State.Running && c.container.State.Pid != 0 {
+		// Fetch IP addresses from the container's namespace
+		cidrs, err := namespaceIPAddresses(c.container.State.Pid)
+		if err != nil {
+			log.Debugf("container %s: failed to get addresses: %s", c.container.ID, err)
+		}
+		for _, cidr := range cidrs {
+			// This address can duplicate an address fetched from Docker earlier,
+			// but we eventually turn the lists into sets which will remove duplicates.
+			ips = append(ips, cidr.IP.String())
+		}
+	}
+
 	// For now, for the proof-of-concept, we just add networks as a set of
 	// names. For the next iteration, we will probably want to create a new
 	// Network topology, populate the network nodes with all of the details
 	// here, and provide foreign key links from nodes to networks.
 	networks := make([]string, 0, len(c.container.NetworkSettings.Networks))
 	for name, settings := range c.container.NetworkSettings.Networks {
+		if name == "none" {
+			continue
+		}
 		networks = append(networks, name)
 		if settings.IPAddress != "" {
 			ips = append(ips, settings.IPAddress)
@@ -299,11 +315,20 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 	// Treat all Docker IPs as local scoped.
 	ipsWithScopes := addScopeToIPs(c.hostID, ipv4s)
 
-	return report.EmptySets.
-		Add(ContainerNetworks, report.MakeStringSet(networks...)).
-		Add(ContainerPorts, c.ports(localAddrs)).
-		Add(ContainerIPs, report.MakeStringSet(ipv4s...)).
-		Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...))
+	s := report.MakeSets()
+	if len(networks) > 0 {
+		s = s.Add(ContainerNetworks, report.MakeStringSet(networks...))
+	}
+	if len(c.container.NetworkSettings.Ports) > 0 {
+		s = s.Add(ContainerPorts, c.ports(localAddrs))
+	}
+	if len(ipv4s) > 0 {
+		s = s.Add(ContainerIPs, report.MakeStringSet(ipv4s...))
+	}
+	if len(ipsWithScopes) > 0 {
+		s = s.Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...))
+	}
+	return s
 }
 
 func (c *container) memoryUsageMetric(stats []docker.Stats) report.Metric {
@@ -369,18 +394,26 @@ func (c *container) env() map[string]string {
 	return result
 }
 
+func (c *container) getSanitizedCommand() string {
+	result := c.container.Path
+	if !c.noCommandLineArguments {
+		result = result + " " + strings.Join(c.container.Args, " ")
+	}
+	return result
+}
+
 func (c *container) getBaseNode() report.Node {
 	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{
 		ContainerID:       c.ID(),
-		ContainerCreated:  c.container.Created.Format(time.RFC822),
-		ContainerCommand:  c.container.Path + " " + strings.Join(c.container.Args, " "),
+		ContainerCreated:  c.container.Created.Format(time.RFC3339Nano),
+		ContainerCommand:  c.getSanitizedCommand(),
 		ImageID:           c.Image(),
 		ContainerHostname: c.Hostname(),
-	}).WithParents(report.EmptySets.
-		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
-	)
-	result = result.AddTable(LabelPrefix, c.container.Config.Labels)
-	result = result.AddTable(EnvPrefix, c.env())
+	}).WithParent(report.ContainerImage, report.MakeContainerImageNodeID(c.Image()))
+	result = result.AddPrefixPropertyList(LabelPrefix, c.container.Config.Labels)
+	if !c.noEnvironmentVariables {
+		result = result.AddPrefixPropertyList(EnvPrefix, c.env())
+	}
 	return result
 }
 
@@ -411,12 +444,12 @@ func (c *container) GetNode() report.Node {
 	controls := c.controlsMap()
 
 	if !c.container.State.Paused && c.container.State.Running {
-		uptime := (mtime.Now().Sub(c.container.State.StartedAt) / time.Second) * time.Second
+		uptimeSeconds := int(mtime.Now().Sub(c.container.State.StartedAt) / time.Second)
 		networkMode := ""
 		if c.container.HostConfig != nil {
 			networkMode = c.container.HostConfig.NetworkMode
 		}
-		latest[ContainerUptime] = uptime.String()
+		latest[ContainerUptime] = strconv.Itoa(uptimeSeconds)
 		latest[ContainerRestartCount] = strconv.Itoa(c.container.RestartCount)
 		latest[ContainerNetworkMode] = networkMode
 	}
@@ -444,4 +477,28 @@ func ExtractContainerIPsWithScopes(nmd report.Node) []string {
 func ContainerIsStopped(c Container) bool {
 	state := c.StateString()
 	return (state != StateRunning && state != StateRestarting && state != StatePaused)
+}
+
+// splitImageName returns parts of the full image name (image name, image tag).
+func splitImageName(imageName string) []string {
+	parts := strings.SplitN(imageName, "/", 3)
+	if len(parts) == 3 {
+		imageName = fmt.Sprintf("%s/%s", parts[1], parts[2])
+	}
+	return strings.SplitN(imageName, ":", 2)
+}
+
+// ImageNameWithoutTag splits the image name apart, returning the name
+// without the version, if possible
+func ImageNameWithoutTag(imageName string) string {
+	return splitImageName(imageName)[0]
+}
+
+// ImageNameTag splits the image name apart, returning the version tag, if possible
+func ImageNameTag(imageName string) string {
+	imageNameParts := splitImageName(imageName)
+	if len(imageNameParts) < 2 {
+		return ""
+	}
+	return imageNameParts[1]
 }

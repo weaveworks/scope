@@ -70,6 +70,11 @@ for a protocol buffer variable v:
 	with distinguished wrapper types for each possible field value.
   - Marshal and Unmarshal are functions to encode and decode the wire format.
 
+When the .proto file specifies `syntax="proto3"`, there are some differences:
+
+  - Non-repeated fields of non-message type are values instead of pointers.
+  - Enum types do not get an Enum method.
+
 The simplest way to describe this is to see an example.
 Given file test.proto, containing
 
@@ -216,7 +221,7 @@ The resulting file, test.pb.go, is:
 
 To create and play with a Test object:
 
-package main
+	package main
 
 	import (
 		"log"
@@ -229,6 +234,7 @@ package main
 		test := &pb.Test{
 			Label: proto.String("hello"),
 			Type:  proto.Int32(17),
+			Reps:  []int64{1, 2, 3},
 			Optionalgroup: &pb.Test_OptionalGroup{
 				RequiredField: proto.String("good bye"),
 			},
@@ -259,6 +265,7 @@ package proto
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"reflect"
@@ -266,6 +273,8 @@ import (
 	"strconv"
 	"sync"
 )
+
+var errInvalidUTF8 = errors.New("proto: invalid UTF-8 string")
 
 // Message is implemented by generated protocol buffer messages.
 type Message interface {
@@ -301,18 +310,9 @@ func GetStats() Stats { return stats }
 // temporary Buffer and are fine for most applications.
 type Buffer struct {
 	buf   []byte // encode/decode byte stream
-	index int    // write point
+	index int    // read point
 
-	// pools of basic types to amortize allocation.
-	bools   []bool
-	uint32s []uint32
-	uint64s []uint64
-
-	// extra pools, only used with pointer_reflect.go
-	int32s   []int32
-	int64s   []int64
-	float32s []float32
-	float64s []float64
+	deterministic bool
 }
 
 // NewBuffer allocates a new Buffer and initializes its internal data to
@@ -336,6 +336,30 @@ func (p *Buffer) SetBuf(s []byte) {
 
 // Bytes returns the contents of the Buffer.
 func (p *Buffer) Bytes() []byte { return p.buf }
+
+// SetDeterministic sets whether to use deterministic serialization.
+//
+// Deterministic serialization guarantees that for a given binary, equal
+// messages will always be serialized to the same bytes. This implies:
+//
+//   - Repeated serialization of a message will return the same bytes.
+//   - Different processes of the same binary (which may be executing on
+//     different machines) will serialize equal messages to the same bytes.
+//
+// Note that the deterministic serialization is NOT canonical across
+// languages. It is not guaranteed to remain stable over time. It is unstable
+// across different builds with schema changes due to unknown fields.
+// Users who need canonical serialization (e.g., persistent storage in a
+// canonical form, fingerprinting, etc.) should define their own
+// canonicalization specification and implement their own serializer rather
+// than relying on this API.
+//
+// If deterministic serialization is requested, map entries will be sorted
+// by keys in lexographical order. This is an implementation detail and
+// subject to change.
+func (p *Buffer) SetDeterministic(deterministic bool) {
+	p.deterministic = deterministic
+}
 
 /*
  * Helper routines for simplifying the creation of optional fields of basic type.
@@ -825,22 +849,12 @@ func fieldDefault(ft reflect.Type, prop *Properties) (sf *scalarField, nestedMes
 	return sf, false, nil
 }
 
+// mapKeys returns a sort.Interface to be used for sorting the map keys.
 // Map fields may have key types of non-float scalars, strings and enums.
-// The easiest way to sort them in some deterministic order is to use fmt.
-// If this turns out to be inefficient we can always consider other options,
-// such as doing a Schwartzian transform.
-
 func mapKeys(vs []reflect.Value) sort.Interface {
-	s := mapKeySorter{
-		vs: vs,
-		// default Less function: textual comparison
-		less: func(a, b reflect.Value) bool {
-			return fmt.Sprint(a.Interface()) < fmt.Sprint(b.Interface())
-		},
-	}
+	s := mapKeySorter{vs: vs}
 
-	// Type specialization per https://developers.google.com/protocol-buffers/docs/proto#maps;
-	// numeric keys are sorted numerically.
+	// Type specialization per https://developers.google.com/protocol-buffers/docs/proto#maps.
 	if len(vs) == 0 {
 		return s
 	}
@@ -849,6 +863,12 @@ func mapKeys(vs []reflect.Value) sort.Interface {
 		s.less = func(a, b reflect.Value) bool { return a.Int() < b.Int() }
 	case reflect.Uint32, reflect.Uint64:
 		s.less = func(a, b reflect.Value) bool { return a.Uint() < b.Uint() }
+	case reflect.Bool:
+		s.less = func(a, b reflect.Value) bool { return !a.Bool() && b.Bool() } // false < true
+	case reflect.String:
+		s.less = func(a, b reflect.Value) bool { return a.String() < b.String() }
+	default:
+		panic(fmt.Sprintf("unsupported map key type: %v", vs[0].Kind()))
 	}
 
 	return s
@@ -880,4 +900,22 @@ func isProto3Zero(v reflect.Value) bool {
 		return v.String() == ""
 	}
 	return false
+}
+
+// ProtoPackageIsVersion2 is referenced from generated protocol buffer files
+// to assert that that code is compatible with this version of the proto package.
+const ProtoPackageIsVersion2 = true
+
+// ProtoPackageIsVersion1 is referenced from generated protocol buffer files
+// to assert that that code is compatible with this version of the proto package.
+const ProtoPackageIsVersion1 = true
+
+// InternalMessageInfo is a type used internally by generated .pb.go files.
+// This type is not intended to be used by non-generated code.
+// This type is not subject to any compatibility guarantee.
+type InternalMessageInfo struct {
+	marshal   *marshalInfo
+	unmarshal *unmarshalInfo
+	merge     *mergeInfo
+	discard   *discardInfo
 }

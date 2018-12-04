@@ -1,18 +1,17 @@
 /* eslint no-return-assign: "off", react/jsx-no-bind: "off" */
 import debug from 'debug';
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
+import { debounce } from 'lodash';
+import { Terminal as Term } from 'xterm';
+import * as fit from 'xterm/lib/addons/fit/fit';
 
-import { clickCloseTerminal } from '../actions/app-actions';
+import { closeTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
-import { getPipeStatus, basePath } from '../utils/web-api-utils';
-import Term from '../vendor/term.js';
+import { getPipeStatus, deletePipe, doResizeTty, getWebsocketUrl, basePath } from '../utils/web-api-utils';
 
-const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
-const wsUrl = `${wsProto}://${location.host}${basePath(location.pathname)}`;
 const log = debug('scope:terminal');
 
 const DEFAULT_COLS = 80;
@@ -24,34 +23,12 @@ const MDASH = '\u2014';
 
 const reconnectTimerInterval = 2000;
 
+
 function ab2str(buf) {
   // http://stackoverflow.com/questions/17191945/conversion-between-utf-8-arraybuffer-and-string
   const encodedString = String.fromCharCode.apply(null, new Uint8Array(buf));
   const decodedString = decodeURIComponent(escape(encodedString));
   return decodedString;
-}
-
-function terminalCellSize(wrapperNode, rows, cols) {
-  const height = wrapperNode.clientHeight;
-
-  // Guess the width of the row.
-  let width = wrapperNode.clientWidth;
-  // Now try and measure the first row we find.
-  const firstRow = wrapperNode.querySelector('.terminal div');
-  if (!firstRow) {
-    log("ERROR: Couldn't find first row, resizing might not work very well.");
-  } else {
-    const rowDisplay = firstRow.style.display;
-    firstRow.style.display = 'inline';
-    width = firstRow.offsetWidth;
-    firstRow.style.display = rowDisplay;
-  }
-
-  const pixelPerCol = width / cols;
-  const pixelPerRow = height / rows;
-
-  log('Caculated (col, row) sizes in px: ', pixelPerCol, pixelPerRow);
-  return {pixelPerCol, pixelPerRow};
 }
 
 function openNewWindow(url, bcr, minWidth = 200) {
@@ -68,11 +45,12 @@ function openNewWindow(url, bcr, minWidth = 200) {
   };
 
   const windowOptionsString = Object.keys(windowOptions)
-    .map((k) => `${k}=${windowOptions[k]}`)
+    .map(k => `${k}=${windowOptions[k]}`)
     .join(',');
 
   window.open(url, '', windowOptionsString);
 }
+
 
 class Terminal extends React.Component {
   constructor(props, context) {
@@ -83,39 +61,54 @@ class Terminal extends React.Component {
 
     this.state = {
       connected: false,
+      detached: false,
       rows: DEFAULT_ROWS,
       cols: DEFAULT_COLS,
-      pixelPerCol: 0,
-      pixelPerRow: 0
     };
+
     this.handleCloseClick = this.handleCloseClick.bind(this);
     this.handlePopoutTerminal = this.handlePopoutTerminal.bind(this);
+    this.saveInnerFlexRef = this.saveInnerFlexRef.bind(this);
+    this.saveNodeRef = this.saveNodeRef.bind(this);
     this.handleResize = this.handleResize.bind(this);
+    this.handleResizeDebounced = debounce(this.handleResize, 500);
   }
 
   createWebsocket(term) {
-    const socket = new WebSocket(`${wsUrl}/api/pipe/${this.getPipeId()}`);
+    const socket = new WebSocket(`${getWebsocketUrl()}/api/pipe/${this.getPipeId()}`);
     socket.binaryType = 'arraybuffer';
 
     getPipeStatus(this.getPipeId(), this.props.dispatch);
 
     socket.onopen = () => {
       clearTimeout(this.reconnectTimeout);
-      log('socket open to', wsUrl);
+      log('socket open to', getWebsocketUrl());
       this.setState({connected: true});
     };
 
     socket.onclose = () => {
-      log('socket closed');
+      //
+      // componentWillUnmount has called close and tidied up! don't try and do it again here
+      // (setState etc), its too late.
+      //
+      if (!this.socket) {
+        return;
+      }
       this.socket = null;
       const wereConnected = this.state.connected;
-      this.setState({connected: false});
+      if (this.isComponentMounted) {
+        // Calling setState on an unmounted component will throw a warning.
+        // `connected` will get set to false by `componentWillUnmount`.
+        this.setState({connected: false});
+      }
       if (this.term && this.props.pipe.get('status') !== 'PIPE_DELETED') {
         if (wereConnected) {
           this.createWebsocket(term);
         } else {
           this.reconnectTimeout = setTimeout(
-            this.createWebsocket.bind(this, term), reconnectTimerInterval);
+            this.createWebsocket.bind(this, term),
+            reconnectTimerInterval
+          );
         }
       }
     };
@@ -133,46 +126,75 @@ class Terminal extends React.Component {
     this.socket = socket;
   }
 
-  componentDidMount() {
-    const component = this;
+  componentWillReceiveProps(nextProps) {
+    if (this.props.connect !== nextProps.connect && nextProps.connect) {
+      this.mountTerminal();
+    }
+    // Close the terminal window immediately when the pipe is deleted.
+    if (nextProps.pipe.get('status') === 'PIPE_DELETED') {
+      this.props.dispatch(closeTerminal(this.getPipeId()));
+    }
+  }
 
+  componentDidMount() {
+    this.isComponentMounted = true;
+    if (this.props.connect) {
+      this.mountTerminal();
+    }
+  }
+
+  mountTerminal() {
+    Term.applyAddon(fit);
     this.term = new Term({
-      cols: this.state.cols,
-      rows: this.state.rows,
-      convertEol: !this.props.raw
+      //
+      // Some linux systems fail to render 'monospace' on `<canvas>` correctly:
+      // https://github.com/xtermjs/xterm.js/issues/1170
+      // `theme.fontFamilies.monospace` doesn't provide many options so we add
+      // some here that are very common. The alternative _might_ be to bundle Roboto-Mono
+      //
+      fontFamily: '"Roboto Mono", "Courier New", "Courier", monospace',
+      // `theme.fontSizes.tiny` (`"12px"`) is a string and we need an int here.
+      fontSize: 12,
+      convertEol: !this.props.pipe.get('raw'),
+      cursorBlink: true,
+      scrollback: 10000,
     });
 
-    const innerNode = ReactDOM.findDOMNode(component.inner);
-    this.term.open(innerNode);
+    this.term.open(this.innerFlex);
+    this.term.focus();
+
     this.term.on('data', (data) => {
       if (this.socket) {
         this.socket.send(data);
       }
     });
 
+    this.term.on('resize', ({ cols, rows }) => {
+      const resizeTtyControl = this.props.pipe.get('resizeTtyControl');
+      if (resizeTtyControl) {
+        doResizeTty(this.getPipeId(), resizeTtyControl, cols, rows);
+      }
+      this.setState({ cols, rows });
+    });
+
     this.createWebsocket(this.term);
 
-    const {pixelPerCol, pixelPerRow} = terminalCellSize(
-      innerNode, this.state.rows, this.state.cols);
-
-    window.addEventListener('resize', this.handleResize);
+    window.addEventListener('resize', this.handleResizeDebounced);
 
     this.resizeTimeout = setTimeout(() => {
-      this.setState({
-        pixelPerCol,
-        pixelPerRow
-      });
       this.handleResize();
     }, 10);
   }
 
   componentWillUnmount() {
+    this.isComponentMounted = false;
+    this.setState({connected: false});
     log('cwu terminal');
 
     clearTimeout(this.reconnectTimeout);
     clearTimeout(this.resizeTimeout);
 
-    window.removeEventListener('resize', this.handleResize);
+    window.removeEventListener('resize', this.handleResizeDebounced);
 
     if (this.term) {
       log('destroy terminal');
@@ -180,6 +202,11 @@ class Terminal extends React.Component {
       this.term.destroy();
       this.term = null;
     }
+
+    if (!this.state.detached) {
+      deletePipe(this.getPipeId());
+    }
+
     if (this.socket) {
       log('close socket');
       this.socket.close();
@@ -187,22 +214,7 @@ class Terminal extends React.Component {
     }
   }
 
-  componentWillReceiveProps(nextProps) {
-    const containerMarginChanged = nextProps.containerMargin !== this.props.containerMargin;
-    log(nextProps.containerMargin);
-    if (containerMarginChanged) {
-      this.handleResize();
-    }
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    const sizeChanged = (
-      prevState.cols !== this.state.cols ||
-      prevState.rows !== this.state.rows
-    );
-    if (sizeChanged) {
-      this.term.resize(this.state.cols, this.state.rows);
-    }
+  componentDidUpdate() {
     if (!this.isEmbedded()) {
       setDocumentTitle(this.getTitle());
     }
@@ -210,26 +222,21 @@ class Terminal extends React.Component {
 
   handleCloseClick(ev) {
     ev.preventDefault();
-    this.props.dispatch(clickCloseTerminal(this.getPipeId(), true));
+    this.props.dispatch(closeTerminal(this.getPipeId()));
   }
 
   handlePopoutTerminal(ev) {
     ev.preventDefault();
     const paramString = JSON.stringify(this.props);
-    this.props.dispatch(clickCloseTerminal(this.getPipeId()));
+    this.props.dispatch(closeTerminal(this.getPipeId()));
+    this.setState({detached: true});
 
-    const bcr = ReactDOM.findDOMNode(this).getBoundingClientRect();
-    const minWidth = this.state.pixelPerCol * 80 + (8 * 2);
-    openNewWindow(`terminal.html#!/state/${paramString}`, bcr, minWidth);
+    const bcr = this.node.getBoundingClientRect();
+    openNewWindow(`${basePath(window.location.pathname)}/terminal.html#!/state/${paramString}`, bcr);
   }
 
   handleResize() {
-    const innerNode = ReactDOM.findDOMNode(this.innerFlex);
-    const height = innerNode.clientHeight - (2 * 8);
-    const cols = DEFAULT_COLS;
-    const rows = Math.floor(height / this.state.pixelPerRow);
-
-    this.setState({cols, rows});
+    this.term.fit();
   }
 
   isEmbedded() {
@@ -247,8 +254,9 @@ class Terminal extends React.Component {
   }
 
   getTerminalHeader() {
+    const light = this.props.statusBarColor || getNeutralColor();
     const style = {
-      backgroundColor: this.props.titleBarColor || getNeutralColor()
+      backgroundColor: light,
     };
     return (
       <div className="terminal-header" style={style}>
@@ -259,27 +267,18 @@ class Terminal extends React.Component {
             onClick={this.handlePopoutTerminal}>
           Pop out
           </span>
-          <span title="Close" className="terminal-header-tools-item-icon fa fa-close"
+          <span
+            title="Close"
+            className="terminal-header-tools-item-icon fa fa-close"
             onClick={this.handleCloseClick} />
         </div>
+        {this.getControlStatusIcon()}
         <span className="terminal-header-title">{this.getTitle()}</span>
       </div>
     );
   }
 
   getStatus() {
-    if (this.props.pipe.get('status') === 'PIPE_DELETED') {
-      return (
-        <div>
-          <h3>Connection Closed</h3>
-          <div className="termina-status-bar-message">
-            The connection to this container has been closed.
-            <div className="link" onClick={this.handleCloseClick}>Close terminal</div>
-          </div>
-        </div>
-      );
-    }
-
     if (!this.state.connected) {
       return (
         <h3>Connecting...</h3>
@@ -303,29 +302,50 @@ class Terminal extends React.Component {
     );
   }
 
+  saveNodeRef(ref) {
+    this.node = ref;
+  }
+
+  saveInnerFlexRef(ref) {
+    this.innerFlex = ref;
+  }
+
   render() {
     const innerFlexStyle = {
       opacity: this.state.connected ? 1 : 0.8,
       overflow: 'hidden',
-    };
-    const innerStyle = {
-      width: (this.state.cols + 2) * this.state.pixelPerCol
     };
     const innerClassName = classNames('terminal-inner hideable', {
       'terminal-inactive': !this.state.connected
     });
 
     return (
-      <div className="terminal-wrapper">
+      <div className="terminal-wrapper" ref={this.saveNodeRef}>
         {this.isEmbedded() && this.getTerminalHeader()}
-        <div ref={(ref) => this.innerFlex = ref}
-          className={innerClassName} style={innerFlexStyle} >
-          <div style={innerStyle} ref={(ref) => this.inner = ref} />
-        </div>
+        <div className={innerClassName} style={innerFlexStyle} ref={this.saveInnerFlexRef} />
         {this.getTerminalStatusBar()}
       </div>
     );
   }
+  getControlStatusIcon() {
+    const icon = this.props.controlStatus && this.props.controlStatus.get('control').icon;
+    return (
+      <span
+        style={{marginRight: '8px', width: '14px'}}
+        className={classNames('fa', {[icon]: icon})}
+      />
+    );
+  }
 }
 
-export default connect()(Terminal);
+function mapStateToProps(state, ownProps) {
+  const controlStatus = state.get('controlPipes').find(pipe =>
+    pipe.get('nodeId') === ownProps.pipe.get('nodeId'));
+  return { controlStatus };
+}
+
+Terminal.defaultProps = {
+  connect: true
+};
+
+export default connect(mapStateToProps)(Terminal);

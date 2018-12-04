@@ -7,8 +7,8 @@ import (
 
 	"github.com/ugorji/go/codec"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
 )
 
@@ -19,17 +19,17 @@ func TestMetricsMerge(t *testing.T) {
 	t4 := time.Now().Add(3 * time.Minute)
 
 	metrics1 := report.Metrics{
-		"metric1": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
+		"metric1": report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 0.1}, {Timestamp: t2, Value: 0.2}}),
 		"metric2": report.MakeSingletonMetric(t3, 0.3),
 	}
 	metrics2 := report.Metrics{
 		"metric2": report.MakeSingletonMetric(t4, 0.4),
-		"metric3": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
+		"metric3": report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 0.1}, {Timestamp: t2, Value: 0.2}}),
 	}
 	want := report.Metrics{
-		"metric1": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
-		"metric2": report.MakeMetric([]report.Sample{{t3, 0.3}, {t4, 0.4}}),
-		"metric3": report.MakeMetric([]report.Sample{{t1, 0.1}, {t2, 0.2}}),
+		"metric1": report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 0.1}, {Timestamp: t2, Value: 0.2}}),
+		"metric2": report.MakeMetric([]report.Sample{{Timestamp: t3, Value: 0.3}, {Timestamp: t4, Value: 0.4}}),
+		"metric3": report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 0.1}, {Timestamp: t2, Value: 0.2}}),
 	}
 	have := metrics1.Merge(metrics2)
 	if !reflect.DeepEqual(want, have) {
@@ -49,13 +49,7 @@ func TestMetricsCopy(t *testing.T) {
 	}
 }
 
-func checkMetric(t *testing.T, metric report.Metric, first, last time.Time, min, max float64) {
-	if !metric.First.Equal(first) {
-		t.Errorf("Expected metric.First == %q, but was: %q", first, metric.First)
-	}
-	if !metric.Last.Equal(last) {
-		t.Errorf("Expected metric.Last == %q, but was: %q", last, metric.Last)
-	}
+func checkMetric(t *testing.T, metric report.Metric, min, max float64) {
 	if metric.Min != min {
 		t.Errorf("Expected metric.Min == %f, but was: %f", min, metric.Min)
 	}
@@ -65,24 +59,21 @@ func checkMetric(t *testing.T, metric report.Metric, first, last time.Time, min,
 }
 
 func TestMetricFirstLastMinMax(t *testing.T) {
-
-	checkMetric(t, report.MakeMetric(nil), time.Time{}, time.Time{}, 0.0, 0.0)
-
 	t1 := time.Now()
 	t2 := time.Now().Add(1 * time.Minute)
 
-	metric1 := report.MakeMetric([]report.Sample{{t1, -0.1}, {t2, 0.2}})
+	metric1 := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -0.1}, {Timestamp: t2, Value: 0.2}})
 
-	checkMetric(t, metric1, t1, t2, -0.1, 0.2)
-	checkMetric(t, metric1.Merge(metric1), t1, t2, -0.1, 0.2)
+	checkMetric(t, metric1, -0.1, 0.2)
+	checkMetric(t, metric1.Merge(metric1), -0.1, 0.2)
 
 	t3 := time.Now().Add(2 * time.Minute)
 	t4 := time.Now().Add(3 * time.Minute)
-	metric2 := report.MakeMetric([]report.Sample{{t3, 0.31}, {t4, 0.4}})
+	metric2 := report.MakeMetric([]report.Sample{{Timestamp: t3, Value: 0.31}, {Timestamp: t4, Value: 0.4}})
 
-	checkMetric(t, metric2, t3, t4, 0.31, 0.4)
-	checkMetric(t, metric1.Merge(metric2), t1, t4, -0.1, 0.4)
-	checkMetric(t, metric2.Merge(metric1), t1, t4, -0.1, 0.4)
+	checkMetric(t, metric2, 0.31, 0.4)
+	checkMetric(t, metric1.Merge(metric2), -0.1, 0.4)
+	checkMetric(t, metric2.Merge(metric1), -0.1, 0.4)
 }
 
 func TestMetricMerge(t *testing.T) {
@@ -91,50 +82,16 @@ func TestMetricMerge(t *testing.T) {
 	t3 := time.Now().Add(2 * time.Minute)
 	t4 := time.Now().Add(3 * time.Minute)
 
-	metric1 := report.MakeMetric([]report.Sample{{t2, 0.2}, {t3, 0.31}})
+	metric1 := report.MakeMetric([]report.Sample{{Timestamp: t2, Value: 0.2}, {Timestamp: t3, Value: 0.31}})
 
-	metric2 := report.MakeMetric([]report.Sample{{t1, -0.1}, {t3, 0.3}, {t4, 0.4}})
+	metric2 := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -0.1}, {Timestamp: t3, Value: 0.3}, {Timestamp: t4, Value: 0.4}})
 
-	want := report.MakeMetric([]report.Sample{{t1, -0.1}, {t2, 0.2}, {t3, 0.31}, {t4, 0.4}})
+	want := report.MakeMetric([]report.Sample{{Timestamp: t1, Value: -0.1}, {Timestamp: t2, Value: 0.2}, {Timestamp: t3, Value: 0.31}, {Timestamp: t4, Value: 0.4}})
 
 	have := metric1.Merge(metric2)
 	if !reflect.DeepEqual(want, have) {
 		t.Errorf("diff: %s", test.Diff(want, have))
 	}
-
-	// Check it didn't modify metric1
-	if !metric1.First.Equal(t2) {
-		t.Errorf("Expected metric1.First == %q, but was: %q", t2, metric1.First)
-	}
-	if !metric1.Last.Equal(t3) {
-		t.Errorf("Expected metric1.Last == %q, but was: %q", t3, metric1.Last)
-	}
-	if metric1.Min != 0.2 {
-		t.Errorf("Expected metric1.Min == %f, but was: %f", 0.2, metric1.Min)
-	}
-	if metric1.Max != 0.31 {
-		t.Errorf("Expected metric1.Max == %f, but was: %f", 0.31, metric1.Max)
-	}
-
-	// Check the result is not the same instance as metric1
-	if &metric1 == &have {
-		t.Errorf("Expected different pointers for metric1 and have, but both were: %p", &have)
-	}
-}
-
-func TestMetricDiv(t *testing.T) {
-	t1 := time.Now()
-	t2 := time.Now().Add(1 * time.Minute)
-
-	want := report.MakeMetric([]report.Sample{{t1, -2}, {t2, 2}})
-	beforeDiv := report.MakeMetric([]report.Sample{{t1, -2048}, {t2, 2048}})
-	have := beforeDiv.Div(1024)
-	if !reflect.DeepEqual(want, have) {
-		t.Errorf("diff: %s", test.Diff(want, have))
-	}
-
-	// Check the original was unmodified
-	checkMetric(t, beforeDiv, t1, t2, -2048, 2048)
 }
 
 func TestMetricMarshalling(t *testing.T) {

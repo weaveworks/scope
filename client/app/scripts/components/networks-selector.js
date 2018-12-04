@@ -3,10 +3,10 @@ import { connect } from 'react-redux';
 import classNames from 'classnames';
 
 import { selectNetwork, showNetworks } from '../actions/app-actions';
+import { availableNetworksSelector } from '../selectors/node-networks';
 import NetworkSelectorItem from './network-selector-item';
 
 class NetworkSelector extends React.Component {
-
   constructor(props, context) {
     super(props, context);
     this.onClick = this.onClick.bind(this);
@@ -51,7 +51,7 @@ class NetworkSelector extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    availableNetworks: state.get('availableNetworks'),
+    availableNetworks: availableNetworksSelector(state),
     showingNetworks: state.get('showingNetworks'),
     pinnedNetwork: state.get('pinnedNetwork')
   };

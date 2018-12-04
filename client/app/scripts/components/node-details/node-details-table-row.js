@@ -1,16 +1,18 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import classNames from 'classnames';
+import { groupBy, mapValues } from 'lodash';
+import { intersperse } from '../../utils/array-utils';
+
 
 import NodeDetailsTableNodeLink from './node-details-table-node-link';
-import NodeDetailsTableNodeMetric from './node-details-table-node-metric';
-
+import NodeDetailsTableNodeMetricLink from './node-details-table-node-metric-link';
+import { formatDataType } from '../../utils/string-utils';
 
 function getValuesForNode(node) {
-  const values = {};
-  ['metrics', 'metadata'].forEach(collection => {
+  let values = {};
+  ['metrics', 'metadata'].forEach((collection) => {
     if (node[collection]) {
-      node[collection].forEach(field => {
+      node[collection].forEach((field) => {
         const result = Object.assign({}, field);
         result.valueType = collection;
         values[field.id] = result;
@@ -18,51 +20,96 @@ function getValuesForNode(node) {
     }
   });
 
-  (node.parents || []).forEach(p => {
-    values[p.topologyId] = {
-      id: p.topologyId,
-      label: p.topologyId,
-      value: p.label,
-      relative: p,
+  if (node.parents) {
+    const byTopologyId = groupBy(node.parents, parent => parent.topologyId);
+    const relativesByTopologyId = mapValues(byTopologyId, (relatives, topologyId) => ({
+      id: topologyId,
+      label: topologyId,
+      value: relatives.map(relative => relative.label).join(', '),
       valueType: 'relatives',
+      relatives,
+    }));
+
+    values = {
+      ...values,
+      ...relativesByTopologyId,
     };
-  });
+  }
 
   return values;
 }
 
 
-function renderValues(node, columns = [], columnStyles = []) {
+function renderValues(node, columns = [], columnStyles = [], timestamp = null, topologyId = null) {
   const fields = getValuesForNode(node);
-  return columns.map(({id}, i) => {
+  return columns.map(({ id }, i) => {
     const field = fields[id];
     const style = columnStyles[i];
     if (field) {
       if (field.valueType === 'metadata') {
+        const { value, title } = formatDataType(field, timestamp);
         return (
-          <td className="node-details-table-node-value truncate" title={field.value}
+          <td
+            className="node-details-table-node-value truncate"
+            title={title}
             style={style}
             key={field.id}>
-            {field.value}
+            {field.dataType === 'link' ?
+              <a
+                rel="noopener noreferrer"
+                target="_blank"
+                className="node-details-table-node-link"
+                href={value}>{value}
+              </a> :
+              value}
           </td>
         );
       }
       if (field.valueType === 'relatives') {
         return (
-          <td className="node-details-table-node-value truncate" title={field.value}
+          <td
+            className="node-details-table-node-value truncate"
+            title={field.value}
             style={style}
             key={field.id}>
-            {<NodeDetailsTableNodeLink linkable nodeId={field.relative.id} {...field.relative} />}
+            {intersperse(field.relatives.map(relative =>
+              (<NodeDetailsTableNodeLink
+                key={relative.id}
+                linkable
+                nodeId={relative.id}
+                {...relative}
+              />)), ' ')}
           </td>
         );
       }
-      return <NodeDetailsTableNodeMetric style={style} key={field.id} {...field} />;
+      // valueType === 'metrics'
+      return (
+        <NodeDetailsTableNodeMetricLink
+          style={style}
+          key={field.id}
+          topologyId={topologyId}
+          {...field} />
+      );
     }
     // empty cell to complete the row for proper hover
-    return <td className="node-details-table-node-value" style={style} key={id} />;
+    return (
+      <td className="node-details-table-node-value" style={style} key={id} />
+    );
   });
 }
 
+/**
+ * Table row children may react to onClick events but the row
+ * itself does detect a click by looking at onMouseUp. To stop
+ * the bubbling of clicks on child elements we need to dismiss
+ * the onMouseUp event.
+ */
+export const dismissRowClickProps = {
+  onMouseUp: (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+};
 
 export default class NodeDetailsTableRow extends React.Component {
   constructor(props, context) {
@@ -73,67 +120,68 @@ export default class NodeDetailsTableRow extends React.Component {
     // user is selecting some data in the row. In this case don't trigger the onClick event which
     // is most likely a details panel popping open.
     //
-    this.mouseDragOrigin = [0, 0];
-
-    this.storeLabelRef = this.storeLabelRef.bind(this);
-    this.onMouseDown = this.onMouseDown.bind(this);
-    this.onMouseUp = this.onMouseUp.bind(this);
-    this.onMouseEnter = this.onMouseEnter.bind(this);
-    this.onMouseLeave = this.onMouseLeave.bind(this);
+    this.state = { focused: false };
+    this.mouseDrag = {};
   }
 
-  storeLabelRef(ref) {
-    this.labelEl = ref;
+  onMouseEnter = () => {
+    this.setState({ focused: true });
+    if (this.props.onMouseEnter) {
+      this.props.onMouseEnter(this.props.index, this.props.node);
+    }
   }
 
-  onMouseEnter() {
-    const { node, onMouseEnterRow } = this.props;
-    onMouseEnterRow(node);
+  onMouseLeave = () => {
+    this.setState({ focused: false });
+    if (this.props.onMouseLeave) {
+      this.props.onMouseLeave();
+    }
   }
 
-  onMouseLeave() {
-    const { node, onMouseLeaveRow } = this.props;
-    onMouseLeaveRow(node);
+  onMouseDown = (ev) => {
+    this.mouseDrag = {
+      originX: ev.pageX,
+      originY: ev.pageY,
+    };
   }
 
-  onMouseDown(ev) {
-    const { pageX, pageY } = ev;
-    this.mouseDragOrigin = [pageX, pageY];
-  }
-
-  onMouseUp(ev) {
-    const [originX, originY] = this.mouseDragOrigin;
-    const { pageX, pageY } = ev;
+  onClick = (ev) => {
     const thresholdPx = 2;
+    const { pageX, pageY } = ev;
+    const { originX, originY } = this.mouseDrag;
     const movedTheMouseTooMuch = (
       Math.abs(originX - pageX) > thresholdPx ||
       Math.abs(originY - pageY) > thresholdPx
     );
-    if (movedTheMouseTooMuch) {
+    if (movedTheMouseTooMuch && originX && originY) {
       return;
     }
 
-    const { node, onClick } = this.props;
-    onClick(ev, node, ReactDOM.findDOMNode(this.labelEl));
+    this.props.onClick(ev, this.props.node);
+    this.mouseDrag = {};
   }
 
   render() {
-    const { node, nodeIdKey, topologyId, columns, onClick, onMouseEnterRow, onMouseLeaveRow,
-      selected, colStyles } = this.props;
+    const {
+      node, nodeIdKey, topologyId, columns, onClick, colStyles, timestamp
+    } = this.props;
     const [firstColumnStyle, ...columnStyles] = colStyles;
-    const values = renderValues(node, columns, columnStyles);
+    const values = renderValues(node, columns, columnStyles, timestamp, topologyId);
     const nodeId = node[nodeIdKey];
-    const className = classNames('node-details-table-node', { selected });
+
+    const className = classNames('tour-step-anchor node-details-table-node', {
+      selected: this.props.selected,
+      focused: this.state.focused,
+    });
 
     return (
       <tr
+        onClick={onClick && this.onClick}
         onMouseDown={onClick && this.onMouseDown}
-        onMouseUp={onClick && this.onMouseUp}
-        onMouseEnter={onMouseEnterRow && this.onMouseEnter}
-        onMouseLeave={onMouseLeaveRow && this.onMouseLeave}
+        onMouseEnter={this.onMouseEnter}
+        onMouseLeave={this.onMouseLeave}
         className={className}>
-        <td ref={this.storeLabelRef} className="node-details-table-node-label truncate"
-          style={firstColumnStyle}>
+        <td className="node-details-table-node-label truncate" style={firstColumnStyle}>
           {this.props.renderIdCell(Object.assign(node, {topologyId, nodeId}))}
         </td>
         {values}
@@ -144,5 +192,5 @@ export default class NodeDetailsTableRow extends React.Component {
 
 
 NodeDetailsTableRow.defaultProps = {
-  renderIdCell: (props) => <NodeDetailsTableNodeLink {...props} />
+  renderIdCell: props => <NodeDetailsTableNodeLink {...props} />
 };

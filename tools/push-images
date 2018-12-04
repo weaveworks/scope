@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o nounset
+set -o pipefail
+
+QUAY_PREFIX=quay.io/
+IMAGES=$(make images)
+IMAGE_TAG=$(./tools/image-tag)
+
+usage() {
+    echo "$0 [-no-docker-hub]"
+}
+
+NO_DOCKER_HUB=
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -no-docker-hub)
+            NO_DOCKER_HUB=1
+            shift 1
+            ;;
+        *)
+            usage
+            exit 2
+            ;;
+    esac
+done
+
+pids=""
+for image in ${IMAGES}; do
+    if [[ "$image" == *"build"* ]]; then
+        continue
+    fi
+    echo "Will push ${image}:${IMAGE_TAG}"
+    docker push "${image}:${IMAGE_TAG}" &
+    pids="$pids $!"
+
+    if [ -z "$NO_DOCKER_HUB" ]; then
+        # remove the quey prefix and push to docker hub
+        docker_hub_image=${image#$QUAY_PREFIX}
+        docker tag "${image}:${IMAGE_TAG}" "${docker_hub_image}:${IMAGE_TAG}"
+        echo "Will push ${docker_hub_image}:${IMAGE_TAG}"
+        docker push "${docker_hub_image}:${IMAGE_TAG}" &
+        pids="$pids $!"
+    fi
+done
+
+# Wait individually for tasks so we fail-exit on any non-zero return code
+for p in $pids; do
+    wait "$p"
+done
+
+wait

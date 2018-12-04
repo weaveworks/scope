@@ -1,12 +1,9 @@
 package render
 
 import (
-	"net"
 	"regexp"
-	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -19,12 +16,15 @@ const (
 	IP = "IP"
 )
 
+// UncontainedIDPrefix is the prefix of uncontained pseudo nodes
+var UncontainedIDPrefix = MakePseudoNodeID(UncontainedID, "")
+
 // ContainerRenderer is a Renderer which produces a renderable container
 // graph by merging the process graph and the container topology.
 // NB We only want processes in container _or_ processes with network connections
 // but we need to be careful to ensure we only include each edge once, by only
 // including the ProcessRenderer once.
-var ContainerRenderer = MakeFilter(
+var ContainerRenderer = Memoise(MakeFilter(
 	func(n report.Node) bool {
 		// Drop deleted containers
 		state, ok := n.Latest.Lookup(docker.ContainerState)
@@ -35,112 +35,64 @@ var ContainerRenderer = MakeFilter(
 			MapProcess2Container,
 			ProcessRenderer,
 		),
-
-		// This mapper brings in short lived connections by joining with container IPs.
-		// We need to be careful to ensure we only include each edge once.  Edges brought in
-		// by the above renders will have a pid, so its enough to filter out any nodes with
-		// pids.
-		ShortLivedConnectionJoin(SelectContainer, MapContainer2IP),
-
-		SelectContainer,
+		ConnectionJoin(MapContainer2IP, report.Container),
 	),
-)
+))
 
 const originalNodeID = "original_node_id"
-const originalNodeTopology = "original_node_topology"
 
-// ShortLivedConnectionJoin joins the given renderer with short lived connections
-// from the endpoints topology, using the toIPs function to extract IPs from
+// ConnectionJoin joins the given topology with connections from the
+// endpoints topology, using the toIPs function to extract IPs from
 // the nodes.
-func ShortLivedConnectionJoin(r Renderer, toIPs func(report.Node) []string) Renderer {
-	nodeToIP := func(n report.Node, _ report.Networks) report.Nodes {
-		result := report.Nodes{}
-		for _, ip := range toIPs(n) {
-			result[ip] = NewDerivedNode(ip, n).
-				WithTopology(IP).
-				WithLatests(map[string]string{
-					originalNodeID:       n.ID,
-					originalNodeTopology: n.Topology,
-				}).
-				WithCounters(map[string]int{IP: 1})
-		}
-		return result
-	}
+func ConnectionJoin(toIPs func(report.Node) []string, topology string) Renderer {
+	return connectionJoin{toIPs: toIPs, topology: topology}
+}
 
-	ipToNode := func(n report.Node, _ report.Networks) report.Nodes {
-		// If an IP is shared between multiple nodes, we can't
-		// reliably attribute an connection based on its IP
-		if count, _ := n.Counters.Lookup(IP); count > 1 {
-			return report.Nodes{}
-		}
+type connectionJoin struct {
+	toIPs    func(report.Node) []string
+	topology string
+}
 
-		// Propagate the internet and service pseudo nodes
-		if strings.HasSuffix(n.ID, TheInternetID) || strings.HasPrefix(n.ID, ServiceNodeIDPrefix) {
-			return report.Nodes{n.ID: n}
-		}
-
-		// If this node is not of the original type, exclude it.
-		// This excludes all the nodes we've dragged in from endpoint
-		// that we failed to join to a node.
-		id, ok := n.Latest.Lookup(originalNodeID)
-		if !ok {
-			return report.Nodes{}
-		}
-		topology, ok := n.Latest.Lookup(originalNodeTopology)
-		if !ok {
-			return report.Nodes{}
-		}
-
-		return report.Nodes{
-			id: NewDerivedNode(id, n).
-				WithTopology(topology),
+func (c connectionJoin) Render(rpt report.Report) Nodes {
+	inputNodes := TopologySelector(c.topology).Render(rpt).Nodes
+	// Collect all the IPs we are trying to map to, and which ID they map from
+	var ipNodes = map[string]string{}
+	for _, n := range inputNodes {
+		for _, ip := range c.toIPs(n) {
+			if _, exists := ipNodes[ip]; exists {
+				// If an IP is shared between multiple nodes, we can't reliably
+				// attribute an connection based on its IP
+				ipNodes[ip] = "" // blank out the mapping so we don't use it
+			} else {
+				ipNodes[ip] = n.ID
+			}
 		}
 	}
-
-	// MapEndpoint2IP maps endpoint nodes to their IP address, for joining
-	// with container nodes.  We drop endpoint nodes with pids, as they
-	// will be joined to containers through the process topology, and we
-	// don't want to double count edges.
-	endpoint2IP := func(m report.Node, local report.Networks) report.Nodes {
-		// Don't include procspied connections, to prevent double counting
-		_, ok := m.Latest.Lookup(endpoint.Procspied)
-		if ok {
-			return report.Nodes{}
-		}
-		scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
-		if !ok {
-			return report.Nodes{}
-		}
-		if ip := net.ParseIP(addr); ip != nil && !local.Contains(ip) {
-			node := externalNode(m)
-			return report.Nodes{node.ID: node}
-		}
-
-		// We also allow for joining on ip:port pairs.  This is useful
-		// for connections to the host IPs which have been port
-		// mapped to a container can only be unambiguously identified with the port.
-		// So we need to emit two nodes, for two different cases.
-		id := report.MakeScopedEndpointNodeID(scope, addr, "")
-		idWithPort := report.MakeScopedEndpointNodeID(scope, addr, port)
-		return report.Nodes{
-			id:         NewDerivedNode(id, m).WithTopology(IP),
-			idWithPort: NewDerivedNode(idWithPort, m).WithTopology(IP),
-		}
-	}
-
-	return FilterUnconnected(MakeMap(
-		ipToNode,
-		MakeReduce(
-			MakeMap(
-				nodeToIP,
-				r,
-			),
-			MakeMap(
-				endpoint2IP,
-				SelectEndpoint,
-			),
-		),
-	))
+	return MapEndpoints(
+		func(m report.Node) string {
+			scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
+			if !ok {
+				return ""
+			}
+			id, found := ipNodes[report.MakeScopedEndpointNodeID(scope, addr, "")]
+			// We also allow for joining on ip:port pairs.  This is
+			// useful for connections to the host IPs which have been
+			// port mapped to a container can only be unambiguously
+			// identified with the port.
+			if !found {
+				id, found = ipNodes[report.MakeScopedEndpointNodeID(scope, addr, port)]
+			}
+			if !found || id == "" {
+				return ""
+			}
+			// Not an IP we blanked out earlier.
+			//
+			// MapEndpoints is guaranteed to find a node with this id
+			// (and hence not have to create one), since we got the id
+			// from ipNodes, which is populated from c.topology, which
+			// is where MapEndpoints will look.
+			return id
+		}, c.topology).Render(rpt)
 }
 
 // FilterEmpty is a Renderer which filters out nodes which have no children
@@ -169,18 +121,18 @@ type containerWithImageNameRenderer struct {
 
 // Render produces a container graph where the the latest metadata contains the
 // container image name, if found.
-func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator) report.Nodes {
-	containers := r.Renderer.Render(rpt, dct)
-	images := SelectContainerImage.Render(rpt, dct)
+func (r containerWithImageNameRenderer) Render(rpt report.Report) Nodes {
+	containers := r.Renderer.Render(rpt)
+	images := SelectContainerImage.Render(rpt)
 
-	outputs := report.Nodes{}
-	for id, c := range containers {
+	outputs := make(report.Nodes, len(containers.Nodes))
+	for id, c := range containers.Nodes {
 		outputs[id] = c
 		imageID, ok := c.Latest.Lookup(docker.ImageID)
 		if !ok {
 			continue
 		}
-		image, ok := images[report.MakeContainerImageNodeID(imageID)]
+		image, ok := images.Nodes[report.MakeContainerImageNodeID(imageID)]
 		if !ok {
 			continue
 		}
@@ -188,26 +140,27 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report, dct Decorator)
 		if !ok {
 			continue
 		}
-		imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
-		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutVersion)
+		imageNameWithoutTag := docker.ImageNameWithoutTag(imageName)
+		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutTag)
 
-		c = propagateLatest(docker.ImageName, image, c)
-		c = propagateLatest(docker.ImageLabelPrefix+"works.weave.role", image, c)
+		c.Latest = c.Latest.Propagate(image.Latest, docker.ImageName, docker.ImageTag,
+			docker.ImageSize, docker.ImageVirtualSize, docker.ImageLabelPrefix+"works.weave.role")
+
 		c.Parents = c.Parents.
 			Delete(report.ContainerImage).
-			Add(report.ContainerImage, report.MakeStringSet(imageNodeID))
+			AddString(report.ContainerImage, imageNodeID)
 		outputs[id] = c
 	}
-	return outputs
+	return Nodes{Nodes: outputs, Filtered: containers.Filtered}
 }
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container
 // graph where the ranks are the image names, not their IDs
-var ContainerWithImageNameRenderer = ApplyDecorators(containerWithImageNameRenderer{ContainerRenderer})
+var ContainerWithImageNameRenderer = Memoise(containerWithImageNameRenderer{ContainerRenderer})
 
 // ContainerImageRenderer is a Renderer which produces a renderable container
 // image graph by merging the container graph and the container image topology.
-var ContainerImageRenderer = FilterEmpty(report.Container,
+var ContainerImageRenderer = Memoise(FilterEmpty(report.Container,
 	MakeMap(
 		MapContainerImage2Name,
 		MakeReduce(
@@ -218,10 +171,12 @@ var ContainerImageRenderer = FilterEmpty(report.Container,
 			SelectContainerImage,
 		),
 	),
-)
+))
 
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
 // by hostname graph..
+//
+// not memoised
 var ContainerHostnameRenderer = FilterEmpty(report.Container,
 	MakeReduce(
 		MakeMap(
@@ -290,24 +245,23 @@ func MapContainer2IP(m report.Node) []string {
 // MapProcess2Container maps process Nodes to container
 // Nodes.
 //
-// If this function is given a node without a docker_container_id
-// (including other pseudo nodes), it will produce an "Uncontained"
-// pseudo node.
+// Pseudo nodes are passed straight through.
+//
+// If this function is given a node without a docker_container_id, it
+// will produce an "Uncontained" pseudo node.
 //
 // Otherwise, this function will produce a node with the correct ID
 // format for a container, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
-func MapProcess2Container(n report.Node, _ report.Networks) report.Nodes {
+func MapProcess2Container(n report.Node) report.Node {
 	// Propagate pseudo nodes
 	if n.Topology == Pseudo {
-		return report.Nodes{n.ID: n}
+		return n
 	}
 
-	// Otherwise, if the process is not in a container, group it
-	// into an per-host "Uncontained" node.  If for whatever reason
-	// this node doesn't have a host id in their nodemetadata, it'll
-	// all get grouped into a single uncontained node.
+	// Otherwise, if the process is not in a container, group it into
+	// a per-host "Uncontained" node.
 	var (
 		id   string
 		node report.Node
@@ -316,90 +270,87 @@ func MapProcess2Container(n report.Node, _ report.Networks) report.Nodes {
 		id = report.MakeContainerNodeID(containerID)
 		node = NewDerivedNode(id, n).WithTopology(report.Container)
 	} else {
-		id = MakePseudoNodeID(UncontainedID, report.ExtractHostID(n))
+		hostID, _, _ := report.ParseProcessNodeID(n.ID)
+		id = MakePseudoNodeID(UncontainedID, hostID)
 		node = NewDerivedPseudoNode(id, n)
-		node = propagateLatest(report.HostNodeID, n, node)
-		node = propagateLatest(IsConnected, n, node)
 	}
-	return report.Nodes{id: node}
+	return node
 }
 
 // MapContainer2ContainerImage maps container Nodes to container
 // image Nodes.
 //
+// Pseudo nodes are passed straight through.
+//
 // If this function is given a node without a docker_image_id
-// (including other pseudo nodes), it will produce an "Uncontained"
-// pseudo node.
+// it will drop that node.
 //
 // Otherwise, this function will produce a node with the correct ID
-// format for a container, but without any Major or Minor labels.
-// It does not have enough info to do that, and the resulting graph
-// must be merged with a container graph to get that info.
-func MapContainer2ContainerImage(n report.Node, _ report.Networks) report.Nodes {
+// format for a container image, but without any Major or Minor
+// labels.  It does not have enough info to do that, and the resulting
+// graph must be merged with a container image graph to get that info.
+func MapContainer2ContainerImage(n report.Node) report.Node {
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
-		return report.Nodes{n.ID: n}
+		return n
 	}
 
 	// Otherwise, if some some reason the container doesn't have a image_id
 	// (maybe slightly out of sync reports), just drop it
-	imageID, timestamp, ok := n.Latest.LookupEntry(docker.ImageID)
+	imageID, ok := n.Latest.Lookup(docker.ImageID)
 	if !ok {
-		return report.Nodes{}
+		return report.Node{}
 	}
 
-	// Add container id key to the counters, which will later be counted to produce the minor label
+	// Add container id key to the counters, which will later be
+	// counted to produce the minor label
 	id := report.MakeContainerImageNodeID(imageID)
 	result := NewDerivedNode(id, n).WithTopology(report.ContainerImage)
-	result.Latest = result.Latest.Set(docker.ImageID, timestamp, imageID)
 	result.Counters = result.Counters.Add(n.Topology, 1)
-	return report.Nodes{id: result}
+	return result
 }
 
 // MapContainerImage2Name ignores image versions
-func MapContainerImage2Name(n report.Node, _ report.Networks) report.Nodes {
+func MapContainerImage2Name(n report.Node) report.Node {
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
-		return report.Nodes{n.ID: n}
+		return n
 	}
 
 	imageName, ok := n.Latest.Lookup(docker.ImageName)
 	if !ok {
-		return report.Nodes{}
+		return report.Node{}
 	}
 
-	imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
-	n.ID = report.MakeContainerImageNodeID(imageNameWithoutVersion)
+	imageNameWithoutTag := docker.ImageNameWithoutTag(imageName)
+	n.ID = report.MakeContainerImageNodeID(imageNameWithoutTag)
 
-	if imageID, ok := report.ParseContainerImageNodeID(n.ID); ok {
-		n.Sets = n.Sets.Add(docker.ImageID, report.EmptyStringSet.Add(imageID))
-	}
-
-	return report.Nodes{n.ID: n}
+	return n
 }
 
+var containerHostnameTopology = MakeGroupNodeTopology(report.Container, docker.ContainerHostname)
+
 // MapContainer2Hostname maps container Nodes to 'hostname' renderabled nodes..
-func MapContainer2Hostname(n report.Node, _ report.Networks) report.Nodes {
+func MapContainer2Hostname(n report.Node) report.Node {
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
-		return report.Nodes{n.ID: n}
+		return n
 	}
 
 	// Otherwise, if some some reason the container doesn't have a hostname
 	// (maybe slightly out of sync reports), just drop it
-	id, timestamp, ok := n.Latest.LookupEntry(docker.ContainerHostname)
+	id, ok := n.Latest.Lookup(docker.ContainerHostname)
 	if !ok {
-		return report.Nodes{}
+		return report.Node{}
 	}
 
-	node := NewDerivedNode(id, n).WithTopology(MakeGroupNodeTopology(n.Topology, docker.ContainerHostname))
-	node.Latest = node.Latest.Set(docker.ContainerHostname, timestamp, id)
+	node := NewDerivedNode(id, n).WithTopology(containerHostnameTopology)
 	node.Counters = node.Counters.Add(n.Topology, 1)
-	return report.Nodes{id: node}
+	return node
 }
 
 // MapToEmpty removes all the attributes, children, etc, of a node. Useful when
 // we just want to count the presence of nodes.
-func MapToEmpty(n report.Node, _ report.Networks) report.Nodes {
-	return report.Nodes{n.ID: report.MakeNode(n.ID).WithTopology(n.Topology)}
+func MapToEmpty(n report.Node) report.Node {
+	return report.MakeNode(n.ID).WithTopology(n.Topology)
 }

@@ -1,0 +1,31 @@
+#!/bin/bash
+set -eu
+if [ $# -lt 1 ]; then
+    echo "Usage: $0 <ip:port> [<max_dialer> [<random_seed>]]" >&2
+    exit 1
+fi
+
+readonly addr=$1
+readonly max_dialer=${2:-50}
+
+if [[ $# -gt 2 ]]; then
+    RANDOM=$3
+fi
+
+dialer=()
+# shellcheck disable=SC2154
+trap 'echo -n "stopping ... "; for c in "${dialer[@]}"; do docker rm -f "$c" >/dev/null; done; echo "done"' EXIT
+
+while true; do
+    dialer+=("$(docker run -d dialer /go/bin/dialer connect "$addr" "10")")
+
+    if [ ${#dialer[@]} -gt "$max_dialer" ]; then
+        rand=$(((RANDOM % max_dialer) + 1))
+        container=${dialer[$rand]}
+        docker rm -f "$container" >/dev/null &
+        unset dialer[$rand]
+        dialer=("${dialer[@]}")
+    fi
+
+    sleep 2
+done

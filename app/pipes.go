@@ -3,9 +3,9 @@ package app
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	"context"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 )
@@ -15,7 +15,7 @@ func RegisterPipeRoutes(router *mux.Router, pr PipeRouter) {
 	router.Methods("GET").
 		Name("api_pipe_pipeid_check").
 		Path("/api/pipe/{pipeID}/check").
-		HandlerFunc(requestContextDecorator(checkPipe(pr, UIEnd)))
+		HandlerFunc(requestContextDecorator(checkPipe(pr)))
 
 	router.Methods("GET").
 		Name("api_pipe_pipeid").
@@ -33,7 +33,7 @@ func RegisterPipeRoutes(router *mux.Router, pr PipeRouter) {
 		HandlerFunc(requestContextDecorator(deletePipe(pr)))
 }
 
-func checkPipe(pr PipeRouter, end End) CtxHandlerFunc {
+func checkPipe(pr PipeRouter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		id := mux.Vars(r)["pipeID"]
 		exists, err := pr.Exists(ctx, id)

@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Pipe is a bi-directional channel from someone thing in the probe
+// Pipe is a bi-directional channel from something in the probe
 // to the UI.
 type Pipe interface {
 	Ends() (io.ReadWriter, io.ReadWriter)

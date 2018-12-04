@@ -1,12 +1,13 @@
-import { Map as makeMap } from 'immutable';
-import _ from 'lodash';
+import { Map as makeMap, Set as makeSet, List as makeList } from 'immutable';
+import { escapeRegExp } from 'lodash';
 
+import { isGenericTable, isPropertyList, genericTableEntryKey } from './node-details-utils';
 import { slugify } from './string-utils';
 
 // topolevel search fields
 const SEARCH_FIELDS = makeMap({
   label: 'label',
-  sublabel: 'label_minor'
+  labelMinor: 'labelMinor'
 });
 
 const COMPARISONS = makeMap({
@@ -26,7 +27,7 @@ function makeRegExp(expression, options = 'i') {
   try {
     return new RegExp(expression, options);
   } catch (e) {
-    return new RegExp(_.escapeRegExp(expression), options);
+    return new RegExp(escapeRegExp(expression), options);
   }
 }
 
@@ -71,8 +72,12 @@ function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label, truncat
     if (matches) {
       const firstMatch = matches[0];
       const index = text.search(queryRe);
-      nodeMatches = nodeMatches.setIn(keyPath,
-        {text, label, start: index, length: firstMatch.length, truncate});
+      nodeMatches = nodeMatches.setIn(
+        keyPath,
+        {
+          text, label, start: index, length: firstMatch.length, truncate
+        }
+      );
     }
   }
   return nodeMatches;
@@ -109,70 +114,101 @@ function findNodeMatchMetric(nodeMatches, keyPath, fieldValue, fieldLabel, metri
       }
     }
     if (matched) {
-      nodeMatches = nodeMatches.setIn(keyPath,
-        {fieldLabel, metric: true});
+      nodeMatches = nodeMatches.setIn(
+        keyPath,
+        {fieldLabel, metric: true}
+      );
     }
   }
   return nodeMatches;
 }
 
-
-export function searchTopology(nodes, { prefix, query, metric, comp, value }) {
+export function searchNode(node, {
+  prefix, query, metric, comp, value
+}) {
   let nodeMatches = makeMap();
-  nodes.forEach((node, nodeId) => {
-    if (query) {
-      // top level fields
-      SEARCH_FIELDS.forEach((field, label) => {
-        const keyPath = [nodeId, label];
-        if (node.has(field)) {
-          nodeMatches = findNodeMatch(nodeMatches, keyPath, node.get(field),
-            query, prefix, label);
-        }
+
+  if (query) {
+    // top level fields
+    SEARCH_FIELDS.forEach((field, label) => {
+      const keyPath = [label];
+      if (node.has(field)) {
+        nodeMatches = findNodeMatch(
+          nodeMatches, keyPath, node.get(field),
+          query, prefix, label
+        );
+      }
+    });
+
+    // metadata
+    if (node.get('metadata')) {
+      node.get('metadata').forEach((field) => {
+        const keyPath = ['metadata', field.get('id')];
+        nodeMatches = findNodeMatch(
+          nodeMatches, keyPath, field.get('value'),
+          query, prefix, field.get('label'), field.get('truncate')
+        );
       });
+    }
 
-      // metadata
-      if (node.get('metadata')) {
-        node.get('metadata').forEach(field => {
-          const keyPath = [nodeId, 'metadata', field.get('id')];
-          nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
-            query, prefix, field.get('label'), field.get('truncate'));
-        });
-      }
+    // parents and relatives
+    if (node.get('parents')) {
+      node.get('parents').forEach((parent) => {
+        const keyPath = ['parents', parent.get('id')];
+        nodeMatches = findNodeMatch(
+          nodeMatches, keyPath, parent.get('label'),
+          query, prefix, parent.get('topologyId')
+        );
+      });
+    }
 
-      // parents and relatives
-      if (node.get('parents')) {
-        node.get('parents').forEach(parent => {
-          const keyPath = [nodeId, 'parents', parent.get('id')];
-          nodeMatches = findNodeMatch(nodeMatches, keyPath, parent.get('label'),
-            query, prefix, parent.get('topologyId'));
-        });
-      }
+    // property lists
+    (node.get('tables') || []).filter(isPropertyList).forEach((propertyList) => {
+      (propertyList.get('rows') || []).forEach((row) => {
+        const entries = row.get('entries');
+        const keyPath = ['property-lists', row.get('id')];
+        nodeMatches = findNodeMatch(
+          nodeMatches, keyPath, entries.get('value'),
+          query, prefix, entries.get('label')
+        );
+      });
+    });
 
-      // tables (envvars and labels)
-      const tables = node.get('tables');
-      if (tables) {
-        tables.forEach((table) => {
-          if (table.get('rows')) {
-            table.get('rows').forEach(field => {
-              const keyPath = [nodeId, 'tables', field.get('id')];
-              nodeMatches = findNodeMatch(nodeMatches, keyPath, field.get('value'),
-                query, prefix, field.get('label'));
-            });
-          }
+    // generic tables
+    (node.get('tables') || []).filter(isGenericTable).forEach((table) => {
+      (table.get('rows') || []).forEach((row) => {
+        table.get('columns').forEach((column) => {
+          const val = row.get('entries').get(column.get('id'));
+          const keyPath = ['tables', genericTableEntryKey(row, column)];
+          nodeMatches = findNodeMatch(nodeMatches, keyPath, val, query);
         });
-      }
-    } else if (metric) {
-      const metrics = node.get('metrics');
-      if (metrics) {
-        metrics.forEach(field => {
-          const keyPath = [nodeId, 'metrics', field.get('id')];
-          nodeMatches = findNodeMatchMetric(nodeMatches, keyPath, field.get('value'),
-            field.get('label'), metric, comp, value);
-        });
-      }
+      });
+    });
+  } else if (metric) {
+    const metrics = node.get('metrics');
+    if (metrics) {
+      metrics.forEach((field) => {
+        const keyPath = ['metrics', field.get('id')];
+        nodeMatches = findNodeMatchMetric(
+          nodeMatches, keyPath, field.get('value'),
+          field.get('label'), metric, comp, value
+        );
+      });
+    }
+  }
+
+  return nodeMatches;
+}
+
+export function searchTopology(nodes, parsedQuery) {
+  let nodesMatches = makeMap();
+  nodes.forEach((node, nodeId) => {
+    const nodeMatches = searchNode(node, parsedQuery);
+    if (!nodeMatches.isEmpty()) {
+      nodesMatches = nodesMatches.set(nodeId, nodeMatches);
     }
   });
-  return nodeMatches;
+  return nodesMatches;
 }
 
 /**
@@ -203,7 +239,7 @@ export function parseQuery(query) {
         if (comparisonQuery && comparisonQuery.length === 2) {
           const value = parseValue(comparisonQuery[1]);
           const metric = comparisonQuery[0].trim();
-          if (!isNaN(value) && metric) {
+          if (!window.isNaN(value) && metric) {
             comparison = {
               metric,
               value,
@@ -224,48 +260,63 @@ export function parseQuery(query) {
   return null;
 }
 
-/**
- * Returns {topologyId: {nodeId: matches}}
- */
-export function updateNodeMatches(state) {
-  const parsed = parseQuery(state.get('searchQuery'));
-  if (parsed) {
-    if (state.has('nodesByTopology')) {
-      state.get('nodesByTopology').forEach((nodes, topologyId) => {
-        const nodeMatches = searchTopology(nodes, parsed);
-        if (nodeMatches.size > 0) {
-          state = state.setIn(['searchNodeMatches', topologyId], nodeMatches);
-        } else {
-          state = state.deleteIn(['searchNodeMatches', topologyId]);
-        }
-      });
-    }
-  } else if (state.has('searchNodeMatches')) {
-    state = state.update('searchNodeMatches', snm => snm.clear());
-  }
 
-  return state;
+export function getSearchableFields(nodes) {
+  const get = (node, key) => node.get(key) || makeList();
+
+  const baseLabels = makeSet(nodes.size > 0 ? SEARCH_FIELDS.valueSeq() : []);
+
+  const metadataLabels = nodes.reduce((labels, node) => (
+    labels.union(get(node, 'metadata').map(f => f.get('label')))
+  ), makeSet());
+
+  const parentLabels = nodes.reduce((labels, node) => (
+    labels.union(get(node, 'parents').map(p => p.get('topologyId')))
+  ), makeSet());
+
+  // Consider only property lists (and not generic tables).
+  const tableRowLabels = nodes.reduce((labels, node) => (
+    labels.union(get(node, 'tables').filter(isPropertyList).flatMap(t => (t.get('rows') || makeList)
+      .map(f => f.getIn(['entries', 'label']))))
+  ), makeSet());
+
+  const metricLabels = nodes.reduce((labels, node) => (
+    labels.union(get(node, 'metrics').map(f => f.get('label')))
+  ), makeSet());
+
+  return makeMap({
+    fields: baseLabels.union(metadataLabels, parentLabels, tableRowLabels)
+      .map(slugify)
+      .toList()
+      .sort(),
+    metrics: metricLabels.toList().map(slugify).sort()
+  });
 }
+
 
 /**
  * Set `filtered:true` in state's nodes if a pinned search matches
  */
 export function applyPinnedSearches(state) {
   // clear old filter state
-  state = state.update('nodes',
-    nodes => nodes.map(node => node.set('filtered', false)));
+  state = state.update(
+    'nodes',
+    nodes => nodes.map(node => node.set('filtered', false))
+  );
 
   const pinnedSearches = state.get('pinnedSearches');
   if (pinnedSearches.size > 0) {
-    state.get('pinnedSearches').forEach(query => {
+    state.get('pinnedSearches').forEach((query) => {
       const parsed = parseQuery(query);
       if (parsed) {
         const nodeMatches = searchTopology(state.get('nodes'), parsed);
         const filteredNodes = state.get('nodes')
-          .map(node => node.set('filtered',
+          .map(node => node.set(
+            'filtered',
             node.get('filtered') // matched by previous pinned search
             || nodeMatches.size === 0 // no match, filter all nodes
-            || !nodeMatches.has(node.get('id')))); // filter matches
+            || !nodeMatches.has(node.get('id'))
+          )); // filter matches
         state = state.set('nodes', filteredNodes);
       }
     });
@@ -283,5 +334,4 @@ export const testable = {
   parseQuery,
   parseValue,
   searchTopology,
-  updateNodeMatches
 };

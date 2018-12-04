@@ -13,9 +13,9 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/ugorji/go/codec"
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 )
 
 func dummyServer(t *testing.T, expectedToken, expectedID string, expectedVersion string, expectedReport report.Report, done chan struct{}) *httptest.Server {
@@ -73,26 +73,10 @@ func TestAppClientPublish(t *testing.T) {
 	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
 	// tags, transforming empty slices into nils. So, we make DeepEqual
 	// happy by setting empty `json:"omitempty"` entries to nil
-	rpt.Endpoint = report.MakeTopology()
-	rpt.Process = report.MakeTopology()
-	rpt.Container = report.MakeTopology()
-	rpt.ContainerImage = report.MakeTopology()
-	rpt.Pod = report.MakeTopology()
-	rpt.Service = report.MakeTopology()
-	rpt.Deployment = report.MakeTopology()
-	rpt.ReplicaSet = report.MakeTopology()
-	rpt.Host = report.MakeTopology()
-	rpt.Overlay = report.MakeTopology()
-	rpt.Endpoint.Controls = nil
-	rpt.Process.Controls = nil
-	rpt.Container.Controls = nil
-	rpt.ContainerImage.Controls = nil
-	rpt.Pod.Controls = nil
-	rpt.Service.Controls = nil
-	rpt.Deployment.Controls = nil
-	rpt.ReplicaSet.Controls = nil
-	rpt.Host.Controls = nil
-	rpt.Overlay.Controls = nil
+	rpt.WalkTopologies(func(to *report.Topology) {
+		*to = report.MakeTopology()
+		to.Controls = nil
+	})
 
 	s := dummyServer(t, token, id, version, rpt, done)
 	defer s.Close()
@@ -109,16 +93,20 @@ func TestAppClientPublish(t *testing.T) {
 		Insecure:     false,
 	}
 
-	p, err := NewAppClient(pc, u.Host, s.URL, nil)
+	url, err := url.Parse(s.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := NewAppClient(pc, u.Host, *url, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer p.Stop()
 
 	// First few reports might be dropped as the client is spinning up.
-	rp := NewReportPublisher(p, false)
 	for i := 0; i < 10; i++ {
-		if err := rp.Publish(rpt); err != nil {
+		buf, _ := rpt.WriteBinary()
+		if err := p.Publish(buf, false); err != nil {
 			t.Error(err)
 		}
 		time.Sleep(10 * time.Millisecond)
@@ -158,7 +146,11 @@ func TestAppClientDetails(t *testing.T) {
 		ProbeID:  "",
 		Insecure: false,
 	}
-	p, err := NewAppClient(pc, u.Host, s.URL, nil)
+	url, err := url.Parse(s.URL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p, err := NewAppClient(pc, u.Host, *url, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -203,12 +195,14 @@ func TestStop(t *testing.T) {
 		Insecure: false,
 	}
 
-	p, err := NewAppClient(pc, u.Host, s.URL, nil)
+	url, err := url.Parse(s.URL)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	rp := NewReportPublisher(p, false)
+	p, err := NewAppClient(pc, u.Host, *url, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Make sure the app received our report and is stuck
 	for done := false; !done; {
@@ -216,7 +210,8 @@ func TestStop(t *testing.T) {
 		case <-receivedReport:
 			done = true
 		default:
-			if err := rp.Publish(rpt); err != nil {
+			buf, _ := rpt.WriteBinary()
+			if err := p.Publish(buf, false); err != nil {
 				t.Error(err)
 			}
 			time.Sleep(10 * time.Millisecond)

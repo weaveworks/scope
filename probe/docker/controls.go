@@ -3,7 +3,7 @@ package docker
 import (
 	docker_client "github.com/fsouza/go-dockerclient"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
@@ -12,14 +12,15 @@ import (
 
 // Control IDs used by the docker integration.
 const (
-	StopContainer    = "docker_stop_container"
-	StartContainer   = "docker_start_container"
-	RestartContainer = "docker_restart_container"
-	PauseContainer   = "docker_pause_container"
-	UnpauseContainer = "docker_unpause_container"
-	RemoveContainer  = "docker_remove_container"
-	AttachContainer  = "docker_attach_container"
-	ExecContainer    = "docker_exec_container"
+	StopContainer    = report.DockerStopContainer
+	StartContainer   = report.DockerStartContainer
+	RestartContainer = report.DockerRestartContainer
+	PauseContainer   = report.DockerPauseContainer
+	UnpauseContainer = report.DockerUnpauseContainer
+	RemoveContainer  = report.DockerRemoveContainer
+	AttachContainer  = report.DockerAttachContainer
+	ExecContainer    = report.DockerExecContainer
+	ResizeExecTTY    = "docker_resize_exec_tty"
 
 	waitTime = 10
 )
@@ -85,6 +86,7 @@ func (r *registry) attachContainer(containerID string, req xfer.Request) xfer.Re
 		ErrorStream:  local,
 	})
 	if err != nil {
+		pipe.Close()
 		return xfer.ResponseError(err)
 	}
 	pipe.OnClose(func() {
@@ -111,7 +113,7 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 		AttachStdout: true,
 		AttachStderr: true,
 		Tty:          true,
-		Cmd:          []string{"/bin/sh", "-l", "-c", "TERM=xterm exec $( (type getent > /dev/null 2>&1  && getent passwd root | cut -d: -f7 2>/dev/null) || echo /bin/sh)"},
+		Cmd:          []string{"/bin/sh", "-c", "TERM=xterm exec $( (type getent > /dev/null 2>&1  && getent passwd root | cut -d: -f7 2>/dev/null) || echo /bin/sh)"},
 		Container:    containerID,
 	})
 	if err != nil {
@@ -122,6 +124,7 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 	if err != nil {
 		return xfer.ResponseError(err)
 	}
+
 	local, _ := pipe.Ends()
 	cw, err := r.client.StartExecNonBlocking(exec.ID, docker_client.StartExecOptions{
 		Tty:          true,
@@ -131,13 +134,22 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 		ErrorStream:  local,
 	})
 	if err != nil {
+		pipe.Close()
 		return xfer.ResponseError(err)
 	}
+
+	r.Lock()
+	r.pipeIDToexecID[id] = exec.ID
+	r.Unlock()
+
 	pipe.OnClose(func() {
 		if err := cw.Close(); err != nil {
 			log.Errorf("Error closing exec in container %s: %v", containerID, err)
 			return
 		}
+		r.Lock()
+		delete(r.pipeIDToexecID, id)
+		r.Unlock()
 	})
 	go func() {
 		if err := cw.Wait(); err != nil {
@@ -146,9 +158,28 @@ func (r *registry) execContainer(containerID string, req xfer.Request) xfer.Resp
 		pipe.Close()
 	}()
 	return xfer.Response{
-		Pipe:   id,
-		RawTTY: true,
+		Pipe:             id,
+		RawTTY:           true,
+		ResizeTTYControl: ResizeExecTTY,
 	}
+}
+
+func (r *registry) resizeExecTTY(pipeID string, height, width uint) xfer.Response {
+	r.Lock()
+	execID, ok := r.pipeIDToexecID[pipeID]
+	r.Unlock()
+
+	if !ok {
+		return xfer.ResponseErrorf("Unknown pipeID (%q)", pipeID)
+	}
+
+	if err := r.client.ResizeExecTTY(execID, int(height), int(width)); err != nil {
+		return xfer.ResponseErrorf(
+			"Error setting terminal size (%d, %d) of pipe %s: %v",
+			height, width, pipeID, err)
+	}
+
+	return xfer.Response{}
 }
 
 func captureContainerID(f func(string, xfer.Request) xfer.Response) func(xfer.Request) xfer.Response {
@@ -171,6 +202,7 @@ func (r *registry) registerControls() {
 		RemoveContainer:  captureContainerID(r.removeContainer),
 		AttachContainer:  captureContainerID(r.attachContainer),
 		ExecContainer:    captureContainerID(r.execContainer),
+		ResizeExecTTY:    xfer.ResizeTTYControlWrapper(r.resizeExecTTY),
 	}
 	r.handlerRegistry.Batch(nil, controls)
 }
@@ -185,6 +217,7 @@ func (r *registry) deregisterControls() {
 		RemoveContainer,
 		AttachContainer,
 		ExecContainer,
+		ResizeExecTTY,
 	}
 	r.handlerRegistry.Batch(controls, nil)
 }

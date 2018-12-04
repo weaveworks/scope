@@ -1,8 +1,6 @@
 import React from 'react';
-import { connect } from 'react-redux';
 
-class ShowMore extends React.Component {
-
+export default class ShowMore extends React.PureComponent {
   constructor(props, context) {
     super(props, context);
     this.handleClick = this.handleClick.bind(this);
@@ -14,7 +12,9 @@ class ShowMore extends React.Component {
   }
 
   render() {
-    const { collection, notShown, expanded, hideNumber } = this.props;
+    const {
+      collection, notShown, expanded, hideNumber
+    } = this.props;
     const showLimitAction = collection && (expanded || notShown > 0);
     const limitActionText = !hideNumber && !expanded && notShown > 0 ? `+${notShown}` : '';
     const limitActionIcon = !expanded && notShown > 0 ? 'fa fa-caret-down' : 'fa fa-caret-up';
@@ -29,5 +29,3 @@ class ShowMore extends React.Component {
     );
   }
 }
-
-export default connect()(ShowMore);

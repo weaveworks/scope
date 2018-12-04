@@ -14,16 +14,21 @@ const (
 )
 
 // NewConnectionScanner creates a new Darwin ConnectionScanner
-func NewConnectionScanner(_ process.Walker) ConnectionScanner {
-	return &darwinScanner{}
+func NewConnectionScanner(_ process.Walker, processes bool) ConnectionScanner {
+	return &darwinScanner{processes}
 }
 
-type darwinScanner struct{}
+// NewSyncConnectionScanner creates a new synchronous Darwin ConnectionScanner
+func NewSyncConnectionScanner(_ process.Walker, processes bool) ConnectionScanner {
+	return &darwinScanner{processes}
+}
 
-// Connections returns all established (TCP) connections. No need to be root
-// to run this. If processes is true it also tries to fill in the process
-// fields of the connection. You need to be root to find all processes.
-func (s *darwinScanner) Connections(processes bool) (ConnIter, error) {
+type darwinScanner struct {
+	processes bool
+}
+
+// Connections returns all established (TCP) connections.
+func (s *darwinScanner) Connections() (ConnIter, error) {
 	out, err := exec.Command(
 		netstatBinary,
 		"-n", // no number resolving
@@ -37,7 +42,7 @@ func (s *darwinScanner) Connections(processes bool) (ConnIter, error) {
 	}
 	connections := parseDarwinNetstat(string(out))
 
-	if processes {
+	if s.processes {
 		out, err := exec.Command(
 			lsofBinary,
 			"-i",       // only Internet files

@@ -18,7 +18,7 @@ func (f *fixedConnIter) Next() *Connection {
 type FixedScanner []Connection
 
 // Connections implements ConnectionsScanner.Connections
-func (s FixedScanner) Connections(_ bool) (ConnIter, error) {
+func (s FixedScanner) Connections() (ConnIter, error) {
 	iter := fixedConnIter(s)
 	return &iter, nil
 }

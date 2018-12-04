@@ -3,17 +3,18 @@ package kubernetes
 import (
 	"time"
 
-	"k8s.io/kubernetes/pkg/api"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/weaveworks/scope/report"
 )
 
 // These constants are keys used in node metadata
 const (
-	Name        = "kubernetes_name"
-	Namespace   = "kubernetes_namespace"
-	Created     = "kubernetes_created"
-	LabelPrefix = "kubernetes_labels_"
+	Name            = report.KubernetesName
+	Namespace       = report.KubernetesNamespace
+	Created         = report.KubernetesCreated
+	LabelPrefix     = "kubernetes_labels_"
+	VolumeClaimName = report.KubernetesVolumeClaim
 )
 
 // Meta represents a metadata information about a Kubernetes object
@@ -27,7 +28,7 @@ type Meta interface {
 }
 
 type meta struct {
-	ObjectMeta api.ObjectMeta
+	ObjectMeta metav1.ObjectMeta
 }
 
 func (m meta) UID() string {
@@ -43,7 +44,7 @@ func (m meta) Namespace() string {
 }
 
 func (m meta) Created() string {
-	return m.ObjectMeta.CreationTimestamp.Format(time.RFC822)
+	return m.ObjectMeta.CreationTimestamp.Format(time.RFC3339Nano)
 }
 
 func (m meta) Labels() map[string]string {
@@ -56,5 +57,38 @@ func (m meta) MetaNode(id string) report.Node {
 		Name:      m.Name(),
 		Namespace: m.Namespace(),
 		Created:   m.Created(),
-	}).AddTable(LabelPrefix, m.Labels())
+	}).AddPrefixPropertyList(LabelPrefix, m.Labels())
+}
+
+type namespaceMeta struct {
+	ObjectMeta metav1.ObjectMeta
+}
+
+func (m namespaceMeta) UID() string {
+	return string(m.ObjectMeta.UID)
+}
+
+func (m namespaceMeta) Name() string {
+	return m.ObjectMeta.Name
+}
+
+func (m namespaceMeta) Namespace() string {
+	return m.ObjectMeta.Namespace
+}
+
+func (m namespaceMeta) Created() string {
+	return m.ObjectMeta.CreationTimestamp.Format(time.RFC3339Nano)
+}
+
+func (m namespaceMeta) Labels() map[string]string {
+	return m.ObjectMeta.Labels
+}
+
+// MetaNode gets the node metadata
+// For namespaces, ObjectMeta.Namespace is not set
+func (m namespaceMeta) MetaNode(id string) report.Node {
+	return report.MakeNodeWith(id, map[string]string{
+		Name:    m.Name(),
+		Created: m.Created(),
+	}).AddPrefixPropertyList(LabelPrefix, m.Labels())
 }

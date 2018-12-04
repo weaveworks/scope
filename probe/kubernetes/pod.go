@@ -1,15 +1,24 @@
 package kubernetes
 
 import (
+	"strconv"
+
 	"github.com/weaveworks/scope/report"
-	"k8s.io/kubernetes/pkg/api"
+
+	apiv1 "k8s.io/api/core/v1"
 )
 
 // These constants are keys used in node metadata
 const (
-	State = "kubernetes_state"
+	State           = report.KubernetesState
+	IsInHostNetwork = report.KubernetesIsInHostNetwork
+	RestartCount    = report.KubernetesRestartCount
+)
 
+// Pod states we handle specially
+const (
 	StateDeleted = "deleted"
+	StateFailed  = "Failed"
 )
 
 // Pod represents a Kubernetes pod
@@ -18,17 +27,19 @@ type Pod interface {
 	AddParent(topology, id string)
 	NodeName() string
 	GetNode(probeID string) report.Node
+	RestartCount() uint
+	ContainerNames() []string
 }
 
 type pod struct {
-	*api.Pod
+	*apiv1.Pod
 	Meta
 	parents report.Sets
-	Node    *api.Node
+	Node    *apiv1.Node
 }
 
 // NewPod creates a new Pod
-func NewPod(p *api.Pod) Pod {
+func NewPod(p *apiv1.Pod) Pod {
 	return &pod{
 		Pod:     p,
 		Meta:    meta{p.ObjectMeta},
@@ -45,7 +56,7 @@ func (p *pod) UID() string {
 }
 
 func (p *pod) AddParent(topology, id string) {
-	p.parents = p.parents.Add(topology, report.MakeStringSet(id))
+	p.parents = p.parents.AddString(topology, id)
 }
 
 func (p *pod) State() string {
@@ -56,12 +67,50 @@ func (p *pod) NodeName() string {
 	return p.Spec.NodeName
 }
 
+func (p *pod) RestartCount() uint {
+	count := uint(0)
+	for _, cs := range p.Status.ContainerStatuses {
+		count += uint(cs.RestartCount)
+	}
+	return count
+}
+
+func (p *pod) VolumeClaimName() string {
+	var claimName string
+	for _, volume := range p.Spec.Volumes {
+		if volume.VolumeSource.PersistentVolumeClaim != nil {
+			claimName = volume.VolumeSource.PersistentVolumeClaim.ClaimName
+			break
+		}
+	}
+	return claimName
+}
+
 func (p *pod) GetNode(probeID string) report.Node {
-	return p.MetaNode(report.MakePodNodeID(p.UID())).WithLatests(map[string]string{
+	latests := map[string]string{
 		State: p.State(),
 		IP:    p.Status.PodIP,
 		report.ControlProbeID: probeID,
-	}).
+		RestartCount:          strconv.FormatUint(uint64(p.RestartCount()), 10),
+	}
+
+	if p.VolumeClaimName() != "" {
+		latests[VolumeClaim] = p.VolumeClaimName()
+	}
+
+	if p.Pod.Spec.HostNetwork {
+		latests[IsInHostNetwork] = "true"
+	}
+
+	return p.MetaNode(report.MakePodNodeID(p.UID())).WithLatests(latests).
 		WithParents(p.parents).
 		WithLatestActiveControls(GetLogs, DeletePod)
+}
+
+func (p *pod) ContainerNames() []string {
+	containerNames := make([]string, 0, len(p.Pod.Spec.Containers))
+	for _, c := range p.Pod.Spec.Containers {
+		containerNames = append(containerNames, c.Name)
+	}
+	return containerNames
 }

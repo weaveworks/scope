@@ -19,6 +19,12 @@ func (m Metrics) Lookup(key string) (Metric, bool) {
 // Merge merges two sets maps into a fresh set, performing set-union merges as
 // appropriate.
 func (m Metrics) Merge(other Metrics) Metrics {
+	if len(other) > len(m) {
+		m, other = other, m
+	}
+	if len(other) == 0 {
+		return m
+	}
 	result := m.Copy()
 	for k, v := range other {
 		if rv, ok := result[k]; ok {
@@ -42,10 +48,12 @@ func (m Metrics) Copy() Metrics {
 // Metric is a list of timeseries data with some metadata. Clients must use the
 // Add method to add values.  Metrics are immutable.
 type Metric struct {
-	Samples     []Sample
-	Min, Max    float64
-	First, Last time.Time
+	Samples  []Sample
+	Min, Max float64
 }
+
+func (m Metric) first() time.Time { return m.Samples[0].Timestamp }
+func (m Metric) last() time.Time  { return m.Samples[len(m.Samples)-1].Timestamp }
 
 // Sample is a single datapoint of a metric.
 type Sample struct {
@@ -59,17 +67,17 @@ func MakeSingletonMetric(t time.Time, v float64) Metric {
 		Samples: []Sample{{t, v}},
 		Min:     v,
 		Max:     v,
-		First:   t,
-		Last:    t,
 	}
 
 }
+
+var emptyMetric = Metric{}
 
 // MakeMetric makes a new Metric from unique samples incrementally ordered in
 // time.
 func MakeMetric(samples []Sample) Metric {
 	if len(samples) < 1 {
-		return Metric{}
+		return emptyMetric
 	}
 
 	var (
@@ -89,8 +97,6 @@ func MakeMetric(samples []Sample) Metric {
 		Samples: samples,
 		Min:     min,
 		Max:     max,
-		First:   samples[0].Timestamp,
-		Last:    samples[len(samples)-1].Timestamp,
 	}
 }
 
@@ -100,28 +106,12 @@ func (m Metric) WithMax(max float64) Metric {
 		Samples: m.Samples,
 		Max:     max,
 		Min:     m.Min,
-		First:   m.First,
-		Last:    m.Last,
 	}
 }
 
 // Len returns the number of samples in the metric.
 func (m Metric) Len() int {
 	return len(m.Samples)
-}
-
-func first(t1, t2 time.Time) time.Time {
-	if t2.IsZero() || (!t1.IsZero() && t1.Before(t2)) {
-		return t1
-	}
-	return t2
-}
-
-func last(t1, t2 time.Time) time.Time {
-	if t2.IsZero() || (!t1.IsZero() && t1.After(t2)) {
-		return t1
-	}
-	return t2
 }
 
 // Merge combines the two Metrics and returns a new result.
@@ -133,7 +123,7 @@ func (m Metric) Merge(other Metric) Metric {
 		return other
 	case len(other.Samples) == 0:
 		return m
-	case other.First.After(m.Last):
+	case other.first().After(m.last()):
 		samplesOut := make([]Sample, len(m.Samples)+len(other.Samples))
 		copy(samplesOut, m.Samples)
 		copy(samplesOut[len(m.Samples):], other.Samples)
@@ -141,10 +131,8 @@ func (m Metric) Merge(other Metric) Metric {
 			Samples: samplesOut,
 			Max:     math.Max(m.Max, other.Max),
 			Min:     math.Min(m.Min, other.Min),
-			First:   m.First,
-			Last:    other.Last,
 		}
-	case m.First.After(other.Last):
+	case m.first().After(other.last()):
 		samplesOut := make([]Sample, len(m.Samples)+len(other.Samples))
 		copy(samplesOut, other.Samples)
 		copy(samplesOut[len(other.Samples):], m.Samples)
@@ -152,8 +140,6 @@ func (m Metric) Merge(other Metric) Metric {
 			Samples: samplesOut,
 			Max:     math.Max(m.Max, other.Max),
 			Min:     math.Min(m.Min, other.Min),
-			First:   other.First,
-			Last:    m.Last,
 		}
 	}
 
@@ -186,25 +172,6 @@ func (m Metric) Merge(other Metric) Metric {
 		Samples: samplesOut,
 		Max:     math.Max(m.Max, other.Max),
 		Min:     math.Min(m.Min, other.Min),
-		First:   first(m.First, other.First),
-		Last:    last(m.Last, other.Last),
-	}
-}
-
-// Div returns a new copy of the metric, with each value divided by n.
-func (m Metric) Div(n float64) Metric {
-	samplesOut := make([]Sample, len(m.Samples), len(m.Samples))
-
-	for i := range m.Samples {
-		samplesOut[i].Value = m.Samples[i].Value / n
-		samplesOut[i].Timestamp = m.Samples[i].Timestamp
-	}
-	return Metric{
-		Samples: samplesOut,
-		Max:     m.Max / n,
-		Min:     m.Min / n,
-		First:   m.First,
-		Last:    m.Last,
 	}
 }
 
@@ -223,8 +190,7 @@ type WireMetrics struct {
 	Samples []Sample `json:"samples,omitempty"`
 	Min     float64  `json:"min"`
 	Max     float64  `json:"max"`
-	First   string   `json:"first,omitempty"`
-	Last    string   `json:"last,omitempty"`
+	dummySelfer
 }
 
 func renderTime(t time.Time) string {
@@ -235,6 +201,9 @@ func renderTime(t time.Time) string {
 }
 
 func parseTime(s string) time.Time {
+	if s == "" {
+		return time.Time{}
+	}
 	t, _ := time.Parse(time.RFC3339Nano, s)
 	return t
 }
@@ -246,8 +215,6 @@ func (m Metric) ToIntermediate() WireMetrics {
 		Samples: m.Samples,
 		Max:     m.Max,
 		Min:     m.Min,
-		First:   renderTime(m.First),
-		Last:    renderTime(m.Last),
 	}
 }
 
@@ -258,8 +225,6 @@ func (m WireMetrics) FromIntermediate() Metric {
 		Samples: m.Samples,
 		Max:     m.Max,
 		Min:     m.Min,
-		First:   parseTime(m.First),
-		Last:    parseTime(m.Last),
 	}
 }
 
@@ -272,9 +237,7 @@ func (m *Metric) CodecEncodeSelf(encoder *codec.Encoder) {
 // CodecDecodeSelf implements codec.Selfer
 func (m *Metric) CodecDecodeSelf(decoder *codec.Decoder) {
 	in := WireMetrics{}
-	if err := decoder.Decode(&in); err != nil {
-		return
-	}
+	in.CodecDecodeSelf(decoder)
 	*m = in.FromIntermediate()
 }
 

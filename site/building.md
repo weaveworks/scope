@@ -1,6 +1,7 @@
 ---
 title: Developing and Debugging
 menu_order: 90
+search_type: Documentation
 ---
 
 The following topics are discussed:
@@ -25,6 +26,14 @@ Then, run the local build via:
 If needed, install the tools used for managing dependencies, managing releases, and doing coverage analysis via:
 
     make deps
+
+Scope unit tests for `probe` and `app` components can be run via:
+
+    make tests
+
+Similarly the frontent client tests can be run via:
+
+    make client-test
 
 
 >**Note:** The tools from `make deps` depend on a local install of

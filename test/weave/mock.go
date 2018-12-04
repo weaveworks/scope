@@ -12,9 +12,9 @@ const (
 	MockWeavePeerNickName  = "winny"
 	MockWeaveDefaultSubnet = "10.32.0.1/12"
 	MockContainerID        = "83183a667c01"
-	MockContainerMAC       = "d6:f2:5a:12:36:a8"
-	MockContainerIP        = "10.0.0.123"
 	MockHostname           = "hostname.weave.local"
+	MockProxyAddress       = "unix:///foo/bar/weave.sock"
+	MockDriverName         = "weave_mock"
 )
 
 // MockClient is a mock version of weave.Client
@@ -25,17 +25,14 @@ func (MockClient) Status() (weave.Status, error) {
 	return weave.Status{
 		Router: weave.Router{
 			Name: MockWeavePeerName,
-			Peers: []struct {
-				Name     string
-				NickName string
-			}{
+			Peers: []weave.Peer{
 				{
 					Name:     MockWeavePeerName,
 					NickName: MockWeavePeerNickName,
 				},
 			},
 		},
-		DNS: weave.DNS{
+		DNS: &weave.DNS{
 			Entries: []struct {
 				Hostname    string
 				ContainerID string
@@ -48,8 +45,20 @@ func (MockClient) Status() (weave.Status, error) {
 				},
 			},
 		},
-		IPAM: weave.IPAM{
+		IPAM: &weave.IPAM{
 			DefaultSubnet: MockWeaveDefaultSubnet,
+			Entries: []struct {
+				Size        uint32
+				IsKnownPeer bool
+			}{
+				{Size: 0, IsKnownPeer: false},
+			},
+		},
+		Proxy: &weave.Proxy{
+			Addresses: []string{MockProxyAddress},
+		},
+		Plugin: &weave.Plugin{
+			DriverName: MockDriverName,
 		},
 	}, nil
 }
@@ -57,17 +66,6 @@ func (MockClient) Status() (weave.Status, error) {
 // AddDNSEntry implements weave.Client
 func (MockClient) AddDNSEntry(fqdn, containerid string, ip net.IP) error {
 	return nil
-}
-
-// PS implements weave.Client
-func (MockClient) PS() (map[string]weave.PSEntry, error) {
-	return map[string]weave.PSEntry{
-		MockContainerID: {
-			ContainerIDPrefix: MockContainerID,
-			MACAddress:        MockContainerMAC,
-			IPs:               []string{MockContainerIP},
-		},
-	}, nil
 }
 
 // Expose implements weave.Client

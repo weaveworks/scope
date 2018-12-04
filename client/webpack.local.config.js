@@ -1,72 +1,69 @@
-var webpack = require('webpack');
-var autoprefixer = require('autoprefixer');
-var path = require('path');
-var HtmlWebpackPlugin = require('html-webpack-plugin');
+const webpack = require('webpack');
+const autoprefixer = require('autoprefixer');
+const path = require('path');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const SassLintPlugin = require('sasslint-webpack-plugin');
+const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
+const { themeVarsAsScss } = require('weaveworks-ui-components/lib/theme');
 
 /**
- * This is the Webpack configuration file for local development. It contains
- * local-specific configuration such as the React Hot Loader, as well as:
+ * This is the Webpack configuration file for local development.
+ * It contains local-specific configuration which includes:
  *
- * - The entry point of the application
- * - Where the output file should be
+ * - Hot reloading configuration
+ * - The entry points of the application
  * - Which loaders to use on what files to properly transpile the source
  *
  * For more information, see: http://webpack.github.io/docs/configuration.html
  */
 
- // Inject websocket url to dev backend
- var WEBPACK_SERVER_HOST = process.env.WEBPACK_SERVER_HOST || 'localhost';
-
 module.exports = {
-
   // Efficiently evaluate modules with source maps
-  devtool: 'cheap-module-source-map',
+  devtool: 'eval-source-map',
 
-  // Set entry point include necessary files for hot load
+  // Set entry points with hot loading
   entry: {
-    'app': [
+    app: [
       './app/scripts/main',
-      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
-      'webpack/hot/only-dev-server'
+      'webpack-hot-middleware/client'
+    ],
+    'contrast-theme': [
+      './app/scripts/contrast-theme',
+      'webpack-hot-middleware/client'
     ],
     'dev-app': [
       './app/scripts/main.dev',
-      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
-      'webpack/hot/only-dev-server'
-    ],
-    'contrast-app': [
-      './app/scripts/contrast-main',
-      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
-      'webpack/hot/only-dev-server'
+      'webpack-hot-middleware/client'
     ],
     'terminal-app': [
       './app/scripts/terminal-main',
-      'webpack-dev-server/client?http://' + WEBPACK_SERVER_HOST + ':4041',
-      'webpack/hot/only-dev-server'
+      'webpack-hot-middleware/client'
     ],
-    vendors: ['babel-polyfill', 'classnames', 'd3', 'dagre', 'filesize',
-      'immutable', 'lodash', 'moment', 'page', 'react',
-      'react-dom', 'react-motion', 'react-redux', 'redux', 'redux-thunk',
-      'reqwest']
+    vendors: ['babel-polyfill', 'classnames', 'dagre', 'filesize', 'immutable',
+      'moment', 'page', 'react', 'react-dom', 'react-motion', 'react-redux', 'redux',
+      'redux-thunk', 'reqwest', 'xterm', 'webpack-hot-middleware/client'
+    ]
   },
 
-  // This will not actually create a app.js file in ./build. It is used
-  // by the dev server for dynamic hot loading.
+  // Used by Webpack Dev Middleware
   output: {
-    path: path.join(__dirname, 'build/'),
+    publicPath: '',
+    path: path.join(__dirname, 'build'),
     filename: '[name].js'
   },
 
   // Necessary plugins for hot load
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin('vendors', 'vendors.js'),
+    new webpack.optimize.CommonsChunkPlugin({ name: 'vendors', filename: 'vendors.js' }),
+    new webpack.optimize.OccurrenceOrderPlugin(),
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoErrorsPlugin(),
-    new webpack.IgnorePlugin(/^\.\/locale$/, [/moment$/]),
-    new HtmlWebpackPlugin({
-      chunks: ['vendors', 'contrast-app'],
-      template: 'app/html/index.html',
-      filename: 'contrast.html'
+    new webpack.NoEmitOnErrorsPlugin(),
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
+    new ExtractTextPlugin('style-[name]-[chunkhash].css'),
+    new SassLintPlugin({
+      context: 'app/styles',
+      ignorePlugins: ['html-webpack-plugin', 'extract-text-webpack-plugin'],
     }),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'terminal-app'],
@@ -74,42 +71,41 @@ module.exports = {
       filename: 'terminal.html'
     }),
     new HtmlWebpackPlugin({
-      chunks: ['vendors', 'dev-app'],
+      chunks: ['vendors', 'dev-app', 'contrast-theme'],
       template: 'app/html/index.html',
       filename: 'dev.html'
     }),
     new HtmlWebpackPlugin({
-      chunks: ['vendors', 'app'],
+      chunks: ['vendors', 'app', 'contrast-theme'],
       template: 'app/html/index.html',
       filename: 'index.html'
-    })
+    }),
+    new ContrastStyleCompiler()
   ],
 
   // Transform source code using Babel and React Hot Loader
   module: {
-    include: [
-      path.resolve(__dirname, 'app/scripts')
-    ],
+    // Webpack is opionated about how pkgs should be laid out:
+    // https://github.com/webpack/webpack/issues/1617
+    noParse: [/xterm\/(.*).map$/, /xterm\/dist\/xterm\.js/],
 
-    preLoaders: [
+    rules: [
       {
         test: /\.js$/,
         exclude: /node_modules|vendor/,
-        loader: 'eslint-loader'
-      }
-    ],
-    loaders: [
-      {
-        test: /\.json$/,
-        loader: 'json-loader'
-      },
-      {
-        test: /\.less$/,
-        loader: 'style-loader!css-loader!postcss-loader!less-loader'
+        loaders: [
+          'eslint-loader',
+          'stylelint-custom-processor-loader',
+        ],
+        enforce: 'pre'
       },
       {
         test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
-        loader: 'url-loader?limit=10000&minetype=application/font-woff'
+        loader: 'url-loader',
+        options: {
+          limit: 10000,
+          minetype: 'application/font-woff',
+        }
       },
       {
         test: /\.(ttf|eot|svg|ico)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
@@ -118,19 +114,41 @@ module.exports = {
       {
         test: /\.jsx?$/,
         exclude: /node_modules|vendor/,
-        loaders: ['react-hot', 'babel']
+        loader: 'babel-loader'
+      },
+      {
+        test: /\.(scss|css)$/,
+        loader: ExtractTextPlugin.extract({
+          fallback: 'style-loader',
+          use: [{
+            loader: 'css-loader'
+          }, {
+            loader: 'postcss-loader',
+            options: {
+              plugins: [
+                autoprefixer({
+                  browsers: ['last 2 versions']
+                })
+              ]
+            }
+          }, {
+            loader: 'sass-loader',
+            options: {
+              data: themeVarsAsScss(),
+              includePaths: [
+                path.resolve(__dirname, './node_modules/xterm'),
+                path.resolve(__dirname, './node_modules/font-awesome'),
+                path.resolve(__dirname, './node_modules/rc-slider'),
+              ]
+            }
+          }],
+        })
       }
     ]
   },
 
-  postcss: [
-    autoprefixer({
-      browsers: ['last 2 versions']
-    })
-  ],
-
   // Automatically transform files with these extensions
   resolve: {
-    extensions: ['', '.js', '.jsx']
-  }
+    extensions: ['.js', '.jsx']
+  },
 };

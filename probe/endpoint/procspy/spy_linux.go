@@ -26,47 +26,68 @@ func (c *pnConnIter) Next() *Connection {
 		bufPool.Put(c.buf)
 		return nil
 	}
-	if proc, ok := c.procs[n.inode]; ok {
+	if proc, ok := c.procs[n.Inode]; ok {
 		n.Proc = *proc
+	} else {
+		// ProcNet.Next() always returns a pointer to the same
+		// struct. We therefore must clear any garbage left over from
+		// the previous call.
+		n.Proc = Proc{}
 	}
 	return n
 }
 
 // NewConnectionScanner creates a new Linux ConnectionScanner
-func NewConnectionScanner(walker process.Walker) ConnectionScanner {
-	br := newBackgroundReader(walker)
-	return &linuxScanner{br}
+func NewConnectionScanner(walker process.Walker, processes bool) ConnectionScanner {
+	scanner := &linuxScanner{}
+	if processes {
+		scanner.r = newBackgroundReader(walker)
+	}
+	return scanner
+}
+
+// NewSyncConnectionScanner creates a new synchronous Linux ConnectionScanner
+func NewSyncConnectionScanner(walker process.Walker, processes bool) ConnectionScanner {
+	scanner := &linuxScanner{}
+	if processes {
+		scanner.r = newForegroundReader(walker)
+	}
+	return scanner
 }
 
 type linuxScanner struct {
-	br *backgroundReader
+	r reader
 }
 
-func (s *linuxScanner) Connections(processes bool) (ConnIter, error) {
+func (s *linuxScanner) Connections() (ConnIter, error) {
 	// buffer for contents of /proc/<pid>/net/tcp
 	buf := bufPool.Get().(*bytes.Buffer)
 	buf.Reset()
 
 	var procs map[uint64]*Proc
-	if processes {
+	if s.r != nil {
 		var err error
-		if procs, err = s.br.getWalkedProcPid(buf); err != nil {
+		if procs, err = s.r.getWalkedProcPid(buf); err != nil {
 			return nil, err
 		}
 	}
 
 	if buf.Len() == 0 {
 		readFile(procRoot+"/net/tcp", buf)
-		readFile(procRoot+"/net/tcp6", buf)
+		if ipv6IsSupported {
+			readFile(procRoot+"/net/tcp6", buf)
+		}
 	}
 
 	return &pnConnIter{
-		pn:    NewProcNet(buf.Bytes(), tcpEstablished),
+		pn:    NewProcNet(buf.Bytes()),
 		buf:   buf,
 		procs: procs,
 	}, nil
 }
 
 func (s *linuxScanner) Stop() {
-	s.br.stop()
+	if s.r != nil {
+		s.r.stop()
+	}
 }

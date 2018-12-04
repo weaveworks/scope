@@ -8,13 +8,13 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"context"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"golang.org/x/net/context"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/common/mtime"
 	"github.com/weaveworks/scope/common/xfer"
 )
 
@@ -332,11 +332,11 @@ func (pr *consulPipeRouter) Release(ctx context.Context, id string, e app.End) e
 	// atomically clear my end of the pipe in consul
 	return pr.client.CAS(key, &consulPipe{}, func(in interface{}) (interface{}, bool, error) {
 		if in == nil {
-			return nil, false, fmt.Errorf("Pipe %s not found", id)
+			return nil, false, fmt.Errorf("pipe %s not found", id)
 		}
 		p := in.(*consulPipe)
 		if p.addrFor(e) != pr.advertise {
-			return nil, false, fmt.Errorf("Pipe %s not owned by us!", id)
+			return nil, false, fmt.Errorf("pipe %s not owned by us", id)
 		}
 		refs := p.release(e)
 		if refs == 0 {

@@ -6,68 +6,53 @@ import (
 
 // HostRenderer is a Renderer which produces a renderable host
 // graph from the host topology.
-var HostRenderer = ApplyDecorators(MakeReduce(
-	MakeMap(
-		MapEndpoint2Host,
-		EndpointRenderer,
-	),
-	MakeMap(
-		MapX2Host,
-		ProcessRenderer,
-	),
-	MakeMap(
-		MapX2Host,
-		ContainerRenderer,
-	),
-	MakeMap(
-		MapX2Host,
-		ContainerImageRenderer,
-	),
-	MakeMap(
-		MapX2Host,
-		PodRenderer,
-	),
-	SelectHost,
-))
+//
+// not memoised
+var HostRenderer = MakeReduce(
+	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ProcessRenderer},
+	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerRenderer},
+	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerImageRenderer},
+	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: PodRenderer},
+	MapEndpoints(endpoint2Host, report.Host),
+)
 
-// MapX2Host maps any Nodes to host Nodes.
+// nodes2Hosts maps any Nodes to host Nodes.
 //
 // If this function is given a node without a hostname
 // (including other pseudo nodes), it will drop the node.
 //
-// Otherwise, this function will produce a node with the correct ID
-// format for a container, but without any Major or Minor labels.
-// It does not have enough info to do that, and the resulting graph
-// must be merged with a container graph to get that info.
-func MapX2Host(n report.Node, _ report.Networks) report.Nodes {
-	// Don't propagate all pseudo nodes - we do this in MapEndpoint2Host
-	if n.Topology == Pseudo {
-		return report.Nodes{}
+// Otherwise, this function will produce nodes with the correct ID
+// format for a host, but without any Major or Minor labels.  It does
+// not have enough info to do that, and the resulting graph must be
+// merged with a host graph to get that info.
+func nodes2Hosts(nodes Nodes) Nodes {
+	ret := newJoinResults(nil)
+
+	for _, n := range nodes.Nodes {
+		if n.Topology == Pseudo {
+			continue // Don't propagate pseudo nodes - we do this in endpoints2Hosts
+		}
+		isImage := n.Topology == report.ContainerImage
+		hostIDs, _ := n.Parents.Lookup(report.Host)
+		for _, id := range hostIDs {
+			if isImage {
+				// We need to treat image nodes specially because they
+				// aggregate adjacencies of containers across multiple
+				// hosts, and hence mapping these adjacencies to host
+				// adjacencies would produce edges that aren't present
+				// in reality.
+				ret.addUnmappedChild(n, id, report.Host)
+			} else {
+				ret.addChild(n, id, report.Host)
+			}
+		}
 	}
-	hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
-	if !ok {
-		return report.Nodes{}
-	}
-	id := report.MakeHostNodeID(report.ExtractHostID(n))
-	result := NewDerivedNode(id, n).WithTopology(report.Host)
-	result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
-	result.Counters = result.Counters.Add(n.Topology, 1)
-	result.Children = report.MakeNodeSet(n)
-	return report.Nodes{id: result}
+	return ret.result(nodes)
 }
 
-// MapEndpoint2Host takes nodes from the endpoint topology and produces
-// host nodes or pseudo nodes.
-func MapEndpoint2Host(n report.Node, local report.Networks) report.Nodes {
-	// Nodes without a hostid are treated as pseudo nodes
-	hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
-	if !ok {
-		return MapEndpoint2Pseudo(n, local)
+func endpoint2Host(n report.Node) string {
+	if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); ok {
+		return hostNodeID
 	}
-
-	id := report.MakeHostNodeID(report.ExtractHostID(n))
-	result := NewDerivedNode(id, n).WithTopology(report.Host)
-	result.Latest = result.Latest.Set(report.HostNodeID, timestamp, hostNodeID)
-	result.Counters = result.Counters.Add(n.Topology, 1)
-	return report.Nodes{id: result}
+	return ""
 }

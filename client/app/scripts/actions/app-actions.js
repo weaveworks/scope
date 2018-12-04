@@ -1,26 +1,50 @@
 import debug from 'debug';
+import { fromJS } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
-import { modulo } from '../utils/math-utils';
-import { updateRoute } from '../utils/router-utils';
-import { parseQuery } from '../utils/search-utils';
-import { bufferDeltaUpdate, resumeUpdate,
-  resetUpdateBuffer } from '../utils/update-buffer-utils';
-import { doControlRequest, getAllNodes, getNodesDelta, getNodeDetails,
-  getTopologies, deletePipe } from '../utils/web-api-utils';
-import { getActiveTopologyOptions,
-  getCurrentTopologyUrl } from '../utils/topology-utils';
+import { clearStoredViewState, updateRoute } from '../utils/router-utils';
+import {
+  doControlRequest,
+  getAllNodes,
+  getResourceViewNodesSnapshot,
+  getNodeDetails,
+  getTopologies,
+  deletePipe,
+  stopPolling,
+  teardownWebsockets,
+  getNodes,
+} from '../utils/web-api-utils';
+import { loadTheme } from '../utils/contrast-utils';
+import { isPausedSelector } from '../selectors/time-travel';
+import {
+  availableMetricTypesSelector,
+  nextPinnedMetricTypeSelector,
+  previousPinnedMetricTypeSelector,
+  pinnedMetricSelector,
+} from '../selectors/node-metric';
+import {
+  isResourceViewModeSelector,
+  resourceViewAvailableSelector,
+} from '../selectors/topology';
+
+import {
+  GRAPH_VIEW_MODE,
+  TABLE_VIEW_MODE,
+  RESOURCE_VIEW_MODE,
+} from '../constants/naming';
+
 
 const log = debug('scope:app-actions');
 
+
 export function showHelp() {
-  return {type: ActionTypes.SHOW_HELP};
+  return { type: ActionTypes.SHOW_HELP };
 }
 
 
 export function hideHelp() {
-  return {type: ActionTypes.HIDE_HELP};
+  return { type: ActionTypes.HIDE_HELP };
 }
 
 
@@ -35,11 +59,12 @@ export function toggleHelp() {
 }
 
 
-export function sortOrderChanged(sortBy, sortedDesc) {
+export function sortOrderChanged(sortedBy, sortedDesc) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.SORT_ORDER_CHANGED,
-      sortBy, sortedDesc
+      sortedBy,
+      sortedDesc
     });
     updateRoute(getState);
   };
@@ -97,19 +122,24 @@ export function unpinNetwork(networkId) {
 // Metrics
 //
 
-
-export function selectMetric(metricId) {
+export function hoverMetric(metricType) {
   return {
-    type: ActionTypes.SELECT_METRIC,
-    metricId
+    type: ActionTypes.HOVER_METRIC,
+    metricType,
   };
 }
 
-export function pinMetric(metricId) {
+export function unhoverMetric() {
+  return {
+    type: ActionTypes.UNHOVER_METRIC,
+  };
+}
+
+export function pinMetric(metricType) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.PIN_METRIC,
-      metricId,
+      metricType,
     });
     updateRoute(getState);
   };
@@ -117,32 +147,53 @@ export function pinMetric(metricId) {
 
 export function unpinMetric() {
   return (dispatch, getState) => {
+    // We always have to keep metrics pinned in the resource view.
+    if (!isResourceViewModeSelector(getState())) {
+      dispatch({
+        type: ActionTypes.UNPIN_METRIC,
+      });
+      updateRoute(getState);
+    }
+  };
+}
+
+export function pinNextMetric() {
+  return (dispatch, getState) => {
+    const nextPinnedMetricType = nextPinnedMetricTypeSelector(getState());
+    dispatch(pinMetric(nextPinnedMetricType));
+  };
+}
+
+export function pinPreviousMetric() {
+  return (dispatch, getState) => {
+    const previousPinnedMetricType = previousPinnedMetricTypeSelector(getState());
+    dispatch(pinMetric(previousPinnedMetricType));
+  };
+}
+
+export function updateSearch(searchQuery = '', pinnedSearches = []) {
+  return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.UNPIN_METRIC,
+      type: ActionTypes.UPDATE_SEARCH,
+      pinnedSearches,
+      searchQuery,
     });
     updateRoute(getState);
   };
 }
 
-export function pinNextMetric(delta) {
+export function focusSearch() {
   return (dispatch, getState) => {
-    const state = getState();
-    const metrics = state.get('availableCanvasMetrics').map(m => m.get('id'));
-    const currentIndex = metrics.indexOf(state.get('selectedMetric'));
-    const nextIndex = modulo(currentIndex + delta, metrics.count());
-    const nextMetric = metrics.get(nextIndex);
-
-    dispatch(pinMetric(nextMetric));
-  };
-}
-
-export function unpinSearch(query) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.UNPIN_SEARCH,
-      query
-    });
-    updateRoute(getState);
+    dispatch({ type: ActionTypes.FOCUS_SEARCH });
+    // update nodes cache to allow search across all topologies,
+    // wait a second until animation is over
+    // NOTE: This will cause matching recalculation (and rerendering)
+    // of all the nodes in the topology, instead applying it only on
+    // the nodes delta. The solution would be to implement deeper
+    // search selectors with per-node caching instead of per-topology.
+    setTimeout(() => {
+      getAllNodes(getState(), dispatch);
+    }, 1200);
   };
 }
 
@@ -150,29 +201,19 @@ export function blurSearch() {
   return { type: ActionTypes.BLUR_SEARCH };
 }
 
-export function changeTopologyOption(option, value, topologyId) {
+export function changeTopologyOption(option, value, topologyId, addOrRemove) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
       topologyId,
       option,
-      value
+      value,
+      addOrRemove
     });
     updateRoute(getState);
     // update all request workers with new options
-    resetUpdateBuffer();
-    const state = getState();
-    getTopologies(getActiveTopologyOptions(state), dispatch);
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
-      dispatch
-    );
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getTopologies(getState, dispatch);
+    getNodes(getState, dispatch);
   };
 }
 
@@ -191,19 +232,18 @@ export function clickCloseDetails(nodeId) {
       type: ActionTypes.CLICK_CLOSE_DETAILS,
       nodeId
     });
+    // Pull the most recent details for the next details panel that comes into focus.
+    getNodeDetails(getState, dispatch);
     updateRoute(getState);
   };
 }
 
-export function clickCloseTerminal(pipeId, closePipe) {
+export function closeTerminal(pipeId) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_CLOSE_TERMINAL,
+      type: ActionTypes.CLOSE_TERMINAL,
       pipeId
     });
-    if (closePipe) {
-      deletePipe(pipeId, dispatch);
-    }
     updateRoute(getState);
   };
 }
@@ -232,43 +272,77 @@ export function clickForceRelayout() {
   };
 }
 
-export function toggleGridMode(enabledArgument) {
+export function setViewportDimensions(width, height) {
+  return (dispatch) => {
+    dispatch({ type: ActionTypes.SET_VIEWPORT_DIMENSIONS, width, height });
+  };
+}
+
+export function setGraphView() {
   return (dispatch, getState) => {
-    const enabled = (enabledArgument === undefined) ?
-      !getState().get('gridMode') :
-      enabledArgument;
     dispatch({
-      type: ActionTypes.SET_GRID_MODE,
-      enabled
+      type: ActionTypes.SET_VIEW_MODE,
+      viewMode: GRAPH_VIEW_MODE,
     });
     updateRoute(getState);
-    if (!enabled) {
-      dispatch(clickForceRelayout());
+  };
+}
+
+export function setTableView() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.SET_VIEW_MODE,
+      viewMode: TABLE_VIEW_MODE,
+    });
+    updateRoute(getState);
+  };
+}
+
+export function setResourceView() {
+  return (dispatch, getState) => {
+    if (resourceViewAvailableSelector(getState())) {
+      dispatch({
+        type: ActionTypes.SET_VIEW_MODE,
+        viewMode: RESOURCE_VIEW_MODE,
+      });
+      // Pin the first metric if none of the visible ones is pinned.
+      const state = getState();
+      if (!pinnedMetricSelector(state)) {
+        const firstAvailableMetricType = availableMetricTypesSelector(state).first();
+        dispatch(pinMetric(firstAvailableMetricType));
+      }
+      getResourceViewNodesSnapshot(getState(), dispatch);
+      updateRoute(getState);
     }
   };
 }
 
-export function clickNode(nodeId, label, origin) {
+export function clickNode(nodeId, label, origin, topologyId = null) {
   return (dispatch, getState) => {
     dispatch({
       type: ActionTypes.CLICK_NODE,
       origin,
       label,
-      nodeId
+      nodeId,
+      topologyId,
     });
     updateRoute(getState);
-    const state = getState();
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(getState, dispatch);
   };
 }
 
-export function clickPauseUpdate() {
-  return {
-    type: ActionTypes.CLICK_PAUSE_UPDATE
+export function pauseTimeAtNow() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.PAUSE_TIME_AT_NOW
+    });
+    updateRoute(getState);
+    if (!getState().get('nodesLoaded')) {
+      getNodes(getState, dispatch);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
+    }
   };
 }
 
@@ -282,22 +356,21 @@ export function clickRelative(nodeId, topologyId, label, origin) {
       topologyId
     });
     updateRoute(getState);
-    const state = getState();
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    getNodeDetails(getState, dispatch);
   };
 }
 
-export function clickResumeUpdate() {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.CLICK_RESUME_UPDATE
-    });
-    resumeUpdate(getState);
-  };
+function updateTopology(dispatch, getState) {
+  const state = getState();
+  // If we're in the resource view, get the snapshot of all the relevant node topologies.
+  if (isResourceViewModeSelector(state)) {
+    getResourceViewNodesSnapshot(state, dispatch);
+  }
+  updateRoute(getState);
+  // NOTE: This is currently not needed for our static resource
+  // view, but we'll need it here later and it's simpler to just
+  // keep it than to redo the nodes delta updating logic.
+  getNodes(getState, dispatch);
 }
 
 export function clickShowTopologyForNode(topologyId, nodeId) {
@@ -307,15 +380,7 @@ export function clickShowTopologyForNode(topologyId, nodeId) {
       topologyId,
       nodeId
     });
-    updateRoute(getState);
-    // update all request workers with new options
-    resetUpdateBuffer();
-    const state = getState();
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
-      dispatch
-    );
+    updateTopology(dispatch, getState);
   };
 }
 
@@ -325,15 +390,15 @@ export function clickTopology(topologyId) {
       type: ActionTypes.CLICK_TOPOLOGY,
       topologyId
     });
-    updateRoute(getState);
-    // update all request workers with new options
-    resetUpdateBuffer();
-    const state = getState();
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
-      dispatch
-    );
+    updateTopology(dispatch, getState);
+  };
+}
+
+export function cacheZoomState(zoomState) {
+  return {
+    type: ActionTypes.CACHE_ZOOM_STATE,
+    // Make sure only proper numerical values are cached.
+    zoomState: zoomState.filter(value => !window.isNaN(value)),
   };
 }
 
@@ -360,19 +425,10 @@ export function doControl(nodeId, control) {
   return (dispatch) => {
     dispatch({
       type: ActionTypes.DO_CONTROL,
-      nodeId
+      nodeId,
+      control
     });
     doControlRequest(nodeId, control, dispatch);
-  };
-}
-
-export function doSearch(searchQuery) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.DO_SEARCH,
-      searchQuery
-    });
-    updateRoute(getState);
   };
 }
 
@@ -390,68 +446,16 @@ export function enterNode(nodeId) {
   };
 }
 
-export function focusSearch() {
-  return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.FOCUS_SEARCH });
-    // update nodes cache to allow search across all topologies,
-    // wait a second until animation is over
-    setTimeout(() => {
-      getAllNodes(getState, dispatch);
-    }, 1200);
-  };
-}
-
-export function hitBackspace() {
-  return (dispatch, getState) => {
-    const state = getState();
-    // remove last pinned query if search query is empty
-    if (state.get('searchFocused') && !state.get('searchQuery')) {
-      const query = state.get('pinnedSearches').last();
-      if (query) {
-        dispatch({
-          type: ActionTypes.UNPIN_SEARCH,
-          query
-        });
-        updateRoute(getState);
-      }
-    }
-  };
-}
-
-export function hitEnter() {
-  return (dispatch, getState) => {
-    const state = getState();
-    // pin query based on current search field
-    if (state.get('searchFocused')) {
-      const query = state.get('searchQuery');
-      if (query && parseQuery(query)) {
-        dispatch({
-          type: ActionTypes.PIN_SEARCH,
-          query
-        });
-        updateRoute(getState);
-      }
-    }
-  };
-}
-
 export function hitEsc() {
   return (dispatch, getState) => {
     const state = getState();
     const controlPipe = state.get('controlPipes').last();
     if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
       dispatch({
-        type: ActionTypes.CLICK_CLOSE_TERMINAL,
+        type: ActionTypes.CLOSE_TERMINAL,
         pipeId: controlPipe.get('id')
       });
       updateRoute(getState);
-      // Don't deselect node on ESC if there is a controlPipe (keep terminal open)
-    } else if (state.get('searchFocused')) {
-      if (state.get('searchQuery')) {
-        dispatch(doSearch(''));
-      } else {
-        dispatch(blurSearch());
-      }
     } else if (state.get('showingHelp')) {
       dispatch(hideHelp());
     } else if (state.get('nodeDetails').last() && !controlPipe) {
@@ -490,32 +494,81 @@ export function receiveControlSuccess(nodeId) {
   };
 }
 
-export function receiveNodeDetails(details) {
+export function receiveNodeDetails(details, requestTimestamp) {
   return {
     type: ActionTypes.RECEIVE_NODE_DETAILS,
+    requestTimestamp,
     details
   };
 }
 
 export function receiveNodesDelta(delta) {
   return (dispatch, getState) => {
-    //
-    // allow css-animation to run smoothly by scheduling it to run on the
-    // next tick after any potentially expensive canvas re-draws have been
-    // completed.
-    //
-    setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
+    if (!isPausedSelector(getState())) {
+      // Allow css-animation to run smoothly by scheduling it to run on the
+      // next tick after any potentially expensive canvas re-draws have been
+      // completed.
+      setTimeout(() => dispatch({ type: ActionTypes.SET_RECEIVED_NODES_DELTA }), 0);
 
-    if (delta.add || delta.update || delta.remove) {
-      const state = getState();
-      if (state.get('updatePausedAt') !== null) {
-        bufferDeltaUpdate(delta);
-      } else {
+      // When moving in time, we will consider the transition complete
+      // only when the first batch of nodes delta has been received. We
+      // do that because we want to keep the previous state blurred instead
+      // of transitioning over an empty state like when switching topologies.
+      if (getState().get('timeTravelTransitioning')) {
+        dispatch({ type: ActionTypes.FINISH_TIME_TRAVEL_TRANSITION });
+      }
+
+      const hasChanges = delta.add || delta.update || delta.remove || delta.reset;
+      if (hasChanges) {
         dispatch({
           type: ActionTypes.RECEIVE_NODES_DELTA,
           delta
         });
       }
+    }
+  };
+}
+
+export function resumeTime() {
+  return (dispatch, getState) => {
+    if (isPausedSelector(getState())) {
+      dispatch({
+        type: ActionTypes.RESUME_TIME
+      });
+      updateRoute(getState);
+      // After unpausing, all of the following calls will re-activate polling.
+      getTopologies(getState, dispatch);
+      getNodes(getState, dispatch, true);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
+    }
+  };
+}
+
+export function receiveNodes(nodes) {
+  return {
+    type: ActionTypes.RECEIVE_NODES,
+    nodes,
+  };
+}
+
+export function jumpToTime(timestamp) {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.JUMP_TO_TIME,
+      timestamp,
+    });
+    updateRoute(getState);
+    getTopologies(getState, dispatch);
+    if (!getState().get('nodesLoaded')) {
+      getNodes(getState, dispatch);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
+    } else {
+      // Get most recent details before freezing the state.
+      getNodeDetails(getState, dispatch);
     }
   };
 }
@@ -535,30 +588,43 @@ export function receiveTopologies(topologies) {
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies
     });
+    getNodes(getState, dispatch);
+    // Populate search matches on first load
     const state = getState();
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
-      dispatch
-    );
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('nodeDetails'),
-      dispatch
-    );
-    // populate search matches on first load
-    if (firstLoad && state.get('searchQuery')) {
-      dispatch(focusSearch());
+    // Fetch all the relevant nodes once on first load
+    if (firstLoad && isResourceViewModeSelector(state)) {
+      getResourceViewNodesSnapshot(state, dispatch);
     }
   };
 }
 
 export function receiveApiDetails(apiDetails) {
-  return {
-    type: ActionTypes.RECEIVE_API_DETAILS,
-    hostname: apiDetails.hostname,
-    version: apiDetails.version,
-    plugins: apiDetails.plugins
+  return (dispatch, getState) => {
+    const isFirstTime = !getState().get('version');
+    const pausedAt = getState().get('pausedAt');
+
+    dispatch({
+      type: ActionTypes.RECEIVE_API_DETAILS,
+      capabilities: fromJS(apiDetails.capabilities || {}),
+      hostname: apiDetails.hostname,
+      version: apiDetails.version,
+      newVersion: apiDetails.newVersion,
+      plugins: apiDetails.plugins,
+    });
+
+    // On initial load either start time travelling at the pausedAt timestamp
+    // (if it was given as URL param) if time travelling is enabled, otherwise
+    // simply pause at the present time which is arguably the next best thing
+    // we could do.
+    // NOTE: We can't make this decision before API details are received because
+    // we have no prior info on whether time travel would be available.
+    if (isFirstTime && pausedAt) {
+      if (apiDetails.capabilities && apiDetails.capabilities.historic_reports) {
+        dispatch(jumpToTime(pausedAt));
+      } else {
+        dispatch(pauseTimeAtNow());
+      }
+    }
   };
 }
 
@@ -572,16 +638,17 @@ export function receiveControlNodeRemoved(nodeId) {
   };
 }
 
-export function receiveControlPipeFromParams(pipeId, rawTty) {
+export function receiveControlPipeFromParams(pipeId, rawTty, resizeTtyControl) {
   // TODO add nodeId
   return {
     type: ActionTypes.RECEIVE_CONTROL_PIPE,
     pipeId,
-    rawTty
+    rawTty,
+    resizeTtyControl
   };
 }
 
-export function receiveControlPipe(pipeId, nodeId, rawTty) {
+export function receiveControlPipe(pipeId, nodeId, rawTty, resizeTtyControl, control) {
   return (dispatch, getState) => {
     const state = getState();
     if (state.get('nodeDetails').last()
@@ -600,7 +667,9 @@ export function receiveControlPipe(pipeId, nodeId, rawTty) {
       type: ActionTypes.RECEIVE_CONTROL_PIPE,
       nodeId,
       pipeId,
-      rawTty
+      rawTty,
+      resizeTtyControl,
+      control
     });
 
     updateRoute(getState);
@@ -622,10 +691,27 @@ export function receiveError(errorUrl) {
   };
 }
 
-export function receiveNotFound(nodeId) {
+export function receiveNotFound(nodeId, requestTimestamp) {
   return {
+    type: ActionTypes.RECEIVE_NOT_FOUND,
+    requestTimestamp,
     nodeId,
-    type: ActionTypes.RECEIVE_NOT_FOUND
+  };
+}
+
+export function setContrastMode(enabled) {
+  return (dispatch) => {
+    loadTheme(enabled ? 'contrast' : 'normal');
+    dispatch({
+      type: ActionTypes.TOGGLE_CONTRAST_MODE,
+      enabled,
+    });
+  };
+}
+
+export function getTopologiesWithInitialPoll() {
+  return (dispatch, getState) => {
+    getTopologies(getState, dispatch, true);
   };
 }
 
@@ -635,18 +721,74 @@ export function route(urlState) {
       state: urlState,
       type: ActionTypes.ROUTE_TOPOLOGY
     });
+    // Handle Time Travel state update through separate actions as it's more complex.
+    // This is mostly to handle switching contexts Explore <-> Monitor in WC while
+    // the timestamp keeps changing - e.g. if we were Time Travelling in Scope and
+    // then went live in Monitor, switching back to Explore should properly close
+    // the Time Travel etc, not just update the pausedAt state directly.
+    if (!urlState.pausedAt) {
+      dispatch(resumeTime());
+    } else {
+      dispatch(jumpToTime(urlState.pausedAt));
+    }
     // update all request workers with new options
+    getTopologies(getState, dispatch);
+    getNodes(getState, dispatch);
+    // If we are landing on the resource view page, we need to fetch not only all the
+    // nodes for the current topology, but also the nodes of all the topologies that make
+    // the layers in the resource view.
     const state = getState();
-    getTopologies(getActiveTopologyOptions(state), dispatch);
-    getNodesDelta(
-      getCurrentTopologyUrl(state),
-      getActiveTopologyOptions(state),
-      dispatch
-    );
-    getNodeDetails(
-      state.get('topologyUrlsById'),
-      state.get('nodeDetails'),
-      dispatch
-    );
+    if (isResourceViewModeSelector(state)) {
+      getResourceViewNodesSnapshot(state, dispatch);
+    }
+  };
+}
+
+export function resetLocalViewState() {
+  return (dispatch) => {
+    dispatch({type: ActionTypes.RESET_LOCAL_VIEW_STATE});
+    clearStoredViewState();
+    // eslint-disable-next-line prefer-destructuring
+    window.location.href = window.location.href.split('#')[0];
+  };
+}
+
+export function toggleTroubleshootingMenu(ev) {
+  if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+  return {
+    type: ActionTypes.TOGGLE_TROUBLESHOOTING_MENU
+  };
+}
+
+export function changeInstance() {
+  return (dispatch, getState) => {
+    dispatch({
+      type: ActionTypes.CHANGE_INSTANCE
+    });
+    updateRoute(getState);
+  };
+}
+
+export function shutdown() {
+  return (dispatch) => {
+    stopPolling();
+    teardownWebsockets();
+    dispatch({
+      type: ActionTypes.SHUTDOWN
+    });
+  };
+}
+
+export function setMonitorState(monitor) {
+  return {
+    type: ActionTypes.MONITOR_STATE,
+    monitor
+  };
+}
+
+export function setStoreViewState(storeViewState) {
+  return {
+    type: ActionTypes.SET_STORE_VIEW_STATE,
+    storeViewState
   };
 }

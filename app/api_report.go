@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -13,7 +13,7 @@ import (
 // Raw report handler
 func makeRawReportHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		report, err := rep.Report(ctx)
+		report, err := rep.Report(ctx, time.Now())
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return
@@ -32,7 +32,17 @@ type probeDesc struct {
 // Probe handler
 func makeProbeHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		rpt, err := rep.Report(ctx)
+		r.ParseForm()
+		if _, sparse := r.Form["sparse"]; sparse {
+			// if we have reports, we must have connected probes
+			hasProbes, err := rep.HasReports(ctx, time.Now())
+			if err != nil {
+				respondWith(w, http.StatusInternalServerError, err)
+			}
+			respondWith(w, http.StatusOK, hasProbes)
+			return
+		}
+		rpt, err := rep.Report(ctx, time.Now())
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return

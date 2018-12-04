@@ -1,0 +1,36 @@
+---
+# Configure Docker
+# See also: https://docs.docker.com/engine/installation/linux/ubuntulinux/#install
+
+- name: ensure docker group is present (or create it)
+  group:
+    name: docker
+    state: present
+
+- name: add user to docker group (avoids sudo-ing)
+  user:
+    name: "{{ ansible_user }}"
+    group: docker
+    state: present
+
+- name: ensure docker's systemd directory exists
+  file:
+    path: /etc/systemd/system/docker.service.d
+    state: directory
+    recurse: yes
+  when: ansible_os_family != "RedHat"
+
+- name: enable docker remote api over tcp
+  copy:
+    src: "{{ role_path }}/files/docker.conf"
+    dest: /etc/systemd/system/docker.service.d/docker.conf
+  register: docker_conf
+  when: ansible_os_family != "RedHat"
+
+- name: restart docker service
+  systemd:
+    name: docker
+    state: restarted
+    daemon_reload: yes  # ensure docker.conf is picked up.
+    enabled: yes
+  when: docker_conf.changed or ansible_os_family == "RedHat"

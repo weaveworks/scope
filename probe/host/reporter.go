@@ -1,11 +1,13 @@
 package host
 
 import (
-	"net"
+	"fmt"
 	"runtime"
+	"strconv"
+	"sync"
 	"time"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
 )
@@ -35,12 +37,12 @@ const (
 // Exposed for testing.
 var (
 	MetadataTemplates = report.MetadataTemplates{
-		KernelVersion: {ID: KernelVersion, Label: "Kernel Version", From: report.FromLatest, Priority: 1},
-		Uptime:        {ID: Uptime, Label: "Uptime", From: report.FromLatest, Priority: 2},
+		KernelVersion: {ID: KernelVersion, Label: "Kernel version", From: report.FromLatest, Priority: 1},
+		Uptime:        {ID: Uptime, Label: "Uptime", From: report.FromLatest, Priority: 2, Datatype: report.Duration},
 		HostName:      {ID: HostName, Label: "Hostname", From: report.FromLatest, Priority: 11},
 		OS:            {ID: OS, Label: "OS", From: report.FromLatest, Priority: 12},
-		LocalNetworks: {ID: LocalNetworks, Label: "Local Networks", From: report.FromSets, Priority: 13},
-		ScopeVersion:  {ID: ScopeVersion, Label: "Scope Version", From: report.FromLatest, Priority: 14},
+		LocalNetworks: {ID: LocalNetworks, Label: "Local networks", From: report.FromSets, Priority: 13},
+		ScopeVersion:  {ID: ScopeVersion, Label: "Scope version", From: report.FromLatest, Priority: 14},
 	}
 
 	MetricTemplates = report.MetricTemplates{
@@ -52,6 +54,7 @@ var (
 
 // Reporter generates Reports containing the host topology.
 type Reporter struct {
+	sync.RWMutex
 	hostID          string
 	hostName        string
 	probeID         string
@@ -59,6 +62,7 @@ type Reporter struct {
 	pipes           controls.PipeClient
 	hostShellCmd    []string
 	handlerRegistry *controls.HandlerRegistry
+	pipeIDToTTY     map[string]uintptr
 }
 
 // NewReporter returns a Reporter which produces a report containing host
@@ -72,29 +76,17 @@ func NewReporter(hostID, hostName, probeID, version string, pipes controls.PipeC
 		version:         version,
 		hostShellCmd:    getHostShellCmd(),
 		handlerRegistry: handlerRegistry,
+		pipeIDToTTY:     map[string]uintptr{},
 	}
 	r.registerControls()
 	return r
 }
 
 // Name of this reporter, for metrics gathering
-func (Reporter) Name() string { return "Host" }
+func (*Reporter) Name() string { return "Host" }
 
 // GetLocalNetworks is exported for mocking
-var GetLocalNetworks = func() ([]*net.IPNet, error) {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return nil, err
-	}
-	localNets := report.Networks{}
-	for _, addr := range addrs {
-		// Not all addrs are IPNets.
-		if ipNet, ok := addr.(*net.IPNet); ok {
-			localNets = append(localNets, ipNet)
-		}
-	}
-	return localNets, nil
-}
+var GetLocalNetworks = report.GetLocalNetworks
 
 // Report implements Reporter.
 func (r *Reporter) Report() (report.Report, error) {
@@ -116,10 +108,11 @@ func (r *Reporter) Report() (report.Report, error) {
 		return rep, err
 	}
 
-	kernel, err := GetKernelVersion()
+	kernelRelease, kernelVersion, err := GetKernelReleaseAndVersion()
 	if err != nil {
 		return rep, err
 	}
+	kernel := fmt.Sprintf("%s %s", kernelRelease, kernelVersion)
 
 	rep.Host = rep.Host.WithMetadataTemplates(MetadataTemplates)
 	rep.Host = rep.Host.WithMetricTemplates(MetricTemplates)
@@ -138,10 +131,10 @@ func (r *Reporter) Report() (report.Report, error) {
 			HostName:              r.hostName,
 			OS:                    runtime.GOOS,
 			KernelVersion:         kernel,
-			Uptime:                uptime.String(),
+			Uptime:                strconv.Itoa(int(uptime / time.Second)), // uptime in seconds
 			ScopeVersion:          r.version,
 		}).
-			WithSets(report.EmptySets.
+			WithSets(report.MakeSets().
 				Add(LocalNetworks, report.MakeStringSet(localCIDRs...)),
 			).
 			WithMetrics(metrics).

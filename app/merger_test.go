@@ -5,9 +5,9 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
 )
 
@@ -23,12 +23,11 @@ func TestMerger(t *testing.T) {
 		report1, report2, report3,
 	}
 	want := report.MakeReport()
-	want.Endpoint.
-		AddNode(report.MakeNode("foo")).
-		AddNode(report.MakeNode("bar")).
-		AddNode(report.MakeNode("baz"))
+	want.Endpoint.AddNode(report.MakeNode("foo"))
+	want.Endpoint.AddNode(report.MakeNode("bar"))
+	want.Endpoint.AddNode(report.MakeNode("baz"))
 
-	for _, merger := range []app.Merger{app.MakeDumbMerger(), app.NewSmartMerger()} {
+	for _, merger := range []app.Merger{app.NewFastMerger()} {
 		// Test the empty list case
 		if have := merger.Merge([]report.Report{}); !reflect.DeepEqual(have, report.MakeReport()) {
 			t.Errorf("Bad merge: %s", test.Diff(have, want))
@@ -45,12 +44,8 @@ func TestMerger(t *testing.T) {
 	}
 }
 
-func BenchmarkSmartMerger(b *testing.B) {
-	benchmarkMerger(b, app.NewSmartMerger())
-}
-
-func BenchmarkDumbMerger(b *testing.B) {
-	benchmarkMerger(b, app.MakeDumbMerger())
+func BenchmarkFastMerger(b *testing.B) {
+	benchmarkMerger(b, app.NewFastMerger())
 }
 
 const numHosts = 15
@@ -68,14 +63,17 @@ func benchmarkMerger(b *testing.B, merger app.Merger) {
 	for i := 0; i < numHosts*5; i++ {
 		reports = append(reports, makeReport())
 	}
+	replacements := []report.Report{}
+	for i := 0; i < numHosts/3; i++ {
+		replacements = append(replacements, makeReport())
+	}
 
-	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// replace 1/3 of hosts work of reports & merge them all
-		for i := 0; i < numHosts/3; i++ {
-			reports[rand.Intn(len(reports))] = makeReport()
+		for i := 0; i < len(replacements); i++ {
+			reports[rand.Intn(len(reports))] = replacements[i]
 		}
 
 		merger.Merge(reports)

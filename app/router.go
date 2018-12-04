@@ -9,12 +9,13 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
-	"github.com/PuerkitoBio/ghost/handlers"
-	log "github.com/Sirupsen/logrus"
+	"context"
+	"github.com/NYTimes/gziphandler"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"github.com/ugorji/go/codec"
-	"golang.org/x/net/context"
 
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/xfer"
@@ -29,15 +30,20 @@ var (
 	UniqueID = "0"
 )
 
+// contextKey is a wrapper type for use in context.WithValue() to satisfy golint
+// https://github.com/golang/go/issues/17293
+// https://github.com/golang/lint/pull/245
+type contextKey string
+
 // RequestCtxKey is key used for request entry in context
-const RequestCtxKey = "request"
+const RequestCtxKey contextKey = contextKey("request")
 
 // CtxHandlerFunc is a http.HandlerFunc, with added contexts
 type CtxHandlerFunc func(context.Context, http.ResponseWriter, *http.Request)
 
 func requestContextDecorator(f CtxHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(context.Background(), RequestCtxKey, r)
+		ctx := context.WithValue(r.Context(), RequestCtxKey, r)
 		f(ctx, w, r)
 	}
 }
@@ -80,32 +86,29 @@ func matchURL(r *http.Request, pattern string) (map[string]string, bool) {
 	return vars, true
 }
 
-func gzipHandler(h http.HandlerFunc) http.HandlerFunc {
-	return handlers.GZIPHandlerFunc(h, nil)
+func gzipHandler(h http.HandlerFunc) http.Handler {
+	return gziphandler.GzipHandler(h)
 }
 
 // RegisterTopologyRoutes registers the various topology routes with a http mux.
-func RegisterTopologyRoutes(router *mux.Router, r Reporter) {
+func RegisterTopologyRoutes(router *mux.Router, r Reporter, capabilities map[string]bool) {
 	get := router.Methods("GET").Subrouter()
-	get.HandleFunc("/api",
-		gzipHandler(requestContextDecorator(apiHandler(r))))
-	get.HandleFunc("/api/topology",
+	get.Handle("/api",
+		gzipHandler(requestContextDecorator(apiHandler(r, capabilities))))
+	get.Handle("/api/topology",
 		gzipHandler(requestContextDecorator(topologyRegistry.makeTopologyList(r))))
-	get.
-		HandleFunc("/api/topology/{topology}",
-			gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, handleTopology)))).
+	get.Handle("/api/topology/{topology}",
+		gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, handleTopology)))).
 		Name("api_topology_topology")
-	get.
-		HandleFunc("/api/topology/{topology}/ws",
-			requestContextDecorator(captureReporter(r, handleWebsocket))). // NB not gzip!
+	get.Handle("/api/topology/{topology}/ws",
+		requestContextDecorator(captureReporter(r, handleWebsocket))). // NB not gzip!
 		Name("api_topology_topology_ws")
-	get.
-		MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).HandlerFunc(
+	get.MatcherFunc(URLMatcher("/api/topology/{topology}/{id}")).Handler(
 		gzipHandler(requestContextDecorator(topologyRegistry.captureRenderer(r, handleNode)))).
 		Name("api_topology_topology_id")
-	get.HandleFunc("/api/report",
+	get.Handle("/api/report",
 		gzipHandler(requestContextDecorator(makeRawReportHandler(r))))
-	get.HandleFunc("/api/probes",
+	get.Handle("/api/probes",
 		gzipHandler(requestContextDecorator(makeProbeHandler(r))))
 }
 
@@ -115,13 +118,13 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	post.HandleFunc("/api/report", requestContextDecorator(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		var (
 			rpt    report.Report
-			buf    bytes.Buffer
-			reader = io.TeeReader(r.Body, &buf)
+			buf    = &bytes.Buffer{}
+			reader = io.TeeReader(r.Body, buf)
 		)
 
 		gzipped := strings.Contains(r.Header.Get("Content-Encoding"), "gzip")
 		if !gzipped {
-			reader = io.TeeReader(r.Body, gzip.NewWriter(&buf))
+			reader = io.TeeReader(r.Body, gzip.NewWriter(buf))
 		}
 
 		contentType := r.Header.Get("Content-Type")
@@ -144,8 +147,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 
 		// a.Add(..., buf) assumes buf is gzip'd msgpack
 		if !isMsgpack {
-			buf = bytes.Buffer{}
-			rpt.WriteBinary(&buf, gzip.BestCompression)
+			buf, _ = rpt.WriteBinary()
 		}
 
 		if err := a.Add(ctx, rpt, buf.Bytes()); err != nil {
@@ -172,9 +174,9 @@ func NewVersion(version, downloadURL string) {
 	}
 }
 
-func apiHandler(rep Reporter) CtxHandlerFunc {
+func apiHandler(rep Reporter, capabilities map[string]bool) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		report, err := rep.Report(ctx)
+		report, err := rep.Report(ctx, time.Now())
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return
@@ -182,11 +184,12 @@ func apiHandler(rep Reporter) CtxHandlerFunc {
 		newVersion.Lock()
 		defer newVersion.Unlock()
 		respondWith(w, http.StatusOK, xfer.Details{
-			ID:         UniqueID,
-			Version:    Version,
-			Hostname:   hostname.Get(),
-			Plugins:    report.Plugins,
-			NewVersion: newVersion.NewVersionInfo,
+			ID:           UniqueID,
+			Version:      Version,
+			Hostname:     hostname.Get(),
+			Plugins:      report.Plugins,
+			Capabilities: capabilities,
+			NewVersion:   newVersion.NewVersionInfo,
 		})
 	}
 }

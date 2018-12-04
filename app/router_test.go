@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
+	"context"
 	"github.com/gorilla/mux"
 	"github.com/ugorji/go/codec"
-	"golang.org/x/net/context"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/app"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/fixture"
 )
 
@@ -74,7 +74,7 @@ func TestReportPostHandler(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		report, err := c.Report(ctx)
+		report, err := c.Report(ctx, time.Now())
 		if err != nil {
 			t.Error(err)
 		}

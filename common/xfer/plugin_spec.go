@@ -2,7 +2,6 @@ package xfer
 
 import (
 	"bytes"
-	"encoding/gob"
 	"fmt"
 	"sort"
 
@@ -207,23 +206,6 @@ func (PluginSpecs) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
 func (*PluginSpecs) UnmarshalJSON(b []byte) error {
 	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
-}
-
-// GobEncode implements gob.Marshaller
-func (n PluginSpecs) GobEncode() ([]byte, error) {
-	buf := bytes.Buffer{}
-	err := gob.NewEncoder(&buf).Encode(n.toIntermediate())
-	return buf.Bytes(), err
-}
-
-// GobDecode implements gob.Unmarshaller
-func (n *PluginSpecs) GobDecode(input []byte) error {
-	in := []PluginSpec{}
-	if err := gob.NewDecoder(bytes.NewBuffer(input)).Decode(&in); err != nil {
-		return err
-	}
-	*n = PluginSpecs{}.fromIntermediate(in)
-	return nil
 }
 
 // PluginSpecsByID implements sort.Interface, so we can sort the specs by the

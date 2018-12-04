@@ -2,23 +2,30 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 
-class Plugins extends React.Component {
-  renderPlugin({id, label, description, status}) {
-    const error = status !== 'ok';
-    const className = classNames({ error });
-    const title = `Status: ${status} | Plugin description: ${description}`;
+import Tooltip from './tooltip';
 
-    // Inner span to hold styling so we don't effect the "before:content"
-    return (
-      <span className="plugins-plugin" key={id}>
-        <span className={className} title={title}>
+
+const Plugin = ({
+  id, label, description, status
+}) => {
+  const error = status !== 'ok';
+  const className = classNames({ error });
+  const tip = (<span>Description: {description}<br />Status: {status}</span>);
+
+  // Inner span to hold styling so we don't effect the "before:content"
+  return (
+    <span className="plugins-plugin" key={id}>
+      <Tooltip tip={tip}>
+        <span className={className}>
           {error && <span className="plugins-plugin-icon fa fa-exclamation-circle" />}
           {label || id}
         </span>
-      </span>
-    );
-  }
+      </Tooltip>
+    </span>
+  );
+};
 
+class Plugins extends React.Component {
   render() {
     const hasPlugins = this.props.plugins && this.props.plugins.size > 0;
     return (
@@ -26,8 +33,7 @@ class Plugins extends React.Component {
         <span className="plugins-label">
           Plugins:
         </span>
-        {hasPlugins && this.props.plugins.toIndexedSeq()
-          .map(plugin => this.renderPlugin(plugin.toJS()))}
+        {hasPlugins && this.props.plugins.toIndexedSeq().map(plugin => Plugin(plugin.toJS()))}
         {!hasPlugins && <span className="plugins-empty">n/a</span>}
       </div>
     );
@@ -40,6 +46,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(
-  mapStateToProps
-)(Plugins);
+export default connect(mapStateToProps)(Plugins);

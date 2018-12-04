@@ -1,6 +1,7 @@
 package host_test
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -9,10 +10,11 @@ import (
 )
 
 func TestGetKernelVersion(t *testing.T) {
-	have, err := host.GetKernelVersion()
+	release, version, err := host.GetKernelReleaseAndVersion()
 	if err != nil {
 		t.Fatal(err)
 	}
+	have := fmt.Sprintf("%s %s", release, version)
 	if strings.Contains(have, "unknown") {
 		t.Fatal(have)
 	}

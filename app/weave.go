@@ -7,15 +7,14 @@ import (
 
 	fsouza "github.com/fsouza/go-dockerclient"
 
-	"github.com/weaveworks/scope/common/backoff"
+	"github.com/weaveworks/common/backoff"
 )
 
 // Default values for weave app integration
 const (
-	DefaultHostname       = "scope.weave.local."
-	DefaultWeaveURL       = "http://127.0.0.1:6784"
-	DefaultContainerName  = "weavescope"
-	DefaultDockerEndpoint = "unix:///var/run/docker.sock"
+	DefaultHostname      = "scope.weave.local."
+	DefaultWeaveURL      = "http://127.0.0.1:6784"
+	DefaultContainerName = "weavescope"
 )
 
 // WeavePublisher is a thing which periodically registers this app with WeaveDNS.

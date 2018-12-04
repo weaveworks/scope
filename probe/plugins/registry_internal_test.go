@@ -18,12 +18,12 @@ import (
 	"github.com/paypal/ionet"
 	"github.com/ugorji/go/codec"
 
-	fs_hook "github.com/weaveworks/scope/common/fs"
+	fs_hook "github.com/weaveworks/common/fs"
+	"github.com/weaveworks/common/test"
+	"github.com/weaveworks/common/test/fs"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/fs"
 	"github.com/weaveworks/scope/test/reflect"
 )
 
@@ -685,7 +685,8 @@ func nodeControls(indices []int) []string {
 func topologyWithControls(label, nodeID string, controlIndices, nodeControlIndices []int) report.Topology {
 	topology := report.MakeTopology().WithLabel(label, "")
 	topology.Controls = topologyControls(controlIndices)
-	return topology.AddNode(report.MakeNode(nodeID).WithLatestActiveControls(nodeControls(nodeControlIndices)...))
+	topology.AddNode(report.MakeNode(nodeID).WithLatestActiveControls(nodeControls(nodeControlIndices)...))
+	return topology
 }
 
 func pluginSpec(ID string, interfaces ...string) xfer.PluginSpec {

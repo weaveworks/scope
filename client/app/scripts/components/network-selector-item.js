@@ -6,7 +6,6 @@ import { selectNetwork, pinNetwork, unpinNetwork } from '../actions/app-actions'
 import { getNetworkColor } from '../utils/color-utils';
 
 class NetworkSelectorItem extends React.Component {
-
   constructor(props, context) {
     super(props, context);
 
@@ -21,7 +20,7 @@ class NetworkSelectorItem extends React.Component {
 
   onMouseClick() {
     const k = this.props.network.get('id');
-    const pinnedNetwork = this.props.pinnedNetwork;
+    const { pinnedNetwork } = this.props;
 
     if (k === pinnedNetwork) {
       this.props.unpinNetwork(k);
@@ -50,7 +49,7 @@ class NetworkSelectorItem extends React.Component {
         onClick={this.onMouseClick}
         style={style}>
         {network.get('label')}
-        {isPinned && <span className="fa fa-thumb-tack"></span>}
+        {isPinned && <span className="fa fa-thumb-tack" />}
       </div>
     );
   }

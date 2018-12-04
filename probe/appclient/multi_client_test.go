@@ -1,13 +1,14 @@
 package appclient_test
 
 import (
-	"bytes"
 	"io"
+	"net/url"
 	"runtime"
 	"testing"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/appclient"
+	"github.com/weaveworks/scope/report"
 )
 
 type mockClient struct {
@@ -25,11 +26,18 @@ func (c *mockClient) ControlConnection() {
 	c.count++
 }
 
+func (c *mockClient) Target() url.URL {
+	return url.URL{}
+}
+
+func (c *mockClient) ReTarget(_ url.URL) {
+}
+
 func (c *mockClient) Stop() {
 	c.stopped++
 }
 
-func (c *mockClient) Publish(io.Reader) error {
+func (c *mockClient) Publish(io.Reader, bool) error {
 	c.publish++
 	return nil
 }
@@ -42,8 +50,8 @@ var (
 	a2      = &mockClient{id: "2"} // hostname a, app id 2
 	b2      = &mockClient{id: "2"} // hostname b, app id 2 (duplicate)
 	b3      = &mockClient{id: "3"} // hostname b, app id 3
-	factory = func(hostname, target string) (appclient.AppClient, error) {
-		switch target {
+	factory = func(hostname string, url url.URL) (appclient.AppClient, error) {
+		switch url.Host {
 		case "a1":
 			return a1, nil
 		case "a2":
@@ -53,7 +61,7 @@ var (
 		case "b3":
 			return b3, nil
 		}
-		panic(target)
+		panic(url.Host)
 	}
 )
 
@@ -71,20 +79,20 @@ func TestMultiClient(t *testing.T) {
 	defer mp.Stop()
 
 	// Add two hostnames with overlapping apps, check we don't add the same app twice
-	mp.Set("a", []string{"a1", "a2"})
-	mp.Set("b", []string{"b2", "b3"})
+	mp.Set("a", []url.URL{{Host: "a1"}, {Host: "a2"}})
+	mp.Set("b", []url.URL{{Host: "b2"}, {Host: "b3"}})
 	expect(a1.count, 1)
 	expect(a2.count+b2.count, 1)
 	expect(b3.count, 1)
 
 	// Now drop the overlap, check we don't remove the app
-	mp.Set("b", []string{"b3"})
+	mp.Set("b", []url.URL{{Host: "b3"}})
 	expect(a1.count, 1)
 	expect(a2.count+b2.count, 1)
 	expect(b3.count, 1)
 
 	// Now check we remove apps
-	mp.Set("b", []string{})
+	mp.Set("b", []url.URL{})
 	expect(b3.stopped, 1)
 }
 
@@ -94,11 +102,12 @@ func TestMultiClientPublish(t *testing.T) {
 
 	sum := func() int { return a1.publish + a2.publish + b2.publish + b3.publish }
 
-	mp.Set("a", []string{"a1", "a2"})
-	mp.Set("b", []string{"b2", "b3"})
+	mp.Set("a", []url.URL{{Host: "a1"}, {Host: "a2"}})
+	mp.Set("b", []url.URL{{Host: "b2"}, {Host: "b3"}})
 
+	rpt := report.MakeReport()
 	for i := 1; i < 10; i++ {
-		if err := mp.Publish(&bytes.Buffer{}); err != nil {
+		if err := mp.Publish(rpt); err != nil {
 			t.Error(err)
 		}
 		if want, have := 3*i, sum(); want != have {

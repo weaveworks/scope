@@ -1,55 +1,53 @@
 import React from 'react';
-import d3 from 'd3';
+import { scaleBand } from 'd3-scale';
 import { List as makeList } from 'immutable';
+import { connect } from 'react-redux';
+
 import { getNetworkColor } from '../utils/color-utils';
-import { isContrastMode } from '../utils/contrast-utils';
 
+// Min size is about a quarter of the width, feels about right.
+const minBarWidth = 0.25;
+const barHeight = 0.08;
+const innerPadding = 0.04;
+const borderRadius = 0.01;
+const offset = 0.67;
+const x = scaleBand();
 
-// Gap size between bar segments.
-const minBarHeight = 3;
-const padding = 0.05;
-const rx = 1;
-const ry = rx;
-const x = d3.scale.ordinal();
-
-function NodeNetworksOverlay({offset, size, stack, networks = makeList()}) {
-  // Min size is about a quarter of the width, feels about right.
-  const minBarWidth = (size / 4);
-  const barWidth = Math.max(size, minBarWidth * networks.size);
-  const barHeight = Math.max(size * 0.085, minBarHeight);
+function NodeNetworksOverlay({ networks = makeList() }) {
+  const barWidth = Math.max(1, minBarWidth * networks.size);
+  const yPosition = offset - (barHeight * 0.5);
 
   // Update singleton scale.
   x.domain(networks.map((n, i) => i).toJS());
-  x.rangeBands([barWidth * -0.5, barWidth * 0.5], padding, 0);
+  x.range([barWidth * -0.5, barWidth * 0.5]);
+  x.paddingInner(innerPadding);
 
+  const bandwidth = x.bandwidth();
   const bars = networks.map((n, i) => (
     <rect
-      x={x(i)}
-      y={offset - barHeight * 0.5}
-      width={x.rangeBand()}
-      height={barHeight}
-      rx={rx}
-      ry={ry}
       className="node-network"
-      style={{
-        fill: getNetworkColor(n.get('colorKey', n.get('id')))
-      }}
       key={n.get('id')}
+      x={x(i)}
+      y={yPosition}
+      width={bandwidth}
+      height={barHeight}
+      rx={borderRadius}
+      ry={borderRadius}
+      style={{ fill: getNetworkColor(n.get('colorKey', n.get('id'))) }}
     />
   ));
 
-  let transform = '';
-  if (stack) {
-    const contrastMode = isContrastMode();
-    const [dx, dy] = contrastMode ? [0, 8] : [0, 0];
-    transform = `translate(${dx}, ${dy * -1.5})`;
-  }
-
   return (
-    <g transform={transform}>
+    <g transform="translate(0, -5) scale(60)">
       {bars.toJS()}
     </g>
   );
 }
 
-export default NodeNetworksOverlay;
+function mapStateToProps(state) {
+  return {
+    contrastMode: state.get('contrastMode')
+  };
+}
+
+export default connect(mapStateToProps)(NodeNetworksOverlay);

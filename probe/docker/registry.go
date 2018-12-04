@@ -1,14 +1,12 @@
 package docker
 
 import (
-	"fmt"
-	"strings"
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-radix"
 	docker_client "github.com/fsouza/go-dockerclient"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
@@ -25,7 +23,6 @@ const (
 	UnpauseEvent           = "unpause"
 	NetworkConnectEvent    = "network:connect"
 	NetworkDisconnectEvent = "network:disconnect"
-	endpoint               = "unix:///var/run/docker.sock"
 )
 
 // Vars exported for testing.
@@ -52,19 +49,22 @@ type ContainerUpdateWatcher func(report.Node)
 
 type registry struct {
 	sync.RWMutex
-	quit            chan chan struct{}
-	interval        time.Duration
-	collectStats    bool
-	client          Client
-	pipes           controls.PipeClient
-	hostID          string
-	handlerRegistry *controls.HandlerRegistry
+	quit                   chan chan struct{}
+	interval               time.Duration
+	collectStats           bool
+	client                 Client
+	pipes                  controls.PipeClient
+	hostID                 string
+	handlerRegistry        *controls.HandlerRegistry
+	noCommandLineArguments bool
+	noEnvironmentVariables bool
 
 	watchers        []ContainerUpdateWatcher
 	containers      *radix.Tree
 	containersByPID map[int]Container
 	images          map[string]docker_client.APIImages
 	networks        []docker_client.Network
+	pipeIDToexecID  map[string]string
 }
 
 // Client interface for mocking.
@@ -86,15 +86,31 @@ type Client interface {
 	CreateExec(docker_client.CreateExecOptions) (*docker_client.Exec, error)
 	StartExecNonBlocking(string, docker_client.StartExecOptions) (docker_client.CloseWaiter, error)
 	Stats(docker_client.StatsOptions) error
+	ResizeExecTTY(id string, height, width int) error
 }
 
 func newDockerClient(endpoint string) (Client, error) {
+	if endpoint == "" {
+		return docker_client.NewClientFromEnv()
+	}
 	return docker_client.NewClient(endpoint)
 }
 
+// RegistryOptions are used to initialize the Registry
+type RegistryOptions struct {
+	Interval               time.Duration
+	Pipes                  controls.PipeClient
+	CollectStats           bool
+	HostID                 string
+	HandlerRegistry        *controls.HandlerRegistry
+	DockerEndpoint         string
+	NoCommandLineArguments bool
+	NoEnvironmentVariables bool
+}
+
 // NewRegistry returns a usable Registry. Don't forget to Stop it.
-func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats bool, hostID string, handlerRegistry *controls.HandlerRegistry) (Registry, error) {
-	client, err := NewDockerClientStub(endpoint)
+func NewRegistry(options RegistryOptions) (Registry, error) {
+	client, err := NewDockerClientStub(options.DockerEndpoint)
 	if err != nil {
 		return nil, err
 	}
@@ -103,14 +119,17 @@ func NewRegistry(interval time.Duration, pipes controls.PipeClient, collectStats
 		containers:      radix.New(),
 		containersByPID: map[int]Container{},
 		images:          map[string]docker_client.APIImages{},
+		pipeIDToexecID:  map[string]string{},
 
 		client:          client,
-		pipes:           pipes,
-		interval:        interval,
-		collectStats:    collectStats,
-		hostID:          hostID,
-		handlerRegistry: handlerRegistry,
+		pipes:           options.Pipes,
+		interval:        options.Interval,
+		collectStats:    options.CollectStats,
+		hostID:          options.HostID,
+		handlerRegistry: options.HandlerRegistry,
 		quit:            make(chan chan struct{}),
+		noCommandLineArguments: options.NoCommandLineArguments,
+		noEnvironmentVariables: options.NoEnvironmentVariables,
 	}
 
 	r.registerControls()
@@ -337,7 +356,7 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 	o, ok := r.containers.Get(containerID)
 	var c Container
 	if !ok {
-		c = NewContainerStub(dockerContainer, r.hostID)
+		c = NewContainerStub(dockerContainer, r.hostID, r.noCommandLineArguments, r.noEnvironmentVariables)
 		r.containers.Insert(containerID, c)
 	} else {
 		c = o.(Container)
@@ -352,11 +371,9 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 	}
 
 	// Trigger anyone watching for updates
-	if err != nil {
-		node := c.GetNode()
-		for _, f := range r.watchers {
-			f(node)
-		}
+	node := c.GetNode()
+	for _, f := range r.watchers {
+		f(node)
 	}
 
 	// And finally, ensure we gather stats for it
@@ -451,15 +468,4 @@ func (r *registry) WalkNetworks(f func(docker_client.Network)) {
 	for _, network := range r.networks {
 		f(network)
 	}
-}
-
-// ImageNameWithoutVersion splits the image name apart, returning the name
-// without the version, if possible
-func ImageNameWithoutVersion(name string) string {
-	parts := strings.SplitN(name, "/", 3)
-	if len(parts) == 3 {
-		name = fmt.Sprintf("%s/%s", parts[1], parts[2])
-	}
-	parts = strings.SplitN(name, ":", 2)
-	return parts[0]
 }

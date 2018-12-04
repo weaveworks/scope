@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
 )
 
@@ -159,7 +159,7 @@ func TestPropagateSingleMetrics(t *testing.T) {
 			},
 		},
 	} {
-		got := render.PropagateSingleMetrics(c.topology)(c.input, report.Networks{})
+		got := render.PropagateSingleMetrics(c.topology, mockRenderer{report.Nodes{c.input.ID: c.input}}).Render(report.Report{}).Nodes
 		if !reflect.DeepEqual(got, c.output) {
 			t.Errorf("[%s] Diff: %s", c.name, test.Diff(c.output, got))
 		}

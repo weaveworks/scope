@@ -6,21 +6,21 @@ import (
 	"testing"
 	"time"
 
-	fs_hook "github.com/weaveworks/scope/common/fs"
+	fs_hook "github.com/weaveworks/common/fs"
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/probe/process"
-	"github.com/weaveworks/scope/test"
 )
 
 func TestLinuxConnections(t *testing.T) {
 	fs_hook.Mock(mockFS)
 	defer fs_hook.Restore()
-	scanner := NewConnectionScanner(process.NewWalker("/proc"))
+	scanner := NewConnectionScanner(process.NewWalker("/proc", false), true)
 	defer scanner.Stop()
 
 	// let the background scanner finish its first pass
 	time.Sleep(1 * time.Second)
 
-	iter, err := scanner.Connections(true)
+	iter, err := scanner.Connections()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func TestLinuxConnections(t *testing.T) {
 		LocalPort:     42688,
 		RemoteAddress: net.ParseIP("0.0.0.0").To4(),
 		RemotePort:    0,
-		inode:         5107,
+		Inode:         5107,
 		Proc: Proc{
 			PID:  1,
 			Name: "foo",

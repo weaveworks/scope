@@ -3,32 +3,28 @@ package report
 // IDList is a list of string IDs, which are always sorted and unique.
 type IDList StringSet
 
-// EmptyIDList is an Empty ID List.
-var EmptyIDList = IDList(EmptyStringSet)
+var emptyIDList = IDList(MakeStringSet())
 
 // MakeIDList makes a new IDList.
 func MakeIDList(ids ...string) IDList {
+	if len(ids) == 0 {
+		return emptyIDList
+	}
 	return IDList(MakeStringSet(ids...))
 }
 
 // Add is the only correct way to add ids to an IDList.
 func (a IDList) Add(ids ...string) IDList {
+	if len(ids) == 0 {
+		return a
+	}
 	return IDList(StringSet(a).Add(ids...))
-}
-
-// Remove is the only correct way to remove IDs from an IDList.
-func (a IDList) Remove(ids ...string) IDList {
-	return IDList(StringSet(a).Remove(ids...))
-}
-
-// Copy returns a copy of the IDList.
-func (a IDList) Copy() IDList {
-	return IDList(StringSet(a).Copy())
 }
 
 // Merge all elements from a and b into a new list
 func (a IDList) Merge(b IDList) IDList {
-	return IDList(StringSet(a).Merge(StringSet(b)))
+	merged, _ := StringSet(a).Merge(StringSet(b))
+	return IDList(merged)
 }
 
 // Contains returns true if id is in the list.

@@ -6,15 +6,16 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
 
+	"context"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"golang.org/x/net/context"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/probe/controls"
@@ -83,7 +84,8 @@ func TestPipeClose(t *testing.T) {
 	probeConfig := appclient.ProbeConfig{
 		ProbeID: "foo",
 	}
-	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, ip+":"+port, nil)
+	url := url.URL{Scheme: "http", Host: ip + ":" + port}
+	client, err := appclient.NewAppClient(probeConfig, ip+":"+port, url, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

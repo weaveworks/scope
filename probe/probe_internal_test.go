@@ -1,13 +1,10 @@
 package probe
 
 import (
-	"compress/gzip"
-	"io"
 	"testing"
 	"time"
 
-	"github.com/ugorji/go/codec"
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
@@ -53,13 +50,7 @@ type mockPublisher struct {
 	have chan report.Report
 }
 
-func (m mockPublisher) Publish(in io.Reader) error {
-	var r report.Report
-	if reader, err := gzip.NewReader(in); err != nil {
-		return err
-	} else if err := codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode(&r); err != nil {
-		return err
-	}
+func (m mockPublisher) Publish(r report.Report) error {
 	m.have <- r
 	return nil
 }
@@ -81,16 +72,9 @@ func TestProbe(t *testing.T) {
 	// tags, transforming empty slices into nils. So, we make DeepEqual
 	// happy by setting empty `json:"omitempty"` entries to nil
 	node.Metrics = nil
-	want.Endpoint.Controls = nil
-	want.Process.Controls = nil
-	want.Container.Controls = nil
-	want.ContainerImage.Controls = nil
-	want.Pod.Controls = nil
-	want.Service.Controls = nil
-	want.Deployment.Controls = nil
-	want.ReplicaSet.Controls = nil
-	want.Host.Controls = nil
-	want.Overlay.Controls = nil
+	want.WalkTopologies(func(t *report.Topology) {
+		t.Controls = nil
+	})
 	want.Endpoint.AddNode(node)
 
 	pub := mockPublisher{make(chan report.Report, 10)}

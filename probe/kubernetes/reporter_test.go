@@ -7,9 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	"k8s.io/kubernetes/pkg/types"
+	apiv1 "k8s.io/api/core/v1"
+	apiv1beta1 "k8s.io/api/extensions/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
@@ -24,73 +25,74 @@ var (
 	pod1UID     = "a1b2c3d4e5"
 	pod2UID     = "f6g7h8i9j0"
 	serviceUID  = "service1234"
-	podTypeMeta = unversioned.TypeMeta{
+	podTypeMeta = metav1.TypeMeta{
 		Kind:       "Pod",
 		APIVersion: "v1",
 	}
-	apiPod1 = api.Pod{
+	apiPod1 = apiv1.Pod{
 		TypeMeta: podTypeMeta,
-		ObjectMeta: api.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "pong-a",
 			UID:               types.UID(pod1UID),
 			Namespace:         "ping",
-			CreationTimestamp: unversioned.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels:            map[string]string{"ponger": "true"},
 		},
-		Status: api.PodStatus{
+		Status: apiv1.PodStatus{
 			HostIP: "1.2.3.4",
-			ContainerStatuses: []api.ContainerStatus{
+			ContainerStatuses: []apiv1.ContainerStatus{
 				{ContainerID: "container1"},
 				{ContainerID: "container2"},
 			},
 		},
-		Spec: api.PodSpec{
-			NodeName: nodeName,
+		Spec: apiv1.PodSpec{
+			NodeName:    nodeName,
+			HostNetwork: true,
 		},
 	}
-	apiPod2 = api.Pod{
+	apiPod2 = apiv1.Pod{
 		TypeMeta: podTypeMeta,
-		ObjectMeta: api.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "pong-b",
 			UID:               types.UID(pod2UID),
 			Namespace:         "ping",
-			CreationTimestamp: unversioned.Now(),
+			CreationTimestamp: metav1.Now(),
 			Labels:            map[string]string{"ponger": "true"},
 		},
-		Status: api.PodStatus{
+		Status: apiv1.PodStatus{
 			HostIP: "1.2.3.4",
-			ContainerStatuses: []api.ContainerStatus{
+			ContainerStatuses: []apiv1.ContainerStatus{
 				{ContainerID: "container3"},
 				{ContainerID: "container4"},
 			},
 		},
-		Spec: api.PodSpec{
+		Spec: apiv1.PodSpec{
 			NodeName: nodeName,
 		},
 	}
-	apiService1 = api.Service{
-		TypeMeta: unversioned.TypeMeta{
+	apiService1 = apiv1.Service{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
 			APIVersion: "v1",
 		},
-		ObjectMeta: api.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:              "pongservice",
 			UID:               types.UID(serviceUID),
 			Namespace:         "ping",
-			CreationTimestamp: unversioned.Now(),
+			CreationTimestamp: metav1.Now(),
 		},
-		Spec: api.ServiceSpec{
-			Type:           api.ServiceTypeLoadBalancer,
+		Spec: apiv1.ServiceSpec{
+			Type:           apiv1.ServiceTypeLoadBalancer,
 			ClusterIP:      "10.0.1.1",
 			LoadBalancerIP: "10.0.1.2",
-			Ports: []api.ServicePort{
+			Ports: []apiv1.ServicePort{
 				{Protocol: "TCP", Port: 6379},
 			},
 			Selector: map[string]string{"ponger": "true"},
 		},
-		Status: api.ServiceStatus{
-			LoadBalancer: api.LoadBalancerStatus{
-				Ingress: []api.LoadBalancerIngress{
+		Status: apiv1.ServiceStatus{
+			LoadBalancer: apiv1.LoadBalancerStatus{
+				Ingress: []apiv1.LoadBalancerIngress{
 					{IP: "10.0.1.2"},
 				},
 			},
@@ -110,9 +112,10 @@ func newMockClient() *mockClient {
 }
 
 type mockClient struct {
-	pods     []kubernetes.Pod
-	services []kubernetes.Service
-	logs     map[string]io.ReadCloser
+	pods        []kubernetes.Pod
+	services    []kubernetes.Service
+	deployments []kubernetes.Deployment
+	logs        map[string]io.ReadCloser
 }
 
 func (c *mockClient) Stop() {}
@@ -132,20 +135,37 @@ func (c *mockClient) WalkServices(f func(kubernetes.Service) error) error {
 	}
 	return nil
 }
+func (c *mockClient) WalkDaemonSets(f func(kubernetes.DaemonSet) error) error {
+	return nil
+}
+func (c *mockClient) WalkStatefulSets(f func(kubernetes.StatefulSet) error) error {
+	return nil
+}
+func (c *mockClient) WalkCronJobs(f func(kubernetes.CronJob) error) error {
+	return nil
+}
 func (c *mockClient) WalkDeployments(f func(kubernetes.Deployment) error) error {
+	for _, deployment := range c.deployments {
+		if err := f(deployment); err != nil {
+			return err
+		}
+	}
 	return nil
 }
-func (c *mockClient) WalkReplicaSets(f func(kubernetes.ReplicaSet) error) error {
+func (c *mockClient) WalkNamespaces(f func(kubernetes.NamespaceResource) error) error {
 	return nil
 }
-func (c *mockClient) WalkReplicationControllers(f func(kubernetes.ReplicationController) error) error {
+func (c *mockClient) WalkPersistentVolumes(f func(kubernetes.PersistentVolume) error) error {
 	return nil
 }
-func (*mockClient) WalkNodes(f func(*api.Node) error) error {
+func (c *mockClient) WalkPersistentVolumeClaims(f func(kubernetes.PersistentVolumeClaim) error) error {
+	return nil
+}
+func (c *mockClient) WalkStorageClasses(f func(kubernetes.StorageClass) error) error {
 	return nil
 }
 func (*mockClient) WatchPods(func(kubernetes.Event, kubernetes.Pod)) {}
-func (c *mockClient) GetLogs(namespaceID, podName string) (io.ReadCloser, error) {
+func (c *mockClient) GetLogs(namespaceID, podName string, _ []string) (io.ReadCloser, error) {
 	r, ok := c.logs[namespaceID+";"+podName]
 	if !ok {
 		return nil, fmt.Errorf("Not found")
@@ -176,17 +196,21 @@ func (c mockPipeClient) PipeClose(appID, id string) error {
 }
 
 func TestReporter(t *testing.T) {
-	oldGetNodeName := kubernetes.GetNodeName
-	defer func() { kubernetes.GetNodeName = oldGetNodeName }()
-	kubernetes.GetNodeName = func(*kubernetes.Reporter) (string, error) {
-		return nodeName, nil
+	oldGetNodeName := kubernetes.GetLocalPodUIDs
+	defer func() { kubernetes.GetLocalPodUIDs = oldGetNodeName }()
+	kubernetes.GetLocalPodUIDs = func(string) (map[string]struct{}, error) {
+		uids := map[string]struct{}{
+			pod1UID: {},
+			pod2UID: {},
+		}
+		return uids, nil
 	}
 
 	pod1ID := report.MakePodNodeID(pod1UID)
 	pod2ID := report.MakePodNodeID(pod2UID)
 	serviceID := report.MakeServiceNodeID(serviceUID)
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "", "foo", nil, hr).Report()
+	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "probe-id", "foo", nil, hr, "", 0).Report()
 
 	// Reporter should have added the following pods
 	for _, pod := range []struct {
@@ -202,7 +226,7 @@ func TestReporter(t *testing.T) {
 		{pod2ID, serviceID, map[string]string{
 			kubernetes.Name:      "pong-b",
 			kubernetes.Namespace: "ping",
-			kubernetes.Created:   pod1.Created(),
+			kubernetes.Created:   pod2.Created(),
 		}},
 	} {
 		node, ok := rpt.Pod.Nodes[pod.id]
@@ -231,12 +255,70 @@ func TestReporter(t *testing.T) {
 		for k, want := range map[string]string{
 			kubernetes.Name:      "pongservice",
 			kubernetes.Namespace: "ping",
-			kubernetes.Created:   pod1.Created(),
+			kubernetes.Created:   service1.Created(),
 		} {
 			if have, ok := node.Latest.Lookup(k); !ok || have != want {
 				t.Errorf("Expected service %s latest %q: %q, got %q", serviceID, k, want, have)
 			}
 		}
+	}
+
+	// Reporter should allow controls for k8s topologies by providing a probe ID
+	{
+		for _, topologyName := range []string{
+			report.Container,
+			report.CronJob,
+			report.DaemonSet,
+			report.Deployment,
+			report.Pod,
+			report.Service,
+			report.StatefulSet,
+		} {
+			topology, ok := rpt.Topology(topologyName)
+			if !ok {
+				// TODO: this mock report doesn't have nodes for all the topologies yet, so don't fail for now.
+				// t.Errorf("Expected report to have nodes in topology %q, but none found", topology)
+			}
+			for _, n := range topology.Nodes {
+				if probeID, ok := n.Latest.Lookup(report.ControlProbeID); !ok || probeID != "probe-id" {
+					t.Errorf("Expected node %q to have probeID, but not found", n.ID)
+				}
+			}
+		}
+	}
+
+}
+
+func BenchmarkReporter(b *testing.B) {
+	hr := controls.NewDefaultHandlerRegistry()
+	mockK8s := newMockClient()
+	// Add more dummy data
+	for i := 0; i < 50; i++ {
+		service := apiService1
+		service.ObjectMeta.UID = types.UID(fmt.Sprintf("service%d", i))
+		mockK8s.services = append(mockK8s.services, kubernetes.NewService(&service))
+		pod := apiPod1
+		pod.ObjectMeta.UID = types.UID(fmt.Sprintf("pod%d", i))
+		mockK8s.pods = append(mockK8s.pods, kubernetes.NewPod(&pod))
+		deployment := apiv1beta1.Deployment{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Deployment",
+				APIVersion: "v1beta1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              fmt.Sprintf("deployment%d", i),
+				UID:               types.UID(fmt.Sprintf("deployment%d", i)),
+				Namespace:         "ping",
+				CreationTimestamp: metav1.Now(),
+			},
+		}
+		mockK8s.deployments = append(mockK8s.deployments, kubernetes.NewDeployment(&deployment))
+	}
+	reporter := kubernetes.NewReporter(mockK8s, nil, "probe-id", "foo", nil, hr, nodeName, 0)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		reporter.Report()
 	}
 }
 
@@ -247,13 +329,13 @@ func TestTagger(t *testing.T) {
 	}))
 
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil, hr).Tag(rpt)
+	rpt, err := kubernetes.NewReporter(newMockClient(), nil, "", "", nil, hr, "", 0).Tag(rpt)
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
 	have, ok := rpt.Container.Nodes["container1"].Parents.Lookup(report.Pod)
-	want := report.EmptyStringSet.Add(report.MakePodNodeID("123456"))
+	want := report.MakeStringSet(report.MakePodNodeID("123456"))
 	if !ok || !reflect.DeepEqual(have, want) {
 		t.Errorf("Expected container to have pod parent %v %v", have, want)
 	}
@@ -267,16 +349,16 @@ type callbackReadCloser struct {
 func (c *callbackReadCloser) Close() error { return c.close() }
 
 func TestReporterGetLogs(t *testing.T) {
-	oldGetNodeName := kubernetes.GetNodeName
-	defer func() { kubernetes.GetNodeName = oldGetNodeName }()
-	kubernetes.GetNodeName = func(*kubernetes.Reporter) (string, error) {
-		return nodeName, nil
+	oldGetNodeName := kubernetes.GetLocalPodUIDs
+	defer func() { kubernetes.GetLocalPodUIDs = oldGetNodeName }()
+	kubernetes.GetLocalPodUIDs = func(string) (map[string]struct{}, error) {
+		return map[string]struct{}{}, nil
 	}
 
 	client := newMockClient()
 	pipes := mockPipeClient{}
 	hr := controls.NewDefaultHandlerRegistry()
-	reporter := kubernetes.NewReporter(client, pipes, "", "", nil, hr)
+	reporter := kubernetes.NewReporter(client, pipes, "", "", nil, hr, "", 0)
 
 	// Should error on invalid IDs
 	{

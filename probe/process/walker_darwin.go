@@ -8,7 +8,7 @@ import (
 )
 
 // NewWalker returns a Darwin (lsof-based) walker.
-func NewWalker(_ string) Walker {
+func NewWalker(_ string, _ bool) Walker {
 	return &walker{}
 }
 
@@ -21,6 +21,13 @@ const (
 )
 
 // These functions copied from procspy.
+
+// IsProcInAccept returns true if the process has a at least one thread
+// blocked on the accept() system call
+func IsProcInAccept(procRoot, pid string) (ret bool) {
+	// Not implemented on darwin
+	return false
+}
 
 func (walker) Walk(f func(Process, Process)) error {
 	output, err := exec.Command(

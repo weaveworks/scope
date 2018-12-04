@@ -3,36 +3,40 @@ package render_test
 import (
 	"testing"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 	"github.com/weaveworks/scope/test/reflect"
 )
 
-type renderFunc func(r report.Report) report.Nodes
+type renderFunc func(r report.Report) render.Nodes
 
-func (f renderFunc) Render(r report.Report, _ render.Decorator) report.Nodes { return f(r) }
-func (f renderFunc) Stats(r report.Report, _ render.Decorator) render.Stats  { return render.Stats{} }
+func (f renderFunc) Render(r report.Report) render.Nodes { return f(r) }
 
 func TestMemoise(t *testing.T) {
 	calls := 0
-	r := renderFunc(func(rpt report.Report) report.Nodes {
+	r := renderFunc(func(rpt report.Report) render.Nodes {
 		calls++
-		return report.Nodes{rpt.ID: report.MakeNode(rpt.ID)}
+		return render.Nodes{Nodes: report.Nodes{rpt.ID: report.MakeNode(rpt.ID)}}
 	})
 	m := render.Memoise(r)
+
+	if render.Memoise(m) != m {
+		t.Errorf("Memoised renderers should be fixpoints.")
+	}
+
 	rpt1 := report.MakeReport()
 
-	result1 := m.Render(rpt1, nil)
+	result1 := m.Render(rpt1)
 	// it should have rendered it.
-	if _, ok := result1[rpt1.ID]; !ok {
+	if _, ok := result1.Nodes[rpt1.ID]; !ok {
 		t.Errorf("Expected rendered report to contain a node, but got: %v", result1)
 	}
 	if calls != 1 {
 		t.Errorf("Expected renderer to have been called the first time")
 	}
 
-	result2 := m.Render(rpt1, nil)
+	result2 := m.Render(rpt1)
 	if !reflect.DeepEqual(result1, result2) {
 		t.Errorf("Expected memoised result to be returned: %s", test.Diff(result1, result2))
 	}
@@ -41,7 +45,7 @@ func TestMemoise(t *testing.T) {
 	}
 
 	rpt2 := report.MakeReport()
-	result3 := m.Render(rpt2, nil)
+	result3 := m.Render(rpt2)
 	if reflect.DeepEqual(result1, result3) {
 		t.Errorf("Expected different result for different report, but were the same")
 	}
@@ -50,7 +54,7 @@ func TestMemoise(t *testing.T) {
 	}
 
 	render.ResetCache()
-	result4 := m.Render(rpt1, nil)
+	result4 := m.Render(rpt1)
 	if !reflect.DeepEqual(result1, result4) {
 		t.Errorf("Expected original result to be returned: %s", test.Diff(result1, result4))
 	}

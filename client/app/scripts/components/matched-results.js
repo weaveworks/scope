@@ -1,32 +1,25 @@
 import React from 'react';
-import { connect } from 'react-redux';
-
-import MatchedText from './matched-text';
+import { MatchedText } from 'weaveworks-ui-components';
 
 const SHOW_ROW_COUNT = 2;
-const MAX_MATCH_LENGTH = 24;
 
-class MatchedResults extends React.Component {
+const Match = (searchTerms, match) => (
+  <div className="matched-results-match" key={match.label}>
+    <div className="matched-results-match-wrapper">
+      <span className="matched-results-match-label">
+        {match.label}:
+      </span>
+      <MatchedText
+        text={match.text}
+        matches={searchTerms}
+      />
+    </div>
+  </div>
+);
 
-  renderMatch(matches, field) {
-    const match = matches.get(field);
-    const text = match.text;
-
-    return (
-      <div className="matched-results-match" key={match.label}>
-        <div className="matched-results-match-wrapper">
-          <span className="matched-results-match-label">
-            {match.label}:
-          </span>
-          <MatchedText text={text} match={match} maxLength={MAX_MATCH_LENGTH}
-            truncate={match.truncate} />
-        </div>
-      </div>
-    );
-  }
-
+export default class MatchedResults extends React.PureComponent {
   render() {
-    const { matches, style } = this.props;
+    const { matches, searchTerms, style } = this.props;
 
     if (!matches) {
       return null;
@@ -44,13 +37,17 @@ class MatchedResults extends React.Component {
 
     return (
       <div className="matched-results" style={style}>
-        {matches.keySeq().take(SHOW_ROW_COUNT).map(fieldId => this.renderMatch(matches, fieldId))}
-        {moreFieldMatches && <div className="matched-results-more" title={moreFieldMatchesTitle}>
-          {`${moreFieldMatches.size} more matches`}
-        </div>}
+        {matches
+          .keySeq()
+          .take(SHOW_ROW_COUNT)
+          .map(fieldId => Match(searchTerms, matches.get(fieldId)))
+        }
+        {moreFieldMatches &&
+          <div className="matched-results-more" title={moreFieldMatchesTitle}>
+            {`${moreFieldMatches.size} more matches`}
+          </div>
+        }
       </div>
     );
   }
 }
-
-export default connect()(MatchedResults);

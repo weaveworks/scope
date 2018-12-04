@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/weaveworks/scope/common/mtime"
+	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -25,7 +25,7 @@ func TestReporter(t *testing.T) {
 			host.CPUUsage:    report.MakeSingletonMetric(timestamp, 30.0).WithMax(100.0),
 			host.MemoryUsage: report.MakeSingletonMetric(timestamp, 60.0).WithMax(100.0),
 		}
-		uptime      = "278h55m43s"
+		uptime      = "3600" // one hour
 		kernel      = "release version"
 		_, ipnet, _ = net.ParseCIDR(network)
 	)
@@ -34,30 +34,30 @@ func TestReporter(t *testing.T) {
 	defer mtime.NowReset()
 
 	var (
-		oldGetKernelVersion    = host.GetKernelVersion
-		oldGetLoad             = host.GetLoad
-		oldGetUptime           = host.GetUptime
-		oldGetCPUUsagePercent  = host.GetCPUUsagePercent
-		oldGetMemoryUsageBytes = host.GetMemoryUsageBytes
-		oldGetLocalNetworks    = host.GetLocalNetworks
+		oldGetKernelReleaseAndVersion = host.GetKernelReleaseAndVersion
+		oldGetLoad                    = host.GetLoad
+		oldGetUptime                  = host.GetUptime
+		oldGetCPUUsagePercent         = host.GetCPUUsagePercent
+		oldGetMemoryUsageBytes        = host.GetMemoryUsageBytes
+		oldGetLocalNetworks           = host.GetLocalNetworks
 	)
 	defer func() {
-		host.GetKernelVersion = oldGetKernelVersion
+		host.GetKernelReleaseAndVersion = oldGetKernelReleaseAndVersion
 		host.GetLoad = oldGetLoad
 		host.GetUptime = oldGetUptime
 		host.GetCPUUsagePercent = oldGetCPUUsagePercent
 		host.GetMemoryUsageBytes = oldGetMemoryUsageBytes
 		host.GetLocalNetworks = oldGetLocalNetworks
 	}()
-	host.GetKernelVersion = func() (string, error) { return release + " " + version, nil }
+	host.GetKernelReleaseAndVersion = func() (string, string, error) { return release, version, nil }
 	host.GetLoad = func(time.Time) report.Metrics { return metrics }
-	host.GetUptime = func() (time.Duration, error) { return time.ParseDuration(uptime) }
+	host.GetUptime = func() (time.Duration, error) { return time.Hour, nil }
 	host.GetCPUUsagePercent = func() (float64, float64) { return 30.0, 100.0 }
 	host.GetMemoryUsageBytes = func() (float64, float64) { return 60.0, 100.0 }
 	host.GetLocalNetworks = func() ([]*net.IPNet, error) { return []*net.IPNet{ipnet}, nil }
 
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, err := host.NewReporter(hostID, hostname, "", "", nil, hr).Report()
+	rpt, err := host.NewReporter(hostID, hostname, "probe-id", "", nil, hr).Report()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,6 +77,7 @@ func TestReporter(t *testing.T) {
 		{host.OS, runtime.GOOS},
 		{host.Uptime, uptime},
 		{host.KernelVersion, kernel},
+		{report.ControlProbeID, "probe-id"},
 	} {
 		if have, ok := node.Latest.Lookup(tuple.key); !ok || have != tuple.want {
 			t.Errorf("Expected %s %q, got %q", tuple.key, tuple.want, have)
@@ -96,7 +97,7 @@ func TestReporter(t *testing.T) {
 		} else if sample, ok := metric.LastSample(); !ok {
 			t.Errorf("Expected %s metric to have a sample, but there were none", key)
 		} else if sample.Value != wantSample.Value {
-			t.Errorf("Expected %s metric sample %f, got %f", key, wantSample, sample.Value)
+			t.Errorf("Expected %s metric sample %f, got %f", key, wantSample.Value, sample.Value)
 		}
 	}
 }

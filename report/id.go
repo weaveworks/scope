@@ -5,9 +5,6 @@ import (
 	"strings"
 )
 
-// TheInternet is used as a node ID to indicate a remote IP.
-const TheInternet = "theinternet"
-
 // Delimiters are used to separate parts of node IDs, to guarantee uniqueness
 // in particular contexts.
 const (
@@ -22,6 +19,12 @@ const (
 
 	// Key added to nodes to prevent them being joined with conntracked connections
 	DoesNotMakeConnections = "does_not_make_connections"
+
+	// WeaveOverlayPeerPrefix is the prefix for weave peers in the overlay network
+	WeaveOverlayPeerPrefix = ""
+
+	// DockerOverlayPeerPrefix is the prefix for docker peers in the overlay network
+	DockerOverlayPeerPrefix = "docker_peer_"
 )
 
 // MakeEndpointNodeID produces an endpoint node ID from its composite parts.
@@ -71,6 +74,11 @@ func MakeProcessNodeID(hostID, pid string) string {
 	return hostID + ScopeDelim + pid
 }
 
+// MakeECSServiceNodeID produces an ECS Service node ID from its composite parts.
+func MakeECSServiceNodeID(cluster, serviceName string) string {
+	return cluster + ScopeDelim + serviceName
+}
+
 var (
 	// MakeHostNodeID produces a host node ID from its composite parts.
 	MakeHostNodeID = makeSingleComponentID("host")
@@ -113,6 +121,60 @@ var (
 
 	// ParseReplicaSetNodeID parses a replica set node ID
 	ParseReplicaSetNodeID = parseSingleComponentID("replica_set")
+
+	// MakeDaemonSetNodeID produces a replica set node ID from its composite parts.
+	MakeDaemonSetNodeID = makeSingleComponentID("daemonset")
+
+	// ParseDaemonSetNodeID parses a daemon set node ID
+	ParseDaemonSetNodeID = parseSingleComponentID("daemonset")
+
+	// MakeStatefulSetNodeID produces a statefulset node ID from its composite parts.
+	MakeStatefulSetNodeID = makeSingleComponentID("statefulset")
+
+	// ParseStatefulSetNodeID parses a statefulset node ID
+	ParseStatefulSetNodeID = parseSingleComponentID("statefulset")
+
+	// MakeCronJobNodeID produces a cronjob node ID from its composite parts.
+	MakeCronJobNodeID = makeSingleComponentID("cronjob")
+
+	// ParseCronJobNodeID parses a cronjob node ID
+	ParseCronJobNodeID = parseSingleComponentID("cronjob")
+
+	// MakeNamespaceNodeID produces a namespace node ID from its composite parts.
+	MakeNamespaceNodeID = makeSingleComponentID("namespace")
+
+	// ParseNamespaceNodeID parses a namespace set node ID
+	ParseNamespaceNodeID = parseSingleComponentID("namespace")
+
+	// MakeECSTaskNodeID produces a ECSTask node ID from its composite parts.
+	MakeECSTaskNodeID = makeSingleComponentID("ecs_task")
+
+	// ParseECSTaskNodeID parses a ECSTask node ID
+	ParseECSTaskNodeID = parseSingleComponentID("ecs_task")
+
+	// MakeSwarmServiceNodeID produces a Swarm service node ID from its composite parts.
+	MakeSwarmServiceNodeID = makeSingleComponentID("swarm_service")
+
+	// ParseSwarmServiceNodeID parses a Swarm service node ID
+	ParseSwarmServiceNodeID = parseSingleComponentID("swarm_service")
+
+	// MakePersistentVolumeNodeID produces a Persistent Volume node ID from its composite parts.
+	MakePersistentVolumeNodeID = makeSingleComponentID("persistent_volume")
+
+	// ParsePersistentVolumeNodeID parses a Persistent Volume node ID
+	ParsePersistentVolumeNodeID = parseSingleComponentID("persistent_volume")
+
+	// MakePersistentVolumeClaimNodeID produces a Persistent Volume Claim node ID from its composite parts.
+	MakePersistentVolumeClaimNodeID = makeSingleComponentID("persistent_volume_claim")
+
+	// ParsePersistentVolumeClaimNodeID parses a Persistent Volume Claim node ID
+	ParsePersistentVolumeClaimNodeID = parseSingleComponentID("persistent_volume_claim")
+
+	// MakeStorageClassNodeID produces a storage class node ID from its composite parts.
+	MakeStorageClassNodeID = makeSingleComponentID("storage_class")
+
+	// ParseStorageClassNodeID parses a storage class node ID
+	ParseStorageClassNodeID = parseSingleComponentID("storage_class")
 )
 
 // makeSingleComponentID makes a single-component node id encoder
@@ -125,54 +187,95 @@ func makeSingleComponentID(tag string) func(string) string {
 // parseSingleComponentID makes a single-component node id decoder
 func parseSingleComponentID(tag string) func(string) (string, bool) {
 	return func(id string) (string, bool) {
-		fields := strings.SplitN(id, ScopeDelim, 2)
-		if len(fields) != 2 || fields[1] != "<"+tag+">" {
+		field0, field1, ok := split2(id, ScopeDelim)
+		if !ok || field1 != "<"+tag+">" {
 			return "", false
 		}
-		return fields[0], true
+		return field0, true
 	}
 }
 
 // MakeOverlayNodeID produces an overlay topology node ID from a router peer's
-// name, which is assumed to be globally unique.
-func MakeOverlayNodeID(peerName string) string {
-	return "#" + peerName
+// prefix and name, which is assumed to be globally unique.
+func MakeOverlayNodeID(peerPrefix, peerName string) string {
+	return "#" + peerPrefix + peerName
 }
 
-// ParseNodeID produces the host ID and remainder (typically an address) from
-// a node ID. Note that hostID may be blank.
-func ParseNodeID(nodeID string) (hostID string, remainder string, ok bool) {
-	fields := strings.SplitN(nodeID, ScopeDelim, 2)
-	if len(fields) != 2 {
+// ParseOverlayNodeID produces the overlay type and peer name.
+func ParseOverlayNodeID(id string) (overlayPrefix string, peerName string) {
+
+	if !strings.HasPrefix(id, "#") {
+		// Best we can do
+		return "", ""
+	}
+
+	id = id[1:]
+
+	if strings.HasPrefix(id, DockerOverlayPeerPrefix) {
+		return DockerOverlayPeerPrefix, id[len(DockerOverlayPeerPrefix):]
+	}
+
+	return WeaveOverlayPeerPrefix, id
+}
+
+// Split a string s into two parts separated by sep.
+func split2(s, sep string) (s1, s2 string, ok bool) {
+	// Not using strings.SplitN() to avoid a heap allocation
+	pos := strings.Index(s, sep)
+	if pos == -1 {
 		return "", "", false
 	}
-	return fields[0], fields[1], true
+	return s[:pos], s[pos+1:], true
+}
+
+// ParseNodeID produces the id and tag of a single-component node ID.
+func ParseNodeID(nodeID string) (id string, tag string, ok bool) {
+	return split2(nodeID, ScopeDelim)
 }
 
 // ParseEndpointNodeID produces the scope, address, and port and remainder.
-// Note that hostID may be blank.
+// Note that scope may be blank.
 func ParseEndpointNodeID(endpointNodeID string) (scope, address, port string, ok bool) {
-	fields := strings.SplitN(endpointNodeID, ScopeDelim, 3)
-	if len(fields) != 3 {
+	// Not using strings.SplitN() to avoid a heap allocation
+	first := strings.Index(endpointNodeID, ScopeDelim)
+	if first == -1 {
 		return "", "", "", false
 	}
-
-	return fields[0], fields[1], fields[2], true
+	second := strings.Index(endpointNodeID[first+1:], ScopeDelim)
+	if second == -1 {
+		return "", "", "", false
+	}
+	return endpointNodeID[:first], endpointNodeID[first+1 : first+1+second], endpointNodeID[first+1+second+1:], true
 }
 
 // ParseAddressNodeID produces the host ID, address from an address node ID.
 func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) {
-	fields := strings.SplitN(addressNodeID, ScopeDelim, 2)
-	if len(fields) != 2 {
+	return split2(addressNodeID, ScopeDelim)
+}
+
+// ParseProcessNodeID produces the host ID and PID from a process node ID.
+func ParseProcessNodeID(processNodeID string) (hostID, pid string, ok bool) {
+	return split2(processNodeID, ScopeDelim)
+}
+
+// ParseECSServiceNodeID produces the cluster, service name from an ECS Service node ID
+func ParseECSServiceNodeID(ecsServiceNodeID string) (cluster, serviceName string, ok bool) {
+	cluster, serviceName, ok = split2(ecsServiceNodeID, ScopeDelim)
+	if !ok {
 		return "", "", false
 	}
-	return fields[0], fields[1], true
+	// In previous versions, ECS Service node IDs were of form serviceName + "<ecs_service>".
+	// For backwards compatibility, we should still return a sensical serviceName for these cases.
+	if serviceName == "<ecs_service>" {
+		return "unknown", cluster, true
+	}
+	return cluster, serviceName, true
 }
 
 // ExtractHostID extracts the host id from Node
 func ExtractHostID(m Node) string {
 	hostNodeID, _ := m.Latest.Lookup(HostNodeID)
-	hostID, _, _ := ParseNodeID(hostNodeID)
+	hostID, _ := ParseHostNodeID(hostNodeID)
 	return hostID
 }
 

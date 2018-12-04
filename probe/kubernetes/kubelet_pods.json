@@ -1,0 +1,127 @@
+{
+  "kind": "PodList",
+  "apiVersion": "v1",
+  "metadata": {},
+  "items": [
+    {
+      "metadata": {
+        "name": "configs-db-289919966-phz6s",
+        "generateName": "configs-db-289919966-",
+        "namespace": "default",
+        "selfLink": "/api/v1/namespaces/default/pods/configs-db-289919966-phz6s",
+        "uid": "af1b5325-d8cf-11e6-84fa-0800278a0c83",
+        "resourceVersion": "16439",
+        "creationTimestamp": "2017-01-12T14:01:58Z",
+        "labels": {
+          "name": "configs-db",
+          "pod-template-hash": "289919966"
+        },
+        "annotations": {
+          "kubernetes.io/config.seen": "2017-01-16T13:01:12.824003566Z",
+          "kubernetes.io/config.source": "api",
+          "kubernetes.io/created-by": "{\"kind\":\"SerializedReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"ReplicaSet\",\"namespace\":\"default\",\"name\":\"configs-db-289919966\",\"uid\":\"af1ad88a-d8cf-11e6-84fa-0800278a0c83\",\"apiVersion\":\"extensions\",\"resourceVersion\":\"16139\"}}\n",
+          "prometheus.io.scrape": "false"
+        },
+        "ownerReferences": [
+          {
+            "apiVersion": "extensions/v1beta1",
+            "kind": "ReplicaSet",
+            "name": "configs-db-289919966",
+            "uid": "af1ad88a-d8cf-11e6-84fa-0800278a0c83",
+            "controller": true
+          }
+        ]
+      },
+      "spec": {
+        "volumes": [
+          {
+            "name": "default-token-bzbt2",
+            "secret": {
+              "secretName": "default-token-bzbt2",
+              "defaultMode": 420
+            }
+          }
+        ],
+        "containers": [
+          {
+            "name": "configs-db",
+            "image": "quay.io/weaveworks/configs-db",
+            "ports": [
+              {
+                "containerPort": 5432,
+                "protocol": "TCP"
+              }
+            ],
+            "resources": {},
+            "volumeMounts": [
+              {
+                "name": "default-token-bzbt2",
+                "readOnly": true,
+                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+              }
+            ],
+            "terminationMessagePath": "/dev/termination-log",
+            "imagePullPolicy": "IfNotPresent"
+          }
+        ],
+        "restartPolicy": "Always",
+        "terminationGracePeriodSeconds": 30,
+        "dnsPolicy": "ClusterFirst",
+        "serviceAccountName": "default",
+        "serviceAccount": "default",
+        "nodeName": "minikube",
+        "securityContext": {}
+      },
+      "status": {
+        "phase": "Running",
+        "conditions": [
+          {
+            "type": "Initialized",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2017-01-12T14:01:59Z"
+          },
+          {
+            "type": "Ready",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2017-01-16T13:01:32Z"
+          },
+          {
+            "type": "PodScheduled",
+            "status": "True",
+            "lastProbeTime": null,
+            "lastTransitionTime": "2017-01-12T14:01:58Z"
+          }
+        ],
+        "hostIP": "192.168.99.100",
+        "podIP": "172.17.0.23",
+        "startTime": "2017-01-12T14:01:59Z",
+        "containerStatuses": [
+          {
+            "name": "configs-db",
+            "state": {
+              "running": {
+                "startedAt": "2017-01-16T13:01:25Z"
+              }
+            },
+            "lastState": {
+              "terminated": {
+                "exitCode": 0,
+                "reason": "Completed",
+                "startedAt": "2017-01-12T14:02:00Z",
+                "finishedAt": "2017-01-16T11:54:52Z",
+                "containerID": "docker://1e8bb78d93fbf1395d301e81bc30e3416c934e6180d0684f8576e8383c41d070"
+              }
+            },
+            "ready": true,
+            "restartCount": 1,
+            "image": "quay.io/weaveworks/configs-db",
+            "imageID": "docker://sha256:f6d024621defbdb2e9124da2f4fef1ab02d9d329405722c5c519d96e5a17eeb7",
+            "containerID": "docker://9a5091295c7e6616237162ffefb89012e04f9d26d8e1b732b6a8a77b239e6052"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+---
+# Set up Docker
+# See also: legacy gce.sh script
+
+# Distribution-specific tasks:
+- include: debian.yml
+  when: ansible_os_family == "Debian"
+
+- include: redhat.yml
+  when: ansible_os_family == "RedHat"

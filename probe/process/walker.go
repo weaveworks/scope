@@ -4,15 +4,16 @@ import "sync"
 
 // Process represents a single process.
 type Process struct {
-	PID, PPID      int
-	Name           string
-	Cmdline        string
-	Threads        int
-	Jiffies        uint64
-	RSSBytes       uint64
-	RSSBytesLimit  uint64
-	OpenFilesCount int
-	OpenFilesLimit uint64
+	PID, PPID         int
+	Name              string
+	Cmdline           string
+	Threads           int
+	Jiffies           uint64
+	RSSBytes          uint64
+	RSSBytesLimit     uint64
+	OpenFilesCount    int
+	OpenFilesLimit    uint64
+	IsWaitingInAccept bool
 }
 
 // Walker is something that walks the /proc directory

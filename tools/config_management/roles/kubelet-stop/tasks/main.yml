@@ -1,0 +1,14 @@
+---
+
+- name: check if kubelet service exists
+  stat:
+    path: /etc/init.d/kubelet
+  register: kubelet
+
+# avoids having weave-net and weave-kube conflict in some test cases (e.g. 130_expose_test.sh)
+- name: stop kubelet service
+  systemd:
+    name: kubelet
+    state: stopped
+    enabled: no
+  when: kubelet.stat.exists

@@ -14,12 +14,17 @@ const (
 	ScopeProbeVersionHeader = "X-Scope-Probe-Version"
 )
 
+// HistoricReportsCapability indicates whether reports older than the
+// current time (-app.window) can be retrieved.
+const HistoricReportsCapability = "historic_reports"
+
 // Details are some generic details that can be fetched from /api
 type Details struct {
-	ID       string      `json:"id"`
-	Version  string      `json:"version"`
-	Hostname string      `json:"hostname"`
-	Plugins  PluginSpecs `json:"plugins,omitempty"`
+	ID           string          `json:"id"`
+	Version      string          `json:"version"`
+	Hostname     string          `json:"hostname"`
+	Plugins      PluginSpecs     `json:"plugins,omitempty"`
+	Capabilities map[string]bool `json:"capabilities,omitempty"`
 
 	NewVersion *NewVersionInfo `json:"newVersion,omitempty"`
 }

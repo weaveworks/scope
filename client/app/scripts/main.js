@@ -1,22 +1,26 @@
-require('font-awesome-webpack');
-require('../styles/main.less');
-require('../images/favicon.ico');
-
 import 'babel-polyfill';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 
+import '../styles/main.scss';
+import '../images/favicon.ico';
 import configureStore from './stores/configureStore';
-import App from './components/app';
 
 const store = configureStore();
 
-ReactDOM.render(
-  <Provider store={store}>
-    <div>
-      <App />
-    </div>
-  </Provider>,
-  document.getElementById('app')
-);
+function renderApp() {
+  const App = require('./components/app').default;
+  ReactDOM.render(
+    (
+      <Provider store={store}>
+        <App />
+      </Provider>
+    ), document.getElementById('app')
+  );
+}
+
+renderApp();
+if (module.hot) {
+  module.hot.accept('./components/app', renderApp);
+}

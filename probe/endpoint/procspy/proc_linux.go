@@ -10,19 +10,31 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
+	log "github.com/sirupsen/logrus"
 
-	"github.com/weaveworks/scope/common/fs"
-	"github.com/weaveworks/scope/common/marshal"
+	"github.com/weaveworks/common/fs"
 	"github.com/weaveworks/scope/probe/process"
+
+	"golang.org/x/sys/unix"
 )
 
 var (
 	procRoot               = "/proc"
 	namespaceKey           = []string{"procspy", "namespaces"}
 	netNamespacePathSuffix = ""
+	ipv6IsSupported        = tcp6FileExists()
 )
+
+func tcp6FileExists() bool {
+	filename := filepath.Join(procRoot, "self/net/tcp6")
+	f, err := fs.Open(filename)
+	if err != nil {
+		return false
+	}
+	f.Close()
+	return true
+}
 
 type pidWalker struct {
 	walker      process.Walker
@@ -41,19 +53,14 @@ func newPidWalker(walker process.Walker, tickc <-chan time.Time, fdBlockSize uin
 	return w
 }
 
-// SetProcRoot sets the location of the proc filesystem.
-func SetProcRoot(root string) {
-	procRoot = root
-}
-
 func getKernelVersion() (major, minor int, err error) {
-	var u syscall.Utsname
-	if err = syscall.Uname(&u); err != nil {
+	var u unix.Utsname
+	if err = unix.Uname(&u); err != nil {
 		return
 	}
 
 	// Kernel versions are not always a semver, so we have to do minimal parsing.
-	release := marshal.FromUtsname(u.Release)
+	release := string(u.Release[:bytes.IndexByte(u.Release[:], 0)])
 	if n, err := fmt.Sscanf(release, "%d.%d", &major, &minor); err != nil || n != 2 {
 		return 0, 0, fmt.Errorf("Malformed version: %s", release)
 	}
@@ -89,10 +96,8 @@ func getNetNamespacePathSuffix() string {
 	return netNamespacePathSuffix
 }
 
-// Read the connections for a group of processes living in the same namespace,
-// which are found (identically) in /proc/PID/net/tcp{,6} for any of the
-// processes.
-func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process) (bool, error) {
+// ReadTCPFiles reads the proc files tcp and tcp6 for a pid
+func ReadTCPFiles(pid int, buf *bytes.Buffer) (int64, error) {
 	var (
 		errRead  error
 		errRead6 error
@@ -100,29 +105,44 @@ func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process
 		read6    int64
 	)
 
-	for _, p := range namespaceProcs {
-		dirName := strconv.Itoa(p.PID)
+	// even for tcp4 connections, we need to read the "tcp6" file because of IPv4-Mapped IPv6 Addresses
 
-		read, errRead = readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
+	dirName := strconv.Itoa(pid)
+	read, errRead = readFile(filepath.Join(procRoot, dirName, "/net/tcp"), buf)
+	if ipv6IsSupported {
 		read6, errRead6 = readFile(filepath.Join(procRoot, dirName, "/net/tcp6"), buf)
+	}
 
-		if errRead != nil || errRead6 != nil {
+	if errRead != nil {
+		return read + read6, errRead
+	}
+	return read + read6, errRead6
+}
+
+// Read the connections for a group of processes living in the same namespace,
+// which are found (identically) in /proc/PID/net/tcp{,6} for any of the
+// processes.
+func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process) (bool, error) {
+	var (
+		read int64
+		err  error
+	)
+	for _, p := range namespaceProcs {
+		read, err = ReadTCPFiles(p.PID, buf)
+		if err != nil {
 			// try next process
 			continue
 		}
-		return read+read6 > 0, nil
+		// Return after succeeding on any process
+		// (proc/PID/net/tcp and proc/PID/net/tcp6 are identical for all the processes in the same namespace)
+		return read > 0, nil
 	}
 
-	// would be cool to have an or operation between errors
-	if errRead != nil {
-		return false, errRead
-	}
-	if errRead6 != nil {
-		return false, errRead6
+	if err != nil {
+		return false, err
 	}
 
 	return false, nil
-
 }
 
 // walkNamespace does the work of walk for a single namespace
@@ -195,6 +215,19 @@ func (w pidWalker) walkNamespace(namespaceID uint64, buf *bytes.Buffer, sockets 
 	return nil
 }
 
+// ReadNetnsFromPID gets the netns inode of the specified pid
+func ReadNetnsFromPID(pid int) (uint64, error) {
+	var statT syscall.Stat_t
+
+	dirName := strconv.Itoa(pid)
+	netNamespacePath := filepath.Join(procRoot, dirName, getNetNamespacePathSuffix())
+	if err := fs.Stat(netNamespacePath, &statT); err != nil {
+		return 0, err
+	}
+
+	return statT.Ino, nil
+}
+
 // walk walks over all numerical (PID) /proc entries. It reads
 // /proc/PID/net/tcp{,6} for each namespace and sees if the ./fd/* files of each
 // process in that namespace are symlinks to sockets. Returns a map from socket
@@ -203,7 +236,6 @@ func (w pidWalker) walk(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 	var (
 		sockets    = map[uint64]*Proc{}              // map socket inode -> process
 		namespaces = map[uint64][]*process.Process{} // map network namespace id -> processes
-		statT      syscall.Stat_t
 	)
 
 	// We do two process traversals: One to group processes by namespace and
@@ -215,14 +247,11 @@ func (w pidWalker) walk(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 	// the processes living in that namespace.
 
 	w.walker.Walk(func(p, _ process.Process) {
-		dirName := strconv.Itoa(p.PID)
-
-		netNamespacePath := filepath.Join(procRoot, dirName, getNetNamespacePathSuffix())
-		if err := fs.Stat(netNamespacePath, &statT); err != nil {
+		namespaceID, err := ReadNetnsFromPID(p.PID)
+		if err != nil {
 			return
 		}
 
-		namespaceID := statT.Ino
 		namespaces[namespaceID] = append(namespaces[namespaceID], &p)
 	})
 

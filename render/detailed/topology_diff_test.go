@@ -5,9 +5,9 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/render/detailed"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/scope/test"
 )
 
 // ByID is a sort interface for a NodeSummary slice.
@@ -19,17 +19,21 @@ func (r ByID) Less(i, j int) bool { return r[i].ID < r[j].ID }
 
 func TestTopoDiff(t *testing.T) {
 	nodea := detailed.NodeSummary{
-		ID:         "nodea",
-		Label:      "Node A",
-		LabelMinor: "'ts an a",
-		Pseudo:     false,
-		Adjacency:  report.MakeIDList("nodeb"),
+		BasicNodeSummary: detailed.BasicNodeSummary{
+			ID:         "nodea",
+			Label:      "Node A",
+			LabelMinor: "'ts an a",
+			Pseudo:     false,
+		},
+		Adjacency: report.MakeIDList("nodeb"),
 	}
 	nodeap := nodea
 	nodeap.Adjacency = report.MakeIDList("nodeb", "nodeq") // not the same anymore
 	nodeb := detailed.NodeSummary{
-		ID:    "nodeb",
-		Label: "Node B",
+		BasicNodeSummary: detailed.BasicNodeSummary{
+			ID:    "nodeb",
+			Label: "Node B",
+		},
 	}
 
 	// Helper to make RenderableNode maps.
@@ -77,6 +81,22 @@ func TestTopoDiff(t *testing.T) {
 			have:  detailed.TopoDiff(nodes(nodea), nodes(nodeap)),
 			want: detailed.Diff{
 				Update: []detailed.NodeSummary{nodeap},
+			},
+		},
+		{
+			label: "no previous nodes",
+			have:  detailed.TopoDiff(nil, nodes(nodea)),
+			want: detailed.Diff{
+				Add:   []detailed.NodeSummary{nodea},
+				Reset: true,
+			},
+		},
+		{
+			label: "empty previous nodes",
+			have:  detailed.TopoDiff(nodes(), nodes(nodea)),
+			want: detailed.Diff{
+				Add:   []detailed.NodeSummary{nodea},
+				Reset: false,
 			},
 		},
 	} {
