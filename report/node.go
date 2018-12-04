@@ -19,7 +19,7 @@ type Node struct {
 	Latest         StringLatestMap          `json:"latest,omitempty"`
 	Metrics        Metrics                  `json:"metrics,omitempty" deepequal:"nil==empty"`
 	Parents        Sets                     `json:"parents,omitempty"`
-	Children       NodeSet                  `json:"children,omitempty"`
+	Children       NodeSet                  `json:"-"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
