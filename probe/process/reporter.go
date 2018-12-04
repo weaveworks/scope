@@ -32,7 +32,7 @@ var (
 	MetricTemplates = report.MetricTemplates{
 		CPUUsage:       {ID: CPUUsage, Label: "CPU", Format: report.PercentFormat, Priority: 1},
 		MemoryUsage:    {ID: MemoryUsage, Label: "Memory", Format: report.FilesizeFormat, Priority: 2},
-		OpenFilesCount: {ID: OpenFilesCount, Label: "Open Files", Format: report.IntegerFormat, Priority: 3},
+		OpenFilesCount: {ID: OpenFilesCount, Label: "Open files", Format: report.IntegerFormat, Priority: 3},
 	}
 )
 

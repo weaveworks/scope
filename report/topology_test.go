@@ -61,8 +61,8 @@ func TestStringSetMerge(t *testing.T) {
 		{input: report.MakeStringSet("a", "c"), other: report.MakeStringSet("a", "b"), want: report.MakeStringSet("a", "b", "c")},
 		{input: report.MakeStringSet("b"), other: report.MakeStringSet("a"), want: report.MakeStringSet("a", "b")},
 	} {
-		if want, have := testcase.want, testcase.input.Merge(testcase.other); !reflect.DeepEqual(want, have) {
-			t.Errorf("%v + %v: want %v, have %v", testcase.input, testcase.other, want, have)
+		if have, _ := testcase.input.Merge(testcase.other); !reflect.DeepEqual(testcase.want, have) {
+			t.Errorf("%v + %v: want %v, have %v", testcase.input, testcase.other, testcase.want, have)
 		}
 	}
 }

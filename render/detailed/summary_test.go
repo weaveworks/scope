@@ -132,8 +132,8 @@ func TestMakeNodeSummary(t *testing.T) {
 					Shape:      "hexagon",
 				},
 				Metadata: []report.MetadataRow{
-					{ID: docker.ImageName, Label: "Image", Value: fixture.ClientContainerImageName, Priority: 1},
-					{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 10, Truncate: 12},
+					{ID: docker.ImageName, Label: "Image name", Value: fixture.ClientContainerImageName, Priority: 2},
+					{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 11, Truncate: 12},
 				},
 				Adjacency: report.MakeIDList(fixture.ServerContainerNodeID),
 			},
@@ -252,9 +252,9 @@ func TestNodeMetadata(t *testing.T) {
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
 			want: []report.MetadataRow{
-				{ID: docker.ContainerStateHuman, Label: "State", Value: "running", Priority: 3},
-				{ID: docker.ContainerIPs, Label: "IPs", Value: "10.10.10.0/24, 10.10.10.1/24", Priority: 7},
-				{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 10, Truncate: 12},
+				{ID: docker.ContainerStateHuman, Label: "State", Value: "running", Priority: 4},
+				{ID: docker.ContainerIPs, Label: "IPs", Value: "10.10.10.0/24, 10.10.10.1/24", Priority: 8},
+				{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 11, Truncate: 12},
 			},
 		},
 		{
@@ -429,13 +429,13 @@ func TestNodeTables(t *testing.T) {
 				{
 					ID:    docker.EnvPrefix,
 					Type:  report.PropertyListType,
-					Label: "Environment Variables",
+					Label: "Environment variables",
 					Rows:  []report.Row{},
 				},
 				{
 					ID:    docker.LabelPrefix,
 					Type:  report.PropertyListType,
-					Label: "Docker Labels",
+					Label: "Docker labels",
 					Rows: []report.Row{
 						{
 							ID: "label_label1",

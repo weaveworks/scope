@@ -1,5 +1,6 @@
 import debug from 'debug';
 import React from 'react';
+import PropTypes from 'prop-types';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { debounce } from 'lodash';
@@ -11,7 +12,6 @@ import Logo from './logo';
 import Footer from './footer';
 import Sidebar from './sidebar';
 import HelpPanel from './help-panel';
-import CloudFeature from './cloud-feature';
 import TroubleshootingMenu from './troubleshooting-menu';
 import Search from './search';
 import Status from './status';
@@ -58,7 +58,6 @@ import {
 } from '../constants/key-codes';
 
 const keyPressLog = debug('scope:app-key-press');
-
 
 class App extends React.Component {
   constructor(props, context) {
@@ -202,14 +201,12 @@ class App extends React.Component {
 
           {showingTroubleshootingMenu && <TroubleshootingMenu />}
 
-          {showingDetails && <Details />}
+          {showingDetails && <Details
+            renderNodeDetailsExtras={this.props.renderNodeDetailsExtras}
+          />}
 
           <div className="header">
-            {timeTravelSupported && (
-              <CloudFeature alwaysShow>
-                <TimeTravelWrapper />
-              </CloudFeature>
-            )}
+            {timeTravelSupported && this.props.renderTimeTravel()}
 
             <div className="selectors">
               <div className="logo">
@@ -266,8 +263,16 @@ function mapStateToProps(state) {
   };
 }
 
+App.propTypes = {
+  renderTimeTravel: PropTypes.func,
+  renderNodeDetailsExtras: PropTypes.func,
+  monitor: PropTypes.bool,
+};
+
 App.defaultProps = {
-  monitor: false
+  renderTimeTravel: () => <TimeTravelWrapper />,
+  renderNodeDetailsExtras: () => null,
+  monitor: false,
 };
 
 export default connect(mapStateToProps)(App);

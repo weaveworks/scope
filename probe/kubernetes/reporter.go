@@ -25,6 +25,14 @@ const (
 	NodeType           = report.KubernetesNodeType
 	Type               = report.KubernetesType
 	Ports              = report.KubernetesPorts
+	VolumeClaim        = report.KubernetesVolumeClaim
+	StorageClassName   = report.KubernetesStorageClassName
+	AccessModes        = report.KubernetesAccessModes
+	ReclaimPolicy      = report.KubernetesReclaimPolicy
+	Status             = report.KubernetesStatus
+	Message            = report.KubernetesMessage
+	VolumeName         = report.KubernetesVolumeName
+	Provisioner        = report.KubernetesProvisioner
 )
 
 // Exposed for testing
@@ -56,8 +64,8 @@ var (
 		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
 		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
 		Strategy:           {ID: Strategy, Label: "Strategy", From: report.FromLatest, Priority: 7},
 	}
@@ -68,7 +76,7 @@ var (
 		NodeType:        {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:       {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:         {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		DesiredReplicas: {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas: {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 4},
 		report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 5},
 	}
 
@@ -78,8 +86,8 @@ var (
 		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed Gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired Replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
 		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
 	}
 
@@ -90,7 +98,7 @@ var (
 		Namespace:     {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:       {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
 		Schedule:      {ID: Schedule, Label: "Schedule", From: report.FromLatest, Priority: 4},
-		LastScheduled: {ID: LastScheduled, Label: "Last Scheduled", From: report.FromLatest, Datatype: report.DateTime, Priority: 5},
+		LastScheduled: {ID: LastScheduled, Label: "Last scheduled", From: report.FromLatest, Datatype: report.DateTime, Priority: 5},
 		Suspended:     {ID: Suspended, Label: "Suspended", From: report.FromLatest, Priority: 6},
 		ActiveJobs:    {ID: ActiveJobs, Label: "# Jobs", From: report.FromLatest, Datatype: report.Number, Priority: 7},
 		report.Pod:    {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 8},
@@ -98,10 +106,32 @@ var (
 
 	CronJobMetricTemplates = PodMetricTemplates
 
+	PersistentVolumeMetadataTemplates = report.MetadataTemplates{
+		NodeType:         {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		VolumeClaim:      {ID: VolumeClaim, Label: "Volume claim", From: report.FromLatest, Priority: 2},
+		StorageClassName: {ID: StorageClassName, Label: "Storage class", From: report.FromLatest, Priority: 3},
+		AccessModes:      {ID: AccessModes, Label: "Access modes", From: report.FromLatest, Priority: 5},
+		Status:           {ID: Status, Label: "Status", From: report.FromLatest, Priority: 6},
+	}
+
+	PersistentVolumeClaimMetadataTemplates = report.MetadataTemplates{
+		NodeType:         {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		Status:           {ID: Status, Label: "Status", From: report.FromLatest, Priority: 3},
+		VolumeName:       {ID: VolumeName, Label: "Volume", From: report.FromLatest, Priority: 4},
+		StorageClassName: {ID: StorageClassName, Label: "Storage class", From: report.FromLatest, Priority: 5},
+	}
+
+	StorageClassMetadataTemplates = report.MetadataTemplates{
+		NodeType:    {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Name:        {ID: Name, Label: "Name", From: report.FromLatest, Priority: 2},
+		Provisioner: {ID: Provisioner, Label: "Provisioner", From: report.FromLatest, Priority: 3},
+	}
+
 	TableTemplates = report.TableTemplates{
 		LabelPrefix: {
 			ID:     LabelPrefix,
-			Label:  "Kubernetes Labels",
+			Label:  "Kubernetes labels",
 			Type:   report.PropertyListType,
 			Prefix: LabelPrefix,
 		},
@@ -110,13 +140,13 @@ var (
 	ScalingControls = []report.Control{
 		{
 			ID:    ScaleDown,
-			Human: "Scale Down",
+			Human: "Scale down",
 			Icon:  "fa-minus",
 			Rank:  0,
 		},
 		{
 			ID:    ScaleUp,
-			Human: "Scale Up",
+			Human: "Scale up",
 			Icon:  "fa-plus",
 			Rank:  1,
 		},
@@ -183,8 +213,8 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 // IsPauseImageName indicates whether an image name corresponds to a
 // kubernetes pause container image.
 func IsPauseImageName(imageName string) bool {
-	return strings.Contains(imageName, "google_containers/pause")
-
+	return strings.Contains(imageName, "google_containers/pause") ||
+		strings.Contains(imageName, "k8s.gcr.io/pause")
 }
 
 func isPauseContainer(n report.Node, rpt report.Report) bool {
@@ -219,10 +249,7 @@ func (r *Reporter) Tag(rpt report.Report) (report.Report, error) {
 			n = n.WithLatest(report.DoesNotMakeConnections, mtime.Now(), "")
 		}
 
-		rpt.Container.Nodes[id] = n.WithParents(report.MakeSets().Add(
-			report.Pod,
-			report.MakeStringSet(report.MakePodNodeID(uid)),
-		))
+		rpt.Container.Nodes[id] = n.WithParent(report.Pod, report.MakePodNodeID(uid))
 	}
 	return rpt, nil
 }
@@ -259,6 +286,18 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
+	persistentVolumeTopology, _, err := r.persistentVolumeTopology()
+	if err != nil {
+		return result, err
+	}
+	persistentVolumeClaimTopology, _, err := r.persistentVolumeClaimTopology()
+	if err != nil {
+		return result, err
+	}
+	storageClassTopology, _, err := r.storageClassTopology()
+	if err != nil {
+		return result, err
+	}
 	result.Pod = result.Pod.Merge(podTopology)
 	result.Service = result.Service.Merge(serviceTopology)
 	result.Host = result.Host.Merge(hostTopology)
@@ -267,6 +306,9 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.CronJob = result.CronJob.Merge(cronJobTopology)
 	result.Deployment = result.Deployment.Merge(deploymentTopology)
 	result.Namespace = result.Namespace.Merge(namespaceTopology)
+	result.PersistentVolume = result.PersistentVolume.Merge(persistentVolumeTopology)
+	result.PersistentVolumeClaim = result.PersistentVolumeClaim.Merge(persistentVolumeClaimTopology)
+	result.StorageClass = result.StorageClass.Merge(storageClassTopology)
 	return result, nil
 }
 
@@ -312,7 +354,7 @@ func (r *Reporter) hostTopology(services []Service) report.Topology {
 	t := report.MakeTopology()
 	t.AddNode(
 		report.MakeNode(report.MakeHostNodeID(r.hostID)).
-			WithSets(report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(serviceNetwork.String()))))
+			WithSets(report.MakeSets().AddString(host.LocalNetworks, serviceNetwork.String())))
 	return t
 }
 
@@ -374,6 +416,45 @@ func (r *Reporter) cronJobTopology() (report.Topology, []CronJob, error) {
 		return nil
 	})
 	return result, cronJobs, err
+}
+
+func (r *Reporter) persistentVolumeTopology() (report.Topology, []PersistentVolume, error) {
+	persistentVolumes := []PersistentVolume{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(PersistentVolumeMetadataTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkPersistentVolumes(func(p PersistentVolume) error {
+		result.AddNode(p.GetNode())
+		persistentVolumes = append(persistentVolumes, p)
+		return nil
+	})
+	return result, persistentVolumes, err
+}
+
+func (r *Reporter) persistentVolumeClaimTopology() (report.Topology, []PersistentVolumeClaim, error) {
+	persistentVolumeClaims := []PersistentVolumeClaim{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(PersistentVolumeClaimMetadataTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkPersistentVolumeClaims(func(p PersistentVolumeClaim) error {
+		result.AddNode(p.GetNode())
+		persistentVolumeClaims = append(persistentVolumeClaims, p)
+		return nil
+	})
+	return result, persistentVolumeClaims, err
+}
+
+func (r *Reporter) storageClassTopology() (report.Topology, []StorageClass, error) {
+	storageClasses := []StorageClass{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(StorageClassMetadataTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkStorageClasses(func(p StorageClass) error {
+		result.AddNode(p.GetNode())
+		storageClasses = append(storageClasses, p)
+		return nil
+	})
+	return result, storageClasses, err
 }
 
 type labelledChild interface {

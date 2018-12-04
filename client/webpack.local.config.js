@@ -5,7 +5,7 @@ const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const SassLintPlugin = require('sasslint-webpack-plugin');
 const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
-const { themeColorsAsScss } = require('weaveworks-ui-components/lib/theme');
+const { themeVarsAsScss } = require('weaveworks-ui-components/lib/theme');
 
 /**
  * This is the Webpack configuration file for local development.
@@ -134,7 +134,7 @@ module.exports = {
           }, {
             loader: 'sass-loader',
             options: {
-              data: themeColorsAsScss(),
+              data: themeVarsAsScss(),
               includePaths: [
                 path.resolve(__dirname, './node_modules/xterm'),
                 path.resolve(__dirname, './node_modules/font-awesome'),

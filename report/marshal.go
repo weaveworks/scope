@@ -6,10 +6,10 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/ugorji/go/codec"
@@ -26,17 +26,27 @@ func (s *dummySelfer) CodecEncodeSelf(encoder *codec.Encoder) {
 	panic("This shouldn't happen: perhaps something has gone wrong in code generation?")
 }
 
-// WriteBinary writes a Report as a gzipped msgpack.
-func (rep Report) WriteBinary(w io.Writer, compressionLevel int) error {
-	gzwriter, err := gzip.NewWriterLevel(w, compressionLevel)
-	if err != nil {
-		return err
-	}
-	if err = codec.NewEncoder(gzwriter, &codec.MsgpackHandle{}).Encode(&rep); err != nil {
-		return err
+// StdoutPublisher is useful when debugging
+type StdoutPublisher struct{}
+
+// Publish implements probe.ReportPublisher
+func (StdoutPublisher) Publish(rep Report) error {
+	handle := &codec.JsonHandle{Indent: 2}
+	handle.Canonical = true
+	return codec.NewEncoder(os.Stdout, handle).Encode(rep)
+}
+
+// WriteBinary writes a Report as a gzipped msgpack into a bytes.Buffer
+func (rep Report) WriteBinary() (*bytes.Buffer, error) {
+	w := &bytes.Buffer{}
+	gzwriter := gzipWriterPool.Get().(*gzip.Writer)
+	gzwriter.Reset(w)
+	defer gzipWriterPool.Put(gzwriter)
+	if err := codec.NewEncoder(gzwriter, &codec.MsgpackHandle{}).Encode(&rep); err != nil {
+		return nil, err
 	}
 	gzwriter.Close() // otherwise the content won't get flushed to the output stream
-	return nil
+	return w, nil
 }
 
 type byteCounter struct {
@@ -50,13 +60,22 @@ func (c byteCounter) Read(p []byte) (n int, err error) {
 	return n, err
 }
 
+// buffer pools to reduce garbage-collection
+var bufferPool = &sync.Pool{
+	New: func() interface{} { return new(bytes.Buffer) },
+}
+var gzipWriterPool = &sync.Pool{
+	// NewWriterLevel() only errors if the compression level is invalid, which can't happen here
+	New: func() interface{} { w, _ := gzip.NewWriterLevel(nil, gzip.DefaultCompression); return w },
+}
+
 // ReadBinary reads bytes into a Report.
 //
 // Will decompress the binary if gzipped is true, and will use the given
 // codecHandle to decode it.
 func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handle) error {
 	var err error
-	var compressedSize, uncompressedSize uint64
+	var compressedSize uint64
 
 	// We have historically had trouble with reports being too large. We are
 	// keeping this instrumentation around to help us implement
@@ -71,12 +90,14 @@ func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handl
 		}
 	}
 	// Read everything into memory before decoding: it's faster
-	buf, err := ioutil.ReadAll(r)
+	buf := bufferPool.Get().(*bytes.Buffer)
+	buf.Reset()
+	defer bufferPool.Put(buf)
+	uncompressedSize, err := buf.ReadFrom(r)
 	if err != nil {
 		return err
 	}
-	uncompressedSize = uint64(len(buf))
-	if err := rep.ReadBytes(buf, codecHandle); err != nil {
+	if err := rep.ReadBytes(buf.Bytes(), codecHandle); err != nil {
 		return err
 	}
 	log.Debugf(
@@ -109,11 +130,13 @@ func MakeFromBytes(buf []byte) (*Report, error) {
 	if err != nil {
 		return nil, err
 	}
-	buf, err = ioutil.ReadAll(r)
+	buffer := bufferPool.Get().(*bytes.Buffer)
+	buffer.Reset()
+	defer bufferPool.Put(buffer)
+	uncompressedSize, err := buffer.ReadFrom(r)
 	if err != nil {
 		return nil, err
 	}
-	uncompressedSize := len(buf)
 	log.Debugf(
 		"Received report sizes: compressed %d bytes, uncompressed %d bytes (%.2f%%)",
 		compressedSize,
@@ -121,7 +144,7 @@ func MakeFromBytes(buf []byte) (*Report, error) {
 		float32(compressedSize)/float32(uncompressedSize)*100,
 	)
 	rep := MakeReport()
-	if err := rep.ReadBytes(buf, &codec.MsgpackHandle{}); err != nil {
+	if err := rep.ReadBytes(buffer.Bytes(), &codec.MsgpackHandle{}); err != nil {
 		return nil, err
 	}
 	return &rep, nil
@@ -149,7 +172,7 @@ func MakeFromFile(path string) (rpt Report, _ error) {
 // WriteToFile writes a Report to a file. The encoding is determined
 // by the file extension (".msgpack" or ".json", with an optional
 // ".gz").
-func (rep *Report) WriteToFile(path string, compressionLevel int) error {
+func (rep *Report) WriteToFile(path string) error {
 	f, err := os.Create(path)
 	if err != nil {
 		return err
@@ -166,10 +189,9 @@ func (rep *Report) WriteToFile(path string, compressionLevel int) error {
 	defer bufwriter.Flush()
 	w = bufwriter
 	if gzipped {
-		gzwriter, err := gzip.NewWriterLevel(w, compressionLevel)
-		if err != nil {
-			return err
-		}
+		gzwriter := gzipWriterPool.Get().(*gzip.Writer)
+		gzwriter.Reset(w)
+		defer gzipWriterPool.Put(gzwriter)
 		defer gzwriter.Close()
 		w = gzwriter
 	}

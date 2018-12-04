@@ -15,6 +15,7 @@ class Details extends React.Component {
             index={index}
             cardCount={details.size}
             nodeControlStatus={controlStatus.get(obj.id)}
+            renderNodeDetailsExtras={this.props.renderNodeDetailsExtras}
             {...obj}
           />
         ))}

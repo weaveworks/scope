@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/report"
@@ -15,6 +16,22 @@ const (
 	Name   = "name"
 	Domain = "domain"
 )
+
+func TestWithLatest(t *testing.T) {
+	mtime.NowForce(time.Now())
+	defer mtime.NowReset()
+
+	latests1 := map[string]string{Name: "x"}
+	latests2 := map[string]string{PID: "123"}
+	node1 := report.MakeNode("node1").WithLatests(latests1)
+	assert.Equal(t, 1, node1.Latest.Len())
+	node2 := node1.WithLatests(latests1)
+	assert.Equal(t, node1, node2)
+	node3 := node1.WithLatests(latests2)
+	assert.Equal(t, 2, node3.Latest.Len())
+	node4 := node1.WithLatests(latests2)
+	assert.Equal(t, node3, node4)
+}
 
 func TestMergeNodes(t *testing.T) {
 	mtime.NowForce(time.Now())

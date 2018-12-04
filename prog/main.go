@@ -93,6 +93,7 @@ type flags struct {
 }
 
 type probeFlags struct {
+	printOnStdout          bool
 	token                  string
 	httpListen             string
 	publishInterval        time.Duration
@@ -152,6 +153,7 @@ type appFlags struct {
 	collectorURL              string
 	s3URL                     string
 	controlRouterURL          string
+	controlRPCTimeout         time.Duration
 	pipeRouterURL             string
 	natsHostname              string
 	memcachedHostname         string
@@ -273,6 +275,7 @@ func setupFlags(flags *flags) {
 	flag.Bool("app-only", false, "Only run the app.")
 
 	// Probe flags
+	flag.BoolVar(&flags.probe.printOnStdout, "probe.publish.stdout", false, "Print reports on stdout instead of sending to app, for debugging")
 	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.token, probeTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
@@ -348,6 +351,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.app.collectorURL, "app.collector", "local", "Collector to use (local, dynamodb, or file/directory)")
 	flag.StringVar(&flags.app.s3URL, "app.collector.s3", "local", "S3 URL to use (when collector is dynamodb)")
 	flag.StringVar(&flags.app.controlRouterURL, "app.control.router", "local", "Control router to use (local or sqs)")
+	flag.DurationVar(&flags.app.controlRPCTimeout, "app.control.rpctimeout", time.Minute, "Timeout for control RPC")
 	flag.StringVar(&flags.app.pipeRouterURL, "app.pipe.router", "local", "Pipe router to use (local)")
 	flag.StringVar(&flags.app.natsHostname, "app.nats", "", "Hostname for NATS service to use for shortcut reports.  If empty, shortcut reporting will be disabled.")
 	flag.StringVar(&flags.app.memcachedHostname, "app.memcached.hostname", "", "Hostname for memcached service to use when caching reports.  If empty, no memcached will be used.")

@@ -4,6 +4,7 @@
     "stylelint-config-styled-components",
     "stylelint-config-recommended",
   ],
+  "plugins": ["stylelint-declaration-use-variable"],
   "rules": {
     "block-no-empty": null,
     "color-named": "never",
@@ -15,5 +16,15 @@
       "ignoreProperties": ["tab-size", "hyphens"],
     }],
     "selector-type-no-unknown": null,
+    "sh-waqar/declaration-use-variable": [[
+      "border-radius",
+      "border-top-left-radius",
+      "border-top-right-radius",
+      "border-bottom-left-radius",
+      "border-bottom-right-radius",
+      "font-family",
+      "font-size",
+      "z-index"
+    ]],
   },
 }
