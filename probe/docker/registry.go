@@ -1,14 +1,12 @@
 package docker
 
 import (
-	"fmt"
-	"strings"
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-radix"
 	docker_client "github.com/fsouza/go-dockerclient"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/report"
@@ -470,15 +468,4 @@ func (r *registry) WalkNetworks(f func(docker_client.Network)) {
 	for _, network := range r.networks {
 		f(network)
 	}
-}
-
-// ImageNameWithoutVersion splits the image name apart, returning the name
-// without the version, if possible
-func ImageNameWithoutVersion(name string) string {
-	parts := strings.SplitN(name, "/", 3)
-	if len(parts) == 3 {
-		name = fmt.Sprintf("%s/%s", parts[1], parts[2])
-	}
-	parts = strings.SplitN(name, ":", 2)
-	return parts[0]
 }

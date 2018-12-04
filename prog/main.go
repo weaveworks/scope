@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	billing "github.com/weaveworks/billing-client"
 	"github.com/weaveworks/scope/app"
@@ -93,6 +93,7 @@ type flags struct {
 }
 
 type probeFlags struct {
+	printOnStdout          bool
 	token                  string
 	httpListen             string
 	publishInterval        time.Duration
@@ -118,6 +119,9 @@ type probeFlags struct {
 	dockerEnabled  bool
 	dockerInterval time.Duration
 	dockerBridge   string
+
+	criEnabled  bool
+	criEndpoint string
 
 	kubernetesEnabled      bool
 	kubernetesNodeName     string
@@ -152,6 +156,7 @@ type appFlags struct {
 	collectorURL              string
 	s3URL                     string
 	controlRouterURL          string
+	controlRPCTimeout         time.Duration
 	pipeRouterURL             string
 	natsHostname              string
 	memcachedHostname         string
@@ -273,6 +278,7 @@ func setupFlags(flags *flags) {
 	flag.Bool("app-only", false, "Only run the app.")
 
 	// Probe flags
+	flag.BoolVar(&flags.probe.printOnStdout, "probe.publish.stdout", false, "Print reports on stdout instead of sending to app, for debugging")
 	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.token, probeTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
@@ -281,7 +287,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.probe.pluginsRoot, "probe.plugins.root", "/var/run/scope/plugins", "Root directory to search for plugins")
 	flag.BoolVar(&flags.probe.noControls, "probe.no-controls", false, "Disable controls (e.g. start/stop containers, terminals, logs ...)")
 	flag.BoolVar(&flags.probe.noCommandLineArguments, "probe.omit.cmd-args", false, "Disable collection of command-line arguments")
-	flag.BoolVar(&flags.probe.noEnvironmentVariables, "probe.omit.env-vars", false, "Disable collection of environment variables")
+	flag.BoolVar(&flags.probe.noEnvironmentVariables, "probe.omit.env-vars", true, "Disable collection of environment variables")
 
 	flag.BoolVar(&flags.probe.insecure, "probe.insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
 	flag.StringVar(&flags.probe.resolver, "probe.resolver", "", "IP address & port of resolver to use.  Default is to use system resolver.")
@@ -300,6 +306,10 @@ func setupFlags(flags *flags) {
 	flag.BoolVar(&flags.probe.dockerEnabled, "probe.docker", false, "collect Docker-related attributes for processes")
 	flag.DurationVar(&flags.probe.dockerInterval, "probe.docker.interval", 10*time.Second, "how often to update Docker attributes")
 	flag.StringVar(&flags.probe.dockerBridge, "probe.docker.bridge", "docker0", "the docker bridge name")
+
+	// CRI
+	flag.BoolVar(&flags.probe.criEnabled, "probe.cri", true, "collect CRI-related attributes for processes")
+	flag.StringVar(&flags.probe.criEndpoint, "probe.cri.endpoint", "unix///var/run/dockershim.sock", "The endpoint to connect to the CRI")
 
 	// K8s
 	flag.BoolVar(&flags.probe.kubernetesEnabled, "probe.kubernetes", false, "collect kubernetes-related attributes for containers")
@@ -348,6 +358,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.app.collectorURL, "app.collector", "local", "Collector to use (local, dynamodb, or file/directory)")
 	flag.StringVar(&flags.app.s3URL, "app.collector.s3", "local", "S3 URL to use (when collector is dynamodb)")
 	flag.StringVar(&flags.app.controlRouterURL, "app.control.router", "local", "Control router to use (local or sqs)")
+	flag.DurationVar(&flags.app.controlRPCTimeout, "app.control.rpctimeout", time.Minute, "Timeout for control RPC")
 	flag.StringVar(&flags.app.pipeRouterURL, "app.pipe.router", "local", "Pipe router to use (local)")
 	flag.StringVar(&flags.app.natsHostname, "app.nats", "", "Hostname for NATS service to use for shortcut reports.  If empty, shortcut reporting will be disabled.")
 	flag.StringVar(&flags.app.memcachedHostname, "app.memcached.hostname", "", "Hostname for memcached service to use when caching reports.  If empty, no memcached will be used.")

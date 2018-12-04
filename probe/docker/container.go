@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	docker "github.com/fsouza/go-dockerclient"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
@@ -277,6 +277,17 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 		ips = append(ips, c.container.NetworkSettings.IPAddress)
 	}
 
+	// Fetch IP addresses from the container's namespace
+	cidrs, err := namespaceIPAddresses(c.container.State.Pid)
+	if err != nil {
+		log.Debugf("container %s: failed to get addresses: %s", c.container.ID, err)
+	}
+	for _, cidr := range cidrs {
+		// This address can duplicate an address fetched from Docker earlier,
+		// but we eventually turn the lists into sets which will remove duplicates.
+		ips = append(ips, cidr.IP.String())
+	}
+
 	// For now, for the proof-of-concept, we just add networks as a set of
 	// names. For the next iteration, we will probably want to create a new
 	// Network topology, populate the network nodes with all of the details
@@ -396,9 +407,7 @@ func (c *container) getBaseNode() report.Node {
 		ContainerCommand:  c.getSanitizedCommand(),
 		ImageID:           c.Image(),
 		ContainerHostname: c.Hostname(),
-	}).WithParents(report.MakeSets().
-		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
-	)
+	}).WithParent(report.ContainerImage, report.MakeContainerImageNodeID(c.Image()))
 	result = result.AddPrefixPropertyList(LabelPrefix, c.container.Config.Labels)
 	if !c.noEnvironmentVariables {
 		result = result.AddPrefixPropertyList(EnvPrefix, c.env())
@@ -466,4 +475,28 @@ func ExtractContainerIPsWithScopes(nmd report.Node) []string {
 func ContainerIsStopped(c Container) bool {
 	state := c.StateString()
 	return (state != StateRunning && state != StateRestarting && state != StatePaused)
+}
+
+// splitImageName returns parts of the full image name (image name, image tag).
+func splitImageName(imageName string) []string {
+	parts := strings.SplitN(imageName, "/", 3)
+	if len(parts) == 3 {
+		imageName = fmt.Sprintf("%s/%s", parts[1], parts[2])
+	}
+	return strings.SplitN(imageName, ":", 2)
+}
+
+// ImageNameWithoutTag splits the image name apart, returning the name
+// without the version, if possible
+func ImageNameWithoutTag(imageName string) string {
+	return splitImageName(imageName)[0]
+}
+
+// ImageNameTag splits the image name apart, returning the version tag, if possible
+func ImageNameTag(imageName string) string {
+	imageNameParts := splitImageName(imageName)
+	if len(imageNameParts) < 2 {
+		return ""
+	}
+	return imageNameParts[1]
 }

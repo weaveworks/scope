@@ -89,7 +89,6 @@ export const initialState = makeMap({
   viewport: makeMap({ width: 0, height: 0 }),
   websocketClosed: false,
   zoomCache: makeMap(),
-  serviceImages: makeMap()
 });
 
 function calcSelectType(topology) {
@@ -281,7 +280,7 @@ export function rootReducer(state = initialState, action) {
       return closeNodeDetails(state, action.nodeId);
     }
 
-    case ActionTypes.CLICK_CLOSE_TERMINAL: {
+    case ActionTypes.CLOSE_TERMINAL: {
       return state.update('controlPipes', controlPipes => controlPipes.clear());
     }
 
@@ -374,11 +373,6 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.PAUSE_TIME_AT_NOW: {
       state = state.set('timeTravelTransitioning', false);
       return state.set('pausedAt', moment().utc().format());
-    }
-
-    case ActionTypes.START_TIME_TRAVEL: {
-      state = state.set('timeTravelTransitioning', false);
-      return state.set('pausedAt', action.timestamp || moment().utc().format());
     }
 
     case ActionTypes.JUMP_TO_TIME: {
@@ -688,7 +682,8 @@ export function rootReducer(state = initialState, action) {
         pinnedMetricType: action.state.pinnedMetricType,
       });
       if (action.state.topologyOptions) {
-        state = state.set('topologyOptions', fromJS(action.state.topologyOptions));
+        const options = getDefaultTopologyOptions(state).mergeDeep(action.state.topologyOptions);
+        state = state.set('topologyOptions', options);
       }
       if (action.state.topologyViewMode) {
         state = state.set('topologyViewMode', action.state.topologyViewMode);
@@ -751,22 +746,6 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.SHUTDOWN: {
       return clearNodes(state);
-    }
-
-    case ActionTypes.REQUEST_SERVICE_IMAGES: {
-      return state.setIn(['serviceImages', action.serviceId], {
-        isFetching: true
-      });
-    }
-
-    case ActionTypes.RECEIVE_SERVICE_IMAGES: {
-      const { service, errors, serviceId } = action;
-
-      return state.setIn(['serviceImages', serviceId], {
-        isFetching: false,
-        containers: service ? service.Containers : null,
-        errors
-      });
     }
 
     case ActionTypes.MONITOR_STATE: {

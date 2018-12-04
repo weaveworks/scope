@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	consul "github.com/hashicorp/consul/api"
+	log "github.com/sirupsen/logrus"
 )
 
 const (

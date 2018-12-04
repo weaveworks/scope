@@ -128,6 +128,16 @@ func IsConnected(node report.Node) bool {
 	return ok
 }
 
+// IsPodComponent check whether given node is everything but PV, PVC, SC
+func IsPodComponent(node report.Node) bool {
+	var ok bool
+	ok = true
+	if node.Topology == "persistent_volume" || node.Topology == "persistent_volume_claim" || node.Topology == "storage_class" {
+		ok = false
+	}
+	return ok
+}
+
 // connected returns the node ids of nodes which have edges to/from
 // them, excluding edges to/from themselves.
 func connected(nodes report.Nodes) map[string]struct{} {
@@ -148,10 +158,10 @@ func connected(nodes report.Nodes) map[string]struct{} {
 // and outgoing internet node. These are typically artifacts of
 // imperfect connection tracking, e.g. when VIPs and NAT traversal are
 // in use.
-func filterInternetAdjacencies(nodes report.Nodes) report.Nodes {
+func filterInternetAdjacencies(nodes report.Nodes) {
 	incomingInternet, ok := nodes[IncomingInternetID]
 	if !ok {
-		return nodes
+		return
 	}
 	newAdjacency := report.MakeIDList()
 	for _, dstID := range incomingInternet.Adjacency {
@@ -160,9 +170,7 @@ func filterInternetAdjacencies(nodes report.Nodes) report.Nodes {
 		}
 	}
 	incomingInternet.Adjacency = newAdjacency
-	output := nodes.Copy()
-	output[IncomingInternetID] = incomingInternet
-	return output
+	nodes[IncomingInternetID] = incomingInternet
 }
 
 // ColorConnected colors nodes with the IsConnectedMark key if they
@@ -187,7 +195,8 @@ type filterUnconnected struct {
 
 // Transform implements Transformer
 func (f filterUnconnected) Transform(input Nodes) Nodes {
-	output := filterInternetAdjacencies(input.Nodes)
+	output := input.Nodes.Copy()
+	filterInternetAdjacencies(output)
 	connected := connected(output)
 	filtered := input.Filtered
 	for id, node := range output {

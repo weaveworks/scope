@@ -19,8 +19,8 @@ var (
 
 func BenchmarkEndpointRender(b *testing.B) { benchmarkRender(b, render.EndpointRenderer) }
 func BenchmarkProcessRender(b *testing.B)  { benchmarkRender(b, render.ProcessRenderer) }
-func BenchmarkProcessWithContainerNameRender(b *testing.B) {
-	benchmarkRender(b, render.ProcessWithContainerNameRenderer)
+func BenchmarkConnectedProcessRender(b *testing.B) {
+	benchmarkRender(b, render.ConnectedProcessRenderer)
 }
 func BenchmarkProcessNameRender(b *testing.B) { benchmarkRender(b, render.ProcessNameRenderer) }
 func BenchmarkContainerRender(b *testing.B)   { benchmarkRender(b, render.ContainerRenderer) }

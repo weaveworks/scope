@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	"bufio"
+	"fmt"
+	"net"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -93,4 +96,32 @@ func MakeLabelValue(path string) string {
 		result = "root"
 	}
 	return result
+}
+
+// interceptor implements WriteHeader to intercept status codes. WriteHeader
+// may not be called on success, so initialize statusCode with the status you
+// want to report on success, i.e. http.StatusOK.
+//
+// interceptor also implements net.Hijacker, to let the downstream Handler
+// hijack the connection. This is needed, for example, for working with websockets.
+type interceptor struct {
+	http.ResponseWriter
+	statusCode int
+	recorded   bool
+}
+
+func (i *interceptor) WriteHeader(code int) {
+	if !i.recorded {
+		i.statusCode = code
+		i.recorded = true
+	}
+	i.ResponseWriter.WriteHeader(code)
+}
+
+func (i *interceptor) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hj, ok := i.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("interceptor: can't cast parent ResponseWriter to Hijacker")
+	}
+	return hj.Hijack()
 }

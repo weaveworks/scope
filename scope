@@ -124,7 +124,7 @@ check_docker_for_mac() {
         && [ -S /var/run/docker.sock ] \
         && [ ! "${DOCKER_HOST+x}" = x ] \
         && [ "${HOME+x}" = x ] \
-        && [ -d "${HOME}/Library/Containers/com.docker.docker/Data/database" ]
+        && [ -d "${HOME}/Library/Containers/com.docker.docker/Data" ]
 }
 
 # Check that a container named $1 with image $2 is not running

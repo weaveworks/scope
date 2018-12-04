@@ -73,9 +73,7 @@ func (n Node) After(other Node) bool {
 // WithLatests returns a fresh copy of n, with Metadata m merged in.
 func (n Node) WithLatests(m map[string]string) Node {
 	ts := mtime.Now()
-	for k, v := range m {
-		n.Latest = n.Latest.Set(k, ts, v)
-	}
+	n.Latest = n.Latest.addMapEntries(ts, m)
 	return n
 }
 
@@ -149,6 +147,12 @@ func (n Node) WithLatestControls(lcs map[string]NodeControlData) Node {
 // WithLatestControl produces a new Node with control added to it
 func (n Node) WithLatestControl(control string, ts time.Time, data NodeControlData) Node {
 	n.LatestControls = n.LatestControls.Set(control, ts, data)
+	return n
+}
+
+// WithParent returns a fresh copy of n, with one parent added
+func (n Node) WithParent(key, parent string) Node {
+	n.Parents = n.Parents.AddString(key, parent)
 	return n
 }
 

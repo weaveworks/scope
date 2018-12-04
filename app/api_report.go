@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
