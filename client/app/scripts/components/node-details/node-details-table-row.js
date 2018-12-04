@@ -54,7 +54,14 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null, t
             title={title}
             style={style}
             key={field.id}>
-            {value}
+            {field.dataType === 'link' ?
+              <a
+                rel="noopener noreferrer"
+                target="_blank"
+                className="node-details-table-node-link"
+                href={value}>{value}
+              </a> :
+              value}
           </td>
         );
       }
@@ -162,7 +169,7 @@ export default class NodeDetailsTableRow extends React.Component {
     const values = renderValues(node, columns, columnStyles, timestamp, topologyId);
     const nodeId = node[nodeIdKey];
 
-    const className = classNames('node-details-table-node', {
+    const className = classNames('tour-step-anchor node-details-table-node', {
       selected: this.props.selected,
       focused: this.state.focused,
     });

@@ -1,4 +1,5 @@
 import page from 'page';
+import stableStringify from 'json-stable-stringify';
 import { fromJS, is as isDeepEqual } from 'immutable';
 import { each, omit, omitBy, isEmpty } from 'lodash';
 
@@ -107,9 +108,12 @@ export function getUrlState(state) {
 
 export function updateRoute(getState) {
   const state = getUrlState(getState());
-  const stateUrl = encodeURL(JSON.stringify(state));
-  const dispatch = false;
   const prevState = parseHashState();
+  const dispatch = false;
+
+  const stateUrl = encodeURL(stableStringify(state));
+  const prevStateUrl = encodeURL(stableStringify(prevState));
+  if (stateUrl === prevStateUrl) return;
 
   // back up state in storage as well
   storageSet(STORAGE_STATE_KEY, stateUrl);
@@ -152,7 +156,7 @@ export function getRouter(dispatch, initialState) {
       } else {
         const mergedState = Object.assign(initialState, parsedState);
         // push storage state to URL
-        window.location.hash = `!/state/${JSON.stringify(mergedState)}`;
+        window.location.hash = `!/state/${stableStringify(mergedState)}`;
         dispatch(route(mergedState));
       }
     } else {

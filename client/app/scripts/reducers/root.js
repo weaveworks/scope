@@ -89,7 +89,6 @@ export const initialState = makeMap({
   viewport: makeMap({ width: 0, height: 0 }),
   websocketClosed: false,
   zoomCache: makeMap(),
-  serviceImages: makeMap()
 });
 
 function calcSelectType(topology) {
@@ -281,7 +280,7 @@ export function rootReducer(state = initialState, action) {
       return closeNodeDetails(state, action.nodeId);
     }
 
-    case ActionTypes.CLICK_CLOSE_TERMINAL: {
+    case ActionTypes.CLOSE_TERMINAL: {
       return state.update('controlPipes', controlPipes => controlPipes.clear());
     }
 
@@ -374,11 +373,6 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.PAUSE_TIME_AT_NOW: {
       state = state.set('timeTravelTransitioning', false);
       return state.set('pausedAt', moment().utc().format());
-    }
-
-    case ActionTypes.START_TIME_TRAVEL: {
-      state = state.set('timeTravelTransitioning', false);
-      return state.set('pausedAt', action.timestamp || moment().utc().format());
     }
 
     case ActionTypes.JUMP_TO_TIME: {
@@ -650,11 +644,15 @@ export function rootReducer(state = initialState, action) {
         log(`Set currentTopologyId to ${state.get('currentTopologyId')}`);
       }
       state = setTopology(state, state.get('currentTopologyId'));
-      // only set on first load, if options are not already set via route
-      if (!state.get('topologiesLoaded') && state.get('topologyOptions').size === 0) {
-        state = state.set('topologyOptions', getDefaultTopologyOptions(state));
+
+      // Expand topology options with topologies' defaults on first load, but let
+      // the current state of topologyOptions (which at this point reflects the
+      // URL state) still take the precedence over defaults.
+      if (!state.get('topologiesLoaded')) {
+        const options = getDefaultTopologyOptions(state).mergeDeep(state.get('topologyOptions'));
+        state = state.set('topologyOptions', options);
+        state = state.set('topologiesLoaded', true);
       }
-      state = state.set('topologiesLoaded', true);
 
       return state;
     }
@@ -683,6 +681,10 @@ export function rootReducer(state = initialState, action) {
         selectedNodeId: action.state.selectedNodeId,
         pinnedMetricType: action.state.pinnedMetricType,
       });
+      if (action.state.topologyOptions) {
+        const options = getDefaultTopologyOptions(state).mergeDeep(action.state.topologyOptions);
+        state = state.set('topologyOptions', options);
+      }
       if (action.state.topologyViewMode) {
         state = state.set('topologyViewMode', action.state.topologyViewMode);
       }
@@ -716,12 +718,6 @@ export function rootReducer(state = initialState, action) {
       } else {
         state = state.update('nodeDetails', nodeDetails => nodeDetails.clear());
       }
-      // Use the default topology options for all the fields not
-      // explicitly listed in the Scope state (URL or local storage).
-      state = state.set(
-        'topologyOptions',
-        getDefaultTopologyOptions(state).mergeDeep(action.state.topologyOptions),
-      );
       return state;
     }
 
@@ -750,22 +746,6 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.SHUTDOWN: {
       return clearNodes(state);
-    }
-
-    case ActionTypes.REQUEST_SERVICE_IMAGES: {
-      return state.setIn(['serviceImages', action.serviceId], {
-        isFetching: true
-      });
-    }
-
-    case ActionTypes.RECEIVE_SERVICE_IMAGES: {
-      const { service, errors, serviceId } = action;
-
-      return state.setIn(['serviceImages', serviceId], {
-        isFetching: false,
-        containers: service ? service.Containers : null,
-        errors
-      });
     }
 
     case ActionTypes.MONITOR_STATE: {

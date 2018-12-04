@@ -6,6 +6,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
+const { themeVarsAsScss } = require('weaveworks-ui-components/lib/theme');
 
 const GLOBALS = {
   'process.env': {NODE_ENV: '"production"'}
@@ -133,6 +134,7 @@ module.exports = {
             loader: 'sass-loader',
             options: {
               minimize: true,
+              data: themeVarsAsScss(),
               includePaths: [
                 path.resolve(__dirname, './node_modules/xterm'),
                 path.resolve(__dirname, './node_modules/font-awesome'),

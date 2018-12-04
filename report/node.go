@@ -18,7 +18,7 @@ type Node struct {
 	Controls       NodeControls             `json:"controls,omitempty"`
 	LatestControls NodeControlDataLatestMap `json:"latestControls,omitempty"`
 	Latest         StringLatestMap          `json:"latest,omitempty"`
-	Metrics        Metrics                  `json:"metrics,omitempty"`
+	Metrics        Metrics                  `json:"metrics,omitempty" deepequal:"nil==empty"`
 	Parents        Sets                     `json:"parents,omitempty"`
 	Children       NodeSet                  `json:"children,omitempty"`
 }
@@ -149,6 +149,12 @@ func (n Node) WithLatestControls(lcs map[string]NodeControlData) Node {
 // WithLatestControl produces a new Node with control added to it
 func (n Node) WithLatestControl(control string, ts time.Time, data NodeControlData) Node {
 	n.LatestControls = n.LatestControls.Set(control, ts, data)
+	return n
+}
+
+// WithParent returns a fresh copy of n, with one parent added
+func (n Node) WithParent(key, parent string) Node {
+	n.Parents = n.Parents.AddString(key, parent)
 	return n
 }
 

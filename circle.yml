@@ -66,7 +66,7 @@ test:
         parallel: true
     - test "$CIRCLE_NODE_INDEX" != "0" || (goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=$SRCDIR/profile.cov -service=circleci || true):
         parallel: true
-    - test "$CIRCLE_NODE_INDEX" != "0" || (cd $SRCDIR; cp scope.tar $CIRCLE_ARTIFACTS):
+    - test "$CIRCLE_NODE_INDEX" != "0" || (cd $SRCDIR; cp */*.codecgen.go $CIRCLE_ARTIFACTS):
         parallel: true
 
 deployment:

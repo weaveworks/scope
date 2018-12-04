@@ -26,7 +26,7 @@ class ViewModeSelector extends React.Component {
   render() {
     return (
       <div className="view-mode-selector">
-        <div className="view-mode-selector-wrapper">
+        <div className="tour-step-anchor view-mode-selector-wrapper">
           <ViewModeButton
             label="Graph"
             icons="fa fa-share-alt"

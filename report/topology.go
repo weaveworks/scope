@@ -13,7 +13,7 @@ type Topology struct {
 	Label             string            `json:"label,omitempty"`
 	LabelPlural       string            `json:"label_plural,omitempty"`
 	Nodes             Nodes             `json:"nodes"`
-	Controls          Controls          `json:"controls,omitempty"`
+	Controls          Controls          `json:"controls,omitempty" deepequal:"nil==empty"`
 	MetadataTemplates MetadataTemplates `json:"metadata_templates,omitempty"`
 	MetricTemplates   MetricTemplates   `json:"metric_templates,omitempty"`
 	TableTemplates    TableTemplates    `json:"table_templates,omitempty"`
@@ -163,6 +163,21 @@ func (t Topology) Merge(other Topology) Topology {
 	}
 }
 
+// UnsafeMerge merges the other object into this one, modifying the original.
+func (t *Topology) UnsafeMerge(other Topology) {
+	if t.Shape == "" {
+		t.Shape = other.Shape
+	}
+	if t.Label == "" {
+		t.Label, t.LabelPlural = other.Label, other.LabelPlural
+	}
+	t.Nodes.UnsafeMerge(other.Nodes)
+	t.Controls = t.Controls.Merge(other.Controls)
+	t.MetadataTemplates = t.MetadataTemplates.Merge(other.MetadataTemplates)
+	t.MetricTemplates = t.MetricTemplates.Merge(other.MetricTemplates)
+	t.TableTemplates = t.TableTemplates.Merge(other.TableTemplates)
+}
+
 // Nodes is a collection of nodes in a topology. Keys are node IDs.
 // TODO(pb): type Topology map[string]Node
 type Nodes map[string]Node
@@ -186,14 +201,19 @@ func (n Nodes) Merge(other Nodes) Nodes {
 		return n
 	}
 	cp := n.Copy()
+	cp.UnsafeMerge(other)
+	return cp
+}
+
+// UnsafeMerge merges the other object into this one, modifying the original.
+func (n *Nodes) UnsafeMerge(other Nodes) {
 	for k, v := range other {
-		if n, ok := cp[k]; ok { // don't overwrite
-			cp[k] = v.Merge(n)
+		if existing, ok := (*n)[k]; ok { // don't overwrite
+			(*n)[k] = v.Merge(existing)
 		} else {
-			cp[k] = v
+			(*n)[k] = v
 		}
 	}
-	return cp
 }
 
 // Validate checks the topology for various inconsistencies.

@@ -93,13 +93,6 @@ func TestLatestMapMerge(t *testing.T) {
 			want: MakeStringLatestMap().
 				Set("foo", now, "bar"),
 		},
-		"Empty b": {
-			a: MakeStringLatestMap().
-				Set("foo", now, "bar"),
-			b: MakeStringLatestMap(),
-			want: MakeStringLatestMap().
-				Set("foo", now, "bar"),
-		},
 		"Disjoint a & b": {
 			a: MakeStringLatestMap().
 				Set("foo", now, "bar"),
@@ -117,8 +110,24 @@ func TestLatestMapMerge(t *testing.T) {
 			want: MakeStringLatestMap().
 				Set("foo", now, "bar"),
 		},
+		"Longer": {
+			a: MakeStringLatestMap().
+				Set("PID", now, "23128").
+				Set("Name", now, "curl"),
+			b: MakeStringLatestMap().
+				Set("PID", then, "0").
+				Set("Name", now, "curl").
+				Set("Domain", now, "node-a.local"),
+			want: MakeStringLatestMap().
+				Set("PID", now, "23128").
+				Set("Name", now, "curl").
+				Set("Domain", now, "node-a.local"),
+		},
 	} {
 		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
+			t.Errorf("%s:\n%s", name, test.Diff(c.want, have))
+		}
+		if have := c.b.Merge(c.a); !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s:\n%s", name, test.Diff(c.want, have))
 		}
 	}
@@ -168,6 +177,36 @@ func BenchmarkLatestMapDecode(b *testing.B) {
 	}
 }
 
+func TestLatestMapDecoding(t *testing.T) {
+	ts, _ := time.Parse(time.RFC3339Nano, "2018-02-26T09:50:43Z")
+	want := MakeStringLatestMap().
+		Set("foo", ts, "bar").
+		Set("bar", ts, "baz").
+		Set("emptyval", ts, "")
+	// The following string is carefully constructed to have 'emptyval' not in alphabetical order
+	data := `
+{
+  "bar": {
+    "timestamp": "2018-02-26T09:50:43Z",
+    "value": "baz"
+  },
+  "foo": {
+    "timestamp": "2018-02-26T09:50:43Z",
+    "value": "bar"
+  },
+  "emptyval": {
+    "timestamp": "2018-02-26T09:50:43Z"
+  }
+}`
+	h := &codec.JsonHandle{}
+	decoder := codec.NewDecoder(bytes.NewBufferString(data), h)
+	have := MakeStringLatestMap()
+	have.CodecDecodeSelf(decoder)
+	if !reflect.DeepEqual(want, have) {
+		t.Error(test.Diff(want, have))
+	}
+}
+
 func TestLatestMapEncoding(t *testing.T) {
 	now := time.Now()
 	want := MakeStringLatestMap().
@@ -188,7 +227,6 @@ func TestLatestMapEncoding(t *testing.T) {
 			t.Error(test.Diff(want, have))
 		}
 	}
-
 }
 
 func TestLatestMapEncodingNil(t *testing.T) {

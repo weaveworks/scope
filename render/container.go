@@ -140,16 +140,17 @@ func (r containerWithImageNameRenderer) Render(rpt report.Report) Nodes {
 		if !ok {
 			continue
 		}
-		imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
-		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutVersion)
+		imageNameWithoutTag := docker.ImageNameWithoutTag(imageName)
+		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutTag)
 
 		c = propagateLatest(docker.ImageName, image, c)
+		c = propagateLatest(docker.ImageTag, image, c)
 		c = propagateLatest(docker.ImageSize, image, c)
 		c = propagateLatest(docker.ImageVirtualSize, image, c)
 		c = propagateLatest(docker.ImageLabelPrefix+"works.weave.role", image, c)
 		c.Parents = c.Parents.
 			Delete(report.ContainerImage).
-			Add(report.ContainerImage, report.MakeStringSet(imageNodeID))
+			AddString(report.ContainerImage, imageNodeID)
 		outputs[id] = c
 	}
 	return Nodes{Nodes: outputs, Filtered: containers.Filtered}
@@ -255,10 +256,10 @@ func MapContainer2IP(m report.Node) []string {
 // format for a container, but without any Major or Minor labels.
 // It does not have enough info to do that, and the resulting graph
 // must be merged with a container graph to get that info.
-func MapProcess2Container(n report.Node) report.Nodes {
+func MapProcess2Container(n report.Node) report.Node {
 	// Propagate pseudo nodes
 	if n.Topology == Pseudo {
-		return report.Nodes{n.ID: n}
+		return n
 	}
 
 	// Otherwise, if the process is not in a container, group it into
@@ -275,7 +276,7 @@ func MapProcess2Container(n report.Node) report.Nodes {
 		id = MakePseudoNodeID(UncontainedID, hostID)
 		node = NewDerivedPseudoNode(id, n)
 	}
-	return report.Nodes{id: node}
+	return node
 }
 
 // MapContainer2ContainerImage maps container Nodes to container
@@ -290,17 +291,17 @@ func MapProcess2Container(n report.Node) report.Nodes {
 // format for a container image, but without any Major or Minor
 // labels.  It does not have enough info to do that, and the resulting
 // graph must be merged with a container image graph to get that info.
-func MapContainer2ContainerImage(n report.Node) report.Nodes {
+func MapContainer2ContainerImage(n report.Node) report.Node {
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
-		return report.Nodes{n.ID: n}
+		return n
 	}
 
 	// Otherwise, if some some reason the container doesn't have a image_id
 	// (maybe slightly out of sync reports), just drop it
 	imageID, ok := n.Latest.Lookup(docker.ImageID)
 	if !ok {
-		return report.Nodes{}
+		return report.Node{}
 	}
 
 	// Add container id key to the counters, which will later be
@@ -308,50 +309,50 @@ func MapContainer2ContainerImage(n report.Node) report.Nodes {
 	id := report.MakeContainerImageNodeID(imageID)
 	result := NewDerivedNode(id, n).WithTopology(report.ContainerImage)
 	result.Counters = result.Counters.Add(n.Topology, 1)
-	return report.Nodes{id: result}
+	return result
 }
 
 // MapContainerImage2Name ignores image versions
-func MapContainerImage2Name(n report.Node) report.Nodes {
+func MapContainerImage2Name(n report.Node) report.Node {
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
-		return report.Nodes{n.ID: n}
+		return n
 	}
 
 	imageName, ok := n.Latest.Lookup(docker.ImageName)
 	if !ok {
-		return report.Nodes{}
+		return report.Node{}
 	}
 
-	imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
-	n.ID = report.MakeContainerImageNodeID(imageNameWithoutVersion)
+	imageNameWithoutTag := docker.ImageNameWithoutTag(imageName)
+	n.ID = report.MakeContainerImageNodeID(imageNameWithoutTag)
 
-	return report.Nodes{n.ID: n}
+	return n
 }
 
 var containerHostnameTopology = MakeGroupNodeTopology(report.Container, docker.ContainerHostname)
 
 // MapContainer2Hostname maps container Nodes to 'hostname' renderabled nodes..
-func MapContainer2Hostname(n report.Node) report.Nodes {
+func MapContainer2Hostname(n report.Node) report.Node {
 	// Propagate all pseudo nodes
 	if n.Topology == Pseudo {
-		return report.Nodes{n.ID: n}
+		return n
 	}
 
 	// Otherwise, if some some reason the container doesn't have a hostname
 	// (maybe slightly out of sync reports), just drop it
 	id, ok := n.Latest.Lookup(docker.ContainerHostname)
 	if !ok {
-		return report.Nodes{}
+		return report.Node{}
 	}
 
 	node := NewDerivedNode(id, n).WithTopology(containerHostnameTopology)
 	node.Counters = node.Counters.Add(n.Topology, 1)
-	return report.Nodes{id: node}
+	return node
 }
 
 // MapToEmpty removes all the attributes, children, etc, of a node. Useful when
 // we just want to count the presence of nodes.
-func MapToEmpty(n report.Node) report.Nodes {
-	return report.Nodes{n.ID: report.MakeNode(n.ID).WithTopology(n.Topology)}
+func MapToEmpty(n report.Node) report.Node {
+	return report.MakeNode(n.ID).WithTopology(n.Topology)
 }

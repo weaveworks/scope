@@ -25,7 +25,7 @@ class ViewModeButton extends React.Component {
     const { label, viewMode, disabled } = this.props;
 
     const isSelected = (this.props.topologyViewMode === viewMode);
-    const className = classNames(`view-mode-selector-action view-${label}-action`, {
+    const className = classNames(`tour-step-anchor view-mode-selector-action view-${label}-action`, {
       'view-mode-selector-action-selected': isSelected,
     });
 

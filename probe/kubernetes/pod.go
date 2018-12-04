@@ -13,8 +13,12 @@ const (
 	State           = report.KubernetesState
 	IsInHostNetwork = report.KubernetesIsInHostNetwork
 	RestartCount    = report.KubernetesRestartCount
+)
 
+// Pod states we handle specially
+const (
 	StateDeleted = "deleted"
+	StateFailed  = "Failed"
 )
 
 // Pod represents a Kubernetes pod
@@ -52,7 +56,7 @@ func (p *pod) UID() string {
 }
 
 func (p *pod) AddParent(topology, id string) {
-	p.parents = p.parents.Add(topology, report.MakeStringSet(id))
+	p.parents = p.parents.AddString(topology, id)
 }
 
 func (p *pod) State() string {
@@ -71,12 +75,27 @@ func (p *pod) RestartCount() uint {
 	return count
 }
 
+func (p *pod) VolumeClaimName() string {
+	var claimName string
+	for _, volume := range p.Spec.Volumes {
+		if volume.VolumeSource.PersistentVolumeClaim != nil {
+			claimName = volume.VolumeSource.PersistentVolumeClaim.ClaimName
+			break
+		}
+	}
+	return claimName
+}
+
 func (p *pod) GetNode(probeID string) report.Node {
 	latests := map[string]string{
 		State: p.State(),
 		IP:    p.Status.PodIP,
 		report.ControlProbeID: probeID,
 		RestartCount:          strconv.FormatUint(uint64(p.RestartCount()), 10),
+	}
+
+	if p.VolumeClaimName() != "" {
+		latests[VolumeClaim] = p.VolumeClaimName()
 	}
 
 	if p.Pod.Spec.HostNetwork {
