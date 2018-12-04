@@ -57,11 +57,11 @@ export default class ZoomControl extends React.Component {
     return (
       <div className="zoom-control">
         <button className="zoom-in" onClick={this.handleZoomIn}>
-          <span className="fa fa-plus" />
+          <i className="fa fa-plus" />
         </button>
         <Slider value={value} max={1} step={SLIDER_STEP} vertical onChange={this.handleChange} />
         <button className="zoom-out" onClick={this.handleZoomOut}>
-          <span className="fa fa-minus" />
+          <i className="fa fa-minus" />
         </button>
       </div>
     );

@@ -27,7 +27,7 @@ class Warning extends React.Component {
     return (
       <div className={className} onClick={this.handleClick}>
         <div className="warning-wrapper">
-          <span className="warning-icon fa fa-warning" title={text} />
+          <i className="warning-icon fa fa-exclamation-triangle" title={text} />
           {expanded && <span className="warning-text">{text}</span>}
         </div>
       </div>

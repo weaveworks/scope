@@ -1,6 +1,7 @@
 package render
 
 import (
+	"net"
 	"regexp"
 	"strings"
 
@@ -19,6 +20,7 @@ var (
 		// for finer grained details
 		`amazonaws\.com`,
 		`googleapis\.com`,
+		`weave\.works`,             // Weave Cloud
 		`core\.windows\.net`,       // Azure Storage - Blob, Tables, Files & Queues
 		`servicebus\.windows\.net`, // Azure Service Bus
 		`azure-api\.net`,           // Azure API Management
@@ -81,5 +83,31 @@ func LocalNetworks(r report.Report) report.Networks {
 			}
 		}
 	}
+	if extra := kubeServiceNetwork(r.Service); extra != nil {
+		networks.Add(extra)
+	}
 	return networks
+}
+
+// FIXME: Hideous hack to remove persistent-connection edges to
+// virtual service IPs attributed to the internet. The global
+// service-cluster-ip-range is not exposed by the API server (see
+// https://github.com/kubernetes/kubernetes/issues/25533), so instead
+// we synthesise it by computing the smallest network that contains
+// all service IPs. That network may be smaller than the actual range
+// but that is ok, since in the end all we care about is that it
+// contains all the service IPs.
+//
+// The right way of fixing this is performing DNAT mapping on
+// persistent connections for which we don't have a robust solution
+// (see https://github.com/weaveworks/scope/issues/1491).
+func kubeServiceNetwork(services report.Topology) *net.IPNet {
+	serviceIPs := make([]net.IP, 0, len(services.Nodes))
+	for _, md := range services.Nodes {
+		serviceIP, _ := md.Latest.Lookup(report.KubernetesIP)
+		if ip := net.ParseIP(serviceIP).To4(); ip != nil {
+			serviceIPs = append(serviceIPs, ip)
+		}
+	}
+	return report.ContainingIPv4Network(serviceIPs)
 }

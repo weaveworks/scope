@@ -1,7 +1,12 @@
+// +build linux
+
 package endpoint
 
 import (
+	"net"
 	"strconv"
+
+	"github.com/typetypetype/conntrack"
 
 	"github.com/weaveworks/scope/report"
 )
@@ -9,11 +14,11 @@ import (
 // This is our 'abstraction' of the endpoint that have been rewritten by NAT.
 // Original is the private IP that has been rewritten.
 type endpointMapping struct {
-	originalIP   string
-	originalPort int
+	originalIP   net.IP
+	originalPort uint16
 
-	rewrittenIP   string
-	rewrittenPort int
+	rewrittenIP   net.IP
+	rewrittenPort uint16
 }
 
 // natMapper rewrites a report to deal with NAT'd connections.
@@ -25,21 +30,21 @@ func makeNATMapper(fw flowWalker) natMapper {
 	return natMapper{fw}
 }
 
-func toMapping(f flow) *endpointMapping {
+func toMapping(f conntrack.Conn) *endpointMapping {
 	var mapping endpointMapping
-	if f.Original.Layer3.SrcIP == f.Reply.Layer3.DstIP {
+	if f.Orig.Src.Equal(f.Reply.Dst) {
 		mapping = endpointMapping{
-			originalIP:    f.Reply.Layer3.SrcIP,
-			originalPort:  f.Reply.Layer4.SrcPort,
-			rewrittenIP:   f.Original.Layer3.DstIP,
-			rewrittenPort: f.Original.Layer4.DstPort,
+			originalIP:    f.Reply.Src,
+			originalPort:  f.Reply.SrcPort,
+			rewrittenIP:   f.Orig.Dst,
+			rewrittenPort: f.Orig.DstPort,
 		}
 	} else {
 		mapping = endpointMapping{
-			originalIP:    f.Original.Layer3.SrcIP,
-			originalPort:  f.Original.Layer4.SrcPort,
-			rewrittenIP:   f.Reply.Layer3.DstIP,
-			rewrittenPort: f.Reply.Layer4.DstPort,
+			originalIP:    f.Orig.Src,
+			originalPort:  f.Orig.SrcPort,
+			rewrittenIP:   f.Reply.Dst,
+			rewrittenPort: f.Reply.DstPort,
 		}
 	}
 
@@ -49,13 +54,13 @@ func toMapping(f flow) *endpointMapping {
 // applyNAT duplicates Nodes in the endpoint topology of a report, based on
 // the NAT table.
 func (n natMapper) applyNAT(rpt report.Report, scope string) {
-	n.flowWalker.walkFlows(func(f flow, active bool) {
+	n.flowWalker.walkFlows(func(f conntrack.Conn, _ bool) {
 		mapping := toMapping(f)
 
-		realEndpointPort := strconv.Itoa(mapping.originalPort)
-		copyEndpointPort := strconv.Itoa(mapping.rewrittenPort)
-		realEndpointID := report.MakeEndpointNodeID(scope, "", mapping.originalIP, realEndpointPort)
-		copyEndpointID := report.MakeEndpointNodeID(scope, "", mapping.rewrittenIP, copyEndpointPort)
+		realEndpointPort := strconv.Itoa(int(mapping.originalPort))
+		copyEndpointPort := strconv.Itoa(int(mapping.rewrittenPort))
+		realEndpointID := report.MakeEndpointNodeID(scope, "", mapping.originalIP.String(), realEndpointPort)
+		copyEndpointID := report.MakeEndpointNodeID(scope, "", mapping.rewrittenIP.String(), copyEndpointPort)
 
 		node, ok := rpt.Endpoint.Nodes[realEndpointID]
 		if !ok {

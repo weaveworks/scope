@@ -30,7 +30,7 @@ Official Weave Scope plugins can be found at [Weaveworks Plugins](https://github
 
 * [IOWait](https://github.com/weaveworks-plugins/scope-iowait): is a Go plugin that uses [iostat](https://en.wikipedia.org/wiki/Iostat) to provide host-level CPU IO wait or idle metrics.
 
-* [HTTP Statistics](https://github.com/weaveworks-plugins/scope-http-statistics): is a Python plugin that uses [bcc](http://iovisor.github.io/bcc/) to track multiple metrics about HTTP per process. It does this without any application-level instrumentation requirements and without a negligible performance toll. This plugin is a work in progress, and currently implements the following (for more information read the [plugin documentation](https://github.com/weaveworks-plugins/scope-http-statistics)):
+* [HTTP Statistics](https://github.com/weaveworks-plugins/scope-http-statistics): is a Python plugin that uses [bcc](http://iovisor.github.io/bcc/) to track multiple metrics about HTTP per process. It does this without any application-level instrumentation requirements and with a negligible performance toll. This plugin is a work in progress, and currently implements the following (for more information read the [plugin documentation](https://github.com/weaveworks-plugins/scope-http-statistics)):
 	* Number of HTTP requests per seconds.
 	* Number of HTTP responses code per second (per code).
 
@@ -156,13 +156,13 @@ two controls (`ctrl-one` and `ctrl-two`) and two nodes, each with a different co
       "ctrl-one": {
         "id": "ctrl-one",
         "human": "Ctrl One",
-        "icon": "fa-futbol-o",
+        "icon": "far fa-futbol",
         "rank": 1
       },
       "ctrl-two": {
         "id": "ctrl-two",
         "human": "Ctrl Two",
-        "icon": "fa-beer",
+        "icon": "fa fa-beer",
         "rank": 2
       }
     },
@@ -546,7 +546,7 @@ Metadata templates are not placed within nodes but in the `metadata_templates` s
 
 - `id` is a string identifying the particular metadata template (here `traffic-control-pktloss`) and is also used as a key to the template value.
 - `label` contains the label used by the Scope UI.
-- `dataType` specifies the type of data, and determines how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime" and "" for strings.
+- `dataType` specifies the type of data, and determines how the value is displayed. Possible values for this attribute are: "number", "ip", "datetime", "link" and "" for strings.
 - `priority` is a floating point value used to decide the display ordering (lower values are displayed before higher ones). If omitted, the UI displays it last.
 - `from` indicates where to look for the metadata. The possible values are:
   - `latest`
@@ -601,7 +601,7 @@ In order to display tabular data with multiple columns, additional fields are ne
 - `columns` defines the table's columns
   - `id` the column id
   - `label` the column header
-  - `dataType`: specifies the column type. Can be "" (for a string), "number" or "ip". Defaults to string if absent.
+  - `dataType`: specifies the column type. Can be "" (for a string), "number", "link", or "ip". Defaults to string if absent.
 
 Values are placed in their respective columns and rows by specially formatting the entries in latest (`prefix`{unique row id}___`column-id`). _**Note:** that's 3 underscores._
 

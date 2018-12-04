@@ -112,7 +112,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 **Docker Compose Format Version 1:**
 
     scope:
-      image: weaveworks/scope:1.7.3
+      image: weaveworks/scope:1.9.1
       net: "host"
       pid: "host"
       privileged: true
@@ -128,7 +128,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
     version: '2'
     services:
       scope:
-        image: weaveworks/scope:1.7.3
+        image: weaveworks/scope:1.9.1
         network_mode: "host"
         pid: "host"
         privileged: true
@@ -176,7 +176,7 @@ To install Weave Scope on OpenShift, you first need to login as `system:admin` u
 
 Next, create a dedicated project for Weave Scope then apply policy changes needed to run Weave Scope:
 
-    oc new-project weave-scope
+    oc new-project weave
     # Scope probe pods need full access to Kubernetes API via 'weave-scope' service account
     oc adm policy add-cluster-role-to-user cluster-admin -z weave-scope
     # Scope probe pods also need to run as priviliaged containers, so grant 'priviliged' Security Context Constrains (SCC) for 'weave-scope' service account
@@ -185,7 +185,7 @@ Next, create a dedicated project for Weave Scope then apply policy changes neede
     oc adm policy add-scc-to-user anyuid -z default
 
 The installation method for Scope on OpenShift is very similar to the one described [above](#k8s) for Kubernetes, but instead of `kubectl apply ...` you need to use
-`oc apply ...` and install it into the namespace of the `weave-scope` project you have just created, and not the `weave` namespace, i.e.:
+`oc apply ...` and install it into the namespace of the `weave` project you have just created, and not the `weave` namespace, i.e.:
 
     oc apply -f 'https://cloud.weave.works/k8s/scope.yaml'
 

@@ -1,3 +1,5 @@
+// +build linux
+
 package endpoint
 
 import (
@@ -11,7 +13,7 @@ import (
 	"sync"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/weaveworks/common/fs"
 	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/host"
@@ -53,16 +55,28 @@ type EbpfTracker struct {
 	closedDuringInit  map[fourTuple]struct{}
 }
 
-var releaseRegex = regexp.MustCompile(`^(\d+)\.(\d+).*$`)
+// releaseRegex should match all possible variations of a common Linux
+// version string:
+//   - 4.1
+//   - 4.22-foo
+//   - 4.1.2-foo
+//   - 4.1.2-33.44+bar
+//   - etc.
+// For example, on a Ubuntu system the vendor specific release part
+// (after the first `-`) could look like:
+// '<ABI number>.<upload number>-<flavour>' or
+// '<ABI number>-<flavour>'
+// See https://wiki.ubuntu.com/Kernel/FAQ
+var releaseRegex = regexp.MustCompile(`^(\d+)\.(\d+)\.?(\d*)-?(\d*)(.*)$`)
 
 func isKernelSupported() error {
-	release, _, err := host.GetKernelReleaseAndVersion()
+	release, version, err := host.GetKernelReleaseAndVersion()
 	if err != nil {
 		return err
 	}
 
 	releaseParts := releaseRegex.FindStringSubmatch(release)
-	if len(releaseParts) != 3 {
+	if len(releaseParts) != 6 {
 		return fmt.Errorf("got invalid release version %q (expected format '4.4[.2-1]')", release)
 	}
 
@@ -82,6 +96,23 @@ func isKernelSupported() error {
 
 	if major < 4 || minor < 4 {
 		return fmt.Errorf("got kernel %s but need kernel >=4.4", release)
+	}
+
+	if strings.Contains(version, "Ubuntu") {
+		// Check for specific Ubuntu kernel versions with
+		// known issues.
+
+		abiNumber, err := strconv.Atoi(releaseParts[4])
+		if err != nil {
+			// By now we know it's at least kernel 4.4 and
+			// not "119-ish", so allow it.
+			return nil
+		}
+		if major == 4 && minor == 4 && abiNumber >= 119 && abiNumber < 127 {
+			// https://github.com/weaveworks/scope/issues/3131
+			// https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1763454
+			return fmt.Errorf("got Ubuntu kernel %s with known bug", release)
+		}
 	}
 
 	return nil

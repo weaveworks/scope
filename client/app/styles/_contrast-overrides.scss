@@ -1,16 +1,16 @@
 @import "variables";
-$background-color: lighten($primary-color, 75%);
-$background-lighter-color: lighten($background-color, 10%);
-$background-darker-color: darken($background-color, 20%);
-$background-darker-secondary-color: darken($background-color, 15%);
-$background-dark-color: $primary-color;
-$text-color: black;
-$text-secondary-color: lighten($text-color, 10%);
-$text-tertiary-color: lighten($text-color, 20%);
-$border-light-color: lighten($text-color, 50%);
-$text-darker-color: darken($text-color, 20%);
-$white: white;
-$edge-color: black;
+
+$background-color: $color-white;
+$background-lighter-color: $color-white;
+$background-darker-color: $color-purple-200;
+$background-darker-secondary-color: $color-purple-200;
+$background-dark-color: $color-purple-900;
+$text-color: $color-black;
+$text-secondary-color: $color-black;
+$text-tertiary-color: $color-black;
+$border-light-color: $color-gray-600;
+$text-darker-color: $color-black;
+$edge-color: $color-black;
 
 $node-elements-in-background-opacity: 0.4;
 
@@ -30,9 +30,9 @@ $btn-opacity-disabled: 0.4;
 
 $link-opacity-default: 1;
 
-$search-border-color: $background-darker-color;
+$search-border-color: $color-purple-200;
 $search-border-width: 2px;
 
 /* specific elements */
-$body-background-color: #FFF;
-$label-background-color: #FFF;
+$body-background-color: $color-white;
+$label-background-color: $color-white;

@@ -94,7 +94,16 @@ export default class NodeDetailsGenericTable extends React.Component {
                       title={value}
                       key={column.id}
                       style={styles[index]}>
-                      <MatchedText text={value} match={match} />
+                      {column.dataType === 'link' ?
+                        <a
+                          rel="noopener noreferrer"
+                          target="_blank"
+                          className="node-details-table-node-link"
+                          href={value}>
+                          {value}
+                        </a> :
+                        <MatchedText text={value} match={match} />
+                      }
                     </td>
                   );
                 })}

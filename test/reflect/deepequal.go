@@ -146,6 +146,11 @@ func structEq(v1, v2 reflect.Value, visited map[visit]bool, depth int) bool {
 		if v1.Type().Field(i).Tag.Get("deepequal") == "skip" {
 			continue
 		}
+		if v1.Type().Field(i).Tag.Get("deepequal") == "nil==empty" {
+			if v1.Field(i).IsNil() && v2.Field(i).Len() == 0 || v2.Field(i).IsNil() && v1.Field(i).Len() == 0 {
+				continue
+			}
+		}
 		if !deepValueEqual(v1.Field(i), v2.Field(i), visited, depth+1) {
 			return false
 		}

@@ -3,9 +3,9 @@ package host
 import (
 	"os/exec"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/term"
 	"github.com/kr/pty"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"

@@ -470,7 +470,7 @@ func TestRegistryDelete(t *testing.T) {
 	setupStubs(mdc, func() {
 		registry := testRegistry()
 		defer registry.Stop()
-		runtime.Gosched()
+		time.Sleep(time.Millisecond * 100) // Allow for goroutines to get started
 
 		// Collect all the events.
 		mtx := sync.Mutex{}
@@ -514,19 +514,4 @@ func TestRegistryDelete(t *testing.T) {
 			mtx.Unlock()
 		}
 	})
-}
-
-func TestDockerImageName(t *testing.T) {
-	for _, input := range []struct{ in, name string }{
-		{"foo/bar", "foo/bar"},
-		{"foo/bar:baz", "foo/bar"},
-		{"reg:123/foo/bar:baz", "foo/bar"},
-		{"docker-registry.domain.name:5000/repo/image1:ver", "repo/image1"},
-		{"foo", "foo"},
-	} {
-		name := docker.ImageNameWithoutVersion(input.in)
-		if name != input.name {
-			t.Fatalf("%s: %s != %s", input.in, name, input.name)
-		}
-	}
 }

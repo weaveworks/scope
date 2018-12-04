@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/base64"
+	"fmt"
 	"math/rand"
 	"net"
 	"net/http"
@@ -10,12 +12,15 @@ import (
 	"strconv"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/armon/go-metrics"
 	"github.com/prometheus/client_golang/prometheus"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/weaveworks/common/logging"
 	"github.com/weaveworks/common/network"
 	"github.com/weaveworks/common/sanitize"
+	"github.com/weaveworks/common/signals"
+	"github.com/weaveworks/common/tracing"
 	"github.com/weaveworks/go-checkpoint"
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/weave"
@@ -24,6 +29,7 @@ import (
 	"github.com/weaveworks/scope/probe/appclient"
 	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/controls"
+	"github.com/weaveworks/scope/probe/cri"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/host"
@@ -32,12 +38,14 @@ import (
 	"github.com/weaveworks/scope/probe/plugins"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
-	"github.com/weaveworks/weave/common"
 )
 
 const (
 	versionCheckPeriod = 6 * time.Hour
 	defaultServiceHost = "https://cloud.weave.works.:443"
+
+	kubernetesRoleHost    = "host"
+	kubernetesRoleCluster = "cluster"
 )
 
 var (
@@ -91,6 +99,15 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 
+	if flags.basicAuth {
+		log.Infof("Basic authentication enabled")
+	} else {
+		log.Infof("Basic authentication disabled")
+	}
+
+	traceCloser := tracing.NewFromEnv("scope-probe")
+	defer traceCloser.Close()
+
 	// Setup in memory metrics sink
 	inm := metrics.NewInmemSink(time.Minute, 2*time.Minute)
 	sig := metrics.DefaultInmemSignal(inm)
@@ -99,8 +116,23 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	logCensoredArgs()
 	defer log.Info("probe exiting")
 
+	switch flags.kubernetesRole {
+	case "": // nothing special
+	case kubernetesRoleHost:
+		flags.kubernetesEnabled = true
+	case kubernetesRoleCluster:
+		flags.kubernetesKubeletPort = 0
+		flags.kubernetesEnabled = true
+		flags.spyProcs = false
+		flags.procEnabled = false
+		flags.useConntrack = false
+		flags.useEbpfConn = false
+	default:
+		log.Warnf("unrecognized --probe.kubernetes.role: %s", flags.kubernetesRole)
+	}
+
 	if flags.spyProcs && os.Getegid() != 0 {
-		log.Warn("--probe.process=true, but that requires root to find everything")
+		log.Warn("--probe.proc.spy=true, but that requires root to find everything")
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -119,7 +151,13 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			token = url.User.Username()
 			url.User = nil // erase credentials, as we use a special header
 		}
+
+		if flags.basicAuth {
+			token = base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", flags.username, flags.password)))
+		}
+
 		probeConfig := appclient.ProbeConfig{
+			BasicAuth:    flags.basicAuth,
 			Token:        token,
 			ProbeVersion: version,
 			ProbeID:      probeID,
@@ -130,64 +168,106 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			xfer.ControlHandlerFunc(handlerRegistry.HandleControlRequest),
 		)
 	}
-	clients := appclient.NewMultiAppClient(clientFactory, flags.noControls)
-	defer clients.Stop()
 
-	dnsLookupFn := net.LookupIP
-	if flags.resolver != "" {
-		dnsLookupFn = appclient.LookupUsing(flags.resolver)
+	var clients interface {
+		probe.ReportPublisher
+		controls.PipeClient
 	}
-	resolver, err := appclient.NewResolver(appclient.ResolverConfig{
-		Targets: targets,
-		Lookup:  dnsLookupFn,
-		Set:     clients.Set,
-	})
-	if err != nil {
-		log.Fatalf("Failed to create resolver: %v", err)
-		return
+	if flags.printOnStdout {
+		if len(targets) > 0 {
+			log.Warnf("Dumping to stdout only: targets %v will be ignored", targets)
+		}
+		clients = new(struct {
+			report.StdoutPublisher
+			controls.DummyPipeClient
+		})
+	} else {
+		multiClients := appclient.NewMultiAppClient(clientFactory, flags.noControls)
+		defer multiClients.Stop()
+
+		dnsLookupFn := net.LookupIP
+		if flags.resolver != "" {
+			dnsLookupFn = appclient.LookupUsing(flags.resolver)
+		}
+		resolver, err := appclient.NewResolver(appclient.ResolverConfig{
+			Targets: targets,
+			Lookup:  dnsLookupFn,
+			Set:     multiClients.Set,
+		})
+		if err != nil {
+			log.Fatalf("Failed to create resolver: %v", err)
+			return
+		}
+		defer resolver.Stop()
+
+		if flags.weaveEnabled && flags.weaveHostname != "" {
+			dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
+			if err != nil {
+				log.Errorf("Error getting docker bridge ip: %v", err)
+			} else {
+				weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
+				weaveTargets, err := appclient.ParseTargets([]string{flags.weaveHostname})
+				if err != nil {
+					log.Errorf("Failed to parse weave targets: %v", err)
+				} else {
+					weaveResolver, err := appclient.NewResolver(appclient.ResolverConfig{
+						Targets: weaveTargets,
+						Lookup:  weaveDNSLookup,
+						Set:     multiClients.Set,
+					})
+					if err != nil {
+						log.Errorf("Failed to create weave resolver: %v", err)
+					} else {
+						defer weaveResolver.Stop()
+					}
+				}
+			}
+		}
+		clients = multiClients
 	}
-	defer resolver.Stop()
 
 	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
-
-	hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients, handlerRegistry)
-	defer hostReporter.Stop()
-	p.AddReporter(hostReporter)
-	p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
-
 	var processCache *process.CachingWalker
-	if flags.procEnabled {
-		processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot, false))
-		p.AddTicker(processCache)
-		p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies, flags.noCommandLineArguments))
-	}
 
-	dnsSnooper, err := endpoint.NewDNSSnooper()
-	if err != nil {
-		log.Errorf("Failed to start DNS snooper: nodes for external services will be less accurate: %s", err)
-	} else {
-		defer dnsSnooper.Stop()
-	}
+	if flags.kubernetesRole != kubernetesRoleCluster {
+		hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients, handlerRegistry)
+		defer hostReporter.Stop()
+		p.AddReporter(hostReporter)
+		p.AddTagger(probe.NewTopologyTagger(), host.NewTagger(hostID))
 
-	endpointReporter := endpoint.NewReporter(endpoint.ReporterConfig{
-		HostID:       hostID,
-		HostName:     hostName,
-		SpyProcs:     flags.spyProcs,
-		UseConntrack: flags.useConntrack,
-		WalkProc:     flags.procEnabled,
-		UseEbpfConn:  flags.useEbpfConn,
-		ProcRoot:     flags.procRoot,
-		BufferSize:   flags.conntrackBufferSize,
-		ProcessCache: processCache,
-		DNSSnooper:   dnsSnooper,
-	})
-	defer endpointReporter.Stop()
-	p.AddReporter(endpointReporter)
+		if flags.procEnabled {
+			processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot, false))
+			p.AddTicker(processCache)
+			p.AddReporter(process.NewReporter(processCache, hostID, process.GetDeltaTotalJiffies, flags.noCommandLineArguments))
+		}
+
+		dnsSnooper, err := endpoint.NewDNSSnooper()
+		if err != nil {
+			log.Errorf("Failed to start DNS snooper: nodes for external services will be less accurate: %s", err)
+		} else {
+			defer dnsSnooper.Stop()
+		}
+
+		endpointReporter := endpoint.NewReporter(endpoint.ReporterConfig{
+			HostID:       hostID,
+			HostName:     hostName,
+			SpyProcs:     flags.spyProcs,
+			UseConntrack: flags.useConntrack,
+			WalkProc:     flags.procEnabled,
+			UseEbpfConn:  flags.useEbpfConn,
+			ProcRoot:     flags.procRoot,
+			BufferSize:   flags.conntrackBufferSize,
+			ProcessCache: processCache,
+			DNSSnooper:   dnsSnooper,
+		})
+		defer endpointReporter.Stop()
+		p.AddReporter(endpointReporter)
+	}
 
 	if flags.dockerEnabled {
 		// Don't add the bridge in Kubernetes since container IPs are global and
 		// shouldn't be scoped
-		if !flags.kubernetesEnabled {
+		if flags.dockerBridge != "" && !flags.kubernetesEnabled {
 			if err := report.AddLocalBridge(flags.dockerBridge); err != nil {
 				log.Errorf("Docker: problem with bridge %s: %v", flags.dockerBridge, err)
 			}
@@ -212,17 +292,29 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		}
 	}
 
-	if flags.kubernetesEnabled {
+	if flags.criEnabled {
+		client, err := cri.NewCRIClient(flags.criEndpoint)
+		if err != nil {
+			log.Errorf("CRI: failed to start registry: %v", err)
+		} else {
+			p.AddReporter(cri.NewReporter(client))
+		}
+	}
+
+	if flags.kubernetesEnabled && flags.kubernetesRole != kubernetesRoleHost {
 		if client, err := kubernetes.NewClient(flags.kubernetesClientConfig); err == nil {
 			defer client.Stop()
 			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry, flags.kubernetesNodeName, flags.kubernetesKubeletPort)
 			defer reporter.Stop()
 			p.AddReporter(reporter)
-			p.AddTagger(reporter)
 		} else {
 			log.Errorf("Kubernetes: failed to start client: %v", err)
 			log.Errorf("Kubernetes: make sure to run Scope inside a POD with a service account or provide valid probe.kubernetes.* flags")
 		}
+	}
+
+	if flags.kubernetesEnabled {
+		p.AddTagger(&kubernetes.Tagger{})
 	}
 
 	if flags.ecsEnabled {
@@ -241,30 +333,6 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			defer weave.Stop()
 			p.AddTagger(weave)
 			p.AddReporter(weave)
-
-			if flags.weaveHostname != "" {
-				dockerBridgeIP, err := network.GetFirstAddressOf(flags.dockerBridge)
-				if err != nil {
-					log.Errorf("Error getting docker bridge ip: %v", err)
-				} else {
-					weaveDNSLookup := appclient.LookupUsing(dockerBridgeIP + ":53")
-					weaveTargets, err := appclient.ParseTargets([]string{flags.weaveHostname})
-					if err != nil {
-						log.Errorf("Failed to parse weave targets: %v", err)
-					} else {
-						weaveResolver, err := appclient.NewResolver(appclient.ResolverConfig{
-							Targets: weaveTargets,
-							Lookup:  weaveDNSLookup,
-							Set:     clients.Set,
-						})
-						if err != nil {
-							log.Errorf("Failed to create weave resolver: %v", err)
-						} else {
-							defer weaveResolver.Stop()
-						}
-					}
-				}
-			}
 		}
 	}
 
@@ -288,7 +356,8 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	maybeExportProfileData(flags)
 
 	p.Start()
-	defer p.Stop()
-
-	common.SignalHandlerLoop()
+	signals.SignalHandlerLoop(
+		logging.Logrus(log.StandardLogger()),
+		p,
+	)
 }

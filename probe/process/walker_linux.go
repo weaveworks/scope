@@ -3,6 +3,7 @@ package process
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -31,6 +32,8 @@ var (
 	// key: filename in /proc. Example: "42"
 	// value: two strings separated by a '\0'
 	cmdlineCache = freecache.NewCache(1024 * 16)
+
+	errDeadProcess = errors.New("The process is dead")
 )
 
 const (
@@ -75,6 +78,7 @@ func readStats(path string) (ppid, threads int, jiffies, rss, rssLimit uint64, e
 	const (
 		// /proc/<pid>/stat field positions, counting from zero
 		// see "man 5 proc"
+		procStatFieldState       int = 2
 		procStatFieldPpid        int = 3
 		procStatFieldUserJiffies int = 13
 		procStatFieldSysJiffies  int = 14
@@ -94,7 +98,16 @@ func readStats(path string) (ppid, threads int, jiffies, rss, rssLimit uint64, e
 	// Parse the file without using expensive extra string allocations
 
 	pos := 0
-	skipNSpaces(&buf, &pos, procStatFieldPpid)
+	skipNSpaces(&buf, &pos, procStatFieldState)
+
+	// Error on processes which are in zombie (defunct) or dead state, so they will be skipped
+	switch buf[pos] {
+	case 'Z', 'X', 'x':
+		err = errDeadProcess
+		return
+	}
+
+	pos += 2 // Move past state and space after state
 	ppid = parseIntWithSpaces(&buf, &pos)
 
 	skipNSpaces(&buf, &pos, procStatFieldUserJiffies-procStatFieldPpid)

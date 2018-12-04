@@ -181,7 +181,42 @@ var nodeSummaryGroupSpecs = []struct {
 	{
 		topologyID: report.ContainerImage,
 		NodeSummaryGroup: NodeSummaryGroup{
-			Label:   "Container Images",
+			Label:   "Container images",
+			Columns: []Column{},
+		},
+	},
+	{
+		topologyID: report.PersistentVolume,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label:   "Persistent Volumes",
+			Columns: []Column{},
+		},
+	},
+	{
+		topologyID: report.PersistentVolumeClaim,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label:   "Persistent Volume Claims",
+			Columns: []Column{},
+		},
+	},
+	{
+		topologyID: report.StorageClass,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label:   "Storage Classes",
+			Columns: []Column{},
+		},
+	},
+	{
+		topologyID: report.VolumeSnapshot,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label:   "Volume Snapshots",
+			Columns: []Column{},
+		},
+	},
+	{
+		topologyID: report.VolumeSnapshotData,
+		NodeSummaryGroup: NodeSummaryGroup{
+			Label:   "Volume Snapshot Data",
 			Columns: []Column{},
 		},
 	},

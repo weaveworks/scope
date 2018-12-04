@@ -27,10 +27,12 @@ func (r DNSRecords) Merge(other DNSRecords) DNSRecords {
 	cp := r.Copy()
 	for k, v := range other {
 		if v2, ok := cp[k]; ok {
-			cp[k] = DNSRecord{
-				Forward: v.Forward.Merge(v2.Forward),
-				Reverse: v.Reverse.Merge(v2.Reverse),
+			fMerged, fUnchanged := v.Forward.Merge(v2.Forward)
+			rMerged, rUnchanged := v.Reverse.Merge(v2.Reverse)
+			if fUnchanged && rUnchanged {
+				continue
 			}
+			cp[k] = DNSRecord{Forward: fMerged, Reverse: rMerged}
 		} else {
 			cp[k] = v
 		}

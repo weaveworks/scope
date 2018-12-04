@@ -17,7 +17,7 @@ const Plugin = ({
     <span className="plugins-plugin" key={id}>
       <Tooltip tip={tip}>
         <span className={className}>
-          {error && <span className="plugins-plugin-icon fa fa-exclamation-circle" />}
+          {error && <i className="plugins-plugin-icon fa fa-exclamation-circle" />}
           {label || id}
         </span>
       </Tooltip>

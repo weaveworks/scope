@@ -77,6 +77,7 @@ export const initialState = makeMap({
   showingHelp: false,
   showingTroubleshootingMenu: false,
   showingNetworks: false,
+  storeViewState: true,
   timeTravelTransitioning: false,
   topologies: makeList(),
   topologiesLoaded: false,
@@ -89,7 +90,6 @@ export const initialState = makeMap({
   viewport: makeMap({ width: 0, height: 0 }),
   websocketClosed: false,
   zoomCache: makeMap(),
-  serviceImages: makeMap()
 });
 
 function calcSelectType(topology) {
@@ -219,6 +219,10 @@ export function rootReducer(state = initialState, action) {
       return state.set('searchFocused', false);
     }
 
+    case ActionTypes.FOCUS_SEARCH: {
+      return state.set('searchFocused', true);
+    }
+
     case ActionTypes.CHANGE_TOPOLOGY_OPTION: {
       // set option on parent topology
       const topology = findTopologyById(state.get('topologies'), action.topologyId);
@@ -281,7 +285,7 @@ export function rootReducer(state = initialState, action) {
       return closeNodeDetails(state, action.nodeId);
     }
 
-    case ActionTypes.CLICK_CLOSE_TERMINAL: {
+    case ActionTypes.CLOSE_TERMINAL: {
       return state.update('controlPipes', controlPipes => controlPipes.clear());
     }
 
@@ -376,11 +380,6 @@ export function rootReducer(state = initialState, action) {
       return state.set('pausedAt', moment().utc().format());
     }
 
-    case ActionTypes.START_TIME_TRAVEL: {
-      state = state.set('timeTravelTransitioning', false);
-      return state.set('pausedAt', action.timestamp || moment().utc().format());
-    }
-
     case ActionTypes.JUMP_TO_TIME: {
       state = state.set('timeTravelTransitioning', true);
       return state.set('pausedAt', action.timestamp);
@@ -471,10 +470,6 @@ export function rootReducer(state = initialState, action) {
       }));
     }
 
-    case ActionTypes.DO_SEARCH: {
-      return state.set('searchQuery', action.searchQuery);
-    }
-
     case ActionTypes.ENTER_EDGE: {
       return state.set('mouseOverEdgeId', action.edgeId);
     }
@@ -504,14 +499,9 @@ export function rootReducer(state = initialState, action) {
       }));
     }
 
-    case ActionTypes.FOCUS_SEARCH: {
-      return state.set('searchFocused', true);
-    }
-
-    case ActionTypes.PIN_SEARCH: {
-      const pinnedSearches = state.get('pinnedSearches');
-      state = state.setIn(['pinnedSearches', pinnedSearches.size], action.query);
-      state = state.set('searchQuery', '');
+    case ActionTypes.UPDATE_SEARCH: {
+      state = state.set('pinnedSearches', makeList(action.pinnedSearches));
+      state = state.set('searchQuery', action.searchQuery || '');
       return applyPinnedSearches(state);
     }
 
@@ -650,11 +640,15 @@ export function rootReducer(state = initialState, action) {
         log(`Set currentTopologyId to ${state.get('currentTopologyId')}`);
       }
       state = setTopology(state, state.get('currentTopologyId'));
-      // only set on first load, if options are not already set via route
-      if (!state.get('topologiesLoaded') && state.get('topologyOptions').size === 0) {
-        state = state.set('topologyOptions', getDefaultTopologyOptions(state));
+
+      // Expand topology options with topologies' defaults on first load, but let
+      // the current state of topologyOptions (which at this point reflects the
+      // URL state) still take the precedence over defaults.
+      if (!state.get('topologiesLoaded')) {
+        const options = getDefaultTopologyOptions(state).mergeDeep(state.get('topologyOptions'));
+        state = state.set('topologyOptions', options);
+        state = state.set('topologiesLoaded', true);
       }
-      state = state.set('topologiesLoaded', true);
 
       return state;
     }
@@ -683,6 +677,10 @@ export function rootReducer(state = initialState, action) {
         selectedNodeId: action.state.selectedNodeId,
         pinnedMetricType: action.state.pinnedMetricType,
       });
+      if (action.state.topologyOptions) {
+        const options = getDefaultTopologyOptions(state).mergeDeep(action.state.topologyOptions);
+        state = state.set('topologyOptions', options);
+      }
       if (action.state.topologyViewMode) {
         state = state.set('topologyViewMode', action.state.topologyViewMode);
       }
@@ -716,19 +714,7 @@ export function rootReducer(state = initialState, action) {
       } else {
         state = state.update('nodeDetails', nodeDetails => nodeDetails.clear());
       }
-      // Use the default topology options for all the fields not
-      // explicitly listed in the Scope state (URL or local storage).
-      state = state.set(
-        'topologyOptions',
-        getDefaultTopologyOptions(state).mergeDeep(action.state.topologyOptions),
-      );
       return state;
-    }
-
-    case ActionTypes.UNPIN_SEARCH: {
-      const pinnedSearches = state.get('pinnedSearches').filter(query => query !== action.query);
-      state = state.set('pinnedSearches', pinnedSearches);
-      return applyPinnedSearches(state);
     }
 
     case ActionTypes.DEBUG_TOOLBAR_INTERFERING: {
@@ -752,24 +738,12 @@ export function rootReducer(state = initialState, action) {
       return clearNodes(state);
     }
 
-    case ActionTypes.REQUEST_SERVICE_IMAGES: {
-      return state.setIn(['serviceImages', action.serviceId], {
-        isFetching: true
-      });
-    }
-
-    case ActionTypes.RECEIVE_SERVICE_IMAGES: {
-      const { service, errors, serviceId } = action;
-
-      return state.setIn(['serviceImages', serviceId], {
-        isFetching: false,
-        containers: service ? service.Containers : null,
-        errors
-      });
-    }
-
     case ActionTypes.MONITOR_STATE: {
       return state.set('monitor', action.monitor);
+    }
+
+    case ActionTypes.SET_STORE_VIEW_STATE: {
+      return state.set('storeViewState', action.storeViewState);
     }
 
     default: {

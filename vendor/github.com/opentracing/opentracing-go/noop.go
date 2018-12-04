@@ -2,8 +2,19 @@ package opentracing
 
 import "github.com/opentracing/opentracing-go/log"
 
-// A NoopTracer is a trivial implementation of Tracer for which all operations
-// are no-ops.
+// A NoopTracer is a trivial, minimum overhead implementation of Tracer
+// for which all operations are no-ops.
+//
+// The primary use of this implementation is in libraries, such as RPC
+// frameworks, that make tracing an optional feature controlled by the
+// end user. A no-op implementation allows said libraries to use it
+// as the default Tracer and to write instrumentation that does
+// not need to keep checking if the tracer instance is nil.
+//
+// For the same reason, the NoopTracer is the default "global" tracer
+// (see GlobalTracer and SetGlobalTracer functions).
+//
+// WARNING: NoopTracer does not support baggage propagation.
 type NoopTracer struct{}
 
 type noopSpan struct{}

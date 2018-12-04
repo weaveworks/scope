@@ -19,7 +19,7 @@ const (
 type DaemonSet interface {
 	Meta
 	Selector() (labels.Selector, error)
-	GetNode() report.Node
+	GetNode(probeID string) report.Node
 }
 
 type daemonSet struct {
@@ -43,11 +43,12 @@ func (d *daemonSet) Selector() (labels.Selector, error) {
 	return selector, nil
 }
 
-func (d *daemonSet) GetNode() report.Node {
+func (d *daemonSet) GetNode(probeID string) report.Node {
 	return d.MetaNode(report.MakeDaemonSetNodeID(d.UID())).WithLatests(map[string]string{
-		DesiredReplicas:      fmt.Sprint(d.Status.DesiredNumberScheduled),
-		Replicas:             fmt.Sprint(d.Status.CurrentNumberScheduled),
-		MisscheduledReplicas: fmt.Sprint(d.Status.NumberMisscheduled),
-		NodeType:             "DaemonSet",
+		DesiredReplicas:       fmt.Sprint(d.Status.DesiredNumberScheduled),
+		Replicas:              fmt.Sprint(d.Status.CurrentNumberScheduled),
+		MisscheduledReplicas:  fmt.Sprint(d.Status.NumberMisscheduled),
+		NodeType:              "DaemonSet",
+		report.ControlProbeID: probeID,
 	})
 }

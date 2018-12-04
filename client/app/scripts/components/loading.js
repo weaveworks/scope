@@ -48,7 +48,7 @@ export class Loading extends React.Component {
     const { itemType, show } = this.props;
     const message = renderTemplate(itemType, this.state.template);
     return (
-      <NodesError mainClassName="nodes-chart-loading" faIconClass="fa-circle-thin" hidden={!show}>
+      <NodesError mainClassName="nodes-chart-loading" faIconClass="far fa-circle" hidden={!show}>
         <div className="heading">{message}</div>
       </NodesError>
     );

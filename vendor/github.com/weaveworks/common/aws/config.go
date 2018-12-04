@@ -18,14 +18,7 @@ import (
 // endpoint) or fully valid endpoint with dummy region assumed (e.g
 // for URLs to emulated services).
 func ConfigFromURL(awsURL *url.URL) (*aws.Config, error) {
-	if awsURL.User == nil {
-		return nil, fmt.Errorf("must specify escaped Access Key & Secret Access in URL")
-	}
-
-	password, _ := awsURL.User.Password()
-	creds := credentials.NewStaticCredentials(awsURL.User.Username(), password, "")
 	config := aws.NewConfig().
-		WithCredentials(creds).
 		// Use a custom http.Client with the golang defaults but also specifying
 		// MaxIdleConnsPerHost because of a bug in golang https://github.com/golang/go/issues/13801
 		// where MaxIdleConnsPerHost does not work as expected.
@@ -44,6 +37,13 @@ func ConfigFromURL(awsURL *url.URL) (*aws.Config, error) {
 				ExpectContinueTimeout: 1 * time.Second,
 			},
 		})
+
+	if awsURL.User != nil {
+		password, _ := awsURL.User.Password()
+		creds := credentials.NewStaticCredentials(awsURL.User.Username(), password, "")
+		config = config.WithCredentials(creds)
+	}
+
 	if strings.Contains(awsURL.Host, ".") {
 		return config.WithEndpoint(fmt.Sprintf("http://%s", awsURL.Host)).WithRegion("dummy"), nil
 	}

@@ -27,7 +27,7 @@ func TestMerger(t *testing.T) {
 	want.Endpoint.AddNode(report.MakeNode("bar"))
 	want.Endpoint.AddNode(report.MakeNode("baz"))
 
-	for _, merger := range []app.Merger{app.MakeDumbMerger(), app.NewSmartMerger()} {
+	for _, merger := range []app.Merger{app.NewFastMerger()} {
 		// Test the empty list case
 		if have := merger.Merge([]report.Report{}); !reflect.DeepEqual(have, report.MakeReport()) {
 			t.Errorf("Bad merge: %s", test.Diff(have, want))
@@ -44,12 +44,8 @@ func TestMerger(t *testing.T) {
 	}
 }
 
-func BenchmarkSmartMerger(b *testing.B) {
-	benchmarkMerger(b, app.NewSmartMerger())
-}
-
-func BenchmarkDumbMerger(b *testing.B) {
-	benchmarkMerger(b, app.MakeDumbMerger())
+func BenchmarkFastMerger(b *testing.B) {
+	benchmarkMerger(b, app.NewFastMerger())
 }
 
 const numHosts = 15
@@ -67,13 +63,17 @@ func benchmarkMerger(b *testing.B, merger app.Merger) {
 	for i := 0; i < numHosts*5; i++ {
 		reports = append(reports, makeReport())
 	}
+	replacements := []report.Report{}
+	for i := 0; i < numHosts/3; i++ {
+		replacements = append(replacements, makeReport())
+	}
 
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		// replace 1/3 of hosts work of reports & merge them all
-		for i := 0; i < numHosts/3; i++ {
-			reports[rand.Intn(len(reports))] = makeReport()
+		for i := 0; i < len(replacements); i++ {
+			reports[rand.Intn(len(reports))] = replacements[i]
 		}
 
 		merger.Merge(reports)

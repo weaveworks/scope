@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
@@ -25,14 +25,14 @@ const (
 var (
 	taskMetadata = report.MetadataTemplates{
 		Cluster:    {ID: Cluster, Label: "Cluster", From: report.FromLatest, Priority: 0},
-		CreatedAt:  {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: report.DateTime},
+		CreatedAt:  {ID: CreatedAt, Label: "Created at", From: report.FromLatest, Priority: 1, Datatype: report.DateTime},
 		TaskFamily: {ID: TaskFamily, Label: "Family", From: report.FromLatest, Priority: 2},
 	}
 	serviceMetadata = report.MetadataTemplates{
 		Cluster:             {ID: Cluster, Label: "Cluster", From: report.FromLatest, Priority: 0},
-		CreatedAt:           {ID: CreatedAt, Label: "Created At", From: report.FromLatest, Priority: 1, Datatype: report.DateTime},
-		ServiceDesiredCount: {ID: ServiceDesiredCount, Label: "Desired Tasks", From: report.FromLatest, Priority: 2, Datatype: report.Number},
-		ServiceRunningCount: {ID: ServiceRunningCount, Label: "Running Tasks", From: report.FromLatest, Priority: 3, Datatype: report.Number},
+		CreatedAt:           {ID: CreatedAt, Label: "Created at", From: report.FromLatest, Priority: 1, Datatype: report.DateTime},
+		ServiceDesiredCount: {ID: ServiceDesiredCount, Label: "Desired tasks", From: report.FromLatest, Priority: 2, Datatype: report.Number},
+		ServiceRunningCount: {ID: ServiceRunningCount, Label: "Running tasks", From: report.FromLatest, Priority: 3, Datatype: report.Number},
 	}
 )
 
@@ -182,12 +182,12 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 
 			// parents sets to merge into all matching container nodes
 			parentsSets := report.MakeSets()
-			parentsSets = parentsSets.Add(report.ECSTask, report.MakeStringSet(taskID))
+			parentsSets = parentsSets.AddString(report.ECSTask, taskID)
 			if serviceName, ok := ecsInfo.TaskServiceMap[taskArn]; ok {
 				serviceID := report.MakeECSServiceNodeID(cluster, serviceName)
-				parentsSets = parentsSets.Add(report.ECSService, report.MakeStringSet(serviceID))
+				parentsSets = parentsSets.AddString(report.ECSService, serviceID)
 				// in addition, make service parent of task
-				rpt.ECSTask.Nodes[taskID] = rpt.ECSTask.Nodes[taskID].WithParents(report.MakeSets().Add(report.ECSService, report.MakeStringSet(serviceID)))
+				rpt.ECSTask.Nodes[taskID] = rpt.ECSTask.Nodes[taskID].WithParent(report.ECSService, serviceID)
 			}
 			for _, containerID := range info.ContainerIDs {
 				if containerNode, ok := rpt.Container.Nodes[containerID]; ok {
@@ -212,14 +212,14 @@ func (Reporter) Report() (report.Report, error) {
 	serviceTopology.Controls.AddControls([]report.Control{
 		{
 			ID:    ScaleDown,
-			Human: "Scale Down",
-			Icon:  "fa-minus",
+			Human: "Scale down",
+			Icon:  "fa fa-minus",
 			Rank:  0,
 		},
 		{
 			ID:    ScaleUp,
-			Human: "Scale Up",
-			Icon:  "fa-plus",
+			Human: "Scale up",
+			Icon:  "fa fa-plus",
 			Rank:  1,
 		},
 	})

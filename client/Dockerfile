@@ -1,6 +1,14 @@
-FROM node:8.4.0
-WORKDIR /home/weave
-COPY package.json yarn.lock /home/weave/
-ENV NPM_CONFIG_LOGLEVEL=warn NPM_CONFIG_PROGRESS=false
-RUN yarn --pure-lockfile
-COPY webpack.local.config.js webpack.production.config.js server.js .babelrc .eslintrc .eslintignore /home/weave/
+# Changes to this file will not take effect in CI
+# until the image version in the CI config is updated. See
+# https://github.com/weaveworks/scope/blob/master/.circleci/config.yml#L11
+FROM node:8.11
+ENV NPM_CONFIG_LOGLEVEL=warn
+ENV NPM_CONFIG_PROGRESS=false
+ENV XDG_CACHE_HOME=/home/weave/scope/.cache
+
+ARG revision
+LABEL maintainer="Weaveworks <help@weave.works>" \
+      org.opencontainers.image.title="scope-ui-build" \
+      org.opencontainers.image.source="https://github.com/weaveworks/scope" \
+      org.opencontainers.image.revision="${revision}" \
+      org.opencontainers.image.vendor="Weaveworks"
