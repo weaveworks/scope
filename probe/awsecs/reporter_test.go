@@ -49,7 +49,7 @@ func TestGetLabelInfo(t *testing.T) {
 		t.Errorf("Empty report did not produce empty label info: %v != %v", labelInfo, expected)
 	}
 
-	rpt.Container = rpt.Container.AddNode(getTestContainerNode())
+	rpt.Container.AddNode(getTestContainerNode())
 	labelInfo = awsecs.GetLabelInfo(rpt)
 	expected = map[string]map[string]*awsecs.TaskLabelInfo{
 		testCluster: {
@@ -127,7 +127,7 @@ func TestTagReport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error making report")
 	}
-	rpt.Container = rpt.Container.AddNode(getTestContainerNode())
+	rpt.Container.AddNode(getTestContainerNode())
 	rpt, err = r.Tag(rpt)
 	if err != nil {
 		t.Fatalf("Failed to tag: %v", err)

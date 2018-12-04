@@ -1,7 +1,6 @@
 package render
 
 import (
-	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -13,66 +12,31 @@ const (
 	OutboundMajor = "The Internet"
 	InboundMinor  = "Inbound connections"
 	OutboundMinor = "Outbound connections"
-
-	// Topology for pseudo-nodes and IPs so we can differentiate them at the end
-	Pseudo = "pseudo"
 )
 
 func renderProcesses(rpt report.Report) bool {
 	return len(rpt.Process.Nodes) >= 1
 }
 
-// EndpointRenderer is a Renderer which produces a renderable endpoint graph.
-var EndpointRenderer = SelectEndpoint
-
 // ProcessRenderer is a Renderer which produces a renderable process
-// graph by merging the endpoint graph and the process topology. It
-// also colors connected nodes. Since the process topology views only
-// show connected processes, we need this info to determine whether
-// processes appearing in a details panel are linkable.
-var ProcessRenderer = Memoise(ColorConnected(endpoints2Processes{}))
+// graph by merging the endpoint graph and the process topology.
+var ProcessRenderer = Memoise(endpoints2Processes{})
 
-// processWithContainerNameRenderer is a Renderer which produces a process
-// graph enriched with container names where appropriate
-type processWithContainerNameRenderer struct {
-	Renderer
-}
-
-func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
-	processes := r.Renderer.Render(rpt)
-	containers := SelectContainer.Render(rpt)
-
-	outputs := report.Nodes{}
-	for id, p := range processes.Nodes {
-		outputs[id] = p
-		containerID, timestamp, ok := p.Latest.LookupEntry(docker.ContainerID)
-		if !ok {
-			continue
-		}
-		container, ok := containers.Nodes[report.MakeContainerNodeID(containerID)]
-		if !ok {
-			continue
-		}
-		p.Latest = p.Latest.Set(docker.ContainerID, timestamp, containerID)
-		if containerName, timestamp, ok := container.Latest.LookupEntry(docker.ContainerName); ok {
-			p.Latest = p.Latest.Set(docker.ContainerName, timestamp, containerName)
-		}
-		outputs[id] = p
-	}
-	return Nodes{Nodes: outputs, Filtered: processes.Filtered}
-}
-
-// ProcessWithContainerNameRenderer is a Renderer which produces a process
-// graph enriched with container names where appropriate
+// ConnectedProcessRenderer is a Renderer which colors
+// connected nodes, so we can apply a filter to show/hide unconnected
+// nodes depending on user choice.
 //
 // not memoised
-var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessRenderer}
+var ConnectedProcessRenderer = ColorConnected(ProcessRenderer)
 
-// ProcessNameRenderer is a Renderer which produces a renderable process
-// name graph by munging the progess graph.
+// ProcessNameRenderer is a Renderer which produces a renderable
+// process name graph by munging the progess graph.
+//
+// It also colors connected nodes, so we can apply a filter to
+// show/hide unconnected nodes depending on user choice.
 //
 // not memoised
-var ProcessNameRenderer = CustomRenderer{RenderFunc: processes2Names, Renderer: ProcessRenderer}
+var ProcessNameRenderer = ColorConnected(CustomRenderer{RenderFunc: processes2Names, Renderer: ProcessRenderer})
 
 // endpoints2Processes joins the endpoint topology to the process
 // topology, matching on hostID and pid.
@@ -83,42 +47,22 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 	if len(rpt.Process.Nodes) == 0 {
 		return Nodes{}
 	}
-	local := LocalNetworks(rpt)
-	processes := SelectProcess.Render(rpt)
-	endpoints := SelectEndpoint.Render(rpt)
-	ret := newJoinResults()
-
-	for _, n := range endpoints.Nodes {
-		// Nodes without a hostid are treated as pseudo nodes
-		if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); !ok {
-			if id, ok := pseudoNodeID(n, local); ok {
-				ret.addChild(n, id, newPseudoNode)
-			}
-		} else {
-			pid, timestamp, ok := n.Latest.LookupEntry(process.PID)
+	endpoints := SelectEndpoint.Render(rpt).Nodes
+	return MapEndpoints(
+		func(n report.Node) string {
+			pid, ok := n.Latest.Lookup(process.PID)
 			if !ok {
-				continue
+				return ""
 			}
-			if hasMoreThanOneConnection(n, endpoints.Nodes) {
-				continue
+			if hasMoreThanOneConnection(n, endpoints) {
+				return ""
 			}
-
-			hostID, _, _ := report.ParseNodeID(hostNodeID)
-			id := report.MakeProcessNodeID(hostID, pid)
-			ret.addChild(n, id, func(id string) report.Node {
-				if processNode, found := processes.Nodes[id]; found {
-					return processNode
-				}
-				// we have a pid, but no matching process node; create a new one rather than dropping the data
-				return report.MakeNode(id).WithTopology(report.Process).
-					WithLatest(process.PID, timestamp, pid)
-			})
-		}
-	}
-	ret.copyUnmatched(processes)
-	ret.fixupAdjacencies(processes)
-	ret.fixupAdjacencies(endpoints)
-	return ret.result()
+			hostID := report.ExtractHostID(n)
+			if hostID == "" {
+				return ""
+			}
+			return report.MakeProcessNodeID(hostID, pid)
+		}, report.Process).Render(rpt)
 }
 
 // When there is more than one connection originating from a source
@@ -148,23 +92,18 @@ func hasMoreThanOneConnection(n report.Node, endpoints report.Nodes) bool {
 	return false
 }
 
+var processNameTopology = MakeGroupNodeTopology(report.Process, process.Name)
+
 // processes2Names maps process Nodes to Nodes for each process name.
 func processes2Names(processes Nodes) Nodes {
-	ret := newJoinResults()
+	ret := newJoinResults(nil)
 
 	for _, n := range processes.Nodes {
 		if n.Topology == Pseudo {
 			ret.passThrough(n)
-		} else {
-			name, timestamp, ok := n.Latest.LookupEntry(process.Name)
-			if ok {
-				ret.addChildAndChildren(n, name, func(id string) report.Node {
-					return report.MakeNode(id).WithTopology(MakeGroupNodeTopology(n.Topology, process.Name)).
-						WithLatest(process.Name, timestamp, name)
-				})
-			}
+		} else if name, ok := n.Latest.Lookup(process.Name); ok {
+			ret.addChildAndChildren(n, name, processNameTopology)
 		}
 	}
-	ret.fixupAdjacencies(processes)
-	return ret.result()
+	return ret.result(processes)
 }

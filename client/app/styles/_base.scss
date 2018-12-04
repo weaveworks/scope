@@ -1,13 +1,17 @@
-@import '~xterm/dist/xterm.css';
 @import '~font-awesome/scss/font-awesome.scss';
 @import '~rc-slider/dist/rc-slider.css';
 
+/* sass-lint:disable variable-for-property */
 @font-face {
-  font-family: "Roboto";
-  src: url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.woff2"),
-    url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.woff"),
-    url("../../node_modules/materialize-css/fonts/roboto/Roboto-Regular.ttf");
+  font-family: 'proxima-nova';
+  src: url('../fonts/proximanova-regular.woff');
 }
+
+@font-face {
+  font-family: 'Roboto Mono';
+  src: url('../fonts/robotomono-regular.ttf');
+}
+/* sass-lint:enable variable-for-property */
 
 a {
   text-decoration: none;
@@ -15,8 +19,8 @@ a {
 
 .browsehappy {
   margin: 0.2em 0;
-  background: #ccc;
-  color: #000;
+  background: $color-gray-200;
+  color: $color-black;
   padding: 0.2em 0;
 }
 
@@ -66,17 +70,17 @@ a {
 }
 
 .shadow-2 {
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16), 0 3px 10px rgba(0, 0, 0, 0.23);
+  box-shadow: 0 3px 10px transparentize($color-black, 0.84), 0 3px 10px transparentize($color-black, 0.77);
 }
 
 .shadow-3 {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.19), 0 6px 10px rgba(0, 0, 0, 0.23);
+  box-shadow: 0 10px 30px transparentize($color-black, 0.81), 0 6px 10px transparentize($color-black, 0.77);
 }
 
 .overlay {
   @extend .hideable;
 
-  background-color: white;
+  background-color: $color-white;
   position: absolute;
   width: 100%;
   height: 100%;
@@ -84,7 +88,7 @@ a {
   left: 0;
   opacity: 0;
   pointer-events: none;
-  z-index: 1000;
+  z-index: $layer-modal;
 
   &.faded {
     // NOTE: Not sure if we should block the pointer events here..
@@ -96,21 +100,21 @@ a {
 
 .overlay-wrapper {
   align-items: center;
-  background-color: fade-out($background-average-color, 0.1);
-  border-radius: 4px;
+  background-color: transparentize($color-purple-25, 0.1);
+  border-radius: $border-radius-soft;
   color: $text-tertiary-color;
   display: flex;
-  font-size: 0.7rem;
+  font-size: $font-size-tiny;
   justify-content: center;
   padding: 5px;
-  position: absolute;
+  position: fixed;
   bottom: 11px;
 
   button {
     @extend .btn-opacity;
     background-color: transparent;
     border: 1px solid transparent;
-    border-radius: 4px;
+    border-radius: $border-radius-soft;
     color: $text-secondary-color;
     cursor: pointer;
     line-height: 20px;
@@ -118,7 +122,7 @@ a {
     outline: 0;
 
     .fa {
-      font-size: 125%;
+      font-size: $font-size-normal;
       position: relative;
       top: 2px;
     }
@@ -158,8 +162,8 @@ a {
   background: $body-background-color;
   bottom: 0;
   color: $text-color;
-  font-family: $base-font;
-  font-size: 13px;
+  font-family: $font-family-regular;
+  font-size: $font-size-small;
   height: auto;
   left: 0;
   line-height: 150%;
@@ -172,7 +176,7 @@ a {
 
   * {
     box-sizing: border-box;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -webkit-tap-highlight-color: transparent;
   }
   *:before,
   *:after {
@@ -189,7 +193,7 @@ a {
   }
 
   h2 {
-    font-size: 34px;
+    font-size: $font-size-extra-large;
     line-height: 40px;
     padding-top: 8px;
     margin-bottom: 12px;
@@ -198,25 +202,25 @@ a {
 
   &.time-travel-open {
     .details-wrapper {
-      margin-top: $timeline-height + 15px;
+      margin-top: $timeline-height + 50px;
     }
   }
 }
 
 .header {
+  background-color: transparentize($color-purple-25, 0.2);
+  z-index: $layer-front;
   padding: 15px 10px 0;
-  pointer-events: none;
+  position: relative;
   width: 100%;
 
   .selectors {
     display: flex;
     position: relative;
+
     > * {
-      z-index: 20;
       flex: 1 1;
     }
-
-    .time-control { z-index: 2001; }
 
     .logo {
       margin: -16px 0 0 8px;
@@ -244,13 +248,11 @@ a {
   }
 
   &-label, .pause-text {
-    text-transform: uppercase;
     margin: 0 0.25em;
   }
 
   &-versionupdate {
     margin-right: 0.5em;
-    text-transform: uppercase;
   }
 
   &-tools {
@@ -266,13 +268,13 @@ a {
 
     .tooltip {
       display: none;
-      background-color: black;
+      background-color: $color-black;
       position: absolute;
-      color: white;
+      color: $color-white;
       text-align: center;
       line-height: 22px;
-      border-radius: 3px;
-      font-size: 12px;
+      border-radius: $border-radius-soft;
+      font-size: $font-size-tiny;
       margin-bottom: 25px;
       margin-left: -4px;
       opacity: 0.75;
@@ -281,8 +283,7 @@ a {
       left: 10px;
       transform: translateX(-50%);
       white-space: nowrap;
-      // above everything
-      z-index: 20000;
+      z-index: $layer-tooltip;
 
       // Adjusted from http://www.cssarrowplease.com/
       &:after {
@@ -294,7 +295,7 @@ a {
         width: 0;
         position: absolute;
         border-color: transparent;
-        border-top-color: black;
+        border-top-color: $color-black;
         margin-left: -6px;
       }
     }
@@ -309,7 +310,7 @@ a {
   @extend .fully-pannable;
 }
 
-.topologies {
+.topologies-selector {
   margin: 0 4px;
   display: flex;
 
@@ -317,8 +318,7 @@ a {
     margin: 0px 8px;
 
     &-label {
-      font-size: .8rem;
-      text-transform: uppercase;
+      font-size: $font-size-normal;
     }
 
   }
@@ -326,22 +326,19 @@ a {
   .topologies-sub {
     &-item {
       &-label {
-        font-size: .7rem;
-        text-transform: uppercase;
+        font-size: $font-size-small;
       }
     }
   }
 
   .topologies-item-main,
   .topologies-sub-item {
-    // border: 1px solid $background-darker-secondary-color;
     pointer-events: all;
-
     color: $text-secondary-color;
     @extend .btn-opacity;
     cursor: pointer;
     padding: 4px 8px;
-    border-radius: $border-radius;
+    border-radius: $border-radius-soft;
     opacity: 0.9;
     margin-bottom: 3px;
     border: 1px solid transparent;
@@ -349,7 +346,7 @@ a {
 
     &-active, &:hover {
       color: $text-color;
-      background-color: $background-darker-secondary-color;
+      background-color: $background-darker-color;
     }
 
     &-active {
@@ -357,7 +354,7 @@ a {
     }
 
     &-matched {
-      border-color: $weave-blue;
+      border-color: $color-blue-400;
     }
 
   }
@@ -370,10 +367,10 @@ a {
 
 .nodes-chart-overlay {
   pointer-events: none;
-  opacity: 0;
+  opacity: $node-elements-in-background-opacity;
 
-  &.active {
-    opacity: $node-elements-in-background-opacity;
+  &:not(.active) {
+    display: none;
   }
 }
 
@@ -391,14 +388,18 @@ a {
     width: 33%;
     height: 550px;
 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
     .heading {
-      font-size: 125%;
+      font-size: $font-size-normal;
     }
 
     &-icon {
       text-align: center;
       opacity: 0.25;
-      font-size: 320px;
+      font-size: $overlay-icon-size;
     }
 
     li { padding-top: 5px; }
@@ -430,111 +431,32 @@ a {
   }
 
   text {
-    font-family: $base-font;
+    font-family: $font-family-regular;
     fill: $text-secondary-color;
   }
 
-  .nodes-chart-elements .node {
-    text-align: center;
-
-    .node-label {
-      color: $text-color;
-    }
-
-    .node-label-minor {
-      line-height: 125%;
-    }
-
-    .node-labels-container {
-      transform: scale($node-text-scale);
-      pointer-events: none;
-    }
-
-    .node-label-wrapper {
-      //
-      // Base line height doesn't hop across foreignObject =/
-      //
-      line-height: 150%;
-
-      //
-      // inline-block so wrapper is only as wide as content.
-      //
-      display: inline-block;
-
-      //
-      // - inline-block gets a different baseline depending on overflow value
-      // - this element gets its overflow value changed sometimes.
-      // - explicitly set the baseline so the text doesn't jump up and down.
-      // http://stackoverflow.com/questions/9273016
-      //
-      vertical-align: top;
-
-      cursor: pointer;
-      pointer-events: all;
-      font-size: 12px;
-      width: 100%;
-    }
-
-    .node-label-minor {
-      color: $text-secondary-color;
-      font-size: 0.85em;
-    }
-
-    .node-label, .node-label-minor {
-      span {
-        border-radius: 2px;
-      }
-      span:not(.match) {
-        padding: 0 0.25em;
-        background-color: $label-background-color;
-      }
-      span:empty {
-        padding: 0;
-      }
-    }
-    .matched-results {
-      background-color: $label-background-color;
-    }
-
-    &.pseudo {
-      cursor: default;
-
-      .node-label {
-        fill: $text-secondary-color;
-      }
-
-      .node-label-minor {
-        fill: $text-tertiary-color;
-      }
-
-      .node {
-        opacity: $node-pseudo-opacity;
-      }
-
-      .border {
-        opacity: $node-pseudo-opacity;
-        stroke: $text-tertiary-color;
-      }
-    }
-
-    .node-label, .node-label-minor {
-      text-align: center;
-    }
-
-    .match {
-      background-color: lighten(rgba(0, 210, 255, 0.5), 30%);
-      border: 1px solid $weave-blue;
-    }
+  .nodes-chart-elements .matched-results {
+    background-color: $label-background-color;
   }
 
   .edge {
-    .link {
+    .link-none {
+      fill: none;
+      display: none;
+    }
+    .link-storage {
       fill: none;
       stroke: $edge-color;
+      stroke-dasharray: 1, 30;
+      stroke-linecap: round;
+    }
+    .link {
+      fill: none;
+      stroke: $edge-color
     }
     .shadow {
       fill: none;
-      stroke: $weave-blue;
+      stroke: $color-blue-400;
       stroke-opacity: 0;
     }
     &.highlighted {
@@ -542,80 +464,6 @@ a {
         stroke-opacity: $edge-highlight-opacity;
       }
     }
-  }
-
-  .stack .highlight-only {
-    .background { display: none; }
-    .shadow { display: none; }
-    .border { display: none; }
-    .node { display: none; }
-  }
-
-  .stack .shape .metric-fill {
-    display: none;
-  }
-
-  .shape {
-    transform: scale(1);
-    cursor: pointer;
-
-    .highlight-border {
-      fill: none;
-      stroke: $weave-blue;
-      stroke-width: 0.7 + $node-highlight-stroke-width * 2;
-      stroke-opacity: $node-highlight-stroke-opacity;
-    }
-
-    .highlight-shadow {
-      fill: none;
-      stroke: white;
-      stroke-width: 0.7;
-      stroke-opacity: $node-highlight-shadow-opacity;
-    }
-
-    .background {
-      stroke: none;
-      fill: $background-lighter-color;
-    }
-
-    .metric-fill {
-      stroke: none;
-      fill: #A0BE7E;
-      fill-opacity: 0.7;
-    }
-
-    .border {
-      fill: none;
-      stroke-opacity: 1;
-      stroke-width: $node-border-stroke-width;
-    }
-
-    &.metrics .border {
-      stroke-opacity: 0.3;
-    }
-
-    .shadow {
-      fill: none;
-      stroke: $background-color;
-      stroke-width: $node-shadow-stroke-width;
-    }
-
-    .node {
-      fill: $text-color;
-      stroke: $background-lighter-color;
-      stroke-width: 0.05;
-    }
-
-    text {
-      transform: scale($node-text-scale);
-      font-size: 10px;
-      dominant-baseline: middle;
-      text-anchor: middle;
-    }
-  }
-
-  .stack .shape .border {
-    stroke-width: $node-border-stroke-width * 0.8;
   }
 
   .edge-marker {
@@ -628,13 +476,13 @@ a {
   text-align: center;
 
   &-match {
-    font-size: 0.8em;
+    font-size: $font-size-small;
 
     &-wrapper {
       display: inline-block;
       margin: 1px;
       padding: 2px 4px;
-      background-color: fade-out($weave-blue, .9);
+      background-color: transparentize($color-blue-400, 0.9);
     }
 
     &-label {
@@ -644,9 +492,8 @@ a {
   }
 
   &-more {
-    text-transform: uppercase;
-    font-size: 0.7em;
-    color: darken($weave-blue, 10%);
+    font-size: $font-size-tiny;
+    color: $color-blue-700;
     margin-top: -2px;
   }
 }
@@ -655,7 +502,7 @@ a {
   &-wrapper {
     position: fixed;
     display: flex;
-    z-index: 1024;
+    z-index: $layer-toolbar;
     right: $details-window-padding-left;
     top: 100px;
     bottom: 48px;
@@ -666,16 +513,17 @@ a {
 .node-details {
   height: 100%;
   width: $details-window-width;
-  background-color: rgba(255, 255, 255, 0.86);
+  background-color: transparentize($color-white, 0.14);
   display: flex;
   flex-flow: column;
   margin-bottom: 12px;
   padding-bottom: 2px;
-  border-radius: 2px;
-  background-color: #fff;
+  border-radius: $border-radius-soft;
+  background-color: $color-white;
   @extend .shadow-2;
   // keep node-details above the terminal.
-  z-index: 2;
+  z-index: $layer-front;
+  overflow: hidden;
 
   &:last-child {
     margin-bottom: 0;
@@ -693,40 +541,40 @@ a {
 
     .close-details {
       position: relative;
-      z-index: 1024;
+      z-index: $layer-front;
     }
 
     > span {
       @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
-      font-size: 110%;
-      color: $white;
+      font-size: $font-size-normal;
+      color: $color-white;
       cursor: pointer;
-      border: 1px solid rgba(255, 255, 255, 0);
-      border-radius: 4px;
+      border: 1px solid transparent;
+      border-radius: $border-radius-soft;
 
       span {
-        font-family: $base-font;
-        font-size: 0.9em;
+        font-family: $font-family-regular;
+        font-size: $font-size-small;
         margin-left: 4px;
 
         span {
-          font-size: 1em;
+          text-transform: capitalize;
+          font-size: $font-size-normal;
           margin-left: 0;
-          text-transform: uppercase;
         }
       }
 
       &:hover {
-        border-color: rgba(255, 255, 255, 0.6);
+        border-color: transparentize($color-white, 0.4);
       }
     }
   }
 
   .match {
-    background-color: fade-out($weave-blue, .7);
-    border: 1px solid $weave-blue;
+    background-color: transparentize($color-blue-400, 0.7);
+    border: 1px solid $color-blue-400;
   }
 
   &-header {
@@ -737,7 +585,7 @@ a {
     }
 
     &-label {
-      color: white;
+      color: $color-white;
       margin: 0;
       width: 348px;
       padding-top: 0;
@@ -757,8 +605,8 @@ a {
 
   &-relatives {
     margin-top: 4px;
-    font-size: 120%;
-    color: $white;
+    font-size: $font-size-normal;
+    color: $color-white;
 
     &-link {
       @extend .truncate;
@@ -774,9 +622,8 @@ a {
     &-more {
       @extend .btn-opacity;
       padding: 0 2px;
-      text-transform: uppercase;
       cursor: pointer;
-      font-size: 60%;
+      font-size: $font-size-tiny;
       font-weight: bold;
       display: inline-block;
       position: relative;
@@ -793,12 +640,12 @@ a {
     }
 
     .node-control-button {
-      color: $white;
+      color: $color-white;
     }
 
     &-spinner {
       @extend .hideable;
-      color: $white;
+      color: $color-white;
       margin-left: 8px;
     }
 
@@ -808,7 +655,7 @@ a {
       width: 55%;
       padding-top: 6px;
       text-align: left;
-      color: $white;
+      color: $color-white;
 
       &-icon {
         @extend .blinkable;
@@ -825,7 +672,7 @@ a {
     &-loading {
       margin-top: 48px;
       text-align: center;
-      font-size: 48px;
+      font-size: $font-size-huge;
       color: $text-tertiary-color;
     }
 
@@ -833,10 +680,9 @@ a {
       margin: 16px 0;
 
       &-header {
-        text-transform: uppercase;
-        font-size: 90%;
+        font-size: $font-size-normal;
         color: $text-tertiary-color;
-        padding: 4px 0;
+        margin-bottom: 10px;
       }
     }
   }
@@ -870,13 +716,12 @@ a {
 
         &-value {
           color: $text-secondary-color;
-          font-size: 100%;
+          font-size: $font-size-normal;
         }
 
         &-label {
           color: $text-secondary-color;
-          text-transform: uppercase;
-          font-size: 60%;
+          font-size: $font-size-tiny;
         }
       }
     }
@@ -890,8 +735,7 @@ a {
 
       &-label {
         color: $text-secondary-color;
-        text-transform: uppercase;
-        font-size: 80%;
+        font-size: $font-size-small;
 
         .fa {
           margin-left: 0.5em;
@@ -903,7 +747,7 @@ a {
       }
 
       &-placeholder {
-        font-size: 200%;
+        font-size: $font-size-extra-large;
         opacity: 0.2;
         margin-bottom: 0.2em;
       }
@@ -916,10 +760,6 @@ a {
       width: 33%;
       display: flex;
       color: inherit;
-
-      .label {
-        text-transform: uppercase;
-      }
 
       .node-details-health-item {
         width: auto;
@@ -939,8 +779,7 @@ a {
         color: $text-secondary-color;
         padding: 0 0.5em 0 0;
         white-space: nowrap;
-        text-transform: uppercase;
-        font-size: 80%;
+        font-size: $font-size-small;
 
         &::after {
           content: ':';
@@ -948,7 +787,7 @@ a {
       }
 
       &-value {
-        font-size: 105%;
+        font-size: $font-size-small;
         flex: 1;
         // Now required (from chrome 48) to get overflow + flexbox behaving:
         min-width: 0;
@@ -972,8 +811,7 @@ a {
         color: $text-secondary-color;
         padding: 0 0.5em 0 0;
         white-space: nowrap;
-        text-transform: uppercase;
-        font-size: 80%;
+        font-size: $font-size-small;
 
         &::after {
           content: ':';
@@ -981,7 +819,7 @@ a {
       }
 
       &-value {
-        font-size: 105%;
+        font-size: $font-size-small;
         flex: 1;
         // Now required (from chrome 48) to get overflow + flexbox behaving:
         min-width: 0;
@@ -1012,14 +850,13 @@ a {
     }
 
     &-header {
-      text-transform: uppercase;
       color: $text-tertiary-color;
-      font-size: 90%;
+      font-size: $font-size-small;
       text-align: right;
       padding: 0;
 
       .node-details-table-header-sortable {
-        padding: 3px 2px;
+        padding: 3px 4px;
         cursor: pointer;
       }
 
@@ -1028,7 +865,7 @@ a {
       }
 
       &-sorter {
-        margin: 0 0.25em;
+        margin: 0 0.35em;
       }
 
       &:first-child {
@@ -1049,11 +886,11 @@ a {
     }
 
     &-node {
-      font-size: 105%;
+      font-size: $font-size-small;
       line-height: 1.5;
 
       &:hover, &.selected {
-        background-color: lighten($background-color, 5%);
+        background-color: $color-white;
       }
 
       > * {
@@ -1065,6 +902,7 @@ a {
         text-decoration: underline;
         cursor: pointer;
         opacity: $link-opacity-default;
+        color: $text-color;
       }
 
       &-value, &-metric {
@@ -1089,7 +927,7 @@ a {
 
       &-value-minor,
       &-value-unit {
-        font-size: 95%;
+        font-size: $font-size-small;
         color: $text-secondary-color;
       }
 
@@ -1104,59 +942,6 @@ a {
 
     }
   }
-
-  .image-status {
-
-    .progress-wrapper {
-      position: relative;
-      min-height: 35px;
-    }
-
-    .node-details-content-section-header {
-      display: flex;
-      justify-content: space-between;
-      line-height: 26px;
-    }
-
-    .images .wrapper{
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .weave-circular-progress-wrapper {
-      position: absolute;
-      left: 50%;
-    }
-
-    .new-image {
-      color: $success-green;
-    }
-
-    a {
-      &:hover {
-        background-color: #f1f1f6;
-        cursor: pointer;
-      }
-    }
-
-    .node-details-table-node-link {
-      background-color: transparent;
-      border: 0;
-      cursor: pointer;
-      padding: 0;
-      outline: 0;
-    }
-
-    .node-details-table-node-link,
-    .node-details-table-node-label,
-    .node-details-table-node-value {
-      flex: 1;
-      font-size: 14px;
-      color: $text-color;
-      line-height: 24px;
-      text-transform: none;
-    }
-  }
 }
 
 
@@ -1165,32 +950,33 @@ a {
   &-metric-box {
     @extend .palable;
     cursor: pointer;
-    fill: rgba(150, 150, 150, 0.4);
+    fill: transparentize($color-gray-600, 0.6);
 
     &-info {
-      background-color: rgba(white, 0.6);
-      border-radius: 2px;
+      background-color: transparentize($color-white, 0.4);
+      border-radius: $border-radius-soft;
       cursor: inherit;
       padding: 5px;
 
       .wrapper {
         display: block;
 
-        &.label { font-size: 15px; }
-        &.consumption { font-size: 12px; }
+        &.label { font-size: $font-size-small; }
+        &.consumption { font-size: $font-size-tiny; }
       }
     }
   }
 
   &-layer-topology {
-    background-color: rgba(#eee, 0.95);
-    border: 1px solid #ccc;
+    background-color: transparentize($color-gray-50, 0.05);
+    border-radius: $border-radius-soft;
+    border: 1px solid $color-gray-200;
     color: $text-tertiary-color;
-    font-size: 16px;
+    font-size: $font-size-normal;
     font-weight: bold;
     padding-right: 20px;
     text-align: right;
-    text-transform: uppercase;
+    text-transform: capitalize;
   }
 }
 
@@ -1202,7 +988,7 @@ a {
 .details-wrapper .node-details-table {
   &-node {
     &:hover, &.selected {
-      background-color: lighten($background-color, 5%);
+      background-color: $color-white;
     }
   }
 }
@@ -1211,17 +997,17 @@ a {
   @extend .btn-opacity;
   padding: 6px;
   margin-left: 2px;
-  font-size: 110%;
+  font-size: $font-size-normal;
   color: $text-secondary-color;
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0);
-  border-radius: 10%;
+  border: 1px solid transparent;
+  border-radius: $border-radius-soft;
   &:hover {
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: transparentize($color-white, 0.4);
   }
   &-pending, &-pending:hover {
     opacity: 0.2;
-    border-color: rgba(255, 255, 255, 0);
+    border-color: transparent;
     cursor: not-allowed;
   }
 }
@@ -1255,20 +1041,20 @@ a {
   &-wrapper {
     width: 100%;
     height: 100%;
-    border: 0px solid #000000;
-    color: #f0f0f0;
+    border: 0px solid $color-black;
+    color: $color-gray-50;
   }
 
   &-header {
     @extend .truncate;
-    color: $white;
+    color: $color-white;
     height: $terminal-header-height;
     padding: 8px 24px;
     background-color: $text-color;
     position: relative;
-    font-size: 14px;
+    font-size: $font-size-small;
     line-height: 28px;
-    border-radius: 4px 0 0 0;
+    border-top-left-radius: $border-radius-soft;
 
     &-title {
       cursor: default;
@@ -1282,24 +1068,23 @@ a {
       &-item, &-item-icon {
         @extend .palable;
         padding: 4px 5px;
-        color: $white;
+        color: $color-white;
         cursor: pointer;
         opacity: 0.7;
-        border: 1px solid rgba(255, 255, 255, 0);
-        border-radius: 10%;
+        border: 1px solid transparent;
+        border-radius: $border-radius-soft;
 
-        font-size: 0.8em;
+        font-size: $font-size-tiny;
         font-weight: bold;
-        text-transform: uppercase;
 
         &:hover {
           opacity: 1;
-          border-color: rgba(255, 255, 255, 0.6);
+          border-color: transparentize($color-white, 0.4);
         }
       }
 
       &-item-icon {
-        font-size: 1em;
+        font-size: $font-size-normal;
       }
     }
   }
@@ -1308,14 +1093,15 @@ a {
   &-app &-inner { top: 0; }
   &-inner {
     cursor: text;
-    font-family: $mono-font;
+    font-family: $font-family-monospace;
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: black;
+    background-color: $color-black;
     padding: 8px;
-    border-radius: 0 0 0 4px;
+    box-sizing: content-box;
+    border-bottom-left-radius: $border-radius-soft;
 
     .terminal {
       background-color: transparent !important;
@@ -1323,14 +1109,14 @@ a {
   }
 
   &-status-bar {
-    font-family: $base-font;
+    font-family: $font-family-regular;
     position: absolute;
     bottom: 16px;
     right: 16px;
     width: 50%;
     padding: 16px 16px;
     opacity: 0.8;
-    border-radius: 4px;
+    border-radius: $border-radius-soft;
 
     h3 {
       margin: 4px 0;
@@ -1338,11 +1124,10 @@ a {
 
     &-message {
       margin: 4px 0;
-      color: $white;
+      color: $color-white;
     }
 
     .link {
-      text-transform: uppercase;
       font-weight: bold;
       cursor: pointer;
       float: right;
@@ -1350,8 +1135,8 @@ a {
   }
 
   &-cursor {
-    color: #000;
-    background: #f0f0f0;
+    color: $color-black;
+    background: $color-gray-50;
   }
 }
 
@@ -1371,14 +1156,13 @@ a {
   padding: 0px 0;
   margin-top: 4px;
   text-align: right;
-  text-transform: uppercase;
   cursor: pointer;
   color: $text-secondary-color;
-  font-size: 90%;
+  font-size: $font-size-small;
 
   &-icon {
     color: $text-tertiary-color;
-    font-size: 120%;
+    font-size: $font-size-normal;
     position: relative;
     top: 1px;
   }
@@ -1388,7 +1172,6 @@ a {
   margin-right: 0.5em;
 
   &-label {
-    text-transform: uppercase;
     margin-right: 0.25em;
   }
 
@@ -1403,7 +1186,7 @@ a {
   &-plugin-icon {
     top: 1px;
     position: relative;
-    font-size: 120%;
+    font-size: $font-size-large;
     margin-right: 2px;
   }
 
@@ -1418,14 +1201,15 @@ a {
 }
 
 .status {
-  text-transform: uppercase;
   padding: 2px 12px;
-  border-radius: $border-radius;
+  background-color: $body-background-color;
+  border-radius: $border-radius-soft;
   color: $text-secondary-color;
   display: inline-block;
+  opacity: 0.9;
 
   &-icon {
-    font-size: 1rem;
+    font-size: $font-size-normal;
     position: relative;
     top: 0.125rem;
     margin-right: 0.25rem;
@@ -1439,6 +1223,7 @@ a {
 }
 
 .topology-option, .metric-selector, .network-selector, .view-mode-selector, .time-control {
+  font-size: $font-size-normal;
   color: $text-secondary-color;
   margin-bottom: 6px;
 
@@ -1448,12 +1233,12 @@ a {
 
   .fa {
     margin-left: 4px;
-    color: darkred;
+    color: $color-orange-500;
   }
 
   &-wrapper {
     pointer-events: all;
-    border-radius: $border-radius;
+    border-radius: $border-radius-soft;
     border: 1px solid $background-darker-color;
     display: inline-block;
     white-space: nowrap;
@@ -1473,18 +1258,19 @@ a {
 
     &:first-child {
       border-left: none;
-      border-top-left-radius: $border-radius;
-      border-bottom-left-radius: $border-radius;
+      border-top-left-radius: $border-radius-soft;
+      border-bottom-left-radius: $border-radius-soft;
     }
 
     &:last-child {
-      border-top-right-radius: $border-radius;
-      border-bottom-right-radius: $border-radius;
+      border-top-right-radius: $border-radius-soft;
+      border-bottom-right-radius: $border-radius-soft;
     }
   }
 }
 
 .metric-selector {
+  font-size: $font-size-small;
   margin-top: 6px;
 }
 
@@ -1500,16 +1286,15 @@ a {
   &:first-child,
   &:last-child {
     .view-mode-selector-action {
-      border-radius: 0;
+      border-radius: $border-radius-none;
     }
   }
 
   &-action {
     background-color: transparent;
-    text-transform: uppercase;
 
     &-selected, &:not([disabled]):hover {
-      background-color: $background-darker-secondary-color;
+      background-color: $background-darker-color;
     }
 
     &:not(:last-child) {
@@ -1534,7 +1319,7 @@ a {
 
     .fa {
       color: $text-secondary-color;
-      font-size: 125%;
+      font-size: $font-size-large;
     }
   }
 
@@ -1544,10 +1329,13 @@ a {
     margin-top: 5px;
     text-align: right;
     pointer-events: all;
+    font-size: $font-size-small;
   }
 }
 
 .topology-option {
+  font-size: $font-size-small;
+
   &-action {
     &-selected {
       cursor: default;
@@ -1573,7 +1361,7 @@ a {
   cursor: pointer;
   border: 1px dashed transparent;
   text-transform: none;
-  border-radius: $border-radius;
+  border-radius: $border-radius-soft;
   margin-left: 4px;
 
   &-wrapper {
@@ -1609,14 +1397,14 @@ a {
   bottom: 11px;
   left: 11px;
   padding: 5px;
-  font-size: .7rem;
-  border-radius: 8px;
+  font-size: $font-size-small;
+  border-radius: $border-radius-soft;
   border: 1px solid transparent;
   pointer-events: none;
 }
 
 .sidebar-gridmode {
-  background-color: #e9e9f1;
+  background-color: $color-purple-50;
   border-color: $background-darker-color;
   opacity: 0.9;
 }
@@ -1641,7 +1429,7 @@ a {
   }
 
   &-hint {
-    font-size: 0.7rem;
+    font-size: $font-size-tiny;
     position: absolute;
     padding: 0 1em;
     color: $text-tertiary-color;
@@ -1654,7 +1442,7 @@ a {
   &-help-link {
     @extend .btn-opacity;
     cursor: pointer;
-    font-size: 150%;
+    font-size: $font-size-normal;
   }
 
   &-label {
@@ -1663,7 +1451,7 @@ a {
     user-select: none;
     top: 0;
     left: 4px;
-    z-index: 1024;
+    z-index: $layer-front;
     padding: 4px;
     color: $text-secondary-color;
 
@@ -1672,8 +1460,7 @@ a {
     }
 
     &-hint {
-      font-size: 0.8rem;
-      text-transform: uppercase;
+      font-size: $font-size-small;
       transition: opacity 0.3s 0.5s $base-ease;
       opacity: 1;
     }
@@ -1681,11 +1468,11 @@ a {
 
   &-input {
     overflow: hidden;
-    background: #fff;
+    background: $color-white;
     position: relative;
-    z-index: 1;
+    z-index: $layer-front;
     display: flex;
-    border-radius: $border-radius;
+    border-radius: $border-radius-soft;
     width: 100%;
     border: $search-border-width solid $search-border-color;
     padding: 2px 4px;
@@ -1693,12 +1480,12 @@ a {
     flex-wrap: wrap;
 
     &-field {
-      font-size: 0.8rem;
+      font-size: $font-size-small;
       line-height: 150%;
       position: relative;
       padding: 1px 4px 1px 1.5em;
       border: none;
-      border-radius: 0;
+      border-radius: $border-radius-none;
       background: transparent;
       color: $text-color;
       width: 100px;
@@ -1737,16 +1524,18 @@ a {
   }
 
   &-matched &-input {
-    border-color: $weave-blue;
+    border-color: $color-blue-400;
   }
 
 }
 
 .search-item {
-  background-color: fade-out($weave-blue, .2);
-  border-radius: $border-radius / 2;
+  background-color: transparentize($color-blue-400, 0.2);
+  border-radius: $border-radius-soft;
   margin: 1px 0 1px 1.5em;
-  display: inline-block;
+  padding: 2px 4px 2px 6px;
+  display: flex;
+  align-items: center;
 
   & + .search-item {
     margin-left: 4px;
@@ -1757,14 +1546,14 @@ a {
   }
 
   &-label {
-    padding: 2px 4px;
+    margin-right: 4px;
   }
 
   &-icon {
     @extend .btn-opacity;
-    padding: 2px 4px 2px 2px;
+    padding: 2px;
     cursor: pointer;
-    font-size: 80%;
+    font-size: $font-size-small;
     position: relative;
     top: -1px;
   }
@@ -1783,8 +1572,8 @@ a {
 //
 
 .help-panel {
-  z-index: 2048;
-  background-color: white;
+  z-index: $layer-modal;
+  background-color: $color-white;
   @extend .shadow-2;
   display: flex;
   position: relative;
@@ -1800,14 +1589,13 @@ a {
   }
 
   &-header {
-    background-color: $weave-blue;
+    background-color: $color-blue-400;
     padding: 12px 24px;
-    color: white;
+    color: $color-white;
 
     h2 {
       margin: 0;
-      text-transform: uppercase;
-      font-size: 125%;
+      font-size: $font-size-large;
     }
   }
 
@@ -1820,14 +1608,14 @@ a {
       @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
-      font-size: 110%;
-      color: #8383ac;
+      font-size: $font-size-normal;
+      color: $color-purple-400;
       cursor: pointer;
-      border: 1px solid rgba(131, 131, 172, 0);
-      border-radius: 10%;
+      border: 1px solid transparent;
+      border-radius: $border-radius-soft;
 
       &:hover {
-        border-color: rgba(131, 131, 172, 0.6);
+        border-color: transparentize($color-purple-400, 0.4);
       }
     }
 
@@ -1840,18 +1628,16 @@ a {
     align-items: stretch;
 
     h2 {
-      text-transform: uppercase;
       line-height: 150%;
-      font-size: 125%;
-      color: #8383ac;
+      font-size: $font-size-large;
+      color: $color-purple-400;
       padding: 4px 0;
-      border-bottom: 1px solid rgba(131, 131, 172, 0.1);
+      border-bottom: 1px solid transparentize($color-purple-400, 0.9);
     }
 
     h3 {
-      text-transform: uppercase;
-      font-size: 90%;
-      color: #8383ac;
+      font-size: $font-size-normal;
+      color: $color-purple-400;
       padding: 4px 0;
     }
 
@@ -1867,15 +1653,15 @@ a {
       kbd {
         display: inline-block;
         padding: 3px 5px;
-        font-size: 11px;
+        font-size: $font-size-tiny;
         line-height: 10px;
-        color: #555;
+        color: $color-gray-600;
         vertical-align: middle;
-        background-color: #fcfcfc;
-        border: solid 1px #ccc;
-        border-bottom-color: #bbb;
-        border-radius: 3px;
-        box-shadow: inset 0 -1px 0 #bbb;
+        background-color: $color-white;
+        border: solid 1px $color-gray-200;
+        border-bottom-color: $color-gray-600;
+        border-radius: $border-radius-soft;
+        box-shadow: inset 0 -1px 0 $color-gray-600;
       }
       div.key {
         width: 60px;
@@ -1913,8 +1699,7 @@ a {
     flex-direction: column;
 
     &-current-topology {
-      text-transform: uppercase;
-      color: #8383ac;
+      color: $color-purple-400;
     }
 
     &-fields {
@@ -1966,12 +1751,12 @@ a {
 
 .debug-panel {
   @extend .shadow-2;
-  background-color: #fff;
+  background-color: $color-white;
   top: 80px;
   position: absolute;
   padding: 10px;
   left: 10px;
-  z-index: 10000;
+  z-index: $layer-modal;
 
   opacity: 0.3;
 
@@ -1996,12 +1781,8 @@ a {
 //
 
 .nodes-grid {
-  // TODO: Would be good to have relative positioning here.
-  position: absolute;
-  top: 0;
-
   tr {
-    border-radius: 6px;
+    border-radius: $border-radius-soft;
   }
 
   &-label-minor {
@@ -2044,12 +1825,12 @@ a {
     }
 
     tr:nth-child(even) {
-      background: $background-color;
+      background: $color-gray-100;
     }
 
     tbody tr {
       border: 1px solid transparent;
-      border-radius: 4px;
+      border-radius: $border-radius-soft;
       cursor: pointer;
     }
 
@@ -2057,26 +1838,15 @@ a {
     // because we want consistent behaviour between the
     // visual and row locking logic that happens on hover.
     tbody tr.selected, tbody tr.focused {
-      background-color: #d7ecf5;
-      border: 1px solid $weave-blue;
-    }
-
-    tbody tr.selected {
-      // box-shadow: 0 4px 2px -2px rgba(0, 0, 0, 0.16);
+      background-color: transparentize($color-blue-400, 0.85);
+      border: 1px solid $color-blue-400;
     }
   }
 
   .scroll-body {
 
     table {
-      border-bottom: 1px solid #ccc;
-    }
-
-    thead {
-      // osx scrollbar width: 0
-      // linux scrollbar width: 16
-      // avg scrollbar width: 8
-      padding-right: 8px;
+      border-bottom: 1px solid $color-gray-200;
     }
 
     thead, tbody tr {
@@ -2094,8 +1864,8 @@ a {
     }
 
     thead {
-      box-shadow: 0 4px 2px -2px rgba(0, 0, 0, 0.16);
-      border-bottom: 1px solid #aaa;
+      box-shadow: 0 4px 2px -2px transparentize($color-black, 0.84);
+      border-bottom: 1px solid $color-gray-600;
     }
 
     tbody {
@@ -2120,10 +1890,10 @@ a {
 
   &-content {
     position: relative;
-    background-color: $white;
+    background-color: $color-white;
     padding: 20px;
     @extend .shadow-2;
-    z-index: 2048;
+    z-index: $layer-modal;
   }
 
   &-item {
@@ -2139,7 +1909,7 @@ a {
   }
 
   button, a {
-    color: $weave-charcoal-blue;
+    color: $color-purple-900;
 
     &:hover {
       color: $text-color;

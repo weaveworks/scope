@@ -6,7 +6,8 @@
 #
 # For shell files, it runs shfmt. If you don't have that installed, you can get
 # it with:
-#   go get -u gopkg.in/mvdan/sh.v1/cmd/shfmt
+#   curl -fsSLo shfmt https://github.com/mvdan/sh/releases/download/v1.3.0/shfmt_v1.3.0_linux_amd64
+#   chmod +x shfmt
 #
 # With no arguments, it lints the current files staged
 # for git commit.  Or you can pass it explicit filenames
@@ -49,14 +50,6 @@ done
 spell_check() {
     local filename="$1"
     local lint_result=0
-
-    # we don't want to spell check tar balls, binaries, Makefile and json files
-    if file "$filename" | grep executable >/dev/null 2>&1; then
-        return $lint_result
-    fi
-    if [[ $filename == *".tar" || $filename == *".gz" || $filename == *".json" || $(basename "$filename") == "Makefile" ]]; then
-        return $lint_result
-    fi
 
     # misspell is completely optional.  If you don't like it
     # don't have it installed.
@@ -113,9 +106,12 @@ lint_sh() {
     local filename="$1"
     local lint_result=0
 
-    if ! diff -u "${filename}" <(shfmt -i 4 "${filename}"); then
-        lint_result=1
-        echo "${filename}: run shfmt -i 4 -w ${filename}"
+    # Skip shfmt validation, if not installed
+    if type shfmt >/dev/null 2>&1; then
+        if ! diff -u "${filename}" <(shfmt -i 4 "${filename}"); then
+            lint_result=1
+            echo "${filename}: run shfmt -i 4 -w ${filename}"
+        fi
     fi
 
     # the shellcheck is completely optional.  If you don't like it
@@ -159,7 +155,7 @@ lint_py() {
 
     if yapf --diff "${filename}" | grep -qE '^[+-]'; then
         lint_result=1
-        echo "${filename}: run yapf --in-place ${filename}"
+        echo "${filename} needs reformatting. Run: yapf --in-place ${filename}"
     else
         # Only run flake8 if yapf passes, since they pick up a lot of similar issues
         flake8 "${filename}" || lint_result=1
@@ -185,19 +181,24 @@ lint() {
         *.pb.go) return ;;
     esac
 
-    if [[ "$(file --mime-type "${filename}" | awk '{print $2}')" == "text/x-shellscript" ]]; then
-        ext="sh"
-    fi
+    mimetype=$(file --mime-type "${filename}" | awk '{print $2}')
 
-    case "$ext" in
-        go) lint_go "${filename}" || lint_result=1 ;;
-        sh) lint_sh "${filename}" || lint_result=1 ;;
-        tf) lint_tf "${filename}" || lint_result=1 ;;
-        md) lint_md "${filename}" || lint_result=1 ;;
-        py) lint_py "${filename}" || lint_result=1 ;;
+    case "$mimetype.$ext" in
+        text/x-shellscript.*) lint_sh "${filename}" || lint_result=1 ;;
+        *.go) lint_go "${filename}" || lint_result=1 ;;
+        *.tf) lint_tf "${filename}" || lint_result=1 ;;
+        *.md) lint_md "${filename}" || lint_result=1 ;;
+        *.py) lint_py "${filename}" || lint_result=1 ;;
     esac
 
-    spell_check "${filename}" || lint_result=1
+    # we don't want to spell check tar balls, binaries, Makefile and json files
+    case "$mimetype.$ext" in
+        *.tar | *.gz | *.json) ;;
+        *.req | *.key | *.pem | *.crt) ;;
+        application/x-executable.*) ;;
+        text/x-makefile.*) ;;
+        *) spell_check "${filename}" || lint_result=1 ;;
+    esac
 
     return $lint_result
 }
@@ -240,7 +241,7 @@ filter_out() {
 
 list_files() {
     if [ $# -gt 0 ]; then
-        find "$@" | grep -vE '(^|/)vendor/'
+        find "$@" \( -name vendor -o -name .git \) -prune -o -type f
     else
         git ls-files --exclude-standard | grep -vE '(^|/)vendor/'
     fi

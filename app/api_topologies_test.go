@@ -9,8 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ugorji/go/codec"
+	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	apiv1 "k8s.io/client-go/pkg/api/v1"
 
 	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/app"
@@ -51,7 +51,7 @@ func TestAPITopology(t *testing.T) {
 		}
 
 		// TODO: add ECS nodes in report fixture
-		if topology.Name == "Tasks" || topology.Name == "services" {
+		if topology.Name == "Tasks" || topology.Name == "Services" {
 			continue
 		}
 
@@ -183,7 +183,7 @@ func getTestContainerLabelFilterTopologySummary(t *testing.T, exclude bool) (det
 		return nil, err
 	}
 
-	return detailed.Summaries(report.RenderContext{Report: fixture.Report}, render.Render(fixture.Report, renderer, filter).Nodes), nil
+	return detailed.Summaries(detailed.RenderContext{Report: fixture.Report}, render.Render(fixture.Report, renderer, filter).Nodes), nil
 }
 
 func TestAPITopologyAddsKubernetes(t *testing.T) {

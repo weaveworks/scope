@@ -1,9 +1,13 @@
 import page from 'page';
-import { each } from 'lodash';
+import stableStringify from 'json-stable-stringify';
+import { fromJS, is as isDeepEqual } from 'immutable';
+import { each, omit, omitBy, isEmpty } from 'lodash';
 
 import { route } from '../actions/app-actions';
+import { hashDifferenceDeep } from './hash-utils';
 import { storageGet, storageSet } from './storage-utils';
-import { serializeTimestamp } from './web-api-utils';
+
+import { getDefaultTopologyOptions, initialState as initialRootState } from '../reducers/root';
 
 //
 // page.js won't match the routes below if ":state" has a slash in it, so replace those before we
@@ -42,16 +46,42 @@ function shouldReplaceState(prevState, nextState) {
   return terminalToTerminal || closingTheTerminal;
 }
 
+function omitDefaultValues(urlState) {
+  // A couple of cases which require special handling because their URL state
+  // default values might be in different format than their Redux defaults.
+  if (!urlState.controlPipe) {
+    urlState = omit(urlState, 'controlPipe');
+  }
+  if (isEmpty(urlState.nodeDetails)) {
+    urlState = omit(urlState, 'nodeDetails');
+  }
+  if (isEmpty(urlState.topologyOptions)) {
+    urlState = omit(urlState, 'topologyOptions');
+  }
+
+  // Omit all the fields which match their initial Redux state values.
+  return omitBy(urlState, (value, key) => (
+    isDeepEqual(fromJS(value), initialRootState.get(key))
+  ));
+}
+
 export function getUrlState(state) {
   const cp = state.get('controlPipes').last();
   const nodeDetails = state.get('nodeDetails').toIndexedSeq().map(details => ({
-    id: details.id, label: details.label, topologyId: details.topologyId
+    id: details.id, topologyId: details.topologyId
   }));
+  // Compress the topologyOptions hash by removing all the default options, to make
+  // the Scope state string smaller. The default options will always be used as a
+  // fallback so they don't need to be explicitly mentioned in the state.
+  const topologyOptionsDiff = hashDifferenceDeep(
+    state.get('topologyOptions').toJS(),
+    getDefaultTopologyOptions(state).toJS(),
+  );
 
   const urlState = {
     controlPipe: cp ? cp.toJS() : null,
     nodeDetails: nodeDetails.toJS(),
-    pausedAt: serializeTimestamp(state.get('pausedAt')),
+    pausedAt: state.get('pausedAt'),
     topologyViewMode: state.get('topologyViewMode'),
     pinnedMetricType: state.get('pinnedMetricType'),
     pinnedSearches: state.get('pinnedSearches').toJS(),
@@ -60,7 +90,7 @@ export function getUrlState(state) {
     gridSortedBy: state.get('gridSortedBy'),
     gridSortedDesc: state.get('gridSortedDesc'),
     topologyId: state.get('currentTopologyId'),
-    topologyOptions: state.get('topologyOptions').toJS(), // all options,
+    topologyOptions: topologyOptionsDiff,
     contrastMode: state.get('contrastMode'),
   };
 
@@ -71,14 +101,19 @@ export function getUrlState(state) {
     }
   }
 
-  return urlState;
+  // We can omit all the fields whose values correspond to their Redux initial
+  // state, as that state will be used as fallback anyway when entering routes.
+  return omitDefaultValues(urlState);
 }
 
 export function updateRoute(getState) {
   const state = getUrlState(getState());
-  const stateUrl = encodeURL(JSON.stringify(state));
-  const dispatch = false;
   const prevState = parseHashState();
+  const dispatch = false;
+
+  const stateUrl = encodeURL(stableStringify(state));
+  const prevStateUrl = encodeURL(stableStringify(prevState));
+  if (stateUrl === prevStateUrl) return;
 
   // back up state in storage as well
   storageSet(STORAGE_STATE_KEY, stateUrl);
@@ -121,7 +156,7 @@ export function getRouter(dispatch, initialState) {
       } else {
         const mergedState = Object.assign(initialState, parsedState);
         // push storage state to URL
-        window.location.hash = `!/state/${JSON.stringify(mergedState)}`;
+        window.location.hash = `!/state/${stableStringify(mergedState)}`;
         dispatch(route(mergedState));
       }
     } else {
@@ -132,11 +167,11 @@ export function getRouter(dispatch, initialState) {
   page('/state/:state', (ctx) => {
     const state = JSON.parse(decodeURL(ctx.params.state));
     const dirtyOptions = detectOldOptions(state.topologyOptions);
-    if (dirtyOptions) {
-      dispatch(route(initialState));
-    } else {
-      dispatch(route(state));
-    }
+    const nextState = dirtyOptions ? initialState : state;
+
+    // back up state in storage and redirect
+    storageSet(STORAGE_STATE_KEY, encodeURL(stableStringify(state)));
+    dispatch(route(nextState));
   });
 
   return page;

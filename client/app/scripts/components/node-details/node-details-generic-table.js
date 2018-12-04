@@ -5,7 +5,7 @@ import { Map as makeMap } from 'immutable';
 import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
 
 import {
-  isNumber,
+  isNumeric,
   getTableColumnsStyles,
   genericTableEntryKey
 } from '../../utils/node-details-utils';
@@ -18,7 +18,7 @@ function sortedRows(rows, columns, sortedBy, sortedDesc) {
   const column = columns.find(c => c.id === sortedBy);
   const sorted = sortBy(rows, (row) => {
     let value = row.entries[sortedBy];
-    if (isNumber(column)) {
+    if (isNumeric(column)) {
       value = parseFloat(value);
     }
     return value;
@@ -94,7 +94,16 @@ export default class NodeDetailsGenericTable extends React.Component {
                       title={value}
                       key={column.id}
                       style={styles[index]}>
-                      <MatchedText text={value} match={match} />
+                      {column.dataType === 'link' ?
+                        <a
+                          rel="noopener noreferrer"
+                          target="_blank"
+                          className="node-details-table-node-link"
+                          href={value}>
+                          {value}
+                        </a> :
+                        <MatchedText text={value} match={match} />
+                      }
                     </td>
                   );
                 })}

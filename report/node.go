@@ -6,20 +6,18 @@ import (
 	"github.com/weaveworks/common/mtime"
 )
 
-// Node describes a superset of the metadata that probes can collect about a
-// given node in a given topology, along with the edges emanating from the
-// node and metadata about those edges.
+// Node describes a superset of the metadata that probes can collect
+// about a given node in a given topology, along with the edges (aka
+// adjacency) emanating from the node.
 type Node struct {
 	ID             string                   `json:"id,omitempty"`
 	Topology       string                   `json:"topology,omitempty"`
 	Counters       Counters                 `json:"counters,omitempty"`
 	Sets           Sets                     `json:"sets,omitempty"`
-	Adjacency      IDList                   `json:"adjacency"`
-	Edges          EdgeMetadatas            `json:"edges,omitempty"`
-	Controls       NodeControls             `json:"controls,omitempty"`
+	Adjacency      IDList                   `json:"adjacency,omitempty"`
 	LatestControls NodeControlDataLatestMap `json:"latestControls,omitempty"`
 	Latest         StringLatestMap          `json:"latest,omitempty"`
-	Metrics        Metrics                  `json:"metrics,omitempty"`
+	Metrics        Metrics                  `json:"metrics,omitempty" deepequal:"nil==empty"`
 	Parents        Sets                     `json:"parents,omitempty"`
 	Children       NodeSet                  `json:"children,omitempty"`
 }
@@ -31,8 +29,6 @@ func MakeNode(id string) Node {
 		Counters:       MakeCounters(),
 		Sets:           MakeSets(),
 		Adjacency:      MakeIDList(),
-		Edges:          MakeEdgeMetadatas(),
-		Controls:       MakeNodeControls(),
 		LatestControls: MakeNodeControlDataLatestMap(),
 		Latest:         MakeStringLatestMap(),
 		Metrics:        Metrics{},
@@ -75,9 +71,7 @@ func (n Node) After(other Node) bool {
 // WithLatests returns a fresh copy of n, with Metadata m merged in.
 func (n Node) WithLatests(m map[string]string) Node {
 	ts := mtime.Now()
-	for k, v := range m {
-		n.Latest = n.Latest.Set(k, ts, v)
-	}
+	n.Latest = n.Latest.addMapEntries(ts, m)
 	return n
 }
 
@@ -124,20 +118,6 @@ func (n Node) WithAdjacent(a ...string) Node {
 	return n
 }
 
-// WithEdge returns a fresh copy of n, with 'dst' added to Adjacency and md
-// added to EdgeMetadata.
-func (n Node) WithEdge(dst string, md EdgeMetadata) Node {
-	n.Adjacency = n.Adjacency.Add(dst)
-	n.Edges = n.Edges.Add(dst, md)
-	return n
-}
-
-// WithControls returns a fresh copy of n, with cs added to Controls.
-func (n Node) WithControls(cs ...string) Node {
-	n.Controls = n.Controls.Add(cs...)
-	return n
-}
-
 // WithLatestActiveControls returns a fresh copy of n, with active controls cs added to LatestControls.
 func (n Node) WithLatestActiveControls(cs ...string) Node {
 	lcs := map[string]NodeControlData{}
@@ -159,6 +139,12 @@ func (n Node) WithLatestControls(lcs map[string]NodeControlData) Node {
 // WithLatestControl produces a new Node with control added to it
 func (n Node) WithLatestControl(control string, ts time.Time, data NodeControlData) Node {
 	n.LatestControls = n.LatestControls.Set(control, ts, data)
+	return n
+}
+
+// WithParent returns a fresh copy of n, with one parent added
+func (n Node) WithParent(key, parent string) Node {
+	n.Parents = n.Parents.AddString(key, parent)
 	return n
 }
 
@@ -205,8 +191,6 @@ func (n Node) Merge(other Node) Node {
 		Counters:       n.Counters.Merge(other.Counters),
 		Sets:           n.Sets.Merge(other.Sets),
 		Adjacency:      n.Adjacency.Merge(other.Adjacency),
-		Edges:          n.Edges.Merge(other.Edges),
-		Controls:       n.Controls.Merge(other.Controls),
 		LatestControls: n.LatestControls.Merge(other.LatestControls),
 		Latest:         n.Latest.Merge(other.Latest),
 		Metrics:        n.Metrics.Merge(other.Metrics),

@@ -352,7 +352,7 @@ describe('RootReducer', () => {
     expect(activeTopologyOptionsSelector(nextState).has('option1')).toBeTruthy();
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toBeInstanceOf(Array);
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions).toBeUndefined();
 
     // turn on
     nextState = reducer(nextState, ChangeTopologyOptionAction);
@@ -362,17 +362,17 @@ describe('RootReducer', () => {
     // turn off
     nextState = reducer(nextState, ChangeTopologyOptionAction2);
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions).toBeUndefined();
 
     // sub-topology should retain main topo options
     nextState = reducer(nextState, ClickSubTopologyAction);
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions).toBeUndefined();
 
     // other topology w/o options dont return options, but keep in app state
     nextState = reducer(nextState, ClickTopology2Action);
     expect(activeTopologyOptionsSelector(nextState).size).toEqual(0);
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions).toBeUndefined();
   });
 
   it('adds/removes a topology option', () => {
@@ -433,7 +433,7 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopologyAction);
     expect(activeTopologyOptionsSelector(nextState).get('option1')).toEqual(['off']);
-    expect(getUrlState(nextState).topologyOptions.topo1.option1).toEqual(['off']);
+    expect(getUrlState(nextState).topologyOptions).toBeUndefined();
   });
 
   // nodes delta
@@ -479,7 +479,7 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ReceiveTopologiesAction);
     nextState = reducer(nextState, ClickTopologyAction);
     nextState = reducer(nextState, ReceiveNodesDeltaAction);
-    expect(getUrlState(nextState).selectedNodeId).toEqual(null);
+    expect(getUrlState(nextState).selectedNodeId).toBeUndefined();
 
     nextState = reducer(nextState, ClickNodeAction);
     expect(getUrlState(nextState).selectedNodeId).toEqual('n1');
@@ -487,7 +487,7 @@ describe('RootReducer', () => {
     // go back in browsing
     RouteAction.state = {topologyId: 'topo1', selectedNodeId: null};
     nextState = reducer(nextState, RouteAction);
-    expect(nextState.get('selectedNodeId')).toBe(null);
+    expect(nextState.get('selectedNodeId')).toBeNull();
     expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
   });
 
@@ -497,7 +497,7 @@ describe('RootReducer', () => {
     nextState = reducer(nextState, ClickTopologyAction);
     nextState = reducer(nextState, ReceiveNodesDeltaAction);
 
-    expect(getUrlState(nextState).selectedNodeId).toEqual(null);
+    expect(getUrlState(nextState).selectedNodeId).toBeUndefined();
     expect(getUrlState(nextState).topologyId).toEqual('topo1');
 
     nextState = reducer(nextState, ClickNodeAction);
@@ -505,7 +505,7 @@ describe('RootReducer', () => {
     expect(getUrlState(nextState).topologyId).toEqual('topo1');
 
     nextState = reducer(nextState, ClickSubTopologyAction);
-    expect(getUrlState(nextState).selectedNodeId).toEqual(null);
+    expect(getUrlState(nextState).selectedNodeId).toBeUndefined();
     expect(getUrlState(nextState).topologyId).toEqual('topo1-grouped');
   });
 
@@ -730,38 +730,5 @@ describe('RootReducer', () => {
       constructEdgeId('abc123', 'def456'),
       constructEdgeId('def456', 'abc123')
     ]);
-  });
-  it('receives images for a service', () => {
-    const action = {
-      type: ActionTypes.RECEIVE_SERVICE_IMAGES,
-      serviceId: 'cortex/configs',
-      service: {
-        ID: 'cortex/configs',
-        Containers: [{
-          Available: [{
-            ID: 'quay.io/weaveworks/cortex-configs:master-1ca6274a',
-            CreatedAt: '2017-04-26T13:50:13.284736173Z'
-          }],
-          Current: { ID: 'quay.io/weaveworks/cortex-configs:master-1ca6274a' },
-          Name: 'configs'
-        }]
-      }
-    };
-
-    const nextState = reducer(initialState, action);
-    expect(nextState.getIn(['serviceImages', 'cortex/configs'])).toEqual({
-      isFetching: false,
-      errors: undefined,
-      containers: [{
-        Name: 'configs',
-        Current: {
-          ID: 'quay.io/weaveworks/cortex-configs:master-1ca6274a'
-        },
-        Available: [{
-          ID: 'quay.io/weaveworks/cortex-configs:master-1ca6274a',
-          CreatedAt: '2017-04-26T13:50:13.284736173Z'
-        }]
-      }]
-    });
   });
 });

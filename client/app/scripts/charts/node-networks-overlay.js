@@ -4,7 +4,6 @@ import { List as makeList } from 'immutable';
 import { connect } from 'react-redux';
 
 import { getNetworkColor } from '../utils/color-utils';
-import { NODE_BASE_SIZE } from '../constants/styles';
 
 // Min size is about a quarter of the width, feels about right.
 const minBarWidth = 0.25;
@@ -14,7 +13,7 @@ const borderRadius = 0.01;
 const offset = 0.67;
 const x = scaleBand();
 
-function NodeNetworksOverlay({ stack, networks = makeList(), contrastMode }) {
+function NodeNetworksOverlay({ networks = makeList() }) {
   const barWidth = Math.max(1, minBarWidth * networks.size);
   const yPosition = offset - (barHeight * 0.5);
 
@@ -38,9 +37,8 @@ function NodeNetworksOverlay({ stack, networks = makeList(), contrastMode }) {
     />
   ));
 
-  const translateY = stack && contrastMode ? 0.15 : 0;
   return (
-    <g transform={`translate(0, ${translateY}) scale(${NODE_BASE_SIZE})`}>
+    <g transform="translate(0, -5) scale(60)">
       {bars.toJS()}
     </g>
   );

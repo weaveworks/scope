@@ -9,9 +9,3 @@ export function timer(fn) {
   };
   return timedFn;
 }
-
-export function timestampsEqual(timestampA, timestampB) {
-  const stringifiedTimestampA = timestampA ? timestampA.toISOString() : '';
-  const stringifiedTimestampB = timestampB ? timestampB.toISOString() : '';
-  return stringifiedTimestampA === stringifiedTimestampB;
-}

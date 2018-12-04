@@ -12,7 +12,7 @@ import NodeDetailsTableHeaders from './node-details-table-headers';
 import { ipToPaddedString } from '../../utils/string-utils';
 import { moveElement, insertElement } from '../../utils/array-utils';
 import {
-  isIP, isNumber, defaultSortDesc, getTableColumnsStyles
+  isIP, isNumeric, defaultSortDesc, getTableColumnsStyles
 } from '../../utils/node-details-utils';
 
 
@@ -49,7 +49,7 @@ function getNodeValue(node, header) {
       if (isIP(header)) {
         // Format the IPs so that they are sorted numerically.
         return ipToPaddedString(field.value);
-      } else if (isNumber(header)) {
+      } else if (isNumeric(header)) {
         return parseFloat(field.value);
       }
       return field.value;
@@ -81,7 +81,7 @@ function getMetaDataSorters(nodes) {
   return get(nodes, [0, 'metadata'], []).map((field, index) => (node) => {
     const nodeMetadataField = node.metadata && node.metadata[index];
     if (nodeMetadataField) {
-      if (isNumber(nodeMetadataField)) {
+      if (isNumeric(nodeMetadataField)) {
         return parseFloat(nodeMetadataField.value);
       }
       return nodeMetadataField.value;
@@ -145,6 +145,7 @@ class NodeDetailsTable extends React.Component {
     this.onMouseLeaveRow = this.onMouseLeaveRow.bind(this);
     this.onMouseEnterRow = this.onMouseEnterRow.bind(this);
     this.saveTableContentRef = this.saveTableContentRef.bind(this);
+    this.saveTableHeadRef = this.saveTableHeadRef.bind(this);
     // Use debouncing to prevent event flooding when e.g. crossing fast with mouse cursor
     // over the whole table. That would be expensive as each focus causes table to rerender.
     this.debouncedFocusRow = debounce(this.focusRow, TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL);
@@ -172,7 +173,7 @@ class NodeDetailsTable extends React.Component {
     this.focusState = {
       focusedNode: node,
       focusedRowIndex: rowIndex,
-      tableContentMinHeightConstraint: this.tableContent && this.tableContent.scrollHeight,
+      tableContentMinHeightConstraint: this.tableContentRef && this.tableContentRef.scrollHeight,
     };
   }
 
@@ -192,12 +193,21 @@ class NodeDetailsTable extends React.Component {
   }
 
   saveTableContentRef(ref) {
-    this.tableContent = ref;
+    this.tableContentRef = ref;
+  }
+
+  saveTableHeadRef(ref) {
+    this.tableHeadRef = ref;
   }
 
   getColumnHeaders() {
     const columns = this.props.columns || [];
     return [{id: 'label', label: this.props.label}].concat(columns);
+  }
+
+  componentDidMount() {
+    const scrollbarWidth = this.tableContentRef.offsetWidth - this.tableContentRef.clientWidth;
+    this.tableHeadRef.style.paddingRight = `${scrollbarWidth}px`;
   }
 
   render() {
@@ -250,7 +260,7 @@ class NodeDetailsTable extends React.Component {
       <div className={className} style={this.props.style}>
         <div className="node-details-table-wrapper">
           <table className="node-details-table">
-            <thead>
+            <thead ref={this.saveTableHeadRef}>
               {this.props.nodes && this.props.nodes.length > 0 && <NodeDetailsTableHeaders
                 headers={headers}
                 sortedBy={sortedBy}

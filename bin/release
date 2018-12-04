@@ -104,6 +104,8 @@ build() {
     #    exit 1
     #fi
 
+    tag_images
+
     echo -e '\u2713 Build OK'
     echo '** Release artefacts in' "$RELEASE_DIR"
 }
@@ -232,17 +234,24 @@ publish() {
     fi
 }
 
-push_images() {
-    echo "== Tagging and pushing images on docker hub and quay.io as user $DOCKERHUB_USER"
+tag_images() {
+    echo "== Tagging images for docker hub and quay.io as user $DOCKERHUB_USER"
     for IMAGE in "scope" "cloud-agent"; do
         $SUDO docker tag "$DOCKERHUB_USER/$IMAGE" "$DOCKERHUB_USER/$IMAGE:$VERSION"
-        $SUDO docker push "$DOCKERHUB_USER/$IMAGE:$VERSION"
         $SUDO docker tag "$DOCKERHUB_USER/$IMAGE:$VERSION" "$DOCKERHUB_USER/$IMAGE:latest_release"
-        $SUDO docker push "$DOCKERHUB_USER/$IMAGE:latest_release"
         $SUDO docker tag "$DOCKERHUB_USER/$IMAGE:$VERSION" "quay.io/$DOCKERHUB_USER/$IMAGE:$VERSION"
+    done
+    echo "** Docker images tagged"
+}
+
+push_images() {
+    echo "== Pushing images on docker hub and quay.io as user $DOCKERHUB_USER"
+    for IMAGE in "scope" "cloud-agent"; do
+        $SUDO docker push "$DOCKERHUB_USER/$IMAGE:$VERSION"
+        $SUDO docker push "$DOCKERHUB_USER/$IMAGE:latest_release"
         $SUDO docker push "quay.io/$DOCKERHUB_USER/$IMAGE:$VERSION"
     done
-    echo "** Docker images tagged and pushed"
+    echo "** Docker images pushed"
 }
 
 usage() {

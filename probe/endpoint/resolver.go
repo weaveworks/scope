@@ -41,8 +41,7 @@ func newReverseResolver() *reverseResolver {
 }
 
 // get the reverse resolution for an IP address if already in the cache, a
-// gcache.NotFoundKeyError error otherwise. Note: it returns one of the
-// possible names that can be obtained for that IP.
+// gcache.NotFoundKeyError error otherwise.
 func (r *reverseResolver) get(address string) ([]string, error) {
 	val, err := r.cache.Get(address)
 	if hostnames, ok := val.([]string); err == nil && ok {

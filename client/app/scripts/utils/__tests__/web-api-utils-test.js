@@ -1,4 +1,3 @@
-import moment from 'moment';
 import { Map as makeMap, OrderedMap as makeOrderedMap } from 'immutable';
 
 import { buildUrlQuery, basePath, getApiPath, getWebsocketUrl } from '../web-api-utils';
@@ -38,7 +37,7 @@ describe('WebApiUtils', () => {
     });
 
     it('should combine multiple options with a timestamp', () => {
-      state = state.set('pausedAt', moment('2015-06-14T21:12:05.275Z'));
+      state = state.set('pausedAt', '2015-06-14T21:12:05.275Z');
       expect(buildUrlQuery(makeOrderedMap([
         ['foo', 2],
         ['bar', 4]
@@ -58,7 +57,8 @@ describe('WebApiUtils', () => {
     });
     it('returns the correct url when running as a component', () => {
       process.env.SCOPE_API_PREFIX = '/api';
-      expect(getApiPath('/app/proud-cloud-77')).toEqual('/api/app/proud-cloud-77');
+      // instance ID first to match Weave Cloud routes
+      expect(getApiPath('/proud-cloud-77/app')).toEqual('/api/app/proud-cloud-77');
     });
     it('returns the correct url from an arbitrary path', () => {
       expect(getApiPath('/demo/')).toEqual('/demo');
@@ -84,7 +84,7 @@ describe('WebApiUtils', () => {
     });
     it('returns the correct url when running as a component', () => {
       process.env.SCOPE_API_PREFIX = '/api';
-      expect(getWebsocketUrl(host, '/app/proud-cloud-77')).toEqual(`ws://${host}/api/app/proud-cloud-77`);
+      expect(getWebsocketUrl(host, '/proud-cloud-77/app')).toEqual(`ws://${host}/api/app/proud-cloud-77`);
     });
     it('returns the correct url from an arbitrary path', () => {
       expect(getWebsocketUrl(host, '/demo/')).toEqual(`ws://${host}/demo`);

@@ -1,5 +1,4 @@
 import debug from 'debug';
-import { find } from 'lodash';
 import { fromJS } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
@@ -234,15 +233,12 @@ export function clickCloseDetails(nodeId) {
   };
 }
 
-export function clickCloseTerminal(pipeId, closePipe) {
+export function closeTerminal(pipeId) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_CLOSE_TERMINAL,
+      type: ActionTypes.CLOSE_TERMINAL,
       pipeId
     });
-    if (closePipe) {
-      deletePipe(pipeId, dispatch);
-    }
     updateRoute(getState);
   };
 }
@@ -493,7 +489,7 @@ export function hitEsc() {
     const controlPipe = state.get('controlPipes').last();
     if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
       dispatch({
-        type: ActionTypes.CLICK_CLOSE_TERMINAL,
+        type: ActionTypes.CLOSE_TERMINAL,
         pipeId: controlPipe.get('id')
       });
       updateRoute(getState);
@@ -594,25 +590,6 @@ export function resumeTime() {
   };
 }
 
-export function startTimeTravel(timestamp = null) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.START_TIME_TRAVEL,
-      timestamp,
-    });
-    updateRoute(getState);
-    if (!getState().get('nodesLoaded')) {
-      getNodes(getState, dispatch);
-      if (isResourceViewModeSelector(getState())) {
-        getResourceViewNodesSnapshot(getState(), dispatch);
-      }
-    } else {
-      // Get most recent details before freezing the state.
-      getNodeDetails(getState, dispatch);
-    }
-  };
-}
-
 export function receiveNodes(nodes) {
   return {
     type: ActionTypes.RECEIVE_NODES,
@@ -622,16 +599,20 @@ export function receiveNodes(nodes) {
 
 export function jumpToTime(timestamp) {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
     dispatch({
       type: ActionTypes.JUMP_TO_TIME,
       timestamp,
     });
-    updateRoute(getScopeState);
-    getNodes(getScopeState, dispatch);
-    getTopologies(getScopeState, dispatch);
-    if (isResourceViewModeSelector(getScopeState())) {
-      getResourceViewNodesSnapshot(getScopeState(), dispatch);
+    updateRoute(getState);
+    getTopologies(getState, dispatch);
+    if (!getState().get('nodesLoaded')) {
+      getNodes(getState, dispatch);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
+    } else {
+      // Get most recent details before freezing the state.
+      getNodeDetails(getState, dispatch);
     }
   };
 }
@@ -646,15 +627,14 @@ export function receiveNodesForTopology(nodes, topologyId) {
 
 export function receiveTopologies(topologies) {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
-    const firstLoad = !getScopeState().get('topologiesLoaded');
+    const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies
     });
-    getNodes(getScopeState, dispatch);
+    getNodes(getState, dispatch);
     // Populate search matches on first load
-    const state = getScopeState();
+    const state = getState();
     if (firstLoad && state.get('searchQuery')) {
       dispatch(focusSearch());
     }
@@ -687,7 +667,7 @@ export function receiveApiDetails(apiDetails) {
     // we have no prior info on whether time travel would be available.
     if (isFirstTime && pausedAt) {
       if (apiDetails.capabilities && apiDetails.capabilities.historic_reports) {
-        dispatch(startTimeTravel(pausedAt));
+        dispatch(jumpToTime(pausedAt));
       } else {
         dispatch(pauseTimeAtNow());
       }
@@ -788,6 +768,16 @@ export function route(urlState) {
       state: urlState,
       type: ActionTypes.ROUTE_TOPOLOGY
     });
+    // Handle Time Travel state update through separate actions as it's more complex.
+    // This is mostly to handle switching contexts Explore <-> Monitor in WC while
+    // the timestamp keeps changing - e.g. if we were Time Travelling in Scope and
+    // then went live in Monitor, switching back to Explore should properly close
+    // the Time Travel etc, not just update the pausedAt state directly.
+    if (!urlState.pausedAt) {
+      dispatch(resumeTime());
+    } else {
+      dispatch(jumpToTime(urlState.pausedAt));
+    }
     // update all request workers with new options
     getTopologies(getState, dispatch);
     getNodes(getState, dispatch);
@@ -836,26 +826,9 @@ export function shutdown() {
   };
 }
 
-export function getImagesForService(orgId, serviceId) {
-  return (dispatch, getState, { api }) => {
-    dispatch({
-      type: ActionTypes.REQUEST_SERVICE_IMAGES,
-      serviceId
-    });
-
-    // Use the fluxv2 api
-    api.getFluxImages(orgId, serviceId, 2)
-      .then((services) => {
-        dispatch({
-          type: ActionTypes.RECEIVE_SERVICE_IMAGES,
-          service: find(services, s => s.ID === serviceId),
-          serviceId
-        });
-      }, ({ errors }) => {
-        dispatch({
-          type: ActionTypes.RECEIVE_SERVICE_IMAGES,
-          errors
-        });
-      });
+export function setMonitorState(monitor) {
+  return {
+    type: ActionTypes.MONITOR_STATE,
+    monitor
   };
 }

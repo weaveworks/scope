@@ -6,59 +6,41 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/weaveworks/common/mtime"
 )
 
-// MaxTableRows sets the limit on the table size to render
-// TODO: this won't be needed once we send reports incrementally
+// Table types
 const (
-	MaxTableRows           = 20
-	TableEntryKeySeparator = "___"
-	TruncationCountPrefix  = "table_truncation_count_"
-	MulticolumnTableType   = "multicolumn-table"
-	PropertyListType       = "property-list"
+	MulticolumnTableType = "multicolumn-table"
+	PropertyListType     = "property-list"
 )
 
-// withTableTruncationInformation appends table truncation info to the node, returning the new node.
-func (node Node) withTableTruncationInformation(prefix string, totalRowsCount int, now time.Time) Node {
-	if totalRowsCount > MaxTableRows {
-		truncationCount := fmt.Sprintf("%d", totalRowsCount-MaxTableRows)
-		node = node.WithLatest(TruncationCountPrefix+prefix, now, truncationCount)
-	}
-	return node
-}
+const (
+	tableEntryKeySeparator = "___"
+	truncationCountPrefix  = "table_truncation_count_"
+)
 
 // AddPrefixMulticolumnTable appends arbitrary rows to the Node, returning a new node.
 func (node Node) AddPrefixMulticolumnTable(prefix string, rows []Row) Node {
 	now := mtime.Now()
-	addedRowsCount := 0
 	for _, row := range rows {
-		if addedRowsCount >= MaxTableRows {
-			break
-		}
 		// Add all the row values as separate entries
 		for columnID, value := range row.Entries {
-			key := strings.Join([]string{row.ID, columnID}, TableEntryKeySeparator)
+			key := strings.Join([]string{row.ID, columnID}, tableEntryKeySeparator)
 			node = node.WithLatest(prefix+key, now, value)
 		}
-		addedRowsCount++
 	}
-	return node.withTableTruncationInformation(prefix, len(rows), now)
+	return node
 }
 
 // AddPrefixPropertyList appends arbitrary key-value pairs to the Node, returning a new node.
 func (node Node) AddPrefixPropertyList(prefix string, propertyList map[string]string) Node {
 	now := mtime.Now()
-	addedPropertiesCount := 0
 	for label, value := range propertyList {
-		if addedPropertiesCount >= MaxTableRows {
-			break
-		}
 		node = node.WithLatest(prefix+label, now, value)
-		addedPropertiesCount++
 	}
-	return node.withTableTruncationInformation(prefix, len(propertyList), now)
+	return node
 }
 
 // WithoutPrefix returns the string with trimmed prefix and a
@@ -81,7 +63,7 @@ func (node Node) ExtractMulticolumnTable(template TableTemplate) (rows []Row) {
 	// methods should be enough to implement ForEachWithPrefix(prefix) straightforwardly.
 	node.Latest.ForEach(func(key string, _ time.Time, value string) {
 		if keyWithoutPrefix, ok := WithoutPrefix(key, template.Prefix); ok {
-			ids := strings.Split(keyWithoutPrefix, TableEntryKeySeparator)
+			ids := strings.Split(keyWithoutPrefix, tableEntryKeySeparator)
 			rowID, columnID := ids[0], ids[1]
 			// If the row with the given ID doesn't yet exist, we create an empty one.
 			if _, ok := rowsMapByID[rowID]; !ok {
@@ -137,7 +119,12 @@ func (node Node) ExtractPropertyList(template TableTemplate) (rows []Row) {
 	return rows
 }
 
-// ExtractTable returns the rows to build either a property list or a generic table from this node
+// ExtractTable returns the rows to build either a property list or a
+// generic table from this node. It also returns the number of rows,
+// if any, that were truncated. The probes used to limit the number of
+// labels, env vars and Weave Net connections they report, but this
+// logic has since been removed. So the code here dealing with
+// truncation is only retained in order to handle legacy reports.
 func (node Node) ExtractTable(template TableTemplate) (rows []Row, truncationCount int) {
 	switch template.Type {
 	case MulticolumnTableType:
@@ -147,7 +134,7 @@ func (node Node) ExtractTable(template TableTemplate) (rows []Row, truncationCou
 	}
 
 	truncationCount = 0
-	if str, ok := node.Latest.Lookup(TruncationCountPrefix + template.Prefix); ok {
+	if str, ok := node.Latest.Lookup(truncationCountPrefix + template.Prefix); ok {
 		if n, err := fmt.Sscanf(str, "%d", &truncationCount); n != 1 || err != nil {
 			log.Warn("Unexpected truncation count format %q", str)
 		}
@@ -252,7 +239,10 @@ type TableTemplates map[string]TableTemplate
 
 // Tables renders the TableTemplates for a given node.
 func (t TableTemplates) Tables(node Node) []Table {
-	var result []Table
+	if len(t) == 0 {
+		return nil
+	}
+	result := make([]Table, 0, len(t))
 	for _, template := range t {
 		rows, truncationCount := node.ExtractTable(template)
 		// Extract the type from the template; default to
@@ -291,10 +281,10 @@ func (t TableTemplates) Merge(other TableTemplates) TableTemplates {
 	if t == nil && other == nil {
 		return nil
 	}
-	result := make(TableTemplates, len(t))
-	for k, v := range t {
-		result[k] = v
+	if len(other) > len(t) {
+		t, other = other, t
 	}
+	result := t.Copy()
 	for k, v := range other {
 		if existing, ok := result[k]; ok {
 			result[k] = v.Merge(existing)

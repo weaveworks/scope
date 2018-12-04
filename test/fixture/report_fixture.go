@@ -93,14 +93,20 @@ var (
 	ClientContainerImageName   = "image/client"
 	ServerContainerImageName   = "image/server"
 
-	KubernetesNamespace = "ping"
-	ClientPodUID        = "5d4c3b2a1"
-	ServerPodUID        = "i9h8g7f6e"
-	ClientPodNodeID     = report.MakePodNodeID(ClientPodUID)
-	ServerPodNodeID     = report.MakePodNodeID(ServerPodUID)
-	ServiceName         = "pongservice"
-	ServiceUID          = "service1234"
-	ServiceNodeID       = report.MakeServiceNodeID(ServiceUID)
+	KubernetesNamespace         = "ping"
+	ClientPodUID                = "5d4c3b2a1"
+	ServerPodUID                = "i9h8g7f6e"
+	ClientPodNodeID             = report.MakePodNodeID(ClientPodUID)
+	ServerPodNodeID             = report.MakePodNodeID(ServerPodUID)
+	ServiceName                 = "pongservice"
+	ServiceUID                  = "service1234"
+	ServiceNodeID               = report.MakeServiceNodeID(ServiceUID)
+	PersistentVolumeUID         = "pv1234"
+	PersistentVolumeNodeID      = report.MakePersistentVolumeNodeID(PersistentVolumeUID)
+	PersistentVolumeClaimUID    = "pvc1234"
+	PersistentVolumeClaimNodeID = report.MakePersistentVolumeClaimNodeID(PersistentVolumeClaimUID)
+	StorageClassUID             = "sc1234"
+	StorageClassNodeID          = report.MakeStorageClassNodeID(StorageClassUID)
 
 	ClientProcess1CPUMetric    = report.MakeSingletonMetric(Now.Add(-1*time.Second), 0.01)
 	ClientProcess1MemoryMetric = report.MakeSingletonMetric(Now.Add(-2*time.Second), 0.02)
@@ -129,18 +135,12 @@ var (
 				Client54001NodeID: report.MakeNode(Client54001NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					process.PID:       Client1PID,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(10),
-					EgressByteCount:   newu64(100),
-				}),
+				}).WithAdjacent(Server80NodeID),
 
 				Client54002NodeID: report.MakeNode(Client54002NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					process.PID:       Client2PID,
 					report.HostNodeID: ClientHostNodeID,
-				}).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(20),
-					EgressByteCount:   newu64(200),
-				}),
+				}).WithAdjacent(Server80NodeID),
 
 				Server80NodeID: report.MakeNode(Server80NodeID).WithTopology(report.Endpoint).WithLatests(map[string]string{
 					process.PID:       ServerPID,
@@ -153,26 +153,10 @@ var (
 				}).WithAdjacent(GoogleEndpointNodeID),
 
 				// Probe pseudo nodes
-				UnknownClient1NodeID: report.MakeNode(UnknownClient1NodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(30),
-					EgressByteCount:   newu64(300),
-				}),
-
-				UnknownClient2NodeID: report.MakeNode(UnknownClient2NodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(40),
-					EgressByteCount:   newu64(400),
-				}),
-
-				UnknownClient3NodeID: report.MakeNode(UnknownClient3NodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(50),
-					EgressByteCount:   newu64(500),
-				}),
-
-				RandomClientNodeID: report.MakeNode(RandomClientNodeID).WithTopology(report.Endpoint).WithEdge(Server80NodeID, report.EdgeMetadata{
-					EgressPacketCount: newu64(60),
-					EgressByteCount:   newu64(600),
-				}),
-
+				UnknownClient1NodeID: report.MakeNode(UnknownClient1NodeID).WithTopology(report.Endpoint).WithAdjacent(Server80NodeID),
+				UnknownClient2NodeID: report.MakeNode(UnknownClient2NodeID).WithTopology(report.Endpoint).WithAdjacent(Server80NodeID),
+				UnknownClient3NodeID: report.MakeNode(UnknownClient3NodeID).WithTopology(report.Endpoint).WithAdjacent(Server80NodeID),
+				RandomClientNodeID:   report.MakeNode(RandomClientNodeID).WithTopology(report.Endpoint).WithAdjacent(Server80NodeID),
 				GoogleEndpointNodeID: report.MakeNode(GoogleEndpointNodeID).WithTopology(report.Endpoint),
 			},
 		},
@@ -370,6 +354,48 @@ var (
 					WithTopology(report.Service),
 			},
 		}.WithShape(report.Heptagon).WithLabel("service", "services"),
+		PersistentVolumeClaim: report.Topology{
+			Nodes: report.Nodes{
+				PersistentVolumeClaimNodeID: report.MakeNodeWith(
+
+					PersistentVolumeClaimNodeID, map[string]string{
+						kubernetes.Name:             "pvc-6124",
+						kubernetes.Namespace:        "ping",
+						kubernetes.Status:           "bound",
+						kubernetes.VolumeName:       "pongvolume",
+						kubernetes.AccessModes:      "ReadWriteOnce",
+						kubernetes.StorageClassName: "standard",
+					}).
+					WithTopology(report.PersistentVolumeClaim),
+			},
+		}.WithShape(report.DottedCylinder).WithLabel("persistent volume claim", "persistent volume claims"),
+		PersistentVolume: report.Topology{
+			Nodes: report.Nodes{
+				PersistentVolumeNodeID: report.MakeNodeWith(
+
+					PersistentVolumeNodeID, map[string]string{
+						kubernetes.Name:             "pongvolume",
+						kubernetes.Namespace:        "ping",
+						kubernetes.Status:           "bound",
+						kubernetes.VolumeClaim:      "pvc-6124",
+						kubernetes.AccessModes:      "ReadWriteOnce",
+						kubernetes.StorageClassName: "standard",
+						kubernetes.StorageDriver:    "iSCSI",
+					}).
+					WithTopology(report.PersistentVolume),
+			},
+		}.WithShape(report.Cylinder).WithLabel("persistent volume", "persistent volumes"),
+		StorageClass: report.Topology{
+			Nodes: report.Nodes{
+				StorageClassNodeID: report.MakeNodeWith(
+
+					StorageClassNodeID, map[string]string{
+						kubernetes.Name:        "standard",
+						kubernetes.Provisioner: "pong",
+					}).
+					WithTopology(report.StorageClass),
+			},
+		}.WithShape(report.StorageSheet).WithLabel("storage class", "storage classes"),
 		Sampling: report.Sampling{
 			Count: 1024,
 			Total: 4096,

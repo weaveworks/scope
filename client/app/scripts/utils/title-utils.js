@@ -1,12 +1,16 @@
 
-const PREFIX = document.title || 'Weave Scope';
-const SEPARATOR = ' - ';
+const STANDALONE_TITLE = 'Weave Scope';
+const STANDALONE = document.title === STANDALONE_TITLE;
+const SEPARATOR = ' – ';
 
 export function setDocumentTitle(title) {
+  if (!STANDALONE) {
+    return;
+  }
   if (title) {
-    document.title = [PREFIX, title].join(SEPARATOR);
+    document.title = [STANDALONE_TITLE, title].join(SEPARATOR);
   } else {
-    document.title = PREFIX;
+    document.title = STANDALONE_TITLE;
   }
 }
 

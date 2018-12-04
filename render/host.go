@@ -9,12 +9,11 @@ import (
 //
 // not memoised
 var HostRenderer = MakeReduce(
-	endpoints2Hosts{},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ProcessRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: ContainerImageRenderer},
 	CustomRenderer{RenderFunc: nodes2Hosts, Renderer: PodRenderer},
-	SelectHost,
+	MapEndpoints(endpoint2Host, report.Host),
 )
 
 // nodes2Hosts maps any Nodes to host Nodes.
@@ -27,50 +26,33 @@ var HostRenderer = MakeReduce(
 // not have enough info to do that, and the resulting graph must be
 // merged with a host graph to get that info.
 func nodes2Hosts(nodes Nodes) Nodes {
-	ret := newJoinResults()
+	ret := newJoinResults(nil)
 
 	for _, n := range nodes.Nodes {
 		if n.Topology == Pseudo {
 			continue // Don't propagate pseudo nodes - we do this in endpoints2Hosts
 		}
+		isImage := n.Topology == report.ContainerImage
 		hostIDs, _ := n.Parents.Lookup(report.Host)
 		for _, id := range hostIDs {
-			ret.addChild(n, id, func(id string) report.Node {
-				return report.MakeNode(id).WithTopology(report.Host)
-			})
-		}
-	}
-	ret.fixupAdjacencies(nodes)
-	return ret.result()
-}
-
-// endpoints2Hosts takes nodes from the endpoint topology and produces
-// host nodes or pseudo nodes.
-type endpoints2Hosts struct {
-}
-
-func (e endpoints2Hosts) Render(rpt report.Report) Nodes {
-	local := LocalNetworks(rpt)
-	endpoints := SelectEndpoint.Render(rpt)
-	ret := newJoinResults()
-
-	for _, n := range endpoints.Nodes {
-		// Nodes without a hostid are treated as pseudo nodes
-		hostNodeID, timestamp, ok := n.Latest.LookupEntry(report.HostNodeID)
-		if !ok {
-			id, ok := pseudoNodeID(n, local)
-			if !ok {
-				continue
+			if isImage {
+				// We need to treat image nodes specially because they
+				// aggregate adjacencies of containers across multiple
+				// hosts, and hence mapping these adjacencies to host
+				// adjacencies would produce edges that aren't present
+				// in reality.
+				ret.addUnmappedChild(n, id, report.Host)
+			} else {
+				ret.addChild(n, id, report.Host)
 			}
-			ret.addChild(n, id, newPseudoNode)
-		} else {
-			id := report.MakeHostNodeID(report.ExtractHostID(n))
-			ret.addChild(n, id, func(id string) report.Node {
-				return report.MakeNode(id).WithTopology(report.Host).
-					WithLatest(report.HostNodeID, timestamp, hostNodeID)
-			})
 		}
 	}
-	ret.fixupAdjacencies(endpoints)
-	return ret.result()
+	return ret.result(nodes)
+}
+
+func endpoint2Host(n report.Node) string {
+	if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); ok {
+		return hostNodeID
+	}
+	return ""
 }

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
@@ -37,19 +37,10 @@ type Reporter interface {
 
 // WebReporter is a reporter that creates reports whose data is eventually
 // displayed on websites. It carries fields that will be forwarded to the
-// report.RenderContext
+// detailed.RenderContext
 type WebReporter struct {
 	Reporter
 	MetricsGraphURL string
-}
-
-// RenderContextForReporter creates the rendering context for the given reporter.
-func RenderContextForReporter(rep Reporter, r report.Report) report.RenderContext {
-	rc := report.RenderContext{Report: r}
-	if wrep, ok := rep.(WebReporter); ok {
-		rc.MetricsGraphURL = wrep.MetricsGraphURL
-	}
-	return rc
 }
 
 // Adder is something that can accept reports. It's a convenient interface for
@@ -116,7 +107,7 @@ func NewCollector(window time.Duration) Collector {
 		waitableCondition: waitableCondition{
 			waiters: map[chan struct{}]struct{}{},
 		},
-		merger: NewSmartMerger(),
+		merger: NewFastMerger(),
 	}
 }
 
@@ -301,7 +292,7 @@ func NewFileCollector(path string, window time.Duration) (Collector, error) {
 		go replay(collector, timestamps, reports)
 		return collector, nil
 	}
-	return StaticCollector(NewSmartMerger().Merge(reports).Upgrade()), nil
+	return StaticCollector(NewFastMerger().Merge(reports).Upgrade()), nil
 }
 
 func timestampFromFilepath(path string) (time.Time, error) {

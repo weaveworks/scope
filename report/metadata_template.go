@@ -28,8 +28,8 @@ type MetadataTemplate struct {
 	From     string  `json:"from,omitempty"` // Defines how to get the value from a report node
 }
 
-// MetadataRows returns the rows for a node
-func (t MetadataTemplate) MetadataRows(n Node) []MetadataRow {
+// MetadataRow returns the row for a node
+func (t MetadataTemplate) MetadataRow(n Node) (MetadataRow, bool) {
 	from := fromDefault
 	switch t.From {
 	case FromLatest:
@@ -40,16 +40,16 @@ func (t MetadataTemplate) MetadataRows(n Node) []MetadataRow {
 		from = fromCounters
 	}
 	if val, ok := from(n, t.ID); ok {
-		return []MetadataRow{{
+		return MetadataRow{
 			ID:       t.ID,
 			Label:    t.Label,
 			Value:    val,
 			Truncate: t.Truncate,
 			Datatype: t.Datatype,
 			Priority: t.Priority,
-		}}
+		}, true
 	}
-	return nil
+	return MetadataRow{}, false
 }
 
 func fromDefault(n Node, key string) (string, bool) {
@@ -90,9 +90,17 @@ type MetadataTemplates map[string]MetadataTemplate
 
 // MetadataRows returns the rows for a node
 func (e MetadataTemplates) MetadataRows(n Node) []MetadataRow {
-	var rows []MetadataRow
+	if len(e) == 0 {
+		return nil
+	}
+	rows := make([]MetadataRow, 0, len(e))
 	for _, template := range e {
-		rows = append(rows, template.MetadataRows(n)...)
+		if row, ok := template.MetadataRow(n); ok {
+			rows = append(rows, row)
+		}
+	}
+	if len(rows) == 0 {
+		return nil
 	}
 	sort.Sort(MetadataRowsByPriority(rows))
 	return rows
@@ -103,7 +111,7 @@ func (e MetadataTemplates) Copy() MetadataTemplates {
 	if e == nil {
 		return nil
 	}
-	result := MetadataTemplates{}
+	result := make(MetadataTemplates, len(e))
 	for k, v := range e {
 		result[k] = v
 	}
@@ -113,13 +121,13 @@ func (e MetadataTemplates) Copy() MetadataTemplates {
 // Merge merges two sets of MetadataTemplates so far just ignores based
 // on duplicate id key
 func (e MetadataTemplates) Merge(other MetadataTemplates) MetadataTemplates {
-	if e == nil && other == nil {
-		return nil
+	if len(other) > len(e) {
+		e, other = other, e
 	}
-	result := make(MetadataTemplates, len(e))
-	for k, v := range e {
-		result[k] = v
+	if len(other) == 0 {
+		return e
 	}
+	result := e.Copy()
 	for k, v := range other {
 		if existing, ok := result[k]; !ok || existing.Priority < v.Priority {
 			result[k] = v

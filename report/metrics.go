@@ -19,6 +19,12 @@ func (m Metrics) Lookup(key string) (Metric, bool) {
 // Merge merges two sets maps into a fresh set, performing set-union merges as
 // appropriate.
 func (m Metrics) Merge(other Metrics) Metrics {
+	if len(other) > len(m) {
+		m, other = other, m
+	}
+	if len(other) == 0 {
+		return m
+	}
 	result := m.Copy()
 	for k, v := range other {
 		if rv, ok := result[k]; ok {
@@ -190,23 +196,6 @@ func (m Metric) Merge(other Metric) Metric {
 		Min:     math.Min(m.Min, other.Min),
 		First:   first(m.First, other.First),
 		Last:    last(m.Last, other.Last),
-	}
-}
-
-// Div returns a new copy of the metric, with each value divided by n.
-func (m Metric) Div(n float64) Metric {
-	samplesOut := make([]Sample, len(m.Samples), len(m.Samples))
-
-	for i := range m.Samples {
-		samplesOut[i].Value = m.Samples[i].Value / n
-		samplesOut[i].Timestamp = m.Samples[i].Timestamp
-	}
-	return Metric{
-		Samples: samplesOut,
-		Max:     m.Max / n,
-		Min:     m.Min / n,
-		First:   m.First,
-		Last:    m.Last,
 	}
 }
 

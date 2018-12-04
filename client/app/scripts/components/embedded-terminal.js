@@ -17,9 +17,17 @@ class EmeddedTerminal extends React.Component {
   }
 
   componentDidMount() {
-    setTimeout(() => {
+    this.mountedTimeout = setTimeout(() => {
       this.setState({mounted: true});
     });
+    this.animationTimeout = setTimeout(() => {
+      this.setState({ animated: true });
+    }, 2000);
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.mountedTimeout);
+    clearTimeout(this.animationTimeout);
   }
 
   getTransform() {
@@ -44,7 +52,7 @@ class EmeddedTerminal extends React.Component {
     // React unmount/remounts when key changes, this is important for cleaning up
     // the term.js and creating a new one for the new pipe.
     return (
-      <div className="terminal-embedded">
+      <div className="tour-step-anchor terminal-embedded">
         <div
           onTransitionEnd={this.handleTransitionEnd}
           className="terminal-animation-wrapper"

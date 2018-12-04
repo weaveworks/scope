@@ -1,14 +1,15 @@
 import debug from 'debug';
 import React from 'react';
 import classNames from 'classnames';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
+import { noop } from 'lodash';
 
 import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
 import { isGenericTable, isPropertyList } from '../utils/node-details-utils';
 import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';
-import { timestampsEqual } from '../utils/time-utils';
 
 import Overlay from './overlay';
 import MatchedText from './matched-text';
@@ -20,8 +21,6 @@ import NodeDetailsInfo from './node-details/node-details-info';
 import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import Warning from './warning';
-import CloudFeature from './cloud-feature';
-import NodeDetailsImageStatus from './node-details/node-details-image-status';
 
 
 const log = debug('scope:node-details');
@@ -32,18 +31,12 @@ function getTruncationText(count) {
 }
 
 class NodeDetails extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-    this.handleClickClose = this.handleClickClose.bind(this);
-    this.handleShowTopologyForNode = this.handleShowTopologyForNode.bind(this);
-  }
-
-  handleClickClose(ev) {
+  handleClickClose = (ev) => {
     ev.preventDefault();
     this.props.clickCloseDetails(this.props.nodeId);
   }
 
-  handleShowTopologyForNode(ev) {
+  handleShowTopologyForNode = (ev) => {
     ev.preventDefault();
     this.props.clickShowTopologyForNode(this.props.topologyId, this.props.nodeId);
   }
@@ -177,7 +170,7 @@ class NodeDetails extends React.Component {
     };
 
     return (
-      <div className="node-details">
+      <div className="tour-step-anchor node-details">
         {tools}
         <div className="node-details-header" style={styles.header}>
           <div className="node-details-header-wrapper">
@@ -193,7 +186,7 @@ class NodeDetails extends React.Component {
         </div>
 
         {showControls &&
-          <div className="node-details-controls-wrapper" style={styles.controls}>
+          <div className="tour-step-anchor node-details-controls-wrapper" style={styles.controls}>
             <NodeDetailsControls
               nodeId={this.props.nodeId}
               controls={details.controls}
@@ -256,13 +249,7 @@ class NodeDetails extends React.Component {
             return null;
           })}
 
-          <CloudFeature>
-            <NodeDetailsImageStatus
-              name={details.label}
-              metadata={details.metadata}
-              pseudo={details.pseudo}
-            />
-          </CloudFeature>
+          {this.props.renderNodeDetailsExtras({ topologyId, details })}
         </div>
 
         <Overlay faded={this.props.transitioning} />
@@ -304,10 +291,18 @@ class NodeDetails extends React.Component {
   }
 }
 
+NodeDetails.propTypes = {
+  renderNodeDetailsExtras: PropTypes.func,
+};
+
+NodeDetails.defaultProps = {
+  renderNodeDetailsExtras: noop,
+};
+
 function mapStateToProps(state, ownProps) {
   const currentTopologyId = state.get('currentTopologyId');
   return {
-    transitioning: !timestampsEqual(state.get('pausedAt'), ownProps.timestamp),
+    transitioning: state.get('pausedAt') !== ownProps.timestamp,
     nodeMatches: state.getIn(['searchNodeMatches', currentTopologyId, ownProps.id]),
     nodes: state.get('nodes'),
     selectedNodeId: state.get('selectedNodeId'),

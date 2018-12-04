@@ -54,3 +54,12 @@ func (p *pipe) Close() error {
 	}
 	return err2
 }
+
+// DummyPipeClient implements PipeClient when running the probe in debugging mode
+type DummyPipeClient struct{}
+
+// PipeConnection implements controls.PipeClient
+func (DummyPipeClient) PipeConnection(appID, pipeID string, pipe xfer.Pipe) error { return nil }
+
+// PipeClose implements controls.PipeClient
+func (DummyPipeClient) PipeClose(appID, pipeID string) error { return nil }

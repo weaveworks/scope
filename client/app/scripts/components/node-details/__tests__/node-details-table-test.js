@@ -15,6 +15,7 @@ describe('NodeDetailsTable', () => {
     columns = [
       { id: 'kubernetes_ip', label: 'IP', dataType: 'ip' },
       { id: 'kubernetes_namespace', label: 'Namespace' },
+      { id: 'uptime', label: 'Uptime', dataType: 'duration' },
     ];
     nodes = [
       {
@@ -22,24 +23,36 @@ describe('NodeDetailsTable', () => {
         metadata: [
           { id: 'kubernetes_ip', label: 'IP', value: '10.244.253.24' },
           { id: 'kubernetes_namespace', label: 'Namespace', value: '1111' },
+          {
+            id: 'uptime', dataType: 'duration', label: 'Uptime', value: '1'
+          },
         ]
       }, {
         id: 'node-2',
         metadata: [
           { id: 'kubernetes_ip', label: 'IP', value: '10.244.253.4' },
           { id: 'kubernetes_namespace', label: 'Namespace', value: '12' },
+          {
+            id: 'uptime', dataType: 'duration', label: 'Uptime', value: '4'
+          },
         ]
       }, {
         id: 'node-3',
         metadata: [
           { id: 'kubernetes_ip', label: 'IP', value: '10.44.253.255' },
           { id: 'kubernetes_namespace', label: 'Namespace', value: '5' },
+          {
+            id: 'uptime', dataType: 'duration', label: 'Uptime', value: '30'
+          },
         ]
       }, {
         id: 'node-4',
         metadata: [
           { id: 'kubernetes_ip', label: 'IP', value: '10.244.253.100' },
           { id: 'kubernetes_namespace', label: 'Namespace', value: '00000' },
+          {
+            id: 'uptime', dataType: 'duration', label: 'Uptime', value: '22222'
+          },
         ]
       },
     ];
@@ -123,6 +136,25 @@ describe('NodeDetailsTable', () => {
       matchColumnValues('kubernetes_namespace', ['5', '12', '1111', '00000']);
       clickColumn('Namespace');
       matchColumnValues('kubernetes_namespace', ['00000', '1111', '12', '5']);
+    });
+  });
+
+  describe('uptime duration', () => {
+    it('sorts by column', () => {
+      component = TestUtils.renderIntoDocument((
+        <Provider store={configureStore()}>
+          <NodeDetailsTable
+            columns={columns}
+            sortedBy="uptime"
+            nodeIdKey="id"
+            nodes={nodes}
+          />
+        </Provider>
+      ));
+
+      matchColumnValues('uptime', ['1 second', '4 seconds', '30 seconds', '6 hours']);
+      clickColumn('Uptime');
+      matchColumnValues('uptime', ['6 hours', '30 seconds', '4 seconds', '1 second']);
     });
   });
 });

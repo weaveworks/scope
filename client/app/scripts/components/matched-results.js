@@ -1,6 +1,5 @@
 import React from 'react';
-
-import MatchedText from './matched-text';
+import { MatchedText } from 'weaveworks-ui-components';
 
 const SHOW_ROW_COUNT = 2;
 const MAX_MATCH_LENGTH = 24;
@@ -13,10 +12,12 @@ const Match = match => (
         {match.label}:
       </span>
       <MatchedText
+        noBorder
         text={match.text}
         match={match}
         maxLength={MAX_MATCH_LENGTH}
-        truncate={match.truncate} />
+        truncate={match.truncate}
+      />
     </div>
   </div>
 );

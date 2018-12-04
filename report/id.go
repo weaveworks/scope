@@ -5,9 +5,6 @@ import (
 	"strings"
 )
 
-// TheInternet is used as a node ID to indicate a remote IP.
-const TheInternet = "theinternet"
-
 // Delimiters are used to separate parts of node IDs, to guarantee uniqueness
 // in particular contexts.
 const (
@@ -131,29 +128,53 @@ var (
 	// ParseDaemonSetNodeID parses a daemon set node ID
 	ParseDaemonSetNodeID = parseSingleComponentID("daemonset")
 
-	// MakeStatefulSetNodeID produces a replica set node ID from its composite parts.
+	// MakeStatefulSetNodeID produces a statefulset node ID from its composite parts.
 	MakeStatefulSetNodeID = makeSingleComponentID("statefulset")
 
-	// ParseStatefulSetNodeID parses a daemon set node ID
+	// ParseStatefulSetNodeID parses a statefulset node ID
 	ParseStatefulSetNodeID = parseSingleComponentID("statefulset")
 
-	// MakeCronJobNodeID produces a replica set node ID from its composite parts.
+	// MakeCronJobNodeID produces a cronjob node ID from its composite parts.
 	MakeCronJobNodeID = makeSingleComponentID("cronjob")
 
-	// ParseCronJobNodeID parses a daemon set node ID
+	// ParseCronJobNodeID parses a cronjob node ID
 	ParseCronJobNodeID = parseSingleComponentID("cronjob")
 
-	// MakeECSTaskNodeID produces a replica set node ID from its composite parts.
+	// MakeNamespaceNodeID produces a namespace node ID from its composite parts.
+	MakeNamespaceNodeID = makeSingleComponentID("namespace")
+
+	// ParseNamespaceNodeID parses a namespace set node ID
+	ParseNamespaceNodeID = parseSingleComponentID("namespace")
+
+	// MakeECSTaskNodeID produces a ECSTask node ID from its composite parts.
 	MakeECSTaskNodeID = makeSingleComponentID("ecs_task")
 
-	// ParseECSTaskNodeID parses a replica set node ID
+	// ParseECSTaskNodeID parses a ECSTask node ID
 	ParseECSTaskNodeID = parseSingleComponentID("ecs_task")
 
-	// MakeSwarmServiceNodeID produces a replica set node ID from its composite parts.
+	// MakeSwarmServiceNodeID produces a Swarm service node ID from its composite parts.
 	MakeSwarmServiceNodeID = makeSingleComponentID("swarm_service")
 
-	// ParseSwarmServiceNodeID parses a replica set node ID
+	// ParseSwarmServiceNodeID parses a Swarm service node ID
 	ParseSwarmServiceNodeID = parseSingleComponentID("swarm_service")
+
+	// MakePersistentVolumeNodeID produces a Persistent Volume node ID from its composite parts.
+	MakePersistentVolumeNodeID = makeSingleComponentID("persistent_volume")
+
+	// ParsePersistentVolumeNodeID parses a Persistent Volume node ID
+	ParsePersistentVolumeNodeID = parseSingleComponentID("persistent_volume")
+
+	// MakePersistentVolumeClaimNodeID produces a Persistent Volume Claim node ID from its composite parts.
+	MakePersistentVolumeClaimNodeID = makeSingleComponentID("persistent_volume_claim")
+
+	// ParsePersistentVolumeClaimNodeID parses a Persistent Volume Claim node ID
+	ParsePersistentVolumeClaimNodeID = parseSingleComponentID("persistent_volume_claim")
+
+	// MakeStorageClassNodeID produces a storage class node ID from its composite parts.
+	MakeStorageClassNodeID = makeSingleComponentID("storage_class")
+
+	// ParseStorageClassNodeID parses a storage class node ID
+	ParseStorageClassNodeID = parseSingleComponentID("storage_class")
 )
 
 // makeSingleComponentID makes a single-component node id encoder
@@ -197,7 +218,7 @@ func ParseOverlayNodeID(id string) (overlayPrefix string, peerName string) {
 	return WeaveOverlayPeerPrefix, id
 }
 
-// Split a string s into to parts separated by sep.
+// Split a string s into two parts separated by sep.
 func split2(s, sep string) (s1, s2 string, ok bool) {
 	// Not using strings.SplitN() to avoid a heap allocation
 	pos := strings.Index(s, sep)
@@ -207,9 +228,8 @@ func split2(s, sep string) (s1, s2 string, ok bool) {
 	return s[:pos], s[pos+1:], true
 }
 
-// ParseNodeID produces the host ID and remainder (typically an address) from
-// a node ID. Note that hostID may be blank.
-func ParseNodeID(nodeID string) (hostID string, remainder string, ok bool) {
+// ParseNodeID produces the id and tag of a single-component node ID.
+func ParseNodeID(nodeID string) (id string, tag string, ok bool) {
 	return split2(nodeID, ScopeDelim)
 }
 
@@ -233,6 +253,11 @@ func ParseAddressNodeID(addressNodeID string) (hostID, address string, ok bool) 
 	return split2(addressNodeID, ScopeDelim)
 }
 
+// ParseProcessNodeID produces the host ID and PID from a process node ID.
+func ParseProcessNodeID(processNodeID string) (hostID, pid string, ok bool) {
+	return split2(processNodeID, ScopeDelim)
+}
+
 // ParseECSServiceNodeID produces the cluster, service name from an ECS Service node ID
 func ParseECSServiceNodeID(ecsServiceNodeID string) (cluster, serviceName string, ok bool) {
 	cluster, serviceName, ok = split2(ecsServiceNodeID, ScopeDelim)
@@ -250,7 +275,7 @@ func ParseECSServiceNodeID(ecsServiceNodeID string) (cluster, serviceName string
 // ExtractHostID extracts the host id from Node
 func ExtractHostID(m Node) string {
 	hostNodeID, _ := m.Latest.Lookup(HostNodeID)
-	hostID, _, _ := ParseNodeID(hostNodeID)
+	hostID, _ := ParseHostNodeID(hostNodeID)
 	return hostID
 }
 

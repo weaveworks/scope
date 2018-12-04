@@ -23,7 +23,7 @@ const loadScale = scaleLog().domain([0.01, 100]).range([0, 1]);
 
 export function getMetricValue(metric) {
   if (!metric) {
-    return {height: 0, value: null, formattedValue: 'n/a'};
+    return { height: 0, value: null, formattedValue: 'n/a' };
   }
   const m = metric.toJS();
   const { value } = m;
@@ -35,7 +35,7 @@ export function getMetricValue(metric) {
     max = null;
   }
 
-  let displayedValue = Number(value).toFixed(1);
+  let displayedValue = Number(value);
   if (displayedValue > 0 && (!max || displayedValue < max)) {
     const baseline = 0.1;
     displayedValue = (valuePercentage * (1 - (baseline * 2))) + baseline;

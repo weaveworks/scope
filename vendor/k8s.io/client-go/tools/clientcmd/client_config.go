@@ -27,7 +27,6 @@ import (
 	"github.com/golang/glog"
 	"github.com/imdario/mergo"
 
-	"k8s.io/client-go/pkg/api"
 	restclient "k8s.io/client-go/rest"
 	clientauth "k8s.io/client-go/tools/auth"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -100,6 +99,26 @@ func NewInteractiveClientConfig(config clientcmdapi.Config, contextName string, 
 	return &DirectClientConfig{config, contextName, overrides, fallbackReader, configAccess, promptedCredentials{}}
 }
 
+// NewClientConfigFromBytes takes your kubeconfig and gives you back a ClientConfig
+func NewClientConfigFromBytes(configBytes []byte) (ClientConfig, error) {
+	config, err := Load(configBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &DirectClientConfig{*config, "", &ConfigOverrides{}, nil, nil, promptedCredentials{}}, nil
+}
+
+// RESTConfigFromKubeConfig is a convenience method to give back a restconfig from your kubeconfig bytes.
+// For programmatic access, this is what you want 80% of the time
+func RESTConfigFromKubeConfig(configBytes []byte) (*restclient.Config, error) {
+	clientConfig, err := NewClientConfigFromBytes(configBytes)
+	if err != nil {
+		return nil, err
+	}
+	return clientConfig.ClientConfig()
+}
+
 func (config *DirectClientConfig) RawConfig() (clientcmdapi.Config, error) {
 	return config.config, nil
 }
@@ -107,7 +126,7 @@ func (config *DirectClientConfig) RawConfig() (clientcmdapi.Config, error) {
 // ClientConfig implements ClientConfig
 func (config *DirectClientConfig) ClientConfig() (*restclient.Config, error) {
 	// check that getAuthInfo, getContext, and getCluster do not return an error.
-	// Do this before checking if the curent config is usable in the event that an
+	// Do this before checking if the current config is usable in the event that an
 	// AuthInfo, Context, or Cluster config with user-defined names are not found.
 	// This provides a user with the immediate cause for error if one is found
 	configAuthInfo, err := config.getAuthInfo()
@@ -146,7 +165,11 @@ func (config *DirectClientConfig) ClientConfig() (*restclient.Config, error) {
 		clientConfig.Host = u.String()
 	}
 	if len(configAuthInfo.Impersonate) > 0 {
-		clientConfig.Impersonate = restclient.ImpersonationConfig{UserName: configAuthInfo.Impersonate}
+		clientConfig.Impersonate = restclient.ImpersonationConfig{
+			UserName: configAuthInfo.Impersonate,
+			Groups:   configAuthInfo.ImpersonateGroups,
+			Extra:    configAuthInfo.ImpersonateUserExtra,
+		}
 	}
 
 	// only try to read the auth information if we are secure
@@ -198,10 +221,10 @@ func getServerIdentificationPartialConfig(configAuthInfo clientcmdapi.AuthInfo, 
 
 // clientauth.Info object contain both user identification and server identification.  We want different precedence orders for
 // both, so we have to split the objects and merge them separately
-// we want this order of precedence for user identifcation
+// we want this order of precedence for user identification
 // 1.  configAuthInfo minus auth-path (the final result of command line flags and merged .kubeconfig files)
 // 2.  configAuthInfo.auth-path (this file can contain information that conflicts with #1, and we want #1 to win the priority)
-// 3.  if there is not enough information to idenfity the user, load try the ~/.kubernetes_auth file
+// 3.  if there is not enough information to identify the user, load try the ~/.kubernetes_auth file
 // 4.  if there is not enough information to identify the user, prompt if possible
 func (config *DirectClientConfig) getUserIdentificationPartialConfig(configAuthInfo clientcmdapi.AuthInfo, fallbackReader io.Reader, persistAuthConfig restclient.AuthProviderConfigPersister) (*restclient.Config, error) {
 	mergedConfig := &restclient.Config{}
@@ -217,7 +240,11 @@ func (config *DirectClientConfig) getUserIdentificationPartialConfig(configAuthI
 		mergedConfig.BearerToken = string(tokenBytes)
 	}
 	if len(configAuthInfo.Impersonate) > 0 {
-		mergedConfig.Impersonate = restclient.ImpersonationConfig{UserName: configAuthInfo.Impersonate}
+		mergedConfig.Impersonate = restclient.ImpersonationConfig{
+			UserName: configAuthInfo.Impersonate,
+			Groups:   configAuthInfo.ImpersonateGroups,
+			Extra:    configAuthInfo.ImpersonateUserExtra,
+		}
 	}
 	if len(configAuthInfo.ClientCertificate) > 0 || len(configAuthInfo.ClientCertificateData) > 0 {
 		mergedConfig.CertFile = configAuthInfo.ClientCertificate
@@ -232,6 +259,9 @@ func (config *DirectClientConfig) getUserIdentificationPartialConfig(configAuthI
 	if configAuthInfo.AuthProvider != nil {
 		mergedConfig.AuthProvider = configAuthInfo.AuthProvider
 		mergedConfig.AuthConfigPersister = persistAuthConfig
+	}
+	if configAuthInfo.Exec != nil {
+		mergedConfig.ExecProvider = configAuthInfo.Exec
 	}
 
 	// if there still isn't enough information to authenticate the user, try prompting
@@ -283,11 +313,20 @@ func canIdentifyUser(config restclient.Config) bool {
 	return len(config.Username) > 0 ||
 		(len(config.CertFile) > 0 || len(config.CertData) > 0) ||
 		len(config.BearerToken) > 0 ||
-		config.AuthProvider != nil
+		config.AuthProvider != nil ||
+		config.ExecProvider != nil
 }
 
 // Namespace implements ClientConfig
 func (config *DirectClientConfig) Namespace() (string, bool, error) {
+	if config.overrides != nil && config.overrides.Context.Namespace != "" {
+		// In the event we have an empty config but we do have a namespace override, we should return
+		// the namespace override instead of having config.ConfirmUsable() return an error. This allows
+		// things like in-cluster clients to execute `kubectl get pods --namespace=foo` and have the
+		// --namespace flag honored instead of being ignored.
+		return config.overrides.Context.Namespace, true, nil
+	}
+
 	if err := config.ConfirmUsable(); err != nil {
 		return "", false, err
 	}
@@ -298,14 +337,10 @@ func (config *DirectClientConfig) Namespace() (string, bool, error) {
 	}
 
 	if len(configContext.Namespace) == 0 {
-		return api.NamespaceDefault, false, nil
+		return "default", false, nil
 	}
 
-	overridden := false
-	if config.overrides != nil && config.overrides.Context.Namespace != "" {
-		overridden = true
-	}
-	return configContext.Namespace, overridden, nil
+	return configContext.Namespace, false, nil
 }
 
 // ConfigAccess implements ClientConfig
@@ -462,7 +497,7 @@ func (config *inClusterClientConfig) ClientConfig() (*restclient.Config, error) 
 	}
 
 	// in-cluster configs only takes a host, token, or CA file
-	// if any of them were individually provided, ovewrite anything else
+	// if any of them were individually provided, overwrite anything else
 	if config.overrides != nil {
 		if server := config.overrides.ClusterInfo.Server; len(server) > 0 {
 			icc.Host = server

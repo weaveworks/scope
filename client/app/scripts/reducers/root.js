@@ -21,9 +21,7 @@ import {
 } from '../selectors/topology';
 import { isPausedSelector } from '../selectors/time-travel';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
-import { timestampsEqual } from '../utils/time-utils';
 import { applyPinnedSearches } from '../utils/search-utils';
-import { deserializeTimestamp } from '../utils/web-api-utils';
 import {
   findTopologyById,
   setTopologyUrlsById,
@@ -73,11 +71,10 @@ export const initialState = makeMap({
   pinnedSearches: makeList(), // list of node filters
   routeSet: false,
   searchFocused: false,
-  searchQuery: null,
+  searchQuery: '',
   selectedNetwork: null,
   selectedNodeId: null,
   showingHelp: false,
-  showingTimeTravel: false,
   showingTroubleshootingMenu: false,
   showingNetworks: false,
   timeTravelTransitioning: false,
@@ -92,7 +89,6 @@ export const initialState = makeMap({
   viewport: makeMap({ width: 0, height: 0 }),
   websocketClosed: false,
   zoomCache: makeMap(),
-  serviceImages: makeMap()
 });
 
 function calcSelectType(topology) {
@@ -137,8 +133,9 @@ function setTopology(state, topologyId) {
   return state.set('currentTopologyId', topologyId);
 }
 
-function setDefaultTopologyOptions(state, topologyList) {
-  topologyList.forEach((topology) => {
+export function getDefaultTopologyOptions(state) {
+  let topologyOptions = makeOrderedMap();
+  state.get('topologies').forEach((topology) => {
     let defaultOptions = makeOrderedMap();
     if (topology.has('options') && topology.get('options')) {
       topology.get('options').forEach((option) => {
@@ -147,15 +144,11 @@ function setDefaultTopologyOptions(state, topologyList) {
         defaultOptions = defaultOptions.set(optionId, [defaultValue]);
       });
     }
-
     if (defaultOptions.size) {
-      state = state.setIn(
-        ['topologyOptions', topology.get('id')],
-        defaultOptions
-      );
+      topologyOptions = topologyOptions.set(topology.get('id'), defaultOptions);
     }
   });
-  return state;
+  return topologyOptions;
 }
 
 function closeNodeDetails(state, nodeId) {
@@ -287,7 +280,7 @@ export function rootReducer(state = initialState, action) {
       return closeNodeDetails(state, action.nodeId);
     }
 
-    case ActionTypes.CLICK_CLOSE_TERMINAL: {
+    case ActionTypes.CLOSE_TERMINAL: {
       return state.update('controlPipes', controlPipes => controlPipes.clear());
     }
 
@@ -374,20 +367,12 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.RESUME_TIME: {
       state = state.set('timeTravelTransitioning', true);
-      state = state.set('showingTimeTravel', false);
       return state.set('pausedAt', null);
     }
 
     case ActionTypes.PAUSE_TIME_AT_NOW: {
-      state = state.set('showingTimeTravel', false);
       state = state.set('timeTravelTransitioning', false);
-      return state.set('pausedAt', moment().utc());
-    }
-
-    case ActionTypes.START_TIME_TRAVEL: {
-      state = state.set('showingTimeTravel', true);
-      state = state.set('timeTravelTransitioning', false);
-      return state.set('pausedAt', action.timestamp || moment().utc());
+      return state.set('pausedAt', moment().utc().format());
     }
 
     case ActionTypes.JUMP_TO_TIME: {
@@ -555,7 +540,7 @@ export function rootReducer(state = initialState, action) {
     case ActionTypes.RECEIVE_NODE_DETAILS: {
       // Ignore the update if paused and the timestamp didn't change.
       const setTimestamp = state.getIn(['nodeDetails', action.details.id, 'timestamp']);
-      if (isPausedSelector(state) && timestampsEqual(action.requestTimestamp, setTimestamp)) {
+      if (isPausedSelector(state) && action.requestTimestamp === setTimestamp) {
         return state;
       }
 
@@ -659,11 +644,15 @@ export function rootReducer(state = initialState, action) {
         log(`Set currentTopologyId to ${state.get('currentTopologyId')}`);
       }
       state = setTopology(state, state.get('currentTopologyId'));
-      // only set on first load, if options are not already set via route
-      if (!state.get('topologiesLoaded') && state.get('topologyOptions').size === 0) {
-        state = setDefaultTopologyOptions(state, state.get('topologies'));
+
+      // Expand topology options with topologies' defaults on first load, but let
+      // the current state of topologyOptions (which at this point reflects the
+      // URL state) still take the precedence over defaults.
+      if (!state.get('topologiesLoaded')) {
+        const options = getDefaultTopologyOptions(state).mergeDeep(state.get('topologyOptions'));
+        state = state.set('topologyOptions', options);
+        state = state.set('topologiesLoaded', true);
       }
-      state = state.set('topologiesLoaded', true);
 
       return state;
     }
@@ -688,14 +677,16 @@ export function rootReducer(state = initialState, action) {
         state = clearNodes(state);
       }
       state = setTopology(state, action.state.topologyId);
-      state = setDefaultTopologyOptions(state, state.get('topologies'));
       state = state.merge({
         selectedNodeId: action.state.selectedNodeId,
-        pinnedMetricType: action.state.pinnedMetricType
+        pinnedMetricType: action.state.pinnedMetricType,
       });
-      state = state.set('topologyViewMode', action.state.topologyViewMode);
-      if (action.state.pausedAt) {
-        state = state.set('pausedAt', deserializeTimestamp(action.state.pausedAt));
+      if (action.state.topologyOptions) {
+        const options = getDefaultTopologyOptions(state).mergeDeep(action.state.topologyOptions);
+        state = state.set('topologyOptions', options);
+      }
+      if (action.state.topologyViewMode) {
+        state = state.set('topologyViewMode', action.state.topologyViewMode);
       }
       if (action.state.gridSortedBy) {
         state = state.set('gridSortedBy', action.state.gridSortedBy);
@@ -727,10 +718,6 @@ export function rootReducer(state = initialState, action) {
       } else {
         state = state.update('nodeDetails', nodeDetails => nodeDetails.clear());
       }
-      state = state.set(
-        'topologyOptions',
-        fromJS(action.state.topologyOptions) || state.get('topologyOptions')
-      );
       return state;
     }
 
@@ -761,20 +748,8 @@ export function rootReducer(state = initialState, action) {
       return clearNodes(state);
     }
 
-    case ActionTypes.REQUEST_SERVICE_IMAGES: {
-      return state.setIn(['serviceImages', action.serviceId], {
-        isFetching: true
-      });
-    }
-
-    case ActionTypes.RECEIVE_SERVICE_IMAGES: {
-      const { service, errors, serviceId } = action;
-
-      return state.setIn(['serviceImages', serviceId], {
-        isFetching: false,
-        containers: service ? service.Containers : null,
-        errors
-      });
+    case ActionTypes.MONITOR_STATE: {
+      return state.set('monitor', action.monitor);
     }
 
     default: {

@@ -16,16 +16,15 @@ You can then use these machines as is or run various Ansible playbooks from `../
 
   * On macOS: `brew install vagrant`
   * On Linux (via Aptitude): `sudo apt install vagrant`
-  * If you need a specific version:
-
-          curl -fsS https://releases.hashicorp.com/terraform/x.y.z/terraform_x.y.z_linux_amd64.zip | gunzip > terraform && chmod +x terraform && sudo mv terraform /usr/bin
-
   * For other platforms or more details, see [here](https://www.vagrantup.com/docs/installation/)
 
 * You will need [Terraform](https://www.terraform.io) installed on your machine and added to your `PATH` in order to be able to provision cloud-hosted machines automatically.
 
   * On macOS: `brew install terraform`
   * On Linux (via Aptitude): `sudo apt install terraform`
+  * If you need a specific version:
+
+          curl -fsS https://releases.hashicorp.com/terraform/x.y.z/terraform_x.y.z_linux_amd64.zip | gunzip > terraform && chmod +x terraform && sudo mv terraform /usr/bin
   * For other platforms or more details, see [here](https://www.terraform.io/intro/getting-started/install.html)
 
 * Depending on the cloud provider, you may have to create an account, manually onboard, create and register SSH keys, etc. 

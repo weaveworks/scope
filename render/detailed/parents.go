@@ -1,12 +1,6 @@
 package detailed
 
 import (
-	"sort"
-
-	"github.com/weaveworks/scope/probe/awsecs"
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
-	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -17,36 +11,35 @@ type Parent struct {
 	TopologyID string `json:"topologyId"`
 }
 
-var (
-	kubernetesParentLabel = latestLookup(kubernetes.Name)
-
-	getLabelForTopology = map[string]func(report.Node) string{
-		report.Container:      getRenderableContainerName,
-		report.Pod:            kubernetesParentLabel,
-		report.Deployment:     kubernetesParentLabel,
-		report.DaemonSet:      kubernetesParentLabel,
-		report.StatefulSet:    kubernetesParentLabel,
-		report.CronJob:        kubernetesParentLabel,
-		report.Service:        kubernetesParentLabel,
-		report.ECSTask:        latestLookup(awsecs.TaskFamily),
-		report.ECSService:     ecsServiceParentLabel,
-		report.SwarmService:   latestLookup(docker.ServiceName),
-		report.ContainerImage: containerImageParentLabel,
-		report.Host:           latestLookup(host.HostName),
-	}
-)
+// parent topologies, in the order we want to show them
+var parentTopologies = []string{
+	report.Container,
+	report.ContainerImage,
+	report.Pod,
+	report.Deployment,
+	report.DaemonSet,
+	report.StatefulSet,
+	report.CronJob,
+	report.Service,
+	report.ECSTask,
+	report.ECSService,
+	report.SwarmService,
+	report.Host,
+}
 
 // Parents renders the parents of this report.Node, which have been aggregated
 // from the probe reports.
-func Parents(r report.Report, n report.Node) (result []Parent) {
-	topologyIDs := []string{}
-	for topologyID := range getLabelForTopology {
-		topologyIDs = append(topologyIDs, topologyID)
+func Parents(r report.Report, n report.Node) []Parent {
+	if n.Parents.Size() == 0 {
+		return nil
 	}
-	sort.Strings(topologyIDs)
-	for _, topologyID := range topologyIDs {
-		getLabel := getLabelForTopology[topologyID]
+	result := make([]Parent, 0, n.Parents.Size())
+	for _, topologyID := range parentTopologies {
 		topology, ok := r.Topology(topologyID)
+		if !ok {
+			continue
+		}
+		apiTopologyID, ok := primaryAPITopology[topologyID]
 		if !ok {
 			continue
 		}
@@ -55,47 +48,21 @@ func Parents(r report.Report, n report.Node) (result []Parent) {
 			if topologyID == n.Topology && id == n.ID {
 				continue
 			}
-
-			var parentNode report.Node
-			// Special case: container image parents should be empty nodes for some reason
-			if topologyID == report.ContainerImage {
-				parentNode = report.MakeNode(id)
-			} else {
-				if parent, ok := topology.Nodes[id]; ok {
-					parentNode = parent
-				} else {
-					continue
-				}
-			}
-
-			apiTopologyID, ok := primaryAPITopology[topologyID]
+			parentNode, ok := topology.Nodes[id]
 			if !ok {
-				continue
+				parentNode = report.MakeNode(id).WithTopology(topologyID)
 			}
-
-			result = append(result, Parent{
-				ID:         id,
-				Label:      getLabel(parentNode),
-				TopologyID: apiTopologyID,
-			})
+			if summary, ok := MakeBasicNodeSummary(r, parentNode); ok {
+				result = append(result, Parent{
+					ID:         summary.ID,
+					Label:      summary.Label,
+					TopologyID: apiTopologyID,
+				})
+			}
 		}
 	}
-	return result
-}
-
-func latestLookup(key string) func(report.Node) string {
-	return func(n report.Node) string {
-		value, _ := n.Latest.Lookup(key)
-		return value
+	if len(result) == 0 {
+		return nil
 	}
-}
-
-func ecsServiceParentLabel(n report.Node) string {
-	_, name, _ := report.ParseECSServiceNodeID(n.ID)
-	return name
-}
-
-func containerImageParentLabel(n report.Node) string {
-	name, _ := report.ParseContainerImageNodeID(n.ID)
-	return name
+	return result
 }

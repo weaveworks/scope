@@ -12,6 +12,11 @@ export function isNumber(data) {
   return data && data.dataType && data.dataType === 'number';
 }
 
+/** Whether the value is considered numeric for sorting purposes. */
+export function isNumeric(data) {
+  return data && data.dataType && (data.dataType === 'number' || data.dataType === 'duration');
+}
+
 export function isIP(data) {
   return data && data.dataType && data.dataType === 'ip';
 }

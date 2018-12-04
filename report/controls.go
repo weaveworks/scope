@@ -20,6 +20,12 @@ type Control struct {
 
 // Merge merges other with cs, returning a fresh Controls.
 func (cs Controls) Merge(other Controls) Controls {
+	if len(other) > len(cs) {
+		cs, other = other, cs
+	}
+	if len(other) == 0 {
+		return cs
+	}
 	result := cs.Copy()
 	for k, v := range other {
 		result[k] = v

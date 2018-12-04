@@ -1,10 +1,8 @@
 package weave
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -24,8 +22,7 @@ const dockerAPIVersion = "1.22" // Support Docker Engine >= 1.10
 type Client interface {
 	Status() (Status, error)
 	AddDNSEntry(fqdn, containerid string, ip net.IP) error
-	PS() (map[string]PSEntry, error) // on the interface for mocking
-	Expose() error                   // on the interface for mocking
+	Expose() error // on the interface for mocking
 }
 
 // Status describes whats happen in the Weave Net router.
@@ -107,15 +104,7 @@ type Plugin struct {
 	DriverName string
 }
 
-var weavePsMatch = regexp.MustCompile(`^([0-9a-f]{12}) ((?:[0-9a-f][0-9a-f]\:){5}(?:[0-9a-f][0-9a-f]))(.*)$`)
 var ipMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})(/[0-9]+)`)
-
-// PSEntry is a row from the output of `weave ps`
-type PSEntry struct {
-	ContainerIDPrefix string
-	MACAddress        string
-	IPs               []string
-}
 
 type client struct {
 	url string
@@ -136,7 +125,7 @@ func (c *client) Status() (Status, error) {
 	req.Header.Add("Accept", "application/json")
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return Status{}, err
+		return Status{}, errorf("%v", err)
 	}
 	defer resp.Body.Close()
 
@@ -165,7 +154,7 @@ func (c *client) AddDNSEntry(fqdn, containerID string, ip net.IP) error {
 	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return err
+		return errorf("%v", err)
 	}
 	if err := resp.Body.Close(); err != nil {
 		return err
@@ -176,50 +165,6 @@ func (c *client) AddDNSEntry(fqdn, containerID string, ip net.IP) error {
 	return nil
 }
 
-func (c *client) PS() (map[string]PSEntry, error) {
-	cmd := weaveCommand("--local", "ps")
-	stdOut, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-	stdErr, err := cmd.StderrPipe()
-	if err != nil {
-		return nil, err
-	}
-	if err := cmd.Start(); err != nil {
-		return nil, err
-	}
-
-	psEntriesByPrefix := map[string]PSEntry{}
-	scanner := bufio.NewScanner(stdOut)
-	for scanner.Scan() {
-		line := scanner.Text()
-		groups := weavePsMatch.FindStringSubmatch(line)
-		if len(groups) == 0 {
-			continue
-		}
-		containerIDPrefix, macAddress, ips := groups[1], groups[2], []string{}
-		for _, ipGroup := range ipMatch.FindAllStringSubmatch(groups[3], -1) {
-			ips = append(ips, ipGroup[1])
-		}
-		psEntriesByPrefix[containerIDPrefix] = PSEntry{
-			ContainerIDPrefix: containerIDPrefix,
-			MACAddress:        macAddress,
-			IPs:               ips,
-		}
-	}
-	scannerErr := scanner.Err()
-	slurp, _ := ioutil.ReadAll(stdErr)
-	cmdErr := cmd.Wait()
-	if cmdErr != nil {
-		return nil, fmt.Errorf("%s: %q", cmdErr, slurp)
-	}
-	if scannerErr != nil {
-		return nil, scannerErr
-	}
-	return psEntriesByPrefix, nil
-}
-
 func (c *client) Expose() error {
 	cmd := weaveCommand("--local", "ps", "weave:expose")
 	output, err := cmd.Output()
@@ -228,7 +173,7 @@ func (c *client) Expose() error {
 		if exitErr, ok := err.(*realexec.ExitError); ok {
 			stdErr = exitErr.Stderr
 		}
-		return fmt.Errorf("Error running weave ps: %s: %q", err, stdErr)
+		return errorf("Error running weave ps: %s: %q", err, stdErr)
 	}
 	ips := ipMatch.FindAllSubmatch(output, -1)
 	if ips != nil {
@@ -241,7 +186,7 @@ func (c *client) Expose() error {
 		if exitErr, ok := err.(*realexec.ExitError); ok {
 			stdErr = exitErr.Stderr
 		}
-		return fmt.Errorf("Error running weave expose: %s: %q", err, stdErr)
+		return errorf("Error running weave expose: %s: %q", err, stdErr)
 	}
 	return nil
 }
@@ -250,4 +195,8 @@ func weaveCommand(arg ...string) exec.Cmd {
 	cmd := exec.Command("weave", arg...)
 	cmd.SetEnv(append(os.Environ(), "DOCKER_API_VERSION="+dockerAPIVersion))
 	return cmd
+}
+
+func errorf(format string, a ...interface{}) error {
+	return fmt.Errorf(format+". If you are not running Weave Net, you may wish to suppress this warning by launching scope with the `--weave=false` option.", a...)
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment';
 import { connect } from 'react-redux';
 
 import NodeDetailsHealthItem from './node-details-health-item';
@@ -9,7 +10,7 @@ import { trackAnalyticsEvent } from '../../utils/tracking-utils';
 
 /**
  * @param {string} url
- * @param {Moment} time
+ * @param {string} time
  * @returns {string}
  */
 export function appendTime(url, time) {
@@ -18,12 +19,13 @@ export function appendTime(url, time) {
   // rudimentary check whether we have a cloud link
   const cloudLinkPathEnd = 'notebook/new/';
   const pos = url.indexOf(cloudLinkPathEnd);
+  const timeUnix = moment(time).unix();
   if (pos !== -1) {
     let payload;
     const json = decodeURIComponent(url.substr(pos + cloudLinkPathEnd.length));
     try {
       payload = JSON.parse(json);
-      payload.time = { queryEnd: time.unix() };
+      payload.time = { queryEnd: timeUnix };
     } catch (e) {
       return url;
     }
@@ -32,9 +34,9 @@ export function appendTime(url, time) {
   }
 
   if (url.indexOf('?') !== -1) {
-    return `${url}&time=${time.unix()}`;
+    return `${url}&time=${timeUnix}`;
   }
-  return `${url}?time=${time.unix()}`;
+  return `${url}?time=${timeUnix}`;
 }
 
 class NodeDetailsHealthLinkItem extends React.Component {
@@ -63,12 +65,12 @@ class NodeDetailsHealthLinkItem extends React.Component {
 
   render() {
     const {
-      id, url, pausedAt, ...props
+      id, url, monitor, pausedAt, ...props
     } = this.props;
     const metricColor = getMetricColor(id);
     const labelColor = this.state.hovered && !props.valueEmpty && darkenColor(metricColor);
 
-    const timedUrl = appendTime(url, pausedAt);
+    const timedUrl = monitor === true ? appendTime(url, pausedAt) : '';
 
     return (
       <CloudLink
@@ -93,6 +95,7 @@ class NodeDetailsHealthLinkItem extends React.Component {
 function mapStateToProps(state) {
   return {
     pausedAt: state.get('pausedAt'),
+    monitor: state.get('monitor'),
   };
 }
 

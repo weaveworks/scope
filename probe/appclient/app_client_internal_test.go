@@ -104,9 +104,9 @@ func TestAppClientPublish(t *testing.T) {
 	defer p.Stop()
 
 	// First few reports might be dropped as the client is spinning up.
-	rp := NewReportPublisher(p, false)
 	for i := 0; i < 10; i++ {
-		if err := rp.Publish(rpt); err != nil {
+		buf, _ := rpt.WriteBinary()
+		if err := p.Publish(buf, false); err != nil {
 			t.Error(err)
 		}
 		time.Sleep(10 * time.Millisecond)
@@ -204,15 +204,14 @@ func TestStop(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rp := NewReportPublisher(p, false)
-
 	// Make sure the app received our report and is stuck
 	for done := false; !done; {
 		select {
 		case <-receivedReport:
 			done = true
 		default:
-			if err := rp.Publish(rpt); err != nil {
+			buf, _ := rpt.WriteBinary()
+			if err := p.Publish(buf, false); err != nil {
 				t.Error(err)
 			}
 			time.Sleep(10 * time.Millisecond)

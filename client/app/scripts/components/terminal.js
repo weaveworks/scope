@@ -4,12 +4,13 @@ import React from 'react';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 import { debounce } from 'lodash';
-import Term from 'xterm';
+import { Terminal as Term } from 'xterm';
+import * as fit from 'xterm/lib/addons/fit/fit';
 
-import { clickCloseTerminal } from '../actions/app-actions';
+import { closeTerminal } from '../actions/app-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
-import { getPipeStatus, doResizeTty, getWebsocketUrl, basePath } from '../utils/web-api-utils';
+import { getPipeStatus, deletePipe, doResizeTty, getWebsocketUrl, basePath } from '../utils/web-api-utils';
 
 const log = debug('scope:terminal');
 
@@ -29,32 +30,6 @@ function ab2str(buf) {
   const decodedString = decodeURIComponent(escape(encodedString));
   return decodedString;
 }
-
-function terminalCellSize(wrapperNode) {
-  // Badly guess the width/height of the row.
-  let characterWidth = 20;
-  let characterHeight = 20;
-
-  // Now try and measure the first row we find.
-  const subjectRow = wrapperNode.querySelector('.terminal .xterm-rows div');
-  if (!subjectRow) {
-    log("ERROR: Couldn't find first row, resizing might not work very well.");
-  } else {
-    const rowDisplay = subjectRow.style.display;
-    const contentBuffer = subjectRow.innerHTML;
-
-    subjectRow.innerHTML = 'W';
-    subjectRow.style.display = 'inline';
-    characterWidth = subjectRow.getBoundingClientRect().width;
-    subjectRow.style.display = rowDisplay;
-    characterHeight = parseInt(subjectRow.offsetHeight, 10);
-    subjectRow.innerHTML = contentBuffer;
-  }
-
-  log('Calculated (charWidth, charHeight) sizes in px: ', characterWidth, characterHeight);
-  return {characterWidth, characterHeight};
-}
-
 
 function openNewWindow(url, bcr, minWidth = 200) {
   const screenLeft = window.screenX || window.screenLeft;
@@ -86,10 +61,9 @@ class Terminal extends React.Component {
 
     this.state = {
       connected: false,
+      detached: false,
       rows: DEFAULT_ROWS,
       cols: DEFAULT_COLS,
-      characterWidth: 0,
-      characterHeight: 0
     };
 
     this.handleCloseClick = this.handleCloseClick.bind(this);
@@ -156,6 +130,10 @@ class Terminal extends React.Component {
     if (this.props.connect !== nextProps.connect && nextProps.connect) {
       this.mountTerminal();
     }
+    // Close the terminal window immediately when the pipe is deleted.
+    if (nextProps.pipe.get('status') === 'PIPE_DELETED') {
+      this.props.dispatch(closeTerminal(this.getPipeId()));
+    }
   }
 
   componentDidMount() {
@@ -166,32 +144,44 @@ class Terminal extends React.Component {
   }
 
   mountTerminal() {
+    Term.applyAddon(fit);
     this.term = new Term({
-      cols: this.state.cols,
-      rows: this.state.rows,
+      //
+      // Some linux systems fail to render 'monospace' on `<canvas>` correctly:
+      // https://github.com/xtermjs/xterm.js/issues/1170
+      // `theme.fontFamilies.monospace` doesn't provide many options so we add
+      // some here that are very common. The alternative _might_ be to bundle Roboto-Mono
+      //
+      fontFamily: '"Roboto Mono", "Courier New", "Courier", monospace',
+      // `theme.fontSizes.tiny` (`"12px"`) is a string and we need an int here.
+      fontSize: 12,
       convertEol: !this.props.pipe.get('raw'),
       cursorBlink: true,
       scrollback: 10000,
     });
 
     this.term.open(this.innerFlex);
+    this.term.focus();
+
     this.term.on('data', (data) => {
       if (this.socket) {
         this.socket.send(data);
       }
     });
 
-    this.createWebsocket(this.term);
+    this.term.on('resize', ({ cols, rows }) => {
+      const resizeTtyControl = this.props.pipe.get('resizeTtyControl');
+      if (resizeTtyControl) {
+        doResizeTty(this.getPipeId(), resizeTtyControl, cols, rows);
+      }
+      this.setState({ cols, rows });
+    });
 
-    const {characterWidth, characterHeight} = terminalCellSize(this.term.element);
+    this.createWebsocket(this.term);
 
     window.addEventListener('resize', this.handleResizeDebounced);
 
     this.resizeTimeout = setTimeout(() => {
-      this.setState({
-        characterWidth,
-        characterHeight
-      });
       this.handleResize();
     }, 10);
   }
@@ -213,6 +203,10 @@ class Terminal extends React.Component {
       this.term = null;
     }
 
+    if (!this.state.detached) {
+      deletePipe(this.getPipeId());
+    }
+
     if (this.socket) {
       log('close socket');
       this.socket.close();
@@ -220,14 +214,7 @@ class Terminal extends React.Component {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    const sizeChanged = (
-      prevState.cols !== this.state.cols ||
-      prevState.rows !== this.state.rows
-    );
-    if (sizeChanged) {
-      this.term.resize(this.state.cols, this.state.rows);
-    }
+  componentDidUpdate() {
     if (!this.isEmbedded()) {
       setDocumentTitle(this.getTitle());
     }
@@ -235,33 +222,21 @@ class Terminal extends React.Component {
 
   handleCloseClick(ev) {
     ev.preventDefault();
-    this.props.dispatch(clickCloseTerminal(this.getPipeId(), true));
+    this.props.dispatch(closeTerminal(this.getPipeId()));
   }
 
   handlePopoutTerminal(ev) {
     ev.preventDefault();
     const paramString = JSON.stringify(this.props);
-    this.props.dispatch(clickCloseTerminal(this.getPipeId()));
+    this.props.dispatch(closeTerminal(this.getPipeId()));
+    this.setState({detached: true});
 
     const bcr = this.node.getBoundingClientRect();
-    const minWidth = (this.state.characterWidth * 80) + (8 * 2);
-    openNewWindow(`${basePath(window.location.pathname)}/terminal.html#!/state/${paramString}`, bcr, minWidth);
+    openNewWindow(`${basePath(window.location.pathname)}/terminal.html#!/state/${paramString}`, bcr);
   }
 
   handleResize() {
-    // scrollbar === 16px
-    const width = this.innerFlex.clientWidth - (2 * 8) - 16;
-    const height = this.innerFlex.clientHeight - (2 * 8);
-    const cols = Math.floor(width / this.state.characterWidth);
-    const rows = Math.floor(height / this.state.characterHeight);
-
-    const resizeTtyControl = this.props.pipe.get('resizeTtyControl');
-    if (resizeTtyControl) {
-      doResizeTty(this.getPipeId(), resizeTtyControl, cols, rows)
-        .then(() => this.setState({cols, rows}));
-    } else if (!this.props.pipe.get('raw')) {
-      this.setState({cols, rows});
-    }
+    this.term.fit();
   }
 
   isEmbedded() {
@@ -304,18 +279,6 @@ class Terminal extends React.Component {
   }
 
   getStatus() {
-    if (this.props.pipe.get('status') === 'PIPE_DELETED') {
-      return (
-        <div>
-          <h3>Connection Closed</h3>
-          <div className="termina-status-bar-message">
-            The connection to this container has been closed.
-            <div className="link" onClick={this.handleCloseClick}>Close terminal</div>
-          </div>
-        </div>
-      );
-    }
-
     if (!this.state.connected) {
       return (
         <h3>Connecting...</h3>
@@ -352,9 +315,6 @@ class Terminal extends React.Component {
       opacity: this.state.connected ? 1 : 0.8,
       overflow: 'hidden',
     };
-    const innerStyle = {
-      width: (this.state.cols + 2) * this.state.characterWidth
-    };
     const innerClassName = classNames('terminal-inner hideable', {
       'terminal-inactive': !this.state.connected
     });
@@ -362,9 +322,7 @@ class Terminal extends React.Component {
     return (
       <div className="terminal-wrapper" ref={this.saveNodeRef}>
         {this.isEmbedded() && this.getTerminalHeader()}
-        <div className={innerClassName} style={innerFlexStyle} ref={this.saveInnerFlexRef}>
-          <div style={innerStyle} />
-        </div>
+        <div className={innerClassName} style={innerFlexStyle} ref={this.saveInnerFlexRef} />
         {this.getTerminalStatusBar()}
       </div>
     );

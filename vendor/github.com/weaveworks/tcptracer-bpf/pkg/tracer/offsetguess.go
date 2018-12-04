@@ -28,7 +28,7 @@ type tcpTracerStatus C.struct_tcptracer_status_t
 const (
 	// When reading kernel structs at different offsets, don't go over that
 	// limit. This is an arbitrary choice to avoid infinite loops.
-	threshold = 200
+	threshold = 400
 
 	// The source port is much further away in the inet sock.
 	thresholdInetSock = 2000

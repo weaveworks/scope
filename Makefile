@@ -1,4 +1,4 @@
-.PHONY: all deps static clean realclean client-lint client-test client-sync backend frontend shell lint ui-upload
+.PHONY: all cri deps static clean realclean client-lint client-test client-sync backend frontend shell lint ui-upload
 
 # If you can use Docker without being root, you can `make SUDO= <target>`
 SUDO=$(shell docker info >/dev/null 2>&1 || echo "sudo -E")
@@ -11,6 +11,7 @@ SCOPE_UI_BUILD_UPTODATE=.scope_ui_build.uptodate
 SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
 SCOPE_BACKEND_BUILD_UPTODATE=.scope_backend_build.uptodate
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
+GIT_REVISION=$(shell git rev-parse HEAD)
 WEAVENET_VERSION=2.1.3
 RUNSVINIT=vendor/runsvinit/runsvinit
 CODECGEN_DIR=vendor/github.com/ugorji/go/codec/codecgen
@@ -44,6 +45,16 @@ IMAGE_TAG=$(shell ./tools/image-tag)
 
 all: $(SCOPE_EXPORT)
 
+update-cri:
+	curl https://raw.githubusercontent.com/kubernetes/kubernetes/master/pkg/kubelet/apis/cri/runtime/v1alpha2/api.proto > cri/runtime/api.proto
+
+protoc-gen-gofast:
+	@go get -u -v github.com/gogo/protobuf/protoc-gen-gofast
+
+# Use cri target to download latest cri proto files and regenerate CRI runtime files. 
+cri: update-cri protoc-gen-gofast
+	@cd $(GOPATH)/src;protoc --proto_path=$(GOPATH)/src --gofast_out=plugins=grpc:. github.com/weaveworks/scope/cri/runtime/api.proto
+
 docker/weave:
 	curl -L https://github.com/weaveworks/weave/releases/download/v$(WEAVENET_VERSION)/weave -o docker/weave
 	chmod u+x docker/weave
@@ -56,7 +67,7 @@ docker/%: %
 	cp $* docker/
 
 %.tar: docker/Dockerfile.%
-	$(SUDO) docker build -t $(DOCKERHUB_USER)/$* -f $< docker/
+	$(SUDO) docker build --build-arg=revision=$(GIT_REVISION) -t $(DOCKERHUB_USER)/$* -f $< docker/
 	$(SUDO) docker tag $(DOCKERHUB_USER)/$* $(DOCKERHUB_USER)/$*:$(IMAGE_TAG)
 	$(SUDO) docker save $(DOCKERHUB_USER)/$*:latest > $@
 
@@ -69,7 +80,6 @@ $(RUNSVINIT): vendor/runsvinit/*.go
 $(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name '*.go') prog/staticui/staticui.go prog/externalui/externalui.go $(CODECGEN_TARGETS)
 
 report/report.codecgen.go: $(call GET_CODECGEN_DEPS,report/)
-render/render.codecgen.go: $(call GET_CODECGEN_DEPS,render/)
 render/detailed/detailed.codecgen.go: $(call GET_CODECGEN_DEPS,render/detailed/)
 static: prog/staticui/staticui.go prog/externalui/externalui.go
 prog/staticui/staticui.go: client/build/index.html

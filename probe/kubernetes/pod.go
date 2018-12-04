@@ -5,7 +5,7 @@ import (
 
 	"github.com/weaveworks/scope/report"
 
-	apiv1 "k8s.io/client-go/pkg/api/v1"
+	apiv1 "k8s.io/api/core/v1"
 )
 
 // These constants are keys used in node metadata
@@ -13,8 +13,12 @@ const (
 	State           = report.KubernetesState
 	IsInHostNetwork = report.KubernetesIsInHostNetwork
 	RestartCount    = report.KubernetesRestartCount
+)
 
+// Pod states we handle specially
+const (
 	StateDeleted = "deleted"
+	StateFailed  = "Failed"
 )
 
 // Pod represents a Kubernetes pod
@@ -24,6 +28,7 @@ type Pod interface {
 	NodeName() string
 	GetNode(probeID string) report.Node
 	RestartCount() uint
+	ContainerNames() []string
 }
 
 type pod struct {
@@ -51,7 +56,7 @@ func (p *pod) UID() string {
 }
 
 func (p *pod) AddParent(topology, id string) {
-	p.parents = p.parents.Add(topology, report.MakeStringSet(id))
+	p.parents = p.parents.AddString(topology, id)
 }
 
 func (p *pod) State() string {
@@ -70,12 +75,27 @@ func (p *pod) RestartCount() uint {
 	return count
 }
 
+func (p *pod) VolumeClaimName() string {
+	var claimName string
+	for _, volume := range p.Spec.Volumes {
+		if volume.VolumeSource.PersistentVolumeClaim != nil {
+			claimName = volume.VolumeSource.PersistentVolumeClaim.ClaimName
+			break
+		}
+	}
+	return claimName
+}
+
 func (p *pod) GetNode(probeID string) report.Node {
 	latests := map[string]string{
 		State: p.State(),
 		IP:    p.Status.PodIP,
 		report.ControlProbeID: probeID,
 		RestartCount:          strconv.FormatUint(uint64(p.RestartCount()), 10),
+	}
+
+	if p.VolumeClaimName() != "" {
+		latests[VolumeClaim] = p.VolumeClaimName()
 	}
 
 	if p.Pod.Spec.HostNetwork {
@@ -85,4 +105,12 @@ func (p *pod) GetNode(probeID string) report.Node {
 	return p.MetaNode(report.MakePodNodeID(p.UID())).WithLatests(latests).
 		WithParents(p.parents).
 		WithLatestActiveControls(GetLogs, DeletePod)
+}
+
+func (p *pod) ContainerNames() []string {
+	containerNames := make([]string, 0, len(p.Pod.Spec.Containers))
+	for _, c := range p.Pod.Spec.Containers {
+		containerNames = append(containerNames, c.Name)
+	}
+	return containerNames
 }

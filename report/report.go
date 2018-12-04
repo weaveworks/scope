@@ -6,42 +6,72 @@ import (
 	"strings"
 	"time"
 
-	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/common/xfer"
 )
 
 // Names of the various topologies.
 const (
-	Endpoint       = "endpoint"
-	Process        = "process"
-	Container      = "container"
-	Pod            = "pod"
-	Service        = "service"
-	Deployment     = "deployment"
-	ReplicaSet     = "replica_set"
-	DaemonSet      = "daemon_set"
-	StatefulSet    = "stateful_set"
-	CronJob        = "cron_job"
-	ContainerImage = "container_image"
-	Host           = "host"
-	Overlay        = "overlay"
-	ECSService     = "ecs_service"
-	ECSTask        = "ecs_task"
-	SwarmService   = "swarm_service"
+	Endpoint              = "endpoint"
+	Process               = "process"
+	Container             = "container"
+	Pod                   = "pod"
+	Service               = "service"
+	Deployment            = "deployment"
+	ReplicaSet            = "replica_set"
+	DaemonSet             = "daemon_set"
+	StatefulSet           = "stateful_set"
+	CronJob               = "cron_job"
+	Namespace             = "namespace"
+	ContainerImage        = "container_image"
+	Host                  = "host"
+	Overlay               = "overlay"
+	ECSService            = "ecs_service"
+	ECSTask               = "ecs_task"
+	SwarmService          = "swarm_service"
+	PersistentVolume      = "persistent_volume"
+	PersistentVolumeClaim = "persistent_volume_claim"
+	StorageClass          = "storage_class"
 
 	// Shapes used for different nodes
-	Circle   = "circle"
-	Triangle = "triangle"
-	Square   = "square"
-	Pentagon = "pentagon"
-	Hexagon  = "hexagon"
-	Heptagon = "heptagon"
-	Octagon  = "octagon"
-	Cloud    = "cloud"
+	Circle         = "circle"
+	Triangle       = "triangle"
+	Square         = "square"
+	Pentagon       = "pentagon"
+	Hexagon        = "hexagon"
+	Heptagon       = "heptagon"
+	Octagon        = "octagon"
+	Cloud          = "cloud"
+	Cylinder       = "cylinder"
+	DottedCylinder = "dottedcylinder"
+	StorageSheet   = "sheet"
 
 	// Used when counting the number of containers
 	ContainersKey = "containers"
 )
+
+// topologyNames are the names of all report topologies.
+var topologyNames = []string{
+	Endpoint,
+	Process,
+	Container,
+	ContainerImage,
+	Pod,
+	Service,
+	Deployment,
+	ReplicaSet,
+	DaemonSet,
+	StatefulSet,
+	CronJob,
+	Namespace,
+	Host,
+	Overlay,
+	ECSTask,
+	ECSService,
+	SwarmService,
+	PersistentVolume,
+	PersistentVolumeClaim,
+	StorageClass,
+}
 
 // Report is the core data type. It's produced by probes, and consumed and
 // stored by apps. It's composed of multiple topologies, each representing
@@ -95,6 +125,11 @@ type Report struct {
 	// present.
 	CronJob Topology
 
+	// Namespace nodes represent all Kubernetes Namespaces running on hosts running probes.
+	// Metadata includes things like Namespace id, name, etc. Edges are not
+	// present.
+	Namespace Topology
+
 	// ContainerImages nodes represent all Docker containers images on
 	// hosts running probes. Metadata includes things like image id, name etc.
 	// Edges are not present.
@@ -121,8 +156,22 @@ type Report struct {
 
 	// Overlay nodes are active peers in any software-defined network that's
 	// overlaid on the infrastructure. The information is scraped by polling
-	// their status endpoints. Edges could be present, but aren't currently.
+	// their status endpoints. Edges are present.
 	Overlay Topology
+
+	// Persistent Volume nodes represent all Kubernetes Persistent Volumes running on hosts running probes.
+	// Metadata is limited for now, more to come later.
+	PersistentVolume Topology
+
+	// Persistent Volume Claim nodes represent all Kubernetes Persistent Volume Claims running on hosts running probes.
+	// Metadata is limited for now, more to come later.
+	PersistentVolumeClaim Topology
+
+	// Storage Class represent all kubernetes Storage Classes on hosts running probes.
+	// Metadata is limited for now, more to come later.
+	StorageClass Topology
+
+	DNS DNSRecords
 
 	// Sampling data for this report.
 	Sampling Sampling
@@ -146,12 +195,6 @@ type Report struct {
 	// must be equal, but we don't require that equal reports have
 	// the same id.
 	ID string `deepequal:"skip"`
-}
-
-// RenderContext carries contextual data that is needed when rendering parts of the report.
-type RenderContext struct {
-	Report
-	MetricsGraphURL string
 }
 
 // MakeReport makes a clean report, ready to Merge() other reports into.
@@ -203,6 +246,8 @@ func MakeReport() Report {
 			WithShape(Triangle).
 			WithLabel("cron job", "cron jobs"),
 
+		Namespace: MakeTopology(),
+
 		Overlay: MakeTopology().
 			WithShape(Circle).
 			WithLabel("peer", "peers"),
@@ -219,6 +264,20 @@ func MakeReport() Report {
 			WithShape(Heptagon).
 			WithLabel("service", "services"),
 
+		PersistentVolume: MakeTopology().
+			WithShape(Cylinder).
+			WithLabel("persistent volume", "persistent volumes"),
+
+		PersistentVolumeClaim: MakeTopology().
+			WithShape(DottedCylinder).
+			WithLabel("persistent volume claim", "persistent volume claims"),
+
+		StorageClass: MakeTopology().
+			WithShape(StorageSheet).
+			WithLabel("storage class", "storage classes"),
+
+		DNS: DNSRecords{},
+
 		Sampling: Sampling{},
 		Window:   0,
 		Plugins:  xfer.MakePluginSpecs(),
@@ -226,33 +285,13 @@ func MakeReport() Report {
 	}
 }
 
-// TopologyMap gets a map from topology names to pointers to the respective topologies
-func (r *Report) TopologyMap() map[string]*Topology {
-	return map[string]*Topology{
-		Endpoint:       &r.Endpoint,
-		Process:        &r.Process,
-		Container:      &r.Container,
-		ContainerImage: &r.ContainerImage,
-		Pod:            &r.Pod,
-		Service:        &r.Service,
-		Deployment:     &r.Deployment,
-		ReplicaSet:     &r.ReplicaSet,
-		DaemonSet:      &r.DaemonSet,
-		StatefulSet:    &r.StatefulSet,
-		CronJob:        &r.CronJob,
-		Host:           &r.Host,
-		Overlay:        &r.Overlay,
-		ECSTask:        &r.ECSTask,
-		ECSService:     &r.ECSService,
-		SwarmService:   &r.SwarmService,
-	}
-}
-
 // Copy returns a value copy of the report.
 func (r Report) Copy() Report {
 	newReport := Report{
+		DNS:      r.DNS.Copy(),
 		Sampling: r.Sampling,
 		Window:   r.Window,
+		Shortcut: r.Shortcut,
 		Plugins:  r.Plugins.Copy(),
 		ID:       fmt.Sprintf("%d", rand.Int63()),
 	}
@@ -266,55 +305,96 @@ func (r Report) Copy() Report {
 // original is not modified.
 func (r Report) Merge(other Report) Report {
 	newReport := r.Copy()
-	newReport.Sampling = newReport.Sampling.Merge(other.Sampling)
-	newReport.Window = newReport.Window + other.Window
-	newReport.Plugins = newReport.Plugins.Merge(other.Plugins)
-	newReport.WalkPairedTopologies(&other, func(ourTopology, theirTopology *Topology) {
-		*ourTopology = ourTopology.Merge(*theirTopology)
-	})
+	newReport.UnsafeMerge(other)
 	return newReport
 }
 
-// Topologies returns a slice of Topologies in this report
-func (r Report) Topologies() []Topology {
-	result := []Topology{}
-	r.WalkTopologies(func(t *Topology) {
-		result = append(result, *t)
+// UnsafeMerge merges another Report into the receiver. The original is modified.
+func (r *Report) UnsafeMerge(other Report) {
+	r.DNS = r.DNS.Merge(other.DNS)
+	r.Sampling = r.Sampling.Merge(other.Sampling)
+	r.Window = r.Window + other.Window
+	r.Plugins = r.Plugins.Merge(other.Plugins)
+	r.WalkPairedTopologies(&other, func(ourTopology, theirTopology *Topology) {
+		ourTopology.UnsafeMerge(*theirTopology)
 	})
-	return result
 }
 
 // WalkTopologies iterates through the Topologies of the report,
 // potentially modifying them
 func (r *Report) WalkTopologies(f func(*Topology)) {
-	var dummy Report
-	r.WalkPairedTopologies(&dummy, func(t, _ *Topology) { f(t) })
+	for _, name := range topologyNames {
+		f(r.topology(name))
+	}
+}
+
+// WalkNamedTopologies iterates through the Topologies of the report,
+// potentially modifying them.
+func (r *Report) WalkNamedTopologies(f func(string, *Topology)) {
+	for _, name := range topologyNames {
+		f(name, r.topology(name))
+	}
 }
 
 // WalkPairedTopologies iterates through the Topologies of this and another report,
 // potentially modifying one or both.
 func (r *Report) WalkPairedTopologies(o *Report, f func(*Topology, *Topology)) {
-	f(&r.Endpoint, &o.Endpoint)
-	f(&r.Process, &o.Process)
-	f(&r.Container, &o.Container)
-	f(&r.ContainerImage, &o.ContainerImage)
-	f(&r.Pod, &o.Pod)
-	f(&r.Service, &o.Service)
-	f(&r.Deployment, &o.Deployment)
-	f(&r.ReplicaSet, &o.ReplicaSet)
-	f(&r.DaemonSet, &o.DaemonSet)
-	f(&r.StatefulSet, &o.StatefulSet)
-	f(&r.CronJob, &o.CronJob)
-	f(&r.Host, &o.Host)
-	f(&r.Overlay, &o.Overlay)
-	f(&r.ECSTask, &o.ECSTask)
-	f(&r.ECSService, &o.ECSService)
-	f(&r.SwarmService, &o.SwarmService)
+	for _, name := range topologyNames {
+		f(r.topology(name), o.topology(name))
+	}
 }
 
-// Topology gets a topology by name
+// topology returns a reference to one of the report's topologies,
+// selected by name.
+func (r *Report) topology(name string) *Topology {
+	switch name {
+	case Endpoint:
+		return &r.Endpoint
+	case Process:
+		return &r.Process
+	case Container:
+		return &r.Container
+	case ContainerImage:
+		return &r.ContainerImage
+	case Pod:
+		return &r.Pod
+	case Service:
+		return &r.Service
+	case Deployment:
+		return &r.Deployment
+	case ReplicaSet:
+		return &r.ReplicaSet
+	case DaemonSet:
+		return &r.DaemonSet
+	case StatefulSet:
+		return &r.StatefulSet
+	case CronJob:
+		return &r.CronJob
+	case Namespace:
+		return &r.Namespace
+	case Host:
+		return &r.Host
+	case Overlay:
+		return &r.Overlay
+	case ECSTask:
+		return &r.ECSTask
+	case ECSService:
+		return &r.ECSService
+	case SwarmService:
+		return &r.SwarmService
+	case PersistentVolume:
+		return &r.PersistentVolume
+	case PersistentVolumeClaim:
+		return &r.PersistentVolumeClaim
+	case StorageClass:
+		return &r.StorageClass
+	}
+	return nil
+}
+
+// Topology returns one of the report's topologies, selected by name.
 func (r Report) Topology(name string) (Topology, bool) {
-	if t, ok := r.TopologyMap()[name]; ok {
+	if t := r.topology(name); t != nil {
 		return *t, true
 	}
 	return Topology{}, false
@@ -323,8 +403,8 @@ func (r Report) Topology(name string) (Topology, bool) {
 // Validate checks the report for various inconsistencies.
 func (r Report) Validate() error {
 	var errs []string
-	for _, topology := range r.Topologies() {
-		if err := topology.Validate(); err != nil {
+	for _, name := range topologyNames {
+		if err := r.topology(name).Validate(); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}
@@ -339,43 +419,8 @@ func (r Report) Validate() error {
 
 // Upgrade returns a new report based on a report received from the old probe.
 //
-// This for now creates node's LatestControls from Controls.
 func (r Report) Upgrade() Report {
-	return r.upgradeLatestControls().upgradePodNodes()
-}
-
-func (r Report) upgradeLatestControls() Report {
-	needUpgrade := false
-	r.WalkTopologies(func(topology *Topology) {
-		for _, node := range topology.Nodes {
-			if node.LatestControls.Size() == 0 && len(node.Controls.Controls) > 0 {
-				needUpgrade = true
-			}
-		}
-	})
-
-	if !needUpgrade {
-		return r
-	}
-
-	cp := r.Copy()
-	ncd := NodeControlData{
-		Dead: false,
-	}
-	cp.WalkTopologies(func(topology *Topology) {
-		n := Nodes{}
-		for name, node := range topology.Nodes {
-			if node.LatestControls.Size() == 0 && len(node.Controls.Controls) > 0 {
-				for _, control := range node.Controls.Controls {
-					node.LatestControls = node.LatestControls.Set(control, node.Controls.Timestamp, ncd)
-				}
-			}
-			n[name] = node
-		}
-		topology.Nodes = n
-	})
-
-	return cp
+	return r.upgradePodNodes().upgradeNamespaces().upgradeDNSRecords()
 }
 
 func (r Report) upgradePodNodes() Report {
@@ -409,32 +454,60 @@ func (r Report) upgradePodNodes() Report {
 	return r
 }
 
-// BackwardCompatible returns a new backward-compatible report.
-//
-// This for now creates node's Controls from LatestControls.
-func (r Report) BackwardCompatible() Report {
-	now := mtime.Now()
-	cp := r.Copy()
-	cp.WalkTopologies(func(topology *Topology) {
-		n := Nodes{}
-		for name, node := range topology.Nodes {
-			var controls []string
-			node.LatestControls.ForEach(func(k string, _ time.Time, v NodeControlData) {
-				if !v.Dead {
-					controls = append(controls, k)
-				}
-			})
-			if len(controls) > 0 {
-				node.Controls = NodeControls{
-					Timestamp: now,
-					Controls:  MakeStringSet(controls...),
+func (r Report) upgradeNamespaces() Report {
+	if len(r.Namespace.Nodes) > 0 {
+		return r
+	}
+
+	namespaces := map[string]struct{}{}
+	for _, t := range []Topology{r.Pod, r.Service, r.Deployment, r.DaemonSet, r.StatefulSet, r.CronJob} {
+		for _, n := range t.Nodes {
+			if state, ok := n.Latest.Lookup(KubernetesState); ok && state == "deleted" {
+				continue
+			}
+			if namespace, ok := n.Latest.Lookup(KubernetesNamespace); ok {
+				namespaces[namespace] = struct{}{}
+			}
+		}
+	}
+
+	nodes := make(Nodes, len(namespaces))
+	for ns := range namespaces {
+		// Namespace ID:
+		// Probes did not use to report namespace ids, but since creating a report node requires an id,
+		// the namespace name, which is unique, is passed to `MakeNamespaceNodeID`
+		namespaceID := MakeNamespaceNodeID(ns)
+		nodes[namespaceID] = MakeNodeWith(namespaceID, map[string]string{KubernetesName: ns})
+	}
+	r.Namespace.Nodes = nodes
+
+	return r
+}
+
+func (r Report) upgradeDNSRecords() Report {
+	if len(r.DNS) > 0 {
+		return r
+	}
+	dns := make(DNSRecords)
+	for endpointID, endpoint := range r.Endpoint.Nodes {
+		_, addr, _, ok := ParseEndpointNodeID(endpointID)
+		snoopedNames, foundS := endpoint.Sets.Lookup(SnoopedDNSNames)
+		reverseNames, foundR := endpoint.Sets.Lookup(ReverseDNSNames)
+		if ok && (foundS || foundR) {
+			// Add address and names to report-level map
+			if existing, found := dns[addr]; found {
+				var sUnchanged, rUnchanged bool
+				snoopedNames, sUnchanged = snoopedNames.Merge(existing.Forward)
+				reverseNames, rUnchanged = reverseNames.Merge(existing.Reverse)
+				if sUnchanged && rUnchanged {
+					continue
 				}
 			}
-			n[name] = node
+			dns[addr] = DNSRecord{Forward: snoopedNames, Reverse: reverseNames}
 		}
-		topology.Nodes = n
-	})
-	return cp
+	}
+	r.DNS = dns
+	return r
 }
 
 // Sampling describes how the packet data sources for this report were

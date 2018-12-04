@@ -6,7 +6,6 @@ import (
 
 	"github.com/weaveworks/scope/probe/awsecs"
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/probe/process"
@@ -42,84 +41,126 @@ type Column struct {
 	Datatype    string `json:"dataType"`
 }
 
-// NodeSummary is summary information about a child for a Node.
+// BasicNodeSummary is basic summary information about a Node,
+// sufficient for rendering links to the node.
+type BasicNodeSummary struct {
+	ID         string `json:"id"`
+	Label      string `json:"label"`
+	LabelMinor string `json:"labelMinor"`
+	Rank       string `json:"rank"`
+	Shape      string `json:"shape,omitempty"`
+	Stack      bool   `json:"stack,omitempty"`
+	Pseudo     bool   `json:"pseudo,omitempty"`
+}
+
+// NodeSummary is summary information about a Node.
 type NodeSummary struct {
-	ID         string               `json:"id"`
-	Label      string               `json:"label"`
-	LabelMinor string               `json:"labelMinor"`
-	Rank       string               `json:"rank"`
-	Shape      string               `json:"shape,omitempty"`
-	Stack      bool                 `json:"stack,omitempty"`
-	Linkable   bool                 `json:"linkable,omitempty"` // Whether this node can be linked-to
-	Pseudo     bool                 `json:"pseudo,omitempty"`
-	Metadata   []report.MetadataRow `json:"metadata,omitempty"`
-	Parents    []Parent             `json:"parents,omitempty"`
-	Metrics    []report.MetricRow   `json:"metrics,omitempty"`
-	Tables     []report.Table       `json:"tables,omitempty"`
-	Adjacency  report.IDList        `json:"adjacency,omitempty"`
+	BasicNodeSummary
+	Metadata  []report.MetadataRow `json:"metadata,omitempty"`
+	Parents   []Parent             `json:"parents,omitempty"`
+	Metrics   []report.MetricRow   `json:"metrics,omitempty"`
+	Tables    []report.Table       `json:"tables,omitempty"`
+	Adjacency report.IDList        `json:"adjacency,omitempty"`
 }
 
-var renderers = map[string]func(NodeSummary, report.Node) (NodeSummary, bool){
-	render.Pseudo:         pseudoNodeSummary,
-	report.Process:        processNodeSummary,
-	report.Container:      containerNodeSummary,
-	report.ContainerImage: containerImageNodeSummary,
-	report.Pod:            podNodeSummary,
-	report.Service:        podGroupNodeSummary,
-	report.Deployment:     podGroupNodeSummary,
-	report.DaemonSet:      podGroupNodeSummary,
-	report.StatefulSet:    podGroupNodeSummary,
-	report.CronJob:        podGroupNodeSummary,
-	report.ECSTask:        ecsTaskNodeSummary,
-	report.ECSService:     ecsServiceNodeSummary,
-	report.SwarmService:   swarmServiceNodeSummary,
-	report.Host:           hostNodeSummary,
-	report.Overlay:        weaveNodeSummary,
-	report.Endpoint:       nil, // Do not render
-}
-
-var templates = map[string]struct{ Label, LabelMinor string }{
-	render.TheInternetID:      {render.InboundMajor, ""},
-	render.IncomingInternetID: {render.InboundMajor, render.InboundMinor},
-	render.OutgoingInternetID: {render.OutboundMajor, render.OutboundMinor},
+var renderers = map[string]func(BasicNodeSummary, report.Node) BasicNodeSummary{
+	render.Pseudo:                pseudoNodeSummary,
+	report.Process:               processNodeSummary,
+	report.Container:             containerNodeSummary,
+	report.ContainerImage:        containerImageNodeSummary,
+	report.Pod:                   podNodeSummary,
+	report.Service:               podGroupNodeSummary,
+	report.Deployment:            podGroupNodeSummary,
+	report.DaemonSet:             podGroupNodeSummary,
+	report.StatefulSet:           podGroupNodeSummary,
+	report.CronJob:               podGroupNodeSummary,
+	report.ECSTask:               ecsTaskNodeSummary,
+	report.ECSService:            ecsServiceNodeSummary,
+	report.SwarmService:          swarmServiceNodeSummary,
+	report.Host:                  hostNodeSummary,
+	report.Overlay:               weaveNodeSummary,
+	report.Endpoint:              nil, // Do not render
+	report.PersistentVolume:      persistentVolumeNodeSummary,
+	report.PersistentVolumeClaim: persistentVolumeClaimNodeSummary,
+	report.StorageClass:          storageClassNodeSummary,
 }
 
 // For each report.Topology, map to a 'primary' API topology. This can then be used in a variety of places.
 var primaryAPITopology = map[string]string{
-	report.Process:        "processes",
-	report.Container:      "containers",
-	report.ContainerImage: "containers-by-image",
-	report.Pod:            "pods",
-	report.Deployment:     "kube-controllers",
-	report.DaemonSet:      "kube-controllers",
-	report.StatefulSet:    "kube-controllers",
-	report.CronJob:        "kube-controllers",
-	report.Service:        "services",
-	report.ECSTask:        "ecs-tasks",
-	report.ECSService:     "ecs-services",
-	report.SwarmService:   "swarm-services",
-	report.Host:           "hosts",
+	report.Process:               "processes",
+	report.Container:             "containers",
+	report.ContainerImage:        "containers-by-image",
+	report.Pod:                   "pods",
+	report.Deployment:            "kube-controllers",
+	report.DaemonSet:             "kube-controllers",
+	report.StatefulSet:           "kube-controllers",
+	report.CronJob:               "kube-controllers",
+	report.Service:               "services",
+	report.ECSTask:               "ecs-tasks",
+	report.ECSService:            "ecs-services",
+	report.SwarmService:          "swarm-services",
+	report.Host:                  "hosts",
+	report.PersistentVolume:      "pods",
+	report.PersistentVolumeClaim: "pods",
+	report.StorageClass:          "pods",
+}
+
+// MakeBasicNodeSummary returns a basic summary of a node, if
+// possible. This summary is sufficient for rendering links to the node.
+func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, bool) {
+	summary := BasicNodeSummary{ // This is unlikely to look very good, but is a reasonable fallback
+		ID:    n.ID,
+		Label: n.ID,
+		Shape: report.Triangle,
+	}
+	if t, ok := r.Topology(n.Topology); ok {
+		summary.Shape = t.GetShape()
+	}
+
+	// Do we have a renderer for the topology?
+	if renderer, ok := renderers[n.Topology]; ok {
+		if renderer == nil { // we don't want to render this
+			return summary, false
+		}
+		return renderer(summary, n), true
+	}
+
+	// Is it a group topology?
+	if strings.HasPrefix(n.Topology, "group:") {
+		return groupNodeSummary(summary, r, n), true
+	}
+
+	// Is it any known topology?
+	if _, ok := r.Topology(n.Topology); ok {
+		// We should never get here, since all known topologies are in
+		// 'renderers'.
+		return summary, true
+	}
+
+	// We have no idea how to render this.
+	return summary, false
 }
 
 // MakeNodeSummary summarizes a node, if possible.
-func MakeNodeSummary(rc report.RenderContext, n report.Node) (NodeSummary, bool) {
-	r := rc.Report
-	if renderer, ok := renderers[n.Topology]; ok {
-		// Skip (and don't fall through to fallback) if renderer maps to nil
-		if renderer != nil {
-			summary, b := renderer(baseNodeSummary(r, n), n)
-			return RenderMetricURLs(summary, n, rc.MetricsGraphURL), b
+func MakeNodeSummary(rc RenderContext, n report.Node) (NodeSummary, bool) {
+	base, ok := MakeBasicNodeSummary(rc.Report, n)
+	if !ok {
+		return NodeSummary{}, false
+	}
+	summary := NodeSummary{
+		BasicNodeSummary: base,
+		Parents:          Parents(rc.Report, n),
+		Adjacency:        n.Adjacency,
+	}
+	// Only include metadata, metrics, tables when it's not a group node
+	if _, ok := n.Counters.Lookup(n.Topology); !ok {
+		if topology, ok := rc.Topology(n.Topology); ok {
+			summary.Metadata = topology.MetadataTemplates.MetadataRows(n)
+			summary.Metrics = topology.MetricTemplates.MetricRows(n)
+			summary.Tables = topology.TableTemplates.Tables(n)
 		}
-	} else if _, ok := rc.Topology(n.Topology); ok {
-		summary := baseNodeSummary(r, n)
-		summary.Label = n.ID // This is unlikely to look very good, but is a reasonable fallback
-		return summary, true
 	}
-	if strings.HasPrefix(n.Topology, "group:") {
-		summary, b := groupNodeSummary(baseNodeSummary(r, n), r, n)
-		return RenderMetricURLs(summary, n, rc.MetricsGraphURL), b
-	}
-	return NodeSummary{}, false
+	return RenderMetricURLs(summary, n, rc.Report, rc.MetricsGraphURL), true
 }
 
 // SummarizeMetrics returns a copy of the NodeSummary where the metrics are
@@ -133,132 +174,137 @@ func (n NodeSummary) SummarizeMetrics() NodeSummary {
 	return n
 }
 
-func baseNodeSummary(r report.Report, n report.Node) NodeSummary {
-	t, _ := r.Topology(n.Topology)
-	return NodeSummary{
-		ID:        n.ID,
-		Shape:     t.GetShape(),
-		Linkable:  true,
-		Metadata:  NodeMetadata(r, n),
-		Metrics:   NodeMetrics(r, n),
-		Parents:   Parents(r, n),
-		Tables:    NodeTables(r, n),
-		Adjacency: n.Adjacency,
-	}
-}
-
-func pseudoNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func pseudoNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	pseudoID, _ := render.ParsePseudoNodeID(n.ID)
 	base.Pseudo = true
-	base.Rank = n.ID
+	base.Rank = pseudoID
 
-	// try rendering as an internet node
-	if template, ok := templates[n.ID]; ok {
-		base.Label = template.Label
-		base.LabelMinor = template.LabelMinor
+	switch {
+	case n.ID == render.IncomingInternetID:
+		// render as an internet node
+		base.Label = render.InboundMajor
+		base.LabelMinor = render.InboundMinor
 		base.Shape = report.Cloud
-		return base, true
-	}
-
-	// try rendering as a known service node
-	if strings.HasPrefix(n.ID, render.ServiceNodeIDPrefix) {
+	case n.ID == render.OutgoingInternetID:
+		// render as an internet node
+		base.Label = render.OutboundMajor
+		base.LabelMinor = render.OutboundMinor
+		base.Shape = report.Cloud
+	case strings.HasPrefix(n.ID, render.ServiceNodeIDPrefix):
+		// render as a known service node
 		base.Label = n.ID[len(render.ServiceNodeIDPrefix):]
 		base.LabelMinor = ""
 		base.Shape = report.Cloud
-		return base, true
-	}
-
-	// try rendering it as an uncontained node
-	if strings.HasPrefix(n.ID, render.UncontainedIDPrefix) {
+	case strings.HasPrefix(n.ID, render.UncontainedIDPrefix):
+		// render as an uncontained node
 		base.Label = render.UncontainedMajor
-		base.LabelMinor = report.ExtractHostID(n)
+		base.LabelMinor = n.ID[len(render.UncontainedIDPrefix):]
 		base.Shape = report.Square
 		base.Stack = true
-		return base, true
-	}
-
-	// try rendering it as an unmanaged node
-	if strings.HasPrefix(n.ID, render.UnmanagedIDPrefix) {
+	case strings.HasPrefix(n.ID, render.UnmanagedIDPrefix):
+		// render as an unmanaged node
 		base.Label = render.UnmanagedMajor
+		base.LabelMinor = n.ID[len(render.UnmanagedIDPrefix):]
 		base.Shape = report.Square
 		base.Stack = true
-		base.LabelMinor = report.ExtractHostID(n)
-		return base, true
-	}
-
-	// try rendering it as an endpoint
-	if _, addr, _, ok := report.ParseEndpointNodeID(n.ID); ok {
-		base.Label = addr
-		base.Shape = report.Circle
-		return base, true
-	}
-
-	return NodeSummary{}, false
-}
-
-func processNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label, _ = n.Latest.Lookup(process.Name)
-	base.Rank, _ = n.Latest.Lookup(process.Name)
-
-	pid, ok := n.Latest.Lookup(process.PID)
-	if !ok {
-		return NodeSummary{}, false
-	}
-	if containerName, ok := n.Latest.Lookup(docker.ContainerName); ok {
-		base.LabelMinor = fmt.Sprintf("%s (%s:%s)", report.ExtractHostID(n), containerName, pid)
-	} else {
-		base.LabelMinor = fmt.Sprintf("%s (%s)", report.ExtractHostID(n), pid)
-	}
-
-	base.Linkable = render.IsConnected(n)
-	return base, true
-}
-
-func containerNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	base.Label = getRenderableContainerName(n)
-	base.LabelMinor = report.ExtractHostID(n)
-
-	if imageName, ok := n.Latest.Lookup(docker.ImageName); ok {
-		base.Rank = docker.ImageNameWithoutVersion(imageName)
-	}
-
-	return base, true
-}
-
-func containerImageNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
-	imageName, ok := n.Latest.Lookup(docker.ImageName)
-	if !ok {
-		return NodeSummary{}, false
-	}
-
-	imageNameWithoutVersion := docker.ImageNameWithoutVersion(imageName)
-	base.Label = imageNameWithoutVersion
-	base.Rank = imageNameWithoutVersion
-	base.Stack = true
-
-	if base.Label == ImageNameNone {
-		base.Label, _ = n.Latest.Lookup(docker.ImageID)
-		if len(base.Label) > 12 {
-			base.Label = base.Label[:12]
+	default:
+		// try rendering it as an endpoint
+		if _, addr, _, ok := report.ParseEndpointNodeID(n.ID); ok {
+			base.Label = addr
+			base.Shape = report.Circle
+		} else {
+			// last resort
+			base.Label = pseudoID
 		}
 	}
-
-	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
-
-	return base, true
+	return base
 }
 
-func addKubernetesLabelAndRank(base NodeSummary, n report.Node) NodeSummary {
-	base.Label, _ = n.Latest.Lookup(kubernetes.Name)
-	namespace, _ := n.Latest.Lookup(kubernetes.Namespace)
+func processNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	var (
+		hostID, pid, _   = report.ParseProcessNodeID(n.ID)
+		processName, _   = n.Latest.Lookup(process.Name)
+		containerName, _ = n.Latest.Lookup(docker.ContainerName)
+	)
+	switch {
+	case processName != "" && containerName != "":
+		base.Label = processName
+		base.LabelMinor = fmt.Sprintf("%s (%s:%s)", hostID, containerName, pid)
+		base.Rank = processName
+	case processName != "":
+		base.Label = processName
+		base.LabelMinor = fmt.Sprintf("%s (%s)", hostID, pid)
+		base.Rank = processName
+	case containerName != "":
+		base.Label = pid
+		base.LabelMinor = fmt.Sprintf("%s (%s)", hostID, containerName)
+		base.Rank = hostID
+	default:
+		base.Label = pid
+		base.LabelMinor = hostID
+		base.Rank = hostID
+	}
+	return base
+}
+
+func containerNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	var (
+		containerName = getRenderableContainerName(n)
+		hostName      = report.ExtractHostID(n)
+		imageName, _  = n.Latest.Lookup(docker.ImageName)
+	)
+	base.Label = containerName
+	base.LabelMinor = hostName
+	if imageName != "" {
+		base.Rank = docker.ImageNameWithoutTag(imageName)
+	} else if hostName != "" {
+		base.Rank = hostName
+	} else {
+		base.Rank = base.Label
+	}
+	return base
+}
+
+func containerImageNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	var (
+		imageName, _        = n.Latest.Lookup(docker.ImageName)
+		imageNameWithoutTag = docker.ImageNameWithoutTag(imageName)
+	)
+	switch {
+	case imageNameWithoutTag != "" && imageNameWithoutTag != ImageNameNone:
+		base.Label = imageNameWithoutTag
+	case imageName != "" && imageName != ImageNameNone:
+		base.Label = imageName
+	default:
+		// The id can be an image id or an image name. Ideally we'd
+		// truncate the former but not the latter, but short of
+		// heuristic regexp match we cannot tell the difference.
+		base.Label, _ = report.ParseContainerImageNodeID(n.ID)
+	}
+	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
+	base.Rank = base.Label
+	base.Stack = true
+	return base
+}
+
+func addKubernetesLabelAndRank(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	var (
+		name, _      = n.Latest.Lookup(kubernetes.Name)
+		namespace, _ = n.Latest.Lookup(kubernetes.Namespace)
+	)
+	if name != "" {
+		base.Label = name
+	} else {
+		base.Label, _, _ = report.ParseNodeID(n.ID)
+	}
 	base.Rank = namespace + "/" + base.Label
 	return base
 }
 
-func podNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func podNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base = addKubernetesLabelAndRank(base, n)
 	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
-
-	return base, true
+	return base
 }
 
 var podGroupNodeTypeName = map[string]string{
@@ -268,10 +314,9 @@ var podGroupNodeTypeName = map[string]string{
 	report.CronJob:     "CronJob",
 }
 
-func podGroupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func podGroupNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base = addKubernetesLabelAndRank(base, n)
 	base.Stack = true
-
 	// NB: pods are the highest aggregation level for which we display
 	// counts.
 	count := pluralize(n.Counters, report.Pod, "pod", "pods")
@@ -280,75 +325,87 @@ func podGroupNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
 	} else {
 		base.LabelMinor = count
 	}
-
-	return base, true
+	return base
 }
 
-func ecsTaskNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func ecsTaskNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base.Label, _ = n.Latest.Lookup(awsecs.TaskFamily)
-	return base, true
+	if base.Label == "" {
+		base.Label, _ = report.ParseECSTaskNodeID(n.ID)
+	}
+	return base
 }
 
-func ecsServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func ecsServiceNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	_, base.Label, _ = report.ParseECSServiceNodeID(n.ID)
 	base.Stack = true
-	return base, true
+	return base
 }
 
-func swarmServiceNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func swarmServiceNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base.Label, _ = n.Latest.Lookup(docker.ServiceName)
-	return base, true
+	if base.Label == "" {
+		base.Label, _ = report.ParseSwarmServiceNodeID(n.ID)
+	}
+	return base
 }
 
-func hostNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func hostNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	var (
-		hostname, _ = n.Latest.Lookup(host.HostName)
+		hostname, _ = report.ParseHostNodeID(n.ID)
 		parts       = strings.SplitN(hostname, ".", 2)
 	)
-
 	if len(parts) == 2 {
 		base.Label, base.LabelMinor, base.Rank = parts[0], parts[1], parts[1]
 	} else {
 		base.Label = hostname
 	}
-
-	return base, true
+	return base
 }
 
-func weaveNodeSummary(base NodeSummary, n report.Node) (NodeSummary, bool) {
+func weaveNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	var (
 		nickname, _ = n.Latest.Lookup(overlay.WeavePeerNickName)
+		_, peerName = report.ParseOverlayNodeID(n.ID)
 	)
+	if nickname != "" {
+		base.Label = nickname
+	} else {
+		base.Label = peerName
+	}
+	base.LabelMinor = peerName
+	return base
+}
 
-	_, peerName := report.ParseOverlayNodeID(n.ID)
+func persistentVolumeNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
+}
 
-	base.Label, base.LabelMinor = nickname, peerName
+func persistentVolumeClaimNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
+}
 
-	return base, true
+func storageClassNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
 }
 
 // groupNodeSummary renders the summary for a group node. n.Topology is
 // expected to be of the form: group:container:hostname
-func groupNodeSummary(base NodeSummary, r report.Report, n report.Node) (NodeSummary, bool) {
-	parts := strings.Split(n.Topology, ":")
-	if len(parts) != 3 {
-		return NodeSummary{}, false
+func groupNodeSummary(base BasicNodeSummary, r report.Report, n report.Node) BasicNodeSummary {
+	base.Label, base.Rank = n.ID, n.ID
+	if topology, _, ok := render.ParseGroupNodeTopology(n.Topology); ok {
+		if t, ok := r.Topology(topology); ok {
+			base.Shape = t.GetShape()
+			if t.Label != "" {
+				base.LabelMinor = pluralize(n.Counters, topology, t.Label, t.LabelPlural)
+			}
+		}
 	}
-
-	label, ok := n.Latest.Lookup(parts[2])
-	if !ok {
-		return NodeSummary{}, false
-	}
-	base.Label, base.Rank = label, label
-
-	t, ok := r.Topology(parts[1])
-	if ok && t.Label != "" {
-		base.LabelMinor = pluralize(n.Counters, parts[1], t.Label, t.LabelPlural)
-	}
-
-	base.Shape = t.GetShape()
 	base.Stack = true
-	return base, true
+	return base
 }
 
 func pluralize(counters report.Counters, key, singular, plural string) string {
@@ -372,7 +429,7 @@ func (s nodeSummariesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
 type NodeSummaries map[string]NodeSummary
 
 // Summaries converts RenderableNodes into a set of NodeSummaries
-func Summaries(rc report.RenderContext, rns report.Nodes) NodeSummaries {
+func Summaries(rc RenderContext, rns report.Nodes) NodeSummaries {
 
 	result := NodeSummaries{}
 	for id, node := range rns {
@@ -411,5 +468,9 @@ func getRenderableContainerName(nmd report.Node) string {
 			return label
 		}
 	}
-	return ""
+	containerID, _ := report.ParseContainerNodeID(nmd.ID)
+	if len(containerID) > 12 {
+		containerID = containerID[:12]
+	}
+	return containerID
 }

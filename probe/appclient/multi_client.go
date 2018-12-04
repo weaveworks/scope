@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/url"
 	"strings"
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/report"
@@ -37,13 +35,6 @@ type clientTuple struct {
 	AppClient
 }
 
-// Publisher is something which can send a stream of data somewhere, probably
-// to a remote collector.
-type Publisher interface {
-	Publish(io.Reader, bool) error
-	Stop()
-}
-
 // MultiAppClient maintains a set of upstream apps, and ensures we have an
 // AppClient for each one.
 type MultiAppClient interface {
@@ -51,7 +42,7 @@ type MultiAppClient interface {
 	PipeConnection(appID, pipeID string, pipe xfer.Pipe) error
 	PipeClose(appID, pipeID string) error
 	Stop()
-	Publish(io.Reader, bool) error
+	Publish(r report.Report) error
 }
 
 // NewMultiAppClient creates a new MultiAppClient.
@@ -165,25 +156,18 @@ func (c *multiClient) Stop() {
 // underlying publishers sequentially. To do that, it needs to drain the
 // reader, and recreate new readers for each publisher. Note that it will
 // publish to one endpoint for each unique ID. Failed publishes don't count.
-func (c *multiClient) Publish(r io.Reader, shortcut bool) error {
+func (c *multiClient) Publish(r report.Report) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	if len(c.clients) <= 1 { // optimisation
-		for _, c := range c.clients {
-			return c.Publish(r, shortcut)
-		}
-		return nil
-	}
-
-	buf, err := ioutil.ReadAll(r)
+	buf, err := r.WriteBinary()
 	if err != nil {
 		return err
 	}
 
 	errs := []string{}
 	for _, c := range c.clients {
-		if err := c.Publish(bytes.NewReader(buf), shortcut); err != nil {
+		if err := c.Publish(bytes.NewReader(buf.Bytes()), r.Shortcut); err != nil {
 			errs = append(errs, err.Error())
 		}
 	}

@@ -3,9 +3,9 @@ package kubernetes
 import (
 	"fmt"
 
+	"k8s.io/api/apps/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/pkg/apis/apps/v1beta1"
 
 	"github.com/weaveworks/scope/report"
 )
@@ -14,7 +14,7 @@ import (
 type StatefulSet interface {
 	Meta
 	Selector() (labels.Selector, error)
-	GetNode() report.Node
+	GetNode(probeID string) report.Node
 }
 
 type statefulSet struct {
@@ -38,15 +38,16 @@ func (s *statefulSet) Selector() (labels.Selector, error) {
 	return selector, nil
 }
 
-func (s *statefulSet) GetNode() report.Node {
+func (s *statefulSet) GetNode(probeID string) report.Node {
 	desiredReplicas := 1
 	if s.Spec.Replicas != nil {
 		desiredReplicas = int(*s.Spec.Replicas)
 	}
 	latests := map[string]string{
-		NodeType:        "StatefulSet",
-		DesiredReplicas: fmt.Sprint(desiredReplicas),
-		Replicas:        fmt.Sprint(s.Status.Replicas),
+		NodeType:              "StatefulSet",
+		DesiredReplicas:       fmt.Sprint(desiredReplicas),
+		Replicas:              fmt.Sprint(s.Status.Replicas),
+		report.ControlProbeID: probeID,
 	}
 	if s.Status.ObservedGeneration != nil {
 		latests[ObservedGeneration] = fmt.Sprint(*s.Status.ObservedGeneration)

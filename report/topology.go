@@ -5,16 +5,15 @@ import (
 	"strings"
 )
 
-// Topology describes a specific view of a network. It consists of nodes and
-// edges, and metadata about those nodes and edges, represented by
-// EdgeMetadatas and Nodes respectively. Edges are directional, and embedded
+// Topology describes a specific view of a network. It consists of
+// nodes with metadata, and edges. Edges are directional, and embedded
 // in the Node struct.
 type Topology struct {
 	Shape             string            `json:"shape,omitempty"`
 	Label             string            `json:"label,omitempty"`
 	LabelPlural       string            `json:"label_plural,omitempty"`
 	Nodes             Nodes             `json:"nodes"`
-	Controls          Controls          `json:"controls,omitempty"`
+	Controls          Controls          `json:"controls,omitempty" deepequal:"nil==empty"`
 	MetadataTemplates MetadataTemplates `json:"metadata_templates,omitempty"`
 	MetricTemplates   MetricTemplates   `json:"metric_templates,omitempty"`
 	TableTemplates    TableTemplates    `json:"table_templates,omitempty"`
@@ -103,15 +102,20 @@ func (t Topology) WithLabel(label, labelPlural string) Topology {
 
 // AddNode adds node to the topology under key nodeID; if a
 // node already exists for this key, nmd is merged with that node.
-// The same topology is returned to enable chaining.
 // This method is different from all the other similar methods
 // in that it mutates the Topology, to solve issues of GC pressure.
-func (t Topology) AddNode(node Node) Topology {
+func (t Topology) AddNode(node Node) {
 	if existing, ok := t.Nodes[node.ID]; ok {
 		node = node.Merge(existing)
 	}
 	t.Nodes[node.ID] = node
-	return t
+}
+
+// ReplaceNode adds node to the topology under key nodeID; if a
+// node already exists for this key, node replaces that node.
+// Like AddNode, it mutates the Topology
+func (t Topology) ReplaceNode(node Node) {
+	t.Nodes[node.ID] = node
 }
 
 // GetShape returns the current topology shape, or the default if there isn't one.
@@ -159,6 +163,21 @@ func (t Topology) Merge(other Topology) Topology {
 	}
 }
 
+// UnsafeMerge merges the other object into this one, modifying the original.
+func (t *Topology) UnsafeMerge(other Topology) {
+	if t.Shape == "" {
+		t.Shape = other.Shape
+	}
+	if t.Label == "" {
+		t.Label, t.LabelPlural = other.Label, other.LabelPlural
+	}
+	t.Nodes.UnsafeMerge(other.Nodes)
+	t.Controls = t.Controls.Merge(other.Controls)
+	t.MetadataTemplates = t.MetadataTemplates.Merge(other.MetadataTemplates)
+	t.MetricTemplates = t.MetricTemplates.Merge(other.MetricTemplates)
+	t.TableTemplates = t.TableTemplates.Merge(other.TableTemplates)
+}
+
 // Nodes is a collection of nodes in a topology. Keys are node IDs.
 // TODO(pb): type Topology map[string]Node
 type Nodes map[string]Node
@@ -175,18 +194,26 @@ func (n Nodes) Copy() Nodes {
 // Merge merges the other object into this one, and returns the result object.
 // The original is not modified.
 func (n Nodes) Merge(other Nodes) Nodes {
-	cp := make(Nodes, len(n))
-	for k, v := range n {
-		cp[k] = v
+	if len(other) > len(n) {
+		n, other = other, n
 	}
+	if len(other) == 0 {
+		return n
+	}
+	cp := n.Copy()
+	cp.UnsafeMerge(other)
+	return cp
+}
+
+// UnsafeMerge merges the other object into this one, modifying the original.
+func (n *Nodes) UnsafeMerge(other Nodes) {
 	for k, v := range other {
-		if n, ok := cp[k]; ok { // don't overwrite
-			cp[k] = v.Merge(n)
+		if existing, ok := (*n)[k]; ok { // don't overwrite
+			(*n)[k] = v.Merge(existing)
 		} else {
-			cp[k] = v
+			(*n)[k] = v
 		}
 	}
-	return cp
 }
 
 // Validate checks the topology for various inconsistencies.
@@ -206,13 +233,6 @@ func (t Topology) Validate() error {
 				errs = append(errs, fmt.Sprintf("node missing from adjacency %q -> %q", nodeID, dstNodeID))
 			}
 		}
-
-		// Check all the edge metadatas have entries in adjacencies
-		nmd.Edges.ForEach(func(dstNodeID string, _ EdgeMetadata) {
-			if _, ok := t.Nodes[dstNodeID]; !ok {
-				errs = append(errs, fmt.Sprintf("node %s missing for edge %q", dstNodeID, nodeID))
-			}
-		})
 	}
 
 	if len(errs) > 0 {

@@ -9,6 +9,7 @@ IMAGENAME=$1
 SAVEDNAME=$(echo "$IMAGENAME" | sed "s/[\/\-]/\./g")
 IMAGEDIR=$2
 shift 2
+GIT_REVISION="$(git rev-parse HEAD)"
 
 INPUTFILES=("$@")
 CACHEDIR=$HOME/docker/
@@ -17,7 +18,7 @@ CACHEDIR=$HOME/docker/
 rebuild() {
     mkdir -p "$CACHEDIR"
     rm "$CACHEDIR/$SAVEDNAME"* || true
-    docker build -t "$IMAGENAME" "$IMAGEDIR"
+    docker build --build-arg=revision="$GIT_REVISION" -t "$IMAGENAME" "$IMAGEDIR"
     docker save "$IMAGENAME:latest" | gzip - >"$CACHEDIR/$SAVEDNAME-$CIRCLE_SHA1.gz"
 }
 
