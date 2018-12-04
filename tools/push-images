@@ -26,25 +26,28 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-push_image() {
-    local image="$1"
-    docker push "${image}:${IMAGE_TAG}"
-}
-
+pids=""
 for image in ${IMAGES}; do
     if [[ "$image" == *"build"* ]]; then
         continue
     fi
     echo "Will push ${image}:${IMAGE_TAG}"
-    push_image "${image}" &
+    docker push "${image}:${IMAGE_TAG}" &
+    pids="$pids $!"
 
     if [ -z "$NO_DOCKER_HUB" ]; then
         # remove the quey prefix and push to docker hub
         docker_hub_image=${image#$QUAY_PREFIX}
         docker tag "${image}:${IMAGE_TAG}" "${docker_hub_image}:${IMAGE_TAG}"
         echo "Will push ${docker_hub_image}:${IMAGE_TAG}"
-        docker push "${docker_hub_image}:${IMAGE_TAG}"
+        docker push "${docker_hub_image}:${IMAGE_TAG}" &
+        pids="$pids $!"
     fi
+done
+
+# Wait individually for tasks so we fail-exit on any non-zero return code
+for p in $pids; do
+    wait "$p"
 done
 
 wait

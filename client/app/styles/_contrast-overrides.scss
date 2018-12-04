@@ -2,13 +2,13 @@
 
 $background-color: $color-white;
 $background-lighter-color: $color-white;
-$background-darker-color: $color-blue-haze;
-$background-darker-secondary-color: $color-blue-haze;
-$background-dark-color: $color-primary-charcoal;
+$background-darker-color: $color-purple-200;
+$background-darker-secondary-color: $color-purple-200;
+$background-dark-color: $color-purple-900;
 $text-color: $color-black;
 $text-secondary-color: $color-black;
-$text-tertiary-color: $color-tundora;
-$border-light-color: $color-solid-gray;
+$text-tertiary-color: $color-black;
+$border-light-color: $color-gray-600;
 $text-darker-color: $color-black;
 $edge-color: $color-black;
 
@@ -30,7 +30,7 @@ $btn-opacity-disabled: 0.4;
 
 $link-opacity-default: 1;
 
-$search-border-color: $color-blue-haze;
+$search-border-color: $color-purple-200;
 $search-border-width: 2px;
 
 /* specific elements */

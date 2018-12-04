@@ -2,16 +2,16 @@ $fa-font-path: "~font-awesome/fonts";
 
 $base-ease: ease-in-out;
 
-$background-color: $color-lightgray;
+$background-color: $color-gray-50;
 $background-lighter-color: $color-white;
-$background-darker-color: $color-silver;
-$background-darker-secondary-color: $color-mercury;
-$background-dark-color: $color-primary-charcoal;
-$text-color: $color-gunpowder;
-$text-secondary-color: $color-comet;
-$text-tertiary-color: $color-primary-lavender;
-$border-light-color: $color-mischka;
-$text-darker-color: $color-primary-charcoal;
+$background-darker-color: $color-purple-100;
+$background-darker-secondary-color: $color-gray-50;
+$background-dark-color: $color-purple-900;
+$text-color: $color-purple-800;
+$text-secondary-color: $color-purple-600;
+$text-tertiary-color: $color-purple-400;
+$border-light-color: $color-purple-100;
+$text-darker-color: $color-purple-900;
 
 $details-window-width: 420px;
 $details-window-padding-left: 30px;
@@ -30,9 +30,9 @@ $node-text-scale: 2;
 $edge-highlight-opacity: 0.1;
 $edge-opacity-blurred: 0.2;
 $edge-opacity: 0.5;
-$edge-color: $color-kimberly-dark;
+$edge-color: $color-purple-500;
 
-$btn-opacity-default: 0.7;
+$btn-opacity-default: 0.9;
 $btn-opacity-hover: 1;
 $btn-opacity-selected: 0.9;
 $btn-opacity-disabled: 0.25;
@@ -45,5 +45,5 @@ $search-border-width: 1px;
 $timeline-height: 55px;
 
 /* specific elements */
-$body-background-color: $color-lightgray;
-$label-background-color: transparentize($color-lightgray, 0.3);
+$body-background-color: $color-purple-25;
+$label-background-color: transparentize($color-purple-25, 0.3);

@@ -84,8 +84,6 @@ func TestSummaries(t *testing.T) {
 				Samples: nil,
 				Min:     metric.Min,
 				Max:     metric.Max,
-				First:   metric.First,
-				Last:    metric.Last,
 			},
 		}
 		if !reflect.DeepEqual(want, row) {

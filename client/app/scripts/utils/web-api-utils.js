@@ -87,11 +87,13 @@ export function basePathSlash(urlPath) {
   return `${basePath(urlPath)}/`;
 }
 
+// TODO: This helper should probably be passed by the 'user' of Scope,
+// i.e. in this case Weave Cloud, rather than being hardcoded here.
 export function getApiPath(pathname = window.location.pathname) {
   if (process.env.SCOPE_API_PREFIX) {
-    // Flip the current namespaces and instanceName args to match Weave Cloud routes.
-    const [, instanceName, namespace] = pathname.split('/');
-    return basePath(`${process.env.SCOPE_API_PREFIX}/${namespace}/${instanceName}`);
+    // Extract the instance name (pathname in WC context is of format '/:orgId/explore').
+    const orgId = pathname.split('/')[1];
+    return basePath(`${process.env.SCOPE_API_PREFIX}/app/${orgId}`);
   }
 
   return basePath(pathname);

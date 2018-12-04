@@ -11,7 +11,7 @@ import (
 	"sync"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/weaveworks/common/fs"
 	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/host"
@@ -106,8 +106,7 @@ func isKernelSupported() error {
 			// not "119-ish", so allow it.
 			return nil
 		}
-		// TODO: give the check an upper limit once the bug is fixed
-		if major == 4 && minor == 4 && abiNumber >= 119 {
+		if major == 4 && minor == 4 && abiNumber >= 119 && abiNumber < 127 {
 			// https://github.com/weaveworks/scope/issues/3131
 			// https://bugs.launchpad.net/ubuntu/+source/linux/+bug/1763454
 			return fmt.Errorf("got Ubuntu kernel %s with known bug", release)

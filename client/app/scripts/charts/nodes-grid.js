@@ -1,5 +1,6 @@
 /* eslint react/jsx-no-bind: "off", no-multi-comp: "off" */
 import React from 'react';
+import styled from 'styled-components';
 import { connect } from 'react-redux';
 import { List as makeList, Map as makeMap } from 'immutable';
 import capitalize from 'lodash/capitalize';
@@ -19,6 +20,15 @@ import { getNodeColor } from '../utils/color-utils';
 const IGNORED_COLUMNS = ['docker_container_ports', 'docker_container_id', 'docker_image_id',
   'docker_container_command', 'docker_container_networks'];
 
+
+const Icon = styled.span`
+  border-radius: ${props => props.theme.borderRadius.soft};
+  background-color: ${props => props.color};
+  margin-top: 3px;
+  display: block;
+  height: 12px;
+  width: 12px;
+`;
 
 function topologyLabel(topologies, id) {
   const topology = findTopologyById(topologies, id);
@@ -74,23 +84,18 @@ function renderIdCell({
 }) {
   const showSubLabel = Boolean(pseudo) && labelMinor;
   const title = showSubLabel ? `${label} (${labelMinor})` : label;
-  const iconStyle = {
-    width: 16,
-    flex: 'none',
-    color: getNodeColor(rank, label)
-  };
 
   return (
     <div title={title} className="nodes-grid-id-column">
-      <div style={iconStyle}><i className="fa fa-square" /></div>
+      <div style={{ width: 16, flex: 'none' }}>
+        <Icon color={getNodeColor(rank, label)} />
+      </div>
       <div className="truncate">
         {label} {showSubLabel && <span className="nodes-grid-label-minor">{labelMinor}</span>}
       </div>
     </div>
   );
 }
-
-
 class NodesGrid extends React.Component {
   constructor(props, context) {
     super(props, context);

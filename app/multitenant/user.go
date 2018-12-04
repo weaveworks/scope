@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/weaveworks/scope/app"
 )

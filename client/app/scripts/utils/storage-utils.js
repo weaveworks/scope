@@ -2,30 +2,54 @@ import debug from 'debug';
 
 const log = debug('scope:storage-utils');
 
-// localStorage detection
-const storage = (typeof Storage) !== 'undefined' ? window.localStorage : null;
-
-export function storageGet(key, defaultValue) {
-  if (storage && storage.getItem(key) !== undefined) {
-    return storage.getItem(key);
+export const localSessionStorage = {
+  getItem(k) {
+    return window.sessionStorage.getItem(k) || window.localStorage.getItem(k);
+  },
+  setItem(k, v) {
+    window.sessionStorage.setItem(k, v);
+    window.localStorage.setItem(k, v);
+  },
+  clear() {
+    window.sessionStorage.clear();
+    window.localStorage.clear();
   }
-  return defaultValue;
+};
+
+export function storageGet(key, defaultValue, storage = localSessionStorage) {
+  if (!storage) {
+    return defaultValue;
+  }
+
+  const value = storage.getItem(key);
+  if (value == null) {
+    return defaultValue;
+  }
+
+  return value;
 }
 
-export function storageSet(key, value) {
+export function storageSet(key, value, storage = localSessionStorage) {
   if (storage) {
     try {
       storage.setItem(key, value);
       return true;
     } catch (e) {
-      log('Error storing value in storage. Maybe full? Could not store key.', key);
+      log(
+        'Error storing value in storage. Maybe full? Could not store key.',
+        key
+      );
     }
   }
   return false;
 }
 
-export function storageGetObject(key, defaultValue) {
-  const value = storageGet(key);
+export function storageGetObject(
+  key,
+  defaultValue,
+  storage = localSessionStorage
+) {
+  const value = storageGet(key, undefined, storage);
   if (value) {
     try {
       return JSON.parse(value);
@@ -36,9 +60,9 @@ export function storageGetObject(key, defaultValue) {
   return defaultValue;
 }
 
-export function storageSetObject(key, obj) {
+export function storageSetObject(key, obj, storage = localSessionStorage) {
   try {
-    return storageSet(key, JSON.stringify(obj));
+    return storageSet(key, JSON.stringify(obj), storage);
   } catch (e) {
     log('Error encoding object for key', key);
   }

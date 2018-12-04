@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	billing "github.com/weaveworks/billing-client"
 	"github.com/weaveworks/scope/app"
@@ -93,6 +93,7 @@ type flags struct {
 }
 
 type probeFlags struct {
+	printOnStdout          bool
 	token                  string
 	httpListen             string
 	publishInterval        time.Duration
@@ -118,6 +119,9 @@ type probeFlags struct {
 	dockerEnabled  bool
 	dockerInterval time.Duration
 	dockerBridge   string
+
+	criEnabled  bool
+	criEndpoint string
 
 	kubernetesEnabled      bool
 	kubernetesNodeName     string
@@ -163,6 +167,7 @@ type appFlags struct {
 	userIDHeader              string
 	externalUI                bool
 	metricsGraphURL           string
+	serviceName               string
 
 	blockProfileRate int
 
@@ -274,6 +279,7 @@ func setupFlags(flags *flags) {
 	flag.Bool("app-only", false, "Only run the app.")
 
 	// Probe flags
+	flag.BoolVar(&flags.probe.printOnStdout, "probe.publish.stdout", false, "Print reports on stdout instead of sending to app, for debugging")
 	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.token, probeTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
@@ -301,6 +307,10 @@ func setupFlags(flags *flags) {
 	flag.BoolVar(&flags.probe.dockerEnabled, "probe.docker", false, "collect Docker-related attributes for processes")
 	flag.DurationVar(&flags.probe.dockerInterval, "probe.docker.interval", 10*time.Second, "how often to update Docker attributes")
 	flag.StringVar(&flags.probe.dockerBridge, "probe.docker.bridge", "docker0", "the docker bridge name")
+
+	// CRI
+	flag.BoolVar(&flags.probe.criEnabled, "probe.cri", false, "collect CRI-related attributes for processes")
+	flag.StringVar(&flags.probe.criEndpoint, "probe.cri.endpoint", "unix///var/run/dockershim.sock", "The endpoint to connect to the CRI")
 
 	// K8s
 	flag.BoolVar(&flags.probe.kubernetesEnabled, "probe.kubernetes", false, "collect kubernetes-related attributes for containers")
@@ -360,6 +370,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.app.userIDHeader, "app.userid.header", "", "HTTP header to use as userid")
 	flag.BoolVar(&flags.app.externalUI, "app.externalUI", false, "Point to externally hosted static UI assets")
 	flag.StringVar(&flags.app.metricsGraphURL, "app.metrics-graph", "", "Enable extended metrics graph by providing a templated URL (supports :orgID and :query). Example: --app.metric-graph=/prom/:orgID/notebook/new")
+	flag.StringVar(&flags.app.serviceName, "app.service-name", "app", "The name for this service which should be reported in instrumentation")
 
 	flag.IntVar(&flags.app.blockProfileRate, "app.block.profile.rate", 0, "If more than 0, enable block profiling. The profiler aims to sample an average of one blocking event per rate nanoseconds spent blocked.")
 

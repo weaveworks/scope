@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { fromJS, Map as makeMap, List as makeList } from 'immutable';
+import theme from 'weaveworks-ui-components/lib/theme';
 
 import NodeContainer from './node-container';
 import EdgeContainer from './edge-container';
@@ -20,6 +21,7 @@ import {
   layoutEdgesSelector
 } from '../selectors/graph-view/layout';
 
+import { NODE_BASE_SIZE } from '../constants/styles';
 import {
   BLURRED_EDGES_LAYER,
   BLURRED_NODES_LAYER,
@@ -147,7 +149,11 @@ class NodesChartElements extends React.Component {
   }
 
   renderNode(node) {
-    const { isAnimated, contrastMode } = this.props;
+    const { isAnimated } = this.props;
+    // old versions of scope reports have a node shape of `storagesheet`
+    // if so, normalise to `sheet`
+    const shape = node.get('shape') === 'storagesheet' ? 'sheet' : node.get('shape');
+
     return (
       <NodeContainer
         matches={node.get('matches')}
@@ -155,19 +161,18 @@ class NodesChartElements extends React.Component {
         metric={node.get('metric')}
         focused={node.get('focused')}
         highlighted={node.get('highlighted')}
-        shape={node.get('shape')}
-        stack={node.get('stack')}
+        shape={shape}
+        stacked={node.get('stack')}
         key={node.get('id')}
         id={node.get('id')}
         label={node.get('label')}
         labelMinor={node.get('labelMinor')}
         pseudo={node.get('pseudo')}
         rank={node.get('rank')}
-        dx={node.get('x')}
-        dy={node.get('y')}
-        scale={node.get('scale')}
+        x={node.get('x')}
+        y={node.get('y')}
+        size={node.get('scale') * NODE_BASE_SIZE}
         isAnimated={isAnimated}
-        contrastMode={contrastMode}
       />
     );
   }
@@ -199,7 +204,7 @@ class NodesChartElements extends React.Component {
         className={className}
         key="nodes-chart-overlay"
         transform={`scale(${scale})`}
-        fill="#fff"
+        fill={theme.colors.purple25}
         x={-1}
         y={-1}
         width={2}

@@ -3,9 +3,9 @@ package httpgrpc
 import (
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
+	log "github.com/sirupsen/logrus"
 	spb "google.golang.org/genproto/googleapis/rpc/status"
 	"google.golang.org/grpc/status"
 )
