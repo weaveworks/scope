@@ -49,6 +49,7 @@ type BasicNodeSummary struct {
 	LabelMinor string `json:"labelMinor"`
 	Rank       string `json:"rank"`
 	Shape      string `json:"shape,omitempty"`
+	Tag        string `json:"tag,omitempty"`
 	Stack      bool   `json:"stack,omitempty"`
 	Pseudo     bool   `json:"pseudo,omitempty"`
 }
@@ -64,39 +65,49 @@ type NodeSummary struct {
 }
 
 var renderers = map[string]func(BasicNodeSummary, report.Node) BasicNodeSummary{
-	render.Pseudo:         pseudoNodeSummary,
-	report.Process:        processNodeSummary,
-	report.Container:      containerNodeSummary,
-	report.ContainerImage: containerImageNodeSummary,
-	report.Pod:            podNodeSummary,
-	report.Service:        podGroupNodeSummary,
-	report.Deployment:     podGroupNodeSummary,
-	report.DaemonSet:      podGroupNodeSummary,
-	report.StatefulSet:    podGroupNodeSummary,
-	report.CronJob:        podGroupNodeSummary,
-	report.ECSTask:        ecsTaskNodeSummary,
-	report.ECSService:     ecsServiceNodeSummary,
-	report.SwarmService:   swarmServiceNodeSummary,
-	report.Host:           hostNodeSummary,
-	report.Overlay:        weaveNodeSummary,
-	report.Endpoint:       nil, // Do not render
+	render.Pseudo:                pseudoNodeSummary,
+	report.Process:               processNodeSummary,
+	report.Container:             containerNodeSummary,
+	report.ContainerImage:        containerImageNodeSummary,
+	report.Pod:                   podNodeSummary,
+	report.Service:               podGroupNodeSummary,
+	report.Deployment:            podGroupNodeSummary,
+	report.DaemonSet:             podGroupNodeSummary,
+	report.StatefulSet:           podGroupNodeSummary,
+	report.CronJob:               podGroupNodeSummary,
+	report.ECSTask:               ecsTaskNodeSummary,
+	report.ECSService:            ecsServiceNodeSummary,
+	report.SwarmService:          swarmServiceNodeSummary,
+	report.Host:                  hostNodeSummary,
+	report.Overlay:               weaveNodeSummary,
+	report.Endpoint:              nil, // Do not render
+	report.PersistentVolume:      persistentVolumeNodeSummary,
+	report.PersistentVolumeClaim: persistentVolumeClaimNodeSummary,
+	report.StorageClass:          storageClassNodeSummary,
+	report.VolumeSnapshot:        volumeSnapshotNodeSummary,
+	report.VolumeSnapshotData:    volumeSnapshotDataNodeSummary,
 }
 
 // For each report.Topology, map to a 'primary' API topology. This can then be used in a variety of places.
 var primaryAPITopology = map[string]string{
-	report.Process:        "processes",
-	report.Container:      "containers",
-	report.ContainerImage: "containers-by-image",
-	report.Pod:            "pods",
-	report.Deployment:     "kube-controllers",
-	report.DaemonSet:      "kube-controllers",
-	report.StatefulSet:    "kube-controllers",
-	report.CronJob:        "kube-controllers",
-	report.Service:        "services",
-	report.ECSTask:        "ecs-tasks",
-	report.ECSService:     "ecs-services",
-	report.SwarmService:   "swarm-services",
-	report.Host:           "hosts",
+	report.Process:               "processes",
+	report.Container:             "containers",
+	report.ContainerImage:        "containers-by-image",
+	report.Pod:                   "pods",
+	report.Deployment:            "kube-controllers",
+	report.DaemonSet:             "kube-controllers",
+	report.StatefulSet:           "kube-controllers",
+	report.CronJob:               "kube-controllers",
+	report.Service:               "services",
+	report.ECSTask:               "ecs-tasks",
+	report.ECSService:            "ecs-services",
+	report.SwarmService:          "swarm-services",
+	report.Host:                  "hosts",
+	report.PersistentVolume:      "pods",
+	report.PersistentVolumeClaim: "pods",
+	report.StorageClass:          "pods",
+	report.VolumeSnapshot:        "pods",
+	report.VolumeSnapshotData:    "pods",
 }
 
 // MakeBasicNodeSummary returns a basic summary of a node, if
@@ -109,6 +120,7 @@ func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, boo
 	}
 	if t, ok := r.Topology(n.Topology); ok {
 		summary.Shape = t.GetShape()
+		summary.Tag = t.Tag
 	}
 
 	// Do we have a renderer for the topology?
@@ -250,7 +262,7 @@ func containerNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary
 	base.Label = containerName
 	base.LabelMinor = hostName
 	if imageName != "" {
-		base.Rank = docker.ImageNameWithoutVersion(imageName)
+		base.Rank = docker.ImageNameWithoutTag(imageName)
 	} else if hostName != "" {
 		base.Rank = hostName
 	} else {
@@ -261,12 +273,12 @@ func containerNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary
 
 func containerImageNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	var (
-		imageName, _            = n.Latest.Lookup(docker.ImageName)
-		imageNameWithoutVersion = docker.ImageNameWithoutVersion(imageName)
+		imageName, _        = n.Latest.Lookup(docker.ImageName)
+		imageNameWithoutTag = docker.ImageNameWithoutTag(imageName)
 	)
 	switch {
-	case imageNameWithoutVersion != "" && imageNameWithoutVersion != ImageNameNone:
-		base.Label = imageNameWithoutVersion
+	case imageNameWithoutTag != "" && imageNameWithoutTag != ImageNameNone:
+		base.Label = imageNameWithoutTag
 	case imageName != "" && imageName != ImageNameNone:
 		base.Label = imageName
 	default:
@@ -371,6 +383,31 @@ func weaveNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	return base
 }
 
+func persistentVolumeNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
+}
+
+func persistentVolumeClaimNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
+}
+
+func storageClassNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
+}
+
+func volumeSnapshotNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
+}
+
+func volumeSnapshotDataNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
+	base = addKubernetesLabelAndRank(base, n)
+	return base
+}
+
 // groupNodeSummary renders the summary for a group node. n.Topology is
 // expected to be of the form: group:container:hostname
 func groupNodeSummary(base BasicNodeSummary, r report.Report, n report.Node) BasicNodeSummary {
@@ -378,6 +415,7 @@ func groupNodeSummary(base BasicNodeSummary, r report.Report, n report.Node) Bas
 	if topology, _, ok := render.ParseGroupNodeTopology(n.Topology); ok {
 		if t, ok := r.Topology(topology); ok {
 			base.Shape = t.GetShape()
+			base.Tag = t.Tag
 			if t.Label != "" {
 				base.LabelMinor = pluralize(n.Counters, topology, t.Label, t.LabelPlural)
 			}

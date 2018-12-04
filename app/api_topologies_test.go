@@ -51,7 +51,7 @@ func TestAPITopology(t *testing.T) {
 		}
 
 		// TODO: add ECS nodes in report fixture
-		if topology.Name == "Tasks" || topology.Name == "services" {
+		if topology.Name == "Tasks" || topology.Name == "Services" {
 			continue
 		}
 

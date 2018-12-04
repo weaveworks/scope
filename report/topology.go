@@ -10,6 +10,7 @@ import (
 // in the Node struct.
 type Topology struct {
 	Shape             string            `json:"shape,omitempty"`
+	Tag               string            `json:"tag,omitempty"`
 	Label             string            `json:"label,omitempty"`
 	LabelPlural       string            `json:"label_plural,omitempty"`
 	Nodes             Nodes             `json:"nodes"`
@@ -32,6 +33,7 @@ func MakeTopology() Topology {
 func (t Topology) WithMetadataTemplates(other MetadataTemplates) Topology {
 	return Topology{
 		Shape:             t.Shape,
+		Tag:               t.Tag,
 		Label:             t.Label,
 		LabelPlural:       t.LabelPlural,
 		Nodes:             t.Nodes.Copy(),
@@ -47,6 +49,7 @@ func (t Topology) WithMetadataTemplates(other MetadataTemplates) Topology {
 func (t Topology) WithMetricTemplates(other MetricTemplates) Topology {
 	return Topology{
 		Shape:             t.Shape,
+		Tag:               t.Tag,
 		Label:             t.Label,
 		LabelPlural:       t.LabelPlural,
 		Nodes:             t.Nodes.Copy(),
@@ -62,6 +65,7 @@ func (t Topology) WithMetricTemplates(other MetricTemplates) Topology {
 func (t Topology) WithTableTemplates(other TableTemplates) Topology {
 	return Topology{
 		Shape:             t.Shape,
+		Tag:               t.Tag,
 		Label:             t.Label,
 		LabelPlural:       t.LabelPlural,
 		Nodes:             t.Nodes.Copy(),
@@ -76,6 +80,22 @@ func (t Topology) WithTableTemplates(other TableTemplates) Topology {
 func (t Topology) WithShape(shape string) Topology {
 	return Topology{
 		Shape:             shape,
+		Tag:               t.Tag,
+		Label:             t.Label,
+		LabelPlural:       t.LabelPlural,
+		Nodes:             t.Nodes.Copy(),
+		Controls:          t.Controls.Copy(),
+		MetadataTemplates: t.MetadataTemplates.Copy(),
+		MetricTemplates:   t.MetricTemplates.Copy(),
+		TableTemplates:    t.TableTemplates.Copy(),
+	}
+}
+
+// WithTag sets the tag of nodes from this topology, returning a new topology.
+func (t Topology) WithTag(tag string) Topology {
+	return Topology{
+		Shape:             t.Shape,
+		Tag:               tag,
 		Label:             t.Label,
 		LabelPlural:       t.LabelPlural,
 		Nodes:             t.Nodes.Copy(),
@@ -90,6 +110,7 @@ func (t Topology) WithShape(shape string) Topology {
 func (t Topology) WithLabel(label, labelPlural string) Topology {
 	return Topology{
 		Shape:             t.Shape,
+		Tag:               t.Tag,
 		Label:             label,
 		LabelPlural:       labelPlural,
 		Nodes:             t.Nodes.Copy(),
@@ -130,6 +151,7 @@ func (t Topology) GetShape() string {
 func (t Topology) Copy() Topology {
 	return Topology{
 		Shape:             t.Shape,
+		Tag:               t.Tag,
 		Label:             t.Label,
 		LabelPlural:       t.LabelPlural,
 		Nodes:             t.Nodes.Copy(),
@@ -151,8 +173,13 @@ func (t Topology) Merge(other Topology) Topology {
 	if label == "" {
 		label, labelPlural = other.Label, other.LabelPlural
 	}
+	tag := t.Tag
+	if tag == "" {
+		tag = other.Tag
+	}
 	return Topology{
 		Shape:             shape,
+		Tag:               tag,
 		Label:             label,
 		LabelPlural:       labelPlural,
 		Nodes:             t.Nodes.Merge(other.Nodes),
@@ -161,6 +188,24 @@ func (t Topology) Merge(other Topology) Topology {
 		MetricTemplates:   t.MetricTemplates.Merge(other.MetricTemplates),
 		TableTemplates:    t.TableTemplates.Merge(other.TableTemplates),
 	}
+}
+
+// UnsafeMerge merges the other object into this one, modifying the original.
+func (t *Topology) UnsafeMerge(other Topology) {
+	if t.Shape == "" {
+		t.Shape = other.Shape
+	}
+	if t.Label == "" {
+		t.Label, t.LabelPlural = other.Label, other.LabelPlural
+	}
+	if t.Tag == "" {
+		t.Tag = other.Tag
+	}
+	t.Nodes.UnsafeMerge(other.Nodes)
+	t.Controls = t.Controls.Merge(other.Controls)
+	t.MetadataTemplates = t.MetadataTemplates.Merge(other.MetadataTemplates)
+	t.MetricTemplates = t.MetricTemplates.Merge(other.MetricTemplates)
+	t.TableTemplates = t.TableTemplates.Merge(other.TableTemplates)
 }
 
 // Nodes is a collection of nodes in a topology. Keys are node IDs.
@@ -186,14 +231,19 @@ func (n Nodes) Merge(other Nodes) Nodes {
 		return n
 	}
 	cp := n.Copy()
+	cp.UnsafeMerge(other)
+	return cp
+}
+
+// UnsafeMerge merges the other object into this one, modifying the original.
+func (n *Nodes) UnsafeMerge(other Nodes) {
 	for k, v := range other {
-		if n, ok := cp[k]; ok { // don't overwrite
-			cp[k] = v.Merge(n)
+		if existing, ok := (*n)[k]; ok { // don't overwrite
+			(*n)[k] = v.Merge(existing)
 		} else {
-			cp[k] = v
+			(*n)[k] = v
 		}
 	}
-	return cp
 }
 
 // Validate checks the topology for various inconsistencies.

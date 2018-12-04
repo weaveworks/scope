@@ -1,6 +1,7 @@
 CC=gcc
 CFLAGS=-g -lpthread
 BUILD_IN_CONTAINER=true
+GIT_REVISION := $(shell git rev-parse HEAD)
 
 all: .qotd.marker .app.marker .client.marker .searchapp.marker .shout.marker .frontend.marker .frontend-k8s.marker .echo.marker .trace_app.marker
 
@@ -33,7 +34,7 @@ endif
 .echo.marker: echo/*
 .trace_app.marker: trace_app/*
 .%.marker:
-	docker build -t tomwilkie/$(<D) $(<D)/
+	docker build --build-arg=revision=$(GIT_REVISION) -t tomwilkie/$(<D) $(<D)/
 	touch $@
 
 clean:

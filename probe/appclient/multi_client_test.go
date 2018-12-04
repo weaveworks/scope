@@ -1,7 +1,6 @@
 package appclient_test
 
 import (
-	"bytes"
 	"io"
 	"net/url"
 	"runtime"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/appclient"
+	"github.com/weaveworks/scope/report"
 )
 
 type mockClient struct {
@@ -105,8 +105,9 @@ func TestMultiClientPublish(t *testing.T) {
 	mp.Set("a", []url.URL{{Host: "a1"}, {Host: "a2"}})
 	mp.Set("b", []url.URL{{Host: "b2"}, {Host: "b3"}})
 
+	rpt := report.MakeReport()
 	for i := 1; i < 10; i++ {
-		if err := mp.Publish(&bytes.Buffer{}, false); err != nil {
+		if err := mp.Publish(rpt); err != nil {
 			t.Error(err)
 		}
 		if want, have := 3*i, sum(); want != have {

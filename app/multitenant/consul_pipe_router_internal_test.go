@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/common/xfer"

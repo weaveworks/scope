@@ -72,29 +72,6 @@ func TestNode(t *testing.T) {
 	}
 }
 
-func TestReportBackwardCompatibility(t *testing.T) {
-	mtime.NowForce(time.Now())
-	defer mtime.NowReset()
-	rpt := report.MakeReport()
-	controls := map[string]report.NodeControlData{
-		"dead": {
-			Dead: true,
-		},
-		"alive": {
-			Dead: false,
-		},
-	}
-	node := report.MakeNode("foo").WithLatestControls(controls)
-	expectedNode := node.WithControls("alive")
-	rpt.Pod.AddNode(node)
-	expected := report.MakeReport()
-	expected.Pod.AddNode(expectedNode)
-	got := rpt.BackwardCompatible()
-	if !s_reflect.DeepEqual(expected, got) {
-		t.Error(test.Diff(expected, got))
-	}
-}
-
 func TestReportUpgrade(t *testing.T) {
 	mtime.NowForce(time.Now())
 	defer mtime.NowReset()
@@ -105,14 +82,8 @@ func TestReportUpgrade(t *testing.T) {
 	namespaceID := report.MakeNamespaceNodeID(namespaceName)
 	podNode := report.MakeNode("foo").
 		WithLatests(map[string]string{report.KubernetesNamespace: namespaceName}).
-		WithControls("alive").
 		WithParents(report.MakeSets().Add(report.ReplicaSet, report.MakeStringSet("bar")))
-	controls := map[string]report.NodeControlData{
-		"alive": {
-			Dead: false,
-		},
-	}
-	expectedPodNode := podNode.PruneParents().WithParents(parentsWithDeployment).WithLatestControls(controls)
+	expectedPodNode := podNode.PruneParents().WithParents(parentsWithDeployment)
 	rpt := report.MakeReport()
 	rpt.ReplicaSet.AddNode(rsNode)
 	rpt.Pod.AddNode(podNode)

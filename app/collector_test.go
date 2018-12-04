@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/common/test"

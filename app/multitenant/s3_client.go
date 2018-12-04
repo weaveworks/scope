@@ -3,11 +3,11 @@ package multitenant
 import (
 	"bytes"
 
+	"context"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/net/context"
 
 	"github.com/weaveworks/common/instrument"
 	"github.com/weaveworks/scope/report"
