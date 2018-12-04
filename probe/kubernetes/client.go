@@ -49,6 +49,7 @@ type Client interface {
 	WalkStorageClasses(f func(StorageClass) error) error
 	WalkVolumeSnapshots(f func(VolumeSnapshot) error) error
 	WalkVolumeSnapshotData(f func(VolumeSnapshotData) error) error
+	WalkJobs(f func(Job) error) error
 
 	WatchPods(f func(Event, Pod))
 
@@ -398,6 +399,16 @@ func (c *client) WalkCronJobs(f func(CronJob) error) error {
 	}
 	for _, m := range c.cronJobStore.List() {
 		if err := f(NewCronJob(m, jobs)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *client) WalkJobs(f func(Job) error) error {
+	for _, m := range c.jobStore.List() {
+		job := m.(*apibatchv1.Job)
+		if err := f(NewJob(job)); err != nil {
 			return err
 		}
 	}

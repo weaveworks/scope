@@ -144,6 +144,9 @@ func (c *mockClient) WalkStatefulSets(f func(kubernetes.StatefulSet) error) erro
 func (c *mockClient) WalkCronJobs(f func(kubernetes.CronJob) error) error {
 	return nil
 }
+func (c *mockClient) WalkJobs(f func(kubernetes.Job) error) error {
+	return nil
+}
 func (c *mockClient) WalkDeployments(f func(kubernetes.Deployment) error) error {
 	for _, deployment := range c.deployments {
 		if err := f(deployment); err != nil {

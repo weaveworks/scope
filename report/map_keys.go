@@ -68,6 +68,7 @@ const (
 	KubernetesPublicIP             = "kubernetes_public_ip"
 	KubernetesSchedule             = "kubernetes_schedule"
 	KubernetesSuspended            = "kubernetes_suspended"
+	KubernetesJobsSucceeded        = "kubernetes_jobs_succeeded"
 	KubernetesLastScheduled        = "kubernetes_last_scheduled"
 	KubernetesActiveJobs           = "kubernetes_active_jobs"
 	KubernetesType                 = "kubernetes_type"

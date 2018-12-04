@@ -27,6 +27,7 @@ func renderKubernetesTopologies(rpt report.Report) bool {
 		&rpt.DaemonSet,
 		&rpt.StatefulSet,
 		&rpt.CronJob,
+		&rpt.Job,
 		&rpt.PersistentVolume,
 		&rpt.PersistentVolumeClaim,
 		&rpt.StorageClass,
@@ -112,7 +113,7 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // not memoised
 var KubeControllerRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	renderParents(
-		report.Pod, []string{report.Deployment, report.DaemonSet, report.StatefulSet, report.CronJob}, UnmanagedID,
+		report.Pod, []string{report.Deployment, report.DaemonSet, report.StatefulSet, report.CronJob, report.Job}, UnmanagedID,
 		PodRenderer,
 	),
 )

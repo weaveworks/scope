@@ -33,6 +33,7 @@ const (
 	StorageClass          = "storage_class"
 	VolumeSnapshot        = "volume_snapshot"
 	VolumeSnapshotData    = "volume_snapshot_data"
+	Job                   = "job"
 
 	// Shapes used for different nodes
 	Circle         = "circle"
@@ -65,6 +66,7 @@ var topologyNames = []string{
 	DaemonSet,
 	StatefulSet,
 	CronJob,
+	Job,
 	Namespace,
 	Host,
 	Overlay,
@@ -129,6 +131,11 @@ type Report struct {
 	// Metadata includes things like Cron Job id, name, etc. Edges are not
 	// present.
 	CronJob Topology
+
+	// Job nodes represent all Kubernetes Jobs running on hosts running probes.
+	// Metadata includes things like Job id, name, etc. Edges are not
+	// present.
+	Job Topology
 
 	// Namespace nodes represent all Kubernetes Namespaces running on hosts running probes.
 	// Metadata includes things like Namespace id, name, etc. Edges are not
@@ -256,6 +263,10 @@ func MakeReport() Report {
 		CronJob: MakeTopology().
 			WithShape(Triangle).
 			WithLabel("cron job", "cron jobs"),
+
+		Job: MakeTopology().
+			WithShape(Square).
+			WithLabel("job", "jobs"),
 
 		Namespace: MakeTopology(),
 
@@ -391,6 +402,8 @@ func (r *Report) topology(name string) *Topology {
 		return &r.StatefulSet
 	case CronJob:
 		return &r.CronJob
+	case Job:
+		return &r.Job
 	case Namespace:
 		return &r.Namespace
 	case Host:

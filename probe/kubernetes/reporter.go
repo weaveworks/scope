@@ -108,6 +108,19 @@ var (
 
 	CronJobMetricTemplates = PodMetricTemplates
 
+	JobMetadataTemplates = report.MetadataTemplates{
+		NodeType:  {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Namespace: {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+		// Created:       {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+		// Schedule:      {ID: Schedule, Label: "Schedule", From: report.FromLatest, Priority: 4},
+		// LastScheduled: {ID: LastScheduled, Label: "Last scheduled", From: report.FromLatest, Datatype: report.DateTime, Priority: 5},
+		// Suspended:     {ID: Suspended, Label: "Suspended", From: report.FromLatest, Priority: 6},
+		// ActiveJobs:    {ID: ActiveJobs, Label: "# Jobs", From: report.FromLatest, Datatype: report.Number, Priority: 7},
+		// report.Pod:    {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 8},
+	}
+
+	JobMetricTemplates = PodMetricTemplates
+
 	PersistentVolumeMetadataTemplates = report.MetadataTemplates{
 		NodeType:         {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
 		VolumeClaim:      {ID: VolumeClaim, Label: "Volume claim", From: report.FromLatest, Priority: 2},
@@ -302,6 +315,10 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
+	jobTopology, _, err := r.jobTopology()
+	if err != nil {
+		return result, err
+	}
 	deploymentTopology, deployments, err := r.deploymentTopology()
 	if err != nil {
 		return result, err
@@ -339,6 +356,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.DaemonSet = result.DaemonSet.Merge(daemonSetTopology)
 	result.StatefulSet = result.StatefulSet.Merge(statefulSetTopology)
 	result.CronJob = result.CronJob.Merge(cronJobTopology)
+	result.Job = result.Job.Merge(jobTopology)
 	result.Deployment = result.Deployment.Merge(deploymentTopology)
 	result.Namespace = result.Namespace.Merge(namespaceTopology)
 	result.PersistentVolume = result.PersistentVolume.Merge(persistentVolumeTopology)
@@ -423,6 +441,20 @@ func (r *Reporter) cronJobTopology() (report.Topology, []CronJob, error) {
 		return nil
 	})
 	return result, cronJobs, err
+}
+
+func (r *Reporter) jobTopology() (report.Topology, []Job, error) {
+	jobs := []Job{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(JobMetadataTemplates).
+		WithMetricTemplates(JobMetricTemplates).
+		WithTableTemplates(TableTemplates)
+	err := r.client.WalkJobs(func(c Job) error {
+		result.AddNode(c.GetNode())
+		jobs = append(jobs, c)
+		return nil
+	})
+	return result, jobs, err
 }
 
 func (r *Reporter) persistentVolumeTopology() (report.Topology, []PersistentVolume, error) {
