@@ -8,7 +8,7 @@ import (
 // ExtractFromGRPCRequest extracts the user ID from the request metadata and returns
 // the user ID and a context with the user ID injected.
 func ExtractFromGRPCRequest(ctx context.Context) (string, context.Context, error) {
-	md, ok := metadata.FromContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return "", ctx, ErrNoOrgID
 	}
@@ -28,7 +28,7 @@ func InjectIntoGRPCRequest(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 
-	md, ok := metadata.FromContext(ctx)
+	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {
 		md = metadata.New(map[string]string{})
 	}
@@ -44,7 +44,7 @@ func InjectIntoGRPCRequest(ctx context.Context) (context.Context, error) {
 	} else {
 		md = md.Copy()
 		md[lowerOrgIDHeaderName] = []string{orgID}
-		newCtx = metadata.NewContext(ctx, md)
+		newCtx = metadata.NewOutgoingContext(ctx, md)
 	}
 
 	return newCtx, nil

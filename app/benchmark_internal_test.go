@@ -1,7 +1,9 @@
 package app
 
 import (
+	"context"
 	"flag"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -65,7 +67,10 @@ func BenchmarkReportUpgrade(b *testing.B) {
 
 func BenchmarkReportMerge(b *testing.B) {
 	reports := upgradeReports(readReportFiles(b, *benchReportPath))
-	merger := NewSmartMerger()
+	rand.Shuffle(len(reports), func(i, j int) {
+		reports[i], reports[j] = reports[j], reports[i]
+	})
+	merger := NewFastMerger()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		merger.Merge(reports)
@@ -75,7 +80,7 @@ func BenchmarkReportMerge(b *testing.B) {
 func getReport(b *testing.B) report.Report {
 	r := fixture.Report
 	if *benchReportPath != "" {
-		r = NewSmartMerger().Merge(upgradeReports(readReportFiles(b, *benchReportPath)))
+		r = NewFastMerger().Merge(upgradeReports(readReportFiles(b, *benchReportPath)))
 	}
 	return r
 }
@@ -96,7 +101,7 @@ func renderForTopology(b *testing.B, topologyID string, report report.Report) re
 	if err != nil {
 		b.Fatal(err)
 	}
-	return render.Render(report, renderer, filter).Nodes
+	return render.Render(context.Background(), report, renderer, filter).Nodes
 }
 
 func benchmarkRenderTopology(b *testing.B, topologyID string) {
@@ -107,7 +112,7 @@ func benchmarkRenderTopology(b *testing.B, topologyID string) {
 
 func BenchmarkRenderList(b *testing.B) {
 	benchmarkRender(b, func(report report.Report) {
-		topologyRegistry.renderTopologies(report, &http.Request{Form: url.Values{}})
+		topologyRegistry.renderTopologies(context.Background(), report, &http.Request{Form: url.Values{}})
 	})
 }
 
@@ -136,12 +141,13 @@ func BenchmarkRenderProcessNames(b *testing.B) {
 }
 
 func benchmarkSummarizeTopology(b *testing.B, topologyID string) {
+	ctx := context.Background()
 	r := getReport(b)
 	rc := detailed.RenderContext{Report: r}
 	nodes := renderForTopology(b, topologyID, r)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		detailed.Summaries(rc, nodes)
+		detailed.Summaries(ctx, rc, nodes)
 	}
 }
 

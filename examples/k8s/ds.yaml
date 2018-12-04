@@ -11,6 +11,9 @@ metadata:
   namespace: weave
 spec:
   minReadySeconds: 5
+  selector:
+    matchLabels:
+      app: weave-scope
   template:
     metadata:
       labels:
@@ -28,12 +31,12 @@ spec:
             - '--probe.kubernetes=true'
             - 'weave-scope-app.weave.svc.cluster.local:80'
           env:
-            - name: KUBERNETES_HOSTNAME
+            - name: KUBERNETES_NODENAME
               valueFrom:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
-          image: weaveworks/scope:1.9.0
+          image: weaveworks/scope:1.10.1
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true

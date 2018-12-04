@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	docker "github.com/fsouza/go-dockerclient"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
@@ -277,15 +277,17 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 		ips = append(ips, c.container.NetworkSettings.IPAddress)
 	}
 
-	// Fetch IP addresses from the container's namespace
-	cidrs, err := namespaceIPAddresses(c.container.State.Pid)
-	if err != nil {
-		log.Debugf("container %s: failed to get addresses: %s", c.container.ID, err)
-	}
-	for _, cidr := range cidrs {
-		// This address can duplicate an address fetched from Docker earlier,
-		// but we eventually turn the lists into sets which will remove duplicates.
-		ips = append(ips, cidr.IP.String())
+	if c.container.State.Running && c.container.State.Pid != 0 {
+		// Fetch IP addresses from the container's namespace
+		cidrs, err := namespaceIPAddresses(c.container.State.Pid)
+		if err != nil {
+			log.Debugf("container %s: failed to get addresses: %s", c.container.ID, err)
+		}
+		for _, cidr := range cidrs {
+			// This address can duplicate an address fetched from Docker earlier,
+			// but we eventually turn the lists into sets which will remove duplicates.
+			ips = append(ips, cidr.IP.String())
+		}
 	}
 
 	// For now, for the proof-of-concept, we just add networks as a set of
@@ -407,9 +409,7 @@ func (c *container) getBaseNode() report.Node {
 		ContainerCommand:  c.getSanitizedCommand(),
 		ImageID:           c.Image(),
 		ContainerHostname: c.Hostname(),
-	}).WithParents(report.MakeSets().
-		Add(report.ContainerImage, report.MakeStringSet(report.MakeContainerImageNodeID(c.Image()))),
-	)
+	}).WithParent(report.ContainerImage, report.MakeContainerImageNodeID(c.Image()))
 	result = result.AddPrefixPropertyList(LabelPrefix, c.container.Config.Labels)
 	if !c.noEnvironmentVariables {
 		result = result.AddPrefixPropertyList(EnvPrefix, c.env())

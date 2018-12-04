@@ -107,8 +107,12 @@ FIREWALL_REGEXES = [
                r'(?P<type>[\w\-]+)$'),
 ]
 NAME_REGEXES = [
-    re.compile(r'^host(?P<index>\d+)-(?P<build>\d+)-(?P<shard>\d+)$'),
-    re.compile(r'^test-(?P<build>\d+)-(?P<shard>\d+)-(?P<index>\d+)$'),
+    re.compile(pat)
+    for pat in (
+        r'^host(?P<index>\d+)-(?P<build>\d+)-(?P<shard>\d+)$',
+        r'^host(?P<index>\d+)-(?P<project>[a-zA-Z0-9-]+)-(?P<build>\d+)'
+        r'-(?P<shard>\d+)$',
+        r'^test-(?P<build>\d+)-(?P<shard>\d+)-(?P<index>\d+)$', )
 ]
 
 

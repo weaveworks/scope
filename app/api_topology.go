@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"context"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/render"
@@ -42,7 +42,7 @@ type rendererHandler func(context.Context, render.Renderer, render.Transformer, 
 // Full topology.
 func handleTopology(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(rc, render.Render(rc.Report, renderer, transformer).Nodes),
+		Nodes: detailed.Summaries(ctx, rc, render.Render(ctx, rc.Report, renderer, transformer).Nodes),
 	})
 }
 
@@ -58,7 +58,7 @@ func handleNode(ctx context.Context, renderer render.Renderer, transformer rende
 	// filtering, which gives us the node (if it exists at all), and
 	// then (2) applying the filter separately to that result.  If the
 	// node is lost in the second step, we simply put it back.
-	nodes := renderer.Render(rc.Report)
+	nodes := renderer.Render(ctx, rc.Report)
 	node, ok := nodes.Nodes[nodeID]
 	if !ok {
 		http.NotFound(w, r)
@@ -145,7 +145,7 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(RenderContextForReporter(rep, re), render.Render(re, renderer, filter).Nodes)
+		newTopo := detailed.Summaries(ctx, RenderContextForReporter(rep, re), render.Render(ctx, re, renderer, filter).Nodes)
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

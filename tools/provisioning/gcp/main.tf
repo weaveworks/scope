@@ -77,3 +77,17 @@ resource "google_compute_firewall" "fw-allow-esp" {
 
   source_ranges = ["${var.gcp_network_global_cidr}"]
 }
+
+# Required for WKS Kubernetes API server access
+resource "google_compute_firewall" "fw-allow-kube-apiserver" {
+  name        = "${var.name}-allow-kube-apiserver"
+  network     = "${var.gcp_network}"
+  target_tags = ["${var.name}"]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["6443"]
+  }
+
+  source_ranges = ["${var.client_ip}"]
+}

@@ -3,7 +3,7 @@ package docker
 import (
 	docker_client "github.com/fsouza/go-dockerclient"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/probe/controls"

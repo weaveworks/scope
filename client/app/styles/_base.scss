@@ -1,4 +1,5 @@
-@import '~font-awesome/scss/font-awesome.scss';
+@import '~@fortawesome/fontawesome-free/css/all.css';
+@import '~@fortawesome/fontawesome-free/css/v4-shims.css';
 @import '~rc-slider/dist/rc-slider.css';
 
 /* sass-lint:disable variable-for-property */
@@ -19,7 +20,7 @@ a {
 
 .browsehappy {
   margin: 0.2em 0;
-  background: $color-silver;
+  background: $color-gray-200;
   color: $color-black;
   padding: 0.2em 0;
 }
@@ -100,7 +101,7 @@ a {
 
 .overlay-wrapper {
   align-items: center;
-  background-color: transparentize($background-color, 0.1);
+  background-color: transparentize($color-purple-25, 0.1);
   border-radius: $border-radius-soft;
   color: $text-tertiary-color;
   display: flex;
@@ -121,8 +122,8 @@ a {
     padding: 1px 3px;
     outline: 0;
 
-    .fa {
-      font-size: $font-size-normal;
+    i {
+      font-size: $font-size-small;
       position: relative;
       top: 2px;
     }
@@ -208,8 +209,10 @@ a {
 }
 
 .header {
+  background-color: transparentize($color-purple-25, 0.2);
+  z-index: $layer-front;
   padding: 15px 10px 0;
-  pointer-events: none;
+  position: relative;
   width: 100%;
 
   .selectors {
@@ -217,11 +220,8 @@ a {
     position: relative;
 
     > * {
-      z-index: $layer-front;
       flex: 1 1;
     }
-
-    .time-control { z-index: $layer-modal; }
 
     .logo {
       margin: -16px 0 0 8px;
@@ -335,7 +335,6 @@ a {
   .topologies-item-main,
   .topologies-sub-item {
     pointer-events: all;
-
     color: $text-secondary-color;
     @extend .btn-opacity;
     cursor: pointer;
@@ -348,7 +347,7 @@ a {
 
     &-active, &:hover {
       color: $text-color;
-      background-color: $background-darker-secondary-color;
+      background-color: $background-darker-color;
     }
 
     &-active {
@@ -356,7 +355,7 @@ a {
     }
 
     &-matched {
-      border-color: $color-accent-blue;
+      border-color: $color-blue-400;
     }
 
   }
@@ -437,107 +436,28 @@ a {
     fill: $text-secondary-color;
   }
 
-  .nodes-chart-elements .node {
-    text-align: center;
-
-    .node-label {
-      color: $text-color;
-    }
-
-    .node-label-minor {
-      line-height: 125%;
-    }
-
-    .node-labels-container {
-      transform: scale($node-text-scale);
-      pointer-events: none;
-    }
-
-    .node-label-wrapper {
-      //
-      // Base line height doesn't hop across foreignObject =/
-      //
-      line-height: 150%;
-
-      //
-      // inline-block so wrapper is only as wide as content.
-      //
-      display: inline-block;
-
-      //
-      // - inline-block gets a different baseline depending on overflow value
-      // - this element gets its overflow value changed sometimes.
-      // - explicitly set the baseline so the text doesn't jump up and down.
-      // http://stackoverflow.com/questions/9273016
-      //
-      vertical-align: top;
-
-      cursor: pointer;
-      pointer-events: all;
-      font-size: $font-size-small;
-      width: 100%;
-    }
-
-    .node-label-minor {
-      color: $text-secondary-color;
-      font-size: $font-size-tiny;
-    }
-
-    .node-label, .node-label-minor {
-      span {
-        border-radius: $border-radius-soft;
-      }
-      span:not(.match) {
-        padding: 0 0.25em;
-        background-color: $label-background-color;
-      }
-      span:empty {
-        padding: 0;
-      }
-    }
-    .matched-results {
-      background-color: $label-background-color;
-    }
-
-    &.pseudo {
-      cursor: default;
-
-      .node-label {
-        fill: $text-secondary-color;
-      }
-
-      .node-label-minor {
-        fill: $text-tertiary-color;
-      }
-
-      .node {
-        opacity: $node-pseudo-opacity;
-      }
-
-      .border {
-        opacity: $node-pseudo-opacity;
-        stroke: $text-tertiary-color;
-      }
-    }
-
-    .node-label, .node-label-minor {
-      text-align: center;
-    }
-
-    .match {
-      background-color: transparentize($color-accent-blue, 0.25);
-      border: 1px solid $color-accent-blue;
-    }
+  .nodes-chart-elements .matched-results {
+    background-color: $label-background-color;
   }
 
   .edge {
-    .link {
+    .link-none {
+      fill: none;
+      display: none;
+    }
+    .link-storage {
       fill: none;
       stroke: $edge-color;
+      stroke-dasharray: 1, 30;
+      stroke-linecap: round;
+    }
+    .link {
+      fill: none;
+      stroke: $edge-color
     }
     .shadow {
       fill: none;
-      stroke: $color-accent-blue;
+      stroke: $color-blue-400;
       stroke-opacity: 0;
     }
     &.highlighted {
@@ -545,79 +465,6 @@ a {
         stroke-opacity: $edge-highlight-opacity;
       }
     }
-  }
-
-  .stack .highlight-only {
-    .background { display: none; }
-    .shadow { display: none; }
-    .border { display: none; }
-    .node { display: none; }
-  }
-
-  .stack .shape .metric-fill {
-    display: none;
-  }
-
-  .shape {
-    transform: scale(1);
-    cursor: pointer;
-
-    .highlight-border {
-      fill: none;
-      stroke: $color-accent-blue;
-      stroke-width: 0.7 + $node-highlight-stroke-width * 2;
-      stroke-opacity: $node-highlight-stroke-opacity;
-    }
-
-    .highlight-shadow {
-      fill: none;
-      stroke: $color-white;
-      stroke-width: 0.7;
-      stroke-opacity: $node-highlight-shadow-opacity;
-    }
-
-    .background {
-      stroke: none;
-      fill: $background-lighter-color;
-    }
-
-    .metric-fill {
-      stroke: none;
-      fill-opacity: 0.7;
-    }
-
-    .border {
-      fill: none;
-      stroke-opacity: 1;
-      stroke-width: $node-border-stroke-width;
-    }
-
-    &.metrics .border {
-      stroke-opacity: 0.3;
-    }
-
-    .shadow {
-      fill: none;
-      stroke: $background-color;
-      stroke-width: $node-shadow-stroke-width;
-    }
-
-    .node {
-      fill: $text-color;
-      stroke: $background-lighter-color;
-      stroke-width: 0.05;
-    }
-
-    text {
-      transform: scale($node-text-scale);
-      font-size: $font-size-tiny;
-      dominant-baseline: middle;
-      text-anchor: middle;
-    }
-  }
-
-  .stack .shape .border {
-    stroke-width: $node-border-stroke-width * 0.8;
   }
 
   .edge-marker {
@@ -636,7 +483,7 @@ a {
       display: inline-block;
       margin: 1px;
       padding: 2px 4px;
-      background-color: transparentize($color-accent-blue, 0.9);
+      background-color: transparentize($color-blue-400, 0.9);
     }
 
     &-label {
@@ -647,7 +494,7 @@ a {
 
   &-more {
     font-size: $font-size-tiny;
-    color: $color-turquoise;
+    color: $color-blue-700;
     margin-top: -2px;
   }
 }
@@ -656,7 +503,7 @@ a {
   &-wrapper {
     position: fixed;
     display: flex;
-    z-index: $layer-front;
+    z-index: $layer-toolbar;
     right: $details-window-padding-left;
     top: 100px;
     bottom: 48px;
@@ -677,6 +524,7 @@ a {
   @extend .shadow-2;
   // keep node-details above the terminal.
   z-index: $layer-front;
+  overflow: hidden;
 
   &:last-child {
     margin-bottom: 0;
@@ -697,7 +545,7 @@ a {
       z-index: $layer-front;
     }
 
-    > span {
+    > i {
       @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
@@ -726,8 +574,8 @@ a {
   }
 
   .match {
-    background-color: transparentize($color-accent-blue, 0.7);
-    border: 1px solid $color-accent-blue;
+    background-color: transparentize($color-blue-400, 0.7);
+    border: 1px solid $color-blue-400;
   }
 
   &-header {
@@ -787,6 +635,7 @@ a {
   &-controls {
     white-space: nowrap;
     padding: 8px 0;
+    font-size: $font-size-small;
 
     &-wrapper {
       padding: 0 36px 0 32px;
@@ -889,10 +738,6 @@ a {
       &-label {
         color: $text-secondary-color;
         font-size: $font-size-small;
-
-        .fa {
-          margin-left: 0.5em;
-        }
       }
 
       &-sparkline {
@@ -1083,69 +928,6 @@ a {
         font-size: $font-size-small;
         color: $text-secondary-color;
       }
-
-      &-value-sparkline {
-        > div {
-          display: inline-block;
-        }
-        span {
-          margin-left: 1em;
-        }
-      }
-
-    }
-  }
-
-  .image-status {
-
-    .progress-wrapper {
-      position: relative;
-      min-height: 35px;
-    }
-
-    .node-details-content-section-header {
-      display: flex;
-      justify-content: space-between;
-      line-height: 26px;
-    }
-
-    .images .wrapper{
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .weave-circular-progress-wrapper {
-      position: absolute;
-      left: 50%;
-    }
-
-    .new-image {
-      color: $color-status-info;
-    }
-
-    a {
-      &:hover {
-        background-color: $color-athens-gray;
-        cursor: pointer;
-      }
-    }
-
-    .node-details-table-node-link {
-      background-color: transparent;
-      border: 0;
-      cursor: pointer;
-      padding: 0;
-      outline: 0;
-    }
-
-    .node-details-table-node-link,
-    .node-details-table-node-label,
-    .node-details-table-node-value {
-      flex: 1;
-      font-size: $font-size-small;
-      color: $text-color;
-      line-height: 24px;
-      text-transform: none;
     }
   }
 }
@@ -1156,7 +938,7 @@ a {
   &-metric-box {
     @extend .palable;
     cursor: pointer;
-    fill: transparentize($color-dusty-gray, 0.6);
+    fill: transparentize($color-gray-600, 0.6);
 
     &-info {
       background-color: transparentize($color-white, 0.4);
@@ -1174,8 +956,9 @@ a {
   }
 
   &-layer-topology {
-    background-color: transparentize($color-gallery, 0.05);
-    border: 1px solid $color-silver;
+    background-color: transparentize($color-gray-50, 0.05);
+    border-radius: $border-radius-soft;
+    border: 1px solid $color-gray-200;
     color: $text-tertiary-color;
     font-size: $font-size-normal;
     font-weight: bold;
@@ -1202,7 +985,7 @@ a {
   @extend .btn-opacity;
   padding: 6px;
   margin-left: 2px;
-  font-size: $font-size-normal;
+  font-size: $font-size-small;
   color: $text-secondary-color;
   cursor: pointer;
   border: 1px solid transparent;
@@ -1247,7 +1030,7 @@ a {
     width: 100%;
     height: 100%;
     border: 0px solid $color-black;
-    color: $color-gallery;
+    color: $color-gray-50;
   }
 
   &-header {
@@ -1341,7 +1124,7 @@ a {
 
   &-cursor {
     color: $color-black;
-    background: $color-gallery;
+    background: $color-gray-50;
   }
 }
 
@@ -1407,9 +1190,11 @@ a {
 
 .status {
   padding: 2px 12px;
+  background-color: $body-background-color;
   border-radius: $border-radius-soft;
   color: $text-secondary-color;
   display: inline-block;
+  opacity: 0.9;
 
   &-icon {
     font-size: $font-size-normal;
@@ -1434,9 +1219,10 @@ a {
     margin-bottom: 0;
   }
 
-  .fa {
+  i {
+    font-size: $font-size-tiny;
     margin-left: 4px;
-    color: $color-accent-orange;
+    color: $color-orange-500;
   }
 
   &-wrapper {
@@ -1497,7 +1283,7 @@ a {
     background-color: transparent;
 
     &-selected, &:not([disabled]):hover {
-      background-color: $background-darker-secondary-color;
+      background-color: $background-darker-color;
     }
 
     &:not(:last-child) {
@@ -1520,9 +1306,9 @@ a {
     margin-right: 15px;
     margin-top: 3px;
 
-    .fa {
+    i {
       color: $text-secondary-color;
-      font-size: $font-size-large;
+      font-size: $font-size-normal;
     }
   }
 
@@ -1548,7 +1334,7 @@ a {
 
 .view-mode-selector-wrapper, .time-control-wrapper {
   .label { margin-left: 4px; }
-  .fa {
+  i {
     margin-left: 0;
     color: $text-secondary-color;
   }
@@ -1607,158 +1393,16 @@ a {
 }
 
 .sidebar-gridmode {
-  background-color: $color-athens-gray;
+  background-color: $color-purple-50;
   border-color: $background-darker-color;
   opacity: 0.9;
 }
 
 .search {
-  pointer-events: all;
-
-  display: inline-block;
-  position: relative;
-  width: 10em;
-  transition: width 0.3s 0s $base-ease;
-
   &-wrapper {
     margin: 0 8px;
     min-width: 160px;
     text-align: right;
-  }
-
-  &-disabled {
-    opacity: 0.5;
-    cursor: disabled;
-  }
-
-  &-hint {
-    font-size: $font-size-tiny;
-    position: absolute;
-    padding: 0 1em;
-    color: $text-tertiary-color;
-    top: 0;
-    opacity: 0;
-    transition: transform 0.3s 0s $base-ease, opacity 0.3s 0s $base-ease;
-    text-align: left;
-  }
-
-  &-help-link {
-    @extend .btn-opacity;
-    cursor: pointer;
-    font-size: $font-size-normal;
-  }
-
-  &-label {
-    position: absolute;
-    pointer-events: none;
-    user-select: none;
-    top: 0;
-    left: 4px;
-    z-index: $layer-front;
-    padding: 4px;
-    color: $text-secondary-color;
-
-    &-icon {
-      margin-right: 0.5em;
-    }
-
-    &-hint {
-      font-size: $font-size-small;
-      transition: opacity 0.3s 0.5s $base-ease;
-      opacity: 1;
-    }
-  }
-
-  &-input {
-    overflow: hidden;
-    background: $color-white;
-    position: relative;
-    z-index: $layer-front;
-    display: flex;
-    border-radius: $border-radius-soft;
-    width: 100%;
-    border: $search-border-width solid $search-border-color;
-    padding: 2px 4px;
-    text-align: left;
-    flex-wrap: wrap;
-
-    &-field {
-      font-size: $font-size-small;
-      line-height: 150%;
-      position: relative;
-      padding: 1px 4px 1px 1.5em;
-      border: none;
-      border-radius: $border-radius-none;
-      background: transparent;
-      color: $text-color;
-      width: 100px;
-
-      &:focus {
-        outline: none;
-      }
-    }
-  }
-
-  &-focused &-label-hint,
-  &-pinned &-label-hint,
-  &-filled &-label-hint {
-    transition: opacity 0.1s 0s $base-ease;
-    opacity: 0;
-  }
-
-  &-focused &-hint,
-  &-filled &-hint,
-  &-pinned &-hint {
-    opacity: 1;
-    transform: translate3d(0, 2.75em, 0);
-    transition: transform 0.3s 0.3s $base-ease, opacity 0.3s 0.3s $base-ease;
-  }
-
-  &-focused &-input-field,
-  &-filled &-input-field,
-  &-pinned &-input-field {
-    flex: 1;
-  }
-
-  &-focused,
-  &-filled,
-  &-pinned {
-    width: 100%;
-  }
-
-  &-matched &-input {
-    border-color: $color-accent-blue;
-  }
-
-}
-
-.search-item {
-  background-color: transparentize($color-accent-blue, 0.2);
-  border-radius: $border-radius-soft;
-  margin: 1px 0 1px 1.5em;
-  padding: 2px 4px 2px 6px;
-  display: flex;
-  align-items: center;
-
-  & + .search-item {
-    margin-left: 4px;
-  }
-
-  & + .search-input-field {
-    padding-left: 4px;
-  }
-
-  &-label {
-    margin-right: 4px;
-  }
-
-  &-icon {
-    @extend .btn-opacity;
-    padding: 2px;
-    cursor: pointer;
-    font-size: $font-size-small;
-    position: relative;
-    top: -1px;
   }
 }
 
@@ -1792,7 +1436,7 @@ a {
   }
 
   &-header {
-    background-color: $color-accent-blue;
+    background-color: $color-blue-400;
     padding: 12px 24px;
     color: $color-white;
 
@@ -1807,18 +1451,18 @@ a {
     top: 6px;
     right: 8px;
 
-    span {
+    i {
       @extend .btn-opacity;
       padding: 4px 5px;
       margin-left: 2px;
       font-size: $font-size-normal;
-      color: $color-primary-lavender;
+      color: $color-purple-400;
       cursor: pointer;
       border: 1px solid transparent;
       border-radius: $border-radius-soft;
 
       &:hover {
-        border-color: transparentize($color-primary-lavender, 0.4);
+        border-color: transparentize($color-purple-400, 0.4);
       }
     }
 
@@ -1833,14 +1477,14 @@ a {
     h2 {
       line-height: 150%;
       font-size: $font-size-large;
-      color: $color-primary-lavender;
+      color: $color-purple-400;
       padding: 4px 0;
-      border-bottom: 1px solid transparentize($color-primary-lavender, 0.9);
+      border-bottom: 1px solid transparentize($color-purple-400, 0.9);
     }
 
     h3 {
       font-size: $font-size-normal;
-      color: $color-primary-lavender;
+      color: $color-purple-400;
       padding: 4px 0;
     }
 
@@ -1858,13 +1502,13 @@ a {
         padding: 3px 5px;
         font-size: $font-size-tiny;
         line-height: 10px;
-        color: $color-dim-gray;
+        color: $color-gray-600;
         vertical-align: middle;
-        background-color: $color-alabaster;
-        border: solid 1px $color-silver;
-        border-bottom-color: $color-gray;
+        background-color: $color-white;
+        border: solid 1px $color-gray-200;
+        border-bottom-color: $color-gray-600;
         border-radius: $border-radius-soft;
-        box-shadow: inset 0 -1px 0 $color-gray;
+        box-shadow: inset 0 -1px 0 $color-gray-600;
       }
       div.key {
         width: 60px;
@@ -1886,6 +1530,9 @@ a {
       &-term {
         flex: 1;
         color: $text-secondary-color;
+        i {
+          margin-right: 5px;
+        }
       }
 
       &-term-label {
@@ -1902,7 +1549,7 @@ a {
     flex-direction: column;
 
     &-current-topology {
-      color: $color-primary-lavender;
+      color: $color-purple-400;
     }
 
     &-fields {
@@ -2028,7 +1675,7 @@ a {
     }
 
     tr:nth-child(even) {
-      background: $background-darker-secondary-color;
+      background: $color-gray-100;
     }
 
     tbody tr {
@@ -2041,15 +1688,15 @@ a {
     // because we want consistent behaviour between the
     // visual and row locking logic that happens on hover.
     tbody tr.selected, tbody tr.focused {
-      background-color: transparentize($color-accent-blue, 0.85);
-      border: 1px solid $color-accent-blue;
+      background-color: transparentize($color-blue-400, 0.85);
+      border: 1px solid $color-blue-400;
     }
   }
 
   .scroll-body {
 
     table {
-      border-bottom: 1px solid $color-silver;
+      border-bottom: 1px solid $color-gray-200;
     }
 
     thead, tbody tr {
@@ -2068,7 +1715,7 @@ a {
 
     thead {
       box-shadow: 0 4px 2px -2px transparentize($color-black, 0.84);
-      border-bottom: 1px solid $color-gray;
+      border-bottom: 1px solid $color-gray-600;
     }
 
     tbody {
@@ -2112,20 +1759,20 @@ a {
   }
 
   button, a {
-    color: $color-primary-charcoal;
+    color: $color-purple-900;
 
     &:hover {
       color: $text-color;
     }
   }
 
-  .fa {
+  i {
     width: 20px;
     text-align: center;
     margin-right: 10px;
   }
 
-  .fa-close {
+  .fa.fa-times {
     width: 25px;
   }
 }

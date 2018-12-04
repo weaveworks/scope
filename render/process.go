@@ -1,7 +1,8 @@
 package render
 
 import (
-	"github.com/weaveworks/scope/probe/docker"
+	"context"
+
 	"github.com/weaveworks/scope/probe/endpoint"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -20,60 +21,35 @@ func renderProcesses(rpt report.Report) bool {
 }
 
 // ProcessRenderer is a Renderer which produces a renderable process
-// graph by merging the endpoint graph and the process topology. It
-// also colors connected nodes, so we can apply a filter to show/hide
-// unconnected nodes depending on user choice.
-var ProcessRenderer = Memoise(ColorConnected(endpoints2Processes{}))
+// graph by merging the endpoint graph and the process topology.
+var ProcessRenderer = Memoise(endpoints2Processes{})
 
-// processWithContainerNameRenderer is a Renderer which produces a process
-// graph enriched with container names where appropriate
-type processWithContainerNameRenderer struct {
-	Renderer
-}
-
-func (r processWithContainerNameRenderer) Render(rpt report.Report) Nodes {
-	processes := r.Renderer.Render(rpt)
-	containers := SelectContainer.Render(rpt)
-
-	outputs := make(report.Nodes, len(processes.Nodes))
-	for id, p := range processes.Nodes {
-		outputs[id] = p
-		containerID, ok := p.Latest.Lookup(docker.ContainerID)
-		if !ok {
-			continue
-		}
-		container, ok := containers.Nodes[report.MakeContainerNodeID(containerID)]
-		if !ok {
-			continue
-		}
-		propagateLatest(docker.ContainerName, container, p)
-		outputs[id] = p
-	}
-	return Nodes{Nodes: outputs, Filtered: processes.Filtered}
-}
-
-// ProcessWithContainerNameRenderer is a Renderer which produces a process
-// graph enriched with container names where appropriate
+// ConnectedProcessRenderer is a Renderer which colors
+// connected nodes, so we can apply a filter to show/hide unconnected
+// nodes depending on user choice.
 //
 // not memoised
-var ProcessWithContainerNameRenderer = processWithContainerNameRenderer{ProcessRenderer}
+var ConnectedProcessRenderer = ColorConnected(ProcessRenderer)
 
-// ProcessNameRenderer is a Renderer which produces a renderable process
-// name graph by munging the progess graph.
+// ProcessNameRenderer is a Renderer which produces a renderable
+// process name graph by munging the progess graph.
+//
+// It also colors connected nodes, so we can apply a filter to
+// show/hide unconnected nodes depending on user choice.
 //
 // not memoised
-var ProcessNameRenderer = CustomRenderer{RenderFunc: processes2Names, Renderer: ProcessRenderer}
+var ProcessNameRenderer = ColorConnected(CustomRenderer{RenderFunc: processes2Names, Renderer: ProcessRenderer})
 
 // endpoints2Processes joins the endpoint topology to the process
 // topology, matching on hostID and pid.
 type endpoints2Processes struct {
 }
 
-func (e endpoints2Processes) Render(rpt report.Report) Nodes {
+func (e endpoints2Processes) Render(ctx context.Context, rpt report.Report) Nodes {
 	if len(rpt.Process.Nodes) == 0 {
 		return Nodes{}
 	}
-	endpoints := SelectEndpoint.Render(rpt).Nodes
+	endpoints := SelectEndpoint.Render(ctx, rpt).Nodes
 	return MapEndpoints(
 		func(n report.Node) string {
 			pid, ok := n.Latest.Lookup(process.PID)
@@ -88,7 +64,7 @@ func (e endpoints2Processes) Render(rpt report.Report) Nodes {
 				return ""
 			}
 			return report.MakeProcessNodeID(hostID, pid)
-		}, report.Process).Render(rpt)
+		}, report.Process).Render(ctx, rpt)
 }
 
 // When there is more than one connection originating from a source

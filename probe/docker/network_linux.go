@@ -44,21 +44,15 @@ func namespaceIPAddresses(processID int) ([]*net.IPNet, error) {
 // return all non-local IP addresses from the current namespace
 func allNonLocalAddresses() ([]*net.IPNet, error) {
 	var cidrs []*net.IPNet
-	links, err := netlink.LinkList()
+
+	addrs, err := netlink.AddrList(nil, netlink.FAMILY_ALL)
 	if err != nil {
 		return nil, err
 	}
-
-	for _, link := range links {
-		addrs, err := netlink.AddrList(link, netlink.FAMILY_ALL)
-		if err != nil {
-			return nil, err
-		}
-		for _, addr := range addrs {
-			// Exclude link-local ipv6 addresses, localhost, etc. Hope this is the correct test.
-			if addr.Scope == unix.RT_SCOPE_UNIVERSE {
-				cidrs = append(cidrs, addr.IPNet)
-			}
+	for _, addr := range addrs {
+		// Exclude link-local ipv6 addresses, localhost, etc. Hope this is the correct test.
+		if addr.Scope == unix.RT_SCOPE_UNIVERSE {
+			cidrs = append(cidrs, addr.IPNet)
 		}
 	}
 	return cidrs, nil

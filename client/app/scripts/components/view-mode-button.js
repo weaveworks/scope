@@ -35,7 +35,7 @@ class ViewModeButton extends React.Component {
         disabled={disabled}
         onClick={!disabled ? this.handleClick : undefined}
         title={`View ${label.toLowerCase()}`}>
-        <span className={this.props.icons} style={{ fontSize: 12 }} />
+        <i className={this.props.icons} />
         <span className="label">{label}</span>
       </div>
     );

@@ -1,10 +1,9 @@
 import debug from 'debug';
-import { find } from 'lodash';
 import { fromJS } from 'immutable';
 
 import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
-import { updateRoute } from '../utils/router-utils';
+import { clearStoredViewState, updateRoute } from '../utils/router-utils';
 import {
   doControlRequest,
   getAllNodes,
@@ -16,7 +15,6 @@ import {
   teardownWebsockets,
   getNodes,
 } from '../utils/web-api-utils';
-import { storageSet } from '../utils/storage-utils';
 import { loadTheme } from '../utils/contrast-utils';
 import { isPausedSelector } from '../selectors/time-travel';
 import {
@@ -173,23 +171,29 @@ export function pinPreviousMetric() {
   };
 }
 
-export function pinSearch() {
+export function updateSearch(searchQuery = '', pinnedSearches = []) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.PIN_SEARCH,
-      query: getState().get('searchQuery'),
+      type: ActionTypes.UPDATE_SEARCH,
+      pinnedSearches,
+      searchQuery,
     });
     updateRoute(getState);
   };
 }
 
-export function unpinSearch(query) {
+export function focusSearch() {
   return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.UNPIN_SEARCH,
-      query
-    });
-    updateRoute(getState);
+    dispatch({ type: ActionTypes.FOCUS_SEARCH });
+    // update nodes cache to allow search across all topologies,
+    // wait a second until animation is over
+    // NOTE: This will cause matching recalculation (and rerendering)
+    // of all the nodes in the topology, instead applying it only on
+    // the nodes delta. The solution would be to implement deeper
+    // search selectors with per-node caching instead of per-topology.
+    setTimeout(() => {
+      getAllNodes(getState(), dispatch);
+    }, 1200);
   };
 }
 
@@ -268,16 +272,6 @@ export function clickForceRelayout() {
   };
 }
 
-export function doSearch(searchQuery) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.DO_SEARCH,
-      searchQuery
-    });
-    updateRoute(getState);
-  };
-}
-
 export function setViewportDimensions(width, height) {
   return (dispatch) => {
     dispatch({ type: ActionTypes.SET_VIEWPORT_DIMENSIONS, width, height });
@@ -339,15 +333,14 @@ export function clickNode(nodeId, label, origin, topologyId = null) {
 
 export function pauseTimeAtNow() {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
     dispatch({
       type: ActionTypes.PAUSE_TIME_AT_NOW
     });
-    updateRoute(getScopeState);
-    if (!getScopeState().get('nodesLoaded')) {
-      getNodes(getScopeState, dispatch);
-      if (isResourceViewModeSelector(getScopeState())) {
-        getResourceViewNodesSnapshot(getScopeState(), dispatch);
+    updateRoute(getState);
+    if (!getState().get('nodesLoaded')) {
+      getNodes(getState, dispatch);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
       }
     }
   };
@@ -453,38 +446,6 @@ export function enterNode(nodeId) {
   };
 }
 
-export function focusSearch() {
-  return (dispatch, getState) => {
-    dispatch({ type: ActionTypes.FOCUS_SEARCH });
-    // update nodes cache to allow search across all topologies,
-    // wait a second until animation is over
-    // NOTE: This will cause matching recalculation (and rerendering)
-    // of all the nodes in the topology, instead applying it only on
-    // the nodes delta. The solution would be to implement deeper
-    // search selectors with per-node caching instead of per-topology.
-    setTimeout(() => {
-      getAllNodes(getState(), dispatch);
-    }, 1200);
-  };
-}
-
-export function hitBackspace() {
-  return (dispatch, getState) => {
-    const state = getState();
-    // remove last pinned query if search query is empty
-    if (state.get('searchFocused') && !state.get('searchQuery')) {
-      const query = state.get('pinnedSearches').last();
-      if (query) {
-        dispatch({
-          type: ActionTypes.UNPIN_SEARCH,
-          query
-        });
-        updateRoute(getState);
-      }
-    }
-  };
-}
-
 export function hitEsc() {
   return (dispatch, getState) => {
     const state = getState();
@@ -495,13 +456,6 @@ export function hitEsc() {
         pipeId: controlPipe.get('id')
       });
       updateRoute(getState);
-      // Don't deselect node on ESC if there is a controlPipe (keep terminal open)
-    } else if (state.get('searchFocused')) {
-      if (state.get('searchQuery')) {
-        dispatch(doSearch(''));
-      } else {
-        dispatch(blurSearch());
-      }
     } else if (state.get('showingHelp')) {
       dispatch(hideHelp());
     } else if (state.get('nodeDetails').last() && !controlPipe) {
@@ -550,8 +504,7 @@ export function receiveNodeDetails(details, requestTimestamp) {
 
 export function receiveNodesDelta(delta) {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
-    if (!isPausedSelector(getScopeState())) {
+    if (!isPausedSelector(getState())) {
       // Allow css-animation to run smoothly by scheduling it to run on the
       // next tick after any potentially expensive canvas re-draws have been
       // completed.
@@ -561,7 +514,7 @@ export function receiveNodesDelta(delta) {
       // only when the first batch of nodes delta has been received. We
       // do that because we want to keep the previous state blurred instead
       // of transitioning over an empty state like when switching topologies.
-      if (getScopeState().get('timeTravelTransitioning')) {
+      if (getState().get('timeTravelTransitioning')) {
         dispatch({ type: ActionTypes.FINISH_TIME_TRAVEL_TRANSITION });
       }
 
@@ -578,37 +531,17 @@ export function receiveNodesDelta(delta) {
 
 export function resumeTime() {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
-    if (isPausedSelector(getScopeState())) {
+    if (isPausedSelector(getState())) {
       dispatch({
         type: ActionTypes.RESUME_TIME
       });
-      updateRoute(getScopeState);
+      updateRoute(getState);
       // After unpausing, all of the following calls will re-activate polling.
-      getTopologies(getScopeState, dispatch);
-      getNodes(getScopeState, dispatch, true);
-      if (isResourceViewModeSelector(getScopeState())) {
-        getResourceViewNodesSnapshot(getScopeState(), dispatch);
-      }
-    }
-  };
-}
-
-export function startTimeTravel(timestamp = null) {
-  return (dispatch, getState) => {
-    dispatch({
-      type: ActionTypes.START_TIME_TRAVEL,
-      timestamp,
-    });
-    updateRoute(getState);
-    if (!getState().get('nodesLoaded')) {
-      getNodes(getState, dispatch);
+      getTopologies(getState, dispatch);
+      getNodes(getState, dispatch, true);
       if (isResourceViewModeSelector(getState())) {
         getResourceViewNodesSnapshot(getState(), dispatch);
       }
-    } else {
-      // Get most recent details before freezing the state.
-      getNodeDetails(getState, dispatch);
     }
   };
 }
@@ -622,16 +555,20 @@ export function receiveNodes(nodes) {
 
 export function jumpToTime(timestamp) {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
     dispatch({
       type: ActionTypes.JUMP_TO_TIME,
       timestamp,
     });
-    updateRoute(getScopeState);
-    getNodes(getScopeState, dispatch);
-    getTopologies(getScopeState, dispatch);
-    if (isResourceViewModeSelector(getScopeState())) {
-      getResourceViewNodesSnapshot(getScopeState(), dispatch);
+    updateRoute(getState);
+    getTopologies(getState, dispatch);
+    if (!getState().get('nodesLoaded')) {
+      getNodes(getState, dispatch);
+      if (isResourceViewModeSelector(getState())) {
+        getResourceViewNodesSnapshot(getState(), dispatch);
+      }
+    } else {
+      // Get most recent details before freezing the state.
+      getNodeDetails(getState, dispatch);
     }
   };
 }
@@ -646,18 +583,14 @@ export function receiveNodesForTopology(nodes, topologyId) {
 
 export function receiveTopologies(topologies) {
   return (dispatch, getState) => {
-    const getScopeState = () => getState().scope || getState();
-    const firstLoad = !getScopeState().get('topologiesLoaded');
+    const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
       type: ActionTypes.RECEIVE_TOPOLOGIES,
       topologies
     });
-    getNodes(getScopeState, dispatch);
+    getNodes(getState, dispatch);
     // Populate search matches on first load
-    const state = getScopeState();
-    if (firstLoad && state.get('searchQuery')) {
-      dispatch(focusSearch());
-    }
+    const state = getState();
     // Fetch all the relevant nodes once on first load
     if (firstLoad && isResourceViewModeSelector(state)) {
       getResourceViewNodesSnapshot(state, dispatch);
@@ -687,7 +620,7 @@ export function receiveApiDetails(apiDetails) {
     // we have no prior info on whether time travel would be available.
     if (isFirstTime && pausedAt) {
       if (apiDetails.capabilities && apiDetails.capabilities.historic_reports) {
-        dispatch(startTimeTravel(pausedAt));
+        dispatch(jumpToTime(pausedAt));
       } else {
         dispatch(pauseTimeAtNow());
       }
@@ -796,7 +729,7 @@ export function route(urlState) {
     if (!urlState.pausedAt) {
       dispatch(resumeTime());
     } else {
-      dispatch(startTimeTravel(urlState.pausedAt));
+      dispatch(jumpToTime(urlState.pausedAt));
     }
     // update all request workers with new options
     getTopologies(getState, dispatch);
@@ -814,7 +747,7 @@ export function route(urlState) {
 export function resetLocalViewState() {
   return (dispatch) => {
     dispatch({type: ActionTypes.RESET_LOCAL_VIEW_STATE});
-    storageSet('scopeViewState', '');
+    clearStoredViewState();
     // eslint-disable-next-line prefer-destructuring
     window.location.href = window.location.href.split('#')[0];
   };
@@ -846,33 +779,16 @@ export function shutdown() {
   };
 }
 
-export function getImagesForService(orgId, serviceId) {
-  return (dispatch, getState, { api }) => {
-    dispatch({
-      type: ActionTypes.REQUEST_SERVICE_IMAGES,
-      serviceId
-    });
-
-    // Use the fluxv2 api
-    api.getFluxImages(orgId, serviceId, 2)
-      .then((services) => {
-        dispatch({
-          type: ActionTypes.RECEIVE_SERVICE_IMAGES,
-          service: find(services, s => s.ID === serviceId),
-          serviceId
-        });
-      }, ({ errors }) => {
-        dispatch({
-          type: ActionTypes.RECEIVE_SERVICE_IMAGES,
-          errors
-        });
-      });
-  };
-}
-
 export function setMonitorState(monitor) {
   return {
     type: ActionTypes.MONITOR_STATE,
     monitor
+  };
+}
+
+export function setStoreViewState(storeViewState) {
+  return {
+    type: ActionTypes.SET_STORE_VIEW_STATE,
+    storeViewState
   };
 }

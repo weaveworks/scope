@@ -112,7 +112,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 **Docker Compose Format Version 1:**
 
     scope:
-      image: weaveworks/scope:1.9.0
+      image: weaveworks/scope:1.10.1
       net: "host"
       pid: "host"
       privileged: true
@@ -128,7 +128,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
     version: '2'
     services:
       scope:
-        image: weaveworks/scope:1.9.0
+        image: weaveworks/scope:1.10.1
         network_mode: "host"
         pid: "host"
         privileged: true
@@ -234,8 +234,7 @@ Scope can be installed as a DC/OS Package through the open Universe.
 
 DC/OS is short for Datacenter Operating System, a distributed operating system using Apache Mesos as its kernel. The easiest way to get start with DC/OS in the public-cloud is to [deploy it on Amazon Web Services (AWS)](https://mesosphere.com/amazon/).
 
-For more information see, [Deploying Weave Scope on DC/OS](https://www.weave.works/guides/deploy-weave-scope-dcos/)
-
 **See Also**
 
  * [Understanding Weave Scope](/site/how-it-works.md)
+ * [Scope's FAQ](/site/faq.md)

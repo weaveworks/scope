@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -9,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
+	opentracing "github.com/opentracing/opentracing-go"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/kubernetes"
@@ -45,6 +46,22 @@ var (
 		Options: []APITopologyOption{
 			{Value: "show", Label: "Show unmanaged", filter: nil, filterPseudo: false},
 			{Value: "hide", Label: "Hide unmanaged", filter: render.IsNotPseudo, filterPseudo: true},
+		},
+	}
+	storageFilter = APITopologyOptionGroup{
+		ID:      "storage",
+		Default: "hide",
+		Options: []APITopologyOption{
+			{Value: "show", Label: "Show storage", filter: nil, filterPseudo: false},
+			{Value: "hide", Label: "Hide storage", filter: render.IsPodComponent, filterPseudo: false},
+		},
+	}
+	snapshotFilter = APITopologyOptionGroup{
+		ID:      "snapshot",
+		Default: "hide",
+		Options: []APITopologyOption{
+			{Value: "show", Label: "Show snapshots", filter: nil, filterPseudo: false},
+			{Value: "hide", Label: "Hide snapshots", filter: render.IsNonSnapshotComponent, filterPseudo: false},
 		},
 	}
 )
@@ -189,7 +206,7 @@ func MakeRegistry() *Registry {
 	registry.Add(
 		APITopologyDesc{
 			id:          processesID,
-			renderer:    render.ProcessWithContainerNameRenderer,
+			renderer:    render.ConnectedProcessRenderer,
 			Name:        "Processes",
 			Rank:        1,
 			Options:     unconnectedFilter,
@@ -229,7 +246,7 @@ func MakeRegistry() *Registry {
 			renderer:    render.PodRenderer,
 			Name:        "Pods",
 			Rank:        3,
-			Options:     []APITopologyOptionGroup{unmanagedFilter},
+			Options:     []APITopologyOptionGroup{snapshotFilter, storageFilter, unmanagedFilter},
 			HideIfEmpty: true,
 		},
 		APITopologyDesc{
@@ -314,7 +331,7 @@ func (a byName) Less(i, j int) bool { return a[i].Name < a[j].Name }
 // APITopologyOptionGroup describes a group of APITopologyOptions
 type APITopologyOptionGroup struct {
 	ID string `json:"id"`
-	// Default value for the UI to adopt. NOT used as the default if the value is omitted, allowing "" as a distinct value.
+	// Default value for the option. Used if the value is omitted; not used if the value is ""
 	Default string              `json:"defaultValue"`
 	Options []APITopologyOption `json:"options,omitempty"`
 	// SelectType describes how options can be picked. Currently defined values:
@@ -328,18 +345,14 @@ type APITopologyOptionGroup struct {
 
 // Get the render filters to use for this option group, if any, or nil otherwise.
 func (g APITopologyOptionGroup) filter(value string) render.FilterFunc {
-	selectType := g.SelectType
-	if selectType == "" {
-		selectType = "one"
-	}
 	var values []string
-	switch selectType {
-	case "one":
+	switch g.SelectType {
+	case "", "one":
 		values = []string{value}
 	case "union":
 		values = strings.Split(value, ",")
 	default:
-		log.Errorf("Invalid select type %s for option group %s, ignoring option", selectType, g.ID)
+		log.Errorf("Invalid select type %s for option group %s, ignoring option", g.SelectType, g.ID)
 		return nil
 	}
 	filters := []render.FilterFunc{}
@@ -466,32 +479,36 @@ func (r *Registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
-		respondWith(w, http.StatusOK, r.renderTopologies(report, req))
+		respondWith(w, http.StatusOK, r.renderTopologies(ctx, report, req))
 	}
 }
 
-func (r *Registry) renderTopologies(rpt report.Report, req *http.Request) []APITopologyDesc {
+func (r *Registry) renderTopologies(ctx context.Context, rpt report.Report, req *http.Request) []APITopologyDesc {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "app.renderTopologies")
+	defer span.Finish()
 	topologies := []APITopologyDesc{}
 	req.ParseForm()
 	r.walk(func(desc APITopologyDesc) {
 		renderer, filter, _ := r.RendererForTopology(desc.id, req.Form, rpt)
-		desc.Stats = computeStats(rpt, renderer, filter)
+		desc.Stats = computeStats(ctx, rpt, renderer, filter)
 		for i, sub := range desc.SubTopologies {
 			renderer, filter, _ := r.RendererForTopology(sub.id, req.Form, rpt)
-			desc.SubTopologies[i].Stats = computeStats(rpt, renderer, filter)
+			desc.SubTopologies[i].Stats = computeStats(ctx, rpt, renderer, filter)
 		}
 		topologies = append(topologies, desc)
 	})
 	return updateFilters(rpt, topologies)
 }
 
-func computeStats(rpt report.Report, renderer render.Renderer, transformer render.Transformer) topologyStats {
+func computeStats(ctx context.Context, rpt report.Report, renderer render.Renderer, transformer render.Transformer) topologyStats {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "app.computeStats")
+	defer span.Finish()
 	var (
 		nodes     int
 		realNodes int
 		edges     int
 	)
-	r := render.Render(rpt, renderer, transformer)
+	r := render.Render(ctx, rpt, renderer, transformer)
 	for _, n := range r.Nodes {
 		nodes++
 		if n.Topology != render.Pseudo {
@@ -522,7 +539,10 @@ func (r *Registry) RendererForTopology(topologyID string, values url.Values, rpt
 
 	var filters []render.FilterFunc
 	for _, group := range topology.Options {
-		value := values.Get(group.ID)
+		value := group.Default
+		if vs := values[group.ID]; len(vs) > 0 {
+			value = vs[0]
+		}
 		if filter := group.filter(value); filter != nil {
 			filters = append(filters, filter)
 		}

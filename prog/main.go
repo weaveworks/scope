@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	billing "github.com/weaveworks/billing-client"
 	"github.com/weaveworks/scope/app"
@@ -93,6 +93,10 @@ type flags struct {
 }
 
 type probeFlags struct {
+	printOnStdout          bool
+	basicAuth              bool
+	username               string
+	password               string
 	token                  string
 	httpListen             string
 	publishInterval        time.Duration
@@ -119,7 +123,11 @@ type probeFlags struct {
 	dockerInterval time.Duration
 	dockerBridge   string
 
+	criEnabled  bool
+	criEndpoint string
+
 	kubernetesEnabled      bool
+	kubernetesRole         string
 	kubernetesNodeName     string
 	kubernetesClientConfig kubernetes.ClientConfig
 	kubernetesKubeletPort  uint
@@ -136,12 +144,17 @@ type probeFlags struct {
 
 type appFlags struct {
 	window         time.Duration
+	maxTopNodes    int
 	listen         string
 	stopTimeout    time.Duration
 	logLevel       string
 	logPrefix      string
 	logHTTP        bool
 	logHTTPHeaders bool
+
+	basicAuth bool
+	username  string
+	password  string
 
 	weaveEnabled   bool
 	weaveAddr      string
@@ -163,6 +176,7 @@ type appFlags struct {
 	userIDHeader              string
 	externalUI                bool
 	metricsGraphURL           string
+	serviceName               string
 
 	blockProfileRate int
 
@@ -274,6 +288,10 @@ func setupFlags(flags *flags) {
 	flag.Bool("app-only", false, "Only run the app.")
 
 	// Probe flags
+	flag.BoolVar(&flags.probe.printOnStdout, "probe.publish.stdout", false, "Print reports on stdout instead of sending to app, for debugging")
+	flag.BoolVar(&flags.probe.basicAuth, "probe.basicAuth", false, "Use basic authentication to authenticate with app")
+	flag.StringVar(&flags.probe.username, "probe.basicAuth.username", "admin", "Username for basic authentication")
+	flag.StringVar(&flags.probe.password, "probe.basicAuth.password", "admin", "Password for basic authentication")
 	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.token, probeTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
@@ -302,8 +320,13 @@ func setupFlags(flags *flags) {
 	flag.DurationVar(&flags.probe.dockerInterval, "probe.docker.interval", 10*time.Second, "how often to update Docker attributes")
 	flag.StringVar(&flags.probe.dockerBridge, "probe.docker.bridge", "docker0", "the docker bridge name")
 
+	// CRI
+	flag.BoolVar(&flags.probe.criEnabled, "probe.cri", false, "collect CRI-related attributes for processes")
+	flag.StringVar(&flags.probe.criEndpoint, "probe.cri.endpoint", "unix///var/run/dockershim.sock", "The endpoint to connect to the CRI")
+
 	// K8s
 	flag.BoolVar(&flags.probe.kubernetesEnabled, "probe.kubernetes", false, "collect kubernetes-related attributes for containers")
+	flag.StringVar(&flags.probe.kubernetesRole, "probe.kubernetes.role", "", "host, cluster or blank for everything")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.Server, "probe.kubernetes.api", "", "The address and port of the Kubernetes API server (deprecated in favor of equivalent probe.kubernetes.server)")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.CertificateAuthority, "probe.kubernetes.certificate-authority", "", "Path to a cert. file for the certificate authority")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.ClientCertificate, "probe.kubernetes.client-certificate", "", "Path to a client certificate file for TLS")
@@ -318,7 +341,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.probe.kubernetesClientConfig.User, "probe.kubernetes.user", "", "The name of the kubeconfig user to use")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.Username, "probe.kubernetes.username", "", "Username for basic authentication to the API server")
 	flag.StringVar(&flags.probe.kubernetesNodeName, "probe.kubernetes.node-name", "", "Name of this node, for filtering pods")
-	flag.UintVar(&flags.probe.kubernetesKubeletPort, "probe.kubernetes.kubelet-port", 10255, "Node-local TCP port for contacting kubelet")
+	flag.UintVar(&flags.probe.kubernetesKubeletPort, "probe.kubernetes.kubelet-port", 10255, "Node-local TCP port for contacting kubelet (zero to disable)")
 
 	// AWS ECS
 	flag.BoolVar(&flags.probe.ecsEnabled, "probe.ecs", false, "Collect ecs-related attributes for containers on this node")
@@ -332,12 +355,17 @@ func setupFlags(flags *flags) {
 
 	// App flags
 	flag.DurationVar(&flags.app.window, "app.window", 15*time.Second, "window")
+	flag.IntVar(&flags.app.maxTopNodes, "app.max-topology-nodes", 10000, "drop topologies with more than this many nodes (0 to disable)")
 	flag.StringVar(&flags.app.listen, "app.http.address", ":"+strconv.Itoa(xfer.AppPort), "webserver listen address")
 	flag.DurationVar(&flags.app.stopTimeout, "app.stopTimeout", 5*time.Second, "How long to wait for http requests to finish when shutting down")
 	flag.StringVar(&flags.app.logLevel, "app.log.level", "info", "logging threshold level: debug|info|warn|error|fatal|panic")
 	flag.StringVar(&flags.app.logPrefix, "app.log.prefix", "<app>", "prefix for each log line")
 	flag.BoolVar(&flags.app.logHTTP, "app.log.http", false, "Log individual HTTP requests")
 	flag.BoolVar(&flags.app.logHTTPHeaders, "app.log.httpHeaders", false, "Log HTTP headers. Needs app.log.http to be enabled.")
+
+	flag.BoolVar(&flags.app.basicAuth, "app.basicAuth", false, "Enable basic authentication for app")
+	flag.StringVar(&flags.app.username, "app.basicAuth.username", "admin", "Username for basic authentication")
+	flag.StringVar(&flags.app.password, "app.basicAuth.password", "admin", "Password for basic authentication")
 
 	flag.StringVar(&flags.app.weaveAddr, "app.weave.addr", app.DefaultWeaveURL, "Address on which to contact WeaveDNS")
 	flag.StringVar(&flags.app.weaveHostname, "app.weave.hostname", "", "Hostname to advertise in WeaveDNS")
@@ -360,6 +388,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.app.userIDHeader, "app.userid.header", "", "HTTP header to use as userid")
 	flag.BoolVar(&flags.app.externalUI, "app.externalUI", false, "Point to externally hosted static UI assets")
 	flag.StringVar(&flags.app.metricsGraphURL, "app.metrics-graph", "", "Enable extended metrics graph by providing a templated URL (supports :orgID and :query). Example: --app.metric-graph=/prom/:orgID/notebook/new")
+	flag.StringVar(&flags.app.serviceName, "app.service-name", "app", "The name for this service which should be reported in instrumentation")
 
 	flag.IntVar(&flags.app.blockProfileRate, "app.block.profile.rate", 0, "If more than 0, enable block profiling. The profiler aims to sample an average of one blocking event per rate nanoseconds spent blocked.")
 
@@ -432,6 +461,25 @@ func main() {
 	// Node name may be set by environment variable, e.g. from the Kubernetes downward API
 	if flags.probe.kubernetesNodeName == "" {
 		flags.probe.kubernetesNodeName = os.Getenv("KUBERNETES_NODENAME")
+	}
+
+	if strings.ToLower(os.Getenv("ENABLE_BASIC_AUTH")) == "true" {
+		flags.probe.basicAuth = true
+		flags.app.basicAuth = true
+	} else if strings.ToLower(os.Getenv("ENABLE_BASIC_AUTH")) == "false" {
+		flags.probe.basicAuth = false
+		flags.app.basicAuth = false
+	}
+
+	username := os.Getenv("BASIC_AUTH_USERNAME")
+	if username != "" {
+		flags.probe.username = username
+		flags.app.username = username
+	}
+	password := os.Getenv("BASIC_AUTH_PASSWORD")
+	if password != "" {
+		flags.probe.password = password
+		flags.app.password = password
 	}
 
 	if flags.dryRun {

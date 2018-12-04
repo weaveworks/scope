@@ -144,7 +144,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	rep.Host.Controls.AddControl(report.Control{
 		ID:    ExecHost,
 		Human: "Exec shell",
-		Icon:  "fa-terminal",
+		Icon:  "fa fa-terminal",
 	})
 
 	return rep, nil

@@ -1,6 +1,9 @@
 package middleware
 
 import (
+	"bufio"
+	"fmt"
+	"net"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -57,8 +60,7 @@ func (i Instrument) Wrap(next http.Handler) http.Handler {
 //   2. The request matches an unamed gorilla mux router.  Munge the path
 //      template such that templates like '/api/{org}/foo' come out as
 //      'api_org_foo'.
-//   3. The request doesn't match a mux route.  Munge the Path in the same
-//      manner as (2).
+//   3. The request doesn't match a mux route. Return "other"
 // We do all this as we do not wish to emit high cardinality labels to
 // prometheus.
 func (i Instrument) getRouteName(r *http.Request) string {
@@ -71,7 +73,7 @@ func (i Instrument) getRouteName(r *http.Request) string {
 			return MakeLabelValue(tmpl)
 		}
 	}
-	return MakeLabelValue(r.URL.Path)
+	return "other"
 }
 
 var invalidChars = regexp.MustCompile(`[^a-zA-Z0-9]+`)
@@ -93,4 +95,32 @@ func MakeLabelValue(path string) string {
 		result = "root"
 	}
 	return result
+}
+
+// interceptor implements WriteHeader to intercept status codes. WriteHeader
+// may not be called on success, so initialize statusCode with the status you
+// want to report on success, i.e. http.StatusOK.
+//
+// interceptor also implements net.Hijacker, to let the downstream Handler
+// hijack the connection. This is needed, for example, for working with websockets.
+type interceptor struct {
+	http.ResponseWriter
+	statusCode int
+	recorded   bool
+}
+
+func (i *interceptor) WriteHeader(code int) {
+	if !i.recorded {
+		i.statusCode = code
+		i.recorded = true
+	}
+	i.ResponseWriter.WriteHeader(code)
+}
+
+func (i *interceptor) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	hj, ok := i.ResponseWriter.(http.Hijacker)
+	if !ok {
+		return nil, nil, fmt.Errorf("interceptor: can't cast parent ResponseWriter to Hijacker")
+	}
+	return hj.Hijack()
 }

@@ -11,6 +11,9 @@ metadata:
   namespace: weave
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: weave-scope
   revisionHistoryLimit: 2
   template:
     metadata:
@@ -25,7 +28,7 @@ spec:
           args:
             - '--no-probe'
           env: []
-          image: weaveworks/scope:1.9.0
+          image: weaveworks/scope:1.10.1
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4040

@@ -1,19 +1,23 @@
 package middleware
 
 import (
-	"bufio"
-	"fmt"
-	"net"
+	"bytes"
 	"net/http"
-	"net/http/httputil"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/weaveworks/common/logging"
+	"github.com/weaveworks/common/user"
 )
 
 // Log middleware logs http requests
 type Log struct {
+	Log               logging.Interface
 	LogRequestHeaders bool // LogRequestHeaders true -> dump http headers at debug log level
+}
+
+// logWithRequest information from the request and context as fields.
+func (l Log) logWithRequest(r *http.Request) logging.Interface {
+	return user.LogWith(r.Context(), l.Log)
 }
 
 // Wrap implements Middleware
@@ -21,53 +25,46 @@ func (l Log) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		begin := time.Now()
 		uri := r.RequestURI // capture the URI before running next, as it may get rewritten
-		if l.LogRequestHeaders {
-			// Log headers before running 'next' in case other interceptors change the data.
-			headers, err := httputil.DumpRequest(r, false)
-			if err != nil {
-				log.Warnf("Could not dump request headers: %v", err)
-				return
-			}
-			log.Debugf("Is websocket request: %v\n%s", IsWSHandshakeRequest(r), string(headers))
+		// Log headers before running 'next' in case other interceptors change the data.
+		headers, err := dumpRequest(r)
+		if err != nil {
+			headers = nil
+			l.logWithRequest(r).Errorf("Could not dump request headers: %v", err)
 		}
-		i := &interceptor{ResponseWriter: w, statusCode: http.StatusOK}
-		next.ServeHTTP(i, r)
-		if 100 <= i.statusCode && i.statusCode < 400 {
-			log.Debugf("%s %s (%d) %s", r.Method, uri, i.statusCode, time.Since(begin))
+		var buf bytes.Buffer
+		wrapped := newBadResponseLoggingWriter(w, &buf)
+		next.ServeHTTP(wrapped, r)
+		statusCode := wrapped.statusCode
+		if 100 <= statusCode && statusCode < 500 || statusCode == http.StatusBadGateway || statusCode == http.StatusServiceUnavailable {
+			l.logWithRequest(r).Debugf("%s %s (%d) %s", r.Method, uri, statusCode, time.Since(begin))
+			if l.LogRequestHeaders && headers != nil {
+				l.logWithRequest(r).Debugf("ws: %v; %s", IsWSHandshakeRequest(r), string(headers))
+			}
 		} else {
-			log.Warnf("%s %s (%d) %s", r.Method, uri, i.statusCode, time.Since(begin))
+			l.logWithRequest(r).Warnf("%s %s (%d) %s Response: %q ws: %v; %s",
+				r.Method, uri, statusCode, time.Since(begin), buf.Bytes(), IsWSHandshakeRequest(r), headers)
 		}
 	})
 }
 
 // Logging middleware logs each HTTP request method, path, response code and
 // duration for all HTTP requests.
-var Logging = Log{}
-
-// interceptor implements WriteHeader to intercept status codes. WriteHeader
-// may not be called on success, so initialize statusCode with the status you
-// want to report on success, i.e. http.StatusOK.
-//
-// interceptor also implements net.Hijacker, to let the downstream Handler
-// hijack the connection. This is needed, for example, for working with websockets.
-type interceptor struct {
-	http.ResponseWriter
-	statusCode int
-	recorded   bool
+var Logging = Log{
+	Log: logging.Global(),
 }
 
-func (i *interceptor) WriteHeader(code int) {
-	if !i.recorded {
-		i.statusCode = code
-		i.recorded = true
-	}
-	i.ResponseWriter.WriteHeader(code)
-}
+func dumpRequest(req *http.Request) ([]byte, error) {
+	var b bytes.Buffer
 
-func (i *interceptor) Hijack() (net.Conn, *bufio.ReadWriter, error) {
-	hj, ok := i.ResponseWriter.(http.Hijacker)
-	if !ok {
-		return nil, nil, fmt.Errorf("interceptor: can't cast parent ResponseWriter to Hijacker")
+	// Exclude some headers for security, or just that we don't need them when debugging
+	err := req.Header.WriteSubset(&b, map[string]bool{
+		"Cookie":       true,
+		"X-Csrf-Token": true,
+	})
+	if err != nil {
+		return nil, err
 	}
-	return hj.Hijack()
+
+	ret := bytes.Replace(b.Bytes(), []byte("\r\n"), []byte("; "), -1)
+	return ret, nil
 }

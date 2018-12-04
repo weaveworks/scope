@@ -52,6 +52,15 @@ static void create_bpf_lookup_elem(int fd, void *key, void *value, void *attr)
 	ptr_bpf_attr->key = ptr_to_u64(key);
 	ptr_bpf_attr->value = ptr_to_u64(value);
 }
+
+static int next_bpf_elem(int fd, void *key, void *next_key, void *attr)
+{
+	union bpf_attr* ptr_bpf_attr;
+	ptr_bpf_attr = (union bpf_attr*)attr;
+	ptr_bpf_attr->map_fd = fd;
+	ptr_bpf_attr->key = ptr_to_u64(key);
+	ptr_bpf_attr->next_key = ptr_to_u64(next_key);
+}
 */
 import "C"
 
@@ -130,4 +139,34 @@ func (b *Module) DeleteElement(mp *Map, key unsafe.Pointer) error {
 	}
 
 	return nil
+}
+
+// LookupNextElement looks up the next element in mp using the given key.
+// The next key and the value are stored in the nextKey and value parameter.
+// Returns false at the end of the mp.
+func (b *Module) LookupNextElement(mp *Map, key, nextKey, value unsafe.Pointer) (bool, error) {
+	uba := C.union_bpf_attr{}
+	C.next_bpf_elem(
+		C.int(mp.m.fd),
+		key,
+		nextKey,
+		unsafe.Pointer(&uba),
+	)
+	ret, _, err := syscall.Syscall(
+		C.__NR_bpf,
+		C.BPF_MAP_GET_NEXT_KEY,
+		uintptr(unsafe.Pointer(&uba)),
+		unsafe.Sizeof(uba),
+	)
+	if err != 0 {
+		return false, fmt.Errorf("unable to find next element: %s", err)
+	}
+	if ret != 0 {
+		return false, nil
+	}
+
+	if err := b.LookupElement(mp, nextKey, value); err != nil {
+		return false, err
+	}
+	return true, nil
 }

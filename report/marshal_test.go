@@ -1,8 +1,6 @@
 package report_test
 
 import (
-	"bytes"
-	"compress/gzip"
 	"reflect"
 	"testing"
 	"time"
@@ -13,11 +11,10 @@ import (
 )
 
 func TestRoundtrip(t *testing.T) {
-	var buf bytes.Buffer
 	r1 := report.MakeReport()
-	r1.WriteBinary(&buf, gzip.DefaultCompression)
+	buf, _ := r1.WriteBinary()
 	bytes := append([]byte{}, buf.Bytes()...) // copy the contents for later
-	r2, err := report.MakeFromBinary(&buf)
+	r2, err := report.MakeFromBinary(buf)
 	if err != nil {
 		t.Error(err)
 	}
@@ -47,7 +44,6 @@ func makeTestReport() report.Report {
 	r.Endpoint.AddNode(report.MakeNode(";172.20.1.168;41582").
 		WithTopology("endpoint").
 		WithSet("snooped_dns_names", report.MakeStringSet("ip-172-20-1-168.ec2.internal")).
-		WithControls("docker_remove_container").
 		WithLatestActiveControls("docker_pause_container").
 		WithLatest("addr", t1, "127.0.0.1"),
 	)
@@ -60,7 +56,6 @@ func makeTestReport() report.Report {
 	r.Pod.WithShape("heptagon").WithLabel("pod", "pods").
 		AddNode(report.MakeNode("fceef9592ec3cf1a8e1d178fdd0de41a;<pod>").
 			WithTopology("pod").
-			WithControls("kubernetes_delete_pod").
 			WithLatestControls(map[string]report.NodeControlData{"kubernetes_get_logs": {Dead: true}}).
 			WithLatest("host_node_id", t1, "ip-172-20-1-168;<host>"))
 	r.Overlay.WithMetadataTemplates(report.MetadataTemplates{
@@ -74,40 +69,13 @@ func makeTestReport() report.Report {
 }
 
 func TestBiggerRoundtrip(t *testing.T) {
-	var buf bytes.Buffer
 	r1 := makeTestReport()
-	r1.WriteBinary(&buf, gzip.BestCompression)
-	r2, err := report.MakeFromBinary(&buf)
+	buf, _ := r1.WriteBinary()
+	r2, err := report.MakeFromBinary(buf)
 	if err != nil {
 		t.Error(err)
 	}
 	if !s_reflect.DeepEqual(r1, *r2) {
 		t.Errorf("%v != %v", r1, *r2)
-	}
-}
-
-func TestRoundtripNoCompression(t *testing.T) {
-	// Make sure that we can use our standard routines for decompressing
-	// something with '0' level compression.
-	var buf bytes.Buffer
-	r1 := report.MakeReport()
-	r1.WriteBinary(&buf, 0)
-	r2, err := report.MakeFromBinary(&buf)
-	if err != nil {
-		t.Error(err)
-	}
-	if !reflect.DeepEqual(r1, *r2) {
-		t.Errorf("%v != %v", r1, *r2)
-	}
-}
-
-func TestMoreCompressionMeansSmaller(t *testing.T) {
-	// Make sure that 0 level compression actually does compress less.
-	var buf1, buf2 bytes.Buffer
-	r := report.MakeReport()
-	r.WriteBinary(&buf1, gzip.DefaultCompression)
-	r.WriteBinary(&buf2, 0)
-	if buf1.Len() >= buf2.Len() {
-		t.Errorf("Compression doesn't change size: %v >= %v", buf1.Len(), buf2.Len())
 	}
 }

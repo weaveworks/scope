@@ -1,12 +1,9 @@
 package probe
 
 import (
-	"compress/gzip"
-	"io"
 	"testing"
 	"time"
 
-	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
@@ -53,13 +50,7 @@ type mockPublisher struct {
 	have chan report.Report
 }
 
-func (m mockPublisher) Publish(in io.Reader, shortcut bool) error {
-	var r report.Report
-	if reader, err := gzip.NewReader(in); err != nil {
-		return err
-	} else if err := codec.NewDecoder(reader, &codec.MsgpackHandle{}).Decode(&r); err != nil {
-		return err
-	}
+func (m mockPublisher) Publish(r report.Report) error {
 	m.have <- r
 	return nil
 }

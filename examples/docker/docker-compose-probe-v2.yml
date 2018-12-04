@@ -1,7 +1,7 @@
 version: '2'
 services:
   probe:
-    image: weaveworks/scope:0.13.1
+    image: weaveworks/scope:1.10.1
     network_mode: "host"
     pid: "host"
     privileged: true

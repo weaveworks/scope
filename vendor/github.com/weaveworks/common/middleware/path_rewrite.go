@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"regexp"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // PathRewrite supports regex matching and replace on Request URIs

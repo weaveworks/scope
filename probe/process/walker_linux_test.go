@@ -1,6 +1,7 @@
 package process_test
 
 import (
+	"os"
 	"reflect"
 	"testing"
 
@@ -79,9 +80,11 @@ var mockFS = fs.Dir("",
 func TestWalker(t *testing.T) {
 	fs_hook.Mock(mockFS)
 	defer fs_hook.Restore()
+	var pageSize uint64
+	pageSize = (uint64)(os.Getpagesize() * 2)
 
 	want := map[int]process.Process{
-		3: {PID: 3, PPID: 2, Name: "curl", Cmdline: "curl google.com", Threads: 1, RSSBytes: 8192, RSSBytesLimit: 2048, OpenFilesCount: 3, OpenFilesLimit: 32768},
+		3: {PID: 3, PPID: 2, Name: "curl", Cmdline: "curl google.com", Threads: 1, RSSBytes: pageSize, RSSBytesLimit: 2048, OpenFilesCount: 3, OpenFilesLimit: 32768},
 		2: {PID: 2, PPID: 1, Name: "bash", Cmdline: "bash", Threads: 1, OpenFilesCount: 2},
 		4: {PID: 4, PPID: 3, Name: "apache", Cmdline: "apache", Threads: 1, OpenFilesCount: 1},
 		1: {PID: 1, PPID: 0, Name: "init", Cmdline: "init", Threads: 1, OpenFilesCount: 0},

@@ -146,6 +146,15 @@ class Terminal extends React.Component {
   mountTerminal() {
     Term.applyAddon(fit);
     this.term = new Term({
+      //
+      // Some linux systems fail to render 'monospace' on `<canvas>` correctly:
+      // https://github.com/xtermjs/xterm.js/issues/1170
+      // `theme.fontFamilies.monospace` doesn't provide many options so we add
+      // some here that are very common. The alternative _might_ be to bundle Roboto-Mono
+      //
+      fontFamily: '"Roboto Mono", "Courier New", "Courier", monospace',
+      // `theme.fontSizes.tiny` (`"12px"`) is a string and we need an int here.
+      fontSize: 12,
       convertEol: !this.props.pipe.get('raw'),
       cursorBlink: true,
       scrollback: 10000,
@@ -258,9 +267,9 @@ class Terminal extends React.Component {
             onClick={this.handlePopoutTerminal}>
           Pop out
           </span>
-          <span
+          <i
             title="Close"
-            className="terminal-header-tools-item-icon fa fa-close"
+            className="terminal-header-tools-item-icon fa fa-times"
             onClick={this.handleCloseClick} />
         </div>
         {this.getControlStatusIcon()}
@@ -321,7 +330,7 @@ class Terminal extends React.Component {
   getControlStatusIcon() {
     const icon = this.props.controlStatus && this.props.controlStatus.get('control').icon;
     return (
-      <span
+      <i
         style={{marginRight: '8px', width: '14px'}}
         className={classNames('fa', {[icon]: icon})}
       />

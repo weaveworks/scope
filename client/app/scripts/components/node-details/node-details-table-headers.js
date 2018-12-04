@@ -41,9 +41,9 @@ export default class NodeDetailsTableHeaders extends React.Component {
             <td className={headerClasses.join(' ')} style={style} title={header.label} key={header.id}>
               <div className="node-details-table-header-sortable" onClick={onClick}>
                 {isSortedAsc
-                  && <span className="node-details-table-header-sorter fa fa-caret-up" />}
+                  && <i className="node-details-table-header-sorter fa fa-caret-up" />}
                 {isSortedDesc
-                  && <span className="node-details-table-header-sorter fa fa-caret-down" />}
+                  && <i className="node-details-table-header-sorter fa fa-caret-down" />}
                 {label}
               </div>
             </td>

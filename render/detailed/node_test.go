@@ -1,6 +1,7 @@
 package detailed_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -18,7 +19,7 @@ import (
 )
 
 func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
-	s, ok := detailed.MakeNodeSummary(detailed.RenderContext{Report: fixture.Report}, r.Render(fixture.Report).Nodes[id])
+	s, ok := detailed.MakeNodeSummary(detailed.RenderContext{Report: fixture.Report}, r.Render(context.Background(), fixture.Report).Nodes[id])
 	if !ok {
 		t.Fatalf("Expected node %s to be summarizable, but wasn't", id)
 	}
@@ -30,7 +31,7 @@ func connectionID(nodeID string, addr string) string {
 }
 
 func TestMakeDetailedHostNode(t *testing.T) {
-	renderableNodes := render.HostRenderer.Render(fixture.Report).Nodes
+	renderableNodes := render.HostRenderer.Render(context.Background(), fixture.Report).Nodes
 	renderableNode := renderableNodes[fixture.ClientHostNodeID]
 	have := detailed.MakeNode("hosts", detailed.RenderContext{Report: fixture.Report}, renderableNodes, renderableNode)
 
@@ -48,6 +49,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 				Rank:       "hostname.com",
 				Pseudo:     false,
 				Shape:      "circle",
+				Tag:        "",
 			},
 			Adjacency: report.MakeIDList(fixture.ServerHostNodeID),
 			Metadata: []report.MetadataRow{
@@ -176,7 +178,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 
 func TestMakeDetailedContainerNode(t *testing.T) {
 	id := fixture.ServerContainerNodeID
-	renderableNodes := render.ContainerWithImageNameRenderer.Render(fixture.Report).Nodes
+	renderableNodes := render.ContainerWithImageNameRenderer.Render(context.Background(), fixture.Report).Nodes
 	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
@@ -192,6 +194,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 				LabelMinor: "server.hostname.com",
 				Rank:       fixture.ServerContainerImageName,
 				Shape:      "hexagon",
+				Tag:        "",
 				Pseudo:     false,
 			},
 			Metadata: []report.MetadataRow{
@@ -304,7 +307,7 @@ func TestMakeDetailedContainerNode(t *testing.T) {
 
 func TestMakeDetailedPodNode(t *testing.T) {
 	id := fixture.ServerPodNodeID
-	renderableNodes := render.PodRenderer.Render(fixture.Report).Nodes
+	renderableNodes := render.PodRenderer.Render(context.Background(), fixture.Report).Nodes
 	renderableNode, ok := renderableNodes[id]
 	if !ok {
 		t.Fatalf("Node not found: %s", id)
@@ -321,6 +324,7 @@ func TestMakeDetailedPodNode(t *testing.T) {
 				LabelMinor: "1 container",
 				Rank:       "ping/pong-b",
 				Shape:      "heptagon",
+				Tag:        "",
 				Pseudo:     false,
 			},
 			Metadata: []report.MetadataRow{

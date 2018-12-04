@@ -28,8 +28,7 @@ type MockSpanContext struct {
 var mockIDSource = uint32(42)
 
 func nextMockID() int {
-	atomic.AddUint32(&mockIDSource, 1)
-	return int(atomic.LoadUint32(&mockIDSource))
+	return int(atomic.AddUint32(&mockIDSource, 1))
 }
 
 // ForeachBaggageItem belongs to the SpanContext interface
@@ -136,6 +135,8 @@ func (s *MockSpan) Logs() []MockLogRecord {
 
 // Context belongs to the Span interface
 func (s *MockSpan) Context() opentracing.SpanContext {
+	s.Lock()
+	defer s.Unlock()
 	return s.SpanContext
 }
 

@@ -57,7 +57,7 @@ fi
 
 case "$1" in
     'gcp')
-        gcloud compute images list --standard-images --regexp=".*?$2.*" \
+        gcloud compute images list --standard-images --filter="name~'.*?$2.*'" \
             --format="csv[no-heading][separator=/](selfLink.map().scope(projects).segment(0),family)" \
             | sort -d
         ;;

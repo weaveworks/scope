@@ -42,7 +42,7 @@ class Nodes extends React.Component {
     const { topologyNodeCountZero, nodesDisplayEmpty } = this.props;
 
     return (
-      <NodesError faIconClass="fa-circle-thin" hidden={!nodesDisplayEmpty}>
+      <NodesError faIconClass="far fa-circle" hidden={!nodesDisplayEmpty}>
         <div className="heading">Nothing to show. This can have any of these reasons:</div>
         {topologyNodeCountZero ?
           renderCauses(NODES_STATS_COUNT_ZERO_CAUSES) :
