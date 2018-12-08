@@ -57,9 +57,11 @@ func (v podToVolumesRenderer) Render(ctx context.Context, rpt report.Report) Nod
 		if !found {
 			continue
 		}
+		podNamespace, _ := podNode.Latest.Lookup(kubernetes.Namespace)
 		for _, pvcNode := range rpt.PersistentVolumeClaim.Nodes {
 			pvcName, _ := pvcNode.Latest.Lookup(kubernetes.Name)
-			if pvcName == ClaimName {
+			pvcNamespace, _ := pvcNode.Latest.Lookup(kubernetes.Namespace)
+			if (pvcName == ClaimName) && (podNamespace == pvcNamespace) {
 				podNode.Adjacency = podNode.Adjacency.Add(pvcNode.ID)
 				podNode.Children = podNode.Children.Add(pvcNode)
 			}
