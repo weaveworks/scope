@@ -336,7 +336,10 @@ func (c *container) memoryUsageMetric(stats []docker.Stats) report.Metric {
 	samples := make([]report.Sample, len(stats))
 	for i, s := range stats {
 		samples[i].Timestamp = s.Read
-		samples[i].Value = float64(s.MemoryStats.Usage)
+		// This code adapted from
+		// https://github.com/docker/cli/blob/5931fb4276be0afdd6e5ed338d1b2b4b9b5ec8e5/cli/command/container/stats_helpers.go
+		// so that Scope numbers match Docker numbers. Page cache is intentionally excluded.
+		samples[i].Value = float64(s.MemoryStats.Usage - s.MemoryStats.Stats.Cache)
 		if float64(s.MemoryStats.Limit) > max {
 			max = float64(s.MemoryStats.Limit)
 		}
