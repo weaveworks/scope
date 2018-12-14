@@ -15,7 +15,7 @@ describe('NodeDetailsHealthLinkItem', () => {
     });
 
     it('appends as json for cloud link', () => {
-      const url = appendTime('/prom/:orgid/notebook/new/%7B%22cells%22%3A%5B%7B%22queries%22%3A%5B%22go_goroutines%22%5D%7D%5D%7D', time);
+      const url = appendTime('/prom/:instanceid/notebook/new/%7B%22cells%22%3A%5B%7B%22queries%22%3A%5B%22go_goroutines%22%5D%7D%5D%7D', time);
       expect(url).toContain(timeUnix);
 
       const payload = JSON.parse(decodeURIComponent(url.substr(url.indexOf('new/') + 4)));

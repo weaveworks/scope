@@ -91,9 +91,9 @@ export function basePathSlash(urlPath) {
 // i.e. in this case Weave Cloud, rather than being hardcoded here.
 export function getApiPath(pathname = window.location.pathname) {
   if (process.env.SCOPE_API_PREFIX) {
-    // Extract the instance name (pathname in WC context is of format '/:orgId/explore').
-    const orgId = pathname.split('/')[1];
-    return basePath(`${process.env.SCOPE_API_PREFIX}/app/${orgId}`);
+    // Extract the instance name (pathname in WC context is of format '/:instanceId/explore').
+    const instanceId = pathname.split('/')[1];
+    return basePath(`${process.env.SCOPE_API_PREFIX}/app/${instanceId}`);
   }
 
   return basePath(pathname);
