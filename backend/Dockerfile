@@ -45,7 +45,7 @@ RUN export arch_val="$(dpkg --print-architecture)"; \
         curl -fsSLO https://download.docker.com/linux/static/stable/aarch64/docker-${DOCKERVERSION}.tgz && \
         tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
         rm docker-${DOCKERVERSION}.tgz; \
-    else \
+    elif [ "$arch_val" = "amd64" ]; then \
         curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
         tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
         rm docker-${DOCKERVERSION}.tgz; \
