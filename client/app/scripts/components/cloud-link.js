@@ -9,7 +9,7 @@ import CloudFeature from './cloud-feature';
  * that is comprised of Weave Cloud related pieces.
  *
  * We support here relative links with a leading `/` that rewrite
- * the browser url as well as cloud-related placeholders (:orgId).
+ * the browser url as well as cloud-related placeholders (:instanceId).
  *
  * If no `url` is given, only the children is rendered (no anchor).
  *
@@ -50,8 +50,8 @@ class LinkWrapper extends React.Component {
 
   buildHref(url) {
     const { params } = this.props;
-    if (!url || !params || !params.orgId) return url;
-    return url.replace(/:orgid/gi, encodeURIComponent(this.props.params.orgId));
+    if (!url || !params || !params.instanceId) return url;
+    return url.replace(/:instanceid/gi, encodeURIComponent(params.instanceId));
   }
 
   render() {

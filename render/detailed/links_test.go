@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	sampleMetricsGraphURL = "/prom/:orgID/notebook/new"
+	sampleMetricsGraphURL = "/prom/:instanceID/notebook/new"
 )
 
 var (
