@@ -39,10 +39,17 @@ RUN export arch_val="$(dpkg --print-architecture)"; \
 RUN pip install yapf==0.16.2 flake8==3.3.0 requests==2.19.1
 
 # Install Docker (client only)
-ENV DOCKERVERSION=17.03.2-ce
-RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
-    tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
-    rm docker-${DOCKERVERSION}.tgz
+ENV DOCKERVERSION=17.09.1-ce
+RUN export arch_val="$(dpkg --print-architecture)"; \
+    if [ "$arch_val" = "arm64" ]; then \
+        curl -fsSLO https://download.docker.com/linux/static/stable/aarch64/docker-${DOCKERVERSION}.tgz && \
+        tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
+        rm docker-${DOCKERVERSION}.tgz; \
+    else \
+        curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
+        tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
+        rm docker-${DOCKERVERSION}.tgz; \
+    fi;
 
 COPY build.sh /
 ENTRYPOINT ["/build.sh"]
