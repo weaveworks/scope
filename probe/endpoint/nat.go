@@ -114,6 +114,7 @@ func (n natMapper) applyNAT(rpt report.Report, scope string) {
 			if replySrcID != toID {
 				fromNode.Adjacency = fromNode.Adjacency.Minus(toID)
 				fromNode = fromNode.WithAdjacent(replySrcID)
+				rpt.Endpoint.Nodes[fromID] = fromNode
 
 				// add nat original destination as a copy of nat reply source
 				replySrcNode, ok := rpt.Endpoint.Nodes[replySrcID]
