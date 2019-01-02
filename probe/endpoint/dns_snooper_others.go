@@ -1,4 +1,4 @@
-// +build darwin arm
+// +build darwin arm arm64
 
 // Cross-compiling the snooper requires having pcap binaries,
 // let's disable it for now.

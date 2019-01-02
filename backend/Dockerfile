@@ -39,10 +39,20 @@ RUN export arch_val="$(dpkg --print-architecture)"; \
 RUN pip install yapf==0.16.2 flake8==3.3.0 requests==2.19.1
 
 # Install Docker (client only)
-ENV DOCKERVERSION=17.03.2-ce
-RUN curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz && \
+ENV DOCKERVERSION=17.09.1-ce
+RUN export arch_val="$(dpkg --print-architecture)"; \
+    if [ "$arch_val" = "arm64" ]; then \
+        curl -fsSLO https://download.docker.com/linux/static/stable/aarch64/docker-${DOCKERVERSION}.tgz; \
+    elif [ "$arch_val" = "amd64" ]; then \
+        curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKERVERSION}.tgz; \
+    elif [ "$arch_val" = "ppc64el" ]; then \
+        curl -fsSLO https://download.docker.com/linux/static/stable/ppc64le/docker-${DOCKERVERSION}.tgz; \
+    else \
+        echo "No Docker client found for architecture $(arch_val)." && \
+        exit 1; \
+    fi; \
     tar xzvf docker-${DOCKERVERSION}.tgz --strip 1 -C /usr/local/bin docker/docker && \
-    rm docker-${DOCKERVERSION}.tgz
+    rm docker-${DOCKERVERSION}.tgz;
 
 COPY build.sh /
 ENTRYPOINT ["/build.sh"]
