@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 	socks5 "github.com/armon/go-socks5"
 	"github.com/weaveworks/common/mflag"
 	"github.com/weaveworks/common/mflagext"
-	"golang.org/x/net/context"
 )
 
 type pacFileParameters struct {
