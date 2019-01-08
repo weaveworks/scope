@@ -60,6 +60,7 @@ class DetailsCard extends React.Component {
           key={this.props.id}
           nodeId={this.props.id}
           mounted={this.state.mounted}
+          renderNodeDetailsExtras={this.props.renderNodeDetailsExtras}
           {...this.props}
         />
       </div>

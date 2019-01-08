@@ -20,8 +20,7 @@ has_container "$HOST1" nginx
 has_container "$HOST1" client
 has_connection containers "$HOST1" client nginx
 
-# shellcheck disable=SC2016
-run_on "$HOST1" 'echo stop | sudo tee /proc/$(pidof scope-probe)/root/var/run/scope/debug-bpf'
+docker_on "$HOST1" exec weavescope sh -c "echo stop > /var/run/scope/debug-bpf"
 sleep 5
 
 server_on "$HOST1" "nginx2"
@@ -37,8 +36,7 @@ has_connection containers "$HOST1" client2 nginx2
 exec 3>&1
 assert_raises "docker_on $HOST1 logs weavescope 2>&1 | grep 'ebpf tracker died, restarting it' || (docker_on $HOST1 logs weavescope 2>&3 ; false)"
 
-# shellcheck disable=SC2016
-run_on "$HOST1" 'echo stop | sudo tee /proc/$(pidof scope-probe)/root/var/run/scope/debug-bpf'
+docker_on "$HOST1" exec weavescope sh -c "echo stop > /var/run/scope/debug-bpf"
 sleep 5
 
 server_on "$HOST1" "nginx3"

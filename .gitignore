@@ -9,6 +9,7 @@ _test
 .vagrant
 releases
 tmp
+.cache
 
 # Architecture specific extensions/prefixes
 *.[568vq]
@@ -62,6 +63,7 @@ client/build-external/*
 prog/staticui/*
 prog/externalui/*
 client/build-pkg
+client/bundle
 
 # Website
 site-build

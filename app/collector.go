@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
@@ -107,7 +107,7 @@ func NewCollector(window time.Duration) Collector {
 		waitableCondition: waitableCondition{
 			waiters: map[chan struct{}]struct{}{},
 		},
-		merger: NewSmartMerger(),
+		merger: NewFastMerger(),
 	}
 }
 
@@ -292,7 +292,7 @@ func NewFileCollector(path string, window time.Duration) (Collector, error) {
 		go replay(collector, timestamps, reports)
 		return collector, nil
 	}
-	return StaticCollector(NewSmartMerger().Merge(reports).Upgrade()), nil
+	return StaticCollector(NewFastMerger().Merge(reports).Upgrade()), nil
 }
 
 func timestampFromFilepath(path string) (time.Time, error) {

@@ -38,7 +38,7 @@ class Status extends React.Component {
 
     return (
       <div className={classNames}>
-        {showWarningIcon && <span className="status-icon fa fa-exclamation-circle" />}
+        {showWarningIcon && <i className="status-icon fa fa-exclamation-circle" />}
         <span className="status-label" title={title}>{text}</span>
       </div>
     );

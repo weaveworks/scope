@@ -6,6 +6,10 @@ output "public_ips" {
   value = ["${google_compute_instance.tf_test_vm.*.network_interface.0.access_config.0.assigned_nat_ip}"]
 }
 
+output "private_ips" {
+  value = ["${google_compute_instance.tf_test_vm.*.network_interface.0.address}"]
+}
+
 output "hostnames" {
   value = "${join("\n", 
     "${formatlist("%v.%v.%v", 

@@ -1,6 +1,7 @@
 package detailed_test
 
 import (
+	"context"
 	"sort"
 	"testing"
 	"time"
@@ -21,7 +22,7 @@ import (
 func TestSummaries(t *testing.T) {
 	{
 		// Just a convenient source of some rendered nodes
-		have := detailed.Summaries(detailed.RenderContext{Report: fixture.Report}, render.ProcessRenderer.Render(fixture.Report).Nodes)
+		have := detailed.Summaries(context.Background(), detailed.RenderContext{Report: fixture.Report}, render.ProcessRenderer.Render(context.Background(), fixture.Report).Nodes)
 		// The ids of the processes rendered above
 		expectedIDs := []string{
 			fixture.ClientProcess1NodeID,
@@ -53,7 +54,7 @@ func TestSummaries(t *testing.T) {
 		processNode.Metrics = processNode.Metrics.Copy()
 		processNode.Metrics[process.CPUUsage] = metric
 		input.Process.Nodes[fixture.ClientProcess1NodeID] = processNode
-		have := detailed.Summaries(detailed.RenderContext{Report: input}, render.ProcessRenderer.Render(input).Nodes)
+		have := detailed.Summaries(context.Background(), detailed.RenderContext{Report: input}, render.ProcessRenderer.Render(context.Background(), input).Nodes)
 
 		node, ok := have[fixture.ClientProcess1NodeID]
 		if !ok {
@@ -84,8 +85,6 @@ func TestSummaries(t *testing.T) {
 				Samples: nil,
 				Min:     metric.Min,
 				Max:     metric.Max,
-				First:   metric.First,
-				Last:    metric.Last,
 			},
 		}
 		if !reflect.DeepEqual(want, row) {
@@ -112,6 +111,7 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: "client.hostname.com (10001)",
 					Rank:       fixture.Client1Name,
 					Shape:      "square",
+					Tag:        "",
 				},
 				Metadata: []report.MetadataRow{
 					{ID: process.PID, Label: "PID", Value: fixture.Client1PID, Priority: 1, Datatype: report.Number},
@@ -130,10 +130,11 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: fixture.ClientHostName,
 					Rank:       fixture.ClientContainerImageName,
 					Shape:      "hexagon",
+					Tag:        "",
 				},
 				Metadata: []report.MetadataRow{
-					{ID: docker.ImageName, Label: "Image", Value: fixture.ClientContainerImageName, Priority: 1},
-					{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 10, Truncate: 12},
+					{ID: docker.ImageName, Label: "Image name", Value: fixture.ClientContainerImageName, Priority: 2},
+					{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 11, Truncate: 12},
 				},
 				Adjacency: report.MakeIDList(fixture.ServerContainerNodeID),
 			},
@@ -149,6 +150,7 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: "1 container",
 					Rank:       fixture.ClientContainerImageName,
 					Shape:      "hexagon",
+					Tag:        "",
 					Stack:      true,
 				},
 				Metadata: []report.MetadataRow{
@@ -168,6 +170,7 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: "hostname.com",
 					Rank:       "hostname.com",
 					Shape:      "circle",
+					Tag:        "",
 				},
 				Metadata: []report.MetadataRow{
 					{ID: host.HostName, Label: "Hostname", Value: fixture.ClientHostName, Priority: 11},
@@ -186,6 +189,7 @@ func TestMakeNodeSummary(t *testing.T) {
 					LabelMinor: "1 process",
 					Rank:       "apache",
 					Shape:      "square",
+					Tag:        "",
 					Stack:      true,
 				},
 			},
@@ -252,9 +256,9 @@ func TestNodeMetadata(t *testing.T) {
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
 			want: []report.MetadataRow{
-				{ID: docker.ContainerStateHuman, Label: "State", Value: "running", Priority: 3},
-				{ID: docker.ContainerIPs, Label: "IPs", Value: "10.10.10.0/24, 10.10.10.1/24", Priority: 7},
-				{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 10, Truncate: 12},
+				{ID: docker.ContainerStateHuman, Label: "State", Value: "running", Priority: 4},
+				{ID: docker.ContainerIPs, Label: "IPs", Value: "10.10.10.0/24, 10.10.10.1/24", Priority: 8},
+				{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 11, Truncate: 12},
 			},
 		},
 		{
@@ -429,13 +433,13 @@ func TestNodeTables(t *testing.T) {
 				{
 					ID:    docker.EnvPrefix,
 					Type:  report.PropertyListType,
-					Label: "Environment Variables",
+					Label: "Environment variables",
 					Rows:  []report.Row{},
 				},
 				{
 					ID:    docker.LabelPrefix,
 					Type:  report.PropertyListType,
-					Label: "Docker Labels",
+					Label: "Docker labels",
 					Rows: []report.Row{
 						{
 							ID: "label_label1",

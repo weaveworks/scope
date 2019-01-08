@@ -3,9 +3,9 @@ package app
 import (
 	"net/http"
 
-	log "github.com/Sirupsen/logrus"
+	"context"
 	"github.com/gorilla/mux"
-	"golang.org/x/net/context"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
 )

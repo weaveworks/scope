@@ -3,6 +3,7 @@ package expected
 import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -11,11 +12,14 @@ import (
 
 // Exported for testing.
 var (
-	circle   = "circle"
-	square   = "square"
-	heptagon = "heptagon"
-	hexagon  = "hexagon"
-	cloud    = "cloud"
+	circle         = "circle"
+	square         = "square"
+	heptagon       = "heptagon"
+	hexagon        = "hexagon"
+	cloud          = "cloud"
+	cylinder       = "cylinder"
+	dottedcylinder = "dottedcylinder"
+	storagesheet   = "sheet"
 
 	// Helper to make a report.node with some common options
 	node = func(topology string) func(id string, adjacent ...string) report.Node {
@@ -37,6 +41,11 @@ var (
 	pod                   = node(report.Pod)
 	service               = node(report.Service)
 	hostNode              = node(report.Host)
+	persistentVolume      = node(report.PersistentVolume)
+	persistentVolumeClaim = node(report.PersistentVolumeClaim)
+	StorageClass          = node(report.StorageClass)
+	volumeSnapshot        = node(report.VolumeSnapshot)
+	volumeSnapshotData    = node(report.VolumeSnapshotData)
 
 	UnknownPseudoNode1ID = render.MakePseudoNodeID(fixture.UnknownClient1IP)
 	UnknownPseudoNode2ID = render.MakePseudoNodeID(fixture.UnknownClient3IP)
@@ -264,6 +273,49 @@ var (
 				RenderedProcesses[fixture.ServerProcessNodeID],
 				RenderedContainers[fixture.ServerContainerNodeID],
 			)),
+
+		fixture.PersistentVolumeClaimNodeID: persistentVolumeClaim(fixture.PersistentVolumeClaimNodeID, fixture.PersistentVolumeNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:             "pvc-6124",
+				kubernetes.Namespace:        "ping",
+				kubernetes.Status:           "bound",
+				kubernetes.VolumeName:       "pongvolume",
+				kubernetes.AccessModes:      "ReadWriteOnce",
+				kubernetes.StorageClassName: "standard",
+			}).WithChild(report.MakeNode(fixture.PersistentVolumeNodeID).WithTopology(report.PersistentVolume)),
+
+		fixture.PersistentVolumeNodeID: persistentVolume(fixture.PersistentVolumeNodeID, fixture.VolumeSnapshotNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:             "pongvolume",
+				kubernetes.Namespace:        "ping",
+				kubernetes.Status:           "bound",
+				kubernetes.VolumeClaim:      "pvc-6124",
+				kubernetes.AccessModes:      "ReadWriteOnce",
+				kubernetes.StorageClassName: "standard",
+				kubernetes.StorageDriver:    "iSCSI",
+			}).WithChild(report.MakeNode(fixture.VolumeSnapshotNodeID).WithTopology(report.VolumeSnapshot)),
+
+		fixture.StorageClassNodeID: StorageClass(fixture.StorageClassNodeID, fixture.PersistentVolumeClaimNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:        "standard",
+				kubernetes.Provisioner: "pong",
+			}).WithChild(report.MakeNode(fixture.PersistentVolumeClaimNodeID).WithTopology(report.PersistentVolumeClaim)),
+
+		fixture.VolumeSnapshotNodeID: volumeSnapshot(fixture.VolumeSnapshotNodeID, fixture.VolumeSnapshotDataNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:         "vs-1234",
+				kubernetes.Namespace:    "ping",
+				kubernetes.VolumeClaim:  "pvc-6124",
+				kubernetes.SnapshotData: "vsd-1234",
+				kubernetes.VolumeName:   "pongvolume",
+			}).WithChild(report.MakeNode(fixture.VolumeSnapshotDataNodeID).WithTopology(report.VolumeSnapshotData)),
+
+		fixture.VolumeSnapshotDataNodeID: volumeSnapshotData(fixture.VolumeSnapshotDataNodeID).
+			WithLatests(map[string]string{
+				kubernetes.Name:               "vsd-1234",
+				kubernetes.VolumeName:         "pongvolume",
+				kubernetes.VolumeSnapshotName: "vs-1234",
+			}),
 
 		UnmanagedServerID:         unmanagedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerPodNodeID),

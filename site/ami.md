@@ -20,17 +20,17 @@ not remove it and respect the format! -->
 
 | Region         | AMI          |
 |----------------|--------------|
-| us-east-1      | ami-cc6c71b7 |
-| us-east-2      | ami-134a6876 |
-| us-west-1      | ami-7c27101c |
-| us-west-2      | ami-0c778074 |
-| eu-west-1      | ami-e776b19e |
-| eu-west-2      | ami-63acbc07 |
-| eu-central-1   | ami-806dd9ef |
-| ap-northeast-1 | ami-5777b031 |
-| ap-southeast-1 | ami-21385142 |
-| ap-southeast-2 | ami-52c32730 |
-| ca-central-1   | ami-2efd444a |
+| us-east-1      | ami-7b692804 |
+| us-east-2      | ami-6a0b350f |
+| us-west-1      | ami-a4db3fc7 |
+| us-west-2      | ami-12c98a6a |
+| eu-west-1      | ami-b3bab7ca |
+| eu-west-2      | ami-47846a20 |
+| eu-central-1   | ami-7f211294 |
+| ap-northeast-1 | ami-2a8c4355 |
+| ap-southeast-1 | ami-b00304cc |
+| ap-southeast-2 | ami-c7c41ba5 |
+| ca-central-1   | ami-41028125 |
 
 For more information about Weave AMIs and running them see: 
 
@@ -54,8 +54,8 @@ The latest Weave ECS AMIs are based on Amazon's
 [ECS-Optimized Amazon Linux AMI](https://aws.amazon.com/marketplace/pp/B06XS8WHGJ),
 version `2017.03.f` and also includes:
 
-* [Weave Net 2.0.4](https://github.com/weaveworks/weave/blob/master/CHANGELOG.md#release-204)
-* [Weave Scope 1.6.4](https://github.com/weaveworks/scope/blob/master/CHANGELOG.md#release-164)
+* [Weave Net 2.3.0](https://github.com/weaveworks/weave/blob/master/CHANGELOG.md#release-230)
+* [Weave Scope 1.9.0](https://github.com/weaveworks/scope/blob/master/CHANGELOG.md#release-190)
 
 
 ## <a name="deployment-requirements"></a>Deployment Requirements
@@ -240,11 +240,20 @@ requirements.
 AWS_ACCSS_KEY_ID=XXXX AWS_SECRET_ACCESS_KEY=YYYY  ./build-all-amis.sh
 ~~~
 
+(If your account has MFA enabled you should follow [this process](https://aws.amazon.com/premiumsupport/knowledge-center/authenticate-mfa-cli/)
+and also set `AWS_SESSION_TOKEN`)
+
 If building an AMI for a particular region, set the `ONLY_REGION` variable to
 that region when invoking the script:
 
 ~~~bash
 ONLY_REGION=us-east-1 AWS_ACCSS_KEY_ID=XXXX AWS_SECRET_ACCESS_KEY=YYYY  ./build-all-amis.sh
+~~~
+
+To make an AMI public:
+
+~~~bash
+aws ec2 modify-image-attribute --region=us-east-2 --image-id ami-6a0b350f --launch-permission "{\"Add\": [{\"Group\":\"all\"}]}"
 ~~~
 
 ## Further Reading

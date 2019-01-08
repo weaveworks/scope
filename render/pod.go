@@ -1,6 +1,7 @@
 package render
 
 import (
+	"context"
 	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
@@ -26,6 +27,9 @@ func renderKubernetesTopologies(rpt report.Report) bool {
 		&rpt.DaemonSet,
 		&rpt.StatefulSet,
 		&rpt.CronJob,
+		&rpt.PersistentVolume,
+		&rpt.PersistentVolumeClaim,
+		&rpt.StorageClass,
 	}
 	for _, t := range topologies {
 		if len(t.Nodes) > 0 {
@@ -46,25 +50,48 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 	MakeFilter(
 		func(n report.Node) bool {
 			state, ok := n.Latest.Lookup(kubernetes.State)
-			return (!ok || state != kubernetes.StateDeleted)
+			return !ok || !(state == kubernetes.StateDeleted || state == kubernetes.StateFailed)
 		},
 		MakeReduce(
 			PropagateSingleMetrics(report.Container,
-				MakeMap(
-					Map2Parent([]string{report.Pod}, UnmanagedID),
-					MakeFilter(
-						ComposeFilterFuncs(
-							IsRunning,
-							Complement(isPauseContainer),
-						),
-						ContainerWithImageNameRenderer,
-					),
+				MakeMap(propagatePodHost,
+					Map2Parent{topologies: []string{report.Pod}, noParentsPseudoID: UnmanagedID,
+						chainRenderer: MakeFilter(
+							ComposeFilterFuncs(
+								IsRunning,
+								Complement(isPauseContainer),
+							),
+							ContainerWithImageNameRenderer,
+						)},
 				),
 			),
 			ConnectionJoin(MapPod2IP, report.Pod),
+			KubernetesVolumesRenderer,
 		),
 	),
 ))
+
+// Pods are not tagged with a Host parent, but their container children are.
+// If n doesn't already have a host, copy it from one of the children
+func propagatePodHost(n report.Node) report.Node {
+	if n.Topology != report.Pod {
+		return n
+	} else if _, found := n.Parents.Lookup(report.Host); found {
+		return n
+	}
+	done := false
+	n.Children.ForEach(func(child report.Node) {
+		if !done {
+			if hosts, found := child.Parents.Lookup(report.Host); found {
+				for _, h := range hosts {
+					n = n.WithParent(report.Host, h)
+				}
+				done = true
+			}
+		}
+	})
+	return n
+}
 
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
 // graph by merging the pods graph and the services topology.
@@ -101,10 +128,8 @@ func renderParents(childTopology string, parentTopologies []string, noParentsPse
 	return MakeReduce(append(
 		selectors,
 		PropagateSingleMetrics(childTopology,
-			MakeMap(
-				Map2Parent(parentTopologies, noParentsPseudoID),
-				childRenderer,
-			),
+			Map2Parent{topologies: parentTopologies, noParentsPseudoID: noParentsPseudoID,
+				chainRenderer: childRenderer},
 		),
 	)...)
 }
@@ -120,52 +145,58 @@ func MapPod2IP(m report.Node) []string {
 	}
 
 	ip, ok := m.Latest.Lookup(kubernetes.IP)
-	if !ok {
+	if !ok || ip == "" {
 		return nil
 	}
 	return []string{report.MakeScopedEndpointNodeID("", ip, "")}
 }
 
-// Map2Parent returns a MapFunc which maps Nodes to some parent grouping.
-func Map2Parent(
+// Map2Parent is a Renderer which maps Nodes to some parent grouping.
+type Map2Parent struct {
+	// Renderer to chain from
+	chainRenderer Renderer
 	// The topology IDs to look for parents in
-	topologies []string,
+	topologies []string
 	// Either the ID prefix of the pseudo node to use for nodes without
 	// any parents in the group, eg. UnmanagedID, or "" to drop nodes without any parents.
-	noParentsPseudoID string,
-) MapFunc {
-	return func(n report.Node) report.Nodes {
+	noParentsPseudoID string
+}
+
+// Render implements Renderer
+func (m Map2Parent) Render(ctx context.Context, rpt report.Report) Nodes {
+	input := m.chainRenderer.Render(ctx, rpt)
+	ret := newJoinResults(nil)
+
+	for _, n := range input.Nodes {
 		// Uncontained becomes Unmanaged/whatever if noParentsPseudoID is set
-		if noParentsPseudoID != "" && strings.HasPrefix(n.ID, UncontainedIDPrefix) {
-			id := MakePseudoNodeID(noParentsPseudoID, n.ID[len(UncontainedIDPrefix):])
-			node := NewDerivedPseudoNode(id, n)
-			return report.Nodes{id: node}
+		if m.noParentsPseudoID != "" && strings.HasPrefix(n.ID, UncontainedIDPrefix) {
+			id := MakePseudoNodeID(m.noParentsPseudoID, n.ID[len(UncontainedIDPrefix):])
+			ret.addChildAndChildren(n, id, Pseudo)
+			continue
 		}
 
 		// Propagate all pseudo nodes
 		if n.Topology == Pseudo {
-			return report.Nodes{n.ID: n}
+			ret.passThrough(n)
+			continue
 		}
 
+		added := false
 		// For each topology, map to any parents we can find
-		result := report.Nodes{}
-		for _, topology := range topologies {
+		for _, topology := range m.topologies {
 			if groupIDs, ok := n.Parents.Lookup(topology); ok {
 				for _, id := range groupIDs {
-					node := NewDerivedNode(id, n).WithTopology(topology)
-					node.Counters = node.Counters.Add(n.Topology, 1)
-					result[id] = node
+					ret.addChildAndChildren(n, id, topology)
+					added = true
 				}
 			}
 		}
 
-		if len(result) == 0 && noParentsPseudoID != "" {
+		if !added && m.noParentsPseudoID != "" {
 			// Map to pseudo node
-			id := MakePseudoNodeID(noParentsPseudoID, report.ExtractHostID(n))
-			node := NewDerivedPseudoNode(id, n)
-			result[id] = node
+			id := MakePseudoNodeID(m.noParentsPseudoID, report.ExtractHostID(n))
+			ret.addChildAndChildren(n, id, Pseudo)
 		}
-
-		return result
 	}
+	return ret.result(input)
 }

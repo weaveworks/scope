@@ -6,8 +6,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
-
-const { themeColorsAsScss } = require('./webpack-common');
+const { themeVarsAsScss } = require('weaveworks-ui-components/lib/theme');
 
 const GLOBALS = {
   'process.env': {NODE_ENV: '"production"'}
@@ -49,7 +48,7 @@ module.exports = {
   },
 
   plugins: [
-    new CleanWebpackPlugin(['build']),
+    new CleanWebpackPlugin([OUTPUT_PATH]),
     new webpack.DefinePlugin(GLOBALS),
     new webpack.optimize.CommonsChunkPlugin({ name: 'vendors', filename: 'vendors.js' }),
     new webpack.optimize.OccurrenceOrderPlugin(true),
@@ -135,10 +134,9 @@ module.exports = {
             loader: 'sass-loader',
             options: {
               minimize: true,
-              data: themeColorsAsScss(),
+              data: themeVarsAsScss(),
               includePaths: [
                 path.resolve(__dirname, './node_modules/xterm'),
-                path.resolve(__dirname, './node_modules/font-awesome'),
                 path.resolve(__dirname, './node_modules/rc-slider'),
               ]
             }

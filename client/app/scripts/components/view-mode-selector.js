@@ -29,7 +29,7 @@ class ViewModeSelector extends React.Component {
         <div className="tour-step-anchor view-mode-selector-wrapper">
           <ViewModeButton
             label="Graph"
-            icons="fa fa-share-alt"
+            icons="fa fa-sitemap"
             viewMode={GRAPH_VIEW_MODE}
             onClick={this.props.setGraphView}
           />
@@ -41,7 +41,7 @@ class ViewModeSelector extends React.Component {
           />
           <ViewModeButton
             label="Resources"
-            icons="fa fa-bar-chart"
+            icons="fa fa-chart-bar"
             viewMode={RESOURCE_VIEW_MODE}
             onClick={this.props.setResourceView}
             disabled={!this.props.hasResourceView}

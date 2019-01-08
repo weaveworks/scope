@@ -9,6 +9,7 @@ TAGS=
 PARALLEL=
 RACE="-race -covermode=atomic"
 TIMEOUT=1m
+VERBOSE=
 
 usage() {
     echo "$0 [-slow] [-in-container foo] [-netgo] [-(no-)go-get] [-timeout 1m]"
@@ -16,6 +17,10 @@ usage() {
 
 while [ $# -gt 0 ]; do
     case "$1" in
+        "-v")
+            VERBOSE="-v"
+            shift 1
+            ;;
         "-slow")
             SLOW=true
             shift 1
@@ -55,7 +60,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-GO_TEST_ARGS=(-tags "${TAGS[@]}" -cpu 4 -timeout $TIMEOUT)
+GO_TEST_ARGS=(-tags "${TAGS[@]}" -cpu 4 -timeout $TIMEOUT $VERBOSE)
 
 if [ -n "$SLOW" ] || [ -n "$CIRCLECI" ]; then
     SLOW=true

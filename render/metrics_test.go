@@ -1,6 +1,7 @@
 package render_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -159,7 +160,7 @@ func TestPropagateSingleMetrics(t *testing.T) {
 			},
 		},
 	} {
-		got := render.PropagateSingleMetrics(c.topology, mockRenderer{report.Nodes{c.input.ID: c.input}}).Render(report.Report{}).Nodes
+		got := render.PropagateSingleMetrics(c.topology, mockRenderer{report.Nodes{c.input.ID: c.input}}).Render(context.Background(), report.Report{}).Nodes
 		if !reflect.DeepEqual(got, c.output) {
 			t.Errorf("[%s] Diff: %s", c.name, test.Diff(c.output, got))
 		}

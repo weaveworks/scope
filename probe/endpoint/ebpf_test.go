@@ -1,3 +1,5 @@
+// +build linux
+
 package endpoint
 
 import (
@@ -8,6 +10,8 @@ import (
 	"time"
 
 	"github.com/weaveworks/tcptracer-bpf/pkg/tracer"
+
+	"github.com/weaveworks/scope/probe/host"
 )
 
 func newMockEbpfTracker() *EbpfTracker {
@@ -231,5 +235,81 @@ func TestInvalidTimeStampDead(t *testing.T) {
 	}
 	if !mockEbpfTracker.isDead() {
 		t.Errorf("expected ebpfTracker to be set to dead after events with wrong order")
+	}
+}
+
+func TestIsKernelSupported(t *testing.T) {
+	var release, version string
+	oldGetKernelReleaseAndVersion := host.GetKernelReleaseAndVersion
+	defer func() {
+		host.GetKernelReleaseAndVersion = oldGetKernelReleaseAndVersion
+	}()
+	host.GetKernelReleaseAndVersion = func() (string, string, error) { return release, version, nil }
+	testVersions := []struct {
+		release   string
+		version   string
+		supported bool
+	}{
+		{
+			"4.1",
+			"",
+			false,
+		},
+		{
+			"4.4",
+			"",
+			true,
+		},
+		{
+			"4.4-custom",
+			"",
+			true,
+		},
+		{
+			"4.4.127",
+			"",
+			true,
+		},
+		{
+			"4.4.0-119-generic",
+			"#143-Ubuntu SMP Mon Apr 2 16:08:24 UTC 2018",
+			false,
+		},
+		{
+			"4.4.0-127-generic",
+			"#153-Ubuntu SMP Sat May 19 10:58:46 UTC 2018",
+			true,
+		},
+		{
+			"4.4.0-116-generic",
+			"#140-Ubuntu SMP Mon Feb 12 21:23:04 UTC 2018",
+			true,
+		},
+		{
+			"4.13.0-38-generic",
+			"#43-Ubuntu SMP Wed Mar 14 15:20:44 UTC 2018",
+			true,
+		},
+		{
+			"4.13.0-119-generic",
+			"#43-Ubuntu SMP Wed Apr 1 00:00:00 UTC 2018",
+			true,
+		},
+		{
+			"4.9.0-6-amd64",
+			"#1 SMP Debian 4.9.82-1+deb9u3 (2018-03-02)",
+			true,
+		},
+	}
+	for _, tv := range testVersions {
+		release = tv.release
+		version = tv.version
+		err := isKernelSupported()
+		if tv.supported && err != nil {
+			t.Errorf("expected kernel release %q version %q to be supported but got error: %v", release, version, err)
+		}
+		if !tv.supported && err == nil {
+			t.Errorf("expected kernel release %q version %q to not be supported", release, version)
+		}
 	}
 }

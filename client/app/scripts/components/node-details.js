@@ -1,8 +1,10 @@
 import debug from 'debug';
 import React from 'react';
 import classNames from 'classnames';
+import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
+import { noop } from 'lodash';
 
 import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
@@ -19,8 +21,6 @@ import NodeDetailsInfo from './node-details/node-details-info';
 import NodeDetailsRelatives from './node-details/node-details-relatives';
 import NodeDetailsTable from './node-details/node-details-table';
 import Warning from './warning';
-import CloudFeature from './cloud-feature';
-import NodeDetailsImageStatus from './node-details/node-details-image-status';
 
 
 const log = debug('scope:node-details');
@@ -57,16 +57,16 @@ class NodeDetails extends React.Component {
       <div className="node-details-tools-wrapper">
         <div className="node-details-tools">
           {showSwitchTopology &&
-            <span
+            <i
               title={topologyTitle}
-              className="fa fa-long-arrow-left"
+              className="fa fa-long-arrow-alt-left"
               onClick={this.handleShowTopologyForNode}>
               <span>Show in <span>{this.props.topologyId.replace(/-/g, ' ')}</span></span>
-            </span>
+            </i>
           }
-          <span
+          <i
             title="Close details"
-            className="fa fa-close close-details"
+            className="fa fa-times close-details"
             onClick={this.handleClickClose}
           />
         </div>
@@ -80,7 +80,7 @@ class NodeDetails extends React.Component {
     // NOTE: If we start the fa-spin animation before the node details panel has been
     // mounted, the spinner is displayed blurred the whole time in Chrome (possibly
     // caused by a bug having to do with animating the details panel).
-    const spinnerClassName = classNames('fa fa-circle-o-notch', { 'fa-spin': this.props.mounted });
+    const spinnerClassName = classNames('fa fa-circle-notch', { 'fa-spin': this.props.mounted });
     const nodeColor = (node ?
       getNodeColorDark(node.get('rank'), label, node.get('pseudo')) :
       getNeutralColor());
@@ -130,9 +130,7 @@ class NodeDetails extends React.Component {
         </div>
         <div className="node-details-content">
           <p className="node-details-content-info">
-            <strong>{this.props.label}</strong> is not visible to Scope when it
-             is not communicating.
-            Details will become available here when it communicates again.
+            <strong>{this.props.label}</strong> not found!
           </p>
         </div>
         <Overlay faded={this.props.transitioning} />
@@ -249,14 +247,7 @@ class NodeDetails extends React.Component {
             return null;
           })}
 
-          <CloudFeature>
-            <NodeDetailsImageStatus
-              name={details.label}
-              metadata={details.metadata}
-              pseudo={details.pseudo}
-              topologyId={topologyId}
-            />
-          </CloudFeature>
+          {this.props.renderNodeDetailsExtras({ topologyId, details })}
         </div>
 
         <Overlay faded={this.props.transitioning} />
@@ -297,6 +288,14 @@ class NodeDetails extends React.Component {
     setDocumentTitle(this.props.details && this.props.details.label);
   }
 }
+
+NodeDetails.propTypes = {
+  renderNodeDetailsExtras: PropTypes.func,
+};
+
+NodeDetails.defaultProps = {
+  renderNodeDetailsExtras: noop,
+};
 
 function mapStateToProps(state, ownProps) {
   const currentTopologyId = state.get('currentTopologyId');

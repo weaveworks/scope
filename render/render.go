@@ -1,18 +1,24 @@
 package render
 
 import (
+	"context"
+
+	opentracing "github.com/opentracing/opentracing-go"
+	otlog "github.com/opentracing/opentracing-go/log"
+
 	"github.com/weaveworks/scope/report"
 )
 
 // MapFunc is anything which can take an arbitrary Node and
-// return a set of other Nodes.
+// return another Node.
 //
-// If the output is empty, the node shall be omitted from the rendered topology.
-type MapFunc func(report.Node) report.Nodes
+// If the output ID is blank, the node shall be omitted from the rendered topology.
+// (we chose not to return an extra bool because it adds clutter)
+type MapFunc func(report.Node) report.Node
 
 // Renderer is something that can render a report to a set of Nodes.
 type Renderer interface {
-	Render(report.Report) Nodes
+	Render(context.Context, report.Report) Nodes
 }
 
 // Nodes is the result of Rendering
@@ -47,8 +53,10 @@ func (ts Transformers) Transform(nodes Nodes) Nodes {
 }
 
 // Render renders the report and then transforms it
-func Render(rpt report.Report, renderer Renderer, transformer Transformer) Nodes {
-	return transformer.Transform(renderer.Render(rpt))
+func Render(ctx context.Context, rpt report.Report, renderer Renderer, transformer Transformer) Nodes {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Render:"+typeName(renderer))
+	defer span.Finish()
+	return transformer.Transform(renderer.Render(ctx, rpt))
 }
 
 // Reduce renderer is a Renderer which merges together the output of several
@@ -61,7 +69,9 @@ func MakeReduce(renderers ...Renderer) Renderer {
 }
 
 // Render produces a set of Nodes given a Report.
-func (r Reduce) Render(rpt report.Report) Nodes {
+func (r Reduce) Render(ctx context.Context, rpt report.Report) Nodes {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Reduce.Render")
+	defer span.Finish()
 	l := len(r)
 	switch l {
 	case 0:
@@ -71,7 +81,9 @@ func (r Reduce) Render(rpt report.Report) Nodes {
 	for _, renderer := range r {
 		renderer := renderer // Pike!!
 		go func() {
-			c <- renderer.Render(rpt)
+			span, ctx := opentracing.StartSpanFromContext(ctx, typeName(renderer))
+			c <- renderer.Render(ctx, rpt)
+			span.Finish()
 		}()
 	}
 	for ; l > 1; l-- {
@@ -97,46 +109,25 @@ func MakeMap(f MapFunc, r Renderer) Renderer {
 
 // Render transforms a set of Nodes produces by another Renderer.
 // using a map function
-func (m Map) Render(rpt report.Report) Nodes {
+func (m Map) Render(ctx context.Context, rpt report.Report) Nodes {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Map.Render:"+functionName(m.MapFunc))
+	defer span.Finish()
 	var (
-		input       = m.Renderer.Render(rpt)
-		output      = report.Nodes{}
-		mapped      = map[string]report.IDList{} // input node ID -> output node IDs
-		adjacencies = map[string]report.IDList{} // output node ID -> input node Adjacencies
+		input  = m.Renderer.Render(ctx, rpt)
+		output = newJoinResults(nil)
 	)
 
 	// Rewrite all the nodes according to the map function
 	for _, inRenderable := range input.Nodes {
-		for _, outRenderable := range m.MapFunc(inRenderable) {
-			if existing, ok := output[outRenderable.ID]; ok {
-				outRenderable = outRenderable.Merge(existing)
-			}
-
-			output[outRenderable.ID] = outRenderable
-			mapped[inRenderable.ID] = mapped[inRenderable.ID].Add(outRenderable.ID)
-			adjacencies[outRenderable.ID] = adjacencies[outRenderable.ID].Merge(inRenderable.Adjacency)
+		outRenderable := m.MapFunc(inRenderable)
+		if outRenderable.ID != "" {
+			output.add(inRenderable.ID, outRenderable)
 		}
 	}
+	span.LogFields(otlog.Int("input.nodes", len(input.Nodes)),
+		otlog.Int("ouput.nodes", len(output.nodes)))
 
-	// Rewrite Adjacency for new node IDs.
-	for outNodeID, inAdjacency := range adjacencies {
-		outAdjacency := report.MakeIDList()
-		for _, inAdjacent := range inAdjacency {
-			outAdjacency = outAdjacency.Merge(mapped[inAdjacent])
-		}
-		outNode := output[outNodeID]
-		outNode.Adjacency = outAdjacency
-		output[outNodeID] = outNode
-	}
-
-	return Nodes{Nodes: output}
-}
-
-func propagateLatest(key string, from, to report.Node) report.Node {
-	if value, timestamp, ok := from.Latest.LookupEntry(key); ok {
-		to.Latest = to.Latest.Set(key, timestamp, value)
-	}
-	return to
+	return output.result(input)
 }
 
 // Condition is a predecate over the entire report that can evaluate to true or false.
@@ -153,9 +144,9 @@ func ConditionalRenderer(c Condition, r Renderer) Renderer {
 	return conditionalRenderer{c, r}
 }
 
-func (cr conditionalRenderer) Render(rpt report.Report) Nodes {
+func (cr conditionalRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	if cr.Condition(rpt) {
-		return cr.Renderer.Render(rpt)
+		return cr.Renderer.Render(ctx, rpt)
 	}
 	return Nodes{}
 }
@@ -170,7 +161,8 @@ type joinResults struct {
 func newJoinResults(inputNodes report.Nodes) joinResults {
 	nodes := make(report.Nodes, len(inputNodes))
 	for id, n := range inputNodes {
-		n.Adjacency = nil // result() assumes all nodes start with no adjacencies
+		n.Adjacency = nil              // result() assumes all nodes start with no adjacencies
+		n.Children = n.Children.Copy() // so we can do unsafe adds
 		nodes[id] = n
 	}
 	return joinResults{nodes: nodes, mapped: map[string]string{}, multi: map[string][]string{}}
@@ -184,6 +176,16 @@ func (ret *joinResults) mapChild(from, to string) {
 	}
 }
 
+// Add m into the results as a top-level node, mapped from original ID
+// Note it is not safe to mix calls to add() with addChild(), addChildAndChildren() or addUnmappedChild()
+func (ret *joinResults) add(from string, m report.Node) {
+	if existing, ok := ret.nodes[m.ID]; ok {
+		m = m.Merge(existing)
+	}
+	ret.nodes[m.ID] = m
+	ret.mapChild(from, m.ID)
+}
+
 // Add m as a child of the node at id, creating a new result node in
 // the specified topology if not already there.
 func (ret *joinResults) addUnmappedChild(m report.Node, id string, topology string) {
@@ -191,7 +193,7 @@ func (ret *joinResults) addUnmappedChild(m report.Node, id string, topology stri
 	if !exists {
 		result = report.MakeNode(id).WithTopology(topology)
 	}
-	result.Children = result.Children.Add(m)
+	result.Children.UnsafeAdd(m)
 	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
 		result.Counters = result.Counters.Add(m.Topology, 1)
 	}
@@ -210,7 +212,7 @@ func (ret *joinResults) addChild(m report.Node, id string, topology string) {
 func (ret *joinResults) addChildAndChildren(m report.Node, id string, topology string) {
 	ret.addUnmappedChild(m, id, topology)
 	result := ret.nodes[id]
-	result.Children = result.Children.Merge(m.Children)
+	result.Children.UnsafeMerge(m.Children)
 	ret.nodes[id] = result
 	ret.mapChild(m.ID, id)
 }
@@ -219,6 +221,7 @@ func (ret *joinResults) addChildAndChildren(m report.Node, id string, topology s
 func (ret *joinResults) passThrough(n report.Node) {
 	n.Adjacency = nil // result() assumes all nodes start with no adjacencies
 	ret.nodes[n.ID] = n
+	n.Children = n.Children.Copy() // so we can do unsafe adds
 	ret.mapChild(n.ID, n.ID)
 }
 
