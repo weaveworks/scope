@@ -2,6 +2,7 @@ package render
 
 import (
 	"context"
+	"strings"
 
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
@@ -53,17 +54,21 @@ type podToVolumesRenderer struct{}
 func (v podToVolumesRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for podID, podNode := range rpt.Pod.Nodes {
-		ClaimName, found := podNode.Latest.Lookup(kubernetes.VolumeClaim)
+		claimNames, found := podNode.Latest.Lookup(kubernetes.VolumeClaim)
 		if !found {
 			continue
 		}
 		podNamespace, _ := podNode.Latest.Lookup(kubernetes.Namespace)
-		for _, pvcNode := range rpt.PersistentVolumeClaim.Nodes {
-			pvcName, _ := pvcNode.Latest.Lookup(kubernetes.Name)
-			pvcNamespace, _ := pvcNode.Latest.Lookup(kubernetes.Namespace)
-			if (pvcName == ClaimName) && (podNamespace == pvcNamespace) {
-				podNode.Adjacency = podNode.Adjacency.Add(pvcNode.ID)
-				podNode.Children = podNode.Children.Add(pvcNode)
+		claimNameList := strings.Split(claimNames, report.ScopeDelim)
+		for _, ClaimName := range claimNameList {
+			for _, pvcNode := range rpt.PersistentVolumeClaim.Nodes {
+				pvcName, _ := pvcNode.Latest.Lookup(kubernetes.Name)
+				pvcNamespace, _ := pvcNode.Latest.Lookup(kubernetes.Namespace)
+				if (pvcName == ClaimName) && (podNamespace == pvcNamespace) {
+					podNode.Adjacency = podNode.Adjacency.Add(pvcNode.ID)
+					podNode.Children = podNode.Children.Add(pvcNode)
+					break
+				}
 			}
 		}
 		nodes[podID] = podNode

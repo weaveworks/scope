@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/weaveworks/scope/report"
 
@@ -29,6 +30,7 @@ type Pod interface {
 	GetNode(probeID string) report.Node
 	RestartCount() uint
 	ContainerNames() []string
+	VolumeClaimNames() []string
 }
 
 type pod struct {
@@ -75,15 +77,14 @@ func (p *pod) RestartCount() uint {
 	return count
 }
 
-func (p *pod) VolumeClaimName() string {
-	var claimName string
+func (p *pod) VolumeClaimNames() []string {
+	var claimNames []string
 	for _, volume := range p.Spec.Volumes {
 		if volume.VolumeSource.PersistentVolumeClaim != nil {
-			claimName = volume.VolumeSource.PersistentVolumeClaim.ClaimName
-			break
+			claimNames = append(claimNames, volume.VolumeSource.PersistentVolumeClaim.ClaimName)
 		}
 	}
-	return claimName
+	return claimNames
 }
 
 func (p *pod) GetNode(probeID string) report.Node {
@@ -94,8 +95,10 @@ func (p *pod) GetNode(probeID string) report.Node {
 		RestartCount:          strconv.FormatUint(uint64(p.RestartCount()), 10),
 	}
 
-	if p.VolumeClaimName() != "" {
-		latests[VolumeClaim] = p.VolumeClaimName()
+	if len(p.VolumeClaimNames()) > 0 {
+		// PVC name consist of lower case alphanumeric characters, "-" or "."
+		// and must start and end with an alphanumeric character.
+		latests[VolumeClaim] = strings.Join(p.VolumeClaimNames(), report.ScopeDelim)
 	}
 
 	if p.Pod.Spec.HostNetwork {
