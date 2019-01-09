@@ -14,9 +14,9 @@ const log = debug('scope:nodes-chart');
 
 const layoutOptionsSelector = createStructuredSelector({
   forceRelayout: state => state.get('forceRelayout'),
+  height: canvasHeightSelector,
   topologyId: state => state.get('currentTopologyId'),
   topologyOptions: activeTopologyOptionsSelector,
-  height: canvasHeightSelector,
   width: canvasWidthSelector,
 });
 
@@ -43,8 +43,8 @@ const graphLayoutSelector = createSelector(
     // If the graph is empty, skip computing the layout.
     if (nodes.size === 0) {
       return {
-        nodes: makeMap(),
         edges: makeMap(),
+        nodes: makeMap(),
       };
     }
 

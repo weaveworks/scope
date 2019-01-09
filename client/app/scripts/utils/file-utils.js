@@ -3,15 +3,15 @@ import { each } from 'lodash';
 
 const doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
 const prefix = {
-  xmlns: 'http://www.w3.org/2000/xmlns/',
+  svg: 'http://www.w3.org/2000/svg',
   xlink: 'http://www.w3.org/1999/xlink',
-  svg: 'http://www.w3.org/2000/svg'
+  xmlns: 'http://www.w3.org/2000/xmlns/'
 };
 const cssSkipValues = {
-  auto: true,
   '0px 0px': true,
-  visible: true,
-  pointer: true
+  auto: true,
+  pointer: true,
+  visible: true
 };
 
 function setInlineStyles(svg, target, emptySvgDeclarationComputed) {

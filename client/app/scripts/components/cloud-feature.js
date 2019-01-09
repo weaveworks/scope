@@ -27,14 +27,14 @@ class CloudFeature extends React.Component {
 }
 
 CloudFeature.contextTypes = {
-  store: PropTypes.object.isRequired,
   router: PropTypes.object,
-  serviceStore: PropTypes.object
+  serviceStore: PropTypes.object,
+  store: PropTypes.object.isRequired
 };
 
 CloudFeature.childContextTypes = {
-  store: PropTypes.object,
-  router: PropTypes.object
+  router: PropTypes.object,
+  store: PropTypes.object
 };
 
 export default connect()(CloudFeature);

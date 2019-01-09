@@ -17,7 +17,7 @@ export const nodeNetworksSelector = createMapSelector(
     const networkValues = networks.has('value') ? networks.get('value').split(', ') : [];
 
     return fromJS(networkValues.map(network => ({
-      id: network, label: network, colorKey: network
+      colorKey: network, id: network, label: network
     })));
   }
 );

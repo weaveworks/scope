@@ -49,8 +49,8 @@ class DetailsCard extends React.Component {
       }
     }
     const style = {
-      transform,
       left: showingTerminal ? MARGINS.right : null,
+      transform,
       width: showingTerminal ? null : WIDTH
     };
     return (

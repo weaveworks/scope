@@ -42,8 +42,8 @@ const transformedDimensions = (props) => {
 
   // Update the horizontal transform with trimmed values.
   return {
-    width: xEnd - xStart,
     height,
+    width: xEnd - xStart,
     x: xStart,
     y,
   };
@@ -87,10 +87,10 @@ class NodeResourcesMetricBox extends React.Component {
     } = this.state;
     const translateY = height * (1 - relativeHeight);
     return {
-      transform: `translate(0, ${translateY})`,
+      height: height * relativeHeight,
       opacity: this.props.contrastMode ? 1 : 0.85,
       stroke: this.props.contrastMode ? 'black' : 'white',
-      height: height * relativeHeight,
+      transform: `translate(0, ${translateY})`,
       width,
       x,
       y,

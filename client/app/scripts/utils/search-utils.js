@@ -12,8 +12,8 @@ const SEARCH_FIELDS = makeMap({
 
 const COMPARISONS = makeMap({
   '<': 'lt',
-  '>': 'gt',
-  '=': 'eq'
+  '=': 'eq',
+  '>': 'gt'
 });
 const COMPARISONS_REGEX = new RegExp(`[${COMPARISONS.keySeq().toJS().join('')}]`);
 
@@ -75,7 +75,7 @@ function findNodeMatch(nodeMatches, keyPath, text, query, prefix, label, truncat
       nodeMatches = nodeMatches.setIn(
         keyPath,
         {
-          text, label, start: index, length: firstMatch.length, truncate
+          label, length: firstMatch.length, start: index, text, truncate
         }
       );
     }
@@ -227,8 +227,8 @@ export function parseQuery(query) {
       query = prefixQuery[1].trim();
       if (prefix && query) {
         return {
-          query,
-          prefix
+          prefix,
+          query
         };
       }
     } else if (COMPARISONS_REGEX.test(query)) {
@@ -241,9 +241,9 @@ export function parseQuery(query) {
           const metric = comparisonQuery[0].trim();
           if (!window.isNaN(value) && metric) {
             comparison = {
+              comp,
               metric,
-              value,
-              comp
+              value
             };
             return false; // dont look further
           }
@@ -329,8 +329,8 @@ export const testable = {
   applyPinnedSearches,
   findNodeMatch,
   findNodeMatchMetric,
-  matchPrefix,
   makeRegExp,
+  matchPrefix,
   parseQuery,
   parseValue,
   searchTopology,

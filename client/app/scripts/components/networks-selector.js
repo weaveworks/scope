@@ -52,8 +52,8 @@ class NetworkSelector extends React.Component {
 function mapStateToProps(state) {
   return {
     availableNetworks: availableNetworksSelector(state),
-    showingNetworks: state.get('showingNetworks'),
-    pinnedNetwork: state.get('pinnedNetwork')
+    pinnedNetwork: state.get('pinnedNetwork'),
+    showingNetworks: state.get('showingNetworks')
   };
 }
 

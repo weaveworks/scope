@@ -57,12 +57,12 @@ class NetworkSelectorItem extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    selectedNetwork: state.get('selectedNetwork'),
-    pinnedNetwork: state.get('pinnedNetwork')
+    pinnedNetwork: state.get('pinnedNetwork'),
+    selectedNetwork: state.get('selectedNetwork')
   };
 }
 
 export default connect(
   mapStateToProps,
-  { selectNetwork, pinNetwork, unpinNetwork }
+  { pinNetwork, selectNetwork, unpinNetwork }
 )(NetworkSelectorItem);

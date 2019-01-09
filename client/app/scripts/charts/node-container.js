@@ -24,8 +24,8 @@ class NodeContainer extends React.Component {
     ev.stopPropagation();
     trackAnalyticsEvent('scope.node.click', {
       layout: GRAPH_VIEW_MODE,
-      topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
+      topologyId: this.props.currentTopology.get('id'),
     });
     this.props.clickNode(nodeId, this.props.label, this.ref.getBoundingClientRect());
   };
@@ -90,11 +90,11 @@ class NodeContainer extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    searchTerms: [state.get('searchQuery')],
-    exportingGraph: state.get('exportingGraph'),
-    showingNetworks: state.get('showingNetworks'),
-    currentTopology: state.get('currentTopology'),
     contrastMode: state.get('contrastMode'),
+    currentTopology: state.get('currentTopology'),
+    exportingGraph: state.get('exportingGraph'),
+    searchTerms: [state.get('searchQuery')],
+    showingNetworks: state.get('showingNetworks'),
   };
 }
 

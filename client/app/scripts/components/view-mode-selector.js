@@ -55,15 +55,15 @@ class ViewModeSelector extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    isResourceViewMode: isResourceViewModeSelector(state),
+    currentTopology: state.get('currentTopology'),
     hasResourceView: resourceViewAvailableSelector(state),
+    isResourceViewMode: isResourceViewModeSelector(state),
     showingMetricsSelector: availableMetricsSelector(state).count() > 0,
     topologyViewMode: state.get('topologyViewMode'),
-    currentTopology: state.get('currentTopology'),
   };
 }
 
 export default connect(
   mapStateToProps,
-  { setGraphView, setTableView, setResourceView }
+  { setGraphView, setResourceView, setTableView }
 )(ViewModeSelector);

@@ -87,19 +87,19 @@ export function getUrlState(state) {
   );
 
   const urlState = {
+    contrastMode: state.get('contrastMode'),
     controlPipe: cp ? cp.toJS() : null,
+    gridSortedBy: state.get('gridSortedBy'),
+    gridSortedDesc: state.get('gridSortedDesc'),
     nodeDetails: nodeDetails.toJS(),
     pausedAt: state.get('pausedAt'),
-    topologyViewMode: state.get('topologyViewMode'),
     pinnedMetricType: state.get('pinnedMetricType'),
     pinnedSearches: state.get('pinnedSearches').toJS(),
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId'),
-    gridSortedBy: state.get('gridSortedBy'),
-    gridSortedDesc: state.get('gridSortedDesc'),
     topologyId: state.get('currentTopologyId'),
     topologyOptions: topologyOptionsDiff,
-    contrastMode: state.get('contrastMode'),
+    topologyViewMode: state.get('topologyViewMode'),
   };
 
   if (state.get('showingNetworks')) {

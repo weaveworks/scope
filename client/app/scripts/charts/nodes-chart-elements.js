@@ -247,7 +247,7 @@ class NodesChartElements extends React.Component {
     const orderedElements = makeList([
       edges.get(BLURRED_EDGES_LAYER, makeList()),
       nodes.get(BLURRED_NODES_LAYER, makeList()),
-      fromJS([{ isOverlay: true, isActive: !!nodes.get(BLURRED_NODES_LAYER) }]),
+      fromJS([{ isActive: !!nodes.get(BLURRED_NODES_LAYER), isOverlay: true }]),
       edges.get(NORMAL_EDGES_LAYER, makeList()),
       nodes.get(NORMAL_NODES_LAYER, makeList()),
       edges.get(HIGHLIGHTED_EDGES_LAYER, makeList()),
@@ -267,24 +267,24 @@ class NodesChartElements extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    contrastMode: state.get('contrastMode'),
     hasSelectedNode: hasSelectedNodeFn(state),
-    layoutNodes: layoutNodesSelector(state),
-    layoutEdges: layoutEdgesSelector(state),
-    isAnimated: !graphExceedsComplexityThreshSelector(state),
-    highlightedNodeIds: highlightedNodeIdsSelector(state),
     highlightedEdgeIds: highlightedEdgeIdsSelector(state),
-    selectedNetworkNodesIds: selectedNetworkNodesIdsSelector(state),
-    searchNodeMatches: searchNodeMatchesSelector(state),
+    highlightedNodeIds: highlightedNodeIdsSelector(state),
+    isAnimated: !graphExceedsComplexityThreshSelector(state),
+    layoutEdges: layoutEdgesSelector(state),
+    layoutNodes: layoutNodesSelector(state),
+    mouseOverEdgeId: state.get('mouseOverEdgeId'),
+    mouseOverNodeId: state.get('mouseOverNodeId'),
     neighborsOfSelectedNode: getAdjacentNodes(state),
-    nodeNetworks: nodeNetworksSelector(state),
     nodeMetric: nodeMetricSelector(state),
-    selectedScale: selectedScaleSelector(state),
+    nodeNetworks: nodeNetworksSelector(state),
+    searchNodeMatches: searchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNetwork: state.get('selectedNetwork'),
+    selectedNetworkNodesIds: selectedNetworkNodesIdsSelector(state),
     selectedNodeId: state.get('selectedNodeId'),
-    mouseOverNodeId: state.get('mouseOverNodeId'),
-    mouseOverEdgeId: state.get('mouseOverEdgeId'),
-    contrastMode: state.get('contrastMode'),
+    selectedScale: selectedScaleSelector(state),
   };
 }
 

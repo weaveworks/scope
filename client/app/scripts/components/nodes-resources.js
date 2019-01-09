@@ -55,8 +55,8 @@ class NodesResources extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    selectedNodeId: state.get('selectedNodeId'),
     layersTopologyIds: layersTopologyIdsSelector(state),
+    selectedNodeId: state.get('selectedNodeId'),
   };
 }
 

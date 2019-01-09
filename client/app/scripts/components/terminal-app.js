@@ -18,9 +18,9 @@ class TerminalApp extends React.Component {
     );
 
     this.state = {
+      statusBarColor: params.statusBarColor,
       title: params.title,
-      titleBarColor: params.titleBarColor,
-      statusBarColor: params.statusBarColor
+      titleBarColor: params.titleBarColor
     };
 
     this.onKeyUp = this.onKeyUp.bind(this);
@@ -70,5 +70,5 @@ function mapStateToProps(state) {
 
 export default connect(
   mapStateToProps,
-  { receiveControlPipeFromParams, hitEsc }
+  { hitEsc, receiveControlPipeFromParams }
 )(TerminalApp);

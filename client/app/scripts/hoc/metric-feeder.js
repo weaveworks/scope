@@ -22,7 +22,7 @@ const WINDOW_LENGTH = 60;
  * Samples have to be of type `[{date: String, value: Number}, ...]`.
  * This component also keeps a historic max of all samples it sees over time.
  */
-export default ComposedComponent => class extends React.Component {
+export default ComposedComponent => (class extends React.Component {
   constructor(props, context) {
     super(props, context);
 
@@ -140,7 +140,7 @@ export default ComposedComponent => class extends React.Component {
 
     const dateFilter = d => d.date > movingFirstDate && d.date <= movingLastDate;
     const samples = buffer
-      .map((v, k) => ({value: v, date: +parseDate(k)}))
+      .map((v, k) => ({date: +parseDate(k), value: v}))
       .toIndexedSeq()
       .toJS()
       .filter(dateFilter);
@@ -149,11 +149,11 @@ export default ComposedComponent => class extends React.Component {
     const slidingWindow = {
       first: movingFirstDate,
       last: movingLastDate,
-      value: lastValue,
+      max,
       samples,
-      max
+      value: lastValue
     };
 
     return <ComposedComponent {...this.props} {...slidingWindow} />;
   }
-};
+});

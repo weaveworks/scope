@@ -4,9 +4,9 @@ import { GRAPH_VIEW_MODE, RESOURCE_VIEW_MODE } from './naming';
 export const DETAILS_PANEL_WIDTH = 420;
 export const DETAILS_PANEL_OFFSET = 8;
 export const DETAILS_PANEL_MARGINS = {
-  top: 24,
   bottom: 48,
-  right: 36
+  right: 36,
+  top: 24
 };
 
 // Resource view
@@ -52,54 +52,55 @@ export const EDGE_WAYPOINTS_CAP = 10;
 
 export const CANVAS_MARGINS = {
   [GRAPH_VIEW_MODE]: {
-    top: 220, left: 80, right: 80, bottom: 150
+    bottom: 150, left: 80, right: 80, top: 220
   },
   [RESOURCE_VIEW_MODE]: {
-    top: 200, left: 210, right: 40, bottom: 150
+    bottom: 150, left: 210, right: 40, top: 200
   },
 };
 
 // Node details table constants
 export const NODE_DETAILS_TABLE_CW = {
-  XS: '32px',
+  L: '85px',
+  M: '70px',
   // 6 chars wide with our current font choices, (pids can be 6, ports only 5).
   S: '56px',
-  M: '70px',
-  L: '85px',
   XL: '120px',
+  XS: '32px',
   XXL: '140px',
   XXXL: '170px',
 };
 
 export const NODE_DETAILS_TABLE_COLUMN_WIDTHS = {
-  count: NODE_DETAILS_TABLE_CW.XS,
   container: NODE_DETAILS_TABLE_CW.XS,
+  count: NODE_DETAILS_TABLE_CW.XS,
   docker_container_created: NODE_DETAILS_TABLE_CW.XXXL,
   docker_container_restart_count: NODE_DETAILS_TABLE_CW.M,
   docker_container_state_human: NODE_DETAILS_TABLE_CW.XXXL,
   docker_container_uptime: NODE_DETAILS_TABLE_CW.L,
   docker_cpu_total_usage: NODE_DETAILS_TABLE_CW.M,
   docker_memory_usage: NODE_DETAILS_TABLE_CW.M,
-  open_files_count: NODE_DETAILS_TABLE_CW.M,
-  pid: NODE_DETAILS_TABLE_CW.S,
-  port: NODE_DETAILS_TABLE_CW.S,
-  ppid: NODE_DETAILS_TABLE_CW.M, // Label "Parent PID" needs more space
-  process_cpu_usage_percent: NODE_DETAILS_TABLE_CW.M,
-  process_memory_usage_bytes: NODE_DETAILS_TABLE_CW.M,
-  threads: NODE_DETAILS_TABLE_CW.M,
-
   // e.g. details panel > pods
   kubernetes_ip: NODE_DETAILS_TABLE_CW.XL,
   kubernetes_state: NODE_DETAILS_TABLE_CW.M,
+  open_files_count: NODE_DETAILS_TABLE_CW.M,
+  pid: NODE_DETAILS_TABLE_CW.S,
+  port: NODE_DETAILS_TABLE_CW.S,
+  // Label "Parent PID" needs more space
+  ppid: NODE_DETAILS_TABLE_CW.M,
+  process_cpu_usage_percent: NODE_DETAILS_TABLE_CW.M,
+
+  process_memory_usage_bytes: NODE_DETAILS_TABLE_CW.M,
+  threads: NODE_DETAILS_TABLE_CW.M,
 
   // weave connections
   weave_connection_connection: NODE_DETAILS_TABLE_CW.XXL,
-  weave_connection_state: NODE_DETAILS_TABLE_CW.L,
   weave_connection_info: NODE_DETAILS_TABLE_CW.XL,
+  weave_connection_state: NODE_DETAILS_TABLE_CW.L,
 };
 
 export const NODE_DETAILS_TABLE_XS_LABEL = {
-  count: '#',
   // TODO: consider changing the name of this field on the BE
   container: '#',
+  count: '#',
 };

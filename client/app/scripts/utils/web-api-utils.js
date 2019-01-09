@@ -213,14 +213,14 @@ function getNodesOnce(getState, dispatch) {
   const optionsQuery = buildUrlQuery(topologyOptions, state);
   const url = `${getApiPath()}${topologyUrl}?${optionsQuery}`;
   doRequest({
-    url,
-    success: (res) => {
-      dispatch(receiveNodes(res.nodes));
-    },
     error: (req) => {
       log(`Error in nodes request: ${req.responseText}`);
       dispatch(receiveError(url));
-    }
+    },
+    success: (res) => {
+      dispatch(receiveNodes(res.nodes));
+    },
+    url
   });
 }
 
@@ -249,15 +249,6 @@ function pollTopologies(getState, dispatch, initialPoll = false) {
   // NOTE: getState is called every time to make sure the up-to-date state is used.
   const url = topologiesUrl(getState());
   doRequest({
-    url,
-    success: (res) => {
-      if (continuePolling && !isPausedSelector(getState())) {
-        dispatch(receiveTopologies(res));
-        topologyTimer = setTimeout(() => {
-          pollTopologies(getState, dispatch);
-        }, TOPOLOGY_REFRESH_INTERVAL);
-      }
-    },
     error: (req) => {
       log(`Error in topology request: ${req.responseText}`);
       dispatch(receiveError(url));
@@ -267,21 +258,30 @@ function pollTopologies(getState, dispatch, initialPoll = false) {
           pollTopologies(getState, dispatch);
         }, TOPOLOGY_REFRESH_INTERVAL);
       }
-    }
+    },
+    success: (res) => {
+      if (continuePolling && !isPausedSelector(getState())) {
+        dispatch(receiveTopologies(res));
+        topologyTimer = setTimeout(() => {
+          pollTopologies(getState, dispatch);
+        }, TOPOLOGY_REFRESH_INTERVAL);
+      }
+    },
+    url
   });
 }
 
 function getTopologiesOnce(getState, dispatch) {
   const url = topologiesUrl(getState());
   doRequest({
-    url,
-    success: (res) => {
-      dispatch(receiveTopologies(res));
-    },
     error: (req) => {
       log(`Error in topology request: ${req.responseText}`);
       dispatch(receiveError(url));
-    }
+    },
+    success: (res) => {
+      dispatch(receiveTopologies(res));
+    },
+    url
   });
 }
 
@@ -323,13 +323,6 @@ export function getNodeDetails(getState, dispatch) {
     const url = urlComponents.join('');
 
     doRequest({
-      url,
-      success: (res) => {
-        // make sure node is still selected
-        if (nodeMap.has(res.node.id)) {
-          dispatch(receiveNodeDetails(res.node, requestTimestamp));
-        }
-      },
       error: (err) => {
         log(`Error in node details request: ${err.responseText}`);
         // dont treat missing node as error
@@ -338,7 +331,14 @@ export function getNodeDetails(getState, dispatch) {
         } else {
           dispatch(receiveError(topologyUrl));
         }
-      }
+      },
+      success: (res) => {
+        // make sure node is still selected
+        if (nodeMap.has(res.node.id)) {
+          dispatch(receiveNodeDetails(res.node, requestTimestamp));
+        }
+      },
+      url
     });
   } else if (obj) {
     log('No details or url found for ', obj);
@@ -366,15 +366,6 @@ export function getApiDetails(dispatch) {
   clearTimeout(apiDetailsTimer);
   const url = `${getApiPath()}/api`;
   doRequest({
-    url,
-    success: (res) => {
-      dispatch(receiveApiDetails(res));
-      if (continuePolling) {
-        apiDetailsTimer = setTimeout(() => {
-          getApiDetails(dispatch);
-        }, API_REFRESH_INTERVAL);
-      }
-    },
     error: (req) => {
       log(`Error in api details request: ${req.responseText}`);
       receiveError(url);
@@ -383,7 +374,16 @@ export function getApiDetails(dispatch) {
           getApiDetails(dispatch);
         }, API_REFRESH_INTERVAL / 2);
       }
-    }
+    },
+    success: (res) => {
+      dispatch(receiveApiDetails(res));
+      if (continuePolling) {
+        apiDetailsTimer = setTimeout(() => {
+          getApiDetails(dispatch);
+        }, API_REFRESH_INTERVAL);
+      }
+    },
+    url
   });
 }
 
@@ -392,15 +392,20 @@ export function doControlRequest(nodeId, control, dispatch) {
   const url = `${getApiPath()}/api/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
   doRequest({
+    error: (err) => {
+      dispatch(receiveControlError(nodeId, err.response));
+      controlErrorTimer = setTimeout(() => {
+        dispatch(clearControlError(nodeId));
+      }, 10000);
+    },
     method: 'POST',
-    url,
     success: (res) => {
       dispatch(receiveControlSuccess(nodeId));
       if (res) {
         if (res.pipe) {
           dispatch(blurSearch());
           const resizeTtyControl = res.resize_tty_control &&
-            {id: res.resize_tty_control, probeId: control.probeId, nodeId: control.nodeId};
+            {id: res.resize_tty_control, nodeId: control.nodeId, probeId: control.probeId};
           dispatch(receiveControlPipe(
             res.pipe,
             nodeId,
@@ -414,12 +419,7 @@ export function doControlRequest(nodeId, control, dispatch) {
         }
       }
     },
-    error: (err) => {
-      dispatch(receiveControlError(nodeId, err.response));
-      controlErrorTimer = setTimeout(() => {
-        dispatch(clearControlError(nodeId));
-      }, 10000);
-    }
+    url
   });
 }
 
@@ -429,9 +429,9 @@ export function doResizeTty(pipeId, control, cols, rows) {
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
 
   return doRequest({
+    data: JSON.stringify({height: rows.toString(), pipeID: pipeId, width: cols.toString()}),
     method: 'POST',
     url,
-    data: JSON.stringify({pipeID: pipeId, width: cols.toString(), height: rows.toString()}),
   })
     .fail((err) => {
       log(`Error resizing pipe: ${err}`);
@@ -442,15 +442,15 @@ export function doResizeTty(pipeId, control, cols, rows) {
 export function deletePipe(pipeId, dispatch) {
   const url = `${getApiPath()}/api/pipe/${encodeURIComponent(pipeId)}`;
   doRequest({
-    method: 'DELETE',
-    url,
-    success: () => {
-      log('Closed the pipe!');
-    },
     error: (err) => {
       log(`Error closing pipe:${err}`);
       dispatch(receiveError(url));
-    }
+    },
+    method: 'DELETE',
+    success: () => {
+      log('Closed the pipe!');
+    },
+    url
   });
 }
 
@@ -458,8 +458,6 @@ export function deletePipe(pipeId, dispatch) {
 export function getPipeStatus(pipeId, dispatch) {
   const url = `${getApiPath()}/api/pipe/${encodeURIComponent(pipeId)}/check`;
   doRequest({
-    method: 'GET',
-    url,
     complete: (res) => {
       const status = {
         204: 'PIPE_ALIVE',
@@ -472,7 +470,9 @@ export function getPipeStatus(pipeId, dispatch) {
       }
 
       dispatch(receiveControlPipeStatus(pipeId, status));
-    }
+    },
+    method: 'GET',
+    url
   });
 }
 

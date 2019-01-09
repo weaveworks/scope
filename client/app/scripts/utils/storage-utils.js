@@ -3,16 +3,16 @@ import debug from 'debug';
 const log = debug('scope:storage-utils');
 
 export const localSessionStorage = {
+  clear() {
+    window.sessionStorage.clear();
+    window.localStorage.clear();
+  },
   getItem(k) {
     return window.sessionStorage.getItem(k) || window.localStorage.getItem(k);
   },
   setItem(k, v) {
     window.sessionStorage.setItem(k, v);
     window.localStorage.setItem(k, v);
-  },
-  clear() {
-    window.sessionStorage.clear();
-    window.localStorage.clear();
   }
 };
 

@@ -20,11 +20,11 @@ class TopologyOptions extends React.Component {
 
   trackOptionClick(optionId, nextOptions) {
     trackAnalyticsEvent('scope.topology.option.click', {
-      optionId,
-      value: nextOptions,
       layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
+      optionId,
       parentTopologyId: this.props.currentTopology.get('parentId'),
+      topologyId: this.props.currentTopology.get('id'),
+      value: nextOptions,
     });
   }
 
@@ -95,8 +95,8 @@ class TopologyOptions extends React.Component {
     }
 
     const noneItem = makeMap({
-      value: '',
-      label: option.get('noneLabel')
+      label: option.get('noneLabel'),
+      value: ''
     });
     return (
       <div className="topology-option" key={optionId}>
@@ -137,11 +137,11 @@ class TopologyOptions extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    options: getCurrentTopologyOptions(state),
-    topologyViewMode: state.get('topologyViewMode'),
+    activeOptions: activeTopologyOptionsSelector(state),
     currentTopology: state.get('currentTopology'),
     currentTopologyId: state.get('currentTopologyId'),
-    activeOptions: activeTopologyOptionsSelector(state)
+    options: getCurrentTopologyOptions(state),
+    topologyViewMode: state.get('topologyViewMode')
   };
 }
 

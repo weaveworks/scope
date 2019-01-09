@@ -80,15 +80,15 @@ class Nodes extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    currentTopology: state.get('currentTopology'),
     isGraphViewMode: isGraphViewModeSelector(state),
-    isTableViewMode: isTableViewModeSelector(state),
     isResourceViewMode: isResourceViewModeSelector(state),
-    topologyNodeCountZero: isTopologyNodeCountZero(state),
+    isTableViewMode: isTableViewModeSelector(state),
     nodesDisplayEmpty: isNodesDisplayEmpty(state),
     nodesLoaded: nodesLoadedSelector(state),
-    currentTopology: state.get('currentTopology'),
     topologies: state.get('topologies'),
     topologiesLoaded: state.get('topologiesLoaded'),
+    topologyNodeCountZero: isTopologyNodeCountZero(state),
   };
 }
 

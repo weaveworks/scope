@@ -247,7 +247,7 @@ class NodeDetails extends React.Component {
             return null;
           })}
 
-          {this.props.renderNodeDetailsExtras({ topologyId, details })}
+          {this.props.renderNodeDetailsExtras({ details, topologyId })}
         </div>
 
         <Overlay faded={this.props.transitioning} />
@@ -300,10 +300,10 @@ NodeDetails.defaultProps = {
 function mapStateToProps(state, ownProps) {
   const currentTopologyId = state.get('currentTopologyId');
   return {
-    transitioning: state.get('pausedAt') !== ownProps.timestamp,
     nodeMatches: state.getIn(['searchNodeMatches', currentTopologyId, ownProps.id]),
     nodes: state.get('nodes'),
     selectedNodeId: state.get('selectedNodeId'),
+    transitioning: state.get('pausedAt') !== ownProps.timestamp,
   };
 }
 

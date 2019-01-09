@@ -16,8 +16,8 @@ const BACKEND_HOST = process.env.BACKEND_HOST || 'localhost';
 */
 
 const backendProxy = httpProxy.createProxy({
-  ws: true,
   target: `http://${BACKEND_HOST}:4040`,
+  ws: true,
 });
 backendProxy.on('error', err => console.error('Proxy error', err));
 app.all('/api*', backendProxy.web.bind(backendProxy));
@@ -49,10 +49,8 @@ if (process.env.NODE_ENV !== 'production') {
   const compiler = webpack(config);
 
   app.use(webpackMiddleware(compiler, {
-    // required
-    publicPath: config.output.publicPath,
-    // options
     noInfo: true,
+    publicPath: config.output.publicPath, // required
     stats: 'errors-only',
   }));
 

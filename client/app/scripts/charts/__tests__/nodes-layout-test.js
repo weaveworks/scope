@@ -25,32 +25,55 @@ describe('NodesLayout', () => {
 
   const nodeSets = {
     initial4: {
+      edges: fromJS({
+        [edge('n1', 'n3')]: {id: edge('n1', 'n3'), source: 'n1', target: 'n3'},
+        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'},
+        [edge('n2', 'n4')]: {id: edge('n2', 'n4'), source: 'n2', target: 'n4'}
+      }),
       nodes: fromJS({
         n1: {id: 'n1'},
         n2: {id: 'n2'},
         n3: {id: 'n3'},
         n4: {id: 'n4'}
-      }),
+      })
+    },
+    layoutProps: {
+      edges: fromJS({}),
+      nodes: fromJS({
+        n1: {
+          id: 'n1', label: 'lold', labelMinor: 'lmold', rank: 'rold'
+        },
+      })
+    },
+    layoutProps2: {
+      edges: fromJS({}),
+      nodes: fromJS({
+        n1: {
+          id: 'n1', label: 'lnew', labelMinor: 'lmnew', rank: 'rnew', x: 111, y: 109
+        },
+      })
+    },
+    rank4: {
       edges: fromJS({
         [edge('n1', 'n3')]: {id: edge('n1', 'n3'), source: 'n1', target: 'n3'},
         [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'},
         [edge('n2', 'n4')]: {id: edge('n2', 'n4'), source: 'n2', target: 'n4'}
-      })
-    },
-    rank4: {
+      }),
       nodes: fromJS({
         n1: {id: 'n1', rank: 'A'},
         n2: {id: 'n2', rank: 'A'},
         n3: {id: 'n3', rank: 'B'},
         n4: {id: 'n4', rank: 'B'}
-      }),
-      edges: fromJS({
-        [edge('n1', 'n3')]: {id: edge('n1', 'n3'), source: 'n1', target: 'n3'},
-        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'},
-        [edge('n2', 'n4')]: {id: edge('n2', 'n4'), source: 'n2', target: 'n4'}
       })
     },
     rank6: {
+      edges: fromJS({
+        [edge('n1', 'n3')]: {id: edge('n1', 'n3'), source: 'n1', target: 'n3'},
+        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'},
+        [edge('n1', 'n5')]: {id: edge('n1', 'n5'), source: 'n1', target: 'n5'},
+        [edge('n2', 'n4')]: {id: edge('n2', 'n4'), source: 'n2', target: 'n4'},
+        [edge('n2', 'n6')]: {id: edge('n2', 'n6'), source: 'n2', target: 'n6'},
+      }),
       nodes: fromJS({
         n1: {id: 'n1', rank: 'A'},
         n2: {id: 'n2', rank: 'A'},
@@ -58,68 +81,64 @@ describe('NodesLayout', () => {
         n4: {id: 'n4', rank: 'B'},
         n5: {id: 'n5', rank: 'A'},
         n6: {id: 'n6', rank: 'B'},
-      }),
-      edges: fromJS({
-        [edge('n1', 'n3')]: {id: edge('n1', 'n3'), source: 'n1', target: 'n3'},
-        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'},
-        [edge('n1', 'n5')]: {id: edge('n1', 'n5'), source: 'n1', target: 'n5'},
-        [edge('n2', 'n4')]: {id: edge('n2', 'n4'), source: 'n2', target: 'n4'},
-        [edge('n2', 'n6')]: {id: edge('n2', 'n6'), source: 'n2', target: 'n6'},
       })
     },
     removeEdge24: {
+      edges: fromJS({
+        [edge('n1', 'n3')]: {id: edge('n1', 'n3'), source: 'n1', target: 'n3'},
+        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
+      }),
       nodes: fromJS({
         n1: {id: 'n1'},
         n2: {id: 'n2'},
         n3: {id: 'n3'},
         n4: {id: 'n4'}
-      }),
-      edges: fromJS({
-        [edge('n1', 'n3')]: {id: edge('n1', 'n3'), source: 'n1', target: 'n3'},
-        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
       })
     },
     removeNode2: {
+      edges: fromJS({
+        [edge('n1', 'n3')]: {id: edge('n1', 'n3'), source: 'n1', target: 'n3'},
+        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
+      }),
       nodes: fromJS({
         n1: {id: 'n1'},
         n3: {id: 'n3'},
         n4: {id: 'n4'}
-      }),
-      edges: fromJS({
-        [edge('n1', 'n3')]: {id: edge('n1', 'n3'), source: 'n1', target: 'n3'},
-        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
       })
     },
     removeNode23: {
+      edges: fromJS({
+        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
+      }),
       nodes: fromJS({
         n1: {id: 'n1'},
         n4: {id: 'n4'}
-      }),
-      edges: fromJS({
-        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
       })
     },
     single3: {
+      edges: fromJS({}),
       nodes: fromJS({
         n1: {id: 'n1'},
         n2: {id: 'n2'},
         n3: {id: 'n3'}
-      }),
-      edges: fromJS({})
+      })
     },
     singlePortrait: {
+      edges: fromJS({
+        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
+      }),
       nodes: fromJS({
         n1: {id: 'n1'},
         n2: {id: 'n2'},
         n3: {id: 'n3'},
         n4: {id: 'n4'},
         n5: {id: 'n5'}
-      }),
-      edges: fromJS({
-        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
       })
     },
     singlePortrait6: {
+      edges: fromJS({
+        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
+      }),
       nodes: fromJS({
         n1: {id: 'n1'},
         n2: {id: 'n2'},
@@ -127,26 +146,7 @@ describe('NodesLayout', () => {
         n4: {id: 'n4'},
         n5: {id: 'n5'},
         n6: {id: 'n6'}
-      }),
-      edges: fromJS({
-        [edge('n1', 'n4')]: {id: edge('n1', 'n4'), source: 'n1', target: 'n4'}
       })
-    },
-    layoutProps: {
-      nodes: fromJS({
-        n1: {
-          id: 'n1', label: 'lold', labelMinor: 'lmold', rank: 'rold'
-        },
-      }),
-      edges: fromJS({})
-    },
-    layoutProps2: {
-      nodes: fromJS({
-        n1: {
-          id: 'n1', label: 'lnew', labelMinor: 'lmnew', rank: 'rnew', x: 111, y: 109
-        },
-      }),
-      edges: fromJS({})
     }
   };
 
@@ -155,8 +155,8 @@ describe('NodesLayout', () => {
     window.localStorage.clear();
 
     options = {
-      nodeCache: makeMap(),
-      edgeCache: makeMap()
+      edgeCache: makeMap(),
+      nodeCache: makeMap()
     };
   });
 

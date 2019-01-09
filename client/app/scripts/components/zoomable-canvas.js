@@ -28,17 +28,17 @@ class ZoomableCanvas extends React.Component {
     super(props, context);
 
     this.state = {
-      isPanning: false,
-      contentMinX: 0,
       contentMaxX: 0,
-      contentMinY: 0,
       contentMaxY: 0,
-      translateX: 0,
-      translateY: 0,
-      minScale: 1,
+      contentMinX: 0,
+      contentMinY: 0,
+      isPanning: false,
       maxScale: 1,
+      minScale: 1,
       scaleX: 1,
       scaleY: 1,
+      translateX: 0,
+      translateY: 0,
     };
 
     this.debouncedCacheZoom = debounce(this.cacheZoom.bind(this), ZOOM_CACHE_DEBOUNCE_INTERVAL);
@@ -264,13 +264,13 @@ class ZoomableCanvas extends React.Component {
 
 function mapStateToProps(state, props) {
   return {
-    width: canvasWidthSelector(state),
-    height: canvasHeightSelector(state),
     canvasMargins: canvasMarginsSelector(state),
-    layoutZoomState: props.zoomStateSelector(state),
-    layoutLimits: props.limitsSelector(state),
-    layoutId: JSON.stringify(activeTopologyZoomCacheKeyPathSelector(state)),
     forceRelayout: state.get('forceRelayout'),
+    height: canvasHeightSelector(state),
+    layoutId: JSON.stringify(activeTopologyZoomCacheKeyPathSelector(state)),
+    layoutLimits: props.limitsSelector(state),
+    layoutZoomState: props.zoomStateSelector(state),
+    width: canvasWidthSelector(state),
   };
 }
 

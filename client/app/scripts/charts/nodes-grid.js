@@ -44,7 +44,7 @@ function getColumns(nodes, topologies) {
     .flatMap((n) => {
       const metrics = (n.get('metrics') || makeList())
         .filter(m => !m.get('valueEmpty'))
-        .map(m => makeMap({ id: m.get('id'), label: m.get('label'), dataType: 'number' }));
+        .map(m => makeMap({ dataType: 'number', id: m.get('id'), label: m.get('label') }));
       return metrics;
     })
     .toSet()
@@ -55,7 +55,7 @@ function getColumns(nodes, topologies) {
     .toList()
     .flatMap((n) => {
       const metadata = (n.get('metadata') || makeList())
-        .map(m => makeMap({ id: m.get('id'), label: m.get('label'), dataType: m.get('dataType') }));
+        .map(m => makeMap({ dataType: m.get('dataType'), id: m.get('id'), label: m.get('label') }));
       return metadata;
     })
     .toSet()
@@ -87,7 +87,7 @@ function renderIdCell({
 
   return (
     <div title={title} className="nodes-grid-id-column">
-      <div style={{ width: 16, flex: 'none' }}>
+      <div style={{ flex: 'none', width: 16 }}>
         <Icon color={getNodeColor(rank, label)} />
       </div>
       <div className="truncate">
@@ -108,8 +108,8 @@ class NodesGrid extends React.Component {
   onClickRow(ev, node) {
     trackAnalyticsEvent('scope.node.click', {
       layout: TABLE_VIEW_MODE,
-      topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
+      topologyId: this.props.currentTopology.get('id'),
     });
     this.props.clickNode(node.id, node.label, ev.target.getBoundingClientRect());
   }
@@ -141,13 +141,13 @@ class NodesGrid extends React.Component {
     };
 
     const detailsData = {
-      label: this.props.currentTopology && this.props.currentTopology.get('fullName'),
+      columns: getColumns(nodes, topologies),
       id: '',
+      label: this.props.currentTopology && this.props.currentTopology.get('fullName'),
       nodes: nodes
         .toList()
         .filter(n => !(searchQuery && searchNodeMatches.get(n.get('id'), makeMap()).isEmpty()))
-        .toJS(),
-      columns: getColumns(nodes, topologies)
+        .toJS()
     };
 
     return (
@@ -174,16 +174,16 @@ class NodesGrid extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    nodes: shownNodesSelector(state),
-    gridSortedBy: state.get('gridSortedBy'),
-    gridSortedDesc: state.get('gridSortedDesc'),
     currentTopology: state.get('currentTopology'),
     currentTopologyId: state.get('currentTopologyId'),
+    gridSortedBy: state.get('gridSortedBy'),
+    gridSortedDesc: state.get('gridSortedDesc'),
+    nodes: shownNodesSelector(state),
     searchNodeMatches: searchNodeMatchesSelector(state),
     searchQuery: state.get('searchQuery'),
     selectedNodeId: state.get('selectedNodeId'),
-    windowHeight: windowHeightSelector(state),
     topologies: state.get('topologies'),
+    windowHeight: windowHeightSelector(state),
   };
 }
 

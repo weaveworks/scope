@@ -23,8 +23,8 @@ class Topologies extends React.Component {
   onTopologyClick = (ev, topology) => {
     ev.preventDefault();
     trackAnalyticsEvent('scope.topology.selector.click', {
-      topologyId: topology.get('id'),
       parentTopologyId: topology.get('parentId'),
+      topologyId: topology.get('id'),
     });
     this.props.clickTopology(ev.currentTarget.getAttribute('rel'));
   }
@@ -35,9 +35,9 @@ class Topologies extends React.Component {
     const searchMatchCount = this.props.searchMatchCountByTopology.get(topologyId) || 0;
     const title = basicTopologyInfo(subTopology, searchMatchCount);
     const className = classnames(`topologies-sub-item topologies-item-${topologyId}`, {
+      'topologies-sub-item-active': isActive,
       // Don't show matches in the resource view as searching is not supported there yet.
       'topologies-sub-item-matched': !this.props.isResourceViewMode && searchMatchCount,
-      'topologies-sub-item-active': isActive,
     });
 
     return (
@@ -59,9 +59,9 @@ class Topologies extends React.Component {
     const isActive = topology === this.props.currentTopology;
     const searchMatchCount = this.props.searchMatchCountByTopology.get(topology.get('id')) || 0;
     const className = classnames(`tour-step-anchor topologies-item-main topologies-item-${topologyId}`, {
+      'topologies-item-main-active': isActive,
       // Don't show matches in the resource view as searching is not supported there yet.
       'topologies-item-main-matched': !this.props.isResourceViewMode && searchMatchCount,
-      'topologies-item-main-active': isActive,
     });
     const title = basicTopologyInfo(topology, searchMatchCount);
 
@@ -95,10 +95,10 @@ class Topologies extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    topologies: state.get('topologies'),
     currentTopology: state.get('currentTopology'),
-    searchMatchCountByTopology: searchMatchCountByTopologySelector(state),
     isResourceViewMode: isResourceViewModeSelector(state),
+    searchMatchCountByTopology: searchMatchCountByTopologySelector(state),
+    topologies: state.get('topologies'),
   };
 }
 

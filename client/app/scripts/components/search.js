@@ -82,8 +82,8 @@ class SearchComponent extends React.Component {
   handleChange = (searchQuery, pinnedSearches) => {
     trackAnalyticsEvent('scope.search.query.change', {
       layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
+      topologyId: this.props.currentTopology.get('id'),
     });
     this.props.updateSearch(searchQuery, pinnedSearches);
   }
@@ -121,19 +121,19 @@ class SearchComponent extends React.Component {
 
 export default connect(
   state => ({
-    searchHint: getHint(state.get('nodes')),
-    searchFocused: state.get('searchFocused'),
-    topologyViewMode: state.get('topologyViewMode'),
+    currentTopology: state.get('currentTopology'),
     isResourceViewMode: isResourceViewModeSelector(state),
     isTopologyEmpty: isTopologyNodeCountZero(state),
-    currentTopology: state.get('currentTopology'),
-    topologiesLoaded: state.get('topologiesLoaded'),
     pinnedSearches: state.get('pinnedSearches').toJS(),
-    searchQuery: state.get('searchQuery'),
+    searchFocused: state.get('searchFocused'),
+    searchHint: getHint(state.get('nodes')),
     searchMatchesCount: searchMatchCountByTopologySelector(state)
       .reduce((count, topologyMatchCount) => count + topologyMatchCount, 0),
+    searchQuery: state.get('searchQuery'),
+    topologiesLoaded: state.get('topologiesLoaded'),
+    topologyViewMode: state.get('topologyViewMode'),
   }),
   {
-    blurSearch, focusSearch, updateSearch, toggleHelp
+    blurSearch, focusSearch, toggleHelp, updateSearch
   }
 )(SearchComponent);

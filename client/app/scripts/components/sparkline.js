@@ -76,7 +76,7 @@ export default class Sparkline extends React.Component {
       `${data.length} samples, min: ${min}, max: ${max}, mean: ${mean}`;
 
     return {
-      title, lastX, lastY, data
+      data, lastX, lastY, title
     };
   }
 
@@ -88,13 +88,13 @@ export default class Sparkline extends React.Component {
     this.y.domain([0, 1]);
 
     return {
-      title: '',
-      lastX: this.x(last),
-      lastY: this.y(0),
       data: [
         {date: first, value: 0},
         {date: last, value: 0},
       ],
+      lastX: this.x(last),
+      lastY: this.y(0),
+      title: '',
     };
   }
 
@@ -138,23 +138,23 @@ export default class Sparkline extends React.Component {
 }
 
 Sparkline.propTypes = {
-  width: PropTypes.number,
+  circleRadius: PropTypes.number,
+  data: PropTypes.arrayOf(PropTypes.object),
   height: PropTypes.number,
+  hoverColor: PropTypes.string,
+  hovered: PropTypes.bool,
   strokeColor: PropTypes.string,
   strokeWidth: PropTypes.number,
-  hoverColor: PropTypes.string,
-  circleRadius: PropTypes.number,
-  hovered: PropTypes.bool,
-  data: PropTypes.arrayOf(PropTypes.object),
+  width: PropTypes.number,
 };
 
 Sparkline.defaultProps = {
-  width: 80,
+  circleRadius: 1.75,
+  data: [],
   height: 24,
+  hoverColor: '#7d7da8',
+  hovered: false,
   strokeColor: '#7d7da8',
   strokeWidth: 0.5,
-  hoverColor: '#7d7da8',
-  circleRadius: 1.75,
-  hovered: false,
-  data: [],
+  width: 80,
 };

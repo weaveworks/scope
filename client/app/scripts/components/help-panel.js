@@ -51,31 +51,31 @@ function renderShortcutPanel() {
 
 
 const BASIC_SEARCHES = [
-  {term: 'foo', label: 'All fields for foo'},
+  {label: 'All fields for foo', term: 'foo'},
   {
-    term: 'pid: 12345',
-    label: <span>Any field matching <b>pid</b> for the value 12345</span>
+    label: <span>Any field matching <b>pid</b> for the value 12345</span>,
+    term: 'pid: 12345'
   },
 ];
 
 
 const REGEX_SEARCHES = [
   {
-    term: 'foo|bar',
-    label: 'All fields for foo or bar'
+    label: 'All fields for foo or bar',
+    term: 'foo|bar'
   },
   {
-    term: 'command: foo(bar|baz)',
-    label: <span><b>command</b> field for foobar or foobaz</span>
+    label: <span><b>command</b> field for foobar or foobaz</span>,
+    term: 'command: foo(bar|baz)'
   },
 ];
 
 
 const METRIC_SEARCHES = [
-  {term: 'cpu > 4%', label: <span><b>CPU</b> greater than 4%</span>},
+  {label: <span><b>CPU</b> greater than 4%</span>, term: 'cpu > 4%'},
   {
-    term: 'memory < 10mb',
-    label: <span><b>Memory</b> less than 10 megabytes</span>
+    label: <span><b>Memory</b> less than 10 megabytes</span>,
+    term: 'memory < 10mb'
   },
 ];
 
@@ -187,8 +187,8 @@ function HelpPanel({
 function mapStateToProps(state) {
   return {
     canvasMargins: canvasMarginsSelector(state),
-    searchableFields: searchableFieldsSelector(state),
-    currentTopologyName: state.getIn(['currentTopology', 'fullName'])
+    currentTopologyName: state.getIn(['currentTopology', 'fullName']),
+    searchableFields: searchableFieldsSelector(state)
   };
 }
 

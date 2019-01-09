@@ -17,10 +17,10 @@ class MetricSelectorItem extends React.Component {
 
   trackEvent(eventName) {
     trackAnalyticsEvent(eventName, {
-      metricType: this.props.metric.get('label'),
       layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
+      metricType: this.props.metric.get('label'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
+      topologyId: this.props.currentTopology.get('id'),
     });
   }
 
@@ -66,10 +66,10 @@ class MetricSelectorItem extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    topologyViewMode: state.get('topologyViewMode'),
     currentTopology: state.get('currentTopology'),
     pinnedMetricType: state.get('pinnedMetricType'),
     selectedMetricType: selectedMetricTypeSelector(state),
+    topologyViewMode: state.get('topologyViewMode'),
   };
 }
 

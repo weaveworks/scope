@@ -99,11 +99,11 @@ class Footer extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    contrastMode: state.get('contrastMode'),
     hostname: state.get('hostname'),
     topologyViewMode: state.get('topologyViewMode'),
     version: state.get('version'),
     versionUpdate: state.get('versionUpdate'),
-    contrastMode: state.get('contrastMode'),
   };
 }
 
@@ -112,8 +112,8 @@ export default connect(
   {
     clickDownloadGraph,
     clickForceRelayout,
+    setContrastMode,
     toggleHelp,
-    toggleTroubleshootingMenu,
-    setContrastMode
+    toggleTroubleshootingMenu
   }
 )(Footer);

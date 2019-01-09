@@ -33,9 +33,9 @@ export function defaultSortDesc(header) {
 
 export function getTableColumnsStyles(headers) {
   return headers.map(header => ({
+    textAlign: isNumber(header) ? 'right' : 'left',
     // More beauty hacking, ports and counts can only get
     // so big, free up WS for other longer fields like IPs!
-    width: NODE_DETAILS_TABLE_COLUMN_WIDTHS[header.id],
-    textAlign: isNumber(header) ? 'right' : 'left'
+    width: NODE_DETAILS_TABLE_COLUMN_WIDTHS[header.id]
   }));
 }

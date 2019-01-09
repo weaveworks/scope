@@ -62,9 +62,9 @@ export function toggleHelp() {
 export function sortOrderChanged(sortedBy, sortedDesc) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.SORT_ORDER_CHANGED,
       sortedBy,
-      sortedDesc
+      sortedDesc,
+      type: ActionTypes.SORT_ORDER_CHANGED
     });
     updateRoute(getState);
   };
@@ -90,16 +90,16 @@ export function showNetworks(visible) {
 
 export function selectNetwork(networkId) {
   return {
-    type: ActionTypes.SELECT_NETWORK,
-    networkId
+    networkId,
+    type: ActionTypes.SELECT_NETWORK
   };
 }
 
 export function pinNetwork(networkId) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.PIN_NETWORK,
       networkId,
+      type: ActionTypes.PIN_NETWORK,
     });
 
     updateRoute(getState);
@@ -109,8 +109,8 @@ export function pinNetwork(networkId) {
 export function unpinNetwork(networkId) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.UNPIN_NETWORK,
       networkId,
+      type: ActionTypes.UNPIN_NETWORK,
     });
 
     updateRoute(getState);
@@ -124,8 +124,8 @@ export function unpinNetwork(networkId) {
 
 export function hoverMetric(metricType) {
   return {
-    type: ActionTypes.HOVER_METRIC,
     metricType,
+    type: ActionTypes.HOVER_METRIC,
   };
 }
 
@@ -138,8 +138,8 @@ export function unhoverMetric() {
 export function pinMetric(metricType) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.PIN_METRIC,
       metricType,
+      type: ActionTypes.PIN_METRIC,
     });
     updateRoute(getState);
   };
@@ -174,9 +174,9 @@ export function pinPreviousMetric() {
 export function updateSearch(searchQuery = '', pinnedSearches = []) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.UPDATE_SEARCH,
       pinnedSearches,
       searchQuery,
+      type: ActionTypes.UPDATE_SEARCH,
     });
     updateRoute(getState);
   };
@@ -204,11 +204,11 @@ export function blurSearch() {
 export function changeTopologyOption(option, value, topologyId, addOrRemove) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
-      topologyId,
+      addOrRemove,
       option,
-      value,
-      addOrRemove
+      topologyId,
+      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
+      value
     });
     updateRoute(getState);
     // update all request workers with new options
@@ -229,8 +229,8 @@ export function clickBackground() {
 export function clickCloseDetails(nodeId) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_CLOSE_DETAILS,
-      nodeId
+      nodeId,
+      type: ActionTypes.CLICK_CLOSE_DETAILS
     });
     // Pull the most recent details for the next details panel that comes into focus.
     getNodeDetails(getState, dispatch);
@@ -241,8 +241,8 @@ export function clickCloseDetails(nodeId) {
 export function closeTerminal(pipeId) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLOSE_TERMINAL,
-      pipeId
+      pipeId,
+      type: ActionTypes.CLOSE_TERMINAL
     });
     updateRoute(getState);
   };
@@ -250,23 +250,23 @@ export function closeTerminal(pipeId) {
 
 export function clickDownloadGraph() {
   return (dispatch) => {
-    dispatch({ type: ActionTypes.SET_EXPORTING_GRAPH, exporting: true });
+    dispatch({ exporting: true, type: ActionTypes.SET_EXPORTING_GRAPH });
     saveGraph();
-    dispatch({ type: ActionTypes.SET_EXPORTING_GRAPH, exporting: false });
+    dispatch({ exporting: false, type: ActionTypes.SET_EXPORTING_GRAPH });
   };
 }
 
 export function clickForceRelayout() {
   return (dispatch) => {
     dispatch({
-      type: ActionTypes.CLICK_FORCE_RELAYOUT,
-      forceRelayout: true
+      forceRelayout: true,
+      type: ActionTypes.CLICK_FORCE_RELAYOUT
     });
     // fire only once, reset after dispatch
     setTimeout(() => {
       dispatch({
-        type: ActionTypes.CLICK_FORCE_RELAYOUT,
-        forceRelayout: false
+        forceRelayout: false,
+        type: ActionTypes.CLICK_FORCE_RELAYOUT
       });
     }, 100);
   };
@@ -274,7 +274,7 @@ export function clickForceRelayout() {
 
 export function setViewportDimensions(width, height) {
   return (dispatch) => {
-    dispatch({ type: ActionTypes.SET_VIEWPORT_DIMENSIONS, width, height });
+    dispatch({ height, type: ActionTypes.SET_VIEWPORT_DIMENSIONS, width });
   };
 }
 
@@ -320,11 +320,11 @@ export function setResourceView() {
 export function clickNode(nodeId, label, origin, topologyId = null) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_NODE,
-      origin,
       label,
       nodeId,
+      origin,
       topologyId,
+      type: ActionTypes.CLICK_NODE,
     });
     updateRoute(getState);
     getNodeDetails(getState, dispatch);
@@ -349,11 +349,11 @@ export function pauseTimeAtNow() {
 export function clickRelative(nodeId, topologyId, label, origin) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_RELATIVE,
       label,
-      origin,
       nodeId,
-      topologyId
+      origin,
+      topologyId,
+      type: ActionTypes.CLICK_RELATIVE
     });
     updateRoute(getState);
     getNodeDetails(getState, dispatch);
@@ -376,9 +376,9 @@ function updateTopology(dispatch, getState) {
 export function clickShowTopologyForNode(topologyId, nodeId) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE,
+      nodeId,
       topologyId,
-      nodeId
+      type: ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE
     });
     updateTopology(dispatch, getState);
   };
@@ -387,8 +387,8 @@ export function clickShowTopologyForNode(topologyId, nodeId) {
 export function clickTopology(topologyId) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.CLICK_TOPOLOGY,
-      topologyId
+      topologyId,
+      type: ActionTypes.CLICK_TOPOLOGY
     });
     updateTopology(dispatch, getState);
   };
@@ -410,8 +410,8 @@ export function openWebsocket() {
 
 export function clearControlError(nodeId) {
   return {
-    type: ActionTypes.CLEAR_CONTROL_ERROR,
-    nodeId
+    nodeId,
+    type: ActionTypes.CLEAR_CONTROL_ERROR
   };
 }
 
@@ -424,9 +424,9 @@ export function closeWebsocket() {
 export function doControl(nodeId, control) {
   return (dispatch) => {
     dispatch({
-      type: ActionTypes.DO_CONTROL,
+      control,
       nodeId,
-      control
+      type: ActionTypes.DO_CONTROL
     });
     doControlRequest(nodeId, control, dispatch);
   };
@@ -434,15 +434,15 @@ export function doControl(nodeId, control) {
 
 export function enterEdge(edgeId) {
   return {
-    type: ActionTypes.ENTER_EDGE,
-    edgeId
+    edgeId,
+    type: ActionTypes.ENTER_EDGE
   };
 }
 
 export function enterNode(nodeId) {
   return {
-    type: ActionTypes.ENTER_NODE,
-    nodeId
+    nodeId,
+    type: ActionTypes.ENTER_NODE
   };
 }
 
@@ -452,8 +452,8 @@ export function hitEsc() {
     const controlPipe = state.get('controlPipes').last();
     if (controlPipe && controlPipe.get('status') === 'PIPE_DELETED') {
       dispatch({
-        type: ActionTypes.CLOSE_TERMINAL,
-        pipeId: controlPipe.get('id')
+        pipeId: controlPipe.get('id'),
+        type: ActionTypes.CLOSE_TERMINAL
       });
       updateRoute(getState);
     } else if (state.get('showingHelp')) {
@@ -467,38 +467,38 @@ export function hitEsc() {
 
 export function leaveEdge(edgeId) {
   return {
-    type: ActionTypes.LEAVE_EDGE,
-    edgeId
+    edgeId,
+    type: ActionTypes.LEAVE_EDGE
   };
 }
 
 export function leaveNode(nodeId) {
   return {
-    type: ActionTypes.LEAVE_NODE,
-    nodeId
+    nodeId,
+    type: ActionTypes.LEAVE_NODE
   };
 }
 
 export function receiveControlError(nodeId, err) {
   return {
-    type: ActionTypes.DO_CONTROL_ERROR,
+    error: err,
     nodeId,
-    error: err
+    type: ActionTypes.DO_CONTROL_ERROR
   };
 }
 
 export function receiveControlSuccess(nodeId) {
   return {
-    type: ActionTypes.DO_CONTROL_SUCCESS,
-    nodeId
+    nodeId,
+    type: ActionTypes.DO_CONTROL_SUCCESS
   };
 }
 
 export function receiveNodeDetails(details, requestTimestamp) {
   return {
-    type: ActionTypes.RECEIVE_NODE_DETAILS,
+    details,
     requestTimestamp,
-    details
+    type: ActionTypes.RECEIVE_NODE_DETAILS
   };
 }
 
@@ -521,8 +521,8 @@ export function receiveNodesDelta(delta) {
       const hasChanges = delta.add || delta.update || delta.remove || delta.reset;
       if (hasChanges) {
         dispatch({
-          type: ActionTypes.RECEIVE_NODES_DELTA,
-          delta
+          delta,
+          type: ActionTypes.RECEIVE_NODES_DELTA
         });
       }
     }
@@ -548,16 +548,16 @@ export function resumeTime() {
 
 export function receiveNodes(nodes) {
   return {
-    type: ActionTypes.RECEIVE_NODES,
     nodes,
+    type: ActionTypes.RECEIVE_NODES,
   };
 }
 
 export function jumpToTime(timestamp) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.JUMP_TO_TIME,
       timestamp,
+      type: ActionTypes.JUMP_TO_TIME,
     });
     updateRoute(getState);
     getTopologies(getState, dispatch);
@@ -575,9 +575,9 @@ export function jumpToTime(timestamp) {
 
 export function receiveNodesForTopology(nodes, topologyId) {
   return {
-    type: ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY,
     nodes,
-    topologyId
+    topologyId,
+    type: ActionTypes.RECEIVE_NODES_FOR_TOPOLOGY
   };
 }
 
@@ -585,8 +585,8 @@ export function receiveTopologies(topologies) {
   return (dispatch, getState) => {
     const firstLoad = !getState().get('topologiesLoaded');
     dispatch({
-      type: ActionTypes.RECEIVE_TOPOLOGIES,
-      topologies
+      topologies,
+      type: ActionTypes.RECEIVE_TOPOLOGIES
     });
     getNodes(getState, dispatch);
     // Populate search matches on first load
@@ -604,12 +604,12 @@ export function receiveApiDetails(apiDetails) {
     const pausedAt = getState().get('pausedAt');
 
     dispatch({
-      type: ActionTypes.RECEIVE_API_DETAILS,
       capabilities: fromJS(apiDetails.capabilities || {}),
       hostname: apiDetails.hostname,
-      version: apiDetails.version,
       newVersion: apiDetails.newVersion,
       plugins: apiDetails.plugins,
+      type: ActionTypes.RECEIVE_API_DETAILS,
+      version: apiDetails.version,
     });
 
     // On initial load either start time travelling at the pausedAt timestamp
@@ -631,8 +631,8 @@ export function receiveApiDetails(apiDetails) {
 export function receiveControlNodeRemoved(nodeId) {
   return (dispatch, getState) => {
     dispatch({
-      type: ActionTypes.RECEIVE_CONTROL_NODE_REMOVED,
-      nodeId
+      nodeId,
+      type: ActionTypes.RECEIVE_CONTROL_NODE_REMOVED
     });
     updateRoute(getState);
   };
@@ -641,10 +641,10 @@ export function receiveControlNodeRemoved(nodeId) {
 export function receiveControlPipeFromParams(pipeId, rawTty, resizeTtyControl) {
   // TODO add nodeId
   return {
-    type: ActionTypes.RECEIVE_CONTROL_PIPE,
     pipeId,
     rawTty,
-    resizeTtyControl
+    resizeTtyControl,
+    type: ActionTypes.RECEIVE_CONTROL_PIPE
   };
 }
 
@@ -664,12 +664,12 @@ export function receiveControlPipe(pipeId, nodeId, rawTty, resizeTtyControl, con
     }
 
     dispatch({
-      type: ActionTypes.RECEIVE_CONTROL_PIPE,
+      control,
       nodeId,
       pipeId,
       rawTty,
       resizeTtyControl,
-      control
+      type: ActionTypes.RECEIVE_CONTROL_PIPE
     });
 
     updateRoute(getState);
@@ -678,9 +678,9 @@ export function receiveControlPipe(pipeId, nodeId, rawTty, resizeTtyControl, con
 
 export function receiveControlPipeStatus(pipeId, status) {
   return {
-    type: ActionTypes.RECEIVE_CONTROL_PIPE_STATUS,
     pipeId,
-    status
+    status,
+    type: ActionTypes.RECEIVE_CONTROL_PIPE_STATUS
   };
 }
 
@@ -693,9 +693,9 @@ export function receiveError(errorUrl) {
 
 export function receiveNotFound(nodeId, requestTimestamp) {
   return {
-    type: ActionTypes.RECEIVE_NOT_FOUND,
-    requestTimestamp,
     nodeId,
+    requestTimestamp,
+    type: ActionTypes.RECEIVE_NOT_FOUND,
   };
 }
 
@@ -703,8 +703,8 @@ export function setContrastMode(enabled) {
   return (dispatch) => {
     loadTheme(enabled ? 'contrast' : 'normal');
     dispatch({
-      type: ActionTypes.TOGGLE_CONTRAST_MODE,
       enabled,
+      type: ActionTypes.TOGGLE_CONTRAST_MODE,
     });
   };
 }
@@ -781,14 +781,14 @@ export function shutdown() {
 
 export function setMonitorState(monitor) {
   return {
-    type: ActionTypes.MONITOR_STATE,
-    monitor
+    monitor,
+    type: ActionTypes.MONITOR_STATE
   };
 }
 
 export function setStoreViewState(storeViewState) {
   return {
-    type: ActionTypes.SET_STORE_VIEW_STATE,
-    storeViewState
+    storeViewState,
+    type: ActionTypes.SET_STORE_VIEW_STATE
   };
 }

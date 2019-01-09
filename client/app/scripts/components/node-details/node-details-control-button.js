@@ -14,9 +14,9 @@ class NodeDetailsControlButton extends React.Component {
   render() {
     const { icon, human } = this.props.control;
     const className = classNames('tour-step-anchor node-control-button', icon, {
-      'node-control-button-pending': this.props.pending,
       // Old Agent / plugins don't include the 'fa ' prefix, so provide it if they don't.
-      fa: icon.startsWith('fa-')
+      fa: icon.startsWith('fa-'),
+      'node-control-button-pending': this.props.pending
     });
     return (
       <i className={className} title={human} onClick={this.handleClick} />

@@ -23,7 +23,7 @@ const loadScale = scaleLog().domain([0.01, 100]).range([0, 1]);
 
 export function getMetricValue(metric) {
   if (!metric) {
-    return { height: 0, value: null, formattedValue: 'n/a' };
+    return { formattedValue: 'n/a', height: 0, value: null };
   }
   const m = metric.toJS();
   const { value } = m;
@@ -44,9 +44,9 @@ export function getMetricValue(metric) {
   }
 
   return {
-    height: displayedValue,
+    formattedValue: formatMetricSvg(value, m),
     hasMetric: value !== null,
-    formattedValue: formatMetricSvg(value, m)
+    height: displayedValue
   };
 }
 
