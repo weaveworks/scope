@@ -59,24 +59,26 @@ export const initialState = makeMap({
   mouseOverNodeId: null,
   nodeDetails: makeOrderedMap(), // nodeId -> details
   nodes: makeOrderedMap(), // nodeId -> node
-  nodesLoaded: false,
   // nodes cache, infrequently updated, used for search & resource view
-  nodesByTopology: makeMap(), // topologyId -> nodes
+  // topologyId -> nodes
+  nodesByTopology: makeMap(),
+  nodesLoaded: false,
   // class of metric, e.g. 'cpu', rather than 'host_cpu' or 'process_cpu'.
   // allows us to keep the same metric "type" selected when the topology changes.
   pausedAt: null,
   pinnedMetricType: null,
   pinnedNetwork: null,
+  // list of node filters
+  pinnedSearches: makeList(),
   plugins: makeList(),
-  pinnedSearches: makeList(), // list of node filters
   routeSet: false,
   searchFocused: false,
   searchQuery: '',
   selectedNetwork: null,
   selectedNodeId: null,
   showingHelp: false,
-  showingTroubleshootingMenu: false,
   showingNetworks: false,
+  showingTroubleshootingMenu: false,
   storeViewState: true,
   timeTravelTransitioning: false,
   topologies: makeList(),
@@ -87,7 +89,7 @@ export const initialState = makeMap({
   version: null,
   versionUpdate: null,
   // Set some initial numerical values to prevent NaN in case of edgy race conditions.
-  viewport: makeMap({ width: 0, height: 0 }),
+  viewport: makeMap({ height: 0, width: 0 }),
   websocketClosed: false,
   zoomCache: makeMap(),
 });
@@ -242,8 +244,8 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.SET_VIEWPORT_DIMENSIONS: {
       return state.mergeIn(['viewport'], {
-        width: action.width,
         height: action.height,
+        width: action.width,
       });
     }
 
@@ -309,8 +311,8 @@ export function rootReducer(state = initialState, action) {
           {
             id: action.nodeId,
             label: action.label,
-            topologyId: action.topologyId || state.get('currentTopologyId'),
             origin,
+            topologyId: action.topologyId || state.get('currentTopologyId'),
           }
         );
         state = state.set('selectedNodeId', action.nodeId);
@@ -465,8 +467,8 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.DO_CONTROL: {
       return state.setIn(['controlStatus', action.nodeId], makeMap({
-        pending: true,
-        error: null
+        error: null,
+        pending: true
       }));
     }
 
@@ -488,14 +490,14 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.DO_CONTROL_ERROR: {
       return state.setIn(['controlStatus', action.nodeId], makeMap({
-        pending: false,
-        error: action.error
+        error: action.error,
+        pending: false
       }));
     }
     case ActionTypes.DO_CONTROL_SUCCESS: {
       return state.setIn(['controlStatus', action.nodeId], makeMap({
-        pending: false,
-        error: null
+        error: null,
+        pending: false
       }));
     }
 
@@ -511,11 +513,11 @@ export function rootReducer(state = initialState, action) {
 
     case ActionTypes.RECEIVE_CONTROL_PIPE: {
       return state.setIn(['controlPipes', action.pipeId], makeOrderedMap({
+        control: action.control,
         id: action.pipeId,
         nodeId: action.nodeId,
         raw: action.rawTty,
-        resizeTtyControl: action.resizeTtyControl,
-        control: action.control
+        resizeTtyControl: action.resizeTtyControl
       }));
     }
 
@@ -546,9 +548,9 @@ export function rootReducer(state = initialState, action) {
       if (state.hasIn(['nodeDetails', action.details.id])) {
         state = state.updateIn(['nodeDetails', action.details.id], obj => ({
           ...obj,
+          details: action.details,
           notFound: false,
           timestamp: action.requestTimestamp,
-          details: action.details,
         }));
       }
       return state;
@@ -623,8 +625,8 @@ export function rootReducer(state = initialState, action) {
       if (state.hasIn(['nodeDetails', action.nodeId])) {
         state = state.updateIn(['nodeDetails', action.nodeId], obj => ({
           ...obj,
-          timestamp: action.requestTimestamp,
           notFound: true,
+          timestamp: action.requestTimestamp,
         }));
       }
       return state;
@@ -674,8 +676,8 @@ export function rootReducer(state = initialState, action) {
       }
       state = setTopology(state, action.state.topologyId);
       state = state.merge({
-        selectedNodeId: action.state.selectedNodeId,
         pinnedMetricType: action.state.pinnedMetricType,
+        selectedNodeId: action.state.selectedNodeId,
       });
       if (action.state.topologyOptions) {
         const options = getDefaultTopologyOptions(state).mergeDeep(action.state.topologyOptions);

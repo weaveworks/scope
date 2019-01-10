@@ -48,8 +48,8 @@ export default class EdgeContainer extends React.PureComponent {
     super(props, context);
 
     this.state = {
-      waypointsMap: makeMap(),
       thickness: 1,
+      waypointsMap: makeMap(),
     };
   }
 
@@ -83,9 +83,12 @@ export default class EdgeContainer extends React.PureComponent {
     return (
       // For the Motion interpolation to work, the waypoints need to be in a map format like
       // { x0: 11, y0: 22, x1: 33, y1: 44 } that we convert to the array format when rendering.
-      <Motion style={{ interpolatedThickness: weakSpring(thickness), ...waypointsMap.toJS() }}>
+      <Motion style={{
+        interpolatedThickness: weakSpring(thickness),
+        ...waypointsMap.toJS(),
+      }}>
         {
-          ({ interpolatedThickness, ...interpolatedWaypoints}) =>
+          ({ interpolatedThickness, ...interpolatedWaypoints }) =>
             transformedEdge(
               forwardedProps,
               waypointsMapToArray(fromJS(interpolatedWaypoints)),

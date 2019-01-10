@@ -36,6 +36,6 @@ function mapStateToProps(state) {
 export default connect(
   mapStateToProps,
   {
-    jumpToTime, resumeTime, pauseTimeAtNow
+    jumpToTime, pauseTimeAtNow, resumeTime
   },
 )(TimeTravelWrapper);

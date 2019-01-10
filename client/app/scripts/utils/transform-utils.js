@@ -7,10 +7,10 @@ const applyScaleY = ({ scaleY = 1 }, height) => height * scaleY;
 export const applyTransform = (transform, {
   width = 0, height = 0, x, y
 }) => ({
+  height: applyScaleY(transform, height),
+  width: applyScaleX(transform, width),
   x: applyTranslateX(transform, x),
   y: applyTranslateY(transform, y),
-  width: applyScaleX(transform, width),
-  height: applyScaleY(transform, height),
 });
 
 
@@ -22,10 +22,10 @@ const inverseScaleY = ({ scaleY = 1 }, height) => height / scaleY;
 export const inverseTransform = (transform, {
   width = 0, height = 0, x, y
 }) => ({
+  height: inverseScaleY(transform, height),
+  width: inverseScaleX(transform, width),
   x: inverseTranslateX(transform, x),
   y: inverseTranslateY(transform, y),
-  width: inverseScaleX(transform, width),
-  height: inverseScaleY(transform, height),
 });
 
 

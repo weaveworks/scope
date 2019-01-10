@@ -27,7 +27,7 @@ export function initEdgesFromNodes(nodes) {
         // directionality into account when calculating the layout.
         const edgeId = constructEdgeId(source, target);
         const edge = makeMap({
-          id: edgeId, value: 1, source, target
+          id: edgeId, source, target, value: 1
         });
         edges = edges.set(edgeId, edge);
       }

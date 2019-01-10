@@ -33,7 +33,7 @@ const resourceNodesBoundingRectangleSelector = createSelector(
     const yMax = verticalPositions.toList().max() + RESOURCES_LAYER_HEIGHT;
 
     return makeMap({
-      xMin, xMax, yMin, yMax
+      xMax, xMin, yMax, yMin
     });
   }
 );
@@ -62,10 +62,10 @@ export const resourcesDefaultZoomSelector = createSelector(
     const translateY = ((height - ((yMax + yMin) * scaleY)) / 2) + canvasMargins.top;
 
     return makeMap({
-      translateX,
-      translateY,
       scaleX,
       scaleY,
+      translateX,
+      translateY,
     });
   }
 );
@@ -85,14 +85,14 @@ export const resourcesLimitsSelector = createSelector(
     } = boundingRectangle.toJS();
 
     return makeMap({
+      contentMaxX: xMax,
+      contentMaxY: yMax,
+      contentMinX: xMin,
+      contentMinY: yMin,
       // Maximal zoom is such that the smallest box takes the whole canvas.
       maxScale: width / minNodeWidth,
       // Minimal zoom is equivalent to the initial one, where the whole layout matches the canvas.
       minScale: defaultZoom.get('scaleX'),
-      contentMinX: xMin,
-      contentMaxX: xMax,
-      contentMinY: yMin,
-      contentMaxY: yMax,
     });
   }
 );

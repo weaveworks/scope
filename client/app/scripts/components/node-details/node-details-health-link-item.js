@@ -94,8 +94,8 @@ class NodeDetailsHealthLinkItem extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    pausedAt: state.get('pausedAt'),
     monitor: state.get('monitor'),
+    pausedAt: state.get('pausedAt'),
   };
 }
 

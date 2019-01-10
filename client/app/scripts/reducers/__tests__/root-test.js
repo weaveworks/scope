@@ -21,44 +21,44 @@ describe('RootReducer', () => {
 
   const NODE_SET = {
     n1: {
-      id: 'n1',
       adjacency: ['n1', 'n2'],
       filtered: false,
+      id: 'n1',
     },
     n2: {
-      id: 'n2',
       filtered: false,
+      id: 'n2',
     }
   };
 
   const topologies = [
     {
-      hide_if_empty: true,
-      name: 'Processes',
-      rank: 1,
-      sub_topologies: [],
-      url: '/api/topology/processes',
       fullName: 'Processes',
+      hide_if_empty: true,
       id: 'processes',
+      name: 'Processes',
       options: [
         {
           defaultValue: 'hide',
           id: 'unconnected',
-          selectType: 'one',
           options: [
             {
               label: 'Unconnected nodes hidden',
               value: 'hide'
             }
-          ]
+          ],
+          selectType: 'one'
         }
       ],
+      rank: 1,
       stats: {
         edge_count: 379,
         filtered_nodes: 214,
         node_count: 320,
         nonpseudo_node_count: 320
-      }
+      },
+      sub_topologies: [],
+      url: '/api/topology/processes'
     },
     {
       hide_if_empty: true,
@@ -67,7 +67,6 @@ describe('RootReducer', () => {
         {
           defaultValue: 'default',
           id: 'namespace',
-          selectType: 'many',
           options: [
             {
               label: 'monitoring',
@@ -81,7 +80,8 @@ describe('RootReducer', () => {
               label: 'All Namespaces',
               value: 'all'
             }
-          ]
+          ],
+          selectType: 'many'
         },
         {
           defaultValue: 'hide',
@@ -113,7 +113,6 @@ describe('RootReducer', () => {
             {
               defaultValue: 'default',
               id: 'namespace',
-              selectType: 'many',
               options: [
                 {
                   label: 'monitoring',
@@ -127,7 +126,8 @@ describe('RootReducer', () => {
                   label: 'All Namespaces',
                   value: 'all'
                 }
-              ]
+              ],
+              selectType: 'many'
             }
           ],
           rank: 0,
@@ -147,53 +147,53 @@ describe('RootReducer', () => {
   // actions
 
   const ChangeTopologyOptionAction = {
-    type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
-    topologyId: 'topo1',
     option: 'option1',
+    topologyId: 'topo1',
+    type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
     value: ['on']
   };
 
   const ChangeTopologyOptionAction2 = {
-    type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
-    topologyId: 'topo1',
     option: 'option1',
+    topologyId: 'topo1',
+    type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
     value: ['off']
   };
 
   const ClickNodeAction = {
-    type: ActionTypes.CLICK_NODE,
-    nodeId: 'n1'
+    nodeId: 'n1',
+    type: ActionTypes.CLICK_NODE
   };
 
   const ClickNode2Action = {
-    type: ActionTypes.CLICK_NODE,
-    nodeId: 'n2'
+    nodeId: 'n2',
+    type: ActionTypes.CLICK_NODE
   };
 
   const ClickRelativeAction = {
-    type: ActionTypes.CLICK_RELATIVE,
-    nodeId: 'rel1'
+    nodeId: 'rel1',
+    type: ActionTypes.CLICK_RELATIVE
   };
 
   const ClickShowTopologyForNodeAction = {
-    type: ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE,
+    nodeId: 'rel1',
     topologyId: 'topo2',
-    nodeId: 'rel1'
+    type: ActionTypes.CLICK_SHOW_TOPOLOGY_FOR_NODE
   };
 
   const ClickSubTopologyAction = {
-    type: ActionTypes.CLICK_TOPOLOGY,
-    topologyId: 'topo1-grouped'
+    topologyId: 'topo1-grouped',
+    type: ActionTypes.CLICK_TOPOLOGY
   };
 
   const ClickTopologyAction = {
-    type: ActionTypes.CLICK_TOPOLOGY,
-    topologyId: 'topo1'
+    topologyId: 'topo1',
+    type: ActionTypes.CLICK_TOPOLOGY
   };
 
   const ClickTopology2Action = {
-    type: ActionTypes.CLICK_TOPOLOGY,
-    topologyId: 'topo2'
+    topologyId: 'topo2',
+    type: ActionTypes.CLICK_TOPOLOGY
   };
 
   const CloseWebsocketAction = {
@@ -209,36 +209,34 @@ describe('RootReducer', () => {
   };
 
   const ReceiveNodesDeltaAction = {
-    type: ActionTypes.RECEIVE_NODES_DELTA,
     delta: {
       add: [{
-        id: 'n1',
-        adjacency: ['n1', 'n2']
+        adjacency: ['n1', 'n2'],
+        id: 'n1'
       }, {
         id: 'n2'
       }]
-    }
+    },
+    type: ActionTypes.RECEIVE_NODES_DELTA
   };
 
   const ReceiveNodesDeltaUpdateAction = {
-    type: ActionTypes.RECEIVE_NODES_DELTA,
     delta: {
+      remove: ['n2'],
       update: [{
-        id: 'n1',
-        adjacency: ['n1']
-      }],
-      remove: ['n2']
-    }
+        adjacency: ['n1'],
+        id: 'n1'
+      }]
+    },
+    type: ActionTypes.RECEIVE_NODES_DELTA
   };
 
   const ReceiveTopologiesAction = {
-    type: ActionTypes.RECEIVE_TOPOLOGIES,
     topologies: [{
-      url: '/topo1',
       name: 'Topo1',
       options: [{
-        id: 'option1',
         defaultValue: 'off',
+        id: 'option1',
         options: [
           {value: 'on'},
           {value: 'off'}
@@ -248,47 +246,49 @@ describe('RootReducer', () => {
         node_count: 1
       },
       sub_topologies: [{
-        url: '/topo1-grouped',
-        name: 'topo 1 grouped'
-      }]
+        name: 'topo 1 grouped',
+        url: '/topo1-grouped'
+      }],
+      url: '/topo1'
     }, {
-      url: '/topo2',
       name: 'Topo2',
       stats: {
         node_count: 0
       },
       sub_topologies: [{
-        url: '/topo2-sub',
-        name: 'topo 2 sub'
-      }]
-    }]
+        name: 'topo 2 sub',
+        url: '/topo2-sub'
+      }],
+      url: '/topo2'
+    }],
+    type: ActionTypes.RECEIVE_TOPOLOGIES
   };
 
   const ReceiveTopologiesHiddenAction = {
-    type: ActionTypes.RECEIVE_TOPOLOGIES,
     topologies: [{
-      url: '/topo1',
       name: 'Topo1',
       stats: {
         node_count: 1
-      }
+      },
+      url: '/topo1'
     }, {
       hide_if_empty: true,
-      url: '/topo2',
       name: 'Topo2',
-      stats: { node_count: 0, filtered_nodes: 0 },
+      stats: { filtered_nodes: 0, node_count: 0 },
       sub_topologies: [{
-        url: '/topo2-sub',
-        name: 'topo 2 sub',
         hide_if_empty: true,
-        stats: { node_count: 0, filtered_nodes: 0 },
-      }]
-    }]
+        name: 'topo 2 sub',
+        stats: { filtered_nodes: 0, node_count: 0 },
+        url: '/topo2-sub',
+      }],
+      url: '/topo2'
+    }],
+    type: ActionTypes.RECEIVE_TOPOLOGIES
   };
 
   const RouteAction = {
-    type: ActionTypes.ROUTE_TOPOLOGY,
-    state: {}
+    state: {},
+    type: ActionTypes.ROUTE_TOPOLOGY
   };
 
   const ChangeInstanceAction = {
@@ -320,13 +320,13 @@ describe('RootReducer', () => {
     expect(nextState.get('currentTopology').get('url')).toBe('/topo1');
     expect(nextState.get('currentTopology').get('options').first().get('id')).toEqual('option1');
     expect(nextState.getIn(['currentTopology', 'options']).toJS()).toEqual([{
-      id: 'option1',
       defaultValue: 'off',
-      selectType: 'one',
+      id: 'option1',
       options: [
         { value: 'on'},
         { value: 'off'}
-      ]
+      ],
+      selectType: 'one'
     }]);
   });
 
@@ -377,20 +377,20 @@ describe('RootReducer', () => {
 
   it('adds/removes a topology option', () => {
     const addAction = {
-      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
-      topologyId: 'services',
       option: 'namespace',
+      topologyId: 'services',
+      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
       value: ['default', 'scope'],
     };
     const removeAction = {
-      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
-      topologyId: 'services',
       option: 'namespace',
+      topologyId: 'services',
+      type: ActionTypes.CHANGE_TOPOLOGY_OPTION,
       value: ['default']
     };
     let nextState = initialState;
-    nextState = reducer(nextState, { type: ActionTypes.RECEIVE_TOPOLOGIES, topologies});
-    nextState = reducer(nextState, { type: ActionTypes.CLICK_TOPOLOGY, topologyId: 'services' });
+    nextState = reducer(nextState, { topologies, type: ActionTypes.RECEIVE_TOPOLOGIES});
+    nextState = reducer(nextState, { topologyId: 'services', type: ActionTypes.CLICK_TOPOLOGY });
     nextState = reducer(nextState, addAction);
     expect(activeTopologyOptionsSelector(nextState).toJS()).toEqual({
       namespace: ['default', 'scope'],
@@ -405,8 +405,8 @@ describe('RootReducer', () => {
 
   it('sets topology options from route', () => {
     RouteAction.state = {
-      topologyId: 'topo1',
       selectedNodeId: null,
+      topologyId: 'topo1',
       topologyOptions: {topo1: {option1: 'on'}}
     };
 
@@ -424,8 +424,8 @@ describe('RootReducer', () => {
 
   it('uses default topology options from route', () => {
     RouteAction.state = {
-      topologyId: 'topo1',
       selectedNodeId: null,
+      topologyId: 'topo1',
       topologyOptions: null
     };
     let nextState = initialState;
@@ -485,7 +485,7 @@ describe('RootReducer', () => {
     expect(getUrlState(nextState).selectedNodeId).toEqual('n1');
 
     // go back in browsing
-    RouteAction.state = {topologyId: 'topo1', selectedNodeId: null};
+    RouteAction.state = {selectedNodeId: null, topologyId: 'topo1'};
     nextState = reducer(nextState, RouteAction);
     expect(nextState.get('selectedNodeId')).toBeNull();
     expect(nextState.get('nodes').toJS()).toEqual(NODE_SET);
@@ -587,7 +587,7 @@ describe('RootReducer', () => {
   it('keeps hidden topology visible if sub_topology selected', () => {
     let nextState = initialState;
     nextState = reducer(nextState, ReceiveTopologiesAction);
-    nextState = reducer(nextState, { type: ActionTypes.CLICK_TOPOLOGY, topologyId: 'topo2-sub' });
+    nextState = reducer(nextState, { topologyId: 'topo2-sub', type: ActionTypes.CLICK_TOPOLOGY });
     nextState = reducer(nextState, ReceiveTopologiesHiddenAction);
     expect(nextState.get('currentTopologyId')).toEqual('topo2-sub');
     expect(nextState.get('topologies').toJS().length).toEqual(2);
@@ -689,22 +689,22 @@ describe('RootReducer', () => {
   it('cleans up old adjacencies', () => {
     // Add some nodes
     const action1 = {
-      type: ActionTypes.RECEIVE_NODES_DELTA,
-      delta: { add: [{ id: 'n1' }, { id: 'n2' }] }
+      delta: { add: [{ id: 'n1' }, { id: 'n2' }] },
+      type: ActionTypes.RECEIVE_NODES_DELTA
     };
     // Show nodes as connected
     const action2 = {
-      type: ActionTypes.RECEIVE_NODES_DELTA,
       delta: {
-        update: [{ id: 'n1', adjacency: ['n2'] }]
-      }
+        update: [{ adjacency: ['n2'], id: 'n1' }]
+      },
+      type: ActionTypes.RECEIVE_NODES_DELTA
     };
     // Remove the connection
     const action3 = {
-      type: ActionTypes.RECEIVE_NODES_DELTA,
       delta: {
         update: [{ id: 'n1' }]
-      }
+      },
+      type: ActionTypes.RECEIVE_NODES_DELTA
     };
     let nextState = reducer(initialState, action1);
     nextState = reducer(nextState, action2);
@@ -722,8 +722,8 @@ describe('RootReducer', () => {
   });
   it('highlights bidirectional edges', () => {
     const action = {
-      type: ActionTypes.ENTER_EDGE,
-      edgeId: constructEdgeId('abc123', 'def456')
+      edgeId: constructEdgeId('abc123', 'def456'),
+      type: ActionTypes.ENTER_EDGE
     };
     const nextState = reducer(initialState, action);
     expect(highlightedEdgeIdsSelector(nextState).toJS()).toEqual([

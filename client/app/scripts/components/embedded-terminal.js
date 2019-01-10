@@ -9,8 +9,8 @@ class EmeddedTerminal extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.state = {
-      mounted: null,
       animated: null,
+      mounted: null,
     };
 
     this.handleTransitionEnd = this.handleTransitionEnd.bind(this);

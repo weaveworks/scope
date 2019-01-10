@@ -37,11 +37,11 @@ function openNewWindow(url, bcr, minWidth = 200) {
   const popoutWindowToolbarHeight = 51;
   // TODO replace this stuff w/ looking up bounding box.
   const windowOptions = {
-    width: Math.max(minWidth, bcr.width),
     height: bcr.height - popoutWindowToolbarHeight,
     left: screenLeft + bcr.left,
-    top: screenTop + (window.outerHeight - window.innerHeight) + bcr.top,
     location: 'no',
+    top: screenTop + (window.outerHeight - window.innerHeight) + bcr.top,
+    width: Math.max(minWidth, bcr.width),
   };
 
   const windowOptionsString = Object.keys(windowOptions)
@@ -60,10 +60,10 @@ class Terminal extends React.Component {
     this.resizeTimeout = null;
 
     this.state = {
+      cols: DEFAULT_COLS,
       connected: false,
       detached: false,
       rows: DEFAULT_ROWS,
-      cols: DEFAULT_COLS,
     };
 
     this.handleCloseClick = this.handleCloseClick.bind(this);
@@ -146,6 +146,8 @@ class Terminal extends React.Component {
   mountTerminal() {
     Term.applyAddon(fit);
     this.term = new Term({
+      convertEol: !this.props.pipe.get('raw'),
+      cursorBlink: true,
       //
       // Some linux systems fail to render 'monospace' on `<canvas>` correctly:
       // https://github.com/xtermjs/xterm.js/issues/1170
@@ -155,8 +157,6 @@ class Terminal extends React.Component {
       fontFamily: '"Roboto Mono", "Courier New", "Courier", monospace',
       // `theme.fontSizes.tiny` (`"12px"`) is a string and we need an int here.
       fontSize: 12,
-      convertEol: !this.props.pipe.get('raw'),
-      cursorBlink: true,
       scrollback: 10000,
     });
 

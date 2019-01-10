@@ -19,7 +19,7 @@ export function nodeResourceBoxDecorator(node) {
     metricSummary.get('absoluteConsumption');
   const height = RESOURCES_LAYER_HEIGHT;
 
-  return node.merge(makeMap({ width, height }));
+  return node.merge(makeMap({ height, width }));
 }
 
 // Decorates the node with the summary info of its metric of a fixed type.
@@ -41,15 +41,15 @@ export function nodeMetricSummaryDecoratorByType(metricType, showCapacity, scale
     const format = metric.get('format');
 
     return node.set('metricSummary', makeMap({
-      showCapacity,
-      type: metricType,
-      humanizedTotalCapacity: formatMetricSvg(totalCapacity, defaultMetric),
+      absoluteConsumption,
+      format,
       humanizedAbsoluteConsumption: formatMetricSvg(absoluteConsumption, defaultMetric),
       humanizedRelativeConsumption: formatMetricSvg(100 * relativeConsumption, percentMetric),
-      totalCapacity,
-      absoluteConsumption,
+      humanizedTotalCapacity: formatMetricSvg(totalCapacity, defaultMetric),
       relativeConsumption,
-      format,
+      showCapacity,
+      totalCapacity,
+      type: metricType,
     }));
   };
 }

@@ -109,8 +109,8 @@ export function formatDataType(field, referenceTimestamp = null) {
     datetime(timestampString) {
       const timestamp = moment(timestampString);
       return {
-        value: timestamp.from(referenceTimestamp ? moment(referenceTimestamp) : moment()),
-        title: timestamp.utc().toISOString()
+        title: timestamp.utc().toISOString(),
+        value: timestamp.from(referenceTimestamp ? moment(referenceTimestamp) : moment())
       };
     },
     duration(durationSecondsString) {
@@ -118,13 +118,13 @@ export function formatDataType(field, referenceTimestamp = null) {
       const humanizedDuration = humanizedRoundedDownDuration(duration);
 
       return {
-        value: humanizedDuration,
         title: humanizedDuration,
+        value: humanizedDuration,
       };
     },
   };
   const format = formatters[field.dataType];
   return format
     ? format(field.value)
-    : { value: field.value, title: field.value };
+    : { title: field.value, value: field.value };
 }

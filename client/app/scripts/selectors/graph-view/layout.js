@@ -99,7 +99,7 @@ const circularLayoutScalarsSelector = createSelector(
     const circularRadius = viewportExpanse / radiusDensity(circularNodesCount) / scale;
     const circularInnerAngle = (2 * Math.PI) / circularNodesCount;
 
-    return { selectedScale, circularRadius, circularInnerAngle };
+    return { circularInnerAngle, circularRadius, selectedScale };
   }
 );
 

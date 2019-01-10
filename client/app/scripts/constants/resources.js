@@ -10,8 +10,8 @@ export const TOPOLOGIES_WITH_CAPACITY = ['hosts'];
 // the same layers for all the topologies, because their number is small, but later on
 // we might be interested in fully customizing the layers' hierarchy per topology.
 export const RESOURCE_VIEW_LAYERS = {
-  hosts: ['hosts', 'containers', 'processes'],
   containers: ['hosts', 'containers', 'processes'],
+  hosts: ['hosts', 'containers', 'processes'],
   processes: ['hosts', 'containers', 'processes'],
 };
 
@@ -22,6 +22,6 @@ export const RESOURCE_VIEW_LAYERS = {
 // the nodes for all the layers have been loaded, so we'd need to change the routing logic
 // since the requirement is that one these is always pinned in the resource view.
 export const RESOURCE_VIEW_METRICS = [
-  { label: 'CPU', id: 'host_cpu_usage_percent' },
-  { label: 'Memory', id: 'host_mem_usage_bytes' },
+  { id: 'host_cpu_usage_percent', label: 'CPU' },
+  { id: 'host_mem_usage_bytes', label: 'Memory' },
 ];

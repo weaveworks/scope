@@ -17,7 +17,7 @@ const STACK_VARIANTS = [false, true];
 const METRIC_FILLS = [0, 0.1, 50, 99.9, 100];
 const NETWORKS = [
   'be', 'fe', 'zb', 'db', 're', 'gh', 'jk', 'lol', 'nw'
-].map(n => ({id: n, label: n, colorKey: n}));
+].map(n => ({colorKey: n, id: n, label: n}));
 
 const INTERNET = 'the-internet';
 const LOREM = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
@@ -30,10 +30,10 @@ const sampleArray = (collection, n = 4) => sampleSize(collection, random(n));
 const log = debug('scope:debug-panel');
 
 const shapeTypes = {
-  square: ['Process', 'Processes'],
-  hexagon: ['Container', 'Containers'],
+  circle: ['Host', 'Hosts'],
   heptagon: ['Pod', 'Pods'],
-  circle: ['Host', 'Hosts']
+  hexagon: ['Container', 'Containers'],
+  square: ['Process', 'Processes']
 };
 
 
@@ -44,15 +44,15 @@ const LABEL_PREFIXES = range('A'.charCodeAt(), 'Z'.charCodeAt() + 1)
 const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, networks = NETWORKS) => ({
   adjacency,
   controls: {},
-  shape,
-  stack,
   id: name,
   label: name,
   labelMinor: name,
   latest: {},
+  networks,
   origins: [],
   rank: name,
-  networks
+  shape,
+  stack
 });
 
 
@@ -127,8 +127,8 @@ function disableLog() {
 function setAppState(fn) {
   return (dispatch) => {
     dispatch({
-      type: ActionTypes.DEBUG_TOOLBAR_INTERFERING,
-      fn
+      fn,
+      type: ActionTypes.DEBUG_TOOLBAR_INTERFERING
     });
   };
 }
@@ -220,11 +220,11 @@ class DebugToolbar extends React.Component {
     const nodeNames = ns.keySeq().toJS();
     this.asyncDispatch(receiveNodesDelta({
       add: this.createRandomNodes(7),
-      update: sampleArray(nodeNames).map(n => ({
-        id: n,
-        adjacency: sampleArray(nodeNames),
-      }), nodeNames.length),
       remove: this.randomExistingNode(),
+      update: sampleArray(nodeNames).map(n => ({
+        adjacency: sampleArray(nodeNames),
+        id: n,
+      }), nodeNames.length),
     }));
   }
 
@@ -249,7 +249,7 @@ class DebugToolbar extends React.Component {
     setTimeout(() => {
       this.asyncDispatch(receiveNodesDelta({
         add: [{
-          id: INTERNET, label: INTERNET, pseudo: true, labelMinor: 'Outgoing packets', shape: 'cloud'
+          id: INTERNET, label: INTERNET, labelMinor: 'Outgoing packets', pseudo: true, shape: 'cloud'
         }]
       }));
     }, 0);
@@ -357,8 +357,8 @@ class DebugToolbar extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    nodes: state.get('nodes'),
     availableMetrics: availableMetricsSelector(state),
+    nodes: state.get('nodes'),
   };
 }
 

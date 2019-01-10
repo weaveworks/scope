@@ -15,8 +15,8 @@ export default class NodeResourcesLayerTopology extends React.Component {
     // vertical position and height of the resource boxes.
     const verticalTransform = pick(this.props.transform, ['translateY', 'scaleY']);
     const { width, height, y } = applyTransform(verticalTransform, {
-      width: RESOURCES_LAYER_TITLE_WIDTH,
       height: RESOURCES_LAYER_HEIGHT,
+      width: RESOURCES_LAYER_TITLE_WIDTH,
       y: this.props.verticalPosition,
     });
 

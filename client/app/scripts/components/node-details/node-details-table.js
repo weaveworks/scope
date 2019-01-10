@@ -135,8 +135,8 @@ class NodeDetailsTable extends React.Component {
 
     this.state = {
       limit: props.limit,
-      sortedDesc: this.props.sortedDesc,
-      sortedBy: this.props.sortedBy
+      sortedBy: this.props.sortedBy,
+      sortedDesc: this.props.sortedDesc
     };
     this.focusState = {};
 
@@ -305,11 +305,12 @@ class NodeDetailsTable extends React.Component {
 
 
 NodeDetailsTable.defaultProps = {
-  nodeIdKey: 'id', // key to identify a node in a row (used for topology links)
   limit: NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
+  // key to identify a node in a row (used for topology links)
+  nodeIdKey: 'id',
   onSortChange: () => {},
-  sortedDesc: null,
   sortedBy: null,
+  sortedDesc: null,
 };
 
 function mapStateToProps(state) {

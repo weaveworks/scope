@@ -25,9 +25,9 @@ function getValuesForNode(node) {
     const relativesByTopologyId = mapValues(byTopologyId, (relatives, topologyId) => ({
       id: topologyId,
       label: topologyId,
+      relatives,
       value: relatives.map(relative => relative.label).join(', '),
       valueType: 'relatives',
-      relatives,
     }));
 
     values = {
@@ -170,8 +170,8 @@ export default class NodeDetailsTableRow extends React.Component {
     const nodeId = node[nodeIdKey];
 
     const className = classNames('tour-step-anchor node-details-table-node', {
-      selected: this.props.selected,
       focused: this.state.focused,
+      selected: this.props.selected,
     });
 
     return (
@@ -182,7 +182,7 @@ export default class NodeDetailsTableRow extends React.Component {
         onMouseLeave={this.onMouseLeave}
         className={className}>
         <td className="node-details-table-node-label truncate" style={firstColumnStyle}>
-          {this.props.renderIdCell(Object.assign(node, {topologyId, nodeId}))}
+          {this.props.renderIdCell(Object.assign(node, {nodeId, topologyId}))}
         </td>
         {values}
       </tr>

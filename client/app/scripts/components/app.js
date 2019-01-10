@@ -171,8 +171,8 @@ class App extends React.Component {
   trackEvent(eventName, additionalProps = {}) {
     trackAnalyticsEvent(eventName, {
       layout: this.props.topologyViewMode,
-      topologyId: this.props.currentTopology.get('id'),
       parentTopologyId: this.props.currentTopology.get('parentId'),
+      topologyId: this.props.currentTopology.get('id'),
       ...additionalProps,
     });
   }
@@ -249,39 +249,39 @@ class App extends React.Component {
 function mapStateToProps(state) {
   return {
     currentTopology: state.get('currentTopology'),
+    isGraphViewMode: isGraphViewModeSelector(state),
     isResourceViewMode: isResourceViewModeSelector(state),
     isTableViewMode: isTableViewModeSelector(state),
-    isGraphViewMode: isGraphViewModeSelector(state),
     pinnedMetricType: state.get('pinnedMetricType'),
     routeSet: state.get('routeSet'),
     searchFocused: state.get('searchFocused'),
     searchQuery: state.get('searchQuery'),
     showingDetails: state.get('nodeDetails').size > 0,
     showingHelp: state.get('showingHelp'),
-    showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
     showingNetworkSelector: availableNetworksSelector(state).count() > 0,
     showingTerminal: state.get('controlPipes').size > 0,
-    topologyViewMode: state.get('topologyViewMode'),
+    showingTroubleshootingMenu: state.get('showingTroubleshootingMenu'),
     timeTravelSupported: timeTravelSupportedSelector(state),
     timeTravelTransitioning: state.get('timeTravelTransitioning'),
+    topologyViewMode: state.get('topologyViewMode'),
     urlState: getUrlState(state)
   };
 }
 
 App.propTypes = {
-  renderTimeTravel: PropTypes.func,
-  renderNodeDetailsExtras: PropTypes.func,
-  onRouteChange: PropTypes.func,
-  monitor: PropTypes.bool,
   disableStoreViewState: PropTypes.bool,
+  monitor: PropTypes.bool,
+  onRouteChange: PropTypes.func,
+  renderNodeDetailsExtras: PropTypes.func,
+  renderTimeTravel: PropTypes.func,
 };
 
 App.defaultProps = {
-  renderTimeTravel: () => <TimeTravelWrapper />,
-  renderNodeDetailsExtras: () => null,
-  onRouteChange: () => null,
-  monitor: false,
   disableStoreViewState: false,
+  monitor: false,
+  onRouteChange: () => null,
+  renderNodeDetailsExtras: () => null,
+  renderTimeTravel: () => <TimeTravelWrapper />,
 };
 
 export default connect(mapStateToProps)(App);

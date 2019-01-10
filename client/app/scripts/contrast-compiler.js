@@ -21,7 +21,7 @@ module.exports = class ContrastStyleCompiler {
         const contrast = findAsset(css, 'contrast-theme');
         const normal = findAsset(css, 'style-app');
         // Convert to JSON string so they can be parsed into a window variable
-        const themes = JSON.stringify({ normal, contrast, publicPath });
+        const themes = JSON.stringify({ contrast, normal, publicPath });
         // Append a script to the end of <head /> to evaluate before the other scripts are loaded.
         const script = `<script>window.__WEAVE_SCOPE_THEMES = JSON.parse('${themes}')</script>`;
         const [head, end] = htmlPluginData.html.split('</head>');

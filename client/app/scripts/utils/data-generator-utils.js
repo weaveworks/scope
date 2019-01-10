@@ -46,8 +46,8 @@ export const METRIC_LABELS = {
   host_cpu_usage_percent: 'CPU',
   host_mem_usage_bytes: 'Memory',
   load1: 'Load 1',
-  load15: 'Load 15',
   load5: 'Load 5',
+  load15: 'Load 15',
   open_files_count: 'Open files',
   process_cpu_usage_percent: 'CPU',
   process_memory_usage_bytes: 'Memory'
@@ -60,42 +60,42 @@ export function label(m) {
 
 
 const memoryMetric = (node, name, max = 1024 * 1024 * 1024) => ({
-  samples: [{value: getNextValue([node.id, name], max)}],
-  max
+  max,
+  samples: [{value: getNextValue([node.id, name], max)}]
 });
 
 const cpuMetric = (node, name, max = 100) => ({
-  samples: [{value: getNextValue([node.id, name], max)}],
-  max
+  max,
+  samples: [{value: getNextValue([node.id, name], max)}]
 });
 
 const fileMetric = (node, name, max = 1000) => ({
-  samples: [{value: getNextValue([node.id, name], max)}],
-  max
+  max,
+  samples: [{value: getNextValue([node.id, name], max)}]
 });
 
 const loadMetric = (node, name, max = 10) => ({
-  samples: [{value: getNextValue([node.id, name], max)}],
-  max
+  max,
+  samples: [{value: getNextValue([node.id, name], max)}]
 });
 
 const metrics = {
-  // process
-  square: {
-    process_cpu_usage_percent: cpuMetric,
-    process_memory_usage_bytes: memoryMetric,
-    open_files_count: fileMetric
+  // host
+  circle: {
+    host_cpu_usage_percent: cpuMetric,
+    host_mem_usage_bytes: memoryMetric,
+    load5: loadMetric
   },
   // container
   hexagon: {
     docker_cpu_total_usage: cpuMetric,
     docker_memory_usage: memoryMetric
   },
-  // host
-  circle: {
-    load5: loadMetric,
-    host_cpu_usage_percent: cpuMetric,
-    host_mem_usage_bytes: memoryMetric
+  // process
+  square: {
+    open_files_count: fileMetric,
+    process_cpu_usage_percent: cpuMetric,
+    process_memory_usage_bytes: memoryMetric
   }
 };
 

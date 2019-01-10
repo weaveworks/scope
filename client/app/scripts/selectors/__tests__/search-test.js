@@ -29,23 +29,21 @@ describe('Search selectors', () => {
         }],
         tables: [{
           id: 'metric1',
-          type: 'property-list',
           rows: [{
-            id: 'label1',
             entries: {
               label: 'Label 1',
               value: 'Label Value 1'
-            }
+            },
+            id: 'label1'
           }, {
-            id: 'label2',
             entries: {
               label: 'Label 2',
               value: 'Label Value 2'
-            }
-          }]
+            },
+            id: 'label2'
+          }],
+          type: 'property-list'
         }, {
-          id: 'metric2',
-          type: 'multicolumn-table',
           columns: [{
             id: 'a',
             label: 'A'
@@ -53,28 +51,30 @@ describe('Search selectors', () => {
             id: 'c',
             label: 'C'
           }],
+          id: 'metric2',
           rows: [{
-            id: 'row1',
             entries: {
               a: 'xxxa',
               b: 'yyya',
               c: 'zzz1'
-            }
+            },
+            id: 'row1'
           }, {
-            id: 'row2',
             entries: {
               a: 'yyyb',
               b: 'xxxb',
               c: 'zzz2'
-            }
+            },
+            id: 'row2'
           }, {
-            id: 'row3',
             entries: {
               a: 'Value 1',
               b: 'Value 2',
               c: 'Value 3'
-            }
-          }]
+            },
+            id: 'row3'
+          }],
+          type: 'multicolumn-table'
         }],
       },
     })

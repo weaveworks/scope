@@ -14,7 +14,7 @@ import { uniformSelect } from '../utils/array-utils';
 const log = debug('scope:nodes-layout');
 
 const topologyCaches = {};
-export const DEFAULT_MARGINS = { top: 0, left: 0 };
+export const DEFAULT_MARGINS = { left: 0, top: 0 };
 // Pretend the nodes are bigger than they are so that the edges would not enter
 // them under a high curvature which would cause arrow heads to be misplaced.
 const NODE_SIZE_FACTOR = 1.5 * NODE_BASE_SIZE;
@@ -180,8 +180,8 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
     const gNodeId = graphNodeId(node.get('id'));
     if (!graph.hasNode(gNodeId)) {
       graph.setNode(gNodeId, {
-        width: nodeWidth,
-        height: nodeHeight
+        height: nodeHeight,
+        width: nodeWidth
       });
     }
   });
@@ -235,12 +235,12 @@ function runLayoutEngine(graph, imNodes, imEdges, opts) {
 
   const { width, height } = graph.graph();
   let layout = {
-    graphWidth: width,
+    edges,
     graphHeight: height,
-    width,
+    graphWidth: width,
     height,
     nodes,
-    edges
+    width
   };
 
   // layout the single nodes
@@ -388,7 +388,7 @@ function hasSameEndpoints(cachedEdge, nodes) {
  * @return {Object}        layout clone
  */
 function cloneLayout(layout, nodes, edges) {
-  const clone = Object.assign({}, layout, {nodes, edges});
+  const clone = Object.assign({}, layout, {edges, nodes});
   return clone;
 }
 
@@ -433,9 +433,9 @@ export function doLayout(immNodes, immEdges, opts) {
   // one engine and node and edge caches per topology, to keep renderings similar
   if (options.noCache || !topologyCaches[cacheId]) {
     topologyCaches[cacheId] = {
-      nodeCache: makeMap(),
       edgeCache: makeMap(),
-      graph: new dagre.graphlib.Graph({})
+      graph: new dagre.graphlib.Graph({}),
+      nodeCache: makeMap()
     };
   }
 

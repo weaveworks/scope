@@ -17,9 +17,9 @@ class TimeControl extends React.Component {
     const { currentTopology } = this.props;
     return {
       layout: this.props.topologyViewMode,
-      topologyId: currentTopology && currentTopology.get('id'),
       parentTopologyId: currentTopology && currentTopology.get('parentId'),
-      ...data
+      topologyId: currentTopology && currentTopology.get('id'),
+      ...data,
     };
   }
 
@@ -76,19 +76,19 @@ class TimeControl extends React.Component {
 
 function mapStateToProps(state) {
   return {
-    isPaused: isPausedSelector(state),
-    timeTravelSupported: timeTravelSupportedSelector(state),
-    topologyViewMode: state.get('topologyViewMode'),
-    topologiesLoaded: state.get('topologiesLoaded'),
     currentTopology: state.get('currentTopology'),
+    isPaused: isPausedSelector(state),
     pausedAt: state.get('pausedAt'),
+    timeTravelSupported: timeTravelSupportedSelector(state),
+    topologiesLoaded: state.get('topologiesLoaded'),
+    topologyViewMode: state.get('topologyViewMode'),
   };
 }
 
 export default connect(
   mapStateToProps,
   {
-    resumeTime,
     pauseTimeAtNow,
+    resumeTime,
   }
 )(TimeControl);

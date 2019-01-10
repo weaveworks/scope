@@ -91,7 +91,7 @@ class DebugMenu extends React.Component {
 }
 
 export default connect(null, {
-  toggleTroubleshootingMenu,
+  clickDownloadGraph,
   resetLocalViewState,
-  clickDownloadGraph
+  toggleTroubleshootingMenu
 })(DebugMenu);

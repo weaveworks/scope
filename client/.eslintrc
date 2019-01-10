@@ -7,9 +7,17 @@
     "node": true
   },
   "rules": {
-    "no-debugger" : 1,
+    "no-debugger": 1,
     "comma-dangle": 0,
     "global-require": 0,
+    "sort-keys": [
+      "error",
+      "asc",
+      {
+        "caseSensitive": false,
+        "natural": true
+      }
+    ],
     "import/no-extraneous-dependencies": [
       "error",
       {
@@ -36,8 +44,7 @@
     "react/prefer-stateless-function": 0,
     "react/sort-comp": 0,
     "react/prop-types": 0,
-
     "jsx-a11y/click-events-have-key-events": 0,
-    "jsx-a11y/mouse-events-have-key-events": 0,
+    "jsx-a11y/mouse-events-have-key-events": 0
   }
 }

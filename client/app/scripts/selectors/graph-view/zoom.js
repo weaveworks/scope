@@ -23,7 +23,7 @@ const graphBoundingRectangleSelector = createSelector(
     const yMax = graphNodes.map(n => n.get('y') + NODE_BASE_SIZE).max();
 
     return makeMap({
-      xMin, yMin, xMax, yMax
+      xMax, xMin, yMax, yMin
     });
   }
 );
@@ -54,10 +54,10 @@ export const graphDefaultZoomSelector = createSelector(
     const translateY = ((height - ((yMax + yMin) * scale)) / 2) + canvasMargins.top;
 
     return makeMap({
-      translateX,
-      translateY,
       scaleX: scale,
       scaleY: scale,
+      translateX,
+      translateY,
     });
   }
 );
@@ -74,12 +74,12 @@ export const graphLimitsSelector = createSelector(
     } = boundingRectangle.toJS();
 
     return makeMap({
-      minScale: MIN_SCALE,
-      maxScale: MAX_SCALE,
-      contentMinX: xMin,
       contentMaxX: xMax,
-      contentMinY: yMin,
       contentMaxY: yMax,
+      contentMinX: xMin,
+      contentMinY: yMin,
+      maxScale: MAX_SCALE,
+      minScale: MIN_SCALE,
     });
   }
 );

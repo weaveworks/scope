@@ -13,9 +13,9 @@ describe('NodeDetailsTable', () => {
 
   beforeEach(() => {
     columns = [
-      { id: 'kubernetes_ip', label: 'IP', dataType: 'ip' },
+      { dataType: 'ip', id: 'kubernetes_ip', label: 'IP' },
       { id: 'kubernetes_namespace', label: 'Namespace' },
-      { id: 'uptime', label: 'Uptime', dataType: 'duration' },
+      { dataType: 'duration', id: 'uptime', label: 'Uptime' },
     ];
     nodes = [
       {
@@ -24,7 +24,7 @@ describe('NodeDetailsTable', () => {
           { id: 'kubernetes_ip', label: 'IP', value: '10.244.253.24' },
           { id: 'kubernetes_namespace', label: 'Namespace', value: '1111' },
           {
-            id: 'uptime', dataType: 'duration', label: 'Uptime', value: '1'
+            dataType: 'duration', id: 'uptime', label: 'Uptime', value: '1'
           },
         ]
       }, {
@@ -33,7 +33,7 @@ describe('NodeDetailsTable', () => {
           { id: 'kubernetes_ip', label: 'IP', value: '10.244.253.4' },
           { id: 'kubernetes_namespace', label: 'Namespace', value: '12' },
           {
-            id: 'uptime', dataType: 'duration', label: 'Uptime', value: '4'
+            dataType: 'duration', id: 'uptime', label: 'Uptime', value: '4'
           },
         ]
       }, {
@@ -42,7 +42,7 @@ describe('NodeDetailsTable', () => {
           { id: 'kubernetes_ip', label: 'IP', value: '10.44.253.255' },
           { id: 'kubernetes_namespace', label: 'Namespace', value: '5' },
           {
-            id: 'uptime', dataType: 'duration', label: 'Uptime', value: '30'
+            dataType: 'duration', id: 'uptime', label: 'Uptime', value: '30'
           },
         ]
       }, {
@@ -51,7 +51,7 @@ describe('NodeDetailsTable', () => {
           { id: 'kubernetes_ip', label: 'IP', value: '10.244.253.100' },
           { id: 'kubernetes_namespace', label: 'Namespace', value: '00000' },
           {
-            id: 'uptime', dataType: 'duration', label: 'Uptime', value: '22222'
+            dataType: 'duration', id: 'uptime', label: 'Uptime', value: '22222'
           },
         ]
       },
