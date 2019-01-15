@@ -24,10 +24,6 @@ IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker
 LISTENING_IP_ADDR_CMD="for I in \$( $IP_ADDR_CMD ); do if curl -m 1 -s \${I}:4040 > /dev/null ; then echo \${I}; fi; done"
 WEAVESCOPE_DOCKER_ARGS=${WEAVESCOPE_DOCKER_ARGS:-}
 
-# When docker daemon is running with User Namespace enabled, this tool will run into errors:
-#  "Privileged mode is incompatible with user namespaces" for `docker run --privileged`
-#  "Cannot share the host's network namespace when user namespaces are enabled" for `docker run --net=host`
-# To avoid above errors, use `--userns=host` option to let container use host User Namespace.
 # This option(saved in $USERNS_HOST) will be inserted ONLY IF docker support `--userns` option.
 USERNS_HOST=""
 docker run --help | grep -q -- --userns && USERNS_HOST="--userns=host"
@@ -170,7 +166,7 @@ create_plugins_dir() {
 }
 
 docker_args() {
-    echo --privileged $USERNS_HOST --net=host --pid=host \
+    echo --privileged $USERNS_HOST --pid=host \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v /var/run/scope/plugins:/var/run/scope/plugins \
         -v /sys/kernel/debug:/sys/kernel/debug \
@@ -178,8 +174,11 @@ docker_args() {
 }
 
 launch_command() {
+    # FIXME -p flag only wanted when we are running the app
     # shellcheck disable=SC2046,SC2086
     echo docker run -d --name="$SCOPE_CONTAINER_NAME" $(docker_args) \
+         -e SCOPE_HOSTNAME=$(hostname) \
+         -p 4040:4040 \
         $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" --probe.docker=true
 }
 
@@ -218,7 +217,7 @@ dry_run() {
 }
 
 run_in_scope_container() {
-    docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$1"
+    docker run --rm $USERNS_HOST --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$1"
 }
 
 # Wait for the scope app to start listening on localhost:4040
