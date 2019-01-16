@@ -183,7 +183,7 @@ client/build-external/index.html: $(shell find client/app -type f) $(SCOPE_UI_TO
 client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
-		-v $(shell pwd)/client/client:/home/weave/scope/client \
+		-v $(shell pwd)/client:/home/weave/scope/client \
 		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 		-w /home/weave/scope/client \
 		$(SCOPE_UI_BUILD_IMAGE) yarn test
