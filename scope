@@ -177,8 +177,8 @@ launch_command() {
     # FIXME -p flag only wanted when we are running the app
     # shellcheck disable=SC2046,SC2086
     echo docker run -d --name="$SCOPE_CONTAINER_NAME" $(docker_args) \
-         -e SCOPE_HOSTNAME=$(hostname) \
-         -p 4040:4040 \
+        -e SCOPE_HOSTNAME=$(hostname) \
+        -p 4040:4040 \
         $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" --probe.docker=true
 }
 
