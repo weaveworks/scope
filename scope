@@ -174,11 +174,13 @@ docker_args() {
 }
 
 launch_command() {
-    # FIXME -p flag only wanted when we are running the app
+    # -p flag only wanted when we are running the app
+    check_probe_only || launch_port_arg="-p 4040:4040"
+    DOCKER_HOSTNAME=$(run_in_scope_container hostname)
     # shellcheck disable=SC2046,SC2086
     echo docker run -d --name="$SCOPE_CONTAINER_NAME" $(docker_args) \
-        -e SCOPE_HOSTNAME=$(hostname) \
-        -p 4040:4040 \
+        -e SCOPE_HOSTNAME=$(DOCKER_HOSTNAME) \
+        $launch_port_arg \
         $WEAVESCOPE_DOCKER_ARGS "$SCOPE_IMAGE" --probe.docker=true
 }
 
@@ -217,7 +219,8 @@ dry_run() {
 }
 
 run_in_scope_container() {
-    docker run --rm $USERNS_HOST --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$1"
+    # run using Scope image, on the host scope is running on, in the host network
+    docker run --rm $USERNS_HOST --net=host --entrypoint /bin/sh "$SCOPE_IMAGE" -c "$1"
 }
 
 # Wait for the scope app to start listening on localhost:4040
