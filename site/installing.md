@@ -168,6 +168,35 @@ Allowable parameters for the launcher URL:
 
 The URL is: http://localhost:4040.
 
+### Kubernetes (local clone)
+
+A simple way to get Scope running in a Kubernetes setting is to
+
+1. Spin up a cluster wherever it suits you.
+   [Minikube](https://github.com/kubernetes/minikube) is a simple option.
+
+1. Clone the Scope repo:
+
+   ```sh
+   git clone https://github.com/weaveworks/scope
+   cd scope
+   ```
+
+1. Run
+
+   ```sh
+   kubectl apply -f example/k8s
+   ```
+
+   to deploy Scope to your cluster.
+1. Port-forward to access `weave-scope-app`:
+
+   ```sh
+   kubectl port-forward svc/weave-scope-app -n weave 4040:80
+   ```
+
+1. Point your browser to <http://127.0.0.1:4040.>
+
 ### <a name="ose"></a>OpenShift
 
 To install Weave Scope on OpenShift, you first need to login as `system:admin` user with the following command:
