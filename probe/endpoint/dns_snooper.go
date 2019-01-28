@@ -273,7 +273,7 @@ func (s *DNSSnooper) processDNSMessage(dns *layers.DNS) {
 		for _, alias := range aliases {
 			if bytes.Equal(alias, record.Name) {
 				ips[record.IP.String()] = struct{}{}
-				continue
+				break
 			}
 		}
 	}
