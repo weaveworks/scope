@@ -36,7 +36,7 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
-          image: weaveworks/scope:1.10.1
+          image: weaveworks/scope:1.10.2
           imagePullPolicy: IfNotPresent
           securityContext:
             privileged: true

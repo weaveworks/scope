@@ -1,3 +1,58 @@
+## Release 1.10.2
+
+This release has a security fix, a few bug-fixes and some other minor
+improvements.
+
+Special thanks to @arnulfojr, @Akashtic, @AVRahul, @carlosedp, @ycao56
+for community contributions!
+
+Security and bug fixes:
+
+- Address vulnerability (CVE-2018-16487) by updating lodash dependency
+	[#3568](https://github.com/weaveworks/scope/pull/3568)
+- Address vulnerability (CVE-2019-0542) by updating xterm.js dependency
+	[#3557](https://github.com/weaveworks/scope/pull/3557)
+- Fix missing nodes in Kubernetes Cluster mode
+	[#3444](https://github.com/weaveworks/scope/pull/3444)
+- Show all connections when one pod has multiple PVCs
+	[#3553](https://github.com/weaveworks/scope/pull/3553)
+- Fix spurious connection to PVC with same name in different namespace
+	[#3530](https://github.com/weaveworks/scope/pull/3530)
+- Fix linkage from metrics graph to external monitoring url
+	[#3534](https://github.com/weaveworks/scope/pull/3534)
+- Fix build mount path in UI unit tests
+	[#3558](https://github.com/weaveworks/scope/pull/3558)
+- Add extra internal ID on control buttons
+	[#3565](https://github.com/weaveworks/scope/pull/3565)
+
+Feature improvements:
+- Dynamically expand namespace list if you hover over it
+	[#3117](https://github.com/weaveworks/scope/pull/3117)
+	[#3562](https://github.com/weaveworks/scope/pull/3562)
+- Make Scope's container memory usage number match Docker's
+	[#3435](https://github.com/weaveworks/scope/pull/3435)
+
+Build improvements:
+- Add ARM64 build
+	[#3537](https://github.com/weaveworks/scope/pull/3537)
+- Add a CI test to detect the problem which caused release 1.10.0 to fail
+	[#3440](https://github.com/weaveworks/scope/pull/3440)
+- Update some 3rd-party UI components
+	[#3450](https://github.com/weaveworks/scope/pull/3450)
+- re-order some code to make it more readable
+	[#3551](https://github.com/weaveworks/scope/pull/3551)
+- Small performance improvement in rendering Kubernetes volume claims
+	[#3445](https://github.com/weaveworks/scope/pull/3445)
+
+Documentation improvements:
+- [#3417](https://github.com/weaveworks/scope/pull/3417)
+	[#3447](https://github.com/weaveworks/scope/pull/3447)
+	[#3448](https://github.com/weaveworks/scope/pull/3448)
+	[#3436](https://github.com/weaveworks/scope/pull/3436)
+	[#3545](https://github.com/weaveworks/scope/pull/3545)
+	[#3546](https://github.com/weaveworks/scope/pull/3546)
+	[#3563](https://github.com/weaveworks/scope/pull/3563)
+
 ## Release 1.10.1
 
 This is a re-release of 1.10.0 which got hit by an unfortunate build
