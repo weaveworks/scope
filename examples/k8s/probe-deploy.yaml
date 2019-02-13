@@ -1,0 +1,44 @@
+# borrowed from https://cloud.weave.works/k8s/scope.yaml?k8s-version=1.9.3
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weave-scope-cluster-agent
+  labels:
+    name: weave-scope-cluster-agent
+    app: weave-scope
+    weave-cloud-component: scope
+    weave-scope-component: cluster-agent
+  namespace: weave
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: weave-scope-cluster-agent
+      app: weave-scope
+      weave-cloud-component: scope
+      weave-scope-component: cluster-agent
+  revisionHistoryLimit: 2
+  template:
+    metadata:
+      labels:
+        name: weave-scope-cluster-agent
+        app: weave-scope
+        weave-cloud-component: scope
+        weave-scope-component: cluster-agent
+    spec:
+      containers:
+        - name: scope-cluster-agent
+          args:
+            - '--mode=probe'
+            - '--probe-only'
+            - '--probe.kubernetes.role=cluster'
+            - 'weave-scope-app.weave.svc.cluster.local.:80'
+          command:
+            - /home/weave/scope
+          image: 'docker.io/weaveworks/scope:1.10.2'
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
+      serviceAccountName: weave-scope
