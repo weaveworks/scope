@@ -4,6 +4,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -26,6 +28,11 @@ type MetadataTemplate struct {
 	Datatype string  `json:"dataType,omitempty"`
 	Priority float64 `json:"priority,omitempty"`
 	From     string  `json:"from,omitempty"` // Defines how to get the value from a report node
+}
+
+// StripCommandArgs removes all the arguments from the command
+func StripCommandArgs(command string) string {
+	return strings.Split(command, " ")[0]
 }
 
 // MetadataRow returns the row for a node
@@ -96,6 +103,10 @@ func (e MetadataTemplates) MetadataRows(n Node) []MetadataRow {
 	rows := make([]MetadataRow, 0, len(e))
 	for _, template := range e {
 		if row, ok := template.MetadataRow(n); ok {
+			if isCommandKey(row.ID) {
+				row.Value = StripCommandArgs(row.Value)
+				log.Infof("Blublu %s -- %v", n.ID, row)
+			}
 			rows = append(rows, row)
 		}
 	}

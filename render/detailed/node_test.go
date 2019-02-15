@@ -19,7 +19,7 @@ import (
 )
 
 func child(t *testing.T, r render.Renderer, id string) detailed.NodeSummary {
-	s, ok := detailed.MakeNodeSummary(detailed.RenderContext{Report: fixture.Report}, r.Render(context.Background(), fixture.Report).Nodes[id])
+	s, ok := detailed.MakeNodeSummary(detailed.RenderContext{Report: fixture.Report}, false, r.Render(context.Background(), fixture.Report).Nodes[id])
 	if !ok {
 		t.Fatalf("Expected node %s to be summarizable, but wasn't", id)
 	}

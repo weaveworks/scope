@@ -2,7 +2,6 @@ package process
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
@@ -93,7 +92,7 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 
 		if p.Cmdline != "" {
 			if r.noCommandLineArguments {
-				node = node.WithLatest(Cmdline, now, strings.Split(p.Cmdline, " ")[0])
+				node = node.WithLatest(Cmdline, now, report.StripCommandArgs(p.Cmdline))
 			} else {
 				node = node.WithLatest(Cmdline, now, p.Cmdline)
 			}

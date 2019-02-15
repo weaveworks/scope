@@ -13,12 +13,16 @@ import (
 // Raw report handler
 func makeRawReportHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		report, err := rep.Report(ctx, time.Now())
+		censorConfig := report.CensorConfig{
+			HideCommandLineArguments: r.URL.Query().Get("hideCommandLineArguments") == "true",
+			HideEnvironmentVariables: r.URL.Query().Get("hideEnvironmentVariables") == "true",
+		}
+		rawReport, err := rep.Report(ctx, time.Now())
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
-		respondWith(w, http.StatusOK, report)
+		respondWith(w, http.StatusOK, report.CensorReport(rawReport, censorConfig))
 	}
 }
 

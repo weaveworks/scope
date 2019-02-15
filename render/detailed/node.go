@@ -86,12 +86,12 @@ type RenderContext struct {
 
 // MakeNode transforms a renderable node to a detailed node. It uses
 // aggregate metadata, plus the set of origin node IDs, to produce tables.
-func MakeNode(topologyID string, rc RenderContext, ns report.Nodes, n report.Node) Node {
-	summary, _ := MakeNodeSummary(rc, n)
+func MakeNode(topologyID string, rc RenderContext, hideCommandLineArguments bool, ns report.Nodes, n report.Node) Node {
+	summary, _ := MakeNodeSummary(rc, hideCommandLineArguments, n)
 	return Node{
 		NodeSummary: summary,
 		Controls:    controls(rc.Report, n),
-		Children:    children(rc, n),
+		Children:    children(rc, hideCommandLineArguments, n),
 		Connections: []ConnectionsSummary{
 			incomingConnectionsSummary(topologyID, rc.Report, n, ns),
 			outgoingConnectionsSummary(topologyID, rc.Report, n, ns),
@@ -222,13 +222,13 @@ var nodeSummaryGroupSpecs = []struct {
 	},
 }
 
-func children(rc RenderContext, n report.Node) []NodeSummaryGroup {
+func children(rc RenderContext, hideCommandLineArguments bool, n report.Node) []NodeSummaryGroup {
 	summaries := map[string][]NodeSummary{}
 	n.Children.ForEach(func(child report.Node) {
 		if child.ID == n.ID {
 			return
 		}
-		summary, ok := MakeNodeSummary(rc, child)
+		summary, ok := MakeNodeSummary(rc, hideCommandLineArguments, child)
 		if !ok {
 			return
 		}
