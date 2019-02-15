@@ -30,8 +30,8 @@ type APINode struct {
 }
 
 // RenderContextForReporter creates the rendering context for the given reporter.
-func RenderContextForReporter(rep Reporter, r report.Report) detailed.RenderContext {
-	rc := detailed.RenderContext{Report: r}
+func RenderContextForReporter(rep Reporter, r report.Report, req *http.Request) detailed.RenderContext {
+	rc := detailed.RenderContext{Report: report.CensorReportForRequest(r, req)}
 	if wrep, ok := rep.(WebReporter); ok {
 		rc.MetricsGraphURL = wrep.MetricsGraphURL
 	}
@@ -42,21 +42,17 @@ type rendererHandler func(context.Context, render.Renderer, render.Transformer, 
 
 // Full topology.
 func handleTopology(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
-	var (
-		hideCommandLineArguments = true
-	)
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(ctx, rc, hideCommandLineArguments, render.Render(ctx, rc.Report, renderer, transformer).Nodes),
+		Nodes: detailed.Summaries(ctx, rc, render.Render(ctx, rc.Report, renderer, transformer).Nodes),
 	})
 }
 
 // Individual nodes.
 func handleNode(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
 	var (
-		vars                     = mux.Vars(r)
-		topologyID               = vars["topology"]
-		nodeID                   = vars["id"]
-		hideCommandLineArguments = true
+		vars       = mux.Vars(r)
+		topologyID = vars["topology"]
+		nodeID     = vars["id"]
 	)
 	// We must not lose the node during filtering. We achieve that by
 	// (1) rendering the report with the base renderer, without
@@ -76,7 +72,7 @@ func handleNode(ctx context.Context, renderer render.Renderer, transformer rende
 		nodes.Nodes[nodeID] = node
 		nodes.Filtered--
 	}
-	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, rc, hideCommandLineArguments, nodes.Nodes, node)})
+	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, rc, nodes.Nodes, node)})
 }
 
 // Websocket for the full topology.
@@ -86,9 +82,6 @@ func handleWebsocket(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
-	var (
-		hideCommandLineArguments = true
-	)
 	if err := r.ParseForm(); err != nil {
 		respondWith(w, http.StatusInternalServerError, err)
 		return
@@ -148,12 +141,13 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, r.Form, re)
+		rc := RenderContextForReporter(rep, re, r)
+		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, r.Form, rc.Report)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(ctx, RenderContextForReporter(rep, re), hideCommandLineArguments, render.Render(ctx, re, renderer, filter).Nodes)
+		newTopo := detailed.Summaries(ctx, rc, render.Render(ctx, rc.Report, renderer, filter).Nodes)
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

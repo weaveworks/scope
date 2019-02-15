@@ -151,7 +151,7 @@ func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, boo
 }
 
 // MakeNodeSummary summarizes a node, if possible.
-func MakeNodeSummary(rc RenderContext, hideCommandLineArguments bool, n report.Node) (NodeSummary, bool) {
+func MakeNodeSummary(rc RenderContext, n report.Node) (NodeSummary, bool) {
 	base, ok := MakeBasicNodeSummary(rc.Report, n)
 	if !ok {
 		return NodeSummary{}, false
@@ -449,13 +449,13 @@ func (s nodeSummariesByID) Less(i, j int) bool { return s[i].ID < s[j].ID }
 type NodeSummaries map[string]NodeSummary
 
 // Summaries converts RenderableNodes into a set of NodeSummaries
-func Summaries(ctx context.Context, rc RenderContext, hideCommandLineArguments bool, rns report.Nodes) NodeSummaries {
+func Summaries(ctx context.Context, rc RenderContext, rns report.Nodes) NodeSummaries {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "detailed.Summaries")
 	defer span.Finish()
 
 	result := NodeSummaries{}
 	for id, node := range rns {
-		if summary, ok := MakeNodeSummary(rc, hideCommandLineArguments, node); ok {
+		if summary, ok := MakeNodeSummary(rc, node); ok {
 			for i, m := range summary.Metrics {
 				summary.Metrics[i] = m.Summary()
 			}

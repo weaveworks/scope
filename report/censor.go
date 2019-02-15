@@ -1,8 +1,9 @@
 package report
 
-import "strings"
-
-// import log "github.com/sirupsen/logrus"
+import (
+	"net/http"
+	"strings"
+)
 
 type keyMatcher func(string) bool
 
@@ -20,36 +21,37 @@ func keyStartsWith(prefix string) keyMatcher {
 
 type censorValueFunc func(string) string
 
-func assignEmpty(key string) string {
-	return ""
-}
-
+// TODO: Implement this in a more systematic way.
 func censorTopology(t *Topology, match keyMatcher, censor censorValueFunc) {
 	for nodeID := range t.Nodes {
 		for entryID := range t.Nodes[nodeID].Latest {
 			entry := &t.Nodes[nodeID].Latest[entryID]
 			if match(entry.key) {
-				// log.Infof("Blabla ... %s ... %s ... %s", entry.key, entry.Value, censor(entry.Value))
 				entry.Value = censor(entry.Value)
 			}
 		}
 	}
 }
 
-// CensorConfig describe which parts of the report needs to be censored.
-type CensorConfig struct {
-	HideCommandLineArguments bool
-	HideEnvironmentVariables bool
+// CensorReportForRequest removes any sensitive data
+// from the report based on the request query params.
+func CensorReportForRequest(rep Report, req *http.Request) Report {
+	var (
+		hideCommandLineArguments = req.URL.Query().Get("hideCommandLineArguments") == "true"
+		hideEnvironmentVariables = req.URL.Query().Get("hideEnvironmentVariables") == "true"
+		makeEmpty                = func(string) string { return "" }
+	)
+	if hideCommandLineArguments {
+		censorTopology(&rep.Process, keyEquals(Cmdline), StripCommandArgs)
+		censorTopology(&rep.Container, keyEquals(DockerContainerCommand), StripCommandArgs)
+	}
+	if hideEnvironmentVariables {
+		censorTopology(&rep.Container, keyStartsWith(DockerEnvPrefix), makeEmpty)
+	}
+	return rep
 }
 
-// CensorReport removes any sensitive data from the report.
-func CensorReport(r Report, cfg CensorConfig) Report {
-	if cfg.HideCommandLineArguments {
-		censorTopology(&r.Process, keyEquals(Cmdline), StripCommandArgs)
-		censorTopology(&r.Container, keyEquals(DockerContainerCommand), StripCommandArgs)
-	}
-	if cfg.HideEnvironmentVariables {
-		censorTopology(&r.Container, keyStartsWith(DockerEnvPrefix), assignEmpty)
-	}
-	return r
+// StripCommandArgs removes all the arguments from the command
+func StripCommandArgs(command string) string {
+	return strings.Split(command, " ")[0]
 }

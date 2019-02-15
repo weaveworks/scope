@@ -300,7 +300,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.probe.pluginsRoot, "probe.plugins.root", "/var/run/scope/plugins", "Root directory to search for plugins")
 	flag.BoolVar(&flags.probe.noControls, "probe.no-controls", false, "Disable controls (e.g. start/stop containers, terminals, logs ...)")
 	flag.BoolVar(&flags.probe.noCommandLineArguments, "probe.omit.cmd-args", false, "Disable collection of command-line arguments")
-	flag.BoolVar(&flags.probe.noEnvironmentVariables, "probe.omit.env-vars", false, "Disable collection of environment variables")
+	flag.BoolVar(&flags.probe.noEnvironmentVariables, "probe.omit.env-vars", true, "Disable collection of environment variables")
 
 	flag.BoolVar(&flags.probe.insecure, "probe.insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
 	flag.StringVar(&flags.probe.resolver, "probe.resolver", "", "IP address & port of resolver to use.  Default is to use system resolver.")

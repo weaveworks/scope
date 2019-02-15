@@ -215,7 +215,3 @@ func lookupCommonKey(b []byte) string {
 	}
 	return string(b)
 }
-
-func isCommandKey(key string) bool {
-	return key == Cmdline || key == DockerContainerCommand
-}
