@@ -6,6 +6,7 @@ DOCKERHUB_USER=weaveworks
 SCOPE_EXE=prog/scope
 SCOPE_EXPORT=scope.tar
 CLOUD_AGENT_EXPORT=cloud-agent.tar
+RHEL_EXPORT=rhel.tar
 SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
 SCOPE_UI_BUILD_UPTODATE=.scope_ui_build.uptodate
 SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
@@ -74,6 +75,8 @@ docker/%: %
 $(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent docker/$(SCOPE_EXE) docker/weave docker/weaveutil
 
 $(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
+
+$(RHEL_EXPORT): docker/Dockerfile.cloud-agent.rhel
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
@@ -154,7 +157,7 @@ $(SCOPE_UI_TOOLCHAIN_UPTODATE): client/yarn.lock $(SCOPE_UI_BUILD_UPTODATE)
 			-v $(shell pwd)/client:/home/weave/scope/client \
 			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 			-w /home/weave/scope/client \
-			$(SCOPE_UI_BUILD_IMAGE) yarn install; \
+			$(SCOPE_UI_BUILD_IMAGE) yarn installi --network-concurrency 1; \
 	fi
 	touch $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 
