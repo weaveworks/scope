@@ -1,5 +1,0 @@
-FROM registry.access.redhat.com/rhel7:7.6
-WORKDIR /home/weave
-RUN yum install -y bash conntrack-tools net-tools util-linux curl
-COPY ./scope /home/weave/
-ENTRYPOINT ["/home/weave/scope", "--mode=probe", "--no-app", "--probe.docker=true"]

@@ -6,7 +6,8 @@ DOCKERHUB_USER=weaveworks
 SCOPE_EXE=prog/scope
 SCOPE_EXPORT=scope.tar
 CLOUD_AGENT_EXPORT=cloud-agent.tar
-RHEL_EXPORT=rhel.tar
+RHEL=rhel
+RHEL_RELEASE=1
 SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
 SCOPE_UI_BUILD_UPTODATE=.scope_ui_build.uptodate
 SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
@@ -76,7 +77,11 @@ $(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent docker/$(SCOPE_EXE) docker/
 
 $(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 
-$(RHEL_EXPORT): docker/Dockerfile.cloud-agent.rhel
+$(RHEL): docker/Dockerfile.$(RHEL)
+	$(SUDO) docker build --build-arg=version=$(GIT_REVISION) --build-arg=release=${RHEL_RELEASE} -t $(DOCKERHUB_USER)/$* -f $< docker/
+	$(SUDO) docker tag $(DOCKERHUB_USER)/$* $(DOCKERHUB_USER)/$*:$(IMAGE_TAG)
+	$(SUDO) docker save $(DOCKERHUB_USER)/$*:latest > $@
+
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
