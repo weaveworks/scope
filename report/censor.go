@@ -36,15 +36,15 @@ func censorTopology(t *Topology, match keyMatcher, censor censorValueFunc) {
 // CensorConfig describes how probe reports should
 // be censored when rendered through the API.
 type CensorConfig struct {
-	hideCommandLineArguments bool
-	hideEnvironmentVariables bool
+	HideCommandLineArguments bool
+	HideEnvironmentVariables bool
 }
 
 // GetCensorConfigFromQueryParams extracts censor config from request query params.
 func GetCensorConfigFromQueryParams(req *http.Request) CensorConfig {
 	return CensorConfig{
-		hideCommandLineArguments: true || req.URL.Query().Get("hideCommandLineArguments") == "true",
-		hideEnvironmentVariables: true || req.URL.Query().Get("hideEnvironmentVariables") == "true",
+		HideCommandLineArguments: true || req.URL.Query().Get("hideCommandLineArguments") == "true",
+		HideEnvironmentVariables: true || req.URL.Query().Get("hideEnvironmentVariables") == "true",
 	}
 }
 
@@ -54,11 +54,11 @@ func CensorRawReport(r Report, cfg CensorConfig) Report {
 	var (
 		makeEmpty = func(string) string { return "" }
 	)
-	if cfg.hideCommandLineArguments {
+	if cfg.HideCommandLineArguments {
 		censorTopology(&r.Process, keyEquals(Cmdline), StripCommandArgs)
 		censorTopology(&r.Container, keyEquals(DockerContainerCommand), StripCommandArgs)
 	}
-	if cfg.hideEnvironmentVariables {
+	if cfg.HideEnvironmentVariables {
 		censorTopology(&r.Container, keyStartsWith(DockerEnvPrefix), makeEmpty)
 	}
 	return r
