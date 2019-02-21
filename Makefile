@@ -78,10 +78,7 @@ $(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent docker/$(SCOPE_EXE) docker/
 $(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 
 $(RHEL): docker/Dockerfile.$(RHEL)
-	$(SUDO) docker build --build-arg=version=$(GIT_REVISION) --build-arg=release=${RHEL_RELEASE} -t $(DOCKERHUB_USER)/$* -f $< docker/
-	$(SUDO) docker tag $(DOCKERHUB_USER)/$* $(DOCKERHUB_USER)/$*:$(IMAGE_TAG)
-	$(SUDO) docker save $(DOCKERHUB_USER)/$*:latest > $@
-
+	$(SUDO) docker build --build-arg=version=$(GIT_REVISION) --build-arg=release=${RHEL_RELEASE} -t docker.io/tufin/conntrack:${RHEL_RELEASE} -f $< docker/
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 
