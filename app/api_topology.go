@@ -30,8 +30,8 @@ type APINode struct {
 }
 
 // RenderContextForReporter creates the rendering context for the given reporter.
-func RenderContextForReporter(rep Reporter, r report.Report, req *http.Request) detailed.RenderContext {
-	rc := detailed.RenderContext{Report: report.CensorReportForRequest(r, req)}
+func RenderContextForReporter(rep Reporter, r report.Report) detailed.RenderContext {
+	rc := detailed.RenderContext{Report: r}
 	if wrep, ok := rep.(WebReporter); ok {
 		rc.MetricsGraphURL = wrep.MetricsGraphURL
 	}
@@ -42,8 +42,13 @@ type rendererHandler func(context.Context, render.Renderer, render.Transformer, 
 
 // Full topology.
 func handleTopology(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
+	// log.Infof("blublu %v", rc.Report.Container.Nodes)
+	// log.Infof("blublu %v", rc.Report.ContainerImage.Nodes)
+	// log.Infof("blibli %v", render.Render(ctx, rc.Report, renderer, transformer).Nodes)
+	censorCfg := report.GetCensorConfigFromQueryParams(r)
+	nodeSummaries := detailed.Summaries(ctx, rc, render.Render(ctx, rc.Report, renderer, transformer).Nodes)
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(ctx, rc, render.Render(ctx, rc.Report, renderer, transformer).Nodes),
+		Nodes: detailed.CensorNodeSummaries(nodeSummaries, censorCfg),
 	})
 }
 
@@ -72,7 +77,9 @@ func handleNode(ctx context.Context, renderer render.Renderer, transformer rende
 		nodes.Nodes[nodeID] = node
 		nodes.Filtered--
 	}
-	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, rc, nodes.Nodes, node)})
+	censorCfg := report.GetCensorConfigFromQueryParams(r)
+	rawNode := detailed.MakeNode(topologyID, rc, nodes.Nodes, node)
+	respondWith(w, http.StatusOK, APINode{Node: detailed.CensorNode(rawNode, censorCfg)})
 }
 
 // Websocket for the full topology.
@@ -141,16 +148,20 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		rc := RenderContextForReporter(rep, re, r)
+		rc := RenderContextForReporter(rep, re)
 		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, r.Form, rc.Report)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
+		// log.Infof("blublu %v", rc.Report.Container.Nodes)
+		censorCfg := report.GetCensorConfigFromQueryParams(r)
 		newTopo := detailed.Summaries(ctx, rc, render.Render(ctx, rc.Report, renderer, filter).Nodes)
+		newTopo = detailed.CensorNodeSummaries(newTopo, censorCfg)
+		// log.Infof("blublu %v", newTopo)
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
-
+		// log.Infof("dfdfdf %v", diff)
 		if err := conn.WriteJSON(diff); err != nil {
 			if !xfer.IsExpectedWSCloseError(err) {
 				log.Errorf("cannot serialize topology diff: %s", err)
