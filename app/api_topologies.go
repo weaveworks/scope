@@ -577,12 +577,11 @@ func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFu
 			return
 		}
 		req.ParseForm()
-		rc := RenderContextForReporter(rep, rpt)
-		renderer, filter, err := r.RendererForTopology(topologyID, req.Form, rc.Report)
+		renderer, filter, err := r.RendererForTopology(topologyID, req.Form, rpt)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return
 		}
-		f(ctx, renderer, filter, rc, w, req)
+		f(ctx, renderer, filter, RenderContextForReporter(rep, rpt), w, req)
 	}
 }
