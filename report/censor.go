@@ -15,8 +15,8 @@ type CensorConfig struct {
 // GetCensorConfigFromRequest extracts censor config from request query params.
 func GetCensorConfigFromRequest(req *http.Request) CensorConfig {
 	return CensorConfig{
-		HideCommandLineArguments: true || req.URL.Query().Get("hideCommandLineArguments") == "true",
-		HideEnvironmentVariables: true || req.URL.Query().Get("hideEnvironmentVariables") == "true",
+		HideCommandLineArguments: req.URL.Query().Get("hideCommandLineArguments") == "true",
+		HideEnvironmentVariables: req.URL.Query().Get("hideEnvironmentVariables") == "true",
 	}
 }
 
@@ -37,27 +37,32 @@ func StripCommandArgs(command string) string {
 	return strings.Split(command, " ")[0]
 }
 
-// CensorRawReport removes any sensitive data from
-// the raw report based on the request query params.
-func CensorRawReport(r Report, cfg CensorConfig) Report {
-	r.WalkTopologies(func(t *Topology) {
+// CensorRawReport removes any sensitive data from the raw report based on the request query params.
+func CensorRawReport(rawReport Report, cfg CensorConfig) Report {
+	// Create a copy of the report first to make sure the operation is immutable.
+	censoredReport := rawReport.Copy()
+	censoredReport.ID = rawReport.ID
+
+	censoredReport.WalkTopologies(func(t *Topology) {
 		for nodeID, node := range t.Nodes {
-			latest := StringLatestMap{}
-			for _, entry := range node.Latest {
-				// If environment variables are to be hidden, omit passing them to the final report.
-				if cfg.HideEnvironmentVariables && IsEnvironmentVarsEntry(entry.key) {
-					continue
+			if node.Latest != nil {
+				latest := make(StringLatestMap, 0, cap(node.Latest))
+				for _, entry := range node.Latest {
+					// If environment variables are to be hidden, omit passing them to the final report.
+					if cfg.HideEnvironmentVariables && IsEnvironmentVarsEntry(entry.key) {
+						continue
+					}
+					// If command line arguments are to be hidden, strip them away.
+					if cfg.HideCommandLineArguments && IsCommandEntry(entry.key) {
+						entry.Value = StripCommandArgs(entry.Value)
+					}
+					// Pass the latest entry to the final report.
+					latest = append(latest, entry)
 				}
-				// If command line arguments are to be hidden, strip them away.
-				if cfg.HideCommandLineArguments && IsCommandEntry(entry.key) {
-					entry.Value = StripCommandArgs(entry.Value)
-				}
-				// Pass the latest entry to the final report.
-				latest = append(latest, entry)
+				node.Latest = latest
+				t.Nodes[nodeID] = node
 			}
-			node.Latest = latest
-			t.Nodes[nodeID] = node
 		}
 	})
-	return r
+	return censoredReport
 }

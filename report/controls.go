@@ -35,6 +35,9 @@ func (cs Controls) Merge(other Controls) Controls {
 
 // Copy produces a copy of cs.
 func (cs Controls) Copy() Controls {
+	if cs == nil {
+		return nil
+	}
 	result := Controls{}
 	for k, v := range cs {
 		result[k] = v

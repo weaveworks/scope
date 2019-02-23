@@ -136,7 +136,7 @@ func (node Node) ExtractTable(template TableTemplate) (rows []Row, truncationCou
 	truncationCount = 0
 	if str, ok := node.Latest.Lookup(truncationCountPrefix + template.Prefix); ok {
 		if n, err := fmt.Sscanf(str, "%d", &truncationCount); n != 1 || err != nil {
-			log.Warn("Unexpected truncation count format %q", str)
+			log.Warnf("Unexpected truncation count format %q", str)
 		}
 	}
 

@@ -214,6 +214,9 @@ type Nodes map[string]Node
 
 // Copy returns a value copy of the Nodes.
 func (n Nodes) Copy() Nodes {
+	if n == nil {
+		return nil
+	}
 	cp := make(Nodes, len(n))
 	for k, v := range n {
 		cp[k] = v
