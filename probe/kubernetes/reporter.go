@@ -538,10 +538,11 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 		Rank:  0,
 	})
 	pods.Controls.AddControl(report.Control{
-		ID:    DeletePod,
-		Human: "Delete",
-		Icon:  "far fa-trash-alt",
-		Rank:  1,
+		ID:           DeletePod,
+		Human:        "Delete",
+		Icon:         "far fa-trash-alt",
+		Confirmation: "Are you sure you want to delete this pod?",
+		Rank:         1,
 	})
 	for _, service := range services {
 		selectors = append(selectors, match(

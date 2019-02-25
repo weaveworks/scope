@@ -1,5 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
+import { isEmpty } from 'lodash';
 import classNames from 'classnames';
 
 import { trackAnalyticsEvent } from '../../utils/tracking-utils';
@@ -25,9 +26,11 @@ class NodeDetailsControlButton extends React.Component {
 
   handleClick(ev) {
     ev.preventDefault();
-    const { id, human } = this.props.control;
+    const { id, human, confirmation } = this.props.control;
     trackAnalyticsEvent('scope.node.control.click', { id, title: human });
-    this.props.dispatch(doControl(this.props.nodeId, this.props.control));
+    if (isEmpty(confirmation) || window.confirm(confirmation)) { // eslint-disable-line no-alert
+      this.props.dispatch(doControl(this.props.nodeId, this.props.control));
+    }
   }
 }
 
