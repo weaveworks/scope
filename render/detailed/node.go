@@ -41,24 +41,26 @@ func (*ControlInstance) UnmarshalJSON(b []byte) error {
 }
 
 type wiredControlInstance struct {
-	ProbeID string `json:"probeId"`
-	NodeID  string `json:"nodeId"`
-	ID      string `json:"id"`
-	Human   string `json:"human"`
-	Icon    string `json:"icon"`
-	Rank    int    `json:"rank"`
+	ProbeID      string `json:"probeId"`
+	NodeID       string `json:"nodeId"`
+	ID           string `json:"id"`
+	Human        string `json:"human"`
+	Icon         string `json:"icon"`
+	Confirmation string `json:"confirmation,omitempty"`
+	Rank         int    `json:"rank"`
 }
 
 // CodecEncodeSelf marshals this ControlInstance. It takes the basic Metric
 // rendering, then adds some row-specific fields.
 func (c *ControlInstance) CodecEncodeSelf(encoder *codec.Encoder) {
 	encoder.Encode(wiredControlInstance{
-		ProbeID: c.ProbeID,
-		NodeID:  c.NodeID,
-		ID:      c.Control.ID,
-		Human:   c.Control.Human,
-		Icon:    c.Control.Icon,
-		Rank:    c.Control.Rank,
+		ProbeID:      c.ProbeID,
+		NodeID:       c.NodeID,
+		ID:           c.Control.ID,
+		Human:        c.Control.Human,
+		Icon:         c.Control.Icon,
+		Confirmation: c.Control.Confirmation,
+		Rank:         c.Control.Rank,
 	})
 }
 
@@ -70,10 +72,11 @@ func (c *ControlInstance) CodecDecodeSelf(decoder *codec.Decoder) {
 		ProbeID: in.ProbeID,
 		NodeID:  in.NodeID,
 		Control: report.Control{
-			ID:    in.ID,
-			Human: in.Human,
-			Icon:  in.Icon,
-			Rank:  in.Rank,
+			ID:           in.ID,
+			Human:        in.Human,
+			Icon:         in.Icon,
+			Confirmation: in.Confirmation,
+			Rank:         in.Rank,
 		},
 	}
 }

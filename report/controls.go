@@ -12,10 +12,11 @@ type Controls map[string]Control
 
 // A Control basically describes an RPC
 type Control struct {
-	ID    string `json:"id"`
-	Human string `json:"human"`
-	Icon  string `json:"icon"` // from https://fortawesome.github.io/Font-Awesome/cheatsheet/ please
-	Rank  int    `json:"rank"`
+	ID           string `json:"id"`
+	Human        string `json:"human"`
+	Icon         string `json:"icon"` // from https://fortawesome.github.io/Font-Awesome/cheatsheet/ please
+	Confirmation string `json:"confirmation,omitempty"`
+	Rank         int    `json:"rank"`
 }
 
 // Merge merges other with cs, returning a fresh Controls.
