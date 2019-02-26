@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 
@@ -41,14 +42,17 @@ type rendererHandler func(context.Context, render.Renderer, render.Transformer, 
 
 // Full topology.
 func handleTopology(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
+	censorCfg := report.GetCensorConfigFromRequest(r)
+	nodeSummaries := detailed.Summaries(ctx, rc, render.Render(ctx, rc.Report, renderer, transformer).Nodes)
 	respondWith(w, http.StatusOK, APITopology{
-		Nodes: detailed.Summaries(ctx, rc, render.Render(ctx, rc.Report, renderer, transformer).Nodes),
+		Nodes: detailed.CensorNodeSummaries(nodeSummaries, censorCfg),
 	})
 }
 
 // Individual nodes.
 func handleNode(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
 	var (
+		censorCfg  = report.GetCensorConfigFromRequest(r)
 		vars       = mux.Vars(r)
 		topologyID = vars["topology"]
 		nodeID     = vars["id"]
@@ -71,7 +75,8 @@ func handleNode(ctx context.Context, renderer render.Renderer, transformer rende
 		nodes.Nodes[nodeID] = node
 		nodes.Filtered--
 	}
-	respondWith(w, http.StatusOK, APINode{Node: detailed.MakeNode(topologyID, rc, nodes.Nodes, node)})
+	rawNode := detailed.MakeNode(topologyID, rc, nodes.Nodes, node)
+	respondWith(w, http.StatusOK, APINode{Node: detailed.CensorNode(rawNode, censorCfg)})
 }
 
 // Websocket for the full topology.
@@ -120,6 +125,7 @@ func handleWebsocket(
 		wait             = make(chan struct{}, 1)
 		topologyID       = mux.Vars(r)["topology"]
 		startReportingAt = deserializeTimestamp(r.Form.Get("timestamp"))
+		censorCfg        = report.GetCensorConfigFromRequest(r)
 		channelOpenedAt  = time.Now()
 	)
 
@@ -145,7 +151,15 @@ func handleWebsocket(
 			log.Errorf("Error generating report: %v", err)
 			return
 		}
-		newTopo := detailed.Summaries(ctx, RenderContextForReporter(rep, re), render.Render(ctx, re, renderer, filter).Nodes)
+
+		newTopo := detailed.CensorNodeSummaries(
+			detailed.Summaries(
+				ctx,
+				RenderContextForReporter(rep, re),
+				render.Render(ctx, re, renderer, filter).Nodes,
+			),
+			censorCfg,
+		)
 		diff := detailed.TopoDiff(previousTopo, newTopo)
 		previousTopo = newTopo
 

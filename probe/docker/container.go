@@ -53,7 +53,7 @@ const (
 	CPUSystemCPUUsage    = "docker_cpu_system_cpu_usage"
 
 	LabelPrefix = "docker_label_"
-	EnvPrefix   = "docker_env_"
+	EnvPrefix   = report.DockerEnvPrefix
 )
 
 // These 'constants' are used for node states.

@@ -11,6 +11,9 @@ type DNSRecords map[string]DNSRecord
 
 // Copy makes a copy of the DNSRecords
 func (r DNSRecords) Copy() DNSRecords {
+	if r == nil {
+		return nil
+	}
 	cp := make(DNSRecords, len(r))
 	for k, v := range r {
 		cp[k] = v

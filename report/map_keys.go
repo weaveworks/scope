@@ -43,6 +43,7 @@ const (
 	DockerContainerUptime        = "docker_container_uptime"
 	DockerContainerRestartCount  = "docker_container_restart_count"
 	DockerContainerNetworkMode   = "docker_container_network_mode"
+	DockerEnvPrefix              = "docker_env_"
 	// probe/kubernetes
 	KubernetesName                 = "kubernetes_name"
 	KubernetesNamespace            = "kubernetes_namespace"
