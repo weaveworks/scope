@@ -6,6 +6,7 @@ ARG release
 WORKDIR /home/weave
 RUN yum update -y && yum install -y  bash conntrack-tools net-tools util-linux curl
 COPY ./scope /home/weave/
+COPY ./license /home/license
 COPY ./TERMS_OF_USE /home/license
 
 LABEL name=Conntrack
