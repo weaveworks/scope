@@ -33,13 +33,33 @@ OSS Scope has no user concept, this is only available in Weave Cloud. To limit t
         Password for basic authentication (default "admin")
   -app.basicAuth.username string
         Username for basic authentication (default "admin")
+  -probe.basicAuth
+        Enable basic authentication for app
+  -probe.basicAuth.password string
+        Password for basic authentication (default "admin")
+  -probe.basicAuth.username string
+        Username for basic authentication (default "admin")
   ```
+
+  or alternatively set the environment variables to use the same authentication for Scope app and Scope probe:
+
+  ```cli
+  ENABLE_BASIC_AUTH: set to "true"
+  BASIC_AUTH_USERNAME: set to the desired user (default "admin")
+  BASIC_AUTH_PASSWORD: set to the desired password (default "admin")
+  ```
+
+  Note that there is no standard programmatic way of expiring a session with Basic Auth, so the users would normally stayed logged in until the authentication params have changed. See [this article](https://en.wikipedia.org/wiki/Basic_access_authentication#Security) for more details.
 
 ## ARM Support
 
 - It required patches, @adivyoseph (on [#scope](https://weave-community.slack.com/messages/scope/)) had done some work on this.
 - [#2110](https://github.com/weaveworks/scope/issues/2110) says that scope's CI builds ARM32 (but not ARM64) for test-builds at least.
 - @errordeveloper says: It should be easy to add arm64 in CI, You can try and enable builds in ci on a branch.. In theory, you just need to build for `GOARCH=arm64`.
+
+## LDAP Support
+
+Scope doesn't support LDAP right now.
 
 ## Data Storage
 
