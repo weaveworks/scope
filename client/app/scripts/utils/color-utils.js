@@ -1,5 +1,6 @@
 import { hsl } from 'd3-color';
-import { scaleLinear, scaleOrdinal, schemeCategory10 } from 'd3-scale';
+import { scaleLinear, scaleOrdinal } from 'd3-scale';
+import { schemeCategory10 } from 'd3-scale-chromatic';
 
 const PSEUDO_COLOR = '#b1b1cb';
 const hueRange = [20, 330]; // exclude red

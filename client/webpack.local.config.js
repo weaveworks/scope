@@ -1,10 +1,8 @@
 const webpack = require('webpack');
 const autoprefixer = require('autoprefixer');
 const path = require('path');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const SassLintPlugin = require('sasslint-webpack-plugin');
-const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
+const SassLintPlugin = require('sass-lint-webpack');
 const { themeVarsAsScss } = require('weaveworks-ui-components/lib/theme');
 
 /**
@@ -28,10 +26,6 @@ module.exports = {
       './app/scripts/main',
       'webpack-hot-middleware/client'
     ],
-    'contrast-theme': [
-      './app/scripts/contrast-theme',
-      'webpack-hot-middleware/client'
-    ],
     'dev-app': [
       './app/scripts/main.dev',
       'webpack-hot-middleware/client'
@@ -40,47 +34,46 @@ module.exports = {
       './app/scripts/terminal-main',
       'webpack-hot-middleware/client'
     ],
-    vendors: ['babel-polyfill', 'classnames', 'dagre', 'filesize', 'immutable',
+    vendors: ['@babel/polyfill', 'classnames', 'dagre', 'filesize', 'immutable',
       'moment', 'page', 'react', 'react-dom', 'react-motion', 'react-redux', 'redux',
       'redux-thunk', 'reqwest', 'xterm', 'webpack-hot-middleware/client'
     ]
   },
 
+  // See https://webpack.js.org/concepts/mode/#mode-development.
+  mode: 'development',
+
   // Used by Webpack Dev Middleware
   output: {
-    publicPath: '',
+    filename: '[name].js',
     path: path.join(__dirname, 'build'),
-    filename: '[name].js'
+    publicPath: '',
   },
 
   // Necessary plugins for hot load
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin({ name: 'vendors', filename: 'vendors.js' }),
-    new webpack.optimize.OccurrenceOrderPlugin(),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoEmitOnErrorsPlugin(),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
-    new ExtractTextPlugin('style-[name]-[chunkhash].css'),
-    new SassLintPlugin({
-      context: 'app/styles',
-      ignorePlugins: ['html-webpack-plugin', 'extract-text-webpack-plugin'],
-    }),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'terminal-app'],
+      filename: 'terminal.html',
       template: 'app/html/index.html',
-      filename: 'terminal.html'
     }),
     new HtmlWebpackPlugin({
-      chunks: ['vendors', 'dev-app', 'contrast-theme'],
+      chunks: ['vendors', 'dev-app'],
+      filename: 'dev.html',
       template: 'app/html/index.html',
-      filename: 'dev.html'
     }),
     new HtmlWebpackPlugin({
-      chunks: ['vendors', 'app', 'contrast-theme'],
+      chunks: ['vendors', 'app'],
+      filename: 'index.html',
       template: 'app/html/index.html',
-      filename: 'index.html'
     }),
-    new ContrastStyleCompiler()
+    new SassLintPlugin({
+      context: 'app/styles',
+      ignorePlugins: ['html-webpack-plugin'],
+    }),
   ],
 
   // Transform source code using Babel and React Hot Loader
@@ -114,15 +107,16 @@ module.exports = {
       {
         test: /\.jsx?$/,
         exclude: /node_modules|vendor/,
-        loader: 'babel-loader'
+        use: [
+          { loader: 'babel-loader', options: { cacheDirectory: true } },
+        ]
       },
       {
-        test: /\.(scss|css)$/,
-        loader: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: [{
-            loader: 'css-loader'
-          }, {
+        test: /\.css$/,
+        use: [
+          { loader: 'style-loader' },
+          { loader: 'css-loader' },
+          {
             loader: 'postcss-loader',
             options: {
               plugins: [
@@ -131,7 +125,15 @@ module.exports = {
                 })
               ]
             }
-          }, {
+          },
+        ],
+      },
+      {
+        test: /\.scss$/,
+        use: [
+          { loader: 'style-loader' },
+          { loader: 'css-loader' },
+          {
             loader: 'sass-loader',
             options: {
               data: themeVarsAsScss(),
@@ -140,8 +142,8 @@ module.exports = {
                 path.resolve(__dirname, './node_modules/rc-slider'),
               ]
             }
-          }],
-        })
+          },
+        ],
       }
     ]
   },
