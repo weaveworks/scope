@@ -33,6 +33,10 @@ spec:
             - 'weave-scope-app.weave.svc.cluster.local:80'
           image: weaveworks/scope:1.10.2
           imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 100m
+              memory: 100Mi
           securityContext:
             privileged: true
           volumeMounts:
