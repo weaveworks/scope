@@ -13,7 +13,8 @@ import (
 // Raw report handler
 func makeRawReportHandler(rep Reporter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-		rawReport, err := rep.Report(ctx, time.Now())
+		timestamp := deserializeTimestamp(r.URL.Query().Get("timestamp"))
+		rawReport, err := rep.Report(ctx, timestamp)
 		if err != nil {
 			respondWith(w, http.StatusInternalServerError, err)
 			return

@@ -6,7 +6,7 @@ import {
   resetLocalViewState,
   clickDownloadGraph
 } from '../actions/app-actions';
-import { getApiPath } from '../utils/web-api-utils';
+import { getReportUrl } from '../utils/web-api-utils';
 
 class DebugMenu extends React.Component {
   constructor(props, context) {
@@ -21,9 +21,7 @@ class DebugMenu extends React.Component {
   }
 
   render() {
-    const reportDownloadUrl = process.env.WEAVE_CLOUD
-      ? `${getApiPath()}/api/report`
-      : 'api/report';
+    const { pausedAt } = this.props;
     return (
       <div className="troubleshooting-menu-wrapper">
         <div className="troubleshooting-menu">
@@ -32,14 +30,13 @@ class DebugMenu extends React.Component {
             <div className="troubleshooting-menu-item">
               <a
                 className="footer-icon"
-                href={reportDownloadUrl}
-                download
                 title="Save raw data as JSON"
+                href={getReportUrl(pausedAt)}
+                download
               >
                 <i className="fa fa-code" />
-                <span className="description">
-                  Save raw data as JSON
-                </span>
+                <span className="description">Save raw data as JSON</span>
+                {pausedAt && <span className="soft"> ({pausedAt})</span>}
               </a>
             </div>
             <div className="troubleshooting-menu-item">
@@ -49,9 +46,8 @@ class DebugMenu extends React.Component {
                 title="Save canvas as SVG (does not include search highlighting)"
               >
                 <i className="fa fa-download" />
-                <span className="description">
-                  Save canvas as SVG (does not include search highlighting)
-                </span>
+                <span className="description">Save canvas as SVG</span>
+                <span className="soft"> (does not include search highlighting)</span>
               </button>
             </div>
             <div className="troubleshooting-menu-item">
@@ -90,7 +86,13 @@ class DebugMenu extends React.Component {
   }
 }
 
-export default connect(null, {
+function mapStateToProps(state) {
+  return {
+    pausedAt: state.get('pausedAt'),
+  };
+}
+
+export default connect(mapStateToProps, {
   clickDownloadGraph,
   resetLocalViewState,
   toggleTroubleshootingMenu
