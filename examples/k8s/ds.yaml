@@ -25,17 +25,12 @@ spec:
       containers:
         - name: scope-agent
           args:
-            - '--no-app'
+            - '--mode=probe'
+            - '--probe-only'
+            - '--probe.kubernetes.role=host'
             - '--probe.docker.bridge=docker0'
             - '--probe.docker=true'
-            - '--probe.kubernetes=true'
             - 'weave-scope-app.weave.svc.cluster.local:80'
-          env:
-            - name: KUBERNETES_NODENAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
           image: weaveworks/scope:1.10.2
           imagePullPolicy: IfNotPresent
           securityContext:
@@ -50,7 +45,6 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
-      serviceAccountName: weave-scope
       tolerations:
         - effect: NoSchedule
           operator: Exists
