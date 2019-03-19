@@ -27,7 +27,7 @@ spec:
             - '--probe.kubernetes=true'
             - '--probe.cri=true'
             - '--probe.cri.endpoint=unix:///var/run/crio/crio.sock'
-            - 'weave-scope-app.weave.svc.cluster.local:80'
+            - 'weave-scope-app.weave.svc.cluster.local.:80'
           env:
             - name: KUBERNETES_NODENAME
               valueFrom:
