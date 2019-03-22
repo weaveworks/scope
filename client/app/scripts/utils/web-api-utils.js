@@ -48,9 +48,11 @@ let createWebsocketAt = null;
 let firstMessageOnWebsocketAt = null;
 let continuePolling = true;
 
-export function buildUrlQuery(params = makeMap(), state) {
+export function buildUrlQuery(params = makeMap(), state = null) {
   // Attach the time travel timestamp to every request to the backend.
-  params = params.set('timestamp', state.get('pausedAt'));
+  if (state) {
+    params = params.set('timestamp', state.get('pausedAt'));
+  }
 
   // Ignore the entries with values `null` or `undefined`.
   return params.map((value, param) => {
@@ -97,6 +99,10 @@ export function getApiPath(pathname = window.location.pathname) {
   }
 
   return basePath(pathname);
+}
+
+export function getReportUrl(timestamp) {
+  return `${getApiPath()}/api/report?${buildUrlQuery(makeMap({ timestamp }))}`;
 }
 
 function topologiesUrl(state) {
