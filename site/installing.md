@@ -185,7 +185,7 @@ A simple way to get Scope running in a Kubernetes setting is to
 1. Run
 
    ```sh
-   kubectl apply -f example/k8s
+   kubectl apply -f examples/k8s
    ```
 
    to deploy Scope to your cluster.
