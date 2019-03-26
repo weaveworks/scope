@@ -192,10 +192,13 @@ class App extends React.Component {
     const {
       isTableViewMode, isGraphViewMode, isResourceViewMode, showingDetails,
       showingHelp, showingNetworkSelector, showingTroubleshootingMenu,
-      timeTravelTransitioning, timeTravelSupported
+      timeTravelTransitioning, timeTravelSupported, contrastMode,
     } = this.props;
 
-    const className = classNames('scope-app', { 'time-travel-open': timeTravelSupported });
+    const className = classNames('scope-app', {
+      'contrast-mode': contrastMode,
+      'time-travel-open': timeTravelSupported,
+    });
     const isIframe = window !== window.top;
 
     return (
@@ -248,6 +251,7 @@ class App extends React.Component {
 
 function mapStateToProps(state) {
   return {
+    contrastMode: state.get('contrastMode'),
     currentTopology: state.get('currentTopology'),
     isGraphViewMode: isGraphViewModeSelector(state),
     isResourceViewMode: isResourceViewModeSelector(state),

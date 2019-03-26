@@ -1,8 +1,43 @@
 {
-  "plugins": [
-    "lodash",
-    "transform-class-properties",
-    ["transform-object-rest-spread", { "useBuiltIns": true }]
+  "presets": [
+    [
+      "@babel/preset-env",
+      {
+        "modules": false
+      }
+    ],
+    "@babel/preset-react"
   ],
-  "presets": ["env", "react"]
+  "plugins": [
+    [
+      "@babel/plugin-proposal-object-rest-spread",
+      {
+        "useBuiltIns": true
+      }
+    ],
+    "@babel/plugin-proposal-class-properties",
+    "lodash",
+  ],
+  "env": {
+    "test": {
+      "presets": [
+        [
+          "@babel/preset-env",
+          {
+            "modules": "commonjs"
+          }
+        ],
+        "@babel/preset-react"
+      ],
+      "plugins": [
+        [
+          "@babel/plugin-proposal-object-rest-spread",
+          {
+            "useBuiltIns": true
+          }
+        ],
+        "@babel/plugin-proposal-class-properties",
+      ]
+    }
+  }
 }

@@ -3,9 +3,7 @@ const autoprefixer = require('autoprefixer');
 const path = require('path');
 
 const CleanWebpackPlugin = require('clean-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ContrastStyleCompiler = require('./app/scripts/contrast-compiler');
 const { themeVarsAsScss } = require('weaveworks-ui-components/lib/theme');
 
 const GLOBALS = {
@@ -33,47 +31,40 @@ module.exports = {
 
   entry: {
     app: './app/scripts/main',
-    'contrast-theme': ['./app/scripts/contrast-theme'],
     'terminal-app': './app/scripts/terminal-main',
     // keep only some in here, to make vendors and app bundles roughly same size
-    vendors: ['babel-polyfill', 'classnames', 'immutable',
+    vendors: ['@babel/polyfill', 'classnames', 'immutable',
       'react', 'react-dom', 'react-redux', 'redux', 'redux-thunk'
     ]
   },
 
+
+  // See https://webpack.js.org/concepts/mode/#mode-production.
+  mode: 'production',
+
   output: {
-    path: path.join(__dirname, OUTPUT_PATH),
     filename: '[name]-[chunkhash].js',
-    publicPath: PUBLIC_PATH
+    path: path.join(__dirname, OUTPUT_PATH),
+    publicPath: PUBLIC_PATH,
   },
 
   plugins: [
     new CleanWebpackPlugin([OUTPUT_PATH]),
     new webpack.DefinePlugin(GLOBALS),
-    new webpack.optimize.CommonsChunkPlugin({ name: 'vendors', filename: 'vendors.js' }),
-    new webpack.optimize.OccurrenceOrderPlugin(true),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
     new webpack.IgnorePlugin(/.*\.map$/, /xterm\/lib\/addons/),
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: false,
-      compress: {
-        warnings: false
-      }
-    }),
-    new ExtractTextPlugin('style-[name]-[chunkhash].css'),
     new HtmlWebpackPlugin({
-      hash: true,
       chunks: ['vendors', 'terminal-app'],
+      filename: 'terminal.html',
+      hash: true,
       template: 'app/html/index.html',
-      filename: 'terminal.html'
     }),
     new HtmlWebpackPlugin({
+      chunks: ['vendors', 'app'],
+      filename: 'index.html',
       hash: true,
-      chunks: ['vendors', 'app', 'contrast-theme'],
       template: 'app/html/index.html',
-      filename: 'index.html'
     }),
-    new ContrastStyleCompiler()
   ],
 
   module: {
@@ -116,12 +107,11 @@ module.exports = {
         loader: 'babel-loader'
       },
       {
-        test: /\.(scss|css)$/,
-        loader: ExtractTextPlugin.extract({
-          fallback: 'style-loader',
-          use: [{
-            loader: 'css-loader'
-          }, {
+        test: /\.css$/,
+        use: [
+          { loader: 'style-loader' },
+          { loader: 'css-loader' },
+          {
             loader: 'postcss-loader',
             options: {
               plugins: [
@@ -130,18 +120,25 @@ module.exports = {
                 })
               ]
             }
-          }, {
+          },
+        ],
+      },
+      {
+        test: /\.scss$/,
+        use: [
+          { loader: 'style-loader' },
+          { loader: 'css-loader' },
+          {
             loader: 'sass-loader',
             options: {
-              minimize: true,
               data: themeVarsAsScss(),
               includePaths: [
                 path.resolve(__dirname, './node_modules/xterm'),
                 path.resolve(__dirname, './node_modules/rc-slider'),
               ]
             }
-          }]
-        })
+          },
+        ],
       }
     ]
   },

@@ -15,7 +15,6 @@ import {
   teardownWebsockets,
   getNodes,
 } from '../utils/web-api-utils';
-import { loadTheme } from '../utils/contrast-utils';
 import { isPausedSelector } from '../selectors/time-travel';
 import {
   availableMetricTypesSelector,
@@ -701,7 +700,6 @@ export function receiveNotFound(nodeId, requestTimestamp) {
 
 export function setContrastMode(enabled) {
   return (dispatch) => {
-    loadTheme(enabled ? 'contrast' : 'normal');
     dispatch({
       enabled,
       type: ActionTypes.TOGGLE_CONTRAST_MODE,

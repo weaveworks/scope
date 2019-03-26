@@ -14,7 +14,12 @@ const getKey = key => `${STORAGE_KEY_PREFIX}${key}`;
  * @return {Boolean}         True if feature is enabled
  */
 export function featureIsEnabled(feature) {
-  return storageGet(getKey(feature));
+  let enabled = storageGet(getKey(feature));
+  if (typeof enabled === 'string') {
+    // Convert back to boolean if stored as a string.
+    enabled = JSON.parse(enabled);
+  }
+  return enabled;
 }
 
 /**

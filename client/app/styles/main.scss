@@ -1,3 +1,15 @@
-@import "variables";
-@import "terminal";
+// Load the default theme initially to apply it on the global html level.
+@import "default-theme";
 @import "base";
+@import "terminal";
+
+.scope-app.contrast-mode {
+    // Load the contrast theme and reload all the CSS in the scope-app container.
+    @import "contrast-theme";
+    @import "base";
+}
+.scope-app:not(.contrast-mode) {
+    // Load the default theme and reload all the CSS in the scope-app container.
+    @import "default-theme";
+    @import "base";
+}
