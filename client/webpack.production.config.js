@@ -53,12 +53,6 @@ module.exports = {
     new webpack.DefinePlugin(GLOBALS),
     new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
     new webpack.IgnorePlugin(/.*\.map$/, /xterm\/lib\/addons/),
-    // new webpack.optimize.UglifyJsPlugin({
-    //   sourceMap: false,
-    //   compress: {
-    //     warnings: false
-    //   }
-    // }),
     new HtmlWebpackPlugin({
       chunks: ['vendors', 'terminal-app'],
       filename: 'terminal.html',
