@@ -57,8 +57,8 @@ type Client interface {
 	GetLogs(namespaceID, podID string, containerNames []string) (io.ReadCloser, error)
 	DeletePod(namespaceID, podID string) error
 	DeleteVolumeSnapshot(namespaceID, volumeSnapshotID string) error
-	ScaleUp(resource, namespaceID, id string) error
-	ScaleDown(resource, namespaceID, id string) error
+	ScaleUp(namespaceID, id string) error
+	ScaleDown(namespaceID, id string) error
 }
 
 type client struct {
@@ -549,26 +549,26 @@ func (c *client) DeleteVolumeSnapshot(namespaceID, volumeSnapshotID string) erro
 	return c.snapshotClient.VolumesnapshotV1().VolumeSnapshots(namespaceID).Delete(volumeSnapshotID, &metav1.DeleteOptions{})
 }
 
-func (c *client) ScaleUp(resource, namespaceID, id string) error {
-	return c.modifyScale(resource, namespaceID, id, func(scale *apiextensionsv1beta1.Scale) {
+func (c *client) ScaleUp(namespaceID, id string) error {
+	return c.modifyScale(namespaceID, id, func(scale *apiextensionsv1beta1.Scale) {
 		scale.Spec.Replicas++
 	})
 }
 
-func (c *client) ScaleDown(resource, namespaceID, id string) error {
-	return c.modifyScale(resource, namespaceID, id, func(scale *apiextensionsv1beta1.Scale) {
+func (c *client) ScaleDown(namespaceID, id string) error {
+	return c.modifyScale(namespaceID, id, func(scale *apiextensionsv1beta1.Scale) {
 		scale.Spec.Replicas--
 	})
 }
 
-func (c *client) modifyScale(resource, namespace, id string, f func(*apiextensionsv1beta1.Scale)) error {
-	scaler := c.client.Extensions().Scales(namespace)
-	scale, err := scaler.Get(resource, id)
+func (c *client) modifyScale(namespaceID, id string, f func(*apiextensionsv1beta1.Scale)) error {
+	scaler := c.client.ExtensionsV1beta1().Deployments(namespaceID)
+	scale, err := scaler.GetScale(id, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	f(scale)
-	_, err = scaler.Update(resource, scale)
+	_, err = scaler.UpdateScale(id, scale)
 	return err
 }
 

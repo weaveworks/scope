@@ -1121,7 +1121,7 @@
 			"importpath": "github.com/imdario/mergo",
 			"repository": "https://github.com/imdario/mergo",
 			"vcs": "git",
-			"revision": "6633656539c1639d9d78127b7d47c622b5d7b6dc",
+			"revision": "9316a62528ac99aaecb4e47eadd6dc8aa6533d58",
 			"branch": "HEAD",
 			"notests": true
 		},
@@ -2812,7 +2812,7 @@
 			"importpath": "k8s.io/api",
 			"repository": "https://github.com/kubernetes/api",
 			"vcs": "git",
-			"revision": "072894a440bdee3a891dea811fe42902311cd2a3",
+			"revision": "89a74a8d264df0e993299876a8cde88379b940ee",
 			"branch": "HEAD",
 			"notests": true
 		},
@@ -2820,7 +2820,7 @@
 			"importpath": "k8s.io/apimachinery",
 			"repository": "https://github.com/kubernetes/apimachinery",
 			"vcs": "git",
-			"revision": "103fd098999dc9c0c88536f5c9ad2e5da39373ae",
+			"revision": "2b1284ed4c93a43499e781493253e2ac5959c4fd",
 			"branch": "HEAD",
 			"notests": true
 		},
@@ -2828,7 +2828,15 @@
 			"importpath": "k8s.io/client-go",
 			"repository": "https://github.com/kubernetes/client-go",
 			"vcs": "git",
-			"revision": "7d04d0e2a0a1a4d4a1cd6baa432a2301492e4e65",
+			"revision": "e64494209f554a6723674bd494d69445fb76a1d4",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/klog",
+			"repository": "https://github.com/kubernetes/klog",
+			"vcs": "git",
+			"revision": "a5bc97fbc634d635061f3146511332c7e313a55a",
 			"branch": "HEAD",
 			"notests": true
 		},
@@ -2848,6 +2856,14 @@
 			"revision": "a07b7bbb58e7fdc5144f8d7046331d29fc9ad3b3",
 			"branch": "master",
 			"path": "pkg/util/proto",
+			"notests": true
+		},
+		{
+			"importpath": "sigs.k8s.io/yaml",
+			"repository": "https://github.com/kubernetes-sigs/yaml",
+			"vcs": "git",
+			"revision": "fd68e9863619f6ec2fdd8625fe1f02e7c877e480",
+			"branch": "HEAD",
 			"notests": true
 		},
 		{

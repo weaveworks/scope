@@ -169,12 +169,12 @@ func (r *Reporter) CaptureVolumeSnapshot(f func(xfer.Request, string, string, st
 
 // ScaleUp is the control to scale up a deployment
 func (r *Reporter) ScaleUp(req xfer.Request, namespace, id string) xfer.Response {
-	return xfer.ResponseError(r.client.ScaleUp(report.Deployment, namespace, id))
+	return xfer.ResponseError(r.client.ScaleUp(namespace, id))
 }
 
 // ScaleDown is the control to scale up a deployment
 func (r *Reporter) ScaleDown(req xfer.Request, namespace, id string) xfer.Response {
-	return xfer.ResponseError(r.client.ScaleDown(report.Deployment, namespace, id))
+	return xfer.ResponseError(r.client.ScaleDown(namespace, id))
 }
 
 func (r *Reporter) registerControls() {
