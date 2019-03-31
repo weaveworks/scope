@@ -723,6 +723,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/fatih/camelcase",
+			"repository": "https://github.com/fatih/camelcase",
+			"vcs": "git",
+			"revision": "44e46d280b43ec1531bb25252440e34f1b800b65",
+			"branch": "HEAD",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/fluent/fluent-logger-golang/fluent",
 			"repository": "https://github.com/fluent/fluent-logger-golang",
 			"vcs": "git",
@@ -2825,6 +2833,15 @@
 			"notests": true
 		},
 		{
+			"importpath": "k8s.io/cli-runtime/pkg/genericclioptions",
+			"repository": "https://github.com/kubernetes/cli-runtime",
+			"vcs": "git",
+			"revision": "a04da5c88c0796c1dc5ff976a9c91999779ac0e4",
+			"branch": "HEAD",
+			"path": "/pkg/genericclioptions",
+			"notests": true
+		},
+		{
 			"importpath": "k8s.io/client-go",
 			"repository": "https://github.com/kubernetes/client-go",
 			"vcs": "git",
@@ -2856,6 +2873,33 @@
 			"revision": "a07b7bbb58e7fdc5144f8d7046331d29fc9ad3b3",
 			"branch": "master",
 			"path": "pkg/util/proto",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/kubectl/describe",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"vcs": "git",
+			"revision": "ddf47ac13c1a9483ea035a79cd7c10005ff21a6d",
+			"branch": "HEAD",
+			"path": "/pkg/kubectl/describe",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/kubectl/scheme",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"vcs": "git",
+			"revision": "ddf47ac13c1a9483ea035a79cd7c10005ff21a6d",
+			"branch": "HEAD",
+			"path": "/pkg/kubectl/scheme",
+			"notests": true
+		},
+		{
+			"importpath": "k8s.io/kubernetes/pkg/kubectl/util",
+			"repository": "https://github.com/kubernetes/kubernetes",
+			"vcs": "git",
+			"revision": "ddf47ac13c1a9483ea035a79cd7c10005ff21a6d",
+			"branch": "HEAD",
+			"path": "/pkg/kubectl/util",
 			"notests": true
 		},
 		{
