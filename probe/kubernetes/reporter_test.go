@@ -9,7 +9,9 @@ import (
 
 	apiv1 "k8s.io/api/core/v1"
 	apiv1beta1 "k8s.io/api/extensions/v1beta1"
+	k8smeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/weaveworks/scope/common/xfer"
@@ -195,6 +197,9 @@ func (c *mockClient) CreateVolumeSnapshot(namespaceID, persistentVolumeClaimID, 
 }
 func (c *mockClient) DeleteVolumeSnapshot(namespaceID, VolumeSnapshotID string) error {
 	return nil
+}
+func (c *mockClient) Describe(namespaceID, resourceID string, groupKind schema.GroupKind, restMapping k8smeta.RESTMapping) (io.ReadCloser, error) {
+	return nil, nil
 }
 
 type mockPipeClient map[string]xfer.Pipe

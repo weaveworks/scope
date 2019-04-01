@@ -29,5 +29,5 @@ func (p *volumeSnapshotData) GetNode(probeID string) report.Node {
 		NodeType:              "Volume Snapshot Data",
 		VolumeName:            p.Spec.PersistentVolumeRef.Name,
 		VolumeSnapshotName:    p.Spec.VolumeSnapshotRef.Name,
-	})
+	}).WithLatestActiveControls(Describe)
 }

@@ -107,7 +107,7 @@ func (p *pod) GetNode(probeID string) report.Node {
 
 	return p.MetaNode(report.MakePodNodeID(p.UID())).WithLatests(latests).
 		WithParents(p.parents).
-		WithLatestActiveControls(GetLogs, DeletePod)
+		WithLatestActiveControls(GetLogs, DeletePod, Describe)
 }
 
 func (p *pod) ContainerNames() []string {

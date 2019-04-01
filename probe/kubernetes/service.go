@@ -63,7 +63,9 @@ func (s *service) GetNode(probeID string) report.Node {
 		}
 		latest[Ports] = portStr[:len(portStr)-1]
 	}
-	return s.MetaNode(report.MakeServiceNodeID(s.UID())).WithLatests(latest)
+	return s.MetaNode(report.MakeServiceNodeID(s.UID())).
+		WithLatests(latest).
+		WithLatestActiveControls(Describe)
 }
 
 func (s *service) ClusterIP() string {

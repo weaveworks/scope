@@ -85,7 +85,9 @@ func (cj *cronJob) GetNode(probeID string) report.Node {
 	if cj.Status.LastScheduleTime != nil {
 		latest[LastScheduled] = cj.Status.LastScheduleTime.Format(time.RFC3339Nano)
 	}
-	return cj.MetaNode(report.MakeCronJobNodeID(cj.UID())).WithLatests(latest)
+	return cj.MetaNode(report.MakeCronJobNodeID(cj.UID())).
+		WithLatests(latest).
+		WithLatestActiveControls(Describe)
 }
 
 func upgradeCronJob(legacy *batchv2alpha1.CronJob) *batchv1beta1.CronJob {
