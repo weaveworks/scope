@@ -6,7 +6,6 @@ import (
 
 	humanize "github.com/dustin/go-humanize"
 	docker_client "github.com/fsouza/go-dockerclient"
-
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
@@ -37,7 +36,7 @@ var (
 		ContainerUptime:       {ID: ContainerUptime, Label: "Uptime", From: report.FromLatest, Priority: 5, Datatype: report.Duration},
 		ContainerRestartCount: {ID: ContainerRestartCount, Label: "Restart #", From: report.FromLatest, Priority: 6},
 		ContainerNetworks:     {ID: ContainerNetworks, Label: "Networks", From: report.FromSets, Priority: 7},
-		ContainerIPs:          {ID: ContainerIPs, Label: "IPs", From: report.FromSets, Priority: 8},
+		ContainerIPs:          {ID: ContainerIPsWithScopes, Label: "IPs", From: report.FromSetsIPScope, Priority: 8},
 		ContainerPorts:        {ID: ContainerPorts, Label: "Ports", From: report.FromSets, Priority: 9},
 		ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 10},
 		ContainerID:           {ID: ContainerID, Label: "ID", From: report.FromLatest, Truncate: 12, Priority: 11},
@@ -226,7 +225,6 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 		if hostIPs, err := getLocalIPs(); err == nil {
 			hostIPsWithScopes := addScopeToIPs(r.hostID, hostIPs)
 			hostNetworkInfo = hostNetworkInfo.
-				Add(ContainerIPs, report.MakeStringSet(hostIPs...)).
 				Add(ContainerIPsWithScopes, report.MakeStringSet(hostIPsWithScopes...))
 		}
 

@@ -253,11 +253,11 @@ func TestNodeMetadata(t *testing.T) {
 				docker.LabelPrefix + "label1": "label1value",
 				docker.ContainerStateHuman:    docker.StateRunning,
 			}).WithTopology(report.Container).WithSets(report.MakeSets().
-				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
+				Add(docker.ContainerIPsWithScopes, report.MakeStringSet("10.10.10.0-10.10.10.3;10.10.10.0/24", ";10.10.10.1/24", ";10.10.10.1/24")),
 			),
 			want: []report.MetadataRow{
 				{ID: docker.ContainerStateHuman, Label: "State", Value: "running", Priority: 4},
-				{ID: docker.ContainerIPs, Label: "IPs", Value: "10.10.10.0/24, 10.10.10.1/24", Priority: 8},
+				{ID: docker.ContainerIPsWithScopes, Label: "IPs", Value: "10.10.10.0/24, 10.10.10.1/24", Priority: 8},
 				{ID: docker.ContainerID, Label: "ID", Value: fixture.ClientContainerID, Priority: 11, Truncate: 12},
 			},
 		},

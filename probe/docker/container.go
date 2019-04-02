@@ -11,7 +11,6 @@ import (
 
 	docker "github.com/fsouza/go-dockerclient"
 	log "github.com/sirupsen/logrus"
-
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
 )
@@ -322,9 +321,6 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 	if len(c.container.NetworkSettings.Ports) > 0 {
 		s = s.Add(ContainerPorts, c.ports(localAddrs))
 	}
-	if len(ipv4s) > 0 {
-		s = s.Add(ContainerIPs, report.MakeStringSet(ipv4s...))
-	}
 	if len(ipsWithScopes) > 0 {
 		s = s.Add(ContainerIPsWithScopes, report.MakeStringSet(ipsWithScopes...))
 	}
@@ -465,7 +461,7 @@ func (c *container) GetNode() report.Node {
 
 // ExtractContainerIPs returns the list of container IPs given a Node from the Container topology.
 func ExtractContainerIPs(nmd report.Node) []string {
-	v, _ := nmd.Sets.Lookup(ContainerIPs)
+	v, _ := nmd.Sets.LookupMask(ContainerIPsWithScopes, `[.]?;(.*)$`, 1)
 	return []string(v)
 }
 

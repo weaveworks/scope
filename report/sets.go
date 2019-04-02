@@ -2,7 +2,9 @@ package report
 
 import (
 	"reflect"
+	"regexp"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/ps"
 )
@@ -80,6 +82,33 @@ func (s Sets) Lookup(key string) (StringSet, bool) {
 	}
 	if value, ok := s.psMap.Lookup(key); ok {
 		return value.(StringSet), true
+	}
+	return MakeStringSet(), false
+}
+
+// LookupMask returns the sets stored under key with using mask and index identifying match.
+func (s Sets) LookupMask(key string, mask string, matchSelect int) (StringSet, bool) {
+	if s.psMap == nil {
+		return MakeStringSet(), false
+	}
+	if value, ok := s.psMap.Lookup(key); ok {
+		valueSet := value.(StringSet)
+		vMasked := MakeStringSet()
+		re, err := regexp.Compile(mask)
+		if err != nil {
+			log.Errorf("Cannot compile regex %v", mask)
+			return MakeStringSet(), false
+		}
+		for _, elem := range valueSet {
+			match := re.FindStringSubmatch(elem)
+			if len(match) < matchSelect+1 {
+				vMasked = vMasked.Add(elem)
+			} else {
+				vMasked = vMasked.Add(match[matchSelect])
+			}
+		}
+		log.Println(vMasked)
+		return vMasked, true
 	}
 	return MakeStringSet(), false
 }

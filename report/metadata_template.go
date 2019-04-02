@@ -13,9 +13,10 @@ const (
 // FromLatest and friends denote the different fields where metadata can be
 // gathered from.
 const (
-	FromLatest   = "latest"
-	FromSets     = "sets"
-	FromCounters = "counters"
+	FromLatest      = "latest"
+	FromSets        = "sets"
+	FromCounters    = "counters"
+	FromSetsIPScope = "sets_ip_scope"
 )
 
 // MetadataTemplate extracts some metadata rows from a node
@@ -36,6 +37,8 @@ func (t MetadataTemplate) MetadataRow(n Node) (MetadataRow, bool) {
 		from = fromLatest
 	case FromSets:
 		from = fromSets
+	case FromSetsIPScope:
+		from = fromSetsIPScope
 	case FromCounters:
 		from = fromCounters
 	}
@@ -73,6 +76,11 @@ func fromSets(n Node, key string) (string, bool) {
 func fromCounters(n Node, key string) (string, bool) {
 	val, ok := n.Counters.Lookup(key)
 	return strconv.Itoa(val), ok
+}
+
+func fromSetsIPScope(n Node, key string) (string, bool) {
+	val, ok := n.Sets.LookupMask(key, `[.]?;(.*)$`, 1)
+	return strings.Join(val, ", "), ok
 }
 
 // MetadataRow is a row for the metadata table.

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	client "github.com/fsouza/go-dockerclient"
-
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
@@ -108,12 +107,11 @@ func TestContainer(t *testing.T) {
 		want := report.MakeSets().
 			Add("docker_container_ports", report.MakeStringSet("1.2.3.4:80->80/tcp", "81/tcp")).
 			Add("docker_container_networks", nil).
-			Add("docker_container_ips", report.MakeStringSet("1.2.3.4")).
-			Add("docker_container_ips", report.MakeStringSet("5.6.7.8")).
 			Add("docker_container_ips_with_scopes", report.MakeStringSet(";1.2.3.4")).
 			Add("docker_container_ips_with_scopes", report.MakeStringSet(";5.6.7.8")).
 			Add("docker_container_networks", report.MakeStringSet("network1"))
-
+			// Add("docker_container_ips", report.MakeStringSet("1.2.3.4")).
+			// Add("docker_container_ips", report.MakeStringSet("5.6.7.8")).
 		test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 			return c.NetworkInfo([]net.IP{})
 		})
