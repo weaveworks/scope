@@ -178,6 +178,8 @@ jobs:
       PROJECT_NAME: scope
       GCR_NAME: eu.gcr.io/tufinlight/scope
     steps:
+      - attach_workspace:
+          at: .
       - checkout
       - setup_remote_docker
       - run:
