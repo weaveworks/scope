@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/typetypetype/conntrack"
 
+	"github.com/typetypetype/conntrack/ovs"
 	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -17,6 +18,7 @@ import (
 type connectionTracker struct {
 	conf            ReporterConfig
 	flowWalker      flowWalker // Interface
+	ovsWalker       *ovsFlowWalker
 	ebpfTracker     *EbpfTracker
 	reverseResolver *reverseResolver
 
@@ -69,6 +71,9 @@ func (t *connectionTracker) useProcfs() {
 	if t.flowWalker == nil {
 		t.flowWalker = newConntrackFlowWalker(t.conf.UseConntrack, t.conf.ProcRoot, t.conf.BufferSize, false /* natOnly */)
 	}
+	if t.ovsWalker == nil {
+		t.ovsWalker = newOvsFlowWalker(0)
+	}
 }
 
 // ReportConnections calls trackers according to the configuration.
@@ -111,6 +116,10 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 		tuple := flowToTuple(f)
 		seenTuples[tuple.key()] = tuple
 		t.addConnection(rpt, false, tuple, "", nil, nil)
+	})
+
+	t.ovsWalker.walkFlows(func(info ovs.OvsFlowInfo, b bool) {
+
 	})
 
 	if t.conf.WalkProc && t.conf.Scanner != nil {

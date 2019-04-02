@@ -6,18 +6,27 @@ import (
 	"sync"
 	"time"
 
-	"fmt"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/typetypetype/conntrack/ovs"
 )
+
+type TunnelAttrs struct {
+	TunIpSrc uint32
+	TunIpDst uint32
+
+	MaskSrc uint32
+	MaskDst uint32
+
+	IpDst   uint32
+	PortDst uint16
+}
 
 // ovsFlowWalker uses conntrack (via netlink) to track network connections and
 // implement flowWalker.
 type ovsFlowWalker struct {
 	sync.Mutex
-	activeFlows   map[uint32]ovs.OvsFlowInfo // active flows in state != TIME_WAIT
-	bufferedFlows []ovs.OvsFlowInfo          // flows coming out of activeFlows spend 1 walk cycle here
+	activeFlows   map[uint64]TunnelAttrs
+	bufferedFlows []TunnelAttrs // flows coming out of activeFlows spend 1 walk cycle here
 	bufferSize    int
 	natOnly       bool
 	quit          chan struct{}
@@ -25,8 +34,9 @@ type ovsFlowWalker struct {
 
 // newConntracker creates and starts a new conntracker.
 func newOvsFlowWalker(bufferSize int) *ovsFlowWalker {
+	log.Info("creating ovs flow walker")
 	result := &ovsFlowWalker{
-		activeFlows: map[uint32]ovs.OvsFlowInfo{},
+		activeFlows: map[uint64]TunnelAttrs{},
 		bufferSize:  bufferSize,
 		quit:        make(chan struct{}),
 	}
@@ -60,7 +70,7 @@ func (c *ovsFlowWalker) clearFlows() {
 		c.bufferedFlows = append(c.bufferedFlows, f)
 	}
 
-	c.activeFlows = map[uint32]ovs.OvsFlowInfo{}
+	c.activeFlows = map[uint64]TunnelAttrs{}
 }
 
 func (c *ovsFlowWalker) relevant(fi *ovs.OvsFlowInfo) bool {
@@ -135,6 +145,7 @@ func (c *ovsFlowWalker) handleFlow(fi *ovs.OvsFlowInfo) {
 	c.Lock()
 	defer c.Unlock()
 
+	log.Info("handling")
 	key, ok := fi.Keys[ovs.OvsAttrIpv4]
 	if !ok {
 		return
@@ -160,31 +171,22 @@ func (c *ovsFlowWalker) handleFlow(fi *ovs.OvsFlowInfo) {
 		return
 	}
 
-	fmt.Println(fmt.Sprintf("%+v", ipv4fk))
-	fmt.Println(fmt.Sprintf("%+v", maskIpv4Fk))
-	fmt.Println(fmt.Sprintf("%+v", setTunnel))
+	setTunnelFk, ok := setTunnel.(ovs.OvsSetTunnelAction)
+	if !ok {
+		return
+	}
 
-	// Ignore flows for which we never saw an update; they are likely
-	// incomplete or wrong.  See #1462.
-	//switch {
-	//case f.MsgType == conntrack.NfctMsgUpdate:
-	//	if f.TCPState != timeWait {
-	//		c.activeFlows[f.CtId] = f
-	//	} else if _, ok := c.activeFlows[f.CtId]; ok {
-	//		delete(c.activeFlows, f.CtId)
-	//		c.bufferedFlows = append(c.bufferedFlows, f)
-	//	}
-	//case f.MsgType == conntrack.NfctMsgDestroy:
-	//	if active, ok := c.activeFlows[f.CtId]; ok {
-	//		delete(c.activeFlows, f.CtId)
-	//		c.bufferedFlows = append(c.bufferedFlows, active)
-	//	}
-	//}
+	if _, exists := c.activeFlows[setTunnelFk.TunnelId]; !exists {
+		c.activeFlows[setTunnelFk.TunnelId] = TunnelAttrs{TunIpSrc: ipv4fk.Src,
+			TunIpDst: ipv4fk.Dst,
+			MaskSrc:  maskIpv4Fk.Src,
+			MaskDst:  maskIpv4Fk.Dst, IpDst: setTunnelFk.Ipv4Dst, PortDst: setTunnelFk.TpDst}
+	}
 }
 
 // walkFlows calls f with all active flows and flows that have come and gone
 // since the last call to walkFlows
-func (c *ovsFlowWalker) walkFlows(f func(ovs.OvsFlowInfo, bool)) {
+func (c *ovsFlowWalker) walkFlows(f func(TunnelAttrs, bool)) {
 	c.Lock()
 	defer c.Unlock()
 
