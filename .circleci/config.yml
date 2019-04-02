@@ -180,7 +180,8 @@ jobs:
     steps:
       - attach_workspace:
           at: .
-      - setup_remote_docker
+      - run: |
+          docker load -i scope.tar
       - run:
           name: Authenticate with gcloud
           command:
