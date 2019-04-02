@@ -170,7 +170,6 @@ jobs:
           path: /tmp/artifacts
 
   deploy:
-    working_directory: /go/src/github.com/tufin/orca
     docker:
       - image: tufinim/circleci-go:master
     environment:
