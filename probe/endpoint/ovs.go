@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"fmt"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/typetypetype/conntrack/ovs"
 )
@@ -62,15 +64,24 @@ func (c *ovsFlowWalker) clearFlows() {
 }
 
 func (c *ovsFlowWalker) relevant(fi *ovs.OvsFlowInfo) bool {
-	// For now, we're only interested in tcp connections - there is too much udp
-	// traffic going on (every container talking to dns, for example) to
-	// render nicely. TODO: revisit this.
 
-	//fi.
-	//if f.Orig.Proto != tcpProto {
-	//	return false
-	//}
-	//return !(c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0)
+	key, ok := fi.Keys[ovs.OvsAttrIpv4]
+	if !ok {
+		return false
+	}
+
+	if _, ok := key.(ovs.OvsAttrIpv4FlowKey); !ok {
+		return false
+	}
+
+	if _, ok := fi.Masks[ovs.OvsAttrIpv4]; !ok {
+		return false
+	}
+
+	if _, ok := fi.Actions[ovs.OVS_ACTION_ATTR_SET]; !ok {
+		return false
+	}
+
 	return true
 }
 
@@ -123,6 +134,35 @@ func (c *ovsFlowWalker) stop() {
 func (c *ovsFlowWalker) handleFlow(fi *ovs.OvsFlowInfo) {
 	c.Lock()
 	defer c.Unlock()
+
+	key, ok := fi.Keys[ovs.OvsAttrIpv4]
+	if !ok {
+		return
+	}
+
+	ipv4fk, ok := key.(ovs.OvsAttrIpv4FlowKey)
+	if !ok {
+		return
+	}
+
+	maskIpv4, ok := fi.Masks[ovs.OvsAttrIpv4]
+	if !ok {
+		return
+	}
+
+	maskIpv4Fk, ok := maskIpv4.(ovs.OvsAttrIpv4FlowKey)
+	if !ok {
+		return
+	}
+
+	setTunnel, ok := fi.Actions[ovs.OVS_ACTION_ATTR_SET]
+	if !ok {
+		return
+	}
+
+	fmt.Println(fmt.Sprintf("%+v", ipv4fk))
+	fmt.Println(fmt.Sprintf("%+v", maskIpv4Fk))
+	fmt.Println(fmt.Sprintf("%+v", setTunnel))
 
 	// Ignore flows for which we never saw an update; they are likely
 	// incomplete or wrong.  See #1462.
