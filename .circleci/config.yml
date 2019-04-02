@@ -30,9 +30,6 @@ workflows:
             - unit-test
             - build
       - deploy:
-          filters:
-            branches:
-              only: master
           requires:
 #            - client-test
             - integration-tests
@@ -173,30 +170,21 @@ jobs:
           path: /tmp/artifacts
 
   deploy:
-    <<: *defaults
+    working_directory: /go/src/github.com/tufin/orca
+    docker:
+      - image: tufinim/circleci-go:master
     environment:
-      IMAGES: scope cloud-agent
+      IMAGES: scope
+      PROJECT_NAME: scope
+      GCR_NAME: eu.gcr.io/tufinlight/scope
     steps:
       - checkout
       - setup_remote_docker
-      - attach_workspace:
-          at: .
-      - run: |
-          pip install awscli
-          docker load -i scope.tar
-          docker load -i cloud-agent.tar
-      - run: |
-          test -z "${DOCKER_USER}" && exit 0
-          docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-          for IMAGE in $IMAGES; do
-              test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" = "weaveworks" || docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest
-              docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
-              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest
-              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
-          done
-      - run: |
-          test -z "${QUAY_USER}" && exit 0
-          docker login -e '.' -u "$QUAY_USER" -p "$QUAY_PASSWORD" quay.io
-          docker tag weaveworks/scope:$(./tools/image-tag) "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
-          docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
-      - run: test -z "${UI_BUCKET_KEY_ID}" || (make BUILD_IN_CONTAINER=false ui-upload ui-pkg-upload)
+      - run:
+          name: Authenticate with gcloud
+          command:
+            echo $GCLOUD_SERVICE_KEY | /scripts/gcloud_auth.sh
+      - run:
+          name: Upload the docker image to gcr
+          command: |
+            /scripts/upload_to_gcr.sh ${PROJECT_NAME} $GCR_NAME $CIRCLE_BUILD_NUM $CIRCLE_BRANCH
