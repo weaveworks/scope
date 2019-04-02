@@ -1,7 +1,9 @@
 package ovs
 
 import (
+	"fmt"
 	"net"
+	"unsafe"
 )
 
 type OvsKeyAttrType int
@@ -36,6 +38,10 @@ const ( // ovs_key_attr include/linux/openvswitch.h
 	OvsAttrCtLabels        OvsKeyAttrType = 25
 	OvsAttrCtOrigTupleIpv4 OvsKeyAttrType = 26
 	OvsAttrCtOrigTupleIpv6 OvsKeyAttrType = 27
+
+	__OvsAttrMax OvsKeyAttrType = iota
+
+	OvsAttrMax OvsKeyAttrType = __OvsAttrMax - 1
 )
 
 type OvsTunnelKeyAttrType int
@@ -146,7 +152,7 @@ type Conn struct {
 	Err error
 }
 
-type OvsFlowKeys []OvsFlowKey
+type OvsFlowKeys map[OvsKeyAttrType]OvsFlowKey
 
 type OvsFlowKey interface {
 }
@@ -189,6 +195,16 @@ type OvsAttrIpv4FlowKey struct {
 	Ttl   byte
 	Frag  byte
 	OvsFlowKey
+}
+
+func (fk OvsAttrIpv4FlowKey) String() string {
+	return fmt.Sprintf("Src: %s, Dst: %s, Proto %d, Tos %d, Ttl %d, Frag %d",
+		ipv4ToString((*[4]byte)(unsafe.Pointer(&fk.Src))[:]),
+		ipv4ToString((*[4]byte)(unsafe.Pointer(&fk.Dst))[:]),
+		fk.Proto,
+		fk.Tos,
+		fk.Ttl,
+		fk.Frag)
 }
 
 type OvsAttrIpv6FlowKey struct {
@@ -304,12 +320,15 @@ type OvsFlowInfo struct {
 }
 
 type OvsFlowSpec struct {
-	OvsFlowKeys
-	Actions []OvsAction
+	Keys    OvsFlowKeys
+	Masks   OvsFlowKeys
+	Actions OvsActions
 }
 
 type OvsAction interface {
 }
+
+type OvsActions map[int]OvsAction
 
 // ovs_ct_attr include/linux/openvswitch.h
 type OvsCtAction struct {
@@ -338,6 +357,10 @@ type OvsTunnelAttrs struct {
 	TpDst    uint16
 	IPv6Src  net.IP
 	IPv6Dst  net.IP
+}
+
+func (ta OvsTunnelAttrs) String() string {
+	return fmt.Sprintf("Src: %s, Dst %s, ta: %#v", ipv4ToString((*[4]byte)(unsafe.Pointer(&ta.Ipv4Src))[:]), ipv4ToString((*[4]byte)(unsafe.Pointer(&ta.Ipv4Dst))[:]), ta)
 }
 
 type OvsTunnelAttrsPresence struct {
