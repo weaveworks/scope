@@ -16,10 +16,10 @@ workflows:
     jobs:
       - lint
       - unit-test
-      - client-build
-      - client-test:
-          requires:
-            - client-build
+#      - client-build
+#      - client-test:
+#          requires:
+#            - client-build
       - xplatform-build:
           requires:
             - build
@@ -36,7 +36,7 @@ workflows:
             branches:
               only: master
           requires:
-            - client-test
+#            - client-test
             - integration-tests
 
 jobs:
@@ -58,56 +58,56 @@ jobs:
           - coverage
 
   # Create client/build/index.html
-  client-build:
-    <<: *client-defaults
-    steps:
-      - checkout
-      - restore_cache:
-          name: Restoring Yarn Cache
-          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
-      - restore_cache:
-          name: Restoring client/node_modules
-          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
-      - run: cd client; yarn install
-      - save_cache:
-          name: Saving Yarn Cache
-          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
-          paths:
-            - "/home/weave/scope/.cache/yarn"
-      - save_cache:
-          name: Saving client/node_modules
-          # include the CI config in the checksum because it will change when the docker image changes
-          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
-          paths:
-            - "/home/weave/scope/client/node_modules"
-      - run: |
-          cd client
-          yarn run build
-          yarn run build-external
-          yarn run bundle
-      - persist_to_workspace:
-          root: /home/weave/scope
-          paths:
-          - client/build/
-          - client/build-external/
-          - client/bundle/weave-scope.tgz
-
-
-  client-test:
-    <<: *client-defaults
-    steps:
-      - checkout
-      - restore_cache:
-          name: Restoring Yarn Cache
-          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
-      - restore_cache:
-          name: Restoring client/node_modules
-          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
-      - run: |
-          cd client
-          yarn install
-          yarn run lint
-          yarn test
+#  client-build:
+#    <<: *client-defaults
+#    steps:
+#      - checkout
+#      - restore_cache:
+#          name: Restoring Yarn Cache
+#          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
+#      - restore_cache:
+#          name: Restoring client/node_modules
+#          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
+#      - run: cd client; yarn install
+#      - save_cache:
+#          name: Saving Yarn Cache
+#          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
+#          paths:
+#            - "/home/weave/scope/.cache/yarn"
+#      - save_cache:
+#          name: Saving client/node_modules
+#          # include the CI config in the checksum because it will change when the docker image changes
+#          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
+#          paths:
+#            - "/home/weave/scope/client/node_modules"
+#      - run: |
+#          cd client
+#          yarn run build
+#          yarn run build-external
+#          yarn run bundle
+#      - persist_to_workspace:
+#          root: /home/weave/scope
+#          paths:
+#          - client/build/
+#          - client/build-external/
+#          - client/bundle/weave-scope.tgz
+#
+#
+#  client-test:
+#    <<: *client-defaults
+#    steps:
+#      - checkout
+#      - restore_cache:
+#          name: Restoring Yarn Cache
+#          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
+#      - restore_cache:
+#          name: Restoring client/node_modules
+#          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
+#      - run: |
+#          cd client
+#          yarn install
+#          yarn run lint
+#          yarn test
 
   xplatform-build:
     <<: *defaults
@@ -169,7 +169,7 @@ jobs:
           background: true
       # Code coverage
       - run: ./tools/cover/gather_coverage.sh ./coverage
-      - run: goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=profile.cov -service=circleci
+#      - run: goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=profile.cov -service=circleci
       - run: cp coverage.* */*.codecgen.go $CIRCLE_ARTIFACTS
       - store_artifacts:
           path: /tmp/artifacts
