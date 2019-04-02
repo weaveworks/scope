@@ -23,9 +23,7 @@ workflows:
       - xplatform-build:
           requires:
             - build
-      - build:
-          requires:
-            - client-build
+      - build
       - integration-tests:
           requires:
             - lint
