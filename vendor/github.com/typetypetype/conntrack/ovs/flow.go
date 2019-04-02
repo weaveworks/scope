@@ -1599,33 +1599,36 @@ func parsePayload(payload []byte) (*OvsFlowInfo, error) {
 
 func parseFlowKeys(flowKeysPayload []byte) (OvsFlowKeys, error) {
 
+	var res OvsFlowKeys
+
 	var attrSpace [16]NetlinkAttr
 	keys, err := parseAttrs(flowKeysPayload, attrSpace[0:0])
 	if err != nil {
 		return nil, err
 	}
 
-	var res = make(OvsFlowKeys)
-
 	for _, attrKey := range keys {
 		//fmt.Println("FlowKey: ", attrKey.Typ)
 		switch OvsKeyAttrType(attrKey.Typ) {
 		case OvsAttrUnspec:
-			//res = append(res, OvsAttrUnspecFlowKey{})
+			res = append(res, OvsAttrUnspecFlowKey{})
 		case OvsAttrEncap:
-			//res = append(res, OvsAttrEncapFlowKey{})
+			res = append(res, OvsAttrEncapFlowKey{})
 		case OvsAttrPrio:
-			//res = append(res, OvsAttrPrioFlowKey{})
+			res = append(res, OvsAttrPrioFlowKey{})
 		case OvsAttrInPrt:
-			res[OvsAttrInPrt] = OvsAttrInPrtFlowKey{Port: *(*uint32)(unsafe.Pointer(&attrKey.Msg[0]))}
+			inPrt := OvsAttrInPrtFlowKey{Port: *(*uint32)(unsafe.Pointer(&attrKey.Msg[0]))}
+			fmt.Println("In Prt: ", inPrt.Port)
+			res = append(res, inPrt)
 		case OvsAttrEthernet:
-			//res = append(res, OvsAttrEthernetFlowKey{})
+			res = append(res, OvsAttrEthernetFlowKey{})
 		case OvsAttrVlan:
-			res[OvsAttrVlan] = OvsAttrVlanFlowKey{Id: binary.BigEndian.Uint16(attrKey.Msg)}
+			res = append(res, OvsAttrVlanFlowKey{Id: binary.BigEndian.Uint16(attrKey.Msg)})
 		case OvsAttrEthertype:
-			//res = append(res, OvsAttrEthertypeFlowKey{})
+			res = append(res, OvsAttrEthertypeFlowKey{})
 		case OvsAttrIpv4:
 			ipv4fk := OvsAttrIpv4FlowKey{}
+			//binary.Read(bytes.NewReader(attrKey.Msg), binary.BigEndian, &ipv4fk)
 
 			ipv4fk.Src = *(*uint32)(unsafe.Pointer(&attrKey.Msg[0]))
 			ipv4fk.Dst = *(*uint32)(unsafe.Pointer(&attrKey.Msg[4]))
@@ -1633,12 +1636,15 @@ func parseFlowKeys(flowKeysPayload []byte) (OvsFlowKeys, error) {
 			ipv4fk.Tos = *(*byte)(unsafe.Pointer(&attrKey.Msg[8]))
 			ipv4fk.Ttl = *(*byte)(unsafe.Pointer(&attrKey.Msg[8]))
 			ipv4fk.Frag = *(*byte)(unsafe.Pointer(&attrKey.Msg[8]))
-			res[OvsAttrIpv4] = ipv4fk
-
+			res = append(res, ipv4fk)
+			//fmt.Println("Ip Src: ", ipv4ToString((*[4]byte)(unsafe.Pointer(&ipv4fk.Src))[:]))
+			//fmt.Println("Ip Dst: ", ipv4ToString((*[4]byte)(unsafe.Pointer(&ipv4fk.Dst))[:]))
+			//fmt.Println("Tos: ", ipv4fk.Tos)
+			//fmt.Println("Frag: ", ipv4fk.Frag)
 		case OvsAttrIpv6:
 			ipv6fk := OvsAttrIpv6FlowKey{}
 			binary.Read(bytes.NewReader(attrKey.Msg), binary.BigEndian, &ipv6fk)
-			res[OvsAttrIpv6] = ipv6fk
+			res = append(res, ipv6fk)
 		case OvsAttrTcp:
 			tcpfk := OvsAttrTcpFlowKey{}
 
@@ -1648,7 +1654,7 @@ func parseFlowKeys(flowKeysPayload []byte) (OvsFlowKeys, error) {
 			//fmt.Println("Tcp Src: ", ipv4ToString((*[4]byte)(unsafe.Pointer(&tcpfk.Src))[:]))
 			//fmt.Println("Tcp Dst: ", ipv4ToString((*[4]byte)(unsafe.Pointer(&tcpfk.Dst))[:]))
 
-			res[OvsAttrTcp] = tcpfk
+			res = append(res, tcpfk)
 		case OvsAttrUdp:
 			udpfk := OvsAttrUdpFlowKey{}
 			udpfk.Src = *(*uint16)(unsafe.Pointer(&attrKey.Msg[0]))
@@ -1657,7 +1663,7 @@ func parseFlowKeys(flowKeysPayload []byte) (OvsFlowKeys, error) {
 			//fmt.Println("Udp Src: ", ipv4ToString((*[4]byte)(unsafe.Pointer(&udpfk.Src))[:]))
 			//fmt.Println("Udp Dst: ", ipv4ToString((*[4]byte)(unsafe.Pointer(&udpfk.Dst))[:]))
 
-			res[OvsAttrUdp] = udpfk
+			res = append(res, udpfk)
 		case OvsAttrIcmp:
 			//fmt.Println("OvsAttrIcmp")
 		case OvsAttrIcmpv6:
@@ -1671,7 +1677,7 @@ func parseFlowKeys(flowKeysPayload []byte) (OvsFlowKeys, error) {
 		case OvsAttrTunnel:
 			tunnel, _ := parseOvsSetTunnelAction(attrKey.Msg)
 			//fmt.Println(fmt.Sprintf("Tunnel: %+v", tunnel))
-			res[OvsAttrTunnel] = tunnel
+			res = append(res, tunnel)
 		case OvsAttrSctp:
 			//fmt.Println("OvsAttrSctp")
 		case OvsAttrTcpFlags:
@@ -1739,25 +1745,25 @@ func parseFlowKeys(flowKeysPayload []byte) (OvsFlowKeys, error) {
 			//}
 			//fmt.Println()
 			//fmt.Println(fmt.Sprintf("CS: %x", ctfk.CtState))
-			res[OvsAttrCtState] = ctfk
+			res = append(res, ctfk)
 		case OvsAttrCtZone:
 			ctzonefk := OvsAttrCtZoneFlowKey{Zone: *(*uint16)(unsafe.Pointer(&attrKey.Msg[0]))}
-			res[OvsAttrCtZone] = ctzonefk
+			res = append(res, ctzonefk)
 		case OvsAttrCtMark:
 			ctmarkfk := OvsAttrCtMarkFlowKey{Mark: *(*uint32)(unsafe.Pointer(&attrKey.Msg[0]))}
-			res[OvsAttrCtMark] = ctmarkfk
+			res = append(res, ctmarkfk)
 		case OvsAttrCtLabels:
 			ctmarkfk := OvsAttrCtLabelsFlowKey{}
 			copy(ctmarkfk.Labels[:], attrKey.Msg)
-			res[OvsAttrCtLabels] = ctmarkfk
+			res = append(res, ctmarkfk)
 		case OvsAttrCtOrigTupleIpv4:
 			tupIpv4 := OvsAttrCtOrigTupleIpv4FlowKey{}
 			binary.Read(bytes.NewReader(attrKey.Msg[:]), binary.BigEndian, &tupIpv4)
-			res[OvsAttrCtOrigTupleIpv4] = tupIpv4
+			res = append(res, tupIpv4)
 		case OvsAttrCtOrigTupleIpv6:
 			tupIpv6 := OvsAttrCtOrigTupleIpv6FlowKey{}
 			binary.Read(bytes.NewReader(attrKey.Msg[:]), binary.BigEndian, &tupIpv6)
-			res[OvsAttrCtOrigTupleIpv6] = tupIpv6
+			res = append(res, tupIpv6)
 		}
 	}
 

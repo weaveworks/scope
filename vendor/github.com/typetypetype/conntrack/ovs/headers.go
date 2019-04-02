@@ -36,10 +36,6 @@ const ( // ovs_key_attr include/linux/openvswitch.h
 	OvsAttrCtLabels        OvsKeyAttrType = 25
 	OvsAttrCtOrigTupleIpv4 OvsKeyAttrType = 26
 	OvsAttrCtOrigTupleIpv6 OvsKeyAttrType = 27
-
-	__OvsAttrMax OvsKeyAttrType = iota
-
-	OvsAttrMax OvsKeyAttrType = __OvsAttrMax - 1
 )
 
 type OvsTunnelKeyAttrType int
@@ -150,7 +146,7 @@ type Conn struct {
 	Err error
 }
 
-type OvsFlowKeys map[OvsKeyAttrType]OvsFlowKey
+type OvsFlowKeys []OvsFlowKey
 
 type OvsFlowKey interface {
 }
