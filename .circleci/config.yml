@@ -187,4 +187,4 @@ jobs:
       - run:
           name: Upload the docker image to gcr
           command: |
-            /scripts/upload_to_gcr.sh ${PROJECT_NAME} $GCR_NAME $CIRCLE_BUILD_NUM $CIRCLE_BRANCH
+            /scripts/upload_to_gcr.sh weaveworks/scope:latest $GCR_NAME $CIRCLE_BUILD_NUM $CIRCLE_BRANCH
