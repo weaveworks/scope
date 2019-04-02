@@ -1,0 +1,20 @@
+FROM registry.access.redhat.com/rhel7:7.6
+
+ARG version
+ARG release
+
+WORKDIR /home/weave
+RUN yum update -y && yum install -y  bash conntrack-tools net-tools util-linux curl
+COPY ./scope /home/weave/
+COPY ./license /home/license
+COPY ./TERMS_OF_USE /home/license
+
+LABEL name=Conntrack
+LABEL vendor=Tufin
+LABEL version=$version
+LABEL release=$release
+LABEL summary="Tufin Orca is a security solution that enables automation of network security policies for applications running on Kubernetes platforms."
+LABEL description="Conntrack enables inspecting your network traffic on your kubernetes nodes"
+
+
+ENTRYPOINT ["/home/weave/scope", "--mode=probe", "--no-app", "--probe.docker=true"]
