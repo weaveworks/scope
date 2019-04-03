@@ -9,7 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/typetypetype/conntrack"
 
-	"github.com/typetypetype/conntrack/ovs"
 	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -118,8 +117,8 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 		t.addConnection(rpt, false, tuple, "", nil, nil)
 	})
 
-	t.ovsWalker.walkFlows(func(info ovs.OvsFlowInfo, b bool) {
-
+	t.ovsWalker.walkFlows(func(info TunnelAttrs) {
+		t.addTunnel(rpt, info)
 	})
 
 	if t.conf.WalkProc && t.conf.Scanner != nil {
@@ -222,6 +221,20 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 	rpt.Endpoint.AddNode(toNode)
 	t.addDNS(rpt, ft.fromAddr)
 	t.addDNS(rpt, ft.toAddr)
+}
+
+func (t *connectionTracker) addTunnel(rpt *report.Report, info TunnelAttrs) {
+
+	var (
+		fromTunnel = t.makeEndpointNode("", "9.9.9.9", 0, nil)
+		toTunnel   = t.makeEndpointNode("", "9.9.9.9", 0, nil)
+		tunnelFlow = t.makeEndpointNode("", info.DstFlow(), info.PortDst, nil)
+	)
+
+	log.Infof("adding tunnel %+v %+v %+v", fromTunnel, toTunnel, tunnelFlow)
+	rpt.Endpoint.AddNode(fromTunnel.WithAdjacent(toTunnel.ID).WithAdjacent(tunnelFlow.ID))
+	rpt.Endpoint.AddNode(toTunnel)
+	rpt.Endpoint.AddNode(tunnelFlow)
 }
 
 func (t *connectionTracker) makeEndpointNode(namespaceID string, addr string, port uint16, extra map[string]string) report.Node {

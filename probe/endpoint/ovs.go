@@ -6,6 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"fmt"
+	"net"
+	"unsafe"
+
 	log "github.com/sirupsen/logrus"
 	"github.com/typetypetype/conntrack/ovs"
 )
@@ -19,6 +23,23 @@ type TunnelAttrs struct {
 
 	IpDst   uint32
 	PortDst uint16
+}
+
+func (ta TunnelAttrs) SrcIP() string {
+	return fmt.Sprintf("%s/%s", ipv4ToString(ta.TunIpSrc), ipv4ToString(ta.MaskSrc))
+}
+
+func (ta TunnelAttrs) DstIP() string {
+	return fmt.Sprintf("%s/%s", ipv4ToString(ta.TunIpDst), ipv4ToString(ta.MaskDst))
+}
+
+func (ta TunnelAttrs) DstFlow() string {
+	return ipv4ToString(ta.IpDst)
+}
+
+func ipv4ToString(ip uint32) string {
+	ipAsByte := (*[4]byte)(unsafe.Pointer(&ip))[:]
+	return net.IP(ipAsByte).To4().String()
 }
 
 // ovsFlowWalker uses conntrack (via netlink) to track network connections and
@@ -186,15 +207,15 @@ func (c *ovsFlowWalker) handleFlow(fi *ovs.OvsFlowInfo) {
 
 // walkFlows calls f with all active flows and flows that have come and gone
 // since the last call to walkFlows
-func (c *ovsFlowWalker) walkFlows(f func(TunnelAttrs, bool)) {
+func (c *ovsFlowWalker) walkFlows(f func(TunnelAttrs)) {
 	c.Lock()
 	defer c.Unlock()
 
 	for _, flow := range c.activeFlows {
-		f(flow, true)
+		f(flow)
 	}
-	for _, flow := range c.bufferedFlows {
-		f(flow, false)
-	}
-	c.bufferedFlows = c.bufferedFlows[:0]
+	//for _, flow := range c.bufferedFlows {
+	//	f(flow, false)
+	//}
+	//c.bufferedFlows = c.bufferedFlows[:0]
 }
