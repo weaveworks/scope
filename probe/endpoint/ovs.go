@@ -192,28 +192,44 @@ func (c *ovsFlowWalker) handleFlow(fi *ovs.OvsFlowInfo) {
 		return
 	}
 
-	setTunnelFk, ok := setTunnel.(ovs.OvsSetTunnelAction)
+	actions, ok := setTunnel.([]ovs.OvsAction)
 	if !ok {
 		return
 	}
 
-	if _, exists := c.activeFlows[setTunnelFk.TunnelId]; !exists {
-		c.activeFlows[setTunnelFk.TunnelId] = TunnelAttrs{TunIpSrc: ipv4fk.Src,
-			TunIpDst: ipv4fk.Dst,
-			MaskSrc:  maskIpv4Fk.Src,
-			MaskDst:  maskIpv4Fk.Dst, IpDst: setTunnelFk.Ipv4Dst, PortDst: setTunnelFk.TpDst}
+	var setTunnelFk *ovs.OvsSetTunnelAction
+
+	for _, action := range actions {
+		if setTunFk, ok := action.(ovs.OvsSetTunnelAction); ok {
+			setTunnelFk = &setTunFk
+			break
+		}
+
 	}
+
+	if setTunnelFk == nil {
+		return
+	}
+	c.activeFlows[setTunnelFk.TunnelId] = TunnelAttrs{TunIpSrc: ipv4fk.Src,
+		TunIpDst: ipv4fk.Dst,
+		MaskSrc:  maskIpv4Fk.Src,
+		MaskDst:  maskIpv4Fk.Dst, IpDst: setTunnelFk.Ipv4Dst, PortDst: setTunnelFk.TpDst}
+
 }
 
 // walkFlows calls f with all active flows and flows that have come and gone
 // since the last call to walkFlows
 func (c *ovsFlowWalker) walkFlows(f func(TunnelAttrs)) {
+	log.Infof("before lock")
 	c.Lock()
+	log.Infof("after lock")
 	defer c.Unlock()
 
+	log.Infof("before for")
 	for _, flow := range c.activeFlows {
 		f(flow)
 	}
+	log.Infof("after for")
 	//for _, flow := range c.bufferedFlows {
 	//	f(flow, false)
 	//}
