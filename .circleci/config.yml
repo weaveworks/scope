@@ -14,7 +14,7 @@ workflows:
   version: 2
   test_and_deploy:
     jobs:
-      - lint
+#      - lint
       - unit-test
 #      - client-build
 #      - client-test:
@@ -26,7 +26,7 @@ workflows:
       - build
       - integration-tests:
           requires:
-            - lint
+#            - lint
             - unit-test
             - build
       - deploy:
