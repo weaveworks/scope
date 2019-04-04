@@ -123,7 +123,7 @@ run_test() {
 
     local START
     START=$(date +%s)
-    if ! go test "${GO_TEST_ARGS_RUN[@]}" "$dir"; then
+    if ! go test -parallel 1 -p 1 "${GO_TEST_ARGS_RUN[@]}" "$dir"; then
         fail=1
     fi
     local END
