@@ -60,7 +60,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-GO_TEST_ARGS=(-tags "${TAGS[@]}" -timeout $TIMEOUT $VERBOSE)
+GO_TEST_ARGS=(-parallel 1 -p 1 -cpu 1 -tags "${TAGS[@]}" -timeout $TIMEOUT $VERBOSE)
 
 if [ -n "$SLOW" ] || [ -n "$CIRCLECI" ]; then
     SLOW=true
@@ -101,7 +101,7 @@ fi
 PACKAGE_BASE=$(go list -e ./)
 
 # Speed up the tests by compiling and installing their dependencies first.
-go test -parallel 1 -p 1 -i "${GO_TEST_ARGS[@]}" "${TESTDIRS[@]}"
+go test -i "${GO_TEST_ARGS[@]}" "${TESTDIRS[@]}"
 
 run_test() {
     local dir=$1
@@ -123,7 +123,7 @@ run_test() {
 
     local START
     START=$(date +%s)
-    if ! go test -parallel 1 -p 1 "${GO_TEST_ARGS_RUN[@]}" "$dir"; then
+    if ! go test "${GO_TEST_ARGS_RUN[@]}" "$dir"; then
         fail=1
     fi
     local END
