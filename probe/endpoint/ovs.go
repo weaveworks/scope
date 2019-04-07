@@ -15,6 +15,7 @@ import (
 )
 
 type TunnelAttrs struct {
+	TunnelID uint64
 	TunIpSrc uint32
 	TunIpDst uint32
 
@@ -209,10 +210,15 @@ func (c *ovsFlowWalker) handleFlow(fi *ovs.OvsFlowInfo) {
 	if setTunnelFk == nil {
 		return
 	}
-	c.activeFlows[setTunnelFk.TunnelId] = TunnelAttrs{TunIpSrc: ipv4fk.Src,
+
+	c.activeFlows[setTunnelFk.TunnelId] = TunnelAttrs{
+		TunnelID: setTunnelFk.TunnelId,
+		TunIpSrc: ipv4fk.Src,
 		TunIpDst: ipv4fk.Dst,
 		MaskSrc:  maskIpv4Fk.Src,
-		MaskDst:  maskIpv4Fk.Dst, IpDst: setTunnelFk.Ipv4Dst, PortDst: setTunnelFk.TpDst}
+		MaskDst:  maskIpv4Fk.Dst,
+		IpDst:    setTunnelFk.Ipv4Dst,
+		PortDst:  setTunnelFk.TpDst}
 
 }
 

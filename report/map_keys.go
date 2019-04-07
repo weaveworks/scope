@@ -6,6 +6,7 @@ const (
 	ReverseDNSNames = "reverse_dns_names"
 	SnoopedDNSNames = "snooped_dns_names"
 	CopyOf          = "copy_of"
+	TunnelID        = "tunnel_id"
 	// probe/process
 	PID     = "pid"
 	Name    = "name" // also used by probe/docker
