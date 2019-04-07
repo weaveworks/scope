@@ -1,7 +1,8 @@
-package ovs
+package odp
 
 import (
 	"fmt"
+	"sync"
 	"syscall"
 	"unsafe"
 )
@@ -38,11 +39,6 @@ func (fue familyUnavailableError) Error() string {
 	return fmt.Sprintf("Generic netlink family '%s' unavailable; the Open vSwitch kernel module is probably not loaded, try 'modprobe openvswitch'", fue.family)
 }
 
-func IsKernelLacksODPError(err error) bool {
-	_, ok := err.(familyUnavailableError)
-	return ok
-}
-
 func lookupFamily(sock *NetlinkSocket, name string) (GenlFamily, error) {
 	family, err := sock.LookupGenlFamily(name)
 	if err == nil {
@@ -50,7 +46,7 @@ func lookupFamily(sock *NetlinkSocket, name string) (GenlFamily, error) {
 	}
 
 	if err == NetlinkError(syscall.ENOENT) {
-		loadOpenvswitchModule()
+		triedLoadOpenvswitchModule.Do(loadOpenvswitchModule)
 
 		// The module might be loaded now, so try again
 		family, err = sock.LookupGenlFamily(name)
@@ -66,21 +62,17 @@ func lookupFamily(sock *NetlinkSocket, name string) (GenlFamily, error) {
 	return GenlFamily{}, err
 }
 
-var triedLoadOpenvswitchModule bool
+var triedLoadOpenvswitchModule sync.Once
 
 // This tries to provoke the kernel into loading the openvswitch
 // module.  Yes, netdev ioctls can be used to load arbitrary modules,
 // if you have CAP_SYS_MODULE.
 func loadOpenvswitchModule() {
-	if triedLoadOpenvswitchModule {
-		return
-	}
 
 	// netdev ioctls don't seem to work on netlink sockets, so we
 	// need a new socket for this purpose.
 	s, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, 0)
 	if err != nil {
-		triedLoadOpenvswitchModule = true
 		return
 	}
 
@@ -90,7 +82,6 @@ func loadOpenvswitchModule() {
 	copy(req.name[:], []byte("openvswitch"))
 	syscall.Syscall(syscall.SYS_IOCTL, uintptr(s),
 		syscall.SIOCGIFINDEX, uintptr(unsafe.Pointer(&req)))
-	triedLoadOpenvswitchModule = true
 }
 
 func NewDpif() (*Dpif, error) {
