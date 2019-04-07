@@ -133,7 +133,7 @@ func (c *ovsFlowWalker) run() {
 
 	events, stop, err := ovs.FollowOvsFlows(c.bufferSize, 0)
 	if err != nil {
-		log.Errorf("ovs Follow error: %v", err)
+		log.Errorf("ovs follow error: %v", err)
 		return
 	}
 
@@ -166,7 +166,6 @@ func (c *ovsFlowWalker) handleFlow(fi *ovs.OvsFlowInfo) {
 	c.Lock()
 	defer c.Unlock()
 
-	log.Info("handling")
 	key, ok := fi.Keys[ovs.OvsAttrIpv4]
 	if !ok {
 		return
@@ -220,16 +219,12 @@ func (c *ovsFlowWalker) handleFlow(fi *ovs.OvsFlowInfo) {
 // walkFlows calls f with all active flows and flows that have come and gone
 // since the last call to walkFlows
 func (c *ovsFlowWalker) walkFlows(f func(TunnelAttrs)) {
-	log.Infof("before lock")
 	c.Lock()
-	log.Infof("after lock")
 	defer c.Unlock()
 
-	log.Infof("before for")
 	for _, flow := range c.activeFlows {
 		f(flow)
 	}
-	log.Infof("after for")
 	//for _, flow := range c.bufferedFlows {
 	//	f(flow, false)
 	//}
