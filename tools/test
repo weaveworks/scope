@@ -60,7 +60,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-GO_TEST_ARGS=(-tags "${TAGS[@]}" -cpu 4 -timeout $TIMEOUT $VERBOSE)
+GO_TEST_ARGS=(-tags "${TAGS[@]}" -timeout $TIMEOUT $VERBOSE)
 
 if [ -n "$SLOW" ] || [ -n "$CIRCLECI" ]; then
     SLOW=true
