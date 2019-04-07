@@ -101,7 +101,7 @@ fi
 PACKAGE_BASE=$(go list -e ./)
 
 # Speed up the tests by compiling and installing their dependencies first.
-go test -i "${GO_TEST_ARGS[@]}" "${TESTDIRS[@]}"
+go test -parallel 1 -p 1 -i "${GO_TEST_ARGS[@]}" "${TESTDIRS[@]}"
 
 run_test() {
     local dir=$1
