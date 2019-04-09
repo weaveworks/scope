@@ -92,6 +92,10 @@ func main() {
 
 		scanner  scanner
 		loglevel string
+
+		justBigScan bool
+		segments    int
+		pagesPerDot int
 	)
 
 	flag.StringVar(&collectorURL, "app.collector", "local", "Collector to use (local, dynamodb, or file/directory)")
@@ -106,6 +110,10 @@ func main() {
 	flag.StringVar(&scanner.address, "address", ":6060", "Address to listen on, for profiling, etc.")
 	flag.StringVar(&orgsFile, "delete-orgs-file", "", "File containing IDs of orgs to delete")
 	flag.StringVar(&loglevel, "log-level", "info", "Debug level: debug, info, warning, error")
+
+	flag.BoolVar(&justBigScan, "big-scan", false, "If true, just scan the whole index and print summaries")
+	flag.IntVar(&segments, "segments", 1, "Number of segments to run in parallel")
+	flag.IntVar(&pagesPerDot, "pages-per-dot", 10, "Print a dot per N pages in DynamoDB (0 to disable)")
 
 	flag.Parse()
 
@@ -134,6 +142,11 @@ func main() {
 		http.Handle("/metrics", promhttp.Handler())
 		checkFatal(http.ListenAndServe(scanner.address, nil))
 	}()
+
+	if justBigScan {
+		bigScan(dynamoDBConfig, segments, pagesPerDot)
+		return
+	}
 
 	orgs := []string{}
 	if orgsFile != "" {
