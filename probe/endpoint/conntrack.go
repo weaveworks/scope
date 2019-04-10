@@ -109,9 +109,15 @@ func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
 	// For now, we're only interested in tcp connections - there is too much udp
 	// traffic going on (every container talking to dns, for example) to
 	// render nicely. TODO: revisit this.
-	//if f.Orig.Proto != tcpProto {
-	//	return false
-	//}
+
+	if f.Orig.Proto == 17 && f.Orig.DstPort == 4789 {
+		return true
+	}
+
+	if f.Orig.Proto != tcpProto {
+		return false
+	}
+
 	return !(c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0)
 }
 
