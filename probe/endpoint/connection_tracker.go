@@ -9,8 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/typetypetype/conntrack"
 
-	"math"
-
 	"github.com/weaveworks/scope/probe/endpoint/procspy"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -227,11 +225,9 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 
 func (t *connectionTracker) addTunnel(rpt *report.Report, info TunnelAttrs) {
 
-	log.Infof("adding tunnel %+v", info)
-
 	var (
-		fromTunnel = t.makeEndpointNode("", info.SrcIP(), math.MaxUint16, nil)
-		toTunnel   = t.makeEndpointNode("", info.DstIP(), math.MaxUint16-1, nil)
+		fromTunnel = t.makeEndpointNode("", info.SrcIP(), 0, nil)
+		toTunnel   = t.makeEndpointNode("", info.DstIP(), 1, nil)
 		tunnelFlow = t.makeEndpointNode("", info.DstFlow(), info.PortDst, map[string]string{report.TunnelID: strconv.FormatUint(info.TunnelID, 10)})
 	)
 
