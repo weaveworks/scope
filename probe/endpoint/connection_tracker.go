@@ -225,6 +225,8 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 
 func (t *connectionTracker) addTunnel(rpt *report.Report, info TunnelAttrs) {
 
+	log.Infof("adding tunnel %+v", info)
+
 	var (
 		fromTunnel = t.makeEndpointNode("", info.SrcIP(), 0, nil)
 		toTunnel   = t.makeEndpointNode("", info.DstIP(), 0, nil)
