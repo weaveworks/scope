@@ -211,6 +211,10 @@ func (c *ovsFlowWalker) handleFlow(fi *ovs.OvsFlowInfo) {
 		return
 	}
 
+	if ipv4fk.Src == 0 || ipv4fk.Dst == 0 {
+		return
+	}
+
 	c.activeFlows[setTunnelFk.TunnelId] = TunnelAttrs{
 		TunnelID: setTunnelFk.TunnelId,
 		TunIpSrc: ipv4fk.Src,
