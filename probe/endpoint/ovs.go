@@ -132,7 +132,7 @@ func (c *ovsFlowWalker) run() {
 	//c.Unlock()
 	//
 
-	events, stop, err := ovs.FollowOvsFlows(c.bufferSize, 0)
+	events, stop, err := ovs.FollowOvsFlows()
 	if err != nil {
 		log.Errorf("ovs follow error: %v", err)
 		return
