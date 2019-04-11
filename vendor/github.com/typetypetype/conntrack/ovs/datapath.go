@@ -39,11 +39,7 @@ func (dp DatapathHandle) ID() DatapathID {
 }
 
 func (dp DatapathHandle) Reopen() (DatapathHandle, error) {
-	return dp.ReopenGroups(0)
-}
-
-func (dp DatapathHandle) ReopenGroups(groups uint32) (DatapathHandle, error) {
-	dpif, err := dp.Dpif.ReopenGroups(groups)
+	dpif, err := dp.Dpif.Reopen()
 	return DatapathHandle{Dpif: dpif, Ifindex: dp.Ifindex}, err
 }
 
@@ -68,10 +64,6 @@ func (dpif *Dpif) CreateDatapath(name string) (DatapathHandle, error) {
 	}
 
 	return DatapathHandle{Dpif: dpif, Ifindex: dpi.ifindex}, nil
-}
-
-func IsDatapathNameAlreadyExistsError(err error) bool {
-	return err == NetlinkError(syscall.EEXIST)
 }
 
 func (dpif *Dpif) LookupDatapath(name string) (DatapathHandle, error) {

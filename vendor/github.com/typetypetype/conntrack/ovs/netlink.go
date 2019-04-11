@@ -12,12 +12,13 @@ func align(n int, a int) int {
 }
 
 type NetlinkSocket struct {
-	fd   int
-	addr *syscall.SockaddrNetlink
-	buf  []byte
+	fd       int
+	addr     *syscall.SockaddrNetlink
+	sockType int
+	buf      []byte
 }
 
-func OpenNetlinkSocketGroups(protocol int, groups uint32) (*NetlinkSocket, error) {
+func OpenNetlinkSocket(protocol int) (*NetlinkSocket, error) {
 	fd, err := syscall.Socket(syscall.AF_NETLINK, syscall.SOCK_RAW, protocol)
 	if err != nil {
 		return nil, err
@@ -39,7 +40,7 @@ func OpenNetlinkSocketGroups(protocol int, groups uint32) (*NetlinkSocket, error
 		return nil, err
 	}
 
-	addr := syscall.SockaddrNetlink{Family: syscall.AF_NETLINK, Groups: groups}
+	addr := syscall.SockaddrNetlink{Family: syscall.AF_NETLINK}
 	if err := syscall.Bind(fd, &addr); err != nil {
 		return nil, err
 	}
@@ -56,18 +57,14 @@ func OpenNetlinkSocketGroups(protocol int, groups uint32) (*NetlinkSocket, error
 
 	success = true
 	return &NetlinkSocket{
-		fd:   fd,
-		addr: nladdr,
-
+		fd:       fd,
+		addr:     nladdr,
+		sockType: protocol,
 		// netlink messages can be bigger than this, but it
 		// seems unlikely in practice, and this is similar to
 		// the limit that the OVS userspace imposes.
 		buf: make([]byte, 65536),
 	}, nil
-}
-
-func OpenNetlinkSocket(protocol int) (*NetlinkSocket, error) {
-	return OpenNetlinkSocketGroups(protocol, 0)
 }
 
 func (s *NetlinkSocket) PortId() uint32 {

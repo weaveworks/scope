@@ -23,7 +23,8 @@ var familyNames = [FAMILY_COUNT]string{
 }
 
 type Dpif struct {
-	sock     *NetlinkSocket
+	sock *NetlinkSocket
+
 	families [FAMILY_COUNT]GenlFamily
 }
 
@@ -37,6 +38,11 @@ type familyUnavailableError struct {
 
 func (fue familyUnavailableError) Error() string {
 	return fmt.Sprintf("Generic netlink family '%s' unavailable; the Open vSwitch kernel module is probably not loaded, try 'modprobe openvswitch'", fue.family)
+}
+
+func IsKernelLacksODPError(err error) bool {
+	_, ok := err.(familyUnavailableError)
+	return ok
 }
 
 func lookupFamily(sock *NetlinkSocket, name string) (GenlFamily, error) {
@@ -85,11 +91,34 @@ func loadOpenvswitchModule() {
 }
 
 func NewDpif() (*Dpif, error) {
-	return NewDpifGroups(0)
+	return newDpifType(syscall.NETLINK_NETFILTER)
 }
 
-func NewDpifGroups(groups uint32) (*Dpif, error) {
-	sock, err := OpenNetlinkSocketGroups(syscall.NETLINK_GENERIC, groups)
+func NewDpifOvs(follow bool) (*Dpif, error) {
+	dpif, err := newDpifType(syscall.NETLINK_GENERIC)
+	if err != nil {
+		return nil, err
+	}
+
+	group, err := dpif.getMCGroup(FLOW, "ovs_flow")
+
+	if err != nil {
+		dpif.Close()
+		return nil, err
+	}
+
+	if follow {
+		if err := syscall.SetsockoptInt(dpif.sock.fd, SOL_NETLINK, syscall.NETLINK_ADD_MEMBERSHIP, int(group)); err != nil {
+			dpif.Close()
+			return nil, err
+		}
+	}
+
+	return dpif, nil
+}
+
+func newDpifType(netlinkType int) (*Dpif, error) {
+	sock, err := OpenNetlinkSocket(netlinkType)
 	if err != nil {
 		return nil, err
 	}
@@ -104,34 +133,17 @@ func NewDpifGroups(groups uint32) (*Dpif, error) {
 		}
 	}
 
-	group, err := dpif.getMCGroup(FLOW, "ovs_flow")
-
-	if err != nil {
-		sock.Close()
-		return nil, err
-	}
-
-	if err := syscall.SetsockoptInt(sock.fd, SOL_NETLINK, syscall.NETLINK_ADD_MEMBERSHIP, int(group)); err != nil {
-		sock.Close()
-		return nil, err
-	}
-
 	return dpif, nil
 }
 
 // Open a Dpif with a new socket, but reuing the family info
-func (dpif *Dpif) ReopenGroups(groups uint32) (*Dpif, error) {
-	sock, err := OpenNetlinkSocketGroups(syscall.NETLINK_GENERIC, groups)
+func (dpif *Dpif) Reopen() (*Dpif, error) {
+	sock, err := OpenNetlinkSocket(dpif.sock.sockType)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Dpif{sock: sock, families: dpif.families}, nil
-}
-
-// Open a Dpif with a new socket, but reuing the family info
-func (dpif *Dpif) Reopen() (*Dpif, error) {
-	return dpif.ReopenGroups(0)
 }
 
 func (dpif *Dpif) getMCGroup(family int, name string) (uint32, error) {
