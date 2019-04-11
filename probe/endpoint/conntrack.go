@@ -107,6 +107,10 @@ func (c *conntrackWalker) clearFlows() {
 
 func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
 
+	if f.Orig.DstPort == 4789 {
+		log.Info(f)
+	}
+
 	return !(c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0)
 }
 
