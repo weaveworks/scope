@@ -142,12 +142,11 @@ func (c *conntrackWalker) run() {
 			return
 		case f, ok := <-events:
 			if !ok {
+				log.Info("error loop")
 				return
 			}
 			if c.relevant(f) {
 				c.handleFlow(f)
-			} else {
-				log.Infof("irrelevant %+v", f)
 			}
 		}
 	}
