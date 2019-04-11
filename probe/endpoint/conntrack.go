@@ -107,10 +107,6 @@ func (c *conntrackWalker) clearFlows() {
 
 func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
 
-	if f.Orig.DstPort == 4789 {
-		log.Info(f)
-	}
-
 	return !(c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0)
 }
 
@@ -124,6 +120,8 @@ func (c *conntrackWalker) run() {
 	for _, flow := range existingFlows {
 		if c.relevant(flow) && flow.TCPState != tcpClose && flow.TCPState != timeWait {
 			c.activeFlows[flow.CtId] = flow
+		} else {
+			log.Info("irrelevant %+v", flow)
 		}
 	}
 	c.Unlock()
