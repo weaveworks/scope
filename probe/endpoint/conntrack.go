@@ -121,7 +121,7 @@ func (c *conntrackWalker) run() {
 		if c.relevant(flow) && flow.TCPState != tcpClose && flow.TCPState != timeWait {
 			c.activeFlows[flow.CtId] = flow
 		} else {
-			log.Info("irrelevant %+v", flow)
+			log.Infof("irrelevant %+v", flow)
 		}
 	}
 	c.Unlock()
@@ -146,6 +146,8 @@ func (c *conntrackWalker) run() {
 			}
 			if c.relevant(f) {
 				c.handleFlow(f)
+			} else {
+				log.Infof("irrelevant %+v", f)
 			}
 		}
 	}
