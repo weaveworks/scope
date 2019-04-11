@@ -107,7 +107,7 @@ func (c *conntrackWalker) clearFlows() {
 
 func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
 
-	return !(c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0)
+	return true
 }
 
 func (c *conntrackWalker) run() {
