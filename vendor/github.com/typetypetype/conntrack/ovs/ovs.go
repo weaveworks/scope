@@ -6,17 +6,18 @@ import (
 	"strconv"
 )
 
-func FollowOvsFlows(bufferSize int, flags uint32) (<-chan *OvsFlowInfo, func(), error) {
+func FollowOvsFlows() (<-chan *OvsFlowInfo, func(), error) {
 
-	dpif, err := NewDpifGroups(0)
+	dpif, err := NewDpifOvs(true)
 
 	if err != nil {
-		fmt.Println(err)
 		return nil, nil, err
 	}
 
 	dp, _, err := lookupDatapath(dpif, "ovs-system")
-
+	if err != nil {
+		return nil, nil, err
+	}
 	res, stop, err := dp.FollowFlows()
 	return res, func() { stop(); dpif.Close() }, err
 
