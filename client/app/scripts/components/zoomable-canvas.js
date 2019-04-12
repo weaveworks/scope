@@ -63,10 +63,16 @@ class ZoomableCanvas extends React.Component {
 
     this.updateZoomLimits(this.props);
     this.restoreZoomState(this.props);
+    document
+      .getElementById('canvas')
+      .addEventListener('wheel', this.handleZoom, { passive: false });
   }
 
   componentWillUnmount() {
     this.debouncedCacheZoom.cancel();
+    document
+      .getElementById('canvas')
+      .removeEventListener('wheel', this.handleZoom, { passive: false });
   }
 
   componentWillReceiveProps(nextProps) {
@@ -104,7 +110,7 @@ class ZoomableCanvas extends React.Component {
 
     return (
       <div className="zoomable-canvas">
-        <svg id="canvas" className={className} onClick={this.props.onClick} onWheel={this.handleZoom}>
+        <svg id="canvas" className={className} onClick={this.props.onClick}>
           <Logo transform="translate(24,24) scale(0.25)" />
           <g className="zoom-content">
             {this.props.children(this.state)}
