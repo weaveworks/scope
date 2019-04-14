@@ -77,9 +77,7 @@ func (t *connectionTracker) useProcfs() {
 
 // ReportConnections calls trackers according to the configuration.
 func (t *connectionTracker) ReportConnections(rpt *report.Report) {
-	log.Info("reporting")
 	hostNodeID := report.MakeHostNodeID(t.conf.HostID)
-
 	if t.ebpfTracker != nil {
 		if !t.ebpfTracker.isDead() {
 			t.performEbpfTrack(rpt, hostNodeID)
@@ -219,9 +217,10 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 		toNode   = t.makeEndpointNode(namespaceID, ft.toAddr, ft.toPort, extraToNode)
 	)
 
-	if ft.toPort == 4789 {
+	if ft.toPort == 4789 || ft.fromPort == 4789 {
 		log.Info(ft)
 	}
+
 	rpt.Endpoint.AddNode(fromNode.WithAdjacent(toNode.ID))
 	rpt.Endpoint.AddNode(toNode)
 	t.addDNS(rpt, ft.fromAddr)
