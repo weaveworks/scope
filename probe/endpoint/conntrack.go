@@ -124,7 +124,7 @@ func (c *conntrackWalker) run() {
 	}
 	c.Unlock()
 
-	events, stop, err := conntrack.FollowSize(c.bufferSize, 0)
+	events, stop, err := conntrack.FollowSize(c.bufferSize, conntrack.NF_NETLINK_CONNTRACK_UPDATE|conntrack.NF_NETLINK_CONNTRACK_DESTROY)
 	if err != nil {
 		log.Errorf("conntrack Follow error: %v", err)
 		return
