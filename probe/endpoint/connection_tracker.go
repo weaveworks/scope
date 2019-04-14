@@ -111,6 +111,7 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 	// consult the flowWalker for short-lived (conntracked) connections
 	seenTuples := map[string]fourTuple{}
 	t.flowWalker.walkFlows(func(f conntrack.Conn, alive bool) {
+		log.Info(f)
 		tuple := flowToTuple(f)
 		seenTuples[tuple.key()] = tuple
 		t.addConnection(rpt, false, tuple, "", nil, nil)
@@ -216,10 +217,6 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 		fromNode = t.makeEndpointNode(namespaceID, ft.fromAddr, ft.fromPort, extraFromNode)
 		toNode   = t.makeEndpointNode(namespaceID, ft.toAddr, ft.toPort, extraToNode)
 	)
-
-	if ft.toPort == 4789 || ft.fromPort == 4789 {
-		log.Info(ft)
-	}
 
 	rpt.Endpoint.AddNode(fromNode.WithAdjacent(toNode.ID))
 	rpt.Endpoint.AddNode(toNode)
