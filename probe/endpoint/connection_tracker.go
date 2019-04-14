@@ -77,6 +77,7 @@ func (t *connectionTracker) useProcfs() {
 
 // ReportConnections calls trackers according to the configuration.
 func (t *connectionTracker) ReportConnections(rpt *report.Report) {
+	log.Info("reporting")
 	hostNodeID := report.MakeHostNodeID(t.conf.HostID)
 
 	if t.ebpfTracker != nil {
