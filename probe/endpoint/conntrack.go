@@ -160,6 +160,7 @@ func (c *conntrackWalker) handleFlow(f conntrack.Conn) {
 	c.Lock()
 	defer c.Unlock()
 
+	log.Info(f)
 	// Ignore flows for which we never saw an update; they are likely
 	// incomplete or wrong.  See #1462.
 	switch {

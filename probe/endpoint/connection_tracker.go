@@ -111,7 +111,6 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 	// consult the flowWalker for short-lived (conntracked) connections
 	seenTuples := map[string]fourTuple{}
 	t.flowWalker.walkFlows(func(f conntrack.Conn, alive bool) {
-		log.Info(f)
 		tuple := flowToTuple(f)
 		seenTuples[tuple.key()] = tuple
 		t.addConnection(rpt, false, tuple, "", nil, nil)
