@@ -160,7 +160,6 @@ func (c *conntrackWalker) handleFlow(f conntrack.Conn) {
 	c.Lock()
 	defer c.Unlock()
 
-	log.Info(f)
 	// Ignore flows for which we never saw an update; they are likely
 	// incomplete or wrong.  See #1462.
 	switch {
@@ -172,6 +171,9 @@ func (c *conntrackWalker) handleFlow(f conntrack.Conn) {
 			c.bufferedFlows = append(c.bufferedFlows, f)
 		}
 	case f.MsgType == conntrack.NfctMsgDestroy:
+		if f.TCPState == "" {
+			c.bufferedFlows = append(c.bufferedFlows, f)
+		}
 		if active, ok := c.activeFlows[f.CtId]; ok {
 			delete(c.activeFlows, f.CtId)
 			c.bufferedFlows = append(c.bufferedFlows, active)
