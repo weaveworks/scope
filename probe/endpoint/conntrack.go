@@ -120,13 +120,11 @@ func (c *conntrackWalker) run() {
 	for _, flow := range existingFlows {
 		if c.relevant(flow) && flow.TCPState != tcpClose && flow.TCPState != timeWait {
 			c.activeFlows[flow.CtId] = flow
-		} else {
-			log.Infof("irrelevant %+v", flow)
 		}
 	}
 	c.Unlock()
 
-	events, stop, err := conntrack.FollowSize(c.bufferSize, conntrack.NF_NETLINK_CONNTRACK_UPDATE|conntrack.NF_NETLINK_CONNTRACK_DESTROY)
+	events, stop, err := conntrack.FollowSize(c.bufferSize, 0)
 	if err != nil {
 		log.Errorf("conntrack Follow error: %v", err)
 		return
