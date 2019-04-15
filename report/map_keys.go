@@ -4,8 +4,8 @@ package report
 
 type TunnelPort uint16
 
-const TunnelPortSrc TunnelPort = 1
-const TunnelPortDst TunnelPort = 2
+const TunnelPortSrc TunnelPort = 0
+const TunnelPortDst TunnelPort = 1
 
 const (
 	// probe/endpoint
