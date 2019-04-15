@@ -12,19 +12,29 @@ rules:
   - ""
   resources:
   - pods
+  - pods/log
   - replicationcontrollers
   - services
   - nodes
   - persistentvolumes
   - persistentvolumeclaims
   verbs:
+  - get
   - list
   - watch
 - apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - delete
+- apiGroups:
   - apps
   resources:
+  - deployments
   - statefulsets
   verbs:
+  - get
   - list
   - watch
 - apiGroups:
@@ -40,10 +50,18 @@ rules:
   resources:
   - daemonsets
   - deployments
+  - deployments/scale
   - replicasets
   verbs:
+  - get
   - list
   - watch
+- apiGroups:
+  - extensions
+  resources:
+  - deployments/scale
+  verbs:
+  - update
 - apiGroups:
   - storage.k8s.io
   resources:
