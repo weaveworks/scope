@@ -118,19 +118,6 @@ func (c *ovsFlowWalker) relevant(fi *ovs.OvsFlowInfo) bool {
 }
 
 func (c *ovsFlowWalker) run() {
-	//existingFlows, err := conntrack.ConnectionsSize(c.bufferSize)
-	//if err != nil {
-	//	log.Errorf("conntrack Connections error: %v", err)
-	//	return
-	//}
-	//c.Lock()
-	//for _, flow := range existingFlows {
-	//	if c.relevant(flow) && flow.TCPState != tcpClose && flow.TCPState != timeWait {
-	//		c.activeFlows[flow.CtId] = flow
-	//	}
-	//}
-	//c.Unlock()
-	//
 
 	events, stop, err := ovs.FollowOvsFlows()
 	if err != nil {
@@ -235,8 +222,4 @@ func (c *ovsFlowWalker) walkFlows(f func(TunnelAttrs)) {
 	for _, flow := range c.activeFlows {
 		f(flow)
 	}
-	//for _, flow := range c.bufferedFlows {
-	//	f(flow, false)
-	//}
-	//c.bufferedFlows = c.bufferedFlows[:0]
 }
