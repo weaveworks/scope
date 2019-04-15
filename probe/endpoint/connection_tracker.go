@@ -226,8 +226,8 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 func (t *connectionTracker) addTunnel(rpt *report.Report, info TunnelAttrs) {
 
 	var (
-		fromTunnel = t.makeEndpointNode("", info.SrcIP(), 0, nil)
-		toTunnel   = t.makeEndpointNode("", info.DstIP(), 1, nil)
+		fromTunnel = t.makeEndpointNode("", info.SrcIP(), uint16(report.TunnelPortSrc), nil)
+		toTunnel   = t.makeEndpointNode("", info.DstIP(), uint16(report.TunnelPortDst), nil)
 		tunnelFlow = t.makeEndpointNode("", info.DstFlow(), info.PortDst, map[string]string{report.TunnelID: strconv.FormatUint(info.TunnelID, 10)})
 	)
 

@@ -1,6 +1,12 @@
 package report
 
 // node metadata keys
+
+type TunnelPort uint16
+
+const TunnelPortSrc TunnelPort = 1
+const TunnelPortDst TunnelPort = 2
+
 const (
 	// probe/endpoint
 	ReverseDNSNames = "reverse_dns_names"
