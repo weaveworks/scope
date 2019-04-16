@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"fmt"
 	"net"
 	"unsafe"
 
@@ -24,14 +23,6 @@ type TunnelAttrs struct {
 
 	IpDst   uint32
 	PortDst uint16
-}
-
-func (ta TunnelAttrs) SrcIP() string {
-	return fmt.Sprintf("%s/%s", ipv4ToString(ta.TunIpSrc), ipv4ToString(ta.MaskSrc))
-}
-
-func (ta TunnelAttrs) DstIP() string {
-	return fmt.Sprintf("%s/%s", ipv4ToString(ta.TunIpDst), ipv4ToString(ta.MaskDst))
 }
 
 func (ta TunnelAttrs) DstFlow() string {

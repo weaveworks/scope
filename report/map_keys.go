@@ -8,8 +8,10 @@ const (
 	SnoopedDNSNames = "snooped_dns_names"
 	CopyOf          = "copy_of"
 	TunnelID        = "tunnel_id"
-	TunnelSrc       = "tunnel_src"
-	TunnelDst       = "tunnel_dst"
+	TunnelSrcIP     = "tunnel_src_ip"
+	TunnelSrcMask   = "tunnel_src_mask"
+	TunnelDstIP     = "tunnel_dst_ip"
+	TunnelDstMask   = "tunnel_dst_mask"
 	// probe/process
 	PID     = "pid"
 	Name    = "name" // also used by probe/docker
