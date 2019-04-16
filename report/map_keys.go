@@ -2,17 +2,14 @@ package report
 
 // node metadata keys
 
-type TunnelPort uint16
-
-const TunnelPortSrc TunnelPort = 0
-const TunnelPortDst TunnelPort = 1
-
 const (
 	// probe/endpoint
 	ReverseDNSNames = "reverse_dns_names"
 	SnoopedDNSNames = "snooped_dns_names"
 	CopyOf          = "copy_of"
 	TunnelID        = "tunnel_id"
+	TunnelSrc       = "tunnel_src"
+	TunnelDst       = "tunnel_dst"
 	// probe/process
 	PID     = "pid"
 	Name    = "name" // also used by probe/docker
