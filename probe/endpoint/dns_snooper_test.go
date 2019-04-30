@@ -20,19 +20,19 @@ func TestProcessDNSMessageMultipleCNAME(t *testing.T) {
 
 	ipAddressCNAME := "127.0.0.1"
 	answers := []layers.DNSResourceRecord{
-		layers.DNSResourceRecord{
+		{
 			Name:  []byte("api.dummy.com"),
 			CNAME: []byte("api.dummy.com"),
 			Type:  layers.DNSTypeCNAME,
 			Class: layers.DNSClassIN,
 		},
-		layers.DNSResourceRecord{
+		{
 			Name:  []byte("star.c10r.dummy.com"),
 			CNAME: []byte("star.c10r.dummy.com"),
 			Type:  layers.DNSTypeCNAME,
 			Class: layers.DNSClassIN,
 		},
-		layers.DNSResourceRecord{
+		{
 			Name:  []byte("star.c10r.dummy.com"),
 			Type:  layers.DNSTypeA,
 			Class: layers.DNSClassIN,
