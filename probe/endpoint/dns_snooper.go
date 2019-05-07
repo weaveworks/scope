@@ -250,15 +250,14 @@ func (s *DNSSnooper) processDNSMessage(dns *layers.DNS) {
 		domainQueried = question.Name
 		records       = append(dns.Answers, dns.Additionals...)
 		ips           = map[string]struct{}{}
-		alias         []byte
+		aliases       = [][]byte{}
 	)
 
-	// Traverse records for a CNAME first since the DNS RFCs don't seem to guarantee it
-	// appearing before its A-records
+	// Traverse all the CNAME records and the get the aliases. There are cases when the A record is for only one of the
+	// aliases. We traverse CNAME records first because there is no guarantee that the A records will be the first ones
 	for _, record := range records {
-		if record.Type == layers.DNSTypeCNAME && record.Class == layers.DNSClassIN && bytes.Equal(domainQueried, record.Name) {
-			alias = record.CNAME
-			break
+		if record.Type == layers.DNSTypeCNAME && record.Class == layers.DNSClassIN {
+			aliases = append(aliases, record.CNAME)
 		}
 	}
 
@@ -267,8 +266,15 @@ func (s *DNSSnooper) processDNSMessage(dns *layers.DNS) {
 		if record.Type != layers.DNSTypeA || record.Class != layers.DNSClassIN {
 			continue
 		}
-		if bytes.Equal(domainQueried, record.Name) || (alias != nil && bytes.Equal(alias, record.Name)) {
+		if bytes.Equal(domainQueried, record.Name) {
 			ips[record.IP.String()] = struct{}{}
+			continue
+		}
+		for _, alias := range aliases {
+			if bytes.Equal(alias, record.Name) {
+				ips[record.IP.String()] = struct{}{}
+				break
+			}
 		}
 	}
 
