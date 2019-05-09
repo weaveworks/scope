@@ -254,7 +254,7 @@ func (sc *scanner) deleteFromS3AndDynamoDB(ctx context.Context, keys []map[strin
 		return err
 	})
 	if err != nil {
-		log.Errorf("S3 delete: err", err)
+		log.Errorf("S3 delete: err %s", err)
 	}
 	// Now send to be deleted from DynamoDB
 	for _, key := range keys {
