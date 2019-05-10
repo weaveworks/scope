@@ -1,6 +1,7 @@
 package report_test
 
 import (
+	"context"
 	"reflect"
 	"testing"
 	"time"
@@ -14,7 +15,7 @@ func TestRoundtrip(t *testing.T) {
 	r1 := report.MakeReport()
 	buf, _ := r1.WriteBinary()
 	bytes := append([]byte{}, buf.Bytes()...) // copy the contents for later
-	r2, err := report.MakeFromBinary(buf)
+	r2, err := report.MakeFromBinary(context.Background(), buf)
 	if err != nil {
 		t.Error(err)
 	}
@@ -71,7 +72,7 @@ func makeTestReport() report.Report {
 func TestBiggerRoundtrip(t *testing.T) {
 	r1 := makeTestReport()
 	buf, _ := r1.WriteBinary()
-	r2, err := report.MakeFromBinary(buf)
+	r2, err := report.MakeFromBinary(context.Background(), buf)
 	if err != nil {
 		t.Error(err)
 	}

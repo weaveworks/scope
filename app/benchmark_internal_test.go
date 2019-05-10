@@ -30,7 +30,7 @@ func readReportFiles(b *testing.B, path string) []report.Report {
 			if info.IsDir() {
 				return nil
 			}
-			rpt, err := report.MakeFromFile(p)
+			rpt, err := report.MakeFromFile(context.Background(), p)
 			if err != nil {
 				return err
 			}

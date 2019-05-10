@@ -278,7 +278,7 @@ func NewFileCollector(path string, window time.Duration) (Collector, error) {
 			}
 			timestamps = append(timestamps, t)
 
-			rpt, err := report.MakeFromFile(p)
+			rpt, err := report.MakeFromFile(context.Background(), p)
 			if err != nil {
 				return err
 			}
