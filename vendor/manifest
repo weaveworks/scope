@@ -101,8 +101,8 @@
 		{
 			"importpath": "github.com/armon/go-metrics",
 			"repository": "https://github.com/armon/go-metrics",
-			"vcs": "",
-			"revision": "6c5fa0d8f48f4661c9ba8709799c88d425ad20f0",
+			"vcs": "git",
+			"revision": "ec5e00d3c878b2a97bbe0884ef45ffd1b4f669f5",
 			"branch": "master"
 		},
 		{
@@ -1093,6 +1093,14 @@
 			"vcs": "",
 			"revision": "ce617e79981a8fff618bb643d155133a8f38db96",
 			"branch": "master"
+		},
+		{
+			"importpath": "github.com/hashicorp/go-immutable-radix",
+			"repository": "https://github.com/hashicorp/go-immutable-radix",
+			"vcs": "git",
+			"revision": "27df80928bb34bb1b0d6d0e01b9e679902e7a6b5",
+			"branch": "master",
+			"notests": true
 		},
 		{
 			"importpath": "github.com/hashicorp/go-version",
