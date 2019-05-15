@@ -1,11 +1,17 @@
 package report
 
 // node metadata keys
+
 const (
 	// probe/endpoint
 	ReverseDNSNames = "reverse_dns_names"
 	SnoopedDNSNames = "snooped_dns_names"
 	CopyOf          = "copy_of"
+	TunnelID        = "tunnel_id"
+	TunnelSrcIP     = "tunnel_src_ip"
+	TunnelSrcMask   = "tunnel_src_mask"
+	TunnelDstIP     = "tunnel_dst_ip"
+	TunnelDstMask   = "tunnel_dst_mask"
 	// probe/process
 	PID     = "pid"
 	Name    = "name" // also used by probe/docker

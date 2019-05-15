@@ -106,13 +106,8 @@ func (c *conntrackWalker) clearFlows() {
 }
 
 func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
-	// For now, we're only interested in tcp connections - there is too much udp
-	// traffic going on (every container talking to dns, for example) to
-	// render nicely. TODO: revisit this.
-	if f.Orig.Proto != tcpProto {
-		return false
-	}
-	return !(c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0)
+
+	return true
 }
 
 func (c *conntrackWalker) run() {
@@ -145,6 +140,7 @@ func (c *conntrackWalker) run() {
 			return
 		case f, ok := <-events:
 			if !ok {
+				log.Info("error loop")
 				return
 			}
 			if c.relevant(f) {
@@ -175,6 +171,9 @@ func (c *conntrackWalker) handleFlow(f conntrack.Conn) {
 			c.bufferedFlows = append(c.bufferedFlows, f)
 		}
 	case f.MsgType == conntrack.NfctMsgDestroy:
+		if f.TCPState == "" {
+			c.bufferedFlows = append(c.bufferedFlows, f)
+		}
 		if active, ok := c.activeFlows[f.CtId]; ok {
 			delete(c.activeFlows, f.CtId)
 			c.bufferedFlows = append(c.bufferedFlows, active)

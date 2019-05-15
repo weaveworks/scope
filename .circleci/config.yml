@@ -14,29 +14,24 @@ workflows:
   version: 2
   test_and_deploy:
     jobs:
-      - lint
+#      - lint
       - unit-test
-      - client-build
-      - client-test:
-          requires:
-            - client-build
+#      - client-build
+#      - client-test:
+#          requires:
+#            - client-build
       - xplatform-build:
           requires:
             - build
-      - build:
-          requires:
-            - client-build
+      - build
       - integration-tests:
           requires:
-            - lint
+#            - lint
             - unit-test
             - build
       - deploy:
-          filters:
-            branches:
-              only: master
           requires:
-            - client-test
+#            - client-test
             - integration-tests
 
 jobs:
@@ -58,56 +53,56 @@ jobs:
           - coverage
 
   # Create client/build/index.html
-  client-build:
-    <<: *client-defaults
-    steps:
-      - checkout
-      - restore_cache:
-          name: Restoring Yarn Cache
-          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
-      - restore_cache:
-          name: Restoring client/node_modules
-          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
-      - run: cd client; yarn install
-      - save_cache:
-          name: Saving Yarn Cache
-          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
-          paths:
-            - "/home/weave/scope/.cache/yarn"
-      - save_cache:
-          name: Saving client/node_modules
-          # include the CI config in the checksum because it will change when the docker image changes
-          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
-          paths:
-            - "/home/weave/scope/client/node_modules"
-      - run: |
-          cd client
-          yarn run build
-          yarn run build-external
-          yarn run bundle
-      - persist_to_workspace:
-          root: /home/weave/scope
-          paths:
-          - client/build/
-          - client/build-external/
-          - client/bundle/weave-scope.tgz
-
-
-  client-test:
-    <<: *client-defaults
-    steps:
-      - checkout
-      - restore_cache:
-          name: Restoring Yarn Cache
-          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
-      - restore_cache:
-          name: Restoring client/node_modules
-          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
-      - run: |
-          cd client
-          yarn install
-          yarn run lint
-          yarn test
+#  client-build:
+#    <<: *client-defaults
+#    steps:
+#      - checkout
+#      - restore_cache:
+#          name: Restoring Yarn Cache
+#          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
+#      - restore_cache:
+#          name: Restoring client/node_modules
+#          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
+#      - run: cd client; yarn install
+#      - save_cache:
+#          name: Saving Yarn Cache
+#          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
+#          paths:
+#            - "/home/weave/scope/.cache/yarn"
+#      - save_cache:
+#          name: Saving client/node_modules
+#          # include the CI config in the checksum because it will change when the docker image changes
+#          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
+#          paths:
+#            - "/home/weave/scope/client/node_modules"
+#      - run: |
+#          cd client
+#          yarn run build
+#          yarn run build-external
+#          yarn run bundle
+#      - persist_to_workspace:
+#          root: /home/weave/scope
+#          paths:
+#          - client/build/
+#          - client/build-external/
+#          - client/bundle/weave-scope.tgz
+#
+#
+#  client-test:
+#    <<: *client-defaults
+#    steps:
+#      - checkout
+#      - restore_cache:
+#          name: Restoring Yarn Cache
+#          key: yarn-cache-2-{{ checksum "client/yarn.lock" }}
+#      - restore_cache:
+#          name: Restoring client/node_modules
+#          key: node-modules-{{ checksum "client/yarn.lock" }}-{{ checksum ".circleci/config.yml" }}
+#      - run: |
+#          cd client
+#          yarn install
+#          yarn run lint
+#          yarn test
 
   xplatform-build:
     <<: *defaults
@@ -169,36 +164,30 @@ jobs:
           background: true
       # Code coverage
       - run: ./tools/cover/gather_coverage.sh ./coverage
-      - run: goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=profile.cov -service=circleci
+#      - run: goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=profile.cov -service=circleci
       - run: cp coverage.* */*.codecgen.go $CIRCLE_ARTIFACTS
       - store_artifacts:
           path: /tmp/artifacts
 
   deploy:
-    <<: *defaults
+    working_directory: /go/src/github.com/weaveworks/scope
+    docker:
+      - image: tufinim/circleci-go:master
     environment:
-      IMAGES: scope cloud-agent
+      IMAGES: scope
+      PROJECT_NAME: scope
+      GCR_NAME: eu.gcr.io/tufinlight/scope
     steps:
-      - checkout
-      - setup_remote_docker
       - attach_workspace:
           at: .
+      - setup_remote_docker
       - run: |
-          pip install awscli
           docker load -i scope.tar
-          docker load -i cloud-agent.tar
-      - run: |
-          test -z "${DOCKER_USER}" && exit 0
-          docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
-          for IMAGE in $IMAGES; do
-              test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" = "weaveworks" || docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest
-              docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
-              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest
-              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
-          done
-      - run: |
-          test -z "${QUAY_USER}" && exit 0
-          docker login -e '.' -u "$QUAY_USER" -p "$QUAY_PASSWORD" quay.io
-          docker tag weaveworks/scope:$(./tools/image-tag) "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
-          docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
-      - run: test -z "${UI_BUCKET_KEY_ID}" || (make BUILD_IN_CONTAINER=false ui-upload ui-pkg-upload)
+      - run:
+          name: Authenticate with gcloud
+          command:
+            echo $GCLOUD_SERVICE_KEY | /scripts/gcloud_auth.sh
+      - run:
+          name: Upload the docker image to gcr
+          command: |
+            /scripts/upload_to_gcr.sh weaveworks/scope:latest $GCR_NAME $CIRCLE_BUILD_NUM $CIRCLE_BRANCH
