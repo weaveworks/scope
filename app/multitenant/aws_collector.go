@@ -68,6 +68,16 @@ var (
 		Help:      "Distribution of memcache report sizes",
 		Buckets:   prometheus.ExponentialBuckets(4096, 2.0, 10),
 	})
+	reportsPerUser = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "reports_stored_total",
+		Help:      "Total count of stored reports per user.",
+	}, []string{"user"})
+	reportSizePerUser = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "reports_bytes_total",
+		Help:      "Total bytes stored in reports per user.",
+	}, []string{"user"})
 
 	natsRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "scope",
@@ -83,6 +93,8 @@ func init() {
 	prometheus.MustRegister(inProcessCacheRequests)
 	prometheus.MustRegister(inProcessCacheHits)
 	prometheus.MustRegister(reportSizeHistogram)
+	prometheus.MustRegister(reportsPerUser)
+	prometheus.MustRegister(reportSizePerUser)
 	prometheus.MustRegister(natsRequests)
 }
 
@@ -434,6 +446,8 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return err
 	}
 	reportSizeHistogram.Observe(float64(reportSize))
+	reportSizePerUser.WithLabelValues(userid).Add(float64(reportSize))
+	reportsPerUser.WithLabelValues(userid).Inc()
 
 	// third, put it in memcache
 	if c.cfg.MemcacheClient != nil {
