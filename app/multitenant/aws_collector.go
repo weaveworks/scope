@@ -71,7 +71,7 @@ var (
 	reportsPerUser = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "scope",
 		Name:      "reports_stored_total",
-		Help:      "Total stored reports per user.",
+		Help:      "Total count of stored reports per user.",
 	}, []string{"user"})
 	reportSizePerUser = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "scope",
