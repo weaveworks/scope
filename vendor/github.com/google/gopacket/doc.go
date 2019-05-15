@@ -22,6 +22,9 @@ useful, including:
 Also, if you're looking to dive right into code, see the examples subdirectory
 for numerous simple binaries built using gopacket libraries.
 
+Minimum go version required is 1.5 except for pcapgo/EthernetHandle, afpacket,
+and bsdbpf which need at least 1.7 due to x/sys/unix dependencies.
+
 Basic Usage
 
 gopacket takes in packet data as a []byte and decodes it into a packet with
@@ -288,7 +291,10 @@ the packet's information.  A quick example:
    parser := gopacket.NewDecodingLayerParser(layers.LayerTypeEthernet, &eth, &ip4, &ip6, &tcp)
    decoded := []gopacket.LayerType{}
    for packetData := range somehowGetPacketData() {
-     err := parser.DecodeLayers(packetData, &decoded)
+     if err := parser.DecodeLayers(packetData, &decoded); err != nil {
+       fmt.Fprintf(os.Stderr, "Could not decode layers: %v\n", err)
+       continue
+     }
      for _, layerType := range decoded {
        switch layerType {
          case layers.LayerTypeIPv6:
@@ -329,7 +335,7 @@ the following manner:
   }
   buf := gopacket.NewSerializeBuffer()
   opts := gopacket.SerializeOptions{}  // See SerializeOptions for more details.
-  err := ip.SerializeTo(&buf, opts)
+  err := ip.SerializeTo(buf, opts)
   if err != nil { panic(err) }
   fmt.Println(buf.Bytes())  // prints out a byte slice containing the serialized IPv4 layer.
 
