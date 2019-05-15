@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 
@@ -15,7 +16,7 @@ func main() {
 		log.Fatal("usage: copyreport src.(json|msgpack)[.gz] dst.(json|msgpack)[.gz]")
 	}
 
-	rpt, err := report.MakeFromFile(flag.Arg(0))
+	rpt, err := report.MakeFromFile(context.Background(), flag.Arg(0))
 	if err != nil {
 		log.Fatal(err)
 	}

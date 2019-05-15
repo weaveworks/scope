@@ -140,7 +140,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 			return
 		}
 
-		if err := rpt.ReadBinary(reader, gzipped, handle); err != nil {
+		if err := rpt.ReadBinary(ctx, reader, gzipped, handle); err != nil {
 			respondWith(w, http.StatusBadRequest, err)
 			return
 		}

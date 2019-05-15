@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"strings"
 	"sync"
 
+	opentracing "github.com/opentracing/opentracing-go"
+	otlog "github.com/opentracing/opentracing-go/log"
 	log "github.com/sirupsen/logrus"
 	"github.com/ugorji/go/codec"
 )
@@ -73,7 +76,9 @@ var gzipWriterPool = &sync.Pool{
 //
 // Will decompress the binary if gzipped is true, and will use the given
 // codecHandle to decode it.
-func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handle) error {
+func (rep *Report) ReadBinary(ctx context.Context, r io.Reader, gzipped bool, codecHandle codec.Handle) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "report.ReadBinary")
+	defer span.Finish()
 	var err error
 	var compressedSize uint64
 
@@ -106,13 +111,14 @@ func (rep *Report) ReadBinary(r io.Reader, gzipped bool, codecHandle codec.Handl
 		uncompressedSize,
 		float32(compressedSize)/float32(uncompressedSize)*100,
 	)
+	span.LogFields(otlog.Uint64("compressedSize", compressedSize), otlog.Int64("uncompressedSize", uncompressedSize))
 	return nil
 }
 
 // MakeFromBinary constructs a Report from a gzipped msgpack.
-func MakeFromBinary(r io.Reader) (*Report, error) {
+func MakeFromBinary(ctx context.Context, r io.Reader) (*Report, error) {
 	rep := MakeReport()
-	if err := rep.ReadBinary(r, true, &codec.MsgpackHandle{}); err != nil {
+	if err := rep.ReadBinary(ctx, r, true, &codec.MsgpackHandle{}); err != nil {
 		return nil, err
 	}
 	return &rep, nil
@@ -153,7 +159,7 @@ func MakeFromBytes(buf []byte) (*Report, error) {
 // MakeFromFile construct a Report from a file, with the encoding
 // determined by the extension (".msgpack" or ".json", with an
 // optional ".gz").
-func MakeFromFile(path string) (rpt Report, _ error) {
+func MakeFromFile(ctx context.Context, path string) (rpt Report, _ error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return rpt, err
@@ -165,7 +171,7 @@ func MakeFromFile(path string) (rpt Report, _ error) {
 		return rpt, err
 	}
 
-	err = rpt.ReadBinary(f, gzipped, handle)
+	err = rpt.ReadBinary(ctx, f, gzipped, handle)
 	return rpt, err
 }
 
