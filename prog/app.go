@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/goji/httpauth"
@@ -47,10 +48,12 @@ var (
 	}, []string{"method", "route", "status_code", "ws"})
 )
 
-func init() {
+func registerAppMetrics() {
 	prometheus.MustRegister(requestDuration)
 	billing.MustRegisterMetrics()
 }
+
+var registerAppMetricsOnce sync.Once
 
 // Router creates the mux for all the various app components.
 func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter app.PipeRouter, externalUI bool, capabilities map[string]bool, metricsGraphURL string) http.Handler {
@@ -208,6 +211,8 @@ func appMain(flags appFlags) {
 	setLogLevel(flags.logLevel)
 	setLogFormatter(flags.logPrefix)
 	runtime.SetBlockProfileRate(flags.blockProfileRate)
+
+	registerAppMetricsOnce.Do(registerAppMetrics)
 
 	traceCloser := tracing.NewFromEnv(fmt.Sprintf("scope-%s", flags.serviceName))
 	defer traceCloser.Close()

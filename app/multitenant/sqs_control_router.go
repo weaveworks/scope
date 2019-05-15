@@ -30,9 +30,11 @@ var (
 	}, []string{"method", "status_code"})
 )
 
-func init() {
+func registerSQSMetrics() {
 	prometheus.MustRegister(sqsRequestDuration)
 }
+
+var registerSQSMetricsOnce sync.Once
 
 // sqsControlRouter:
 // Creates a queue for every probe that connects to it, and a queue for
@@ -64,6 +66,7 @@ type sqsResponseMessage struct {
 
 // NewSQSControlRouter the harbinger of death
 func NewSQSControlRouter(config *aws.Config, userIDer UserIDer, prefix string, rpcTimeout time.Duration) app.ControlRouter {
+	registerSQSMetricsOnce.Do(registerSQSMetrics)
 	result := &sqsControlRouter{
 		service:          sqs.New(session.New(config)),
 		responseQueueURL: nil,

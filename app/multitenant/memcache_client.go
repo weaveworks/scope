@@ -39,11 +39,13 @@ var (
 	}, []string{"method", "status_code"})
 )
 
-func init() {
+func registerMemcacheClientMetrics() {
 	prometheus.MustRegister(memcacheRequests)
 	prometheus.MustRegister(memcacheHits)
 	prometheus.MustRegister(memcacheRequestDuration)
 }
+
+var registerMemcacheClientMetricsOnce sync.Once
 
 // MemcacheClient is a memcache client that gets its server list from SRV
 // records, and periodically updates that ServerList.
@@ -72,6 +74,7 @@ type MemcacheConfig struct {
 // NewMemcacheClient creates a new MemcacheClient that gets its server list
 // from SRV and updates the server list on a regular basis.
 func NewMemcacheClient(config MemcacheConfig) *MemcacheClient {
+	registerMemcacheClientMetricsOnce.Do(registerMemcacheClientMetrics)
 	var servers memcache.ServerList
 	client := memcache.NewFromSelector(&servers)
 	client.Timeout = config.Timeout
