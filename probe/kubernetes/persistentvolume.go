@@ -10,7 +10,7 @@ import (
 // PersistentVolume represent kubernetes PersistentVolume interface
 type PersistentVolume interface {
 	Meta
-	GetNode() report.Node
+	GetNode(probeID string) report.Node
 	GetAccessMode() string
 	GetVolume() string
 	GetStorageDriver() string
@@ -64,18 +64,21 @@ func (p *persistentVolume) GetStorageDriver() string {
 }
 
 // GetNode returns Persistent Volume as Node
-func (p *persistentVolume) GetNode() report.Node {
+func (p *persistentVolume) GetNode(probeID string) report.Node {
 	latests := map[string]string{
-		NodeType:         "Persistent Volume",
-		VolumeClaim:      p.GetVolume(),
-		StorageClassName: p.Spec.StorageClassName,
-		Status:           string(p.Status.Phase),
-		AccessModes:      p.GetAccessMode(),
+		NodeType:              "Persistent Volume",
+		VolumeClaim:           p.GetVolume(),
+		StorageClassName:      p.Spec.StorageClassName,
+		Status:                string(p.Status.Phase),
+		AccessModes:           p.GetAccessMode(),
+		report.ControlProbeID: probeID,
 	}
 
 	if p.GetStorageDriver() != "" {
 		latests[StorageDriver] = p.GetStorageDriver()
 	}
 
-	return p.MetaNode(report.MakePersistentVolumeNodeID(p.UID())).WithLatests(latests)
+	return p.MetaNode(report.MakePersistentVolumeNodeID(p.UID())).
+		WithLatests(latests).
+		WithLatestActiveControls(Describe)
 }

@@ -61,5 +61,5 @@ func (d *deployment) GetNode(probeID string) report.Node {
 		Strategy:              string(d.Spec.Strategy.Type),
 		report.ControlProbeID: probeID,
 		NodeType:              "Deployment",
-	}).WithLatestActiveControls(ScaleUp, ScaleDown)
+	}).WithLatestActiveControls(ScaleUp, ScaleDown, Describe)
 }

@@ -52,5 +52,7 @@ func (s *statefulSet) GetNode(probeID string) report.Node {
 	if s.Status.ObservedGeneration != nil {
 		latests[ObservedGeneration] = fmt.Sprint(*s.Status.ObservedGeneration)
 	}
-	return s.MetaNode(report.MakeStatefulSetNodeID(s.UID())).WithLatests(latests)
+	return s.MetaNode(report.MakeStatefulSetNodeID(s.UID())).
+		WithLatests(latests).
+		WithLatestActiveControls(Describe)
 }

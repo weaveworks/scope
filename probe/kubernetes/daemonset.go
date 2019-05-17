@@ -50,5 +50,5 @@ func (d *daemonSet) GetNode(probeID string) report.Node {
 		MisscheduledReplicas:  fmt.Sprint(d.Status.NumberMisscheduled),
 		NodeType:              "DaemonSet",
 		report.ControlProbeID: probeID,
-	})
+	}).WithLatestActiveControls(Describe)
 }
