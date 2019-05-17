@@ -559,7 +559,7 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 		Human:        "Delete",
 		Icon:         "far fa-trash-alt",
 		Confirmation: "Are you sure you want to delete this pod?",
-		Rank:         1,
+		Rank:         3,
 	})
 	pods.Controls.AddControl(DescribeControl)
 	for _, service := range services {
