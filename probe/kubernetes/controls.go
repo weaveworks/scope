@@ -91,6 +91,10 @@ func (r *Reporter) describeStoragelass(req xfer.Request, storageClassID string) 
 	return r.describe(req, "", storageClassID, ResourceMap["StorageClass"], apimeta.RESTMapping{})
 }
 
+func (r *Reporter) describeJob(req xfer.Request, namespaceID, jobID string) xfer.Response {
+	return r.describe(req, namespaceID, jobID, ResourceMap["Job"], apimeta.RESTMapping{})
+}
+
 func (r *Reporter) describeVolumeSnapshot(req xfer.Request, namespaceID, volumeSnapshotID, _, _ string) xfer.Response {
 	restMapping := apimeta.RESTMapping{
 		Resource: schema.GroupVersionResource{
@@ -204,6 +208,8 @@ func (r *Reporter) Describe() func(xfer.Request) xfer.Response {
 			f = r.CaptureVolumeSnapshot(r.describeVolumeSnapshot)
 		case "<volume_snapshot_data>":
 			f = r.CaptureVolumeSnapshotData(r.describeVolumeSnapshotData)
+		case "<job>":
+			f = r.CaptureJob(r.describeJob)
 		default:
 			return xfer.ResponseErrorf("Node not found: %s", req.NodeID)
 		}
@@ -444,6 +450,27 @@ func (r *Reporter) CaptureVolumeSnapshotData(f func(xfer.Request, string) xfer.R
 			return xfer.ResponseErrorf("Volume snapshot data not found: %s", uid)
 		}
 		return f(req, volumeSnapshotData.Name())
+	}
+}
+
+// CaptureJob is exported for testing
+func (r *Reporter) CaptureJob(f func(xfer.Request, string, string) xfer.Response) func(xfer.Request) xfer.Response {
+	return func(req xfer.Request) xfer.Response {
+		uid, ok := report.ParseJobNodeID(req.NodeID)
+		if !ok {
+			return xfer.ResponseErrorf("Invalid ID: %s", req.NodeID)
+		}
+		var job Job
+		r.client.WalkJobs(func(c Job) error {
+			if c.UID() == uid {
+				job = c
+			}
+			return nil
+		})
+		if job == nil {
+			return xfer.ResponseErrorf("Job not found: %s", uid)
+		}
+		return f(req, job.Namespace(), job.Name())
 	}
 }
 

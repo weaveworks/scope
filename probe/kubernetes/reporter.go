@@ -145,6 +145,16 @@ var (
 		VolumeSnapshotName: {ID: VolumeSnapshotName, Label: "Volume snapshot", From: report.FromLatest, Priority: 3},
 	}
 
+	JobMetadataTemplates = report.MetadataTemplates{
+		NodeType:   {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+		Name:       {ID: Name, Label: "Name", From: report.FromLatest, Priority: 2},
+		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 3},
+		Created:    {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 4},
+		report.Pod: {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 5},
+	}
+
+	JobMetricTemplates = PodMetricTemplates
+
 	TableTemplates = report.TableTemplates{
 		LabelPrefix: {
 			ID:     LabelPrefix,
@@ -313,7 +323,11 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	podTopology, err := r.podTopology(services, deployments, daemonSets, statefulSets, cronJobs)
+	jobTopology, jobs, err := r.jobTopology()
+	if err != nil {
+		return result, err
+	}
+	podTopology, err := r.podTopology(services, deployments, daemonSets, statefulSets, cronJobs, jobs)
 	if err != nil {
 		return result, err
 	}
@@ -341,6 +355,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
+
 	result.Pod = result.Pod.Merge(podTopology)
 	result.Service = result.Service.Merge(serviceTopology)
 	result.DaemonSet = result.DaemonSet.Merge(daemonSetTopology)
@@ -353,6 +368,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.StorageClass = result.StorageClass.Merge(storageClassTopology)
 	result.VolumeSnapshot = result.VolumeSnapshot.Merge(volumeSnapshotTopology)
 	result.VolumeSnapshotData = result.VolumeSnapshotData.Merge(volumeSnapshotDataTopology)
+	result.Job = result.Job.Merge(jobTopology)
 	return result, nil
 }
 
@@ -525,6 +541,21 @@ func (r *Reporter) volumeSnapshotDataTopology() (report.Topology, []VolumeSnapsh
 	return result, volumeSnapshotData, err
 }
 
+func (r *Reporter) jobTopology() (report.Topology, []Job, error) {
+	jobs := []Job{}
+	result := report.MakeTopology().
+		WithMetadataTemplates(JobMetadataTemplates).
+		WithMetricTemplates(JobMetricTemplates).
+		WithTableTemplates(TableTemplates)
+	result.Controls.AddControl(DescribeControl)
+	err := r.client.WalkJobs(func(c Job) error {
+		result.AddNode(c.GetNode(r.probeID))
+		jobs = append(jobs, c)
+		return nil
+	})
+	return result, jobs, err
+}
+
 type labelledChild interface {
 	Labels() map[string]string
 	AddParent(string, string)
@@ -540,7 +571,7 @@ func match(namespace string, selector labels.Selector, topology, id string) func
 	}
 }
 
-func (r *Reporter) podTopology(services []Service, deployments []Deployment, daemonSets []DaemonSet, statefulSets []StatefulSet, cronJobs []CronJob) (report.Topology, error) {
+func (r *Reporter) podTopology(services []Service, deployments []Deployment, daemonSets []DaemonSet, statefulSets []StatefulSet, cronJobs []CronJob, jobs []Job) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
@@ -617,6 +648,18 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 				selector,
 				report.CronJob,
 				report.MakeCronJobNodeID(cronJob.UID()),
+			))
+		}
+		for _, job := range jobs {
+			selector, err := job.Selector()
+			if err != nil {
+				return pods, err
+			}
+			selectors = append(selectors, match(
+				job.Namespace(),
+				selector,
+				report.Job,
+				report.MakeJobNodeID(job.UID()),
 			))
 		}
 	}

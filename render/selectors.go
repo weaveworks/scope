@@ -30,6 +30,7 @@ var (
 	SelectDaemonSet             = TopologySelector(report.DaemonSet)
 	SelectStatefulSet           = TopologySelector(report.StatefulSet)
 	SelectCronJob               = TopologySelector(report.CronJob)
+	SelectJob                   = TopologySelector(report.Job)
 	SelectECSTask               = TopologySelector(report.ECSTask)
 	SelectECSService            = TopologySelector(report.ECSService)
 	SelectSwarmService          = TopologySelector(report.SwarmService)

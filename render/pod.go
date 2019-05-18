@@ -30,6 +30,7 @@ func renderKubernetesTopologies(rpt report.Report) bool {
 		&rpt.PersistentVolume,
 		&rpt.PersistentVolumeClaim,
 		&rpt.StorageClass,
+		&rpt.Job,
 	}
 	for _, t := range topologies {
 		if len(t.Nodes) > 0 {
@@ -112,7 +113,7 @@ var PodServiceRenderer = ConditionalRenderer(renderKubernetesTopologies,
 // not memoised
 var KubeControllerRenderer = ConditionalRenderer(renderKubernetesTopologies,
 	renderParents(
-		report.Pod, []string{report.Deployment, report.DaemonSet, report.StatefulSet, report.CronJob}, UnmanagedID,
+		report.Pod, []string{report.Deployment, report.DaemonSet, report.StatefulSet, report.CronJob, report.Job}, UnmanagedID,
 		PodRenderer,
 	),
 )
