@@ -48,6 +48,7 @@ const (
 	DottedCylinder = "dottedcylinder"
 	StorageSheet   = "sheet"
 	Camera         = "camera"
+	DottedTriangle = "dottedtriangle"
 
 	// Used when counting the number of containers
 	ContainersKey = "containers"
@@ -303,7 +304,7 @@ func MakeReport() Report {
 			WithLabel("volume snapshot data", "volume snapshot data"),
 
 		Job: MakeTopology().
-			WithShape(StorageSheet).
+			WithShape(DottedTriangle).
 			WithLabel("job", "jobs"),
 
 		DNS: DNSRecords{},
