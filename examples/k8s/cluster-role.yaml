@@ -43,6 +43,7 @@ rules:
   - cronjobs
   - jobs
   verbs:
+  - get
   - list
   - watch
 - apiGroups:

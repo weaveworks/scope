@@ -55,6 +55,7 @@ type Client interface {
 	WalkStorageClasses(f func(StorageClass) error) error
 	WalkVolumeSnapshots(f func(VolumeSnapshot) error) error
 	WalkVolumeSnapshotData(f func(VolumeSnapshotData) error) error
+	WalkJobs(f func(Job) error) error
 
 	WatchPods(f func(Event, Pod))
 
@@ -450,6 +451,16 @@ func (c *client) WalkVolumeSnapshotData(f func(VolumeSnapshotData) error) error 
 	for _, m := range c.volumeSnapshotDataStore.List() {
 		volumeSnapshotData := m.(*snapshotv1.VolumeSnapshotData)
 		if err := f(NewVolumeSnapshotData(volumeSnapshotData)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *client) WalkJobs(f func(Job) error) error {
+	for _, m := range c.jobStore.List() {
+		job := m.(*apibatchv1.Job)
+		if err := f(NewJob(job)); err != nil {
 			return err
 		}
 	}

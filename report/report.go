@@ -33,6 +33,7 @@ const (
 	StorageClass          = "storage_class"
 	VolumeSnapshot        = "volume_snapshot"
 	VolumeSnapshotData    = "volume_snapshot_data"
+	Job                   = "job"
 
 	// Shapes used for different nodes
 	Circle         = "circle"
@@ -47,6 +48,7 @@ const (
 	DottedCylinder = "dottedcylinder"
 	StorageSheet   = "sheet"
 	Camera         = "camera"
+	DottedTriangle = "dottedtriangle"
 
 	// Used when counting the number of containers
 	ContainersKey = "containers"
@@ -76,6 +78,7 @@ var topologyNames = []string{
 	StorageClass,
 	VolumeSnapshot,
 	VolumeSnapshotData,
+	Job,
 }
 
 // Report is the core data type. It's produced by probes, and consumed and
@@ -181,6 +184,9 @@ type Report struct {
 
 	// VolumeSnapshotData represent all Kubernetes Volume Snapshot Data on hosts running probes.
 	VolumeSnapshotData Topology
+
+	// Job represent all Kubernetes Job on hosts running probes.
+	Job Topology
 
 	DNS DNSRecords
 
@@ -296,6 +302,10 @@ func MakeReport() Report {
 			WithShape(Cylinder).
 			WithTag(Camera).
 			WithLabel("volume snapshot data", "volume snapshot data"),
+
+		Job: MakeTopology().
+			WithShape(DottedTriangle).
+			WithLabel("job", "jobs"),
 
 		DNS: DNSRecords{},
 
@@ -413,6 +423,8 @@ func (r *Report) topology(name string) *Topology {
 		return &r.VolumeSnapshot
 	case VolumeSnapshotData:
 		return &r.VolumeSnapshotData
+	case Job:
+		return &r.Job
 	}
 	return nil
 }
