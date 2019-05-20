@@ -5,9 +5,9 @@
 - Add describe control to all Kubernetes resources [#3589](https://github.com/weaveworks/scope/pull/3589)
 - Show Kubernetes jobs [#3609](https://github.com/weaveworks/scope/pull/3609)
 
-Thanks to everyone who contributed to this release: @Deepak1100, @SaifRehman, @awolde, @bboreham, @bia, @dholbach, @fbarl, @foot, @guyfedwards, @jrryjcksn, @leavest, @n0rig, @najeal @paulmorabito, @qiell, @qurname2, @rade, @satyamz, @shindanim, @tiriplicamihai, @tvvignesh, @xrgy :tada:
+Thanks to everyone who contributed to this release: @Deepak1100, @SaifRehman, @awolde, @bboreham, @bia, @dholbach, @fbarl, @foot, @guyfedwards, @jrryjcksn, @leavest, @n0rig, @najeal, @paulmorabito, @qiell, @qurname2, @rade, @satyamz, @shindanim, @tiriplicamihai, @tvvignesh, @xrgy.
 
-Special thanks to @qiell and @satyamz for implementing both features.
+Special thanks to @qiell and @satyamz for implementing both features!
 
 ### Minor improvements
 
