@@ -1,3 +1,44 @@
+## Release 1.11.0
+
+### Highlights
+
+- Add describe control to all Kubernetes resources [#3589](https://github.com/weaveworks/scope/pull/3589)
+- Show Kubernetes jobs [#3609](https://github.com/weaveworks/scope/pull/3609)
+
+Thanks to everyone who contributed to this release: @Deepak1100, @SaifRehman, @awolde, @bboreham, @bia, @dholbach, @fbarl, @foot, @guyfedwards, @jrryjcksn, @leavest, @n0rig, @najeal, @paulmorabito, @qiell, @qurname2, @rade, @satyamz, @shindanim, @tiriplicamihai, @tvvignesh, @xrgy.
+
+Special thanks to @qiell and @satyamz for implementing both features!
+
+### Minor improvements
+
+- Conditional report censoring [#3571](https://github.com/weaveworks/scope/pull/3571)
+- Add a confirmation dialog for deleting a pod [#3572](https://github.com/weaveworks/scope/pull/3572)
+- Add OpenTracing span for report.ReadBinary() [#3598](https://github.com/weaveworks/scope/pull/3598)
+- Add metrics for report size and count per tenant [#3599](https://github.com/weaveworks/scope/pull/3599)
+
+### Bugs and security fixes
+
+- Security fixes in dev dependencies [#3578](https://github.com/weaveworks/scope/pull/3578)
+- Use Time Travel context when downloading raw reports [#3582](https://github.com/weaveworks/scope/pull/3582)
+- Fix bug Chrome 56+ can't prevent default wheel events [#3593](https://github.com/weaveworks/scope/pull/3593)
+- Fix dnssnooper probe for multiple CNAMEs [#3566](https://github.com/weaveworks/scope/pull/3566)
+- Fix build-pkg script [#3587](https://github.com/weaveworks/scope/pull/3587)
+
+### Dependencies updates
+
+- Upgrade to Webpack 4 [#3580](https://github.com/weaveworks/scope/pull/3580)
+- Upgrade client-go version to 10.0.0 [#3588](https://github.com/weaveworks/scope/pull/3588)
+- Upgrade ui-components and some of similar dependencies [#3574](https://github.com/weaveworks/scope/pull/3574)
+- Remove materialize-css JS dep [#3596](https://github.com/weaveworks/scope/pull/3596)
+
+### Documentation and examples
+
+- The path is actually examples/k8s [#3586](https://github.com/weaveworks/scope/pull/3586)
+- Update examples/k8s RBAC permissions [#3595](https://github.com/weaveworks/scope/pull/3595)
+- Update example yamls to probe Kubernetes once per cluster [#3569](https://github.com/weaveworks/scope/pull/3569)
+- Add CPU and memory requests to example Kubernetes manifests [#3570](https://github.com/weaveworks/scope/pull/3570)
+- Extend FAQ with basic auth through environment variables [#3575](https://github.com/weaveworks/scope/pull/3575)
+
 ## Release 1.10.2
 
 This release has a security fix, a few bug-fixes and some other minor
