@@ -13,19 +13,12 @@ import {
 
 
 class Footer extends React.Component {
-  constructor(props, context) {
-    super(props, context);
-
-    this.handleContrastClick = this.handleContrastClick.bind(this);
-    this.handleRelayoutClick = this.handleRelayoutClick.bind(this);
-  }
-
-  handleContrastClick(ev) {
+  handleContrastClick = (ev) => {
     ev.preventDefault();
     this.props.setContrastMode(!this.props.contrastMode);
   }
 
-  handleRelayoutClick(ev) {
+  handleRelayoutClick = (ev) => {
     ev.preventDefault();
     trackAnalyticsEvent('scope.layout.refresh.click', {
       layout: this.props.topologyViewMode,

@@ -699,11 +699,12 @@ export function receiveNotFound(nodeId, requestTimestamp) {
 }
 
 export function setContrastMode(enabled) {
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch({
       enabled,
       type: ActionTypes.TOGGLE_CONTRAST_MODE,
     });
+    updateRoute(getState);
   };
 }
 
