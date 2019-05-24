@@ -47,19 +47,36 @@ This is a rough outline of how to prepare a contribution:
 ## How to build and run the project
 
 ```bash
-make
-./scope launch
+make && ./scope stop && ./scope launch
+```
+
+After every change you make to the Go code, you will need to rerun the command above (recompiling and restarting Scope) and refresh the browser tab to see your changes.
+
+**Tip**: If you are only making changes to Scope frontend code, you can speed up the development cycle by additionally starting up the Webpack server, which will automatically recompile and hot-reload your browser tab http://localhost:4042 on every change:
+
+```bash
+cd client && yarn install && yart start
 ```
 
 ## How to run the test suite
 
-You can run the linting and unit tests by simply doing
+### Backend
+
+You can run the Go linting and unit tests by simply doing
 
 ```bash
 make tests
 ```
 
-There are integration tests for Scope, but unfortunately it's hard to set them up in forked repositories and the setup is not documented. Help is needed to improve this situation: https://github.com/weaveworks/scope/issues/2192
+There are integration tests for Scope, but unfortunately it's hard to set them up in forked repositories and the setup is not documented. Help is needed to improve this situation: [#2192](https://github.com/weaveworks/scope/issues/2192)
+
+### Frontend
+
+Use `yarn` to run all Javascript tests and linting checks:
+
+```bash
+cd client && yarn install && yarn test && yarn lint
+```
 
 # Acceptance policy
 
