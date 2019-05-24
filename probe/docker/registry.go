@@ -262,7 +262,7 @@ func (r *registry) updateContainers() error {
 	}
 
 	for _, apiContainer := range apiContainers {
-		r.updateContainerState(apiContainer.ID, nil)
+		r.updateContainerState(apiContainer.ID)
 	}
 
 	return nil
@@ -300,55 +300,28 @@ func (r *registry) updateNetworks() error {
 func (r *registry) handleEvent(event *docker_client.APIEvents) {
 	// TODO: Send shortcut reports on networks being created/destroyed?
 	switch event.Status {
-	case CreateEvent, RenameEvent, StartEvent, DieEvent, DestroyEvent, PauseEvent, UnpauseEvent, NetworkConnectEvent, NetworkDisconnectEvent:
-		r.updateContainerState(event.ID, stateAfterEvent(event.Status))
-	}
-}
-
-func stateAfterEvent(event string) *string {
-	switch event {
+	case CreateEvent, RenameEvent, StartEvent, DieEvent, PauseEvent, UnpauseEvent, NetworkConnectEvent, NetworkDisconnectEvent:
+		r.updateContainerState(event.ID)
 	case DestroyEvent:
-		return &StateDeleted
-	default:
-		return nil
+		r.Lock()
+		r.deleteContainer(event.ID)
+		r.Unlock()
+		r.sendDeletedUpdate(event.ID)
 	}
 }
 
-func (r *registry) updateContainerState(containerID string, intendedState *string) {
+func (r *registry) updateContainerState(containerID string) {
 	r.Lock()
 	defer r.Unlock()
 
 	dockerContainer, err := r.client.InspectContainer(containerID)
 	if err != nil {
-		// Don't spam the logs if the container was short lived
 		if _, ok := err.(*docker_client.NoSuchContainer); !ok {
-			log.Errorf("Error processing event for container %s: %v", containerID, err)
+			log.Errorf("Unable to get status for container %s: %v", containerID, err)
 			return
 		}
-
-		// Container doesn't exist anymore, so lets stop and remove it
-		c, ok := r.containers.Get(containerID)
-		if !ok {
-			return
-		}
-		container := c.(Container)
-
-		r.containers.Delete(containerID)
-		delete(r.containersByPID, container.PID())
-		if r.collectStats {
-			container.StopGatheringStats()
-		}
-
-		if intendedState != nil {
-			node := report.MakeNodeWith(report.MakeContainerNodeID(containerID), map[string]string{
-				ContainerID:    containerID,
-				ContainerState: *intendedState,
-			})
-			// Trigger anyone watching for updates
-			for _, f := range r.watchers {
-				f(node)
-			}
-		}
+		// Docker says the container doesn't exist - remove it from our data
+		r.deleteContainer(containerID)
 		return
 	}
 
@@ -386,6 +359,32 @@ func (r *registry) updateContainerState(containerID string, intendedState *strin
 		} else {
 			c.StopGatheringStats()
 		}
+	}
+}
+
+func (r *registry) deleteContainer(containerID string) {
+	// Container doesn't exist anymore, so lets stop and remove it
+	c, ok := r.containers.Get(containerID)
+	if !ok {
+		return
+	}
+	container := c.(Container)
+
+	r.containers.Delete(containerID)
+	delete(r.containersByPID, container.PID())
+	if r.collectStats {
+		container.StopGatheringStats()
+	}
+}
+
+func (r *registry) sendDeletedUpdate(containerID string) {
+	node := report.MakeNodeWith(report.MakeContainerNodeID(containerID), map[string]string{
+		ContainerID:    containerID,
+		ContainerState: StateDeleted,
+	})
+	// Trigger anyone watching for updates
+	for _, f := range r.watchers {
+		f(node)
 	}
 }
 
