@@ -25,7 +25,7 @@ When sending email, it's usually best to use the mailing list. The maintainers a
 
 We also meet regularly at the [Scope community meeting](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/). Don't feel discouraged to attend the meeting due to not being a developer. Everybody is welcome!
 
-## Getting Started
+# Getting Started
 
 - Fork the repository on GitHub
 - Read the [README](README.md) for getting started as a user and learn how/where to ask for help 

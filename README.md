@@ -5,6 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/weaveworks/scope)](https://goreportcard.com/report/github.com/weaveworks/scope)
 [![Docker Pulls](https://img.shields.io/docker/pulls/weaveworks/scope.svg?maxAge=604800)](https://hub.docker.com/r/weaveworks/scope/)
 [![GoDoc](https://godoc.org/github.com/weaveworks/scope?status.svg)](https://godoc.org/github.com/weaveworks/scope)
+[![Good first issues](https://img.shields.io/github/issues/weaveworks/scope/good-first-issue.svg?color=blueviolet&label=good%20first%20issues)](https://github.com/weaveworks/scope/issues?q=is%3Aissue+is%3Aopen+label%3Agood-first-issue)
 
 Weave Scope automatically generates a map of your application, enabling you to
 intuitively understand, monitor, and control your containerized, microservices-based application.
@@ -45,7 +46,7 @@ boot2docker, replace localhost with the output of `boot2docker ip`.)
 
 For instructions on installing Scope on [Kubernetes](https://www.weave.works/docs/scope/latest/installing/#k8s), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos), or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 
-## <a name="help"></a>Getting Help
+## <a name="help"></a>Reach Out
 
 We are a very friendly community and love questions, help and feedback.
 
@@ -54,19 +55,20 @@ If you have any questions, feedback, or problems with Scope:
 - Docs
   - Read [the Weave Scope docs](https://www.weave.works/docs/scope/latest/introducing/)
   - Check out the [frequently asked questions](/site/faq.md)
-  - Find out how to [contribute to Scope](CONTRIBUTING.md)
   - Learn more about how the [Scope community operates](GOVERNANCE.md)
 - Join the discussion
-  - Invite yourself to the <a href="https://slack.weave.works/" target="_blank">Weave community</a> Slack.
-  - Ask a question on the [#scope](https://weave-community.slack.com/messages/scope/) Slack channel.
-  - Send an email to [Scope community group](https://groups.google.com/forum/#!forum/scope-community).
-- Meetings and events:
-  - Join the [Weave User Group](https://www.meetup.com/pro/Weave/) and get invited to online talks, hands-on training and meetups in your area.
-  - Join (and read up on) the regular [Scope community meetings](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/edit).
-- [File an issue](https://github.com/weaveworks/scope/issues/new).
+  - Invite yourself to the <a href="https://slack.weave.works/" target="_blank">Weave community</a> Slack
+  - Ask a question on the [#scope](https://weave-community.slack.com/messages/scope/) Slack channel
+  - Send an email to [Scope community group](https://groups.google.com/forum/#!forum/scope-community)
+- Meetings and events
+  - Join the [Weave User Group](https://www.meetup.com/pro/Weave/) and get invited to online talks, hands-on training and meetups in your area
+  - Join (and read up on) the regular [Scope community meetings](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/edit)
+- Contributing
+  - Find out how to [contribute to Scope](CONTRIBUTING.md)
+  - [File an issue](https://github.com/weaveworks/scope/issues/new) or make a pull request for one of our [good first issues](https://github.com/weaveworks/scope/issues?q=is%3Aissue+is%3Aopen+label%3Agood-first-issue)
 
 Your feedback is always welcome!
 
-### License
+## License
 Scope is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text.  
 Find more details about the licenses of vendored code in [VENDORED_CODE.md](VENDORED_CODE.md).
