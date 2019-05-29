@@ -1,3 +1,13 @@
+## Release 1.11.1
+
+This release fixes a couple of bugs:
+
+- Sometimes probe would fail to remove its record of a container when it is destroyed
+	[#3623](https://github.com/weaveworks/scope/pull/3623)
+- Contrast mode was not being reflected in the URL
+	[#3617](https://github.com/weaveworks/scope/pull/3617)
+
+
 ## Release 1.11.0
 
 ### Highlights

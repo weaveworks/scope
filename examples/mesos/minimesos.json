@@ -12,7 +12,7 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "weaveworks/scope:1.11.0",
+      "image": "weaveworks/scope:1.11.1",
       "network": "HOST",
       "privileged": true,
       "parameters": [
