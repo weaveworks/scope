@@ -78,7 +78,8 @@ $(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent docker/$(SCOPE_EXE) docker/
 $(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 
 $(RHEL): docker/Dockerfile.$(RHEL)
-	$(SUDO) docker build --build-arg=version=$(GIT_REVISION) --build-arg=release=${RHEL_RELEASE} -t docker.io/tufin/conntrack:${RHEL_RELEASE} -f $< docker/
+	@$(SUDO) docker build --build-arg=version=$(GIT_REVISION) --build-arg=release=${RHEL_RELEASE} --build-arg=username=${RH_USERNAME} --build-arg=password="${RH_PASSWORD}" -t docker.io/tufin/conntrack:${RHEL_RELEASE} -f $< docker/
+	$(SUDO) docker save docker.io/tufin/conntrack:${RHEL_RELEASE} > rhel.tar
 
 $(RUNSVINIT): vendor/runsvinit/*.go
 

@@ -31,6 +31,13 @@ workflows:
 #            - client-test
             - integration-tests
 
+      - deploy-redhat:
+          filters:
+            branches:
+              only: master
+          requires:
+           - integration-tests
+
 jobs:
   lint:
     <<: *defaults
@@ -116,11 +123,7 @@ jobs:
           paths:
           - scope.tar
           - cloud-agent.tar
-          - tools/runner/runner
-          - prog/externalui/
-          - prog/staticui/
-          - report/report.codecgen.go
-          - render/detailed/detailed.codecgen.go
+          - rhel.tar
 
   integration-tests:
     machine:
@@ -153,11 +156,11 @@ jobs:
           command: test -z "$SECRET_PASSWORD" || (cd integration; ./gce.sh destroy)
           background: true
       # Code coverage
-      - run: ./tools/cover/gather_coverage.sh ./coverage
+#      - run: ./tools/cover/gather_coverage.sh ./coverage
 #      - run: goveralls -repotoken $COVERALLS_REPO_TOKEN -coverprofile=profile.cov -service=circleci
-      - run: cp coverage.* */*.codecgen.go $CIRCLE_ARTIFACTS
-      - store_artifacts:
-          path: /tmp/artifacts
+#      - run: cp coverage.* */*.codecgen.go $CIRCLE_ARTIFACTS
+#      - store_artifacts:
+#          path: /tmp/artifacts
 
   deploy:
     working_directory: /go/src/github.com/weaveworks/scope
@@ -181,3 +184,21 @@ jobs:
           name: Upload the docker image to gcr
           command: |
             /scripts/upload_to_gcr.sh weaveworks/scope:latest $GCR_NAME $CIRCLE_BUILD_NUM $CIRCLE_BRANCH
+
+  deploy-redhat:
+     working_directory: /go/src/github.com/weaveworks/scope
+     docker:
+       - image: tufinim/circleci-go:master
+     steps:
+       - attach_workspace:
+           at: .
+       - setup_remote_docker
+       - run: |
+           docker load -i rhel.tar
+       - run:
+           name: Upload the docker image to redhat
+           command: |
+             echo ${REDHAT_PASS} | docker login -u unused scan.connect.redhat.com --password-stdin
+             docker tag tufin/conntrack:1 scan.connect.redhat.com/ospid-bd3f08ed-337c-4f15-8905-421a0d26ea07/conntrack:${CIRCLE_BUILD_NUM}
+             docker push scan.connect.redhat.com/ospid-bd3f08ed-337c-4f15-8905-421a0d26ea07/conntrack:${CIRCLE_BUILD_NUM}
+

@@ -1,9 +1,12 @@
-FROM registry.access.redhat.com/rhel7:7.6
+FROM registry.access.redhat.com/rhel7:7.6 as intermediate
 
 ARG version
 ARG release
+ARG username
+ARG password
 
 WORKDIR /home/weave
+RUN subscription-manager register --username ${username} --password ${password} --auto-attach
 RUN yum update -y && yum install -y  bash conntrack-tools net-tools util-linux curl
 COPY ./scope /home/weave/
 
