@@ -20,9 +20,6 @@ workflows:
 #      - client-test:
 #          requires:
 #            - client-build
-      - xplatform-build:
-          requires:
-            - build
       - build
       - integration-tests:
           requires:
@@ -103,13 +100,6 @@ jobs:
 #          yarn install
 #          yarn run lint
 #          yarn test
-
-  xplatform-build:
-    <<: *defaults
-    steps:
-      - checkout
-      - run: GOARCH=arm  make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
-      - run: GOOS=darwin make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
 
   build:
     <<: *defaults

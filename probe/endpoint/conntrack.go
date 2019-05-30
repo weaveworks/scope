@@ -37,15 +37,14 @@ func (n nilFlowWalker) walkFlows(f func(conntrack.Conn, bool)) {}
 // implement flowWalker.
 type conntrackWalker struct {
 	sync.Mutex
-	activeFlows   map[uint32]conntrack.Conn // active flows in state != TIME_WAIT
-	bufferedFlows []conntrack.Conn          // flows coming out of activeFlows spend 1 walk cycle here
-	bufferSize    int
-	natOnly       bool
-	quit          chan struct{}
+	activeFlows map[uint32]conntrack.Conn // active flows in state != TIME_WAIT
+	//bufferedFlows []conntrack.Conn          // flows coming out of activeFlows spend 1 walk cycle here
+	bufferSize int
+	quit       chan struct{}
 }
 
 // newConntracker creates and starts a new conntracker.
-func newConntrackFlowWalker(useConntrack bool, procRoot string, bufferSize int, natOnly bool) flowWalker {
+func newConntrackFlowWalker(useConntrack bool, procRoot string, bufferSize int) flowWalker {
 	if !useConntrack {
 		return nilFlowWalker{}
 	} else if err := IsConntrackSupported(procRoot); err != nil {
@@ -55,7 +54,6 @@ func newConntrackFlowWalker(useConntrack bool, procRoot string, bufferSize int, 
 	result := &conntrackWalker{
 		activeFlows: map[uint32]conntrack.Conn{},
 		bufferSize:  bufferSize,
-		natOnly:     natOnly,
 		quit:        make(chan struct{}),
 	}
 	go result.loop()
@@ -98,16 +96,19 @@ func (c *conntrackWalker) clearFlows() {
 	c.Lock()
 	defer c.Unlock()
 
-	for _, f := range c.activeFlows {
-		c.bufferedFlows = append(c.bufferedFlows, f)
-	}
-
 	c.activeFlows = map[uint32]conntrack.Conn{}
 }
 
-func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
+func (c *conntrackWalker) needsDstNat(f conntrack.Conn) bool {
+	return f.Status&conntrack.IPS_DST_NAT == conntrack.IPS_DST_NAT
+}
 
-	return true
+func (c *conntrackWalker) isConnectionInitiator(f conntrack.Conn) bool {
+	return f.TCPState == "SYN_SENT"
+}
+
+func (c *conntrackWalker) isConnectionEstablished(f conntrack.Conn) bool {
+	return f.TCPState == "ESTABLISHED"
 }
 
 func (c *conntrackWalker) run() {
@@ -118,7 +119,7 @@ func (c *conntrackWalker) run() {
 	}
 	c.Lock()
 	for _, flow := range existingFlows {
-		if c.relevant(flow) && flow.TCPState != tcpClose && flow.TCPState != timeWait {
+		if c.needsDstNat(flow) || c.isConnectionInitiator(flow) {
 			c.activeFlows[flow.CtId] = flow
 		}
 	}
@@ -143,9 +144,7 @@ func (c *conntrackWalker) run() {
 				log.Info("error loop")
 				return
 			}
-			if c.relevant(f) {
-				c.handleFlow(f)
-			}
+			c.handleFlow(f)
 		}
 	}
 }
@@ -164,19 +163,12 @@ func (c *conntrackWalker) handleFlow(f conntrack.Conn) {
 	// incomplete or wrong.  See #1462.
 	switch {
 	case f.MsgType == conntrack.NfctMsgUpdate:
-		if f.TCPState != timeWait {
+		if c.isConnectionInitiator(f) || c.isConnectionEstablished(f) {
 			c.activeFlows[f.CtId] = f
-		} else if _, ok := c.activeFlows[f.CtId]; ok {
-			delete(c.activeFlows, f.CtId)
-			c.bufferedFlows = append(c.bufferedFlows, f)
 		}
 	case f.MsgType == conntrack.NfctMsgDestroy:
-		if f.TCPState == "" {
-			c.bufferedFlows = append(c.bufferedFlows, f)
-		}
-		if active, ok := c.activeFlows[f.CtId]; ok {
+		if _, ok := c.activeFlows[f.CtId]; ok {
 			delete(c.activeFlows, f.CtId)
-			c.bufferedFlows = append(c.bufferedFlows, active)
 		}
 	}
 }
@@ -189,8 +181,4 @@ func (c *conntrackWalker) walkFlows(f func(conntrack.Conn, bool)) {
 	for _, flow := range c.activeFlows {
 		f(flow, true)
 	}
-	for _, flow := range c.bufferedFlows {
-		f(flow, false)
-	}
-	c.bufferedFlows = c.bufferedFlows[:0]
 }

@@ -24,7 +24,7 @@ func NewReporter(conf ReporterConfig) *Reporter {
 	return &Reporter{
 		conf:              conf,
 		connectionTracker: newConnectionTracker(conf),
-		natMapper:         makeNATMapper(newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, true /* natOnly */)),
+		//natMapper:         makeNATMapper(newConntrackFlowWalker(conf.UseConntrack, conf.ProcRoot, conf.BufferSize, true /* natOnly */)),
 	}
 }
 
@@ -46,6 +46,6 @@ func (r *Reporter) Report() (report.Report, error) {
 	rpt := report.MakeReport()
 
 	r.connectionTracker.ReportConnections(&rpt)
-	r.natMapper.applyNAT(rpt, r.conf.HostID)
+	//r.natMapper.applyNAT(rpt, r.conf.HostID)
 	return rpt, nil
 }

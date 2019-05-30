@@ -68,7 +68,7 @@ func (t *connectionTracker) useProcfs() {
 		t.conf.Scanner = procspy.NewConnectionScanner(t.conf.ProcessCache, t.conf.SpyProcs)
 	}
 	if t.flowWalker == nil {
-		t.flowWalker = newConntrackFlowWalker(t.conf.UseConntrack, t.conf.ProcRoot, t.conf.BufferSize, false /* natOnly */)
+		t.flowWalker = newConntrackFlowWalker(t.conf.UseConntrack, t.conf.ProcRoot, t.conf.BufferSize)
 	}
 	if t.ovsWalker == nil {
 		t.ovsWalker = newOvsFlowWalker(0)
