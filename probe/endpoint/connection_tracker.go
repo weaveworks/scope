@@ -17,7 +17,6 @@ import (
 type connectionTracker struct {
 	conf            ReporterConfig
 	flowWalker      flowWalker // Interface
-	ovsWalker       *ovsFlowWalker
 	ebpfTracker     *EbpfTracker
 	reverseResolver *reverseResolver
 
@@ -70,9 +69,6 @@ func (t *connectionTracker) useProcfs() {
 	if t.flowWalker == nil {
 		t.flowWalker = newConntrackFlowWalker(t.conf.UseConntrack, t.conf.ProcRoot, t.conf.BufferSize)
 	}
-	if t.ovsWalker == nil {
-		t.ovsWalker = newOvsFlowWalker(0)
-	}
 }
 
 // ReportConnections calls trackers according to the configuration.
@@ -114,10 +110,6 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 		tuple := flowToTuple(f)
 		seenTuples[tuple.key()] = tuple
 		t.addConnection(rpt, false, tuple, "", nil, nil)
-	})
-
-	t.ovsWalker.walkFlows(func(info TunnelAttrs) {
-		t.addTunnel(rpt, info)
 	})
 
 	if t.conf.WalkProc && t.conf.Scanner != nil {
@@ -221,16 +213,6 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 	rpt.Endpoint.AddNode(toNode)
 	t.addDNS(rpt, ft.fromAddr)
 	t.addDNS(rpt, ft.toAddr)
-}
-
-func (t *connectionTracker) addTunnel(rpt *report.Report, info TunnelAttrs) {
-
-	var (
-		tunnelFlow = t.makeEndpointNode("", info.DstFlow(), info.PortDst, map[string]string{report.TunnelID: strconv.FormatUint(info.TunnelID, 10),
-			report.TunnelSrcIP: ipv4ToString(info.TunIpSrc), report.TunnelDstIP: ipv4ToString(info.TunIpDst), report.TunnelSrcMask: ipv4ToString(info.MaskSrc), report.TunnelDstMask: ipv4ToString(info.MaskDst)})
-	)
-
-	rpt.Endpoint.AddNode(tunnelFlow)
 }
 
 func (t *connectionTracker) makeEndpointNode(namespaceID string, addr string, port uint16, extra map[string]string) report.Node {
