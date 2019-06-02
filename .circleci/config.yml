@@ -115,7 +115,7 @@ jobs:
       - setup_remote_docker
       - attach_workspace:
           at: .
-      - run: make BUILD_IN_CONTAINER=false SUDO= static all
+      - run: make BUILD_IN_CONTAINER=false SUDO= static all rhel
       - run: cd extras; make BUILD_IN_CONTAINER=false
       - run: make -C tools/runner
       - persist_to_workspace:
@@ -199,6 +199,6 @@ jobs:
            name: Upload the docker image to redhat
            command: |
              echo ${REDHAT_PASS} | docker login -u unused scan.connect.redhat.com --password-stdin
-             docker tag tufin/conntrack:1 scan.connect.redhat.com/ospid-bd3f08ed-337c-4f15-8905-421a0d26ea07/conntrack:${CIRCLE_BUILD_NUM}
-             docker push scan.connect.redhat.com/ospid-bd3f08ed-337c-4f15-8905-421a0d26ea07/conntrack:${CIRCLE_BUILD_NUM}
+             docker tag tufin/conntrack:1 scan.connect.redhat.com/ospid-af5d3d3c-1231-45c0-b6cc-b9937ff4d844/conntrack:${CIRCLE_BUILD_NUM}
+             docker push scan.connect.redhat.com/ospid-af5d3d3c-1231-45c0-b6cc-b9937ff4d844/conntrack:${CIRCLE_BUILD_NUM}
 

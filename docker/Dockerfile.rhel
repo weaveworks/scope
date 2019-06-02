@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/rhel7:7.6 as intermediate
+FROM registry.access.redhat.com/ubi7/ubi as intermediate
 
 ARG version
 ARG release
