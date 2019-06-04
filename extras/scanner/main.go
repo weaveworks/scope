@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
@@ -83,7 +84,8 @@ func main() {
 		queryRateLimit float64
 		writeRateLimit float64
 
-		orgsFile string
+		orgsFile    string
+		recordsFile string
 
 		scanner  scanner
 		loglevel string
@@ -102,6 +104,7 @@ func main() {
 	flag.IntVar(&scanner.segments, "segments", 1, "Number of segments to read in parallel")
 	flag.StringVar(&scanner.address, "address", ":6060", "Address to listen on, for profiling, etc.")
 	flag.StringVar(&orgsFile, "delete-orgs-file", "", "File containing IDs of orgs to delete")
+	flag.StringVar(&recordsFile, "delete-records-file", "", "File containing IDs of orgs to delete")
 	flag.StringVar(&loglevel, "log-level", "info", "Debug level: debug, info, warning, error")
 
 	flag.BoolVar(&justBigScan, "big-scan", false, "If true, just scan the whole index and print summaries")
@@ -141,12 +144,7 @@ func main() {
 		return
 	}
 
-	orgs := []string{}
-	if orgsFile != "" {
-		content, err := ioutil.ReadFile(orgsFile)
-		checkFatal(err)
-		orgs = strings.Fields(string(content))
-	}
+	orgs := setupOrgs(orgsFile)
 
 	if scanner.stopHour == 0 {
 		scanner.stopHour = int(time.Now().Unix() / int64(time.Hour/time.Second))
@@ -158,19 +156,48 @@ func main() {
 
 	totals := newSummary()
 
-	var orgWait sync.WaitGroup
-	orgWait.Add(len(orgs))
-
-	for _, org := range orgs {
-		go func(org string) {
-			scanner.processOrg(context.Background(), org)
-			orgWait.Done()
-		}(org)
+	if recordsFile != "" {
+		f, err := os.Open(recordsFile)
+		checkFatal(err)
+		defer f.Close()
+		records := bufio.NewScanner(f)
+		for records.Scan() {
+			scanner.HandleRecord(context.Background(), orgs, records.Text())
+		}
+		checkFatal(records.Err())
 	}
-	orgWait.Wait()
 
 	fmt.Printf("\n")
 	totals.print()
+}
+
+func setupOrgs(deleteOrgsFile string) (deleteOrgs map[int]struct{}) {
+	deleteOrgs = map[int]struct{}{}
+	if deleteOrgsFile != "" {
+		content, err := ioutil.ReadFile(deleteOrgsFile)
+		checkFatal(err)
+		for _, arg := range strings.Fields(string(content)) {
+			org, err := strconv.Atoi(arg)
+			checkFatal(err)
+			deleteOrgs[org] = struct{}{}
+		}
+	}
+	return
+}
+
+func (sc *scanner) HandleRecord(ctx context.Context, deleteOrgs map[int]struct{}, record string) {
+	fields := strings.Split(record, "-")
+	org, err := strconv.Atoi(fields[0])
+	checkFatal(err)
+	if _, found := deleteOrgs[org]; !found {
+		return
+	}
+	hour, err := strconv.Atoi(fields[1])
+	checkFatal(err)
+	if hour < sc.startHour || hour > sc.stopHour {
+		return
+	}
+	sc.deleteOneOrgHour(ctx, fields[0], hour)
 }
 
 func (sc *scanner) processOrg(ctx context.Context, org string) {
