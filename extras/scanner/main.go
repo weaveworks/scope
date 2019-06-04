@@ -211,37 +211,41 @@ func main() {
 func (sc *scanner) processOrg(ctx context.Context, org string) {
 	deleted := 0
 	for hour := sc.startHour; hour <= sc.stopHour; hour++ {
-		var keys []map[string]*dynamodb.AttributeValue
-		for {
-			sc.queryLimiter.Wait(ctx)
-			var err error
-			keys, err = queryDynamo(ctx, sc.dynamoDB, sc.tableName, org, int64(hour))
-			if throttled(err) {
-				continue
-			}
-			checkFatal(err)
-			break
-		}
-		var wait sync.WaitGroup
-		if len(keys) > 0 {
-			log.Debugf("deleting org: %s hour: %d num: %d", org, hour, len(keys))
-		}
-		for start := 0; start < len(keys); start += s3deleteBatchSize {
-			end := start + s3deleteBatchSize
-			if end > len(keys) {
-				end = len(keys)
-			}
-			wait.Add(1)
-			go func(start, end int) {
-				sc.deleteFromS3AndDynamoDB(ctx, keys[start:end])
-				wait.Done()
-			}(start, end)
-		}
-		wait.Wait()
-		deleted += len(keys)
-		s3ItemsDeleted.Add(float64(len(keys)))
+		deleted += sc.deleteOneOrgHour(ctx, org, hour)
 	}
 	log.Infof("done %s: %d", org, deleted)
+}
+
+func (sc *scanner) deleteOneOrgHour(ctx context.Context, org string, hour int) int {
+	var keys []map[string]*dynamodb.AttributeValue
+	for {
+		sc.queryLimiter.Wait(ctx)
+		var err error
+		keys, err = queryDynamo(ctx, sc.dynamoDB, sc.tableName, org, int64(hour))
+		if throttled(err) {
+			continue
+		}
+		checkFatal(err)
+		break
+	}
+	var wait sync.WaitGroup
+	if len(keys) > 0 {
+		log.Debugf("deleting org: %s hour: %d num: %d", org, hour, len(keys))
+	}
+	for start := 0; start < len(keys); start += s3deleteBatchSize {
+		end := start + s3deleteBatchSize
+		if end > len(keys) {
+			end = len(keys)
+		}
+		wait.Add(1)
+		go func(start, end int) {
+			sc.deleteFromS3AndDynamoDB(ctx, keys[start:end])
+			wait.Done()
+		}(start, end)
+	}
+	wait.Wait()
+	s3ItemsDeleted.Add(float64(len(keys)))
+	return len(keys)
 }
 
 func (sc *scanner) deleteFromS3AndDynamoDB(ctx context.Context, keys []map[string]*dynamodb.AttributeValue) {
