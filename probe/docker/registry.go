@@ -176,7 +176,9 @@ func (r *registry) listenForEvents() bool {
 	// Next, start listening for events.  We do this before fetching
 	// the list of containers so we don't miss containers created
 	// after listing but before listening for events.
-	events := make(chan *docker_client.APIEvents)
+	// Use a buffered chan so the client library can run ahead of the listener
+	// - Docker will drop an event if it is not collected quickly enough.
+	events := make(chan *docker_client.APIEvents, 1024)
 	if err := r.client.AddEventListener(events); err != nil {
 		log.Errorf("docker registry: %s", err)
 		return true
