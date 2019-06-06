@@ -184,7 +184,9 @@ func setupOrgs(deleteOrgsFile string) (deleteOrgs map[int]struct{}) {
 }
 
 func (sc *scanner) HandleRecord(ctx context.Context, deleteOrgs map[int]struct{}, record string) {
-	fields := strings.Split(record, "-")
+	// Record is something like "1-406768, 4103", which is org-hour, reports
+	fields := strings.Split(record, ", ")
+	fields = strings.Split(fields[0], "-")
 	org, err := strconv.Atoi(fields[0])
 	checkFatal(err)
 	if _, found := deleteOrgs[org]; !found {
