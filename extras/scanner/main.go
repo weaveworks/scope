@@ -17,6 +17,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -267,31 +268,48 @@ func (sc *scanner) deleteFromS3(ctx context.Context, keys []map[string]*dynamodb
 
 func queryDynamo(ctx context.Context, db *dynamodb.DynamoDB, tableName, userid string, row int64) ([]map[string]*dynamodb.AttributeValue, error) {
 	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(row, 10))
-	var resp *dynamodb.QueryOutput
-	err := instrument.TimeRequestHistogram(ctx, "DynamoDB.Query", dynamoRequestDuration, func(_ context.Context) error {
-		var err error
-		resp, err = db.Query(&dynamodb.QueryInput{
-			TableName: aws.String(tableName),
-			KeyConditions: map[string]*dynamodb.Condition{
-				hourField: {
-					AttributeValueList: []*dynamodb.AttributeValue{
-						{S: aws.String(rowKey)},
-					},
-					ComparisonOperator: aws.String("EQ"),
+	var result []map[string]*dynamodb.AttributeValue
+
+	queryInput := &dynamodb.QueryInput{
+		TableName: aws.String(tableName),
+		KeyConditions: map[string]*dynamodb.Condition{
+			hourField: {
+				AttributeValueList: []*dynamodb.AttributeValue{
+					{S: aws.String(rowKey)},
 				},
+				ComparisonOperator: aws.String("EQ"),
 			},
-			ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
+		},
+		ReturnConsumedCapacity: aws.String(dynamodb.ReturnConsumedCapacityTotal),
+	}
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			req, _ := db.QueryRequest(queryInput)
+			req.SetContext(ctx)
+			return req, nil
+		},
+	}
+
+	for {
+		var haveData bool
+		instrument.TimeRequestHistogram(ctx, "DynamoDB.Query", dynamoRequestDuration, func(_ context.Context) error {
+			haveData = p.Next()
+			return nil
 		})
-		return err
-	})
-	if resp.ConsumedCapacity != nil {
-		dynamoConsumedCapacity.WithLabelValues("Query").
-			Add(float64(*resp.ConsumedCapacity.CapacityUnits))
+		if !haveData {
+			if p.Err() != nil {
+				return nil, p.Err()
+			}
+			break
+		}
+		resp := p.Page().(*dynamodb.QueryOutput)
+		if resp.ConsumedCapacity != nil {
+			dynamoConsumedCapacity.WithLabelValues("Query").
+				Add(float64(*resp.ConsumedCapacity.CapacityUnits))
+		}
+		result = append(result, resp.Items...)
 	}
-	if err != nil {
-		return nil, err
-	}
-	return resp.Items, nil
+	return result, nil
 }
 
 const (
