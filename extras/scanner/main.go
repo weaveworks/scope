@@ -91,7 +91,6 @@ func main() {
 		loglevel string
 
 		justBigScan bool
-		segments    int
 		pagesPerDot int
 	)
 
@@ -108,7 +107,6 @@ func main() {
 	flag.StringVar(&loglevel, "log-level", "info", "Debug level: debug, info, warning, error")
 
 	flag.BoolVar(&justBigScan, "big-scan", false, "If true, just scan the whole index and print summaries")
-	flag.IntVar(&segments, "segments", 1, "Number of segments to run in parallel")
 	flag.IntVar(&pagesPerDot, "pages-per-dot", 10, "Print a dot per N pages in DynamoDB (0 to disable)")
 
 	flag.Parse()
@@ -140,7 +138,7 @@ func main() {
 	}()
 
 	if justBigScan {
-		bigScan(dynamoDBConfig, segments, pagesPerDot)
+		bigScan(dynamoDBConfig, scanner.segments, pagesPerDot)
 		return
 	}
 
