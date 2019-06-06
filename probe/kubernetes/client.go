@@ -15,7 +15,9 @@ import (
 	snapshotv1 "github.com/openebs/k8s-snapshot-client/snapshot/pkg/apis/volumesnapshot/v1"
 	snapshot "github.com/openebs/k8s-snapshot-client/snapshot/pkg/client/clientset/versioned"
 	"github.com/pborman/uuid"
+	dto "github.com/prometheus/client_model/go"
 	log "github.com/sirupsen/logrus"
+	"github.com/weaveworks/scope/report"
 	apiappsv1 "k8s.io/api/apps/v1"
 	apiappsv1beta1 "k8s.io/api/apps/v1beta1"
 	apibatchv1 "k8s.io/api/batch/v1"
@@ -38,8 +40,6 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	kubectldescribe "k8s.io/kubernetes/pkg/kubectl/describe"
 	kubectl "k8s.io/kubernetes/pkg/kubectl/describe/versioned"
-	"github.com/weaveworks/scope/report"
-	dto "github.com/prometheus/client_model/go"
 )
 
 // Client keeps track of running kubernetes pods and services
@@ -105,8 +105,8 @@ type client struct {
 	volumeSnapshotStore        cache.Store
 	volumeSnapshotDataStore    cache.Store
 
-	podWatchesMutex sync.Mutex
-	podWatches      []func(Event, Pod)
+	podWatchesMutex     sync.Mutex
+	podWatches          []func(Event, Pod)
 	oomKilledFinishedAt metav1.Time
 }
 
@@ -125,7 +125,6 @@ type ClientConfig struct {
 	User                 string
 	Username             string
 }
-
 
 // NewClient returns a usable Client. Don't forget to Stop it.
 func NewClient(config ClientConfig) (Client, error) {
@@ -337,7 +336,7 @@ func (c *client) WalkPods(f func(Pod) error) error {
 				log.Infof("[WalkPods] pod Status.ContainerStatuses[%d].LastTerminationState.Terminated.Reason: %+v\n", i, state.LastTerminationState.Terminated.Reason)
 
 				var reason string = state.LastTerminationState.Terminated.Reason
-				if (strings.Contains(reason, OOMKilledReason)) {
+				if strings.Contains(reason, OOMKilledReason) {
 					startedAt := state.LastTerminationState.Terminated.StartedAt
 					finishedAt := state.LastTerminationState.Terminated.FinishedAt
 					RestartCount := state.RestartCount

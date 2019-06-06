@@ -13,9 +13,9 @@ const (
 // FromLatest and friends denote the different fields where metadata can be
 // gathered from.
 const (
-	FromLatest   = "latest"
-	FromSets     = "sets"
-	FromCounters = "counters"
+	FromLatest    = "latest"
+	FromSets      = "sets"
+	FromCounters  = "counters"
 	FromOOMKilled = "oomkilled"
 )
 

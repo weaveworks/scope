@@ -14,6 +14,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/prometheus/client_golang/prometheus"
 	billing "github.com/weaveworks/billing-client"
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/app/multitenant"
@@ -22,9 +23,8 @@ import (
 	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/render"
-	"github.com/weaveworks/weave/common"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/weave/common"
 )
 
 var (

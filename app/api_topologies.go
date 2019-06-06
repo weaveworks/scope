@@ -85,23 +85,23 @@ func namespaceFilters(namespaces []string, noneLabel string) APITopologyOptionGr
 // labelFilters generates a label selector option group based on the given labels
 func labelFilters(labels []string, noneLabel string) APITopologyOptionGroup {
 	options := APITopologyOptionGroup{ID: "label", Default: "", SelectType: "union", NoneLabel: noneLabel}
-	new_labels := []string{}
+	newLabels := []string{}
 	for _, name := range labels {
 		found := false
-		if len(new_labels) > 0 {
-			for _, new_name := range new_labels {
-				if name == new_name {
+		if len(newLabels) > 0 {
+			for _, newName := range newLabels {
+				if name == newName {
 					found = true
 					break
 				}
 			}
 		}
 		if !found {
-			new_labels = append(new_labels, name)
+			newLabels = append(newLabels, name)
 		}
 	}
 
-	for _, label := range new_labels {
+	for _, label := range newLabels {
 		options.Options = append(options.Options, APITopologyOption{
 			Value: label, Label: label, filter: render.IsLabel(label), filterPseudo: false,
 		})
