@@ -49,6 +49,7 @@ func (s *podLister) List(selector labels.Selector) (ret []*v1.Pod, err error) {
 	err = cache.ListAll(s.indexer, selector, func(m interface{}) {
 		ret = append(ret, m.(*v1.Pod))
 	})
+
 	return ret, err
 }
 

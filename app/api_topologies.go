@@ -21,6 +21,11 @@ import (
 )
 
 const (
+	k8sNamespaceLabel   = "io.kubernetes.pod.namespace"
+	swarmNamespaceLabel = "com.docker.stack.namespace"
+)
+
+const (
 	apiTopologyURL         = "/api/topology/"
 	processesID            = "processes"
 	processesByNameID      = "processes-by-name"
@@ -77,9 +82,38 @@ func namespaceFilters(namespaces []string, noneLabel string) APITopologyOptionGr
 	return options
 }
 
+// labelFilters generates a label selector option group based on the given labels
+func labelFilters(labels []string, noneLabel string) APITopologyOptionGroup {
+	options := APITopologyOptionGroup{ID: "label", Default: "", SelectType: "union", NoneLabel: noneLabel}
+	new_labels := []string{}
+	for _, name := range labels {
+		found := false
+		if len(new_labels) > 0 {
+			for _, new_name := range new_labels {
+				if name == new_name {
+					found = true
+					break
+				}
+			}
+		}
+		if !found {
+			new_labels = append(new_labels, name)
+		}
+	}
+
+	for _, label := range new_labels {
+		options.Options = append(options.Options, APITopologyOption{
+			Value: label, Label: label, filter: render.IsLabel(label), filterPseudo: false,
+		})
+	}
+
+	return options
+}
+
 // updateFilters updates the available filters based on the current report.
 func updateFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
 	topologies = updateKubeFilters(rpt, topologies)
+	topologies = updateKubeLabelFilters(rpt, topologies)
 	topologies = updateSwarmFilters(rpt, topologies)
 	return topologies
 }
@@ -129,6 +163,35 @@ func updateKubeFilters(rpt report.Report, topologies []APITopologyDesc) []APITop
 		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == kubeControllersID {
 			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
 				namespaceFilters(ns, "All Namespaces"),
+			})
+		}
+	}
+	return topologies
+}
+
+func updateKubeLabelFilters(rpt report.Report, topologies []APITopologyDesc) []APITopologyDesc {
+	ns := []string{}
+	tryKeys := []string{"kubernetes_labels_app", "kubernetes_labels_deployment", "kubernetes_labels_deploymentconfig", "kubernetes_labels_template", "kubernetes_labels_type", "kubernetes_labels_k8s-app", "kubernetes_labels_openshift.io/component", kubernetes.Namespace, docker.LabelPrefix + k8sNamespaceLabel, docker.StackNamespace, docker.LabelPrefix + swarmNamespaceLabel}
+
+	for _, n := range rpt.Pod.Nodes {
+		for _, key := range tryKeys {
+			name, ok := n.Latest.Lookup(key)
+			if !ok {
+				continue
+			}
+
+			ns = append(ns, name)
+		}
+	}
+	if len(ns) == 0 {
+		return topologies
+	}
+	sort.Strings(ns)
+	topologies = append([]APITopologyDesc{}, topologies...) // Make a copy so we can make changes safely
+	for i, t := range topologies {
+		if t.id == containersID || t.id == podsID || t.id == servicesID || t.id == kubeControllersID {
+			topologies[i] = mergeTopologyFilters(t, []APITopologyOptionGroup{
+				labelFilters(ns, "All Labels"),
 			})
 		}
 	}

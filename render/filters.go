@@ -310,6 +310,26 @@ func IsNamespace(namespace string) FilterFunc {
 	}
 }
 
+// IsLabel checks if the node is a pod/service containing the specified label
+func IsLabel(label string) FilterFunc {
+	return func(n report.Node) bool {
+		tryKeys := []string{"kubernetes_labels_app", "kubernetes_labels_deployment", "kubernetes_labels_deploymentconfig", "kubernetes_labels_template", "kubernetes_labels_type", "kubernetes_labels_k8s-app", "kubernetes_labels_openshift.io/component", kubernetes.Namespace, docker.LabelPrefix + k8sNamespaceLabel, docker.StackNamespace, docker.LabelPrefix + swarmNamespaceLabel}
+
+		gotLabel := ""
+		for _, key := range tryKeys {
+			if value, ok := n.Latest.Lookup(key); ok {
+				gotLabel = value
+				break
+			}
+		}
+		// Special case for docker
+		if label == docker.DefaultNamespace && gotLabel == "" {
+			return true
+		}
+		return label == gotLabel
+	}
+}
+
 // IsTopology checks if the node is from a particular report topology
 func IsTopology(topology string) FilterFunc {
 	return func(n report.Node) bool {

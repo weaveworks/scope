@@ -23,6 +23,8 @@ import (
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/weave/common"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/weaveworks/scope/report"
 )
 
 var (
@@ -397,6 +399,9 @@ func setupFlags(flags *flags) {
 }
 
 func main() {
+	// register OOMKilled counter
+	prometheus.MustRegister(report.OOMKilledCounter)
+
 	flags := flags{}
 	setupFlags(&flags)
 	flags.app.BillingEmitterConfig.RegisterFlags(flag.CommandLine)

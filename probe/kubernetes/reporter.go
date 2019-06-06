@@ -46,6 +46,7 @@ var (
 		Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 5},
 		Created:          {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 6},
 		RestartCount:     {ID: RestartCount, Label: "Restart #", From: report.FromLatest, Priority: 7},
+		OOMKilledCount:   {ID: OOMKilledCount, Label: "OOMKilled #", From: report.FromOOMKilled, Priority: 8},
 	}
 
 	PodMetricTemplates = docker.ContainerMetricTemplates

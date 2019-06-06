@@ -15,6 +15,9 @@ const (
 	Created         = report.KubernetesCreated
 	LabelPrefix     = "kubernetes_labels_"
 	VolumeClaimName = report.KubernetesVolumeClaim
+	OOMKilledCountLabel = "oomkilled_count"
+	OOMKilledCount      =  LabelPrefix + OOMKilledCountLabel
+	OOMKilledReason     = "OOMKilled"
 )
 
 // Meta represents a metadata information about a Kubernetes object

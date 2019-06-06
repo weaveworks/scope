@@ -1326,8 +1326,9 @@ a {
   &-wrapper {
     display: inline-flex;
     flex-wrap: wrap;
-    overflow: hidden;
-    max-height: 27px;
+    overflow: scroll;
+    height: auto;
+    max-height: calc((13px * 1.5 + 3px + 3px) * 3); // expand to display 8 rows
     transition: max-height 0.5s 0s $base-ease;
 
     .topology-option-action {
@@ -1335,13 +1336,15 @@ a {
       text-align: center;
     }
   }
-  
-    &:last-child :hover {
+
+/*
+  &:last-child :hover {
     height: auto;
     max-height: calc((13px * 1.5 + 3px + 3px) * 8); // expand to display 8 rows
     overflow: auto;
     transition: max-height 0.5s 0s $base-ease;
-  } 
+  }
+  */
 
   font-size: $font-size-small;
 

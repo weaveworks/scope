@@ -38,6 +38,8 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	kubectldescribe "k8s.io/kubernetes/pkg/kubectl/describe"
 	kubectl "k8s.io/kubernetes/pkg/kubectl/describe/versioned"
+	"github.com/weaveworks/scope/report"
+	dto "github.com/prometheus/client_model/go"
 )
 
 // Client keeps track of running kubernetes pods and services
@@ -105,6 +107,7 @@ type client struct {
 
 	podWatchesMutex sync.Mutex
 	podWatches      []func(Event, Pod)
+	oomKilledFinishedAt metav1.Time
 }
 
 // ClientConfig establishes the configuration for the kubernetes client
@@ -122,6 +125,7 @@ type ClientConfig struct {
 	User                 string
 	Username             string
 }
+
 
 // NewClient returns a usable Client. Don't forget to Stop it.
 func NewClient(config ClientConfig) (Client, error) {
@@ -197,6 +201,7 @@ func NewClient(config ClientConfig) (Client, error) {
 	result.storageClassStore = result.setupStore("storageclasses")
 	result.volumeSnapshotStore = result.setupStore("volumesnapshots")
 	result.volumeSnapshotDataStore = result.setupStore("volumesnapshotdatas")
+	result.oomKilledFinishedAt = metav1.NewTime(time.Now().Add(time.Hour * -24))
 
 	return result, nil
 }
@@ -320,6 +325,64 @@ func (c *client) triggerPodWatches(e Event, pod interface{}) {
 func (c *client) WalkPods(f func(Pod) error) error {
 	for _, m := range c.podStore.List() {
 		pod := m.(*apiv1.Pod)
+
+		for i, state := range pod.Status.ContainerStatuses {
+			// check if OOMKilled event is triggered.
+			appName, exist := pod.Labels["app"]
+			if !exist {
+				appName = ""
+			}
+
+			if state.LastTerminationState.Terminated != nil {
+				log.Infof("[WalkPods] pod Status.ContainerStatuses[%d].LastTerminationState.Terminated.Reason: %+v\n", i, state.LastTerminationState.Terminated.Reason)
+
+				var reason string = state.LastTerminationState.Terminated.Reason
+				if (strings.Contains(reason, OOMKilledReason)) {
+					startedAt := state.LastTerminationState.Terminated.StartedAt
+					finishedAt := state.LastTerminationState.Terminated.FinishedAt
+					RestartCount := state.RestartCount
+
+					interval := finishedAt.Time.Sub(c.oomKilledFinishedAt.Time)
+
+					log.Infof("[WalkPods] Found OOMKilled! pod Name: %s, reason: %s, startedAt: %v, finishedAt: %v, c.oomKilledFinishedAt: %v, interval=%d, RestartCount=%d", pod.Name, reason, startedAt, finishedAt, c.oomKilledFinishedAt, interval, RestartCount)
+
+					if interval > 0 {
+						log.Infof("[WalkPods] Found latest OOMKilled! pod Name: %s, reason: %s, startedAt: %s, finishedAt: %s, oomKilledFinishedAt=%v", pod.Name, reason, startedAt, finishedAt, c.oomKilledFinishedAt)
+
+						// increase OOMKilled count
+						report.OOMKilledCounter.WithLabelValues(pod.Namespace, appName, pod.Name).Add(float64(1))
+						c.oomKilledFinishedAt = metav1.Now()
+					}
+				}
+			}
+
+			// get OOMKilled count
+			oomkilledCount := 0.0
+			if counters, err := report.OOMKilledCounter.GetMetricWithLabelValues(pod.Namespace, appName, pod.Name); err != nil {
+				log.Error("[WalkPods] can't get OOMKilled count for pod Namespace=%s, appName=%s, Name=%s, error=%+v",
+					pod.Namespace, appName, pod.Name, err)
+			} else {
+				out := &dto.Metric{}
+				counters.Write(out)
+				if out.Counter == nil {
+					log.Error("[WalkPods] Counter is nil for pod Namespace=%s, appName=%s, Name=%s",
+						pod.Namespace, appName, pod.Name)
+				} else {
+					oomkilledCount = out.Counter.GetValue()
+					log.Infof("[WalkPods] oomkilledCount is %d, pod Namespace=%s, appName=%s, Name=%s",
+						oomkilledCount, pod.Namespace, appName, pod.Name)
+				}
+			}
+
+			// update OOMKilled count to pod label
+			if pod.Labels == nil {
+				pod.Labels = make(map[string]string)
+				log.Infof("[WalkPods] allocate memory for pod.Labels")
+			}
+
+			pod.Labels[OOMKilledCountLabel] = fmt.Sprintf("%d", int(oomkilledCount))
+		}
+
 		if err := f(NewPod(pod)); err != nil {
 			return err
 		}

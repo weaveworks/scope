@@ -16,6 +16,7 @@ const (
 	FromLatest   = "latest"
 	FromSets     = "sets"
 	FromCounters = "counters"
+	FromOOMKilled = "oomkilled"
 )
 
 // MetadataTemplate extracts some metadata rows from a node
@@ -38,6 +39,8 @@ func (t MetadataTemplate) MetadataRow(n Node) (MetadataRow, bool) {
 		from = fromSets
 	case FromCounters:
 		from = fromCounters
+	case FromOOMKilled:
+		from = fromOOMKilled
 	}
 	if val, ok := from(n, t.ID); ok {
 		return MetadataRow{
@@ -62,6 +65,10 @@ func fromDefault(n Node, key string) (string, bool) {
 }
 
 func fromLatest(n Node, key string) (string, bool) {
+	return n.Latest.Lookup(key)
+}
+
+func fromOOMKilled(n Node, key string) (string, bool) {
 	return n.Latest.Lookup(key)
 }
 
