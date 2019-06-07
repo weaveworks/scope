@@ -108,7 +108,7 @@
     "start-production": "NODE_ENV=production node server.js",
     "test": "jest",
     "coveralls": "cat coverage/lcov.info | coveralls",
-    "lint": "eslint app server.js && stylelint --allow-empty-input src && sass-lint -v",
+    "lint": "eslint app server.js && stylelint app/scripts && sass-lint -v",
     "clean": "rm build/app.js",
     "noprobe": "../scope stop && ../scope launch --no-probe --app.window 8760h",
     "loadreport": "yarn run noprobe && sleep 1 && curl -X POST -H \"Content-Type: application/json\" http://$BACKEND_HOST/api/report -d"
