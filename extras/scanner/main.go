@@ -142,6 +142,9 @@ func main() {
 		bigScan(dynamoDBConfig, scanner.segments, pagesPerDot)
 		return
 	}
+	if recordsFile == "" {
+		checkFatal(fmt.Errorf("Must set one of -delete-records-file or -big-scan."))
+	}
 
 	orgs := setupOrgs(orgsFile)
 
