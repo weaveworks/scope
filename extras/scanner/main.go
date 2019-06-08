@@ -75,6 +75,11 @@ var (
 		Name:      "s3_items_deleted",
 		Help:      "Total number of items deleted.",
 	})
+	recordsScanned = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "delete_records_scanned_total",
+		Help:      "Total number of items deleted.",
+	})
 )
 
 func main() {
@@ -170,6 +175,7 @@ func main() {
 		go func() {
 			for record := range queue {
 				scanner.HandleRecord(context.Background(), orgs, record)
+				recordsScanned.Inc()
 			}
 			wait.Done()
 		}()
