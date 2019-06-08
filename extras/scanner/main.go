@@ -239,11 +239,11 @@ func (sc *scanner) deleteOneOrgHour(ctx context.Context, org string, hour int) i
 				delete(key, reportField) // not part of key in dynamoDB
 			}
 			sc.deleteFromDynamoDB(keys[start:end])
+			s3ItemsDeleted.Add(float64(end - start))
 			wait.Done()
 		}(start, end)
 	}
 	wait.Wait()
-	s3ItemsDeleted.Add(float64(len(keys)))
 	return len(keys)
 }
 
