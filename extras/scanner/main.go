@@ -236,7 +236,7 @@ func (sc *scanner) deleteOneOrgHour(ctx context.Context, org string, hour int) i
 			for _, key := range keys {
 				delete(key, reportField) // not part of key in dynamoDB
 			}
-			sc.deleteFromDynamoDB(keys)
+			sc.deleteFromDynamoDB(keys[start:end])
 			wait.Done()
 		}(start, end)
 	}
