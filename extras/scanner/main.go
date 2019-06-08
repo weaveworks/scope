@@ -158,16 +158,30 @@ func main() {
 
 	totals := newSummary()
 
-	if recordsFile != "" {
-		f, err := os.Open(recordsFile)
-		checkFatal(err)
-		defer f.Close()
-		records := bufio.NewScanner(f)
-		for records.Scan() {
-			scanner.HandleRecord(context.Background(), orgs, records.Text())
-		}
-		checkFatal(records.Err())
+	f, err := os.Open(recordsFile)
+	checkFatal(err)
+	defer f.Close()
+
+	// Create multiple goroutines reading off one queue of records to delete
+	queue := make(chan string)
+	var wait sync.WaitGroup
+	wait.Add(scanner.segments)
+	for i := 0; i < scanner.segments; i++ {
+		go func() {
+			for record := range queue {
+				scanner.HandleRecord(context.Background(), orgs, record)
+			}
+			wait.Done()
+		}()
 	}
+
+	records := bufio.NewScanner(f)
+	for records.Scan() {
+		queue <- records.Text()
+	}
+	checkFatal(records.Err())
+	close(queue)
+	wait.Wait()
 
 	fmt.Printf("\n")
 	totals.print()
