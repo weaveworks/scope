@@ -415,7 +415,7 @@ func (sc *scanner) deleteFromDynamoDB(batch []map[string]*dynamodb.AttributeValu
 		}
 		if err != nil {
 			if throttled(err) {
-				sc.writeLimiter.WaitN(context.Background(), len(batch))
+				sc.writeLimiter.WaitN(context.Background(), numToSend)
 				// Back round the loop without taking anything away from the batch
 				continue
 			} else {
