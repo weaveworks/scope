@@ -97,8 +97,8 @@ func main() {
 
 	flag.StringVar(&collectorURL, "app.collector", "local", "Collector to use (local, dynamodb, or file/directory)")
 	flag.StringVar(&s3URL, "app.collector.s3", "local", "S3 URL to use (when collector is dynamodb)")
-	flag.Float64Var(&queryRateLimit, "query-rate-limit", 100, "Max rate to query DynamoDB")
-	flag.Float64Var(&writeRateLimit, "write-rate-limit", 100, "Rate-limit on throttling from DynamoDB")
+	flag.Float64Var(&queryRateLimit, "query-rate-limit", 10, "Max rate to query DynamoDB")
+	flag.Float64Var(&writeRateLimit, "write-rate-limit", 10, "Rate-limit on throttling from DynamoDB")
 	flag.IntVar(&scanner.startHour, "start-hour", 406848, "Hour number to start")
 	flag.IntVar(&scanner.stopHour, "stop-hour", 0, "Hour number to stop (0 for current hour)")
 	flag.IntVar(&scanner.segments, "segments", 1, "Number of segments to read in parallel")
