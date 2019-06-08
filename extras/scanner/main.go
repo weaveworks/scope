@@ -367,7 +367,7 @@ func (sc *scanner) deleteFromDynamoDB(batch []map[string]*dynamodb.AttributeValu
 			},
 		})
 	}
-	log.Debug("about to delete", len(batch))
+	log.Debug("about to delete ", len(batch))
 	var ret *dynamodb.BatchWriteItemOutput
 	var err error
 	for len(requests) > 0 {
