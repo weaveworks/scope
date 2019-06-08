@@ -233,15 +233,15 @@ func (sc *scanner) deleteOneOrgHour(ctx context.Context, org string, hour int) i
 			end = len(keys)
 		}
 		wait.Add(1)
-		go func(start, end int) {
-			sc.deleteFromS3(ctx, keys[start:end])
-			for _, key := range keys {
+		go func(batchKeys []map[string]*dynamodb.AttributeValue) {
+			sc.deleteFromS3(ctx, batchKeys)
+			for _, key := range batchKeys {
 				delete(key, reportField) // not part of key in dynamoDB
 			}
-			sc.deleteFromDynamoDB(keys[start:end])
-			s3ItemsDeleted.Add(float64(end - start))
+			sc.deleteFromDynamoDB(batchKeys)
+			s3ItemsDeleted.Add(float64(len(batchKeys)))
 			wait.Done()
-		}(start, end)
+		}(keys[start:end])
 	}
 	wait.Wait()
 	return len(keys)
