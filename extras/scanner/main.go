@@ -171,8 +171,8 @@ func main() {
 }
 
 func setupOrgs(deleteOrgsFile string) (deleteOrgs map[int]struct{}) {
-	deleteOrgs = map[int]struct{}{}
 	if deleteOrgsFile != "" {
+		deleteOrgs = map[int]struct{}{}
 		content, err := ioutil.ReadFile(deleteOrgsFile)
 		checkFatal(err)
 		for _, arg := range strings.Fields(string(content)) {
@@ -190,8 +190,10 @@ func (sc *scanner) HandleRecord(ctx context.Context, deleteOrgs map[int]struct{}
 	fields = strings.Split(fields[0], "-")
 	org, err := strconv.Atoi(fields[0])
 	checkFatal(err)
-	if _, found := deleteOrgs[org]; !found {
-		return
+	if deleteOrgs != nil {
+		if _, found := deleteOrgs[org]; !found {
+			return
+		}
 	}
 	hour, err := strconv.Atoi(fields[1])
 	checkFatal(err)
