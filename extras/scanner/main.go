@@ -53,6 +53,11 @@ const (
 )
 
 var (
+	dynamoFailures = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "dynamo_failures_total",
+		Help:      "The total number of errors from DynamoDB.",
+	}, []string{"table", "error", "operation"})
 	dynamoRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "scope",
 		Name:      "dynamo_request_duration_seconds",
@@ -323,6 +328,7 @@ func queryDynamo(ctx context.Context, db *dynamodb.DynamoDB, tableName, userid s
 		})
 		if !haveData {
 			if p.Err() != nil {
+				recordDynamoError(tableName, p.Err(), "DynamoDB.Query")
 				return nil, p.Err()
 			}
 			break
@@ -414,6 +420,7 @@ func (sc *scanner) deleteFromDynamoDB(batch []map[string]*dynamodb.AttributeValu
 				Add(float64(*cc.CapacityUnits))
 		}
 		if err != nil {
+			recordDynamoError(sc.tableName, err, "DynamoDB.Delete")
 			if throttled(err) {
 				sc.writeLimiter.WaitN(context.Background(), numToSend)
 				// Back round the loop without taking anything away from the batch
@@ -429,5 +436,13 @@ func (sc *scanner) deleteFromDynamoDB(batch []map[string]*dynamodb.AttributeValu
 			sc.writeLimiter.WaitN(context.Background(), len(v))
 			requests = append(requests, v...)
 		}
+	}
+}
+
+func recordDynamoError(tableName string, err error, operation string) {
+	if awsErr, ok := err.(awserr.Error); ok {
+		dynamoFailures.WithLabelValues(tableName, awsErr.Code(), operation).Add(float64(1))
+	} else {
+		dynamoFailures.WithLabelValues(tableName, "other", operation).Add(float64(1))
 	}
 }
