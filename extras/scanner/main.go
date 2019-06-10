@@ -2,9 +2,11 @@ package main
 
 import (
 	"bufio"
+	"compress/gzip"
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	_ "net/http/pprof"
@@ -168,9 +170,18 @@ func main() {
 
 	totals := newSummary()
 
-	f, err := os.Open(recordsFile)
+	var recordsReader io.Reader
+	fileReader, err := os.Open(recordsFile)
 	checkFatal(err)
-	defer f.Close()
+	defer fileReader.Close()
+	if strings.HasSuffix(recordsFile, ".gz") {
+		gzipReader, err := gzip.NewReader(fileReader)
+		checkFatal(err)
+		defer gzipReader.Close()
+		recordsReader = gzipReader
+	} else {
+		recordsReader = fileReader
+	}
 
 	// Create multiple goroutines reading off one queue of records to delete
 	queue := make(chan string)
@@ -186,7 +197,7 @@ func main() {
 		}()
 	}
 
-	records := bufio.NewScanner(f)
+	records := bufio.NewScanner(recordsReader)
 	for records.Scan() {
 		queue <- records.Text()
 	}
