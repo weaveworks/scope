@@ -3,7 +3,7 @@
 Minor update:
 
  - Updates to JavaScript dependencies, where security issues were reported:
-	[#3633](https://github.com/weaveworks/scope/pull/36233)
+	[#3633](https://github.com/weaveworks/scope/pull/3633)
  - Another fix for Scope not noticing when a container has been destroyed:
 	[#3627](https://github.com/weaveworks/scope/pull/3627)
 
