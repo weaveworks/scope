@@ -97,8 +97,9 @@ func main() {
 		queryRateLimit float64
 		writeRateLimit float64
 
-		orgsFile    string
-		recordsFile string
+		deleteOrgsFile string
+		keepOrgsStr    string
+		recordsFile    string
 
 		scanner  scanner
 		loglevel string
@@ -115,7 +116,8 @@ func main() {
 	flag.IntVar(&scanner.stopHour, "stop-hour", 0, "Hour number to stop (0 for current hour)")
 	flag.IntVar(&scanner.segments, "segments", 1, "Number of segments to read in parallel")
 	flag.StringVar(&scanner.address, "address", ":6060", "Address to listen on, for profiling, etc.")
-	flag.StringVar(&orgsFile, "delete-orgs-file", "", "File containing IDs of orgs to delete")
+	flag.StringVar(&deleteOrgsFile, "delete-orgs-file", "", "File containing IDs of orgs to delete")
+	flag.StringVar(&keepOrgsStr, "keep-orgs", "", "IDs of orgs to keep - DELETE EVERYTHING ELSE (space-separated)")
 	flag.StringVar(&recordsFile, "delete-records-file", "", "File containing IDs of orgs to delete")
 	flag.StringVar(&loglevel, "log-level", "info", "Debug level: debug, info, warning, error")
 
@@ -158,7 +160,7 @@ func main() {
 		checkFatal(fmt.Errorf("Must set one of -delete-records-file or -big-scan."))
 	}
 
-	orgs := setupOrgs(orgsFile)
+	deleteOrgs, keepOrgs := setupOrgs(deleteOrgsFile, keepOrgsStr)
 
 	if scanner.stopHour == 0 {
 		scanner.stopHour = int(time.Now().Unix() / int64(time.Hour/time.Second))
@@ -190,7 +192,7 @@ func main() {
 	for i := 0; i < scanner.segments; i++ {
 		go func() {
 			for record := range queue {
-				scanner.HandleRecord(context.Background(), orgs, record)
+				scanner.HandleRecord(context.Background(), keepOrgs, deleteOrgs, record)
 				recordsScanned.Inc()
 			}
 			wait.Done()
@@ -209,7 +211,7 @@ func main() {
 	totals.print()
 }
 
-func setupOrgs(deleteOrgsFile string) (deleteOrgs map[int]struct{}) {
+func setupOrgs(deleteOrgsFile, keepOrgsStr string) (deleteOrgs, keepOrgs map[int]struct{}) {
 	if deleteOrgsFile != "" {
 		deleteOrgs = map[int]struct{}{}
 		content, err := ioutil.ReadFile(deleteOrgsFile)
@@ -220,15 +222,29 @@ func setupOrgs(deleteOrgsFile string) (deleteOrgs map[int]struct{}) {
 			deleteOrgs[org] = struct{}{}
 		}
 	}
+
+	if keepOrgsStr != "" {
+		keepOrgs = map[int]struct{}{}
+		for _, arg := range strings.Fields(keepOrgsStr) {
+			org, err := strconv.Atoi(arg)
+			checkFatal(err)
+			keepOrgs[org] = struct{}{}
+		}
+	}
 	return
 }
 
-func (sc *scanner) HandleRecord(ctx context.Context, deleteOrgs map[int]struct{}, record string) {
+func (sc *scanner) HandleRecord(ctx context.Context, keepOrgs, deleteOrgs map[int]struct{}, record string) {
 	// Record is something like "1-406768, 4103", which is org-hour, reports
 	fields := strings.Split(record, ", ")
 	fields = strings.Split(fields[0], "-")
 	org, err := strconv.Atoi(fields[0])
 	checkFatal(err)
+	if keepOrgs != nil {
+		if _, found := keepOrgs[org]; found {
+			return
+		}
+	}
 	if deleteOrgs != nil {
 		if _, found := deleteOrgs[org]; !found {
 			return
