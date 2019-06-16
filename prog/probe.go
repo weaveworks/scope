@@ -287,7 +287,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			if flags.procEnabled {
 				p.AddTagger(docker.NewTagger(registry, processCache))
 			}
-			p.AddReporter(docker.NewReporter(registry, hostID, probeID, p))
+			p.AddReporter(docker.NewReporter(registry, hostName, probeID, p))
 		} else {
 			log.Errorf("Docker: failed to start registry: %v", err)
 		}
@@ -305,7 +305,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	if flags.kubernetesEnabled && flags.kubernetesRole != kubernetesRoleHost {
 		if client, err := kubernetes.NewClient(flags.kubernetesClientConfig); err == nil {
 			defer client.Stop()
-			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry, flags.kubernetesNodeName, flags.kubernetesKubeletPort)
+			reporter := kubernetes.NewReporter(client, clients, probeID, hostName, p, handlerRegistry, flags.kubernetesNodeName, flags.kubernetesKubeletPort)
 			defer reporter.Stop()
 			p.AddReporter(reporter)
 		} else {

@@ -1,5 +1,5 @@
 FROM weaveworks/cloud-agent
-RUN apk add --no-cache runit
+RUN apk add --no-cache runit procps
 COPY ./demo.json /
 COPY ./weave ./weaveutil /usr/bin/
 COPY ./runsvinit ./entrypoint.sh /home/weave/

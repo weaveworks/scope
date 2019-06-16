@@ -13,11 +13,12 @@ const (
 	TunnelDstIP     = "tunnel_dst_ip"
 	TunnelDstMask   = "tunnel_dst_mask"
 	// probe/process
-	PID     = "pid"
-	Name    = "name" // also used by probe/docker
-	PPID    = "ppid"
-	Cmdline = "cmdline"
-	Threads = "threads"
+	PID      = "pid"
+	ChildPID = "child_pid"
+	Name     = "name" // also used by probe/docker
+	PPID     = "ppid"
+	Cmdline  = "cmdline"
+	Threads  = "threads"
 	// probe/docker
 	DockerContainerID            = "docker_container_id"
 	DockerImageID                = "docker_image_id"
@@ -49,7 +50,9 @@ const (
 	DockerContainerUptime        = "docker_container_uptime"
 	DockerContainerRestartCount  = "docker_container_restart_count"
 	DockerContainerNetworkMode   = "docker_container_network_mode"
+
 	// probe/kubernetes
+	KubernetesPodContainerIDs      = "kubernetes_pod_container_ids"
 	KubernetesName                 = "kubernetes_name"
 	KubernetesNamespace            = "kubernetes_namespace"
 	KubernetesCreated              = "kubernetes_created"

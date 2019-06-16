@@ -176,20 +176,20 @@ type Reporter struct {
 	pipes           controls.PipeClient
 	probeID         string
 	probe           *probe.Probe
-	hostID          string
+	hostname        string
 	handlerRegistry *controls.HandlerRegistry
 	nodeName        string
 	kubeletPort     uint
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe, handlerRegistry *controls.HandlerRegistry, nodeName string, kubeletPort uint) *Reporter {
+func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostname string, probe *probe.Probe, handlerRegistry *controls.HandlerRegistry, nodeName string, kubeletPort uint) *Reporter {
 	reporter := &Reporter{
 		client:          client,
 		pipes:           pipes,
 		probeID:         probeID,
 		probe:           probe,
-		hostID:          hostID,
+		hostname:        hostname,
 		handlerRegistry: handlerRegistry,
 		nodeName:        nodeName,
 		kubeletPort:     kubeletPort,
@@ -216,7 +216,7 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 	case ADD:
 		rpt := report.MakeReport()
 		rpt.Shortcut = true
-		rpt.Pod.AddNode(pod.GetNode(r.probeID))
+		rpt.Pod.AddNode(pod.GetNode(r.probeID).WithLatests(map[string]string{report.Host: r.hostname}))
 		r.probe.Publish(rpt)
 	case DELETE:
 		rpt := report.MakeReport()
@@ -625,7 +625,7 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 		for _, selector := range selectors {
 			selector(p)
 		}
-		pods.AddNode(p.GetNode(r.probeID))
+		pods.AddNode(p.GetNode(r.probeID).WithLatests(map[string]string{report.Host: r.hostname}))
 		return nil
 	})
 	return pods, err

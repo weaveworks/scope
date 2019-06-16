@@ -4,8 +4,12 @@ import (
 	"net"
 	"strings"
 
-	humanize "github.com/dustin/go-humanize"
+	"github.com/dustin/go-humanize"
 	docker_client "github.com/fsouza/go-dockerclient"
+
+	"strconv"
+
+	"os/exec"
 
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/host"
@@ -149,16 +153,16 @@ var (
 // Reporter generate Reports containing Container and ContainerImage topologies
 type Reporter struct {
 	registry Registry
-	hostID   string
+	hostname string
 	probeID  string
 	probe    *probe.Probe
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(registry Registry, hostID string, probeID string, probe *probe.Probe) *Reporter {
+func NewReporter(registry Registry, hostname string, probeID string, probe *probe.Probe) *Reporter {
 	reporter := &Reporter{
 		registry: registry,
-		hostID:   hostID,
+		hostname: hostname,
 		probeID:  probeID,
 		probe:    probe,
 	}
@@ -215,16 +219,28 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	metadata := map[string]string{report.ControlProbeID: r.probeID}
 	nodes := []report.Node{}
 	r.registry.WalkContainers(func(c Container) {
-		nodes = append(nodes, c.GetNode().WithLatests(metadata))
-	})
 
+		var childPidsString []string
+		childPids := extractChildPids(c.PID())
+
+		for _, chpid := range childPids {
+			childPidsString = append(childPidsString, strconv.Itoa(chpid))
+		}
+
+		nodes = append(nodes, c.GetNode().WithLatests(metadata).WithLatests(map[string]string{
+			report.PID:      strconv.Itoa(c.PID()),
+			report.ChildPID: report.MakeChildPIDs(childPidsString),
+			ContainerID:     c.ID(),
+			report.Host:     r.hostname,
+		}))
+	})
 	// Copy the IP addresses from other containers where they share network
 	// namespaces & deal with containers in the host net namespace.  This
 	// is recursive to deal with people who decide to be clever.
 	{
 		hostNetworkInfo := report.MakeSets()
 		if hostIPs, err := getLocalIPs(); err == nil {
-			hostIPsWithScopes := addScopeToIPs(r.hostID, hostIPs)
+			hostIPsWithScopes := addScopeToIPs(r.hostname, hostIPs)
 			hostNetworkInfo = hostNetworkInfo.
 				Add(ContainerIPs, report.MakeStringSet(hostIPs...)).
 				Add(ContainerIPsWithScopes, report.MakeStringSet(hostIPsWithScopes...))
@@ -305,7 +321,7 @@ func (r *Reporter) overlayTopology() report.Topology {
 	})
 	// Add both local and global networks to the LocalNetworks Set
 	// since we treat container IPs as local
-	node := report.MakeNode(report.MakeOverlayNodeID(report.DockerOverlayPeerPrefix, r.hostID)).WithSets(
+	node := report.MakeNode(report.MakeOverlayNodeID(report.DockerOverlayPeerPrefix, r.hostname)).WithSets(
 		report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(subnets...)))
 	t := report.MakeTopology()
 	t.AddNode(node)
@@ -320,4 +336,20 @@ func (r *Reporter) swarmServiceTopology() report.Topology {
 // ugly and isn't necessary, so we should strip it off
 func trimImageID(id string) string {
 	return strings.TrimPrefix(id, "sha256:")
+}
+
+func extractChildPids(pid int) []int {
+	childPids, err := exec.Command("ps", "--no-headers", "-o", "pid", "--ppid", strconv.Itoa(pid)).Output()
+	if err != nil {
+		return nil
+	}
+
+	var res []int
+	childPidsStr := strings.TrimRight(strings.TrimLeft(string(childPids), " "), "\n")
+	for _, cpid := range strings.Split(string(childPidsStr), " ") {
+		cpidInt, _ := strconv.Atoi(cpid)
+		res = append(res, cpidInt)
+
+	}
+	return res
 }

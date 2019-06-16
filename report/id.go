@@ -79,6 +79,10 @@ func MakeECSServiceNodeID(cluster, serviceName string) string {
 	return cluster + ScopeDelim + serviceName
 }
 
+func MakeChildPIDs(childPids []string) string {
+	return strings.Join(childPids, ScopeDelim)
+}
+
 var (
 	// MakeHostNodeID produces a host node ID from its composite parts.
 	MakeHostNodeID = makeSingleComponentID("host")

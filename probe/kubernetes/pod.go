@@ -13,6 +13,7 @@ const (
 	State           = report.KubernetesState
 	IsInHostNetwork = report.KubernetesIsInHostNetwork
 	RestartCount    = report.KubernetesRestartCount
+	PodContainerIDs = report.KubernetesPodContainerIDs
 )
 
 // Pod states we handle specially
@@ -29,6 +30,7 @@ type Pod interface {
 	GetNode(probeID string) report.Node
 	RestartCount() uint
 	ContainerNames() []string
+	ContainerIDs() []string
 }
 
 type pod struct {
@@ -100,6 +102,7 @@ func (p *pod) GetNode(probeID string) report.Node {
 
 	if p.Pod.Spec.HostNetwork {
 		latests[IsInHostNetwork] = "true"
+		latests[PodContainerIDs] = report.MakeChildPIDs(p.ContainerIDs())
 	}
 
 	return p.MetaNode(report.MakePodNodeID(p.UID())).WithLatests(latests).
@@ -113,4 +116,12 @@ func (p *pod) ContainerNames() []string {
 		containerNames = append(containerNames, c.Name)
 	}
 	return containerNames
+}
+
+func (p *pod) ContainerIDs() []string {
+	containerStatuses := make([]string, 0, len(p.Pod.Status.ContainerStatuses))
+	for _, c := range p.Pod.Status.ContainerStatuses {
+		containerStatuses = append(containerStatuses, c.ContainerID)
+	}
+	return containerStatuses
 }
