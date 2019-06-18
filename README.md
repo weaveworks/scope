@@ -32,6 +32,11 @@ Interact with your containers directly: pause, restart, and stop containers. Lau
 
 Add custom details or interactions for your hosts, containers, and/or processes by creating Scope plugins. Or, just choose from some that others have already written at the GitHub [Weaveworks Scope Plugins](https://github.com/weaveworks-plugins/) organization.
 
+## Who is using Flux in production
+
+- [MayaData](https://mayadata.io/) in [MayaOnline](https://mayadata.io/products)
+- [Weaveworks](https://www.weave.works/) in [Weave Cloud](https://cloud.weave.works)
+
 ## <a name="getting-started"></a>Getting Started
 
 ```console
