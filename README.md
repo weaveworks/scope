@@ -34,7 +34,7 @@ Add custom details or interactions for your hosts, containers, and/or processes 
 
 ## Who is using Scope in production
 
-- [MayaData](https://mayadata.io/) in [MayaOnline](https://mayadata.io/products)
+- [MayaData](https://mayadata.io/) in [MayaOnline / MayaOnPrem](https://mayadata.io/products)
 - [Weaveworks](https://www.weave.works/) in [Weave Cloud](https://cloud.weave.works)
 
 ## <a name="getting-started"></a>Getting Started
