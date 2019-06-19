@@ -38,6 +38,8 @@ Add custom details or interactions for your hosts, containers, and/or processes 
 - [MayaData](https://mayadata.io/) in [MayaOnline / MayaOnPrem](https://mayadata.io/products)
 - [Weaveworks](https://www.weave.works/) in [Weave Cloud](https://cloud.weave.works)
 
+If you would like to see your name added, let us know on Slack, or send a PR please.
+
 ## <a name="getting-started"></a>Getting Started
 
 ```console
