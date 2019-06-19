@@ -34,6 +34,7 @@ Add custom details or interactions for your hosts, containers, and/or processes 
 
 ## Who is using Scope in production
 
+- [Apester](https://apester.com/)
 - [MayaData](https://mayadata.io/) in [MayaOnline / MayaOnPrem](https://mayadata.io/products)
 - [Weaveworks](https://www.weave.works/) in [Weave Cloud](https://cloud.weave.works)
 
