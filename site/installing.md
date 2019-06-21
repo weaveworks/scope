@@ -243,7 +243,7 @@ The link below will launch a sample app using a Cloudformation template, but you
 
 [![](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home#/stacks/new?templateURL=https:%2F%2Fs3.amazonaws.com%2Fweaveworks-cfn-public%2Fintegrations%2Fecs-identiorca.json)
 
-For step by step instructions on how to configure the stack, see: [Install Weave to AWS with One-Click](https://www.weave.works/docs/cloud/latest/install/ec2-no-kubernetes/)
+For step by step instructions on how to configure the stack, see: [Install Weave to AWS with One-Click](https://www.weave.works/docs/cloud/latest/install/ecs-no-kubernetes/)
 
 ### <a name="minimesos"></a>minimesos
 
