@@ -7,6 +7,7 @@ import (
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -66,6 +67,39 @@ var (
 	}
 )
 
+type mockWalker struct {
+	processes []process.Process
+}
+
+func (m *mockWalker) Walk(f func(process.Process, process.Process)) error {
+	for _, p := range m.processes {
+		f(p, process.Process{})
+	}
+	return nil
+}
+
+var processes = []process.Process{
+	{PID: 1, PPID: 0, Name: "init"},
+	{PID: 2, PPID: 1, Name: "bash"},
+	{PID: 3, PPID: 1, Name: "apache", Threads: 2},
+	{PID: 4, PPID: 2, Name: "ping", Cmdline: "ping foo.bar.local"},
+	{PID: 5, PPID: 1, Cmdline: "tail -f /var/log/syslog"},
+	{PID: 6, PPID: 2, Cmdline: "/usr/bin/openshift-router"},
+	{PID: 7, PPID: 6, Cmdline: "/usr/sbin/haproxy"},
+	{PID: 8, PPID: 7, Cmdline: "touch /var/lib/haproxy/run/haproxy.pid"},
+	{PID: 9, PPID: 8, Cmdline: "process 9"},
+	{PID: 10, PPID: 9, Cmdline: "process 10"},
+	{PID: 11, PPID: 10, Cmdline: "process 11"},
+	{PID: 12, PPID: 11, Cmdline: "process 12"},
+	{PID: 13, PPID: 12, Cmdline: "process 13"},
+	{PID: 14, PPID: 13, Cmdline: "process 14"},
+	{PID: 15, PPID: 14, Cmdline: "process 15"},
+	{PID: 16, PPID: 15, Cmdline: "process 16"},
+	{PID: 17, PPID: 16, Cmdline: "process 17"},
+	{PID: 18, PPID: 17, Cmdline: "process 18"},
+	{PID: 19, PPID: 18, Cmdline: "process 19"},
+}
+
 func TestReporter(t *testing.T) {
 	var (
 		controlProbeID = "a1b2c3d4"
@@ -73,7 +107,7 @@ func TestReporter(t *testing.T) {
 	)
 
 	containerImageNodeID := report.MakeContainerImageNodeID(imageID)
-	rpt, err := docker.NewReporter(mockRegistryInstance, "host1", controlProbeID, nil).Report()
+	rpt, err := docker.NewReporter(mockRegistryInstance, "host1", controlProbeID, nil, &mockWalker{processes: processes}).Report()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -89,6 +123,8 @@ func TestReporter(t *testing.T) {
 		for k, want := range map[string]string{
 			docker.ContainerID:    "ping",
 			docker.ContainerName:  "pong",
+			report.PID:            "2",
+			report.ChildPID:       "4;6;7;8;9;10;11;12;13;14;15",
 			docker.ImageID:        imageID,
 			report.ControlProbeID: controlProbeID,
 		} {

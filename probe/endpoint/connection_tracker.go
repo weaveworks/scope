@@ -159,9 +159,8 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 // getInitialState runs conntrack and proc parsing synchronously only
 // once to initialize ebpfTracker
 func (t *connectionTracker) getInitialState() {
-	var processCache *process.CachingWalker
 	walker := process.NewWalker(t.conf.ProcRoot, true)
-	processCache = process.NewCachingWalker(walker)
+	processCache := process.NewCachingWalker(walker)
 	processCache.Tick()
 
 	scanner := procspy.NewSyncConnectionScanner(processCache, t.conf.SpyProcs)

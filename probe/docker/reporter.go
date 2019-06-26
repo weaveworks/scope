@@ -9,10 +9,9 @@ import (
 
 	"strconv"
 
-	"os/exec"
-
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/host"
+	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -152,19 +151,21 @@ var (
 
 // Reporter generate Reports containing Container and ContainerImage topologies
 type Reporter struct {
-	registry Registry
-	hostname string
-	probeID  string
-	probe    *probe.Probe
+	registry      Registry
+	hostname      string
+	probeID       string
+	probe         *probe.Probe
+	processWalker process.Walker
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(registry Registry, hostname string, probeID string, probe *probe.Probe) *Reporter {
+func NewReporter(registry Registry, hostname string, probeID string, probe *probe.Probe, processWalker process.Walker) *Reporter {
 	reporter := &Reporter{
-		registry: registry,
-		hostname: hostname,
-		probeID:  probeID,
-		probe:    probe,
+		registry:      registry,
+		hostname:      hostname,
+		probeID:       probeID,
+		probe:         probe,
+		processWalker: processWalker,
 	}
 	registry.WatchContainerUpdates(reporter.ContainerUpdated)
 	return reporter
@@ -220,8 +221,13 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	nodes := []report.Node{}
 	r.registry.WalkContainers(func(c Container) {
 
+		ppidToPid := make(map[int][]int)
+		r.processWalker.Walk(func(p process.Process, _ process.Process) {
+			ppidToPid[p.PPID] = append(ppidToPid[p.PPID], p.PID)
+		})
+
 		var childPidsString []string
-		childPids := extractChildPids(c.PID())
+		childPids := extractChildPids(c.PID(), ppidToPid, 10)
 
 		for _, chpid := range childPids {
 			childPidsString = append(childPidsString, strconv.Itoa(chpid))
@@ -285,6 +291,19 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	return result
 }
 
+func extractChildPids(ppid int, ppidToPid map[int][]int, depth int) []int {
+	var res []int
+	if depth <= 1 {
+		return ppidToPid[ppid]
+	} else {
+		for _, pid := range ppidToPid[ppid] {
+			res = append(res, pid)
+			res = append(res, extractChildPids(pid, ppidToPid, depth-1)...)
+		}
+	}
+	return res
+}
+
 func (r *Reporter) containerImageTopology() report.Topology {
 	result := report.MakeTopology().
 		WithMetadataTemplates(ContainerImageMetadataTemplates).
@@ -336,20 +355,4 @@ func (r *Reporter) swarmServiceTopology() report.Topology {
 // ugly and isn't necessary, so we should strip it off
 func trimImageID(id string) string {
 	return strings.TrimPrefix(id, "sha256:")
-}
-
-func extractChildPids(pid int) []int {
-	childPids, err := exec.Command("ps", "--no-headers", "-o", "pid", "--ppid", strconv.Itoa(pid)).Output()
-	if err != nil {
-		return nil
-	}
-
-	var res []int
-	childPidsStr := strings.TrimRight(strings.TrimLeft(string(childPids), " "), "\n")
-	for _, cpid := range strings.Split(string(childPidsStr), " ") {
-		cpidInt, _ := strconv.Atoi(cpid)
-		res = append(res, cpidInt)
-
-	}
-	return res
 }

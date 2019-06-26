@@ -287,7 +287,8 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 			if flags.procEnabled {
 				p.AddTagger(docker.NewTagger(registry, processCache))
 			}
-			p.AddReporter(docker.NewReporter(registry, hostName, probeID, p))
+
+			p.AddReporter(docker.NewReporter(registry, hostName, probeID, p, processCache))
 		} else {
 			log.Errorf("Docker: failed to start registry: %v", err)
 		}
