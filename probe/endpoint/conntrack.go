@@ -96,7 +96,7 @@ func (c *conntrackWalker) clearFlows() {
 	c.Lock()
 	defer c.Unlock()
 
-	c.activeFlows = map[uint32]conntrack.Conn{}
+	c.activeFlows = make(map[uint32]conntrack.Conn)
 }
 
 func (c *conntrackWalker) needsDstNat(f conntrack.Conn) bool {
@@ -125,7 +125,10 @@ func (c *conntrackWalker) run() {
 	}
 	c.Unlock()
 
-	events, stop, err := conntrack.FollowSize(c.bufferSize, conntrack.NF_NETLINK_CONNTRACK_UPDATE|conntrack.NF_NETLINK_CONNTRACK_DESTROY)
+	events, stop, err := conntrack.FollowSize(c.bufferSize, conntrack.NF_NETLINK_CONNTRACK_NEW|
+		conntrack.NF_NETLINK_CONNTRACK_UPDATE|
+		conntrack.NF_NETLINK_CONNTRACK_DESTROY)
+
 	if err != nil {
 		log.Errorf("conntrack Follow error: %v", err)
 		return
@@ -162,14 +165,13 @@ func (c *conntrackWalker) handleFlow(f conntrack.Conn) {
 	// Ignore flows for which we never saw an update; they are likely
 	// incomplete or wrong.  See #1462.
 	switch {
-	case f.MsgType == conntrack.NfctMsgUpdate:
+	case f.MsgType == conntrack.NfctMsgUpdate, f.MsgType == conntrack.NfctMsgNew:
 		if c.isConnectionInitiator(f) || c.isConnectionEstablished(f) {
 			c.activeFlows[f.CtId] = f
 		}
+
 	case f.MsgType == conntrack.NfctMsgDestroy:
-		if _, ok := c.activeFlows[f.CtId]; ok {
-			delete(c.activeFlows, f.CtId)
-		}
+		c.activeFlows[f.CtId] = f
 	}
 }
 
@@ -181,4 +183,5 @@ func (c *conntrackWalker) walkFlows(f func(conntrack.Conn, bool)) {
 	for _, flow := range c.activeFlows {
 		f(flow, true)
 	}
+	c.activeFlows = make(map[uint32]conntrack.Conn)
 }
