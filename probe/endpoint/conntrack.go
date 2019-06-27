@@ -126,8 +126,7 @@ func (c *conntrackWalker) run() {
 	c.Unlock()
 
 	events, stop, err := conntrack.FollowSize(c.bufferSize, conntrack.NF_NETLINK_CONNTRACK_NEW|
-		conntrack.NF_NETLINK_CONNTRACK_UPDATE|
-		conntrack.NF_NETLINK_CONNTRACK_DESTROY)
+		conntrack.NF_NETLINK_CONNTRACK_UPDATE)
 
 	if err != nil {
 		log.Errorf("conntrack Follow error: %v", err)
@@ -170,8 +169,6 @@ func (c *conntrackWalker) handleFlow(f conntrack.Conn) {
 			c.activeFlows[f.CtId] = f
 		}
 
-	case f.MsgType == conntrack.NfctMsgDestroy:
-		c.activeFlows[f.CtId] = f
 	}
 }
 
