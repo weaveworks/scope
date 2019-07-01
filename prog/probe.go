@@ -30,6 +30,7 @@ import (
 	"github.com/weaveworks/scope/probe/cri"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/endpoint"
+	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
@@ -220,10 +221,10 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	var processCache *process.CachingWalker
 
 	if flags.kubernetesRole != kubernetesRoleCluster {
-		//hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients, handlerRegistry)
-		//defer hostReporter.Stop()
-		//p.AddReporter(hostReporter)
-		//p.AddTagger(host.NewTagger(hostID))
+		hostReporter := host.NewReporter(hostID, hostName, probeID, version, clients, handlerRegistry)
+		defer hostReporter.Stop()
+		p.AddReporter(hostReporter)
+		p.AddTagger(host.NewTagger(hostID))
 
 		if flags.procEnabled {
 			processCache = process.NewCachingWalker(process.NewWalker(flags.procRoot, false))
