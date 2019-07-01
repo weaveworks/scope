@@ -86,7 +86,7 @@ const METRIC_SEARCHES = [
       <b>CPU</b>
       {' '}
 greater than 4%
-           </span>,
+    </span>,
     term: 'cpu > 4%'
   },
   {
@@ -94,7 +94,7 @@ greater than 4%
       <b>Memory</b>
       {' '}
 less than 10 megabytes
-           </span>,
+    </span>,
     term: 'memory < 10mb'
   },
 ];
