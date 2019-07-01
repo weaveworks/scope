@@ -290,62 +290,63 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
-	daemonSetTopology, daemonSets, err := r.daemonSetTopology()
+	//daemonSetTopology, daemonSets, err := r.daemonSetTopology()
+	//if err != nil {
+	//	return result, err
+	//}
+	//statefulSetTopology, statefulSets, err := r.statefulSetTopology()
+	//if err != nil {
+	//	return result, err
+	//}
+	//cronJobTopology, cronJobs, err := r.cronJobTopology()
+	//if err != nil {
+	//	return result, err
+	//}
+	//deploymentTopology, deployments, err := r.deploymentTopology()
+	//if err != nil {
+	//	return result, err
+	//}
+	podTopology, err := r.podTopology(services)
 	if err != nil {
 		return result, err
 	}
-	statefulSetTopology, statefulSets, err := r.statefulSetTopology()
-	if err != nil {
-		return result, err
-	}
-	cronJobTopology, cronJobs, err := r.cronJobTopology()
-	if err != nil {
-		return result, err
-	}
-	deploymentTopology, deployments, err := r.deploymentTopology()
-	if err != nil {
-		return result, err
-	}
-	podTopology, err := r.podTopology(services, deployments, daemonSets, statefulSets, cronJobs)
-	if err != nil {
-		return result, err
-	}
-	namespaceTopology, err := r.namespaceTopology()
-	if err != nil {
-		return result, err
-	}
-	persistentVolumeTopology, _, err := r.persistentVolumeTopology()
-	if err != nil {
-		return result, err
-	}
-	persistentVolumeClaimTopology, _, err := r.persistentVolumeClaimTopology()
-	if err != nil {
-		return result, err
-	}
-	storageClassTopology, _, err := r.storageClassTopology()
-	if err != nil {
-		return result, err
-	}
-	volumeSnapshotTopology, _, err := r.volumeSnapshotTopology()
-	if err != nil {
-		return result, err
-	}
-	volumeSnapshotDataTopology, _, err := r.volumeSnapshotDataTopology()
-	if err != nil {
-		return result, err
-	}
+
+	//namespaceTopology, err := r.namespaceTopology()
+	//if err != nil {
+	//	return result, err
+	//}
+	//persistentVolumeTopology, _, err := r.persistentVolumeTopology()
+	//if err != nil {
+	//	return result, err
+	//}
+	//persistentVolumeClaimTopology, _, err := r.persistentVolumeClaimTopology()
+	//if err != nil {
+	//	return result, err
+	//}
+	//storageClassTopology, _, err := r.storageClassTopology()
+	//if err != nil {
+	//	return result, err
+	//}
+	//volumeSnapshotTopology, _, err := r.volumeSnapshotTopology()
+	//if err != nil {
+	//	return result, err
+	//}
+	//volumeSnapshotDataTopology, _, err := r.volumeSnapshotDataTopology()
+	//if err != nil {
+	//	return result, err
+	//}
 	result.Pod = result.Pod.Merge(podTopology)
 	result.Service = result.Service.Merge(serviceTopology)
-	result.DaemonSet = result.DaemonSet.Merge(daemonSetTopology)
-	result.StatefulSet = result.StatefulSet.Merge(statefulSetTopology)
-	result.CronJob = result.CronJob.Merge(cronJobTopology)
-	result.Deployment = result.Deployment.Merge(deploymentTopology)
-	result.Namespace = result.Namespace.Merge(namespaceTopology)
-	result.PersistentVolume = result.PersistentVolume.Merge(persistentVolumeTopology)
-	result.PersistentVolumeClaim = result.PersistentVolumeClaim.Merge(persistentVolumeClaimTopology)
-	result.StorageClass = result.StorageClass.Merge(storageClassTopology)
-	result.VolumeSnapshot = result.VolumeSnapshot.Merge(volumeSnapshotTopology)
-	result.VolumeSnapshotData = result.VolumeSnapshotData.Merge(volumeSnapshotDataTopology)
+	//result.DaemonSet = result.DaemonSet.Merge(daemonSetTopology)
+	//result.StatefulSet = result.StatefulSet.Merge(statefulSetTopology)
+	//result.CronJob = result.CronJob.Merge(cronJobTopology)
+	//result.Deployment = result.Deployment.Merge(deploymentTopology)
+	//result.Namespace = result.Namespace.Merge(namespaceTopology)
+	//result.PersistentVolume = result.PersistentVolume.Merge(persistentVolumeTopology)
+	//result.PersistentVolumeClaim = result.PersistentVolumeClaim.Merge(persistentVolumeClaimTopology)
+	//result.StorageClass = result.StorageClass.Merge(storageClassTopology)
+	//result.VolumeSnapshot = result.VolumeSnapshot.Merge(volumeSnapshotTopology)
+	//result.VolumeSnapshotData = result.VolumeSnapshotData.Merge(volumeSnapshotDataTopology)
 	return result, nil
 }
 
@@ -523,7 +524,7 @@ func match(namespace string, selector labels.Selector, topology, id string) func
 	}
 }
 
-func (r *Reporter) podTopology(services []Service, deployments []Deployment, daemonSets []DaemonSet, statefulSets []StatefulSet, cronJobs []CronJob) (report.Topology, error) {
+func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
 			WithMetadataTemplates(PodMetadataTemplates).
@@ -531,18 +532,18 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 			WithTableTemplates(TableTemplates)
 		selectors = []func(labelledChild){}
 	)
-	pods.Controls.AddControl(report.Control{
-		ID:    GetLogs,
-		Human: "Get logs",
-		Icon:  "fa fa-desktop",
-		Rank:  0,
-	})
-	pods.Controls.AddControl(report.Control{
-		ID:    DeletePod,
-		Human: "Delete",
-		Icon:  "far fa-trash-alt",
-		Rank:  1,
-	})
+	//pods.Controls.AddControl(report.Control{
+	//	ID:    GetLogs,
+	//	Human: "Get logs",
+	//	Icon:  "fa fa-desktop",
+	//	Rank:  0,
+	//})
+	//pods.Controls.AddControl(report.Control{
+	//	ID:    DeletePod,
+	//	Human: "Delete",
+	//	Icon:  "far fa-trash-alt",
+	//	Rank:  1,
+	//})
 	for _, service := range services {
 		selectors = append(selectors, match(
 			service.Namespace(),
@@ -551,56 +552,56 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 			report.MakeServiceNodeID(service.UID()),
 		))
 	}
-	for _, deployment := range deployments {
-		selector, err := deployment.Selector()
-		if err != nil {
-			return pods, err
-		}
-		selectors = append(selectors, match(
-			deployment.Namespace(),
-			selector,
-			report.Deployment,
-			report.MakeDeploymentNodeID(deployment.UID()),
-		))
-	}
-	for _, daemonSet := range daemonSets {
-		selector, err := daemonSet.Selector()
-		if err != nil {
-			return pods, err
-		}
-		selectors = append(selectors, match(
-			daemonSet.Namespace(),
-			selector,
-			report.DaemonSet,
-			report.MakeDaemonSetNodeID(daemonSet.UID()),
-		))
-	}
-	for _, statefulSet := range statefulSets {
-		selector, err := statefulSet.Selector()
-		if err != nil {
-			return pods, err
-		}
-		selectors = append(selectors, match(
-			statefulSet.Namespace(),
-			selector,
-			report.StatefulSet,
-			report.MakeStatefulSetNodeID(statefulSet.UID()),
-		))
-	}
-	for _, cronJob := range cronJobs {
-		cronJobSelectors, err := cronJob.Selectors()
-		if err != nil {
-			return pods, err
-		}
-		for _, selector := range cronJobSelectors {
-			selectors = append(selectors, match(
-				cronJob.Namespace(),
-				selector,
-				report.CronJob,
-				report.MakeCronJobNodeID(cronJob.UID()),
-			))
-		}
-	}
+	//for _, deployment := range deployments {
+	//	selector, err := deployment.Selector()
+	//	if err != nil {
+	//		return pods, err
+	//	}
+	//	selectors = append(selectors, match(
+	//		deployment.Namespace(),
+	//		selector,
+	//		report.Deployment,
+	//		report.MakeDeploymentNodeID(deployment.UID()),
+	//	))
+	//}
+	//for _, daemonSet := range daemonSets {
+	//	selector, err := daemonSet.Selector()
+	//	if err != nil {
+	//		return pods, err
+	//	}
+	//	selectors = append(selectors, match(
+	//		daemonSet.Namespace(),
+	//		selector,
+	//		report.DaemonSet,
+	//		report.MakeDaemonSetNodeID(daemonSet.UID()),
+	//	))
+	//}
+	//for _, statefulSet := range statefulSets {
+	//	selector, err := statefulSet.Selector()
+	//	if err != nil {
+	//		return pods, err
+	//	}
+	//	selectors = append(selectors, match(
+	//		statefulSet.Namespace(),
+	//		selector,
+	//		report.StatefulSet,
+	//		report.MakeStatefulSetNodeID(statefulSet.UID()),
+	//	))
+	//}
+	//for _, cronJob := range cronJobs {
+	//	cronJobSelectors, err := cronJob.Selectors()
+	//	if err != nil {
+	//		return pods, err
+	//	}
+	//	for _, selector := range cronJobSelectors {
+	//		selectors = append(selectors, match(
+	//			cronJob.Namespace(),
+	//			selector,
+	//			report.CronJob,
+	//			report.MakeCronJobNodeID(cronJob.UID()),
+	//		))
+	//	}
+	//}
 
 	var localPodUIDs map[string]struct{}
 	if r.nodeName == "" && r.kubeletPort != 0 {
