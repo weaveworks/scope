@@ -282,8 +282,8 @@ func setupFlags(flags *flags) {
 	// We need to know how to parse them, but they are mainly interpreted by the entrypoint script.
 	// They are also here so they are included in usage, and the probe uses them to decide if to
 	// publish to localhost.
-	flag.BoolVar(&flags.noApp, "no-app", false, "Don't run the app.")
-	flag.BoolVar(&flags.probeOnly, "probe-only", false, "Only run the probe.")
+	flag.BoolVar(&flags.noApp, "no-app", true, "Don't run the app.")
+	flag.BoolVar(&flags.probeOnly, "probe-only", true, "Only run the probe.")
 	flag.Bool("no-probe", false, "Don't run the probe.")
 	flag.Bool("app-only", false, "Only run the app.")
 
@@ -295,11 +295,11 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.token, probeTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
-	flag.DurationVar(&flags.probe.publishInterval, "probe.publish.interval", 3*time.Second, "publish (output) interval")
-	flag.DurationVar(&flags.probe.spyInterval, "probe.spy.interval", time.Second, "spy (scan) interval")
+	flag.DurationVar(&flags.probe.publishInterval, "probe.publish.interval", 10*time.Second, "publish (output) interval")
+	flag.DurationVar(&flags.probe.spyInterval, "probe.spy.interval", 5*time.Second, "spy (scan) interval")
 	flag.StringVar(&flags.probe.pluginsRoot, "probe.plugins.root", "/var/run/scope/plugins", "Root directory to search for plugins")
-	flag.BoolVar(&flags.probe.noControls, "probe.no-controls", false, "Disable controls (e.g. start/stop containers, terminals, logs ...)")
-	flag.BoolVar(&flags.probe.noCommandLineArguments, "probe.omit.cmd-args", false, "Disable collection of command-line arguments")
+	flag.BoolVar(&flags.probe.noControls, "probe.no-controls", true, "Disable controls (e.g. start/stop containers, terminals, logs ...)")
+	flag.BoolVar(&flags.probe.noCommandLineArguments, "probe.omit.cmd-args", true, "Disable collection of command-line arguments")
 	flag.BoolVar(&flags.probe.noEnvironmentVariables, "probe.omit.env-vars", true, "Disable collection of environment variables")
 
 	flag.BoolVar(&flags.probe.insecure, "probe.insecure", false, "(SSL) explicitly allow \"insecure\" SSL connections and transfers")
@@ -313,7 +313,7 @@ func setupFlags(flags *flags) {
 	flag.BoolVar(&flags.probe.spyProcs, "probe.proc.spy", true, "associate endpoints with processes (needs root)")
 	flag.StringVar(&flags.probe.procRoot, "probe.proc.root", "/proc", "location of the proc filesystem")
 	flag.BoolVar(&flags.probe.procEnabled, "probe.processes", true, "produce process topology & include procspied connections")
-	flag.BoolVar(&flags.probe.useEbpfConn, "probe.ebpf.connections", true, "enable connection tracking with eBPF")
+	flag.BoolVar(&flags.probe.useEbpfConn, "probe.ebpf.connections", false, "enable connection tracking with eBPF")
 
 	// Docker
 	flag.BoolVar(&flags.probe.dockerEnabled, "probe.docker", false, "collect Docker-related attributes for processes")
