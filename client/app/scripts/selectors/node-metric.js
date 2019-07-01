@@ -3,7 +3,7 @@ import { createMapSelector, createListSelector } from 'reselect-map';
 import { fromJS, Map as makeMap, List as makeList } from 'immutable';
 
 import { modulo } from '../utils/math-utils';
-import { isGraphViewModeSelector, isResourceViewModeSelector } from '../selectors/topology';
+import { isGraphViewModeSelector, isResourceViewModeSelector } from './topology';
 import { RESOURCE_VIEW_METRICS } from '../constants/resources';
 
 
@@ -93,8 +93,7 @@ const selectedMetricIdSelector = createSelector(
     availableMetricsSelector,
     selectedMetricTypeSelector,
   ],
-  (availableMetrics, metricType) =>
-    (availableMetrics.find(m => m.get('label') === metricType) || makeMap()).get('id')
+  (availableMetrics, metricType) => (availableMetrics.find(m => m.get('label') === metricType) || makeMap()).get('id')
 );
 
 const topCardNodeSelector = createSelector(

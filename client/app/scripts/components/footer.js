@@ -42,15 +42,19 @@ class Footer extends React.Component {
     return (
       <div className="footer">
         <div className="footer-status">
-          {versionUpdate &&
+          {versionUpdate
+            && (
             <a
               className="footer-versionupdate"
               title={versionUpdateTitle}
               href={versionUpdate.get('downloadUrl')}
               target="_blank"
               rel="noopener noreferrer">
-              Update available: {versionUpdate.get('version')}
+              Update available:
+              {' '}
+              {versionUpdate.get('version')}
             </a>
+            )
           }
           <span className="footer-label">Version</span>
           {version || '...'}

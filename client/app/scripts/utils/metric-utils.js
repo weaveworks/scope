@@ -57,12 +57,12 @@ export function getMetricColor(metric) {
     : metric && metric.get('id');
   if (/mem/.test(metricId)) {
     return 'steelBlue';
-  } else if (/cpu/.test(metricId)) {
+  } if (/cpu/.test(metricId)) {
     return colors('cpu').toString();
-  } else if (/files/.test(metricId)) {
+  } if (/files/.test(metricId)) {
     // purple
     return '#9467bd';
-  } else if (/load/.test(metricId)) {
+  } if (/load/.test(metricId)) {
     return colors('load').toString();
   }
   return 'steelBlue';

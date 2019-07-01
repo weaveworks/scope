@@ -1,7 +1,9 @@
 /* eslint-disable import/no-webpack-loader-syntax, import/no-unresolved */
 import debug from 'debug';
 import moment from 'moment';
-import { size, each, includes, isEqual } from 'lodash';
+import {
+  size, each, includes, isEqual
+} from 'lodash';
 import {
   fromJS,
   is as isDeepEqual,

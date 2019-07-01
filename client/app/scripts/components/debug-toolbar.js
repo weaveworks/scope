@@ -1,7 +1,9 @@
 /* eslint react/jsx-no-bind: "off" */
 import React from 'react';
 import { connect } from 'react-redux';
-import { sampleSize, sample, random, range, flattenDeep, times } from 'lodash';
+import {
+  sampleSize, sample, random, range, flattenDeep, times
+} from 'lodash';
 import { fromJS, Set as makeSet } from 'immutable';
 import { hsl } from 'd3-color';
 import debug from 'debug';
@@ -311,7 +313,8 @@ class DebugToolbar extends React.Component {
           <button onClick={this.toggleColors}>toggle</button>
         </div>
 
-        {this.state.showColors &&
+        {this.state.showColors
+        && (
         <table>
           <tbody>
             {LABEL_PREFIXES.map(r => (
@@ -322,7 +325,8 @@ class DebugToolbar extends React.Component {
               </tr>
             ))}
           </tbody>
-        </table>}
+        </table>
+        )}
 
         {this.state.showColors && [getNodeColor, getNodeColorDark].map(fn => (
           <table key={fn}>

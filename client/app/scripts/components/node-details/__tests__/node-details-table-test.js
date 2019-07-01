@@ -70,8 +70,7 @@ describe('NodeDetailsTable', () => {
     // (that is, first by row and then by column), the indexes we are interested in are of the
     // form columnIndex + n * columns.length, where n >= 0. Therefore we take only the values
     // at the index which divided by columns.length gives a reminder columnIndex.
-    const filteredValues = values.filter((element, index) =>
-      index % columns.length === columnIndex);
+    const filteredValues = values.filter((element, index) => index % columns.length === columnIndex);
     // Array comparison
     expect(filteredValues).toEqual(expectedValues);
   }

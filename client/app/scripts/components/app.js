@@ -210,19 +210,23 @@ class App extends React.Component {
 
           {showingTroubleshootingMenu && <TroubleshootingMenu />}
 
-          {showingDetails && <Details
+          {showingDetails && (
+          <Details
             renderNodeDetailsExtras={this.props.renderNodeDetailsExtras}
-          />}
+          />
+          )}
 
           <div className="header">
             {timeTravelSupported && this.props.renderTimeTravel()}
 
             <div className="selectors">
               <div className="logo">
-                {!isIframe &&
+                {!isIframe
+                  && (
                   <svg width="100%" height="100%" viewBox="0 0 1089 217">
                     <Logo />
                   </svg>
+                  )
                 }
               </div>
               <Search />

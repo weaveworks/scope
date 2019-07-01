@@ -1,4 +1,6 @@
-import { isPlainObject, mapValues, isEmpty, omitBy } from 'lodash';
+import {
+  isPlainObject, mapValues, isEmpty, omitBy
+} from 'lodash';
 
 
 export function hashDifferenceDeep(A, B) {

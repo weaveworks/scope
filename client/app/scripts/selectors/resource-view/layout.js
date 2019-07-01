@@ -22,9 +22,9 @@ const log = debug('scope:nodes-layout');
 // Used for ordering the resource nodes.
 const resourceNodeConsumptionComparator = (node) => {
   const metricSummary = node.get('metricSummary');
-  return metricSummary.get('showCapacity') ?
-    -metricSummary.get('relativeConsumption') :
-    -metricSummary.get('absoluteConsumption');
+  return metricSummary.get('showCapacity')
+    ? -metricSummary.get('relativeConsumption')
+    : -metricSummary.get('absoluteConsumption');
 };
 
 // A list of topologies shown in the resource view of the active topology (bottom to top).
@@ -85,8 +85,7 @@ const decoratedNodesByTopologySelector = createSelector(
       const isBaseLayer = (index === 0);
 
       const nodeParentDecorator = nodeParentDecoratorByTopologyId(parentLayerTopologyId);
-      const nodeMetricSummaryDecorator =
-        nodeMetricSummaryDecoratorByType(pinnedMetricType, showCapacity);
+      const nodeMetricSummaryDecorator = nodeMetricSummaryDecoratorByType(pinnedMetricType, showCapacity);
 
       // Color the node, deduce its anchor point, dimensions and info about its pinned metric.
       const decoratedTopologyNodes = (topologyNodes || makeMap())
@@ -158,8 +157,8 @@ export const layoutNodesByTopologyIdSelector = createSelector(
         // We fix it by shrinking all the children to by a factor to perfectly fit into the parent.
         if (totalChildrenWidth > parentWidth) {
           const shrinkFactor = parentWidth / totalChildrenWidth;
-          log(`Inconsistent data: Children of ${parentNodeId} reported to use more ` +
-            `resource than the node itself - shrinking by factor ${shrinkFactor}`);
+          log(`Inconsistent data: Children of ${parentNodeId} reported to use more `
+            + `resource than the node itself - shrinking by factor ${shrinkFactor}`);
           // Shrink all the children.
           nodesBucket.forEach((_, nodeId) => {
             let node = positionedNodes.get(nodeId);

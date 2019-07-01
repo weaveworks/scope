@@ -36,7 +36,14 @@ class DebugMenu extends React.Component {
               >
                 <i className="fa fa-code" />
                 <span className="description">Save raw data as JSON</span>
-                {pausedAt && <span className="soft"> ({pausedAt})</span>}
+                {pausedAt && (
+                <span className="soft">
+                  {' '}
+(
+                  {pausedAt}
+)
+                </span>
+                )}
               </a>
             </div>
             <div className="troubleshooting-menu-item">

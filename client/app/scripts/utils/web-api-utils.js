@@ -11,7 +11,7 @@ import {
   receiveNodesForTopology, receiveNodes,
 } from '../actions/app-actions';
 
-import { getCurrentTopologyUrl } from '../utils/topology-utils';
+import { getCurrentTopologyUrl } from './topology-utils';
 import { layersTopologyIdsSelector } from '../selectors/resource-view/layout';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
 import { isPausedSelector } from '../selectors/time-travel';
@@ -410,8 +410,8 @@ export function doControlRequest(nodeId, control, dispatch) {
       if (res) {
         if (res.pipe) {
           dispatch(blurSearch());
-          const resizeTtyControl = res.resize_tty_control &&
-            {id: res.resize_tty_control, nodeId: control.nodeId, probeId: control.probeId};
+          const resizeTtyControl = res.resize_tty_control
+            && {id: res.resize_tty_control, nodeId: control.nodeId, probeId: control.probeId};
           dispatch(receiveControlPipe(
             res.pipe,
             nodeId,

@@ -91,7 +91,9 @@ function renderIdCell({
         <Icon color={getNodeColor(rank, label)} />
       </div>
       <div className="truncate">
-        {label} {showSubLabel && <span className="nodes-grid-label-minor">{labelMinor}</span>}
+        {label}
+        {' '}
+        {showSubLabel && <span className="nodes-grid-label-minor">{labelMinor}</span>}
       </div>
     </div>
   );
@@ -126,8 +128,7 @@ class NodesGrid extends React.Component {
     const {
       nodes, gridSortedBy, gridSortedDesc, searchNodeMatches, searchQuery, windowHeight, topologies
     } = this.props;
-    const height =
-      this.tableRef ? windowHeight - this.tableRef.getBoundingClientRect().top - 30 : 0;
+    const height = this.tableRef ? windowHeight - this.tableRef.getBoundingClientRect().top - 30 : 0;
     const cmpStyle = {
       height,
       paddingLeft: 40,
@@ -152,7 +153,8 @@ class NodesGrid extends React.Component {
 
     return (
       <div className="nodes-grid" ref={this.saveTableRef}>
-        {nodes.size > 0 && <NodeDetailsTable
+        {nodes.size > 0 && (
+        <NodeDetailsTable
           style={cmpStyle}
           className={className}
           renderIdCell={renderIdCell}
@@ -165,7 +167,8 @@ class NodesGrid extends React.Component {
           selectedNodeId={this.props.selectedNodeId}
           limit={1000}
           {...detailsData}
-          />}
+          />
+        )}
       </div>
     );
   }

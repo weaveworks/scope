@@ -128,9 +128,9 @@ export function setTopologyUrlsById(topologyUrlsById, topologies) {
 
 export function filterHiddenTopologies(topologies, currentTopology) {
   currentTopology = currentTopology || makeMap();
-  return topologies.filter(t => (!t.hide_if_empty || t.stats.node_count > 0 ||
-                               t.stats.filtered_nodes > 0 || t.id === currentTopology.get('id') ||
-                               t.id === currentTopology.get('parentId')));
+  return topologies.filter(t => (!t.hide_if_empty || t.stats.node_count > 0
+                               || t.stats.filtered_nodes > 0 || t.id === currentTopology.get('id')
+                               || t.id === currentTopology.get('parentId')));
 }
 
 export function getCurrentTopologyOptions(state) {

@@ -72,8 +72,8 @@ export default class Sparkline extends React.Component {
     const min = formatMetricSvg(d3Min(data, d => d.value), this.props);
     const max = formatMetricSvg(d3Max(data, d => d.value), this.props);
     const mean = formatMetricSvg(d3Mean(data, d => d.value), this.props);
-    const title = `Last ${Math.round((lastDate - firstDate) / 1000)} seconds, ` +
-      `${data.length} samples, min: ${min}, max: ${max}, mean: ${mean}`;
+    const title = `Last ${Math.round((lastDate - firstDate) / 1000)} seconds, `
+      + `${data.length} samples, min: ${min}, max: ${max}, mean: ${mean}`;
 
     return {
       data, lastX, lastY, title
@@ -122,7 +122,8 @@ export default class Sparkline extends React.Component {
             strokeDasharray={strokeDasharray}
             d={this.line(graph.data)}
           />
-          {hasData && <circle
+          {hasData && (
+          <circle
             className="sparkcircle"
             cx={graph.lastX}
             cy={graph.lastY}
@@ -130,7 +131,8 @@ export default class Sparkline extends React.Component {
             fillOpacity={fillOpacity}
             stroke="none"
             r={radius}
-          />}
+          />
+          )}
         </svg>
       </div>
     );

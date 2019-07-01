@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import NodesChart from '../charts/nodes-chart';
 import NodesGrid from '../charts/nodes-grid';
-import NodesResources from '../components/nodes-resources';
+import NodesResources from './nodes-resources';
 import NodesError from '../charts/nodes-error';
 import DelayedShow from '../utils/delayed-show';
 import { Loading, getNodeType } from './loading';
@@ -44,9 +44,9 @@ class Nodes extends React.Component {
     return (
       <NodesError faIconClass="far fa-circle" hidden={!nodesDisplayEmpty}>
         <div className="heading">Nothing to show. This can have any of these reasons:</div>
-        {topologyNodeCountZero ?
-          renderCauses(NODES_STATS_COUNT_ZERO_CAUSES) :
-          renderCauses(NODES_NOT_DISPLAYED_CAUSES)}
+        {topologyNodeCountZero
+          ? renderCauses(NODES_STATS_COUNT_ZERO_CAUSES)
+          : renderCauses(NODES_NOT_DISPLAYED_CAUSES)}
       </NodesError>
     );
   }

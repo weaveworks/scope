@@ -64,10 +64,14 @@ class TimeControl extends React.Component {
             </span>
           </div>
         </div>
-        {isPaused &&
+        {isPaused
+          && (
           <span className="time-control-info">
-            Showing state from <TimestampTag inheritStyles relative timestamp={pausedAt} />
+            Showing state from
+            {' '}
+            <TimestampTag inheritStyles relative timestamp={pausedAt} />
           </span>
+          )
         }
       </div>
     );

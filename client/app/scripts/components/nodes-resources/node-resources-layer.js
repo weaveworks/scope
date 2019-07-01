@@ -35,11 +35,13 @@ class NodesResourcesLayer extends React.Component {
             />
           ))}
         </g>
-        {!layoutNodes.isEmpty() && <NodeResourcesLayerTopology
+        {!layoutNodes.isEmpty() && (
+        <NodeResourcesLayerTopology
           verticalPosition={layerVerticalPosition}
           transform={transform}
           topologyId={topologyId}
-        />}
+        />
+        )}
       </g>
     );
   }

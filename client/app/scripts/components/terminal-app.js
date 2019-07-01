@@ -51,12 +51,14 @@ class TerminalApp extends React.Component {
 
     return (
       <div className="terminal-app" style={style}>
-        {this.props.controlPipe && <Terminal
+        {this.props.controlPipe && (
+        <Terminal
           pipe={this.props.controlPipe}
           titleBarColor={this.state.titleBarColor}
           statusBarColor={this.state.statusBarColor}
           title={this.state.title}
-          embedded={false} />}
+          embedded={false} />
+        )}
       </div>
     );
   }

@@ -10,7 +10,16 @@ const Plugin = ({
 }) => {
   const error = status !== 'ok';
   const className = classNames({ error });
-  const tip = (<span>Description: {description}<br />Status: {status}</span>);
+  const tip = (
+    <span>
+Description:
+      {description}
+      <br />
+Status:
+      {' '}
+      {status}
+    </span>
+  );
 
   // Inner span to hold styling so we don't effect the "before:content"
   return (

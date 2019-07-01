@@ -112,9 +112,9 @@ class NodeResourcesMetricBox extends React.Component {
     // TODO: Show `+ 31 nodes` kind of tag in their stead.
     if (!showNode) return null;
 
-    const resourceUsageTooltipInfo = showCapacity ?
-      metricSummary.get('humanizedRelativeConsumption') :
-      metricSummary.get('humanizedAbsoluteConsumption');
+    const resourceUsageTooltipInfo = showCapacity
+      ? metricSummary.get('humanizedRelativeConsumption')
+      : metricSummary.get('humanizedAbsoluteConsumption');
 
     return (
       <g
@@ -123,13 +123,25 @@ class NodeResourcesMetricBox extends React.Component {
         onClick={this.handleClick}
         ref={this.saveNodeRef}
       >
-        <title>{label} - {type} usage at {resourceUsageTooltipInfo}</title>
-        {showCapacity && <rect
+        <title>
+          {label}
+          {' '}
+-
+          {' '}
+          {type}
+          {' '}
+usage at
+          {' '}
+          {resourceUsageTooltipInfo}
+        </title>
+        {showCapacity && (
+        <rect
           className="frame"
           rx={theme.borderRadius.soft}
           ry={theme.borderRadius.soft}
           {...this.defaultRectProps()}
-        />}
+        />
+        )}
         <rect
           className="bar"
           fill={color}
@@ -137,13 +149,15 @@ class NodeResourcesMetricBox extends React.Component {
           ry={theme.borderRadius.soft}
           {...this.defaultRectProps(relativeConsumption)}
         />
-        {showInfo && <NodeResourcesMetricBoxInfo
+        {showInfo && (
+        <NodeResourcesMetricBoxInfo
           label={label}
           metricSummary={metricSummary}
           width={width - (2 * RESOURCES_LABEL_PADDING)}
           x={x + RESOURCES_LABEL_PADDING}
           y={y + RESOURCES_LABEL_PADDING}
-        />}
+        />
+        )}
       </g>
     );
   }

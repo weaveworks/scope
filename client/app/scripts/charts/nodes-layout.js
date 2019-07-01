@@ -408,7 +408,7 @@ function copyLayoutProperties(layout, nodeCache, edgeCache) {
     if (edgeCache.has(edge.get('id'))
       && hasSameEndpoints(edgeCache.get(edge.get('id')), result.nodes)) {
       return edge.merge(edgeCache.get(edge.get('id')));
-    } else if (nodeCache.get(edge.get('source')) && nodeCache.get(edge.get('target'))) {
+    } if (nodeCache.get(edge.get('source')) && nodeCache.get(edge.get('target'))) {
       return setSimpleEdgePoints(edge, nodeCache);
     }
     return edge;

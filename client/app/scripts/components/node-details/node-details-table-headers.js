@@ -33,9 +33,8 @@ export default class NodeDetailsTableHeaders extends React.Component {
           }
 
           const style = colStyles[index];
-          const label =
-            (style.width === NODE_DETAILS_TABLE_CW.XS && NODE_DETAILS_TABLE_XS_LABEL[header.id]) ?
-            NODE_DETAILS_TABLE_XS_LABEL[header.id] : header.label;
+          const label = (style.width === NODE_DETAILS_TABLE_CW.XS && NODE_DETAILS_TABLE_XS_LABEL[header.id])
+            ? NODE_DETAILS_TABLE_XS_LABEL[header.id] : header.label;
 
           return (
             <td className={headerClasses.join(' ')} style={style} title={header.label} key={header.id}>

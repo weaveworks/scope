@@ -56,13 +56,18 @@ class NodeDetails extends React.Component {
     return (
       <div className="node-details-tools-wrapper">
         <div className="node-details-tools">
-          {showSwitchTopology &&
+          {showSwitchTopology
+            && (
             <i
               title={topologyTitle}
               className="fa fa-long-arrow-alt-left"
               onClick={this.handleShowTopologyForNode}>
-              <span>Show in <span>{this.props.topologyId.replace(/-/g, ' ')}</span></span>
+              <span>
+Show in
+                <span>{this.props.topologyId.replace(/-/g, ' ')}</span>
+              </span>
             </i>
+            )
           }
           <i
             title="Close details"
@@ -81,9 +86,9 @@ class NodeDetails extends React.Component {
     // mounted, the spinner is displayed blurred the whole time in Chrome (possibly
     // caused by a bug having to do with animating the details panel).
     const spinnerClassName = classNames('fa fa-circle-notch', { 'fa-spin': this.props.mounted });
-    const nodeColor = (node ?
-      getNodeColorDark(node.get('rank'), label, node.get('pseudo')) :
-      getNeutralColor());
+    const nodeColor = (node
+      ? getNodeColorDark(node.get('rank'), label, node.get('pseudo'))
+      : getNeutralColor());
     const tools = this.renderTools();
     const styles = {
       header: {
@@ -130,7 +135,9 @@ class NodeDetails extends React.Component {
         </div>
         <div className="node-details-content">
           <p className="node-details-content-info">
-            <strong>{this.props.label}</strong> not found!
+            <strong>{this.props.label}</strong>
+            {' '}
+not found!
           </p>
         </div>
         <Overlay faded={this.props.transitioning} />
@@ -176,14 +183,17 @@ class NodeDetails extends React.Component {
               <MatchedText text={details.label} match={nodeMatches.get('label')} />
             </h2>
             <div className="node-details-header-relatives">
-              {details.parents && <NodeDetailsRelatives
+              {details.parents && (
+              <NodeDetailsRelatives
                 matches={nodeMatches.get('parents')}
-                relatives={details.parents} />}
+                relatives={details.parents} />
+              )}
             </div>
           </div>
         </div>
 
-        {showControls &&
+        {showControls
+          && (
           <div className="tour-step-anchor node-details-controls-wrapper" style={styles.controls}>
             <NodeDetailsControls
               nodeId={this.props.nodeId}
@@ -191,10 +201,12 @@ class NodeDetails extends React.Component {
               pending={pending}
               error={error} />
           </div>
+          )
         }
 
         <div className="node-details-content">
-          {details.metrics &&
+          {details.metrics
+            && (
             <div className="node-details-content-section">
               <div className="node-details-content-section-header">Status</div>
               <NodeDetailsHealth
@@ -202,12 +214,15 @@ class NodeDetails extends React.Component {
                 topologyId={topologyId}
                 />
             </div>
+            )
           }
-          {details.metadata &&
+          {details.metadata
+            && (
             <div className="node-details-content-section">
               <div className="node-details-content-section-header">Info</div>
               <NodeDetailsInfo rows={details.metadata} matches={nodeMatches.get('metadata')} />
             </div>
+            )
           }
 
           {details.connections && details.connections.filter(cs => cs.connections.length > 0)
@@ -219,7 +234,7 @@ class NodeDetails extends React.Component {
                   nodeIdKey="nodeId"
                 />
               </div>
-          ))}
+            ))}
 
           {details.children && details.children.map(children => (
             <div className="node-details-content-section" key={children.topologyId}>
@@ -233,11 +248,13 @@ class NodeDetails extends React.Component {
                 <div className="node-details-content-section" key={table.id}>
                   <div className="node-details-content-section-header">
                     {table.label && table.label.length > 0 && table.label}
-                    {table.truncationCount > 0 &&
+                    {table.truncationCount > 0
+                      && (
                       <span
                         className="node-details-content-section-header-warning">
                         <Warning text={getTruncationText(table.truncationCount)} />
                       </span>
+                      )
                     }
                   </div>
                   {this.renderTable(table)}
@@ -266,7 +283,7 @@ class NodeDetails extends React.Component {
           matches={nodeMatches.get('tables')}
         />
       );
-    } else if (isPropertyList(table)) {
+    } if (isPropertyList(table)) {
       return (
         <NodeDetailsPropertyList
           rows={table.rows}

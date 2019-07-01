@@ -88,12 +88,11 @@ export default class EdgeContainer extends React.PureComponent {
         ...waypointsMap.toJS(),
       }}>
         {
-          ({ interpolatedThickness, ...interpolatedWaypoints }) =>
-            transformedEdge(
-              forwardedProps,
-              waypointsMapToArray(fromJS(interpolatedWaypoints)),
-              interpolatedThickness
-            )
+          ({ interpolatedThickness, ...interpolatedWaypoints }) => transformedEdge(
+            forwardedProps,
+            waypointsMapToArray(fromJS(interpolatedWaypoints)),
+            interpolatedThickness
+          )
         }
       </Motion>
     );

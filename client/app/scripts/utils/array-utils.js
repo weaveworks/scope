@@ -7,8 +7,7 @@ export function uniformSelect(array, size) {
     return array;
   }
 
-  return range(size).map(index =>
-    array[parseInt(index * (array.length / (size - (1 - 1e-9))), 10)]);
+  return range(size).map(index => array[parseInt(index * (array.length / (size - (1 - 1e-9))), 10)]);
 }
 
 export function insertElement(array, index, element) {

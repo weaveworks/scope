@@ -101,7 +101,8 @@ class TopologyOptions extends React.Component {
     return (
       <div className="topology-option" key={optionId}>
         <div className="topology-option-wrapper">
-          {option.get('selectType') === 'union' &&
+          {option.get('selectType') === 'union'
+            && (
             <TopologyOptionAction
               onClick={this.handleNoneClick}
               optionId={optionId}
@@ -109,6 +110,7 @@ class TopologyOptions extends React.Component {
               topologyId={currentTopologyId}
               activeValue={activeValue}
             />
+            )
           }
           {option.get('options').map(item => (
             <TopologyOptionAction

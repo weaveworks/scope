@@ -1,6 +1,8 @@
 import { Map as makeMap, OrderedMap as makeOrderedMap } from 'immutable';
 
-import { buildUrlQuery, basePath, getApiPath, getWebsocketUrl } from '../web-api-utils';
+import {
+  buildUrlQuery, basePath, getApiPath, getWebsocketUrl
+} from '../web-api-utils';
 
 
 describe('WebApiUtils', () => {

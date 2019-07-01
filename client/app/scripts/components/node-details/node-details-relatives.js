@@ -37,13 +37,16 @@ export default class NodeDetailsRelatives extends React.Component {
           <NodeDetailsRelativesLink
             key={relative.id}
             match={matches.get(relative.id)}
-            {...relative} />))}
-        {showLimitAction &&
+            {...relative} />
+        ))}
+        {showLimitAction
+          && (
           <span
             className="node-details-relatives-more"
             onClick={this.handleLimitClick}>
             {limitActionText}
           </span>
+          )
         }
       </div>
     );

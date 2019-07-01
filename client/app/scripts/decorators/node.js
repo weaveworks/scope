@@ -14,9 +14,9 @@ export function nodeResourceViewColorDecorator(node) {
 // Decorates the resource node with dimensions taken from its metric summary.
 export function nodeResourceBoxDecorator(node) {
   const metricSummary = node.get('metricSummary', makeMap());
-  const width = metricSummary.get('showCapacity') ?
-    metricSummary.get('totalCapacity') :
-    metricSummary.get('absoluteConsumption');
+  const width = metricSummary.get('showCapacity')
+    ? metricSummary.get('totalCapacity')
+    : metricSummary.get('absoluteConsumption');
   const height = RESOURCES_LAYER_HEIGHT;
 
   return node.merge(makeMap({ height, width }));

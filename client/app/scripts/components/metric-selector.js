@@ -22,7 +22,8 @@ class MetricSelector extends React.Component {
 
     return (
       <div className="metric-selector">
-        {hasMetrics &&
+        {hasMetrics
+          && (
           <div className="metric-selector-wrapper" onMouseLeave={this.onMouseOut}>
             {availableMetrics.map(metric => (
               <MetricSelectorItem
@@ -31,6 +32,7 @@ class MetricSelector extends React.Component {
               />
             ))}
           </div>
+          )
         }
       </div>
     );

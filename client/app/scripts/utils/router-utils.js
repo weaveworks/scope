@@ -1,7 +1,9 @@
 import page from 'page';
 import stableStringify from 'json-stable-stringify';
 import { fromJS, is as isDeepEqual } from 'immutable';
-import { each, omit, omitBy, isEmpty } from 'lodash';
+import {
+  each, omit, omitBy, isEmpty
+} from 'lodash';
 
 import { route } from '../actions/app-actions';
 import { hashDifferenceDeep } from './hash-utils';

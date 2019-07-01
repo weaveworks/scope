@@ -53,7 +53,12 @@ function renderShortcutPanel() {
 const BASIC_SEARCHES = [
   {label: 'All fields for foo', term: 'foo'},
   {
-    label: <span>Any field matching <b>pid</b> for the value 12345</span>,
+    label: <span>
+Any field matching
+      <b>pid</b>
+      {' '}
+for the value 12345
+    </span>,
     term: 'pid: 12345'
   },
 ];
@@ -65,16 +70,31 @@ const REGEX_SEARCHES = [
     term: 'foo|bar'
   },
   {
-    label: <span><b>command</b> field for foobar or foobaz</span>,
+    label: <span>
+      <b>command</b>
+      {' '}
+field for foobar or foobaz
+    </span>,
     term: 'command: foo(bar|baz)'
   },
 ];
 
 
 const METRIC_SEARCHES = [
-  {label: <span><b>CPU</b> greater than 4%</span>, term: 'cpu > 4%'},
   {
-    label: <span><b>Memory</b> less than 10 megabytes</span>,
+    label: <span>
+      <b>CPU</b>
+      {' '}
+greater than 4%
+           </span>,
+    term: 'cpu > 4%'
+  },
+  {
+    label: <span>
+      <b>Memory</b>
+      {' '}
+less than 10 megabytes
+           </span>,
     term: 'memory < 10mb'
   },
 ];
@@ -129,8 +149,14 @@ function renderFieldsPanel(currentTopologyName, searchableFields) {
     <div className="help-panel-fields">
       <h2>Fields and Metrics</h2>
       <p>
-        Searchable fields and metrics in the <br />
-        currently selected {currentTopology} topology:
+        Searchable fields and metrics in the
+        {' '}
+        <br />
+        currently selected
+        {' '}
+        {currentTopology}
+        {' '}
+topology:
       </p>
       <div className="help-panel-fields-fields">
         <div className="help-panel-fields-fields-column">

@@ -1,7 +1,9 @@
 import React from 'react';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
-import { find, get, union, sortBy, groupBy, concat, debounce } from 'lodash';
+import {
+  find, get, union, sortBy, groupBy, concat, debounce
+} from 'lodash';
 
 import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
 import { TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL } from '../../constants/timer';
@@ -49,7 +51,7 @@ function getNodeValue(node, header) {
       if (isIP(header)) {
         // Format the IPs so that they are sorted numerically.
         return ipToPaddedString(field.value);
-      } else if (isNumeric(header)) {
+      } if (isNumeric(header)) {
         return parseFloat(field.value);
       }
       return field.value;
@@ -218,8 +220,8 @@ class NodeDetailsTable extends React.Component {
 
     const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
     const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
-    const sortedDesc = (this.state.sortedDesc === null) ?
-      defaultSortDesc(sortedByHeader) : this.state.sortedDesc;
+    const sortedDesc = (this.state.sortedDesc === null)
+      ? defaultSortDesc(sortedByHeader) : this.state.sortedDesc;
 
     let nodes = getSortedNodes(this.props.nodes, sortedByHeader, sortedDesc);
 
@@ -261,12 +263,14 @@ class NodeDetailsTable extends React.Component {
         <div className="node-details-table-wrapper">
           <table className="node-details-table">
             <thead ref={this.saveTableHeadRef}>
-              {this.props.nodes && this.props.nodes.length > 0 && <NodeDetailsTableHeaders
+              {this.props.nodes && this.props.nodes.length > 0 && (
+              <NodeDetailsTableHeaders
                 headers={headers}
                 sortedBy={sortedBy}
                 sortedDesc={sortedDesc}
                 onClick={this.updateSorted}
-              />}
+              />
+              )}
             </thead>
             <tbody
               style={this.props.tbodyStyle}
