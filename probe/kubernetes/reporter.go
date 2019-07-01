@@ -48,8 +48,6 @@ var (
 		RestartCount:     {ID: RestartCount, Label: "Restart #", From: report.FromLatest, Priority: 7},
 	}
 
-	PodMetricTemplates = docker.ContainerMetricTemplates
-
 	ServiceMetadataTemplates = report.MetadataTemplates{
 		Namespace:  {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
 		Created:    {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
@@ -60,114 +58,113 @@ var (
 		Ports:      {ID: Ports, Label: "Ports", From: report.FromLatest, Priority: 8},
 	}
 
-	ServiceMetricTemplates = PodMetricTemplates
+	//
+	//DeploymentMetadataTemplates = report.MetadataTemplates{
+	//	NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+	//	Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+	//	Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+	//	ObservedGeneration: {ID: ObservedGeneration, Label: "Observed gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+	//	DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+	//	report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
+	//	Strategy:           {ID: Strategy, Label: "Strategy", From: report.FromLatest, Priority: 7},
+	//}
+	//
+	//DeploymentMetricTemplates = PodMetricTemplates
+	//
+	//DaemonSetMetadataTemplates = report.MetadataTemplates{
+	//	NodeType:        {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+	//	Namespace:       {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+	//	Created:         {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+	//	DesiredReplicas: {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+	//	report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 5},
+	//}
+	//
+	//DaemonSetMetricTemplates = PodMetricTemplates
+	//
+	//StatefulSetMetadataTemplates = report.MetadataTemplates{
+	//	NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+	//	Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+	//	Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+	//	ObservedGeneration: {ID: ObservedGeneration, Label: "Observed gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
+	//	DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
+	//	report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
+	//}
+	//
+	//StatefulSetMetricTemplates = PodMetricTemplates
+	//
+	//CronJobMetadataTemplates = report.MetadataTemplates{
+	//	NodeType:      {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+	//	Namespace:     {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+	//	Created:       {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
+	//	Schedule:      {ID: Schedule, Label: "Schedule", From: report.FromLatest, Priority: 4},
+	//	LastScheduled: {ID: LastScheduled, Label: "Last scheduled", From: report.FromLatest, Datatype: report.DateTime, Priority: 5},
+	//	Suspended:     {ID: Suspended, Label: "Suspended", From: report.FromLatest, Priority: 6},
+	//	ActiveJobs:    {ID: ActiveJobs, Label: "# Jobs", From: report.FromLatest, Datatype: report.Number, Priority: 7},
+	//	report.Pod:    {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 8},
+	//}
+	//
+	//CronJobMetricTemplates = PodMetricTemplates
+	//
+	//PersistentVolumeMetadataTemplates = report.MetadataTemplates{
+	//	NodeType:         {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+	//	VolumeClaim:      {ID: VolumeClaim, Label: "Volume claim", From: report.FromLatest, Priority: 2},
+	//	StorageClassName: {ID: StorageClassName, Label: "Storage class", From: report.FromLatest, Priority: 3},
+	//	AccessModes:      {ID: AccessModes, Label: "Access modes", From: report.FromLatest, Priority: 5},
+	//	Status:           {ID: Status, Label: "Status", From: report.FromLatest, Priority: 6},
+	//	StorageDriver:    {ID: StorageDriver, Label: "Storage driver", From: report.FromLatest, Priority: 7},
+	//}
+	//
+	//PersistentVolumeClaimMetadataTemplates = report.MetadataTemplates{
+	//	NodeType:         {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+	//	Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
+	//	Status:           {ID: Status, Label: "Status", From: report.FromLatest, Priority: 3},
+	//	VolumeName:       {ID: VolumeName, Label: "Volume", From: report.FromLatest, Priority: 4},
+	//	StorageClassName: {ID: StorageClassName, Label: "Storage class", From: report.FromLatest, Priority: 5},
+	//	VolumeCapacity:   {ID: VolumeCapacity, Label: "Capacity", From: report.FromLatest, Priority: 6},
+	//}
+	//
+	//StorageClassMetadataTemplates = report.MetadataTemplates{
+	//	NodeType:    {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+	//	Name:        {ID: Name, Label: "Name", From: report.FromLatest, Priority: 2},
+	//	Provisioner: {ID: Provisioner, Label: "Provisioner", From: report.FromLatest, Priority: 3},
+	//}
+	//
+	//VolumeSnapshotMetadataTemplates = report.MetadataTemplates{
+	//	NodeType:     {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+	//	Namespace:    {ID: Namespace, Label: "Name", From: report.FromLatest, Priority: 2},
+	//	VolumeClaim:  {ID: VolumeClaim, Label: "Persistent volume claim", From: report.FromLatest, Priority: 3},
+	//	SnapshotData: {ID: SnapshotData, Label: "Volume snapshot data", From: report.FromLatest, Priority: 4},
+	//}
+	//
+	//VolumeSnapshotDataMetadataTemplates = report.MetadataTemplates{
+	//	NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
+	//	VolumeName:         {ID: VolumeName, Label: "Persistent volume", From: report.FromLatest, Priority: 2},
+	//	VolumeSnapshotName: {ID: VolumeSnapshotName, Label: "Volume snapshot", From: report.FromLatest, Priority: 3},
+	//}
 
-	DeploymentMetadataTemplates = report.MetadataTemplates{
-		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
-		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
-		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
-		Strategy:           {ID: Strategy, Label: "Strategy", From: report.FromLatest, Priority: 7},
-	}
+	//TableTemplates = report.TableTemplates{
+	//	LabelPrefix: {
+	//		ID:     LabelPrefix,
+	//		Label:  "Kubernetes labels",
+	//		Type:   report.PropertyListType,
+	//		Prefix: LabelPrefix,
+	//	},
+	//}
 
-	DeploymentMetricTemplates = PodMetricTemplates
-
-	DaemonSetMetadataTemplates = report.MetadataTemplates{
-		NodeType:        {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
-		Namespace:       {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:         {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		DesiredReplicas: {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 4},
-		report.Pod:      {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 5},
-	}
-
-	DaemonSetMetricTemplates = PodMetricTemplates
-
-	StatefulSetMetadataTemplates = report.MetadataTemplates{
-		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
-		Namespace:          {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:            {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		ObservedGeneration: {ID: ObservedGeneration, Label: "Observed gen.", From: report.FromLatest, Datatype: report.Number, Priority: 4},
-		DesiredReplicas:    {ID: DesiredReplicas, Label: "Desired replicas", From: report.FromLatest, Datatype: report.Number, Priority: 5},
-		report.Pod:         {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 6},
-	}
-
-	StatefulSetMetricTemplates = PodMetricTemplates
-
-	CronJobMetadataTemplates = report.MetadataTemplates{
-		NodeType:      {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
-		Namespace:     {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Created:       {ID: Created, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 3},
-		Schedule:      {ID: Schedule, Label: "Schedule", From: report.FromLatest, Priority: 4},
-		LastScheduled: {ID: LastScheduled, Label: "Last scheduled", From: report.FromLatest, Datatype: report.DateTime, Priority: 5},
-		Suspended:     {ID: Suspended, Label: "Suspended", From: report.FromLatest, Priority: 6},
-		ActiveJobs:    {ID: ActiveJobs, Label: "# Jobs", From: report.FromLatest, Datatype: report.Number, Priority: 7},
-		report.Pod:    {ID: report.Pod, Label: "# Pods", From: report.FromCounters, Datatype: report.Number, Priority: 8},
-	}
-
-	CronJobMetricTemplates = PodMetricTemplates
-
-	PersistentVolumeMetadataTemplates = report.MetadataTemplates{
-		NodeType:         {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
-		VolumeClaim:      {ID: VolumeClaim, Label: "Volume claim", From: report.FromLatest, Priority: 2},
-		StorageClassName: {ID: StorageClassName, Label: "Storage class", From: report.FromLatest, Priority: 3},
-		AccessModes:      {ID: AccessModes, Label: "Access modes", From: report.FromLatest, Priority: 5},
-		Status:           {ID: Status, Label: "Status", From: report.FromLatest, Priority: 6},
-		StorageDriver:    {ID: StorageDriver, Label: "Storage driver", From: report.FromLatest, Priority: 7},
-	}
-
-	PersistentVolumeClaimMetadataTemplates = report.MetadataTemplates{
-		NodeType:         {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
-		Namespace:        {ID: Namespace, Label: "Namespace", From: report.FromLatest, Priority: 2},
-		Status:           {ID: Status, Label: "Status", From: report.FromLatest, Priority: 3},
-		VolumeName:       {ID: VolumeName, Label: "Volume", From: report.FromLatest, Priority: 4},
-		StorageClassName: {ID: StorageClassName, Label: "Storage class", From: report.FromLatest, Priority: 5},
-		VolumeCapacity:   {ID: VolumeCapacity, Label: "Capacity", From: report.FromLatest, Priority: 6},
-	}
-
-	StorageClassMetadataTemplates = report.MetadataTemplates{
-		NodeType:    {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
-		Name:        {ID: Name, Label: "Name", From: report.FromLatest, Priority: 2},
-		Provisioner: {ID: Provisioner, Label: "Provisioner", From: report.FromLatest, Priority: 3},
-	}
-
-	VolumeSnapshotMetadataTemplates = report.MetadataTemplates{
-		NodeType:     {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
-		Namespace:    {ID: Namespace, Label: "Name", From: report.FromLatest, Priority: 2},
-		VolumeClaim:  {ID: VolumeClaim, Label: "Persistent volume claim", From: report.FromLatest, Priority: 3},
-		SnapshotData: {ID: SnapshotData, Label: "Volume snapshot data", From: report.FromLatest, Priority: 4},
-	}
-
-	VolumeSnapshotDataMetadataTemplates = report.MetadataTemplates{
-		NodeType:           {ID: NodeType, Label: "Type", From: report.FromLatest, Priority: 1},
-		VolumeName:         {ID: VolumeName, Label: "Persistent volume", From: report.FromLatest, Priority: 2},
-		VolumeSnapshotName: {ID: VolumeSnapshotName, Label: "Volume snapshot", From: report.FromLatest, Priority: 3},
-	}
-
-	TableTemplates = report.TableTemplates{
-		LabelPrefix: {
-			ID:     LabelPrefix,
-			Label:  "Kubernetes labels",
-			Type:   report.PropertyListType,
-			Prefix: LabelPrefix,
-		},
-	}
-
-	ScalingControls = []report.Control{
-		{
-			ID:    ScaleDown,
-			Human: "Scale down",
-			Icon:  "fa fa-minus",
-			Rank:  0,
-		},
-		{
-			ID:    ScaleUp,
-			Human: "Scale up",
-			Icon:  "fa fa-plus",
-			Rank:  1,
-		},
-	}
+	//ScalingControls = []report.Control{
+	//	{
+	//		ID:    ScaleDown,
+	//		Human: "Scale down",
+	//		Icon:  "fa fa-minus",
+	//		Rank:  0,
+	//	},
+	//	{
+	//		ID:    ScaleUp,
+	//		Human: "Scale up",
+	//		Icon:  "fa fa-plus",
+	//		Rank:  1,
+	//	},
+	//}
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
@@ -353,9 +350,7 @@ func (r *Reporter) Report() (report.Report, error) {
 func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 	var (
 		result = report.MakeTopology().
-			WithMetadataTemplates(ServiceMetadataTemplates).
-			WithMetricTemplates(ServiceMetricTemplates).
-			WithTableTemplates(TableTemplates)
+			WithMetadataTemplates(ServiceMetadataTemplates)
 		services = []Service{}
 	)
 	err := r.client.WalkServices(func(s Service) error {
@@ -366,148 +361,148 @@ func (r *Reporter) serviceTopology() (report.Topology, []Service, error) {
 	return result, services, err
 }
 
-func (r *Reporter) deploymentTopology() (report.Topology, []Deployment, error) {
-	var (
-		result = report.MakeTopology().
-			WithMetadataTemplates(DeploymentMetadataTemplates).
-			WithMetricTemplates(DeploymentMetricTemplates).
-			WithTableTemplates(TableTemplates)
-		deployments = []Deployment{}
-	)
-	result.Controls.AddControls(ScalingControls)
-
-	err := r.client.WalkDeployments(func(d Deployment) error {
-		result.AddNode(d.GetNode(r.probeID))
-		deployments = append(deployments, d)
-		return nil
-	})
-	return result, deployments, err
-}
-
-func (r *Reporter) daemonSetTopology() (report.Topology, []DaemonSet, error) {
-	daemonSets := []DaemonSet{}
-	result := report.MakeTopology().
-		WithMetadataTemplates(DaemonSetMetadataTemplates).
-		WithMetricTemplates(DaemonSetMetricTemplates).
-		WithTableTemplates(TableTemplates)
-	err := r.client.WalkDaemonSets(func(d DaemonSet) error {
-		result.AddNode(d.GetNode(r.probeID))
-		daemonSets = append(daemonSets, d)
-		return nil
-	})
-	return result, daemonSets, err
-}
-
-func (r *Reporter) statefulSetTopology() (report.Topology, []StatefulSet, error) {
-	statefulSets := []StatefulSet{}
-	result := report.MakeTopology().
-		WithMetadataTemplates(StatefulSetMetadataTemplates).
-		WithMetricTemplates(StatefulSetMetricTemplates).
-		WithTableTemplates(TableTemplates)
-	err := r.client.WalkStatefulSets(func(s StatefulSet) error {
-		result.AddNode(s.GetNode(r.probeID))
-		statefulSets = append(statefulSets, s)
-		return nil
-	})
-	return result, statefulSets, err
-}
-
-func (r *Reporter) cronJobTopology() (report.Topology, []CronJob, error) {
-	cronJobs := []CronJob{}
-	result := report.MakeTopology().
-		WithMetadataTemplates(CronJobMetadataTemplates).
-		WithMetricTemplates(CronJobMetricTemplates).
-		WithTableTemplates(TableTemplates)
-	err := r.client.WalkCronJobs(func(c CronJob) error {
-		result.AddNode(c.GetNode(r.probeID))
-		cronJobs = append(cronJobs, c)
-		return nil
-	})
-	return result, cronJobs, err
-}
-
-func (r *Reporter) persistentVolumeTopology() (report.Topology, []PersistentVolume, error) {
-	persistentVolumes := []PersistentVolume{}
-	result := report.MakeTopology().
-		WithMetadataTemplates(PersistentVolumeMetadataTemplates).
-		WithTableTemplates(TableTemplates)
-	err := r.client.WalkPersistentVolumes(func(p PersistentVolume) error {
-		result.AddNode(p.GetNode())
-		persistentVolumes = append(persistentVolumes, p)
-		return nil
-	})
-	return result, persistentVolumes, err
-}
-
-func (r *Reporter) persistentVolumeClaimTopology() (report.Topology, []PersistentVolumeClaim, error) {
-	persistentVolumeClaims := []PersistentVolumeClaim{}
-	result := report.MakeTopology().
-		WithMetadataTemplates(PersistentVolumeClaimMetadataTemplates).
-		WithTableTemplates(TableTemplates)
-	result.Controls.AddControl(report.Control{
-		ID:    CreateVolumeSnapshot,
-		Human: "Create snapshot",
-		Icon:  "fa fa-camera",
-		Rank:  0,
-	})
-	err := r.client.WalkPersistentVolumeClaims(func(p PersistentVolumeClaim) error {
-		result.AddNode(p.GetNode(r.probeID))
-		persistentVolumeClaims = append(persistentVolumeClaims, p)
-		return nil
-	})
-	return result, persistentVolumeClaims, err
-}
-
-func (r *Reporter) storageClassTopology() (report.Topology, []StorageClass, error) {
-	storageClasses := []StorageClass{}
-	result := report.MakeTopology().
-		WithMetadataTemplates(StorageClassMetadataTemplates).
-		WithTableTemplates(TableTemplates)
-	err := r.client.WalkStorageClasses(func(p StorageClass) error {
-		result.AddNode(p.GetNode())
-		storageClasses = append(storageClasses, p)
-		return nil
-	})
-	return result, storageClasses, err
-}
-
-func (r *Reporter) volumeSnapshotTopology() (report.Topology, []VolumeSnapshot, error) {
-	volumeSnapshots := []VolumeSnapshot{}
-	result := report.MakeTopology().
-		WithMetadataTemplates(VolumeSnapshotMetadataTemplates).
-		WithTableTemplates(TableTemplates)
-	result.Controls.AddControl(report.Control{
-		ID:    CloneVolumeSnapshot,
-		Human: "Clone snapshot",
-		Icon:  "far fa-clone",
-		Rank:  0,
-	})
-	result.Controls.AddControl(report.Control{
-		ID:    DeleteVolumeSnapshot,
-		Human: "Delete",
-		Icon:  "far fa-trash-alt",
-		Rank:  1,
-	})
-	err := r.client.WalkVolumeSnapshots(func(p VolumeSnapshot) error {
-		result.AddNode(p.GetNode(r.probeID))
-		volumeSnapshots = append(volumeSnapshots, p)
-		return nil
-	})
-	return result, volumeSnapshots, err
-}
-
-func (r *Reporter) volumeSnapshotDataTopology() (report.Topology, []VolumeSnapshotData, error) {
-	volumeSnapshotData := []VolumeSnapshotData{}
-	result := report.MakeTopology().
-		WithMetadataTemplates(VolumeSnapshotDataMetadataTemplates).
-		WithTableTemplates(TableTemplates)
-	err := r.client.WalkVolumeSnapshotData(func(p VolumeSnapshotData) error {
-		result.AddNode(p.GetNode(r.probeID))
-		volumeSnapshotData = append(volumeSnapshotData, p)
-		return nil
-	})
-	return result, volumeSnapshotData, err
-}
+//func (r *Reporter) deploymentTopology() (report.Topology, []Deployment, error) {
+//	var (
+//		result = report.MakeTopology().
+//			WithMetadataTemplates(DeploymentMetadataTemplates).
+//			WithMetricTemplates(DeploymentMetricTemplates).
+//			WithTableTemplates(TableTemplates)
+//		deployments = []Deployment{}
+//	)
+//	result.Controls.AddControls(ScalingControls)
+//
+//	err := r.client.WalkDeployments(func(d Deployment) error {
+//		result.AddNode(d.GetNode(r.probeID))
+//		deployments = append(deployments, d)
+//		return nil
+//	})
+//	return result, deployments, err
+//}
+//
+//func (r *Reporter) daemonSetTopology() (report.Topology, []DaemonSet, error) {
+//	daemonSets := []DaemonSet{}
+//	result := report.MakeTopology().
+//		WithMetadataTemplates(DaemonSetMetadataTemplates).
+//		WithMetricTemplates(DaemonSetMetricTemplates).
+//		WithTableTemplates(TableTemplates)
+//	err := r.client.WalkDaemonSets(func(d DaemonSet) error {
+//		result.AddNode(d.GetNode(r.probeID))
+//		daemonSets = append(daemonSets, d)
+//		return nil
+//	})
+//	return result, daemonSets, err
+//}
+//
+//func (r *Reporter) statefulSetTopology() (report.Topology, []StatefulSet, error) {
+//	statefulSets := []StatefulSet{}
+//	result := report.MakeTopology().
+//		WithMetadataTemplates(StatefulSetMetadataTemplates).
+//		WithMetricTemplates(StatefulSetMetricTemplates).
+//		WithTableTemplates(TableTemplates)
+//	err := r.client.WalkStatefulSets(func(s StatefulSet) error {
+//		result.AddNode(s.GetNode(r.probeID))
+//		statefulSets = append(statefulSets, s)
+//		return nil
+//	})
+//	return result, statefulSets, err
+//}
+//
+//func (r *Reporter) cronJobTopology() (report.Topology, []CronJob, error) {
+//	cronJobs := []CronJob{}
+//	result := report.MakeTopology().
+//		WithMetadataTemplates(CronJobMetadataTemplates).
+//		WithMetricTemplates(CronJobMetricTemplates).
+//		WithTableTemplates(TableTemplates)
+//	err := r.client.WalkCronJobs(func(c CronJob) error {
+//		result.AddNode(c.GetNode(r.probeID))
+//		cronJobs = append(cronJobs, c)
+//		return nil
+//	})
+//	return result, cronJobs, err
+//}
+//
+//func (r *Reporter) persistentVolumeTopology() (report.Topology, []PersistentVolume, error) {
+//	persistentVolumes := []PersistentVolume{}
+//	result := report.MakeTopology().
+//		WithMetadataTemplates(PersistentVolumeMetadataTemplates).
+//		WithTableTemplates(TableTemplates)
+//	err := r.client.WalkPersistentVolumes(func(p PersistentVolume) error {
+//		result.AddNode(p.GetNode())
+//		persistentVolumes = append(persistentVolumes, p)
+//		return nil
+//	})
+//	return result, persistentVolumes, err
+//}
+//
+//func (r *Reporter) persistentVolumeClaimTopology() (report.Topology, []PersistentVolumeClaim, error) {
+//	persistentVolumeClaims := []PersistentVolumeClaim{}
+//	result := report.MakeTopology().
+//		WithMetadataTemplates(PersistentVolumeClaimMetadataTemplates).
+//		WithTableTemplates(TableTemplates)
+//	result.Controls.AddControl(report.Control{
+//		ID:    CreateVolumeSnapshot,
+//		Human: "Create snapshot",
+//		Icon:  "fa fa-camera",
+//		Rank:  0,
+//	})
+//	err := r.client.WalkPersistentVolumeClaims(func(p PersistentVolumeClaim) error {
+//		result.AddNode(p.GetNode(r.probeID))
+//		persistentVolumeClaims = append(persistentVolumeClaims, p)
+//		return nil
+//	})
+//	return result, persistentVolumeClaims, err
+//}
+//
+//func (r *Reporter) storageClassTopology() (report.Topology, []StorageClass, error) {
+//	storageClasses := []StorageClass{}
+//	result := report.MakeTopology().
+//		WithMetadataTemplates(StorageClassMetadataTemplates).
+//		WithTableTemplates(TableTemplates)
+//	err := r.client.WalkStorageClasses(func(p StorageClass) error {
+//		result.AddNode(p.GetNode())
+//		storageClasses = append(storageClasses, p)
+//		return nil
+//	})
+//	return result, storageClasses, err
+//}
+//
+//func (r *Reporter) volumeSnapshotTopology() (report.Topology, []VolumeSnapshot, error) {
+//	volumeSnapshots := []VolumeSnapshot{}
+//	result := report.MakeTopology().
+//		WithMetadataTemplates(VolumeSnapshotMetadataTemplates).
+//		WithTableTemplates(TableTemplates)
+//	result.Controls.AddControl(report.Control{
+//		ID:    CloneVolumeSnapshot,
+//		Human: "Clone snapshot",
+//		Icon:  "far fa-clone",
+//		Rank:  0,
+//	})
+//	result.Controls.AddControl(report.Control{
+//		ID:    DeleteVolumeSnapshot,
+//		Human: "Delete",
+//		Icon:  "far fa-trash-alt",
+//		Rank:  1,
+//	})
+//	err := r.client.WalkVolumeSnapshots(func(p VolumeSnapshot) error {
+//		result.AddNode(p.GetNode(r.probeID))
+//		volumeSnapshots = append(volumeSnapshots, p)
+//		return nil
+//	})
+//	return result, volumeSnapshots, err
+//}
+//
+//func (r *Reporter) volumeSnapshotDataTopology() (report.Topology, []VolumeSnapshotData, error) {
+//	volumeSnapshotData := []VolumeSnapshotData{}
+//	result := report.MakeTopology().
+//		WithMetadataTemplates(VolumeSnapshotDataMetadataTemplates).
+//		WithTableTemplates(TableTemplates)
+//	err := r.client.WalkVolumeSnapshotData(func(p VolumeSnapshotData) error {
+//		result.AddNode(p.GetNode(r.probeID))
+//		volumeSnapshotData = append(volumeSnapshotData, p)
+//		return nil
+//	})
+//	return result, volumeSnapshotData, err
+//}
 
 type labelledChild interface {
 	Labels() map[string]string
@@ -527,9 +522,7 @@ func match(namespace string, selector labels.Selector, topology, id string) func
 func (r *Reporter) podTopology(services []Service) (report.Topology, error) {
 	var (
 		pods = report.MakeTopology().
-			WithMetadataTemplates(PodMetadataTemplates).
-			WithMetricTemplates(PodMetricTemplates).
-			WithTableTemplates(TableTemplates)
+			WithMetadataTemplates(PodMetadataTemplates)
 		selectors = []func(labelledChild){}
 	)
 	//pods.Controls.AddControl(report.Control{
