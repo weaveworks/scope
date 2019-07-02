@@ -15,24 +15,21 @@ spec:
       labels:
         job-name: bryan-scope-scanner
         name: bryan-scope-scanner
+      annotations:
+        iam.amazonaws.com/role: scope-report-deleter
     spec:
       containers:
       - args:
         - --app.collector=dynamodb://us-east-1/prod_reports
         - --app.collector.s3=s3://us-east-1/weaveworks_prod_reports
-        - -delete-orgs-file=/config/delete-orgs
-        - -start-hour=411000
-        - -stop-hour=412000
-        - -deleters=64
+        - -segments=32
+        - -start-hour=400000
+        - -stop-hour=423863
+        - "-keep-orgs=2 383 910"
+        # - -delete-orgs-file=/var/prod-orgs-to-delete
+        - -delete-records-file=/var/prod-records.gz
         # - -log-level=debug
-        env:
-        - name: AWS_ACCESS_KEY_ID
-          value: "redacted"
-        - name: AWS_SECRET_ACCESS_KEY
-          value: "redacted"
-        - name: AWS_SESSION_TOKEN
-          value: "redacted"
-        image: quay.io/weaveworks/scope-deleter:latest
+        image: weaveworks/scope-deleter:latest
         imagePullPolicy: Always
         name: scanner
         ports:
@@ -40,8 +37,8 @@ spec:
           protocol: TCP
         resources:
           requests:
-            cpu: "2"
-            memory: 1Gi
+            cpu: "600m"
+            memory: 2000Mi
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
