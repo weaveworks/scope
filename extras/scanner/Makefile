@@ -16,8 +16,8 @@ build:
 test:
 	go test
 
-docker:
-	docker build --build-arg=revision=$(GIT_REVISION) -t quay.io/weaveworks/scope-deleter .
+docker: build
+	docker build --build-arg=revision=$(GIT_REVISION) -t weaveworks/scope-deleter .
 
 clean:
 	go clean
