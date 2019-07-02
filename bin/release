@@ -239,7 +239,6 @@ tag_images() {
     for IMAGE in "scope" "cloud-agent"; do
         $SUDO docker tag "$DOCKERHUB_USER/$IMAGE" "$DOCKERHUB_USER/$IMAGE:$VERSION"
         $SUDO docker tag "$DOCKERHUB_USER/$IMAGE:$VERSION" "$DOCKERHUB_USER/$IMAGE:latest_release"
-        $SUDO docker tag "$DOCKERHUB_USER/$IMAGE:$VERSION" "quay.io/$DOCKERHUB_USER/$IMAGE:$VERSION"
     done
     echo "** Docker images tagged"
 }
@@ -249,7 +248,6 @@ push_images() {
     for IMAGE in "scope" "cloud-agent"; do
         $SUDO docker push "$DOCKERHUB_USER/$IMAGE:$VERSION"
         $SUDO docker push "$DOCKERHUB_USER/$IMAGE:latest_release"
-        $SUDO docker push "quay.io/$DOCKERHUB_USER/$IMAGE:$VERSION"
     done
     echo "** Docker images pushed"
 }
