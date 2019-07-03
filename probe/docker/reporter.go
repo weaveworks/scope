@@ -33,120 +33,120 @@ const (
 // Exposed for testing
 var (
 	ContainerMetadataTemplates = report.MetadataTemplates{
-		ImageTag:              {ID: ImageTag, Label: "Image tag", From: report.FromLatest, Priority: 1},
-		ImageName:             {ID: ImageName, Label: "Image name", From: report.FromLatest, Priority: 2},
-		ContainerCommand:      {ID: ContainerCommand, Label: "Command", From: report.FromLatest, Priority: 3},
-		ContainerStateHuman:   {ID: ContainerStateHuman, Label: "State", From: report.FromLatest, Priority: 4},
-		ContainerUptime:       {ID: ContainerUptime, Label: "Uptime", From: report.FromLatest, Priority: 5, Datatype: report.Duration},
-		ContainerRestartCount: {ID: ContainerRestartCount, Label: "Restart #", From: report.FromLatest, Priority: 6},
-		ContainerNetworks:     {ID: ContainerNetworks, Label: "Networks", From: report.FromSets, Priority: 7},
-		ContainerIPs:          {ID: ContainerIPs, Label: "IPs", From: report.FromSets, Priority: 8},
-		ContainerPorts:        {ID: ContainerPorts, Label: "Ports", From: report.FromSets, Priority: 9},
-		ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 10},
-		ContainerID:           {ID: ContainerID, Label: "ID", From: report.FromLatest, Truncate: 12, Priority: 11},
+		ImageTag:  {ID: ImageTag, Label: "Image tag", From: report.FromLatest, Priority: 1},
+		ImageName: {ID: ImageName, Label: "Image name", From: report.FromLatest, Priority: 2},
+		//ContainerCommand:      {ID: ContainerCommand, Label: "Command", From: report.FromLatest, Priority: 3},
+		//ContainerStateHuman:   {ID: ContainerStateHuman, Label: "State", From: report.FromLatest, Priority: 4},
+		//ContainerUptime:       {ID: ContainerUptime, Label: "Uptime", From: report.FromLatest, Priority: 5, Datatype: report.Duration},
+		//ContainerRestartCount: {ID: ContainerRestartCount, Label: "Restart #", From: report.FromLatest, Priority: 6},
+		//ContainerNetworks:     {ID: ContainerNetworks, Label: "Networks", From: report.FromSets, Priority: 7},
+		//ContainerIPs:          {ID: ContainerIPs, Label: "IPs", From: report.FromSets, Priority: 8},
+		//ContainerPorts:        {ID: ContainerPorts, Label: "Ports", From: report.FromSets, Priority: 9},
+		//ContainerCreated:      {ID: ContainerCreated, Label: "Created", From: report.FromLatest, Datatype: report.DateTime, Priority: 10},
+		ContainerID: {ID: ContainerID, Label: "ID", From: report.FromLatest, Truncate: 12, Priority: 11},
 	}
 
-	ContainerMetricTemplates = report.MetricTemplates{
-		CPUTotalUsage: {ID: CPUTotalUsage, Label: "CPU", Format: report.PercentFormat, Priority: 1},
-		MemoryUsage:   {ID: MemoryUsage, Label: "Memory", Format: report.FilesizeFormat, Priority: 2},
-	}
+	//ContainerMetricTemplates = report.MetricTemplates{
+	//	CPUTotalUsage: {ID: CPUTotalUsage, Label: "CPU", Format: report.PercentFormat, Priority: 1},
+	//	MemoryUsage:   {ID: MemoryUsage, Label: "Memory", Format: report.FilesizeFormat, Priority: 2},
+	//}
 
-	ContainerImageMetadataTemplates = report.MetadataTemplates{
-		report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: report.Number, Priority: 2},
-	}
+	//ContainerImageMetadataTemplates = report.MetadataTemplates{
+	//	report.Container: {ID: report.Container, Label: "# Containers", From: report.FromCounters, Datatype: report.Number, Priority: 2},
+	//}
+	//
+	//ContainerTableTemplates = report.TableTemplates{
+	//	ImageTableID: {
+	//		ID:    ImageTableID,
+	//		Label: "Image",
+	//		Type:  report.PropertyListType,
+	//		FixedRows: map[string]string{
+	//			// Prepend spaces as a hack to keep at the top when sorted.
+	//			ImageID:          " ID",
+	//			ImageName:        " Name",
+	//			ImageTag:         " Tag",
+	//			ImageSize:        "Size",
+	//			ImageVirtualSize: "Virtual size",
+	//		},
+	//	},
+	//	LabelPrefix: {
+	//		ID:     LabelPrefix,
+	//		Label:  "Docker labels",
+	//		Type:   report.PropertyListType,
+	//		Prefix: LabelPrefix,
+	//	},
+	//	EnvPrefix: {
+	//		ID:     EnvPrefix,
+	//		Label:  "Environment variables",
+	//		Type:   report.PropertyListType,
+	//		Prefix: EnvPrefix,
+	//	},
+	//}
+	//
+	//ContainerImageTableTemplates = report.TableTemplates{
+	//	ImageLabelPrefix: {
+	//		ID:     ImageLabelPrefix,
+	//		Label:  "Docker labels",
+	//		Type:   report.PropertyListType,
+	//		Prefix: ImageLabelPrefix,
+	//	},
+	//}
 
-	ContainerTableTemplates = report.TableTemplates{
-		ImageTableID: {
-			ID:    ImageTableID,
-			Label: "Image",
-			Type:  report.PropertyListType,
-			FixedRows: map[string]string{
-				// Prepend spaces as a hack to keep at the top when sorted.
-				ImageID:          " ID",
-				ImageName:        " Name",
-				ImageTag:         " Tag",
-				ImageSize:        "Size",
-				ImageVirtualSize: "Virtual size",
-			},
-		},
-		LabelPrefix: {
-			ID:     LabelPrefix,
-			Label:  "Docker labels",
-			Type:   report.PropertyListType,
-			Prefix: LabelPrefix,
-		},
-		EnvPrefix: {
-			ID:     EnvPrefix,
-			Label:  "Environment variables",
-			Type:   report.PropertyListType,
-			Prefix: EnvPrefix,
-		},
-	}
+	//ContainerControls = []report.Control{
+	//	{
+	//		ID:    AttachContainer,
+	//		Human: "Attach",
+	//		Icon:  "fa fa-desktop",
+	//		Rank:  1,
+	//	},
+	//	{
+	//		ID:    ExecContainer,
+	//		Human: "Exec shell",
+	//		Icon:  "fa fa-terminal",
+	//		Rank:  2,
+	//	},
+	//	{
+	//		ID:    StartContainer,
+	//		Human: "Start",
+	//		Icon:  "fa fa-play",
+	//		Rank:  3,
+	//	},
+	//	{
+	//		ID:    RestartContainer,
+	//		Human: "Restart",
+	//		Icon:  "fa fa-redo",
+	//		Rank:  4,
+	//	},
+	//	{
+	//		ID:    PauseContainer,
+	//		Human: "Pause",
+	//		Icon:  "fa fa-pause",
+	//		Rank:  5,
+	//	},
+	//	{
+	//		ID:    UnpauseContainer,
+	//		Human: "Unpause",
+	//		Icon:  "fa fa-play",
+	//		Rank:  6,
+	//	},
+	//	{
+	//		ID:    StopContainer,
+	//		Human: "Stop",
+	//		Icon:  "fa fa-stop",
+	//		Rank:  7,
+	//	},
+	//	{
+	//		ID:    RemoveContainer,
+	//		Human: "Remove",
+	//		Icon:  "far fa-trash-alt",
+	//		Rank:  8,
+	//	},
+	//}
 
-	ContainerImageTableTemplates = report.TableTemplates{
-		ImageLabelPrefix: {
-			ID:     ImageLabelPrefix,
-			Label:  "Docker labels",
-			Type:   report.PropertyListType,
-			Prefix: ImageLabelPrefix,
-		},
-	}
-
-	ContainerControls = []report.Control{
-		{
-			ID:    AttachContainer,
-			Human: "Attach",
-			Icon:  "fa fa-desktop",
-			Rank:  1,
-		},
-		{
-			ID:    ExecContainer,
-			Human: "Exec shell",
-			Icon:  "fa fa-terminal",
-			Rank:  2,
-		},
-		{
-			ID:    StartContainer,
-			Human: "Start",
-			Icon:  "fa fa-play",
-			Rank:  3,
-		},
-		{
-			ID:    RestartContainer,
-			Human: "Restart",
-			Icon:  "fa fa-redo",
-			Rank:  4,
-		},
-		{
-			ID:    PauseContainer,
-			Human: "Pause",
-			Icon:  "fa fa-pause",
-			Rank:  5,
-		},
-		{
-			ID:    UnpauseContainer,
-			Human: "Unpause",
-			Icon:  "fa fa-play",
-			Rank:  6,
-		},
-		{
-			ID:    StopContainer,
-			Human: "Stop",
-			Icon:  "fa fa-stop",
-			Rank:  7,
-		},
-		{
-			ID:    RemoveContainer,
-			Human: "Remove",
-			Icon:  "far fa-trash-alt",
-			Rank:  8,
-		},
-	}
-
-	SwarmServiceMetadataTemplates = report.MetadataTemplates{
-		ServiceName:    {ID: ServiceName, Label: "Service name", From: report.FromLatest, Priority: 0},
-		StackNamespace: {ID: StackNamespace, Label: "Stack namespace", From: report.FromLatest, Priority: 1},
-	}
+	//SwarmServiceMetadataTemplates = report.MetadataTemplates{
+	//	ServiceName:    {ID: ServiceName, Label: "Service name", From: report.FromLatest, Priority: 0},
+	//	StackNamespace: {ID: StackNamespace, Label: "Stack namespace", From: report.FromLatest, Priority: 1},
+	//}
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
@@ -192,9 +192,9 @@ func (r *Reporter) Report() (report.Report, error) {
 
 	result := report.MakeReport()
 	result.Container = result.Container.Merge(r.containerTopology(localAddrs))
-	result.ContainerImage = result.ContainerImage.Merge(r.containerImageTopology())
-	result.Overlay = result.Overlay.Merge(r.overlayTopology())
-	result.SwarmService = result.SwarmService.Merge(r.swarmServiceTopology())
+	//result.ContainerImage = result.ContainerImage.Merge(r.containerImageTopology())
+	//result.Overlay = result.Overlay.Merge(r.overlayTopology())
+	//result.SwarmService = result.SwarmService.Merge(r.swarmServiceTopology())
 	return result, nil
 }
 
@@ -212,10 +212,10 @@ func getLocalIPs() ([]string, error) {
 
 func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	result := report.MakeTopology().
-		WithMetadataTemplates(ContainerMetadataTemplates).
-		WithMetricTemplates(ContainerMetricTemplates).
-		WithTableTemplates(ContainerTableTemplates)
-	result.Controls.AddControls(ContainerControls)
+		WithMetadataTemplates(ContainerMetadataTemplates) //.
+	//	WithMetricTemplates(ContainerMetricTemplates).
+	//	WithTableTemplates(ContainerTableTemplates)
+	//result.Controls.AddControls(ContainerControls)
 
 	metadata := map[string]string{report.ControlProbeID: r.probeID}
 	nodes := []report.Node{}
@@ -305,9 +305,9 @@ func extractChildPids(ppid int, ppidToPid map[int][]int, depth int) []int {
 }
 
 func (r *Reporter) containerImageTopology() report.Topology {
-	result := report.MakeTopology().
-		WithMetadataTemplates(ContainerImageMetadataTemplates).
-		WithTableTemplates(ContainerImageTableTemplates)
+	result := report.MakeTopology() //.
+	//WithMetadataTemplates(ContainerImageMetadataTemplates).
+	//WithTableTemplates(ContainerImageTableTemplates)
 
 	r.registry.WalkImages(func(image docker_client.APIImages) {
 		imageID := trimImageID(image.ID)
@@ -347,9 +347,9 @@ func (r *Reporter) overlayTopology() report.Topology {
 	return t
 }
 
-func (r *Reporter) swarmServiceTopology() report.Topology {
-	return report.MakeTopology().WithMetadataTemplates(SwarmServiceMetadataTemplates)
-}
+//func (r *Reporter) swarmServiceTopology() report.Topology {
+//	return report.MakeTopology().WithMetadataTemplates(SwarmServiceMetadataTemplates)
+//}
 
 // Docker sometimes prefixes ids with a "type" annotation, but it renders a bit
 // ugly and isn't necessary, so we should strip it off

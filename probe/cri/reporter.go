@@ -39,9 +39,9 @@ func (r *Reporter) Report() (report.Report, error) {
 }
 
 func (r *Reporter) containerTopology() (report.Topology, error) {
-	result := report.MakeTopology().
-		WithMetadataTemplates(docker.ContainerImageMetadataTemplates).
-		WithTableTemplates(docker.ContainerImageTableTemplates)
+	result := report.MakeTopology() //.
+	//WithMetadataTemplates(docker.ContainerImageMetadataTemplates).
+	//WithTableTemplates(docker.ContainerImageTableTemplates)
 
 	ctx := context.Background()
 	resp, err := r.cri.ListContainers(ctx, &client.ListContainersRequest{})
