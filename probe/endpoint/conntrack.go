@@ -16,9 +16,9 @@ import (
 const (
 	// From https://www.kernel.org/doc/Documentation/networking/nf_conntrack-sysctl.txt
 	eventsPath = "sys/net/netfilter/nf_conntrack_events"
-	timeWait   = "TIME_WAIT"
-	tcpClose   = "CLOSE"
-	tcpProto   = 6
+	//timeWait   = "TIME_WAIT"
+	//tcpClose   = "CLOSE"
+	//tcpProto   = 6
 )
 
 // flowWalker is something that maintains flows, and provides an accessor
@@ -104,11 +104,11 @@ func (c *conntrackWalker) needsDstNat(f conntrack.Conn) bool {
 }
 
 func (c *conntrackWalker) isConnectionInitiator(f conntrack.Conn) bool {
-	return f.TCPState == "SYN_SENT"
+	return f.TCPState == conntrack.TcpStateSynSent
 }
 
 func (c *conntrackWalker) isConnectionEstablished(f conntrack.Conn) bool {
-	return f.TCPState == "ESTABLISHED"
+	return f.TCPState == conntrack.TcpStateEstablished
 }
 
 func (c *conntrackWalker) run() {

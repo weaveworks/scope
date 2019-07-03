@@ -132,7 +132,7 @@ func NewRegistry(options RegistryOptions) (Registry, error) {
 		noEnvironmentVariables: options.NoEnvironmentVariables,
 	}
 
-	r.registerControls()
+	//r.registerControls()
 	go r.loop()
 	return r, nil
 }
