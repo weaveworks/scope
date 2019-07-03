@@ -126,7 +126,7 @@ func Established() ([]ConnTCP, error) {
 			fmt.Printf("msg isn't an update: %d\n", c.MsgType)
 			return
 		}
-		if c.TCPState != "ESTABLISHED" {
+		if c.TCPState != TcpStateEstablished {
 			// fmt.Printf("state isn't ESTABLISHED: %s\n", c.TCPState)
 			return
 		}
@@ -241,7 +241,7 @@ type Tuple struct {
 
 type Conn struct {
 	MsgType  NfConntrackMsg
-	TCPState string
+	TCPState TcpState
 	Status   CtStatus
 	Orig     Tuple
 	Reply    Tuple
@@ -457,7 +457,7 @@ func parseProtoinfoTCP(b []byte, conn *Conn) error {
 	for _, attr := range attrs {
 		switch CtattrProtoinfoTcp(attr.Typ) {
 		case CtaProtoinfoTcpState:
-			conn.TCPState = tcpState[uint8(attr.Msg[0])]
+			conn.TCPState = TcpState(attr.Msg[0])
 		default:
 			// not interested
 		}

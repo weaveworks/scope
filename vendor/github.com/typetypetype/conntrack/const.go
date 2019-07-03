@@ -29,20 +29,22 @@ const (
 )
 
 // taken from libnetfilter_conntrack/src/conntrack/snprintf.c
-var tcpState = []string{
-	"NONE",
-	"SYN_SENT",
-	"SYN_RECV",
-	"ESTABLISHED",
-	"FIN_WAIT",
-	"CLOSE_WAIT",
-	"LAST_ACK",
-	"TIME_WAIT",
-	"CLOSE",
-	"LISTEN",
-	"MAX",
-	"IGNORE",
-}
+type TcpState uint8
+
+const (
+	TcpStateNone TcpState = iota
+	TcpStateSynSent
+	TcpStateSynRecv
+	TcpStateEstablished
+	TcpStateFinWait
+	TcpStateCloseWait
+	TcpStateLastAck
+	TcpStateTimeWait
+	TcpStateClose
+	TcpStateListen
+	TcpStateMax
+	TcpStateIgnore
+)
 
 // Taken from include/uapi/linux/netfilter/nf_conntrack_common.h
 type CtStatus uint32

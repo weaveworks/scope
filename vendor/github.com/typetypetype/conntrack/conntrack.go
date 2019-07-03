@@ -107,7 +107,7 @@ func (c *ConnTrack) track() error {
 			default:
 				// not interested
 
-			case e.TCPState == "ESTABLISHED":
+			case e.TCPState == TcpStateEstablished:
 				cn := e.ConnTCP(local)
 				if cn == nil {
 					// log.Printf("not a local connection: %+v\n", e)
@@ -115,7 +115,7 @@ func (c *ConnTrack) track() error {
 				}
 				established[*cn] = struct{}{}
 
-			case e.MsgType == NfctMsgDestroy, e.TCPState == "TIME_WAIT", e.TCPState == "CLOSE":
+			case e.MsgType == NfctMsgDestroy, e.TCPState == TcpStateTimeWait, e.TCPState == TcpStateClose:
 				cn := e.ConnTCP(local)
 				if cn == nil {
 					// log.Printf("not a local connection: %+v\n", e)
