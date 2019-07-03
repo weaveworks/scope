@@ -262,7 +262,7 @@ var (
 				}),
 			},
 			MetadataTemplates: docker.ContainerMetadataTemplates,
-			MetricTemplates:   docker.ContainerMetricTemplates,
+			//MetricTemplates:   docker.ContainerMetricTemplates,
 		}.WithShape(report.Hexagon).WithLabel("container", "containers"),
 		ContainerImage: report.Topology{
 			Nodes: report.Nodes{
@@ -285,7 +285,7 @@ var (
 						Add("host", report.MakeStringSet(ServerHostNodeID)),
 					).WithTopology(report.ContainerImage),
 			},
-			MetadataTemplates: docker.ContainerImageMetadataTemplates,
+			//MetadataTemplates: docker.ContainerImageMetadataTemplates,
 		}.WithShape(report.Hexagon).WithLabel("image", "images"),
 		Host: report.Topology{
 			Nodes: report.Nodes{
@@ -319,7 +319,7 @@ var (
 				}),
 			},
 			MetadataTemplates: host.MetadataTemplates,
-			MetricTemplates:   host.MetricTemplates,
+			//MetricTemplates:   host.MetricTemplates,
 		}.WithShape(report.Circle).WithLabel("host", "hosts"),
 		Pod: report.Topology{
 			Nodes: report.Nodes{
