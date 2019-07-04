@@ -1,3 +1,12 @@
+## Release 1.11.3
+
+This is a bugfix release, which should improve some cases where
+reports get bigger and bigger over time due to Scope not seeing
+connections get closed.
+
+- Report the error and restart when something goes wrong in connection tracking
+	[#3648](https://github.com/weaveworks/scope/pull/3648)
+
 ## Release 1.11.2
 
 Minor update:
