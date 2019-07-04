@@ -112,7 +112,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
 **Docker Compose Format Version 1:**
 
     scope:
-      image: weaveworks/scope:1.11.2
+      image: weaveworks/scope:1.11.3
       net: "host"
       pid: "host"
       privileged: true
@@ -128,7 +128,7 @@ After it’s been launched, open your browser to `http://localhost:4040`.
     version: '2'
     services:
       scope:
-        image: weaveworks/scope:1.11.2
+        image: weaveworks/scope:1.11.3
         network_mode: "host"
         pid: "host"
         privileged: true
