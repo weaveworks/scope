@@ -3,8 +3,6 @@
 package endpoint
 
 import (
-	"time"
-
 	"github.com/weaveworks/scope/report"
 )
 
@@ -39,10 +37,6 @@ func (r *Reporter) Stop() {
 
 // Report implements Reporter.
 func (r *Reporter) Report() (report.Report, error) {
-	defer func(begin time.Time) {
-		SpyDuration.WithLabelValues().Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
 	rpt := report.MakeReport()
 
 	r.connectionTracker.ReportConnections(&rpt)
