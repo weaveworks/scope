@@ -147,6 +147,11 @@ func (c *conntrackWalker) run() {
 			if !ok {
 				return
 			}
+			if f.Err != nil {
+				log.Errorf("conntrack event error: %v", f.Err)
+				stop()
+				return
+			}
 			if c.relevant(f) {
 				c.handleFlow(f)
 			}
