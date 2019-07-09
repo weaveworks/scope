@@ -62,6 +62,8 @@ The Scope Probe is instrumented with various counters and timers. To have it dum
     kill -USR1 $(pgrep -f scope-probe)
     docker logs weavescope
 
+If you run with `--probe.http.listen` enabled, these are exposed as Prometheus metrics instead, via http at `/metrics`.
+
 ## <a name="profiling"></a>Profiling
 
 Both the Scope App and the Scope Probe offer [HTTP endpoints with profiling information](https://golang.org/pkg/net/http/pprof/).
