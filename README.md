@@ -49,8 +49,7 @@ scope launch
 ```
 
 This script downloads and runs a recent Scope image from Docker Hub.
-Now, open your web browser to **http://localhost:4040**. (If you're using
-boot2docker, replace localhost with the output of `boot2docker ip`.)
+Now, open your web browser to **http://localhost:4040**.
 
 For instructions on installing Scope on [Kubernetes](https://www.weave.works/docs/scope/latest/installing/#k8s), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos), or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 
