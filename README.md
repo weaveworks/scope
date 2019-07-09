@@ -42,6 +42,8 @@ If you would like to see your name added, let us know on Slack, or send a PR ple
 
 ## <a name="getting-started"></a>Getting Started
 
+Ensure your computer is behind a firewall that blocks port 4040 then,
+
 ```console
 sudo curl -L git.io/scope -o /usr/local/bin/scope
 sudo chmod a+x /usr/local/bin/scope
