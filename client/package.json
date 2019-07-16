@@ -8,7 +8,7 @@
   "main": "index.js",
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
-    "babel-plugin-lodash": "3.3.2",
+    "babel-plugin-lodash": "3.3.4",
     "classnames": "2.2.5",
     "d3-array": "1.2.1",
     "d3-color": "1.0.3",
@@ -65,7 +65,7 @@
     "css-loader": "2.1.1",
     "eslint": "6.0.1",
     "eslint-config-airbnb": "17.1.0",
-    "eslint-loader": "https://github.com/webpack-contrib/eslint-loader#b6c3938aae61c0390ac8d941af50cf36df14cfc3",
+    "eslint-loader": "2.2.1",
     "eslint-plugin-import": "2.18.0",
     "eslint-plugin-jsx-a11y": "6.2.3",
     "eslint-plugin-react": "7.14.2",
