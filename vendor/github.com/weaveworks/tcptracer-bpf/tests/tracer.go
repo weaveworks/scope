@@ -11,6 +11,15 @@ import (
 	"github.com/weaveworks/tcptracer-bpf/pkg/tracer"
 )
 
+const (
+	OK = iota
+	BAD_ARGUMENTS
+	TRACER_INSERT_FAILED
+	PROCESS_NOT_FOUND
+	TCP_EVENT_LATE
+	TCP_EVENTS_LOST
+)
+
 var watchFdInstallPids string
 
 type tcpEventTracer struct {
@@ -29,7 +38,7 @@ func (t *tcpEventTracer) TCPEventV4(e tracer.TcpV4) {
 
 	if t.lastTimestampV4 > e.Timestamp {
 		fmt.Printf("ERROR: late event!\n")
-		os.Exit(1)
+		os.Exit(TCP_EVENT_LATE)
 	}
 
 	t.lastTimestampV4 = e.Timestamp
@@ -41,7 +50,7 @@ func (t *tcpEventTracer) TCPEventV6(e tracer.TcpV6) {
 
 	if t.lastTimestampV6 > e.Timestamp {
 		fmt.Printf("ERROR: late event!\n")
-		os.Exit(1)
+		os.Exit(TCP_EVENT_LATE)
 	}
 
 	t.lastTimestampV6 = e.Timestamp
@@ -49,12 +58,12 @@ func (t *tcpEventTracer) TCPEventV6(e tracer.TcpV6) {
 
 func (t *tcpEventTracer) LostV4(count uint64) {
 	fmt.Printf("ERROR: lost %d events!\n", count)
-	os.Exit(1)
+	os.Exit(TCP_EVENTS_LOST)
 }
 
 func (t *tcpEventTracer) LostV6(count uint64) {
 	fmt.Printf("ERROR: lost %d events!\n", count)
-	os.Exit(1)
+	os.Exit(TCP_EVENTS_LOST)
 }
 
 func init() {
@@ -66,13 +75,13 @@ func init() {
 func main() {
 	if flag.NArg() > 1 {
 		flag.Usage()
-		os.Exit(1)
+		os.Exit(BAD_ARGUMENTS)
 	}
 
 	t, err := tracer.NewTracer(&tcpEventTracer{})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
+		os.Exit(TRACER_INSERT_FAILED)
 	}
 
 	t.Start()
@@ -85,14 +94,12 @@ func main() {
 		pid, err := strconv.ParseUint(p, 10, 32)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Invalid pid: %v\n", err)
-			os.Exit(1)
+			os.Exit(PROCESS_NOT_FOUND)
 		}
 		fmt.Printf("Monitor fdinstall events for pid %d\n", pid)
 		t.AddFdInstallWatcher(uint32(pid))
 	}
-
-	fmt.Printf("Ready\n")
-
+	
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, os.Kill)
 
