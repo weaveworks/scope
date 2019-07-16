@@ -86,7 +86,7 @@ var (
 	}, []string{"method", "status_code"})
 )
 
-func init() {
+func registerAWSCollectorMetrics() {
 	prometheus.MustRegister(dynamoRequestDuration)
 	prometheus.MustRegister(dynamoConsumedCapacity)
 	prometheus.MustRegister(dynamoValueSize)
@@ -97,6 +97,8 @@ func init() {
 	prometheus.MustRegister(reportSizePerUser)
 	prometheus.MustRegister(natsRequests)
 }
+
+var registerAWSCollectorMetricsOnce sync.Once
 
 // AWSCollector is a Collector which can also CreateTables
 type AWSCollector interface {
@@ -149,6 +151,7 @@ type watchKey struct {
 // NewAWSCollector the elastic reaper of souls
 // https://github.com/aws/aws-sdk-go/wiki/common-examples
 func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
+	registerAWSCollectorMetricsOnce.Do(registerAWSCollectorMetrics)
 	var nc *nats.Conn
 	if config.NatsHost != "" {
 		var err error

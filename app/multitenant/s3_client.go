@@ -2,6 +2,7 @@ package multitenant
 
 import (
 	"bytes"
+	"sync"
 
 	"context"
 	"github.com/aws/aws-sdk-go/aws"
@@ -28,12 +29,15 @@ type S3Store struct {
 	bucketName string
 }
 
-func init() {
+func registerS3ClientMetrics() {
 	prometheus.MustRegister(s3RequestDuration)
 }
 
+var registerS3ClientMetricsOnce sync.Once
+
 // NewS3Client creates a new S3 client.
 func NewS3Client(config *aws.Config, bucketName string) S3Store {
+	registerS3ClientMetricsOnce.Do(registerS3ClientMetrics)
 	return S3Store{
 		s3:         s3.New(session.New(config)),
 		bucketName: bucketName,
