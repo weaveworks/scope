@@ -42,6 +42,8 @@ If you would like to see your name added, let us know on Slack, or send a PR ple
 
 ## <a name="getting-started"></a>Getting Started
 
+**Ensure your computer is behind a firewall that blocks port 4040** then,
+
 ```console
 sudo curl -L git.io/scope -o /usr/local/bin/scope
 sudo chmod a+x /usr/local/bin/scope
@@ -49,8 +51,7 @@ scope launch
 ```
 
 This script downloads and runs a recent Scope image from Docker Hub.
-Now, open your web browser to **http://localhost:4040**. (If you're using
-boot2docker, replace localhost with the output of `boot2docker ip`.)
+Now, open your web browser to **http://localhost:4040**.
 
 For instructions on installing Scope on [Kubernetes](https://www.weave.works/docs/scope/latest/installing/#k8s), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos), or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 

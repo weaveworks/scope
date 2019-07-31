@@ -168,6 +168,11 @@ Allowable parameters for the launcher URL:
 
 The URL is: http://localhost:4040.
 
+>**Note:** Do not expose the Scope service to the Internet, e.g. by
+   changing the type to NodePort or LoadBalancer. Scope allows anyone
+   with access to the user interface control over your hosts and
+   containers.
+
 ### Kubernetes (local clone)
 
 A simple way to get Scope running in a Kubernetes setting is to
