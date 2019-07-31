@@ -153,7 +153,7 @@ func (p *Probe) tick() {
 		err := ticker.Tick()
 		metrics.MeasureSince([]string{ticker.Name(), "ticker"}, t)
 		if err != nil {
-			log.Errorf("error doing ticker: %v", err)
+			log.Errorf("Error doing ticker: %v", err)
 		}
 	}
 }
@@ -170,7 +170,7 @@ func (p *Probe) report() report.Report {
 			}
 			metrics.MeasureSince([]string{rep.Name(), "reporter"}, t)
 			if err != nil {
-				log.Errorf("error generating report: %v", err)
+				log.Errorf("Error generating %s report: %v", rep.Name(), err)
 				newReport = report.MakeReport() // empty is OK to merge
 			}
 			reports <- newReport
@@ -195,7 +195,7 @@ func (p *Probe) tag(r report.Report) report.Report {
 		}
 		metrics.MeasureSince([]string{tagger.Name(), "tagger"}, t)
 		if err != nil {
-			log.Errorf("error applying tagger: %v", err)
+			log.Errorf("Error applying tagger: %v", err)
 		}
 	}
 	return r
@@ -219,7 +219,7 @@ ForLoop:
 		})
 	}
 	if err := p.publisher.Publish(rpt); err != nil {
-		log.Infof("publish: %v", err)
+		log.Infof("Publish: %v", err)
 	}
 }
 
