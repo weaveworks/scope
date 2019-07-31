@@ -1,3 +1,20 @@
+## Release 1.11.4
+
+This release contains a few fixes, one of which should improve
+resource usage on hosts that have a lot of TCP connections.
+
+- Improve eBPF connection tracker to reduce the number of times it
+  restarts and falls back to a less efficient mechanism.
+	[#3653](https://github.com/weaveworks/scope/pull/3653)
+- Add reporter name to probe error logs. Thanks to @princerachit
+	[#3363](https://github.com/weaveworks/scope/pull/3363)
+- Defer metrics registration until we need it
+	[#3605](https://github.com/weaveworks/scope/pull/3605)
+- Remove unused metric SpyDuration
+	[#3646](https://github.com/weaveworks/scope/pull/3646)
+- Remove quay.io from release script
+	[#3657](https://github.com/weaveworks/scope/pull/3657)
+
 ## Release 1.11.3
 
 This is a bugfix release, which should improve some cases where
