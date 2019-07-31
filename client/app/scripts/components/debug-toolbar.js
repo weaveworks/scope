@@ -157,9 +157,9 @@ class DebugToolbar extends React.Component {
   }
 
   toggleColors() {
-    this.setState({
-      showColors: !this.state.showColors
-    });
+    this.setState(prevState => ({
+      showColors: !prevState.showColors
+    }));
   }
 
   asyncDispatch(v) {

@@ -46,9 +46,9 @@ export default class NodeDetailsGenericTable extends React.Component {
   }
 
   handleLimitClick() {
-    this.setState({
-      limit: this.state.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT
-    });
+    this.setState(prevState => ({
+      limit: prevState.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT
+    }));
   }
 
   render() {

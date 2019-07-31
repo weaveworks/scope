@@ -13,8 +13,9 @@ export default class NodeDetailsHealth extends React.Component {
   }
 
   handleClickMore() {
-    const expanded = !this.state.expanded;
-    this.setState({expanded});
+    this.setState(prevState => ({
+      expanded: !prevState.expanded
+    }));
   }
 
   render() {
@@ -43,7 +44,7 @@ export default class NodeDetailsHealth extends React.Component {
               {...item}
               key={item.id}
               topologyId={topologyId}
-          />
+            />
           ))}
         </div>
         <div className="node-details-health-wrapper">
@@ -52,7 +53,7 @@ export default class NodeDetailsHealth extends React.Component {
               {...item}
               key={item.id}
               topologyId={topologyId}
-          />
+            />
           ))}
         </div>
         <ShowMore

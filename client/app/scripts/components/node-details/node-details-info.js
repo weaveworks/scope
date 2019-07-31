@@ -17,8 +17,9 @@ class NodeDetailsInfo extends React.Component {
   }
 
   handleClickMore() {
-    const expanded = !this.state.expanded;
-    this.setState({expanded});
+    this.setState(prevState => ({
+      expanded: !prevState.expanded
+    }));
   }
 
   render() {

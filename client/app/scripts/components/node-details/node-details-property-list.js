@@ -28,8 +28,9 @@ export default class NodeDetailsPropertyList extends React.Component {
   }
 
   handleLimitClick() {
-    const limit = this.state.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
-    this.setState({limit});
+    this.setState(prevState => ({
+      limit: prevState.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT
+    }));
   }
 
   render() {
