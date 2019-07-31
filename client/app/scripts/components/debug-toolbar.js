@@ -19,7 +19,7 @@ const STACK_VARIANTS = [false, true];
 const METRIC_FILLS = [0, 0.1, 50, 99.9, 100];
 const NETWORKS = [
   'be', 'fe', 'zb', 'db', 're', 'gh', 'jk', 'lol', 'nw'
-].map(n => ({colorKey: n, id: n, label: n}));
+].map(n => ({ colorKey: n, id: n, label: n }));
 
 const INTERNET = 'the-internet';
 const LOREM = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
@@ -60,7 +60,7 @@ const deltaAdd = (name, adjacency = [], shape = 'circle', stack = false, network
 
 function addMetrics(availableMetrics, node, v) {
   const metrics = availableMetrics.size > 0 ? availableMetrics : fromJS([
-    {id: 'host_cpu_usage_percent', label: 'CPU'}
+    { id: 'host_cpu_usage_percent', label: 'CPU' }
   ]);
 
   return Object.assign({}, node, {
@@ -153,7 +153,7 @@ class DebugToolbar extends React.Component {
   }
 
   onChange(ev) {
-    this.setState({nodesToAdd: parseInt(ev.target.value, 10)});
+    this.setState({ nodesToAdd: parseInt(ev.target.value, 10) });
   }
 
   toggleColors() {
@@ -285,48 +285,54 @@ class DebugToolbar extends React.Component {
       <div className="debug-panel">
         <div>
           <strong>Add nodes </strong>
-          <button onClick={() => this.addNodes(1)}>+1</button>
-          <button onClick={() => this.addNodes(10)}>+10</button>
+          <button type="button" onClick={() => this.addNodes(1)}>+1</button>
+          <button type="button" onClick={() => this.addNodes(10)}>+10</button>
           <input type="number" onChange={this.onChange} value={this.state.nodesToAdd} />
-          <button onClick={() => this.addNodes(this.state.nodesToAdd)}>+</button>
-          <button onClick={() => this.asyncDispatch(addAllVariants)}>Variants</button>
-          <button onClick={() => this.asyncDispatch(addAllMetricVariants(availableMetrics))}>
+          <button type="button" onClick={() => this.addNodes(this.state.nodesToAdd)}>+</button>
+          <button type="button" onClick={() => this.asyncDispatch(addAllVariants)}>
+            Variants
+          </button>
+          <button
+            type="button"
+            onClick={() => this.asyncDispatch(addAllMetricVariants(availableMetrics))}>
             Metric Variants
           </button>
-          <button onClick={() => this.addNodes(1, LOREM)}>Long name</button>
-          <button onClick={() => this.addInternetNode()}>Internet</button>
-          <button onClick={() => this.removeNode()}>Remove node</button>
-          <button onClick={() => this.updateAdjacencies()}>Update adj.</button>
+          <button type="button" onClick={() => this.addNodes(1, LOREM)}>Long name</button>
+          <button type="button" onClick={() => this.addInternetNode()}>Internet</button>
+          <button type="button" onClick={() => this.removeNode()}>Remove node</button>
+          <button type="button" onClick={() => this.updateAdjacencies()}>Update adj.</button>
         </div>
 
         <div>
           <strong>Logging </strong>
-          <button onClick={() => enableLog('*')}>scope:*</button>
-          <button onClick={() => enableLog('dispatcher')}>scope:dispatcher</button>
-          <button onClick={() => enableLog('app-key-press')}>scope:app-key-press</button>
-          <button onClick={() => enableLog('terminal')}>scope:terminal</button>
-          <button onClick={() => disableLog()}>Disable log</button>
+          <button type="button" onClick={() => enableLog('*')}>scope:*</button>
+          <button type="button" onClick={() => enableLog('dispatcher')}>scope:dispatcher</button>
+          <button type="button" onClick={() => enableLog('app-key-press')}>
+            scope:app-key-press
+          </button>
+          <button type="button" onClick={() => enableLog('terminal')}>scope:terminal</button>
+          <button type="button" onClick={() => disableLog()}>Disable log</button>
         </div>
 
         <div>
           <strong>Colors </strong>
-          <button onClick={this.toggleColors}>toggle</button>
+          <button type="button" onClick={this.toggleColors}>toggle</button>
         </div>
 
         {this.state.showColors
-        && (
-        <table>
-          <tbody>
-            {LABEL_PREFIXES.map(r => (
-              <tr key={r}>
-                <td
-                  title={`${r}`}
-                  style={{backgroundColor: hsl(text2degree(r), 0.5, 0.5).toString()}} />
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        )}
+          && (
+            <table>
+              <tbody>
+                {LABEL_PREFIXES.map(r => (
+                  <tr key={r}>
+                    <td
+                      title={`${r}`}
+                      style={{ backgroundColor: hsl(text2degree(r), 0.5, 0.5).toString() }} />
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
 
         {this.state.showColors && [getNodeColor, getNodeColorDark].map(fn => (
           <table key={fn}>
@@ -334,7 +340,7 @@ class DebugToolbar extends React.Component {
               {LABEL_PREFIXES.map(r => (
                 <tr key={r}>
                   {LABEL_PREFIXES.map(c => (
-                    <td key={c} title={`(${r}, ${c})`} style={{backgroundColor: fn(r, c)}} />
+                    <td key={c} title={`(${r}, ${c})`} style={{ backgroundColor: fn(r, c) }} />
                   ))}
                 </tr>
               ))}
@@ -344,14 +350,20 @@ class DebugToolbar extends React.Component {
 
         <div>
           <strong>State </strong>
-          <button onClick={() => this.setLoading(true)}>Set doing initial load</button>
-          <button onClick={() => this.setLoading(false)}>Stop</button>
+          <button type="button" onClick={() => this.setLoading(true)}>
+            Set doing initial load
+          </button>
+          <button type="button" onClick={() => this.setLoading(false)}>Stop</button>
         </div>
 
         <div>
           <strong>Short-lived nodes </strong>
-          <button onClick={() => this.setShortLived()}>Toggle short-lived nodes</button>
-          <button onClick={() => this.setIntermittent()}>Toggle intermittent nodes</button>
+          <button type="button" onClick={() => this.setShortLived()}>
+            Toggle short-lived nodes
+          </button>
+          <button type="button" onClick={() => this.setIntermittent()}>
+            Toggle intermittent nodes
+          </button>
         </div>
       </div>
     );

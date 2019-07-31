@@ -1,4 +1,4 @@
-/* eslint react/jsx-no-bind: "off", no-multi-comp: "off" */
+/* eslint react/jsx-no-bind: "off" */
 import React from 'react';
 import styled from 'styled-components';
 import { connect } from 'react-redux';
@@ -55,7 +55,11 @@ function getColumns(nodes, topologies) {
     .toList()
     .flatMap((n) => {
       const metadata = (n.get('metadata') || makeList())
-        .map(m => makeMap({ dataType: m.get('dataType'), id: m.get('id'), label: m.get('label') }));
+        .map(m => makeMap({
+          dataType: m.get('dataType'),
+          id: m.get('id'),
+          label: m.get('label')
+        }));
       return metadata;
     })
     .toSet()
@@ -68,7 +72,10 @@ function getColumns(nodes, topologies) {
     .toList()
     .flatMap((n) => {
       const metadata = (n.get('parents') || makeList())
-        .map(m => makeMap({ id: m.get('topologyId'), label: topologyLabel(topologies, m.get('topologyId')) }));
+        .map(m => makeMap({
+          id: m.get('topologyId'),
+          label: topologyLabel(topologies, m.get('topologyId'))
+        }));
       return metadata;
     })
     .toSet()
@@ -128,7 +135,9 @@ class NodesGrid extends React.Component {
     const {
       nodes, gridSortedBy, gridSortedDesc, searchNodeMatches, searchQuery, windowHeight, topologies
     } = this.props;
-    const height = this.tableRef ? windowHeight - this.tableRef.getBoundingClientRect().top - 30 : 0;
+    const height = this.tableRef
+      ? windowHeight - this.tableRef.getBoundingClientRect().top - 30
+      : 0;
     const cmpStyle = {
       height,
       paddingLeft: 40,
@@ -154,19 +163,19 @@ class NodesGrid extends React.Component {
     return (
       <div className="nodes-grid" ref={this.saveTableRef}>
         {nodes.size > 0 && (
-        <NodeDetailsTable
-          style={cmpStyle}
-          className={className}
-          renderIdCell={renderIdCell}
-          tbodyStyle={tbodyStyle}
-          topologyId={this.props.currentTopologyId}
-          onSortChange={this.onSortChange}
-          onClickRow={this.onClickRow}
-          sortedBy={gridSortedBy}
-          sortedDesc={gridSortedDesc}
-          selectedNodeId={this.props.selectedNodeId}
-          limit={1000}
-          {...detailsData}
+          <NodeDetailsTable
+            style={cmpStyle}
+            className={className}
+            renderIdCell={renderIdCell}
+            tbodyStyle={tbodyStyle}
+            topologyId={this.props.currentTopologyId}
+            onSortChange={this.onSortChange}
+            onClickRow={this.onClickRow}
+            sortedBy={gridSortedBy}
+            sortedDesc={gridSortedDesc}
+            selectedNodeId={this.props.selectedNodeId}
+            limit={1000}
+            {...detailsData}
           />
         )}
       </div>

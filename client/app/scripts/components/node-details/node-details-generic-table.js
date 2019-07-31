@@ -62,7 +62,11 @@ export default class NodeDetailsGenericTable extends React.Component {
     // If there are rows that would be hidden behind 'show more', keep them
     // expanded if any of them match the search query; otherwise hide them.
     if (this.state.limit > 0 && rows.length > this.state.limit) {
-      const hasHiddenMatch = rows.slice(this.state.limit).some(row => columns.some(column => matches.has(genericTableEntryKey(row, column))));
+      const hasHiddenMatch = rows
+        .slice(this.state.limit)
+        .some(
+          row => columns.some(column => matches.has(genericTableEntryKey(row, column)))
+        );
       if (!hasHiddenMatch) {
         notShown = rows.length - NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
         rows = rows.slice(0, this.state.limit);
