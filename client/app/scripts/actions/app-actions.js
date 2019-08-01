@@ -5,7 +5,8 @@ import ActionTypes from '../constants/action-types';
 import { saveGraph } from '../utils/file-utils';
 import { clearStoredViewState, updateRoute } from '../utils/router-utils';
 import {
-  doControlRequest,
+  doRequest,
+  getApiPath,
   getAllNodes,
   getResourceViewNodesSnapshot,
   getNodeDetails,
@@ -33,6 +34,8 @@ import {
   RESOURCE_VIEW_MODE,
 } from '../constants/naming';
 
+
+let controlErrorTimer = 0;
 
 const log = debug('scope:app-actions');
 
@@ -420,17 +423,6 @@ export function closeWebsocket() {
   };
 }
 
-export function doControl(nodeId, control) {
-  return (dispatch) => {
-    dispatch({
-      control,
-      nodeId,
-      type: ActionTypes.DO_CONTROL
-    });
-    doControlRequest(nodeId, control, dispatch);
-  };
-}
-
 export function enterEdge(edgeId) {
   return {
     edgeId,
@@ -683,6 +675,53 @@ export function receiveControlPipeStatus(pipeId, status) {
   };
 }
 
+function doControlRequest(nodeId, control, dispatch) {
+  clearTimeout(controlErrorTimer);
+  const url = `${getApiPath()}/api/control/${encodeURIComponent(control.probeId)}/`
+    + `${encodeURIComponent(control.nodeId)}/${control.id}`;
+  doRequest({
+    error: (err) => {
+      dispatch(receiveControlError(nodeId, err.response));
+      controlErrorTimer = setTimeout(() => {
+        dispatch(clearControlError(nodeId));
+      }, 10000);
+    },
+    method: 'POST',
+    success: (res) => {
+      dispatch(receiveControlSuccess(nodeId));
+      if (res) {
+        if (res.pipe) {
+          dispatch(blurSearch());
+          const resizeTtyControl = res.resize_tty_control
+            && { id: res.resize_tty_control, nodeId: control.nodeId, probeId: control.probeId };
+          dispatch(receiveControlPipe(
+            res.pipe,
+            nodeId,
+            res.raw_tty,
+            resizeTtyControl,
+            control
+          ));
+        }
+        if (res.removedNode) {
+          dispatch(receiveControlNodeRemoved(nodeId));
+        }
+      }
+    },
+    url
+  });
+}
+
+export function doControl(nodeId, control) {
+  return (dispatch) => {
+    dispatch({
+      control,
+      nodeId,
+      type: ActionTypes.DO_CONTROL
+    });
+    doControlRequest(nodeId, control, dispatch);
+  };
+}
+
 export function receiveError(errorUrl) {
   return {
     errorUrl,
@@ -745,7 +784,7 @@ export function route(urlState) {
 
 export function resetLocalViewState() {
   return (dispatch) => {
-    dispatch({type: ActionTypes.RESET_LOCAL_VIEW_STATE});
+    dispatch({ type: ActionTypes.RESET_LOCAL_VIEW_STATE });
     clearStoredViewState();
     // eslint-disable-next-line prefer-destructuring
     window.location.href = window.location.href.split('#')[0];

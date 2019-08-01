@@ -4,10 +4,9 @@ import { defaults } from 'lodash';
 import { Map as makeMap, List } from 'immutable';
 
 import {
-  blurSearch, clearControlError, closeWebsocket, openWebsocket, receiveError,
-  receiveApiDetails, receiveNodesDelta, receiveNodeDetails, receiveControlError,
-  receiveControlNodeRemoved, receiveControlPipe, receiveControlPipeStatus,
-  receiveControlSuccess, receiveTopologies, receiveNotFound,
+  closeWebsocket, openWebsocket, receiveError,
+  receiveApiDetails, receiveNodesDelta, receiveNodeDetails,
+  receiveControlPipeStatus, receiveTopologies, receiveNotFound,
   receiveNodesForTopology, receiveNodes,
 } from '../actions/app-actions';
 
@@ -42,7 +41,6 @@ let socket;
 let reconnectTimer = 0;
 let topologyTimer = 0;
 let apiDetailsTimer = 0;
-let controlErrorTimer = 0;
 let currentUrl = null;
 let createWebsocketAt = null;
 let firstMessageOnWebsocketAt = null;
@@ -182,7 +180,7 @@ function createWebsocket(websocketUrl, getState, dispatch) {
   * XHR wrapper. Applies a CSRF token (if it exists) and content-type to all requests.
   * Any opts that get passed in will override the defaults.
   */
-function doRequest(opts) {
+export function doRequest(opts) {
   const config = defaults(opts, {
     contentType: 'application/json',
     type: 'json'
@@ -393,49 +391,12 @@ export function getApiDetails(dispatch) {
   });
 }
 
-export function doControlRequest(nodeId, control, dispatch) {
-  clearTimeout(controlErrorTimer);
-  const url = `${getApiPath()}/api/control/${encodeURIComponent(control.probeId)}/`
-    + `${encodeURIComponent(control.nodeId)}/${control.id}`;
-  doRequest({
-    error: (err) => {
-      dispatch(receiveControlError(nodeId, err.response));
-      controlErrorTimer = setTimeout(() => {
-        dispatch(clearControlError(nodeId));
-      }, 10000);
-    },
-    method: 'POST',
-    success: (res) => {
-      dispatch(receiveControlSuccess(nodeId));
-      if (res) {
-        if (res.pipe) {
-          dispatch(blurSearch());
-          const resizeTtyControl = res.resize_tty_control
-            && {id: res.resize_tty_control, nodeId: control.nodeId, probeId: control.probeId};
-          dispatch(receiveControlPipe(
-            res.pipe,
-            nodeId,
-            res.raw_tty,
-            resizeTtyControl,
-            control
-          ));
-        }
-        if (res.removedNode) {
-          dispatch(receiveControlNodeRemoved(nodeId));
-        }
-      }
-    },
-    url
-  });
-}
-
-
 export function doResizeTty(pipeId, control, cols, rows) {
   const url = `${getApiPath()}/api/control/${encodeURIComponent(control.probeId)}/`
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
 
   return doRequest({
-    data: JSON.stringify({height: rows.toString(), pipeID: pipeId, width: cols.toString()}),
+    data: JSON.stringify({ height: rows.toString(), pipeID: pipeId, width: cols.toString() }),
     method: 'POST',
     url,
   })

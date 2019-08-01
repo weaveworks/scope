@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import { clickRelative } from '../../actions/app-actions';
 import { trackAnalyticsEvent } from '../../utils/tracking-utils';
-import { dismissRowClickProps } from './node-details-table-row';
+import { dismissRowClickProps } from '../../utils/dom-utils';
 
 
 class NodeDetailsTableNodeLink extends React.Component {
