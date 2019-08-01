@@ -31,7 +31,7 @@ spec:
             - '--probe.docker.bridge=docker0'
             - '--probe.docker=true'
             - 'weave-scope-app.weave.svc.cluster.local.:80'
-          image: weaveworks/scope:1.11.3
+          image: weaveworks/scope:1.11.4
           imagePullPolicy: IfNotPresent
           resources:
             requests:
