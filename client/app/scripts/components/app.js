@@ -18,9 +18,7 @@ import Status from './status';
 import Topologies from './topologies';
 import TopologyOptions from './topology-options';
 import Overlay from './overlay';
-import { getApiDetails } from '../utils/web-api-utils';
 import {
-  focusSearch,
   pinNextMetric,
   pinPreviousMetric,
   hitEsc,
@@ -29,12 +27,16 @@ import {
   setGraphView,
   setMonitorState,
   setTableView,
-  setResourceView,
   setStoreViewState,
-  shutdown,
   setViewportDimensions,
-  getTopologiesWithInitialPoll,
 } from '../actions/app-actions';
+import {
+  focusSearch,
+  getApiDetails,
+  setResourceView,
+  getTopologiesWithInitialPoll,
+  shutdown,
+} from '../actions/request-actions';
 import Details from './details';
 import Nodes from './nodes';
 import TimeControl from './time-control';

@@ -6,7 +6,8 @@ import { List as makeList, Map as makeMap } from 'immutable';
 import capitalize from 'lodash/capitalize';
 
 import NodeDetailsTable from '../components/node-details/node-details-table';
-import { clickNode, sortOrderChanged } from '../actions/app-actions';
+import { clickNode } from '../actions/request-actions';
+import { sortOrderChanged } from '../actions/app-actions';
 import { shownNodesSelector } from '../selectors/node-filters';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { findTopologyById } from '../utils/topology-utils';

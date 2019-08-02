@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import { Map as makeMap } from 'immutable';
 import { noop } from 'lodash';
 
-import { clickCloseDetails, clickShowTopologyForNode } from '../actions/app-actions';
+import { clickCloseDetails, clickShowTopologyForNode } from '../actions/request-actions';
 import { brightenColor, getNeutralColor, getNodeColorDark } from '../utils/color-utils';
 import { isGenericTable, isPropertyList } from '../utils/node-details-utils';
 import { resetDocumentTitle, setDocumentTitle } from '../utils/title-utils';

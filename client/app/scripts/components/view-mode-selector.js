@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 
 import ViewModeButton from './view-mode-button';
 import MetricSelector from './metric-selector';
-import { setGraphView, setTableView, setResourceView } from '../actions/app-actions';
+import { setResourceView } from '../actions/request-actions';
+import { setGraphView, setTableView } from '../actions/app-actions';
 import { availableMetricsSelector } from '../selectors/node-metric';
 import {
   isResourceViewModeSelector,

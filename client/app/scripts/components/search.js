@@ -5,8 +5,11 @@ import { Search } from 'weaveworks-ui-components';
 import styled from 'styled-components';
 
 import {
-  blurSearch, focusSearch, updateSearch, toggleHelp
+  blurSearch, updateSearch, toggleHelp
 } from '../actions/app-actions';
+import {
+  focusSearch
+} from '../actions/request-actions';
 import { searchMatchCountByTopologySelector } from '../selectors/search';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { slugify } from '../utils/string-utils';

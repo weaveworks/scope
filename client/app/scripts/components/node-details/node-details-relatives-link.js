@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { clickRelative } from '../../actions/app-actions';
+import { clickRelative } from '../../actions/request-actions';
 import { trackAnalyticsEvent } from '../../utils/tracking-utils';
 import MatchedText from '../matched-text';
 

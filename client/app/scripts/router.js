@@ -2,7 +2,7 @@ import page from 'page';
 import stableStringify from 'json-stable-stringify';
 import { each } from 'lodash';
 
-import { route } from './actions/app-actions';
+import { route } from './actions/request-actions';
 import { storageGet, storageSet } from './utils/storage-utils';
 import {
   decodeURL, encodeURL, isStoreViewStateEnabled, STORAGE_STATE_KEY

@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { TimestampTag } from 'weaveworks-ui-components';
 
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
-import { pauseTimeAtNow, resumeTime } from '../actions/app-actions';
+import { pauseTimeAtNow, resumeTime } from '../actions/request-actions';
 import { isPausedSelector, timeTravelSupportedSelector } from '../selectors/time-travel';
 
 

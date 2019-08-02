@@ -7,7 +7,7 @@ import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { getCurrentTopologyOptions } from '../utils/topology-utils';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
 import TopologyOptionAction from './topology-option-action';
-import { changeTopologyOption } from '../actions/app-actions';
+import { changeTopologyOption } from '../actions/request-actions';
 
 class TopologyOptions extends React.Component {
   constructor(props, context) {

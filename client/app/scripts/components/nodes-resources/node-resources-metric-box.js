@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import theme from 'weaveworks-ui-components/lib/theme';
 
 import NodeResourcesMetricBoxInfo from './node-resources-metric-box-info';
-import { clickNode } from '../../actions/app-actions';
+import { clickNode } from '../../actions/request-actions';
 import { trackAnalyticsEvent } from '../../utils/tracking-utils';
 import { applyTransform } from '../../utils/transform-utils';
 import { RESOURCE_VIEW_MODE } from '../../constants/naming';

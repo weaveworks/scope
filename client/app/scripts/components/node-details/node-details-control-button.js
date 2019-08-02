@@ -4,7 +4,7 @@ import { isEmpty } from 'lodash';
 import classNames from 'classnames';
 
 import { trackAnalyticsEvent } from '../../utils/tracking-utils';
-import { doControl } from '../../actions/app-actions';
+import { doControl } from '../../actions/request-actions';
 
 class NodeDetailsControlButton extends React.Component {
   constructor(props, context) {
