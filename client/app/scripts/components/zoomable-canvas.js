@@ -8,8 +8,8 @@ import { drag } from 'd3-drag';
 import { event as d3Event, select } from 'd3-selection';
 import { zoomFactor } from 'weaveworks-ui-components/lib/utils/zooming';
 
-import Logo from '../components/logo';
-import ZoomControl from '../components/zoom-control';
+import Logo from './logo';
+import ZoomControl from './zoom-control';
 import { cacheZoomState } from '../actions/app-actions';
 import { applyTransform, inverseTransform } from '../utils/transform-utils';
 import { activeTopologyZoomCacheKeyPathSelector } from '../selectors/zooming';
@@ -116,12 +116,14 @@ class ZoomableCanvas extends React.Component {
             {this.props.children(this.state)}
           </g>
         </svg>
-        {this.canChangeZoom() && <ZoomControl
+        {this.canChangeZoom() && (
+        <ZoomControl
           zoomAction={this.handleZoomControlAction}
           minScale={this.state.minScale}
           maxScale={this.state.maxScale}
           scale={this.state.scaleX}
-        />}
+        />
+        )}
       </div>
     );
   }

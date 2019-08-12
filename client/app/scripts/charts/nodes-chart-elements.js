@@ -63,9 +63,9 @@ class NodesChartElements extends React.Component {
   nodeDisplayLayer(node) {
     if (node.get('id') === this.props.mouseOverNodeId) {
       return HOVERED_NODES_LAYER;
-    } else if (node.get('blurred') && !node.get('focused')) {
+    } if (node.get('blurred') && !node.get('focused')) {
       return BLURRED_NODES_LAYER;
-    } else if (node.get('highlighted')) {
+    } if (node.get('highlighted')) {
       return HIGHLIGHTED_NODES_LAYER;
     }
     return NORMAL_NODES_LAYER;
@@ -74,9 +74,9 @@ class NodesChartElements extends React.Component {
   edgeDisplayLayer(edge) {
     if (edge.get('id') === this.props.mouseOverEdgeId) {
       return HOVERED_EDGES_LAYER;
-    } else if (edge.get('blurred') && !edge.get('focused')) {
+    } if (edge.get('blurred') && !edge.get('focused')) {
       return BLURRED_EDGES_LAYER;
-    } else if (edge.get('highlighted')) {
+    } if (edge.get('highlighted')) {
       return HIGHLIGHTED_EDGES_LAYER;
     }
     return NORMAL_EDGES_LAYER;
@@ -140,8 +140,8 @@ class NodesChartElements extends React.Component {
     const sourceInNetwork = selectedNetworkNodesIds.contains(edge.get('source'));
     const targetInNetwork = selectedNetworkNodesIds.contains(edge.get('target'));
     const notInNetwork = this.props.selectedNetwork && (!sourceInNetwork || !targetInNetwork);
-    return edge.set('blurred', !edge.get('highlighted') && !edge.get('focused') &&
-      (otherNodesSelected || notMatched || notInNetwork));
+    return edge.set('blurred', !edge.get('highlighted') && !edge.get('focused')
+      && (otherNodesSelected || notMatched || notInNetwork));
   }
 
   edgeScaleDecorator(edge) {

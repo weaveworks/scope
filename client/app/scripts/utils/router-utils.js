@@ -1,11 +1,10 @@
 import page from 'page';
 import stableStringify from 'json-stable-stringify';
 import { fromJS, is as isDeepEqual } from 'immutable';
-import { each, omit, omitBy, isEmpty } from 'lodash';
+import { omit, omitBy, isEmpty } from 'lodash';
 
-import { route } from '../actions/app-actions';
 import { hashDifferenceDeep } from './hash-utils';
-import { storageGet, storageSet } from './storage-utils';
+import { storageSet } from './storage-utils';
 
 import { getDefaultTopologyOptions, initialState as initialRootState } from '../reducers/root';
 
@@ -17,9 +16,9 @@ const SLASH = '/';
 const SLASH_REPLACEMENT = '<SLASH>';
 const PERCENT = '%';
 const PERCENT_REPLACEMENT = '<PERCENT>';
-const STORAGE_STATE_KEY = 'scopeViewState';
+export const STORAGE_STATE_KEY = 'scopeViewState';
 
-function encodeURL(url) {
+export function encodeURL(url) {
   return url
     .replace(new RegExp(PERCENT, 'g'), PERCENT_REPLACEMENT)
     .replace(new RegExp(SLASH, 'g'), SLASH_REPLACEMENT);
@@ -41,7 +40,7 @@ export function clearStoredViewState() {
   storageSet(STORAGE_STATE_KEY, '');
 }
 
-function isStoreViewStateEnabled(state) {
+export function isStoreViewStateEnabled(state) {
   return state.get('storeViewState');
 }
 
@@ -134,60 +133,4 @@ export function updateRoute(getState) {
   } else {
     page.show(`/state/${stateUrl}`, state, dispatch);
   }
-}
-
-// Temporarily detect old topology options to avoid breaking things between releases
-// Related to https://github.com/weaveworks/scope/pull/2404
-function detectOldOptions(topologyOptions) {
-  let bad = false;
-  each(topologyOptions, (topology) => {
-    each(topology, (option) => {
-      if (typeof option === 'string') {
-        bad = true;
-      }
-    });
-  });
-  return bad;
-}
-
-
-export function getRouter(initialState) {
-  return (dispatch, getState) => {
-    // strip any trailing '/'s.
-    page.base(window.location.pathname.replace(/\/$/, ''));
-
-    page('/', () => {
-      // recover from storage state on empty URL
-      const storageState = storageGet(STORAGE_STATE_KEY);
-      if (storageState && isStoreViewStateEnabled(getState())) {
-        const parsedState = JSON.parse(decodeURL(storageState));
-        const dirtyOptions = detectOldOptions(parsedState.topologyOptions);
-        if (dirtyOptions) {
-          dispatch(route(initialState));
-        } else {
-          const mergedState = Object.assign(initialState, parsedState);
-          // push storage state to URL
-          window.location.hash = `!/state/${stableStringify(mergedState)}`;
-          dispatch(route(mergedState));
-        }
-      } else {
-        dispatch(route(initialState));
-      }
-    });
-
-    page('/state/:state', (ctx) => {
-      const state = JSON.parse(decodeURL(ctx.params.state));
-      const dirtyOptions = detectOldOptions(state.topologyOptions);
-      const nextState = dirtyOptions ? initialState : state;
-
-      // back up state in storage and redirect
-      if (isStoreViewStateEnabled(getState())) {
-        storageSet(STORAGE_STATE_KEY, encodeURL(stableStringify(state)));
-      }
-
-      dispatch(route(nextState));
-    });
-
-    return page;
-  };
 }

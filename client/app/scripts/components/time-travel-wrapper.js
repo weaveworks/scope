@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { TimeTravel } from 'weaveworks-ui-components';
 
-import { jumpToTime, resumeTime, pauseTimeAtNow } from '../actions/app-actions';
+import { jumpToTime, resumeTime, pauseTimeAtNow } from '../actions/request-actions';
 
 class TimeTravelWrapper extends React.Component {
   handleLiveModeChange = (showingLive) => {

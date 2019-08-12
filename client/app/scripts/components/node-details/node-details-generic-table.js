@@ -46,9 +46,9 @@ export default class NodeDetailsGenericTable extends React.Component {
   }
 
   handleLimitClick() {
-    this.setState({
-      limit: this.state.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT
-    });
+    this.setState(prevState => ({
+      limit: prevState.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT
+    }));
   }
 
   render() {
@@ -62,8 +62,11 @@ export default class NodeDetailsGenericTable extends React.Component {
     // If there are rows that would be hidden behind 'show more', keep them
     // expanded if any of them match the search query; otherwise hide them.
     if (this.state.limit > 0 && rows.length > this.state.limit) {
-      const hasHiddenMatch = rows.slice(this.state.limit).some(row =>
-        columns.some(column => matches.has(genericTableEntryKey(row, column))));
+      const hasHiddenMatch = rows
+        .slice(this.state.limit)
+        .some(
+          row => columns.some(column => matches.has(genericTableEntryKey(row, column)))
+        );
       if (!hasHiddenMatch) {
         notShown = rows.length - NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
         rows = rows.slice(0, this.state.limit);
@@ -94,15 +97,17 @@ export default class NodeDetailsGenericTable extends React.Component {
                       title={value}
                       key={column.id}
                       style={styles[index]}>
-                      {column.dataType === 'link' ?
-                        <a
-                          rel="noopener noreferrer"
-                          target="_blank"
-                          className="node-details-table-node-link"
-                          href={value}>
-                          {value}
-                        </a> :
-                        <MatchedText text={value} match={match} />
+                      {column.dataType === 'link'
+                        ? (
+                          <a
+                            rel="noopener noreferrer"
+                            target="_blank"
+                            className="node-details-table-node-link"
+                            href={value}>
+                            {value}
+                          </a>
+                        )
+                        : <MatchedText text={value} match={match} />
                       }
                     </td>
                   );

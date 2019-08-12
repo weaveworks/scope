@@ -15,8 +15,9 @@ export default class NodeDetailsRelatives extends React.Component {
 
   handleLimitClick(ev) {
     ev.preventDefault();
-    const limit = this.state.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
-    this.setState({limit});
+    this.setState(prevState => ({
+      limit: prevState.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT
+    }));
   }
 
   render() {
@@ -37,13 +38,16 @@ export default class NodeDetailsRelatives extends React.Component {
           <NodeDetailsRelativesLink
             key={relative.id}
             match={matches.get(relative.id)}
-            {...relative} />))}
-        {showLimitAction &&
-          <span
-            className="node-details-relatives-more"
-            onClick={this.handleLimitClick}>
-            {limitActionText}
-          </span>
+            {...relative} />
+        ))}
+        {showLimitAction
+          && (
+            <span
+              className="node-details-relatives-more"
+              onClick={this.handleLimitClick}>
+              {limitActionText}
+            </span>
+          )
         }
       </div>
     );

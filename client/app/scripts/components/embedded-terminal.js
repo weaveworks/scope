@@ -31,8 +31,8 @@ class EmeddedTerminal extends React.Component {
   }
 
   getTransform() {
-    const dx = this.state.mounted ? 0 :
-      window.innerWidth - DETAILS_PANEL_WIDTH - DETAILS_PANEL_MARGINS.right;
+    const dx = this.state.mounted ? 0
+      : window.innerWidth - DETAILS_PANEL_WIDTH - DETAILS_PANEL_MARGINS.right;
     return `translateX(${dx}px)`;
   }
 
@@ -56,7 +56,7 @@ class EmeddedTerminal extends React.Component {
         <div
           onTransitionEnd={this.handleTransitionEnd}
           className="terminal-animation-wrapper"
-          style={{transform: this.getTransform()}} >
+          style={{transform: this.getTransform()}}>
           <Terminal
             key={pipe.get('id')}
             pipe={pipe}

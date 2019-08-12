@@ -4,7 +4,12 @@ import { isEmpty } from 'lodash';
 import { Search } from 'weaveworks-ui-components';
 import styled from 'styled-components';
 
-import { blurSearch, focusSearch, updateSearch, toggleHelp } from '../actions/app-actions';
+import {
+  blurSearch, updateSearch, toggleHelp
+} from '../actions/app-actions';
+import {
+  focusSearch
+} from '../actions/request-actions';
 import { searchMatchCountByTopologySelector } from '../selectors/search';
 import { isResourceViewModeSelector } from '../selectors/topology';
 import { slugify } from '../utils/string-utils';
@@ -107,7 +112,9 @@ class SearchComponent extends React.Component {
             onBlur={this.props.blurSearch}
           />
           <SearchHint active={this.props.searchFocused && isEmpty(pinnedSearches)}>
-            {searchHint} <SearchHintIcon
+            {searchHint}
+            {' '}
+            <SearchHintIcon
               className="fa fa-question-circle"
               onMouseDown={this.props.toggleHelp}
             />

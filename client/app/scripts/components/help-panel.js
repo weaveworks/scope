@@ -7,26 +7,26 @@ import { hideHelp } from '../actions/app-actions';
 
 
 const GENERAL_SHORTCUTS = [
-  {key: 'esc', label: 'Close active panel'},
-  {key: '/', label: 'Activate search field'},
-  {key: '?', label: 'Toggle shortcut menu'},
-  {key: 'g', label: 'Switch to Graph view'},
-  {key: 't', label: 'Switch to Table view'},
-  {key: 'r', label: 'Switch to Resources view'},
+  { key: 'esc', label: 'Close active panel' },
+  { key: '/', label: 'Activate search field' },
+  { key: '?', label: 'Toggle shortcut menu' },
+  { key: 'g', label: 'Switch to Graph view' },
+  { key: 't', label: 'Switch to Table view' },
+  { key: 'r', label: 'Switch to Resources view' },
 ];
 
 
 const CANVAS_METRIC_SHORTCUTS = [
-  {key: '<', label: 'Select and pin previous metric'},
-  {key: '>', label: 'Select and pin next metric'},
-  {key: 'q', label: 'Unpin current metric'},
+  { key: '<', label: 'Select and pin previous metric' },
+  { key: '>', label: 'Select and pin next metric' },
+  { key: 'q', label: 'Unpin current metric' },
 ];
 
 
 function renderShortcuts(cuts) {
   return (
     <div>
-      {cuts.map(({key, label}) => (
+      {cuts.map(({ key, label }) => (
         <div key={key} className="help-panel-shortcuts-shortcut">
           <div className="key"><kbd>{key}</kbd></div>
           <div className="label">{label}</div>
@@ -51,9 +51,16 @@ function renderShortcutPanel() {
 
 
 const BASIC_SEARCHES = [
-  {label: 'All fields for foo', term: 'foo'},
+  { label: 'All fields for foo', term: 'foo' },
   {
-    label: <span>Any field matching <b>pid</b> for the value 12345</span>,
+    label: (
+      <span>
+        Any field matching
+        <b>pid</b>
+        {' '}
+        for the value 12345
+      </span>
+    ),
     term: 'pid: 12345'
   },
 ];
@@ -65,16 +72,37 @@ const REGEX_SEARCHES = [
     term: 'foo|bar'
   },
   {
-    label: <span><b>command</b> field for foobar or foobaz</span>,
+    label: (
+      <span>
+        <b>command</b>
+        {' '}
+        field for foobar or foobaz
+      </span>
+    ),
     term: 'command: foo(bar|baz)'
   },
 ];
 
 
 const METRIC_SEARCHES = [
-  {label: <span><b>CPU</b> greater than 4%</span>, term: 'cpu > 4%'},
   {
-    label: <span><b>Memory</b> less than 10 megabytes</span>,
+    label: (
+      <span>
+        <b>CPU</b>
+        {' '}
+        greater than 4%
+      </span>
+    ),
+    term: 'cpu > 4%'
+  },
+  {
+    label: (
+      <span>
+        <b>Memory</b>
+        {' '}
+        less than 10 megabytes
+      </span>
+    ),
     term: 'memory < 10mb'
   },
 ];
@@ -83,7 +111,7 @@ const METRIC_SEARCHES = [
 function renderSearches(searches) {
   return (
     <div>
-      {searches.map(({term, label}) => (
+      {searches.map(({ term, label }) => (
         <div key={term} className="help-panel-search-row">
           <div className="help-panel-search-row-term">
             <i className="fa fa-search search-label-icon" />
@@ -117,7 +145,7 @@ function renderSearchPanel() {
 
 function renderFieldsPanel(currentTopologyName, searchableFields) {
   const none = (
-    <span style={{fontStyle: 'italic'}}>None</span>
+    <span style={{ fontStyle: 'italic' }}>None</span>
   );
   const currentTopology = (
     <span className="help-panel-fields-current-topology">
@@ -129,8 +157,14 @@ function renderFieldsPanel(currentTopologyName, searchableFields) {
     <div className="help-panel-fields">
       <h2>Fields and Metrics</h2>
       <p>
-        Searchable fields and metrics in the <br />
-        currently selected {currentTopology} topology:
+        Searchable fields and metrics in the
+        {' '}
+        <br />
+        currently selected
+        {' '}
+        {currentTopology}
+        {' '}
+        topology:
       </p>
       <div className="help-panel-fields-fields">
         <div className="help-panel-fields-fields-column">
@@ -162,7 +196,7 @@ function HelpPanel({
 }) {
   return (
     <div className="help-panel-wrapper">
-      <div className="help-panel" style={{marginTop: canvasMargins.top}}>
+      <div className="help-panel" style={{ marginTop: canvasMargins.top }}>
         <div className="help-panel-header">
           <h2>Help</h2>
         </div>

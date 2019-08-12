@@ -7,7 +7,8 @@ import {
   getMetricValue,
   getMetricColor,
 } from '../utils/metric-utils';
-import { clickNode, enterNode, leaveNode } from '../actions/app-actions';
+import { clickNode } from '../actions/request-actions';
+import { enterNode, leaveNode } from '../actions/app-actions';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { getNodeColor } from '../utils/color-utils';
 import MatchedResults from '../components/matched-results';

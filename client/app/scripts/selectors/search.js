@@ -2,7 +2,9 @@ import { createSelector } from 'reselect';
 import { createMapSelector } from 'reselect-map';
 import { Map as makeMap } from 'immutable';
 
-import { parseQuery, searchNode, searchTopology, getSearchableFields } from '../utils/search-utils';
+import {
+  parseQuery, searchNode, searchTopology, getSearchableFields
+} from '../utils/search-utils';
 
 
 const parsedSearchQuerySelector = createSelector(

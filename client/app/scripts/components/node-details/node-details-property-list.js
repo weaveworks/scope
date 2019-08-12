@@ -9,10 +9,12 @@ import ShowMore from '../show-more';
 
 const Controls = controls => (
   <div className="node-details-property-list-controls">
-    {sortBy(controls, 'rank').map(control => (<NodeDetailsControlButton
-      nodeId={control.nodeId}
-      control={control}
-      key={control.id} />))}
+    {sortBy(controls, 'rank').map(control => (
+      <NodeDetailsControlButton
+        nodeId={control.nodeId}
+        control={control}
+        key={control.id} />
+    ))}
   </div>
 );
 
@@ -26,8 +28,9 @@ export default class NodeDetailsPropertyList extends React.Component {
   }
 
   handleLimitClick() {
-    const limit = this.state.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT;
-    this.setState({limit});
+    this.setState(prevState => ({
+      limit: prevState.limit ? 0 : NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT
+    }));
   }
 
   render() {

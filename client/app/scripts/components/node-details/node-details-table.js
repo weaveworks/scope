@@ -1,7 +1,9 @@
 import React from 'react';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
-import { find, get, union, sortBy, groupBy, concat, debounce } from 'lodash';
+import {
+  find, get, union, sortBy, groupBy, concat, debounce
+} from 'lodash';
 
 import { NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT } from '../../constants/limits';
 import { TABLE_ROW_FOCUS_DEBOUNCE_INTERVAL } from '../../constants/timer';
@@ -18,7 +20,7 @@ import {
 
 function getDefaultSortedBy(columns, nodes) {
   // default sorter specified by columns
-  const defaultSortColumn = find(columns, {defaultSort: true});
+  const defaultSortColumn = find(columns, { defaultSort: true });
   if (defaultSortColumn) {
     return defaultSortColumn.id;
   }
@@ -49,7 +51,7 @@ function getNodeValue(node, header) {
       if (isIP(header)) {
         // Format the IPs so that they are sorted numerically.
         return ipToPaddedString(field.value);
-      } else if (isNumeric(header)) {
+      } if (isNumeric(header)) {
         return parseFloat(field.value);
       }
       return field.value;
@@ -125,7 +127,7 @@ function getSortedNodes(nodes, sortedByHeader, sortedDesc) {
 // have a minimal height. That prevents auto-scroll under a focus if the
 // number of table rows shrinks.
 function minHeightConstraint(height = 0) {
-  return <tr className="min-height-constraint" style={{height}} />;
+  return <tr className="min-height-constraint" style={{ height }} />;
 }
 
 
@@ -158,8 +160,9 @@ class NodeDetailsTable extends React.Component {
   }
 
   handleLimitClick() {
-    const limit = this.state.limit ? 0 : this.props.limit;
-    this.setState({ limit });
+    this.setState(prevState => ({
+      limit: prevState.limit ? 0 : this.props.limit
+    }));
   }
 
   focusRow(rowIndex, node) {
@@ -202,7 +205,7 @@ class NodeDetailsTable extends React.Component {
 
   getColumnHeaders() {
     const columns = this.props.columns || [];
-    return [{id: 'label', label: this.props.label}].concat(columns);
+    return [{ id: 'label', label: this.props.label }].concat(columns);
   }
 
   componentDidMount() {
@@ -218,8 +221,8 @@ class NodeDetailsTable extends React.Component {
 
     const sortedBy = this.state.sortedBy || getDefaultSortedBy(columns, this.props.nodes);
     const sortedByHeader = this.getColumnHeaders().find(h => h.id === sortedBy);
-    const sortedDesc = (this.state.sortedDesc === null) ?
-      defaultSortDesc(sortedByHeader) : this.state.sortedDesc;
+    const sortedDesc = (this.state.sortedDesc === null)
+      ? defaultSortDesc(sortedByHeader) : this.state.sortedDesc;
 
     let nodes = getSortedNodes(this.props.nodes, sortedByHeader, sortedDesc);
 
@@ -261,12 +264,14 @@ class NodeDetailsTable extends React.Component {
         <div className="node-details-table-wrapper">
           <table className="node-details-table">
             <thead ref={this.saveTableHeadRef}>
-              {this.props.nodes && this.props.nodes.length > 0 && <NodeDetailsTableHeaders
-                headers={headers}
-                sortedBy={sortedBy}
-                sortedDesc={sortedDesc}
-                onClick={this.updateSorted}
-              />}
+              {this.props.nodes && this.props.nodes.length > 0 && (
+                <NodeDetailsTableHeaders
+                  headers={headers}
+                  sortedBy={sortedBy}
+                  sortedDesc={sortedDesc}
+                  onClick={this.updateSorted}
+                />
+              )}
             </thead>
             <tbody
               style={this.props.tbodyStyle}
@@ -308,7 +313,7 @@ NodeDetailsTable.defaultProps = {
   limit: NODE_DETAILS_DATA_ROWS_DEFAULT_LIMIT,
   // key to identify a node in a row (used for topology links)
   nodeIdKey: 'id',
-  onSortChange: () => {},
+  onSortChange: () => { },
   sortedBy: null,
   sortedDesc: null,
 };

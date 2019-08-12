@@ -13,11 +13,21 @@ export default class NodeResourcesMetricBoxInfo extends React.Component {
       <span>
         <strong>
           {showExtendedInfo ? humanizedRelativeConsumption : humanizedAbsoluteConsumption}
-        </strong> used
-        {showExtendedInfo &&
+        </strong>
+        {' '}
+used
+        {showExtendedInfo
+          && (
           <i>
-            {' - '}({humanizedAbsoluteConsumption} / <strong>{humanizedTotalCapacity}</strong>)
+            {' - '}
+(
+            {humanizedAbsoluteConsumption}
+            {' '}
+/
+            <strong>{humanizedTotalCapacity}</strong>
+)
           </i>
+          )
         }
       </span>
     );

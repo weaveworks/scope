@@ -3,7 +3,7 @@ import React from 'react';
 import CloudLink from '../cloud-link';
 import { formatMetric } from '../../utils/string-utils';
 import { trackAnalyticsEvent } from '../../utils/tracking-utils';
-import { dismissRowClickProps } from './node-details-table-row';
+import { dismissRowClickProps } from '../../utils/dom-utils';
 
 class NodeDetailsTableNodeMetricLink extends React.Component {
   constructor(props) {

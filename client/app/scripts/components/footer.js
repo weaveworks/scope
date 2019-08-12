@@ -42,15 +42,19 @@ class Footer extends React.Component {
     return (
       <div className="footer">
         <div className="footer-status">
-          {versionUpdate &&
-            <a
-              className="footer-versionupdate"
-              title={versionUpdateTitle}
-              href={versionUpdate.get('downloadUrl')}
-              target="_blank"
-              rel="noopener noreferrer">
-              Update available: {versionUpdate.get('version')}
-            </a>
+          {versionUpdate
+            && (
+              <a
+                className="footer-versionupdate"
+                title={versionUpdateTitle}
+                href={versionUpdate.get('downloadUrl')}
+                target="_blank"
+                rel="noopener noreferrer">
+                Update available:
+                {' '}
+                {versionUpdate.get('version')}
+              </a>
+            )
           }
           <span className="footer-label">Version</span>
           {version || '...'}
@@ -64,15 +68,21 @@ class Footer extends React.Component {
 
         <div className="footer-tools">
           <button
+            type="button"
             className="footer-icon"
             onClick={this.handleRelayoutClick}
             title={forceRelayoutTitle}>
             <i className="fa fa-sync" />
           </button>
-          <button onClick={this.handleContrastClick} className="footer-icon" title={otherContrastModeTitle}>
+          <button
+            type="button"
+            onClick={this.handleContrastClick}
+            className="footer-icon"
+            title={otherContrastModeTitle}>
             <i className="fa fa-adjust" />
           </button>
           <button
+            type="button"
             onClick={this.props.toggleTroubleshootingMenu}
             className="footer-icon"
             title="Open troubleshooting menu"
@@ -80,7 +90,11 @@ class Footer extends React.Component {
           >
             <i className="fa fa-bug" />
           </button>
-          <button className="footer-icon" onClick={this.props.toggleHelp} title="Show help">
+          <button
+            type="button"
+            className="footer-icon"
+            onClick={this.props.toggleHelp}
+            title="Show help">
             <i className="fa fa-question" />
           </button>
         </div>

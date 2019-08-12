@@ -26,6 +26,8 @@ class CloudFeature extends React.Component {
   }
 }
 
+/* eslint-disable react/forbid-prop-types */
+// TODO: Remove this component as part of https://github.com/weaveworks/scope/issues/3278.
 CloudFeature.contextTypes = {
   router: PropTypes.object,
   serviceStore: PropTypes.object,
@@ -36,5 +38,6 @@ CloudFeature.childContextTypes = {
   router: PropTypes.object,
   store: PropTypes.object
 };
+/* eslint-enable react/forbid-prop-types */
 
 export default connect()(CloudFeature);

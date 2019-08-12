@@ -31,6 +31,7 @@
     "no-param-reassign": 0,
     "no-restricted-properties": 0,
     "object-curly-spacing": 0,
+    "react/destructuring-assignment": 0,
     "react/jsx-closing-bracket-location": 0,
     "react/jsx-filename-extension": [
       2,

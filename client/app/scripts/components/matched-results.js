@@ -7,7 +7,8 @@ const Match = (searchTerms, match) => (
   <div className="matched-results-match" key={match.label}>
     <div className="matched-results-match-wrapper">
       <span className="matched-results-match-label">
-        {match.label}:
+        {match.label}
+:
       </span>
       <MatchedText
         text={match.text}
@@ -42,10 +43,12 @@ export default class MatchedResults extends React.PureComponent {
           .take(SHOW_ROW_COUNT)
           .map(fieldId => Match(searchTerms, matches.get(fieldId)))
         }
-        {moreFieldMatches &&
+        {moreFieldMatches
+          && (
           <div className="matched-results-more" title={moreFieldMatchesTitle}>
             {`${moreFieldMatches.size} more matches`}
           </div>
+          )
         }
       </div>
     );

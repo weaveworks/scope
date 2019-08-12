@@ -54,14 +54,17 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null, t
             title={title}
             style={style}
             key={field.id}>
-            {field.dataType === 'link' ?
-              <a
-                rel="noopener noreferrer"
-                target="_blank"
-                className="node-details-table-node-link"
-                href={value}>{value}
-              </a> :
-              value}
+            {field.dataType === 'link'
+              ? (
+                <a
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="node-details-table-node-link"
+                  href={value}>
+                  {value}
+                </a>
+              )
+              : value}
           </td>
         );
       }
@@ -72,13 +75,14 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null, t
             title={field.value}
             style={style}
             key={field.id}>
-            {intersperse(field.relatives.map(relative =>
-              (<NodeDetailsTableNodeLink
+            {intersperse(field.relatives.map(relative => (
+              <NodeDetailsTableNodeLink
                 key={relative.id}
                 linkable
                 nodeId={relative.id}
                 {...relative}
-              />)), ' ')}
+              />
+            )), ' ')}
           </td>
         );
       }
@@ -97,19 +101,6 @@ function renderValues(node, columns = [], columnStyles = [], timestamp = null, t
     );
   });
 }
-
-/**
- * Table row children may react to onClick events but the row
- * itself does detect a click by looking at onMouseUp. To stop
- * the bubbling of clicks on child elements we need to dismiss
- * the onMouseUp event.
- */
-export const dismissRowClickProps = {
-  onMouseUp: (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-  }
-};
 
 export default class NodeDetailsTableRow extends React.Component {
   constructor(props, context) {
@@ -150,8 +141,8 @@ export default class NodeDetailsTableRow extends React.Component {
     const { pageX, pageY } = ev;
     const { originX, originY } = this.mouseDrag;
     const movedTheMouseTooMuch = (
-      Math.abs(originX - pageX) > thresholdPx ||
-      Math.abs(originY - pageY) > thresholdPx
+      Math.abs(originX - pageX) > thresholdPx
+      || Math.abs(originY - pageY) > thresholdPx
     );
     if (movedTheMouseTooMuch && originX && originY) {
       return;
@@ -182,7 +173,7 @@ export default class NodeDetailsTableRow extends React.Component {
         onMouseLeave={this.onMouseLeave}
         className={className}>
         <td className="node-details-table-node-label truncate" style={firstColumnStyle}>
-          {this.props.renderIdCell(Object.assign(node, {nodeId, topologyId}))}
+          {this.props.renderIdCell(Object.assign(node, { nodeId, topologyId }))}
         </td>
         {values}
       </tr>

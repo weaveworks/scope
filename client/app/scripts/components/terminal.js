@@ -8,9 +8,12 @@ import { Terminal as Term } from 'xterm';
 import * as fit from 'xterm/lib/addons/fit/fit';
 
 import { closeTerminal } from '../actions/app-actions';
+import { getPipeStatus } from '../actions/request-actions';
 import { getNeutralColor } from '../utils/color-utils';
 import { setDocumentTitle } from '../utils/title-utils';
-import { getPipeStatus, deletePipe, doResizeTty, getWebsocketUrl, basePath } from '../utils/web-api-utils';
+import {
+  deletePipe, doResizeTty, getWebsocketUrl, basePath
+} from '../utils/web-api-utils';
 
 const log = debug('scope:terminal');
 
@@ -327,6 +330,7 @@ class Terminal extends React.Component {
       </div>
     );
   }
+
   getControlStatusIcon() {
     const icon = this.props.controlStatus && this.props.controlStatus.get('control').icon;
     return (
@@ -339,8 +343,7 @@ class Terminal extends React.Component {
 }
 
 function mapStateToProps(state, ownProps) {
-  const controlStatus = state.get('controlPipes').find(pipe =>
-    pipe.get('nodeId') === ownProps.pipe.get('nodeId'));
+  const controlStatus = state.get('controlPipes').find(pipe => pipe.get('nodeId') === ownProps.pipe.get('nodeId'));
   return { controlStatus };
 }
 

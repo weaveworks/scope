@@ -7,7 +7,7 @@ import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { getCurrentTopologyOptions } from '../utils/topology-utils';
 import { activeTopologyOptionsSelector } from '../selectors/topology';
 import TopologyOptionAction from './topology-option-action';
-import { changeTopologyOption } from '../actions/app-actions';
+import { changeTopologyOption } from '../actions/request-actions';
 
 class TopologyOptions extends React.Component {
   constructor(props, context) {
@@ -101,7 +101,8 @@ class TopologyOptions extends React.Component {
     return (
       <div className="topology-option" key={optionId}>
         <div className="topology-option-wrapper">
-          {option.get('selectType') === 'union' &&
+          {option.get('selectType') === 'union'
+            && (
             <TopologyOptionAction
               onClick={this.handleNoneClick}
               optionId={optionId}
@@ -109,6 +110,7 @@ class TopologyOptions extends React.Component {
               topologyId={currentTopologyId}
               activeValue={activeValue}
             />
+            )
           }
           {option.get('options').map(item => (
             <TopologyOptionAction

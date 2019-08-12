@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { TimestampTag } from 'weaveworks-ui-components';
 
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
-import { pauseTimeAtNow, resumeTime } from '../actions/app-actions';
+import { pauseTimeAtNow, resumeTime } from '../actions/request-actions';
 import { isPausedSelector, timeTravelSupportedSelector } from '../selectors/time-travel';
 
 
@@ -64,10 +64,14 @@ class TimeControl extends React.Component {
             </span>
           </div>
         </div>
-        {isPaused &&
+        {isPaused
+          && (
           <span className="time-control-info">
-            Showing state from <TimestampTag inheritStyles relative timestamp={pausedAt} />
+            Showing state from
+            {' '}
+            <TimestampTag inheritStyles relative timestamp={pausedAt} />
           </span>
+          )
         }
       </div>
     );

@@ -18,9 +18,7 @@ import Status from './status';
 import Topologies from './topologies';
 import TopologyOptions from './topology-options';
 import Overlay from './overlay';
-import { getApiDetails } from '../utils/web-api-utils';
 import {
-  focusSearch,
   pinNextMetric,
   pinPreviousMetric,
   hitEsc,
@@ -29,12 +27,16 @@ import {
   setGraphView,
   setMonitorState,
   setTableView,
-  setResourceView,
   setStoreViewState,
-  shutdown,
   setViewportDimensions,
-  getTopologiesWithInitialPoll,
 } from '../actions/app-actions';
+import {
+  focusSearch,
+  getApiDetails,
+  setResourceView,
+  getTopologiesWithInitialPoll,
+  shutdown,
+} from '../actions/request-actions';
 import Details from './details';
 import Nodes from './nodes';
 import TimeControl from './time-control';
@@ -42,7 +44,8 @@ import TimeTravelWrapper from './time-travel-wrapper';
 import ViewModeSelector from './view-mode-selector';
 import NetworkSelector from './networks-selector';
 import DebugToolbar, { showingDebugToolbar, toggleDebugToolbar } from './debug-toolbar';
-import { getRouter, getUrlState } from '../utils/router-utils';
+import { getUrlState } from '../utils/router-utils';
+import { getRouter } from '../router';
 import { trackAnalyticsEvent } from '../utils/tracking-utils';
 import { availableNetworksSelector } from '../selectors/node-networks';
 import { timeTravelSupportedSelector } from '../selectors/time-travel';
@@ -210,19 +213,23 @@ class App extends React.Component {
 
           {showingTroubleshootingMenu && <TroubleshootingMenu />}
 
-          {showingDetails && <Details
+          {showingDetails && (
+          <Details
             renderNodeDetailsExtras={this.props.renderNodeDetailsExtras}
-          />}
+          />
+          )}
 
           <div className="header">
             {timeTravelSupported && this.props.renderTimeTravel()}
 
             <div className="selectors">
               <div className="logo">
-                {!isIframe &&
+                {!isIframe
+                  && (
                   <svg width="100%" height="100%" viewBox="0 0 1089 217">
                     <Logo />
                   </svg>
+                  )
                 }
               </div>
               <Search />

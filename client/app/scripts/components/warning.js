@@ -12,8 +12,9 @@ class Warning extends React.Component {
   }
 
   handleClick() {
-    const expanded = !this.state.expanded;
-    this.setState({ expanded });
+    this.setState(prevState => ({
+      expanded: !prevState.expanded
+    }));
   }
 
   render() {
