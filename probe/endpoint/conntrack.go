@@ -135,16 +135,20 @@ func (c *conntrackWalker) run() {
 		return
 	}
 
-	defer log.Infof("conntrack exiting")
-
+	periodicRestart := time.After(6 * time.Hour)
 	// Handle conntrack events from netlink socket
 	for {
 		select {
+		case <-periodicRestart:
+			log.Debugf("conntrack periodic restart")
+			return
 		case <-c.quit:
+			log.Infof("conntrack quit signal - exiting")
 			stop()
 			return
 		case f, ok := <-events:
 			if !ok {
+				log.Errorf("conntrack events read failed - exiting")
 				return
 			}
 			if f.Err != nil {
