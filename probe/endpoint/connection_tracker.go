@@ -87,8 +87,8 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 		ebpfLastFailureTime := t.ebpfLastFailureTime
 		t.ebpfLastFailureTime = time.Now()
 
-		if ebpfLastFailureTime.After(time.Now().Add(-5 * time.Minute)) {
-			// Multiple failures in the last 5 minutes, fall back to proc parsing
+		if ebpfLastFailureTime.After(time.Now().Add(-1 * time.Minute)) {
+			// Multiple failures in the last minute, fall back to proc parsing
 			log.Warnf("ebpf tracker died again, gently falling back to proc scanning")
 			t.useProcfs()
 		} else {

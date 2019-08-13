@@ -129,6 +129,7 @@ func newEbpfTracker() (*EbpfTracker, error) {
 		debugBPF = true
 	}
 
+	tracer.TimestampOffset = 200000 // Delay events by 0.2ms to avoid out-of-order reporting
 	tracker := &EbpfTracker{
 		debugBPF: debugBPF,
 	}
