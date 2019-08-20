@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/armon/go-metrics"
 	log "github.com/sirupsen/logrus"
 	"github.com/typetypetype/conntrack"
 )
@@ -152,6 +153,7 @@ func (c *conntrackWalker) run() {
 				return
 			}
 			if f.Err != nil {
+				metrics.IncrCounter([]string{"conntrack", "errors"}, 1)
 				log.Errorf("conntrack event error: %v", f.Err)
 				stop()
 				return

@@ -135,12 +135,10 @@ func (p *Probe) spyLoop() {
 	for {
 		select {
 		case <-spyTick:
-			t := time.Now()
 			p.tick()
 			rpt := p.report()
 			rpt = p.tag(rpt)
 			p.spiedReports <- rpt
-			metrics.MeasureSince([]string{"Report Generaton"}, t)
 		case <-p.quit:
 			return
 		}
@@ -151,7 +149,10 @@ func (p *Probe) tick() {
 	for _, ticker := range p.tickers {
 		t := time.Now()
 		err := ticker.Tick()
-		metrics.MeasureSince([]string{ticker.Name(), "ticker"}, t)
+		metrics.MeasureSinceWithLabels([]string{"duration", "seconds"}, t, []metrics.Label{
+			{Name: "operation", Value: "ticker"},
+			{Name: "module", Value: ticker.Name()},
+		})
 		if err != nil {
 			log.Errorf("Error doing ticker: %v", err)
 		}
@@ -168,7 +169,10 @@ func (p *Probe) report() report.Report {
 			if !timer.Stop() {
 				log.Warningf("%v reporter took %v (longer than %v)", rep.Name(), time.Now().Sub(t), p.spyInterval)
 			}
-			metrics.MeasureSince([]string{rep.Name(), "reporter"}, t)
+			metrics.MeasureSinceWithLabels([]string{"duration", "seconds"}, t, []metrics.Label{
+				{Name: "operation", Value: "reporter"},
+				{Name: "module", Value: rep.Name()},
+			})
 			if err != nil {
 				log.Errorf("Error generating %s report: %v", rep.Name(), err)
 				newReport = report.MakeReport() // empty is OK to merge
@@ -193,7 +197,10 @@ func (p *Probe) tag(r report.Report) report.Report {
 		if !timer.Stop() {
 			log.Warningf("%v tagger took %v (longer than %v)", tagger.Name(), time.Now().Sub(t), p.spyInterval)
 		}
-		metrics.MeasureSince([]string{tagger.Name(), "tagger"}, t)
+		metrics.MeasureSinceWithLabels([]string{"duration", "seconds"}, t, []metrics.Label{
+			{Name: "operation", Value: "tagger"},
+			{Name: "module", Value: tagger.Name()},
+		})
 		if err != nil {
 			log.Errorf("Error applying tagger: %v", err)
 		}

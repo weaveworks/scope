@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/armon/go-metrics"
+	metrics_prom "github.com/armon/go-metrics/prometheus"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
 
@@ -108,11 +109,24 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	traceCloser := tracing.NewFromEnv("scope-probe")
 	defer traceCloser.Close()
 
-	// Setup in memory metrics sink
-	inm := metrics.NewInmemSink(time.Minute, 2*time.Minute)
-	sig := metrics.DefaultInmemSignal(inm)
-	defer sig.Stop()
-	metrics.NewGlobal(metrics.DefaultConfig("scope-probe"), inm)
+	cfg := &metrics.Config{
+		ServiceName:      "scope-probe",
+		TimerGranularity: time.Second,
+		FilterDefault:    true, // Don't filter metrics by default
+	}
+	if flags.httpListen == "" {
+		// Setup in memory metrics sink
+		inm := metrics.NewInmemSink(time.Minute, 2*time.Minute)
+		sig := metrics.DefaultInmemSignal(inm)
+		defer sig.Stop()
+		metrics.NewGlobal(cfg, inm)
+	} else {
+		sink, err := metrics_prom.NewPrometheusSink()
+		if err != nil {
+			log.Fatalf("Failed to create Prometheus metrics sink: %v", err)
+		}
+		metrics.NewGlobal(cfg, sink)
+	}
 	logCensoredArgs()
 	defer log.Info("probe exiting")
 
