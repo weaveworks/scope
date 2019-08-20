@@ -1,3 +1,14 @@
+## Release 1.11.5
+
+A few small improvements:
+
+- Expose probe metrics to Prometheus, if an http-listen address is given
+	[#3600](https://github.com/weaveworks/scope/pull/3600)
+- Reduce probe resource usage caused by occasional leaks in probe endpoint reporter
+	[#3661](https://github.com/weaveworks/scope/pull/3661)
+- Update 'eslint' JavaScript checking tool, and resolve warnings
+	[#3643](https://github.com/weaveworks/scope/pull/3643)
+
 ## Release 1.11.4
 
 This release contains a few fixes, one of which should improve

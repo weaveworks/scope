@@ -35,7 +35,7 @@ spec:
             - 'weave-scope-app.weave.svc.cluster.local.:80'
           command:
             - /home/weave/scope
-          image: 'docker.io/weaveworks/scope:1.11.4'
+          image: 'docker.io/weaveworks/scope:1.11.5'
           imagePullPolicy: IfNotPresent
           resources:
             requests:
