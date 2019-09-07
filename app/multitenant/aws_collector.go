@@ -275,16 +275,12 @@ func (c *awsCollector) reportKeysInRange(ctx context.Context, userid string, row
 }
 
 // getReportKeys returns the S3 for reports in the interval [start, end].
-func (c *awsCollector) getReportKeys(ctx context.Context, start, end time.Time) ([]string, error) {
+func (c *awsCollector) getReportKeys(ctx context.Context, userid string, start, end time.Time) ([]string, error) {
 	var (
 		rowStart = start.UnixNano() / time.Hour.Nanoseconds()
 		rowEnd   = end.UnixNano() / time.Hour.Nanoseconds()
+		err      error
 	)
-
-	userid, err := c.cfg.UserIDer(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	// Queries will only every span 2 rows max.
 	var reportKeys []string
@@ -349,9 +345,13 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.Report, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "awsCollector.Report")
 	defer span.Finish()
+	userid, err := c.cfg.UserIDer(ctx)
+	if err != nil {
+		return report.MakeReport(), err
+	}
 	end := timestamp
 	start := end.Add(-c.cfg.Window)
-	reportKeys, err := c.getReportKeys(ctx, start, end)
+	reportKeys, err := c.getReportKeys(ctx, userid, start, end)
 	if err != nil {
 		return report.MakeReport(), err
 	}
@@ -366,8 +366,12 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 }
 
 func (c *awsCollector) HasReports(ctx context.Context, timestamp time.Time) (bool, error) {
+	userid, err := c.cfg.UserIDer(ctx)
+	if err != nil {
+		return false, err
+	}
 	start := timestamp.Add(-c.cfg.Window)
-	reportKeys, err := c.getReportKeys(ctx, start, timestamp)
+	reportKeys, err := c.getReportKeys(ctx, userid, start, timestamp)
 	return len(reportKeys) > 0, err
 }
 
