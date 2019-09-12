@@ -8,7 +8,6 @@ import (
 	"github.com/weaveworks/common/mtime"
 
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/utils"
@@ -102,7 +101,7 @@ var (
 					report.HostNodeID: serverHostNodeID,
 				}).
 					WithSets(report.MakeSets().
-						Add(host.LocalNetworks, report.MakeStringSet("192.168.0.0/16")),
+						Add(report.HostLocalNetworks, report.MakeStringSet("192.168.0.0/16")),
 					).WithTopology(report.Host),
 			},
 		},

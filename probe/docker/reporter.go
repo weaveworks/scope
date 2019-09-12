@@ -8,7 +8,6 @@ import (
 	docker_client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -306,7 +305,7 @@ func (r *Reporter) overlayTopology() report.Topology {
 	// Add both local and global networks to the LocalNetworks Set
 	// since we treat container IPs as local
 	node := report.MakeNode(report.MakeOverlayNodeID(report.DockerOverlayPeerPrefix, r.hostID)).WithSets(
-		report.MakeSets().Add(host.LocalNetworks, report.MakeStringSet(subnets...)))
+		report.MakeSets().Add(report.HostLocalNetworks, report.MakeStringSet(subnets...)))
 	t := report.MakeTopology()
 	t.AddNode(node)
 	return t

@@ -2,7 +2,6 @@ package expected
 
 import (
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
@@ -345,7 +344,7 @@ var (
 	RenderedHosts = report.Nodes{
 		fixture.ClientHostNodeID: hostNode(fixture.ClientHostNodeID, fixture.ServerHostNodeID).
 			WithLatests(map[string]string{
-				host.HostName: fixture.ClientHostName,
+				report.HostName: fixture.ClientHostName,
 			}).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.Client54001NodeID],

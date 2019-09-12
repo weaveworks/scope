@@ -7,7 +7,6 @@ import (
 
 	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
@@ -74,7 +73,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			},
 			Metrics: []report.MetricRow{
 				{
-					ID:       host.CPUUsage,
+					ID:       report.CPUUsage,
 					Label:    "CPU",
 					Format:   "percent",
 					Value:    0.07,
@@ -82,7 +81,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 					Metric:   &fixture.ClientHostCPUMetric,
 				},
 				{
-					ID:       host.MemoryUsage,
+					ID:       report.MemoryUsage,
 					Label:    "Memory",
 					Format:   "filesize",
 					Value:    0.08,
@@ -90,7 +89,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 					Metric:   &fixture.ClientHostMemoryMetric,
 				},
 				{
-					ID:       host.Load1,
+					ID:       report.Load1,
 					Label:    "Load (1m)",
 					Group:    "load",
 					Value:    0.09,

@@ -297,11 +297,11 @@ var (
 						report.HostNodeID: ClientHostNodeID,
 					}).
 					WithTopology(report.Host).WithSets(report.MakeSets().
-					Add(host.LocalNetworks, report.MakeStringSet("10.10.10.0/24")),
+					Add(report.HostLocalNetworks, report.MakeStringSet("10.10.10.0/24")),
 				).WithMetrics(report.Metrics{
-					host.CPUUsage:    ClientHostCPUMetric,
-					host.MemoryUsage: ClientHostMemoryMetric,
-					host.Load1:       ClientHostLoad1Metric,
+					report.CPUUsage:    ClientHostCPUMetric,
+					report.MemoryUsage: ClientHostMemoryMetric,
+					report.Load1:       ClientHostLoad1Metric,
 				}),
 				ServerHostNodeID: report.MakeNodeWith(
 
@@ -311,11 +311,11 @@ var (
 						report.HostNodeID: ServerHostNodeID,
 					}).
 					WithTopology(report.Host).WithSets(report.MakeSets().
-					Add(host.LocalNetworks, report.MakeStringSet("10.10.10.0/24")),
+					Add(report.HostLocalNetworks, report.MakeStringSet("10.10.10.0/24")),
 				).WithMetrics(report.Metrics{
-					host.CPUUsage:    ServerHostCPUMetric,
-					host.MemoryUsage: ServerHostMemoryMetric,
-					host.Load1:       ServerHostLoad1Metric,
+					report.CPUUsage:    ServerHostCPUMetric,
+					report.MemoryUsage: ServerHostMemoryMetric,
+					report.Load1:       ServerHostLoad1Metric,
 				}),
 			},
 			MetadataTemplates: host.MetadataTemplates,

@@ -6,7 +6,6 @@ import (
 	client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -141,7 +140,7 @@ func TestReporter(t *testing.T) {
 		}
 
 		want := "5.6.7.8/24"
-		if have, ok := node.Sets.Lookup(host.LocalNetworks); !ok || len(have) != 1 || have[0] != want {
+		if have, ok := node.Sets.Lookup(report.HostLocalNetworks); !ok || len(have) != 1 || have[0] != want {
 			t.Fatalf("Expected node to have exactly local network %v but found %v", want, have)
 		}
 

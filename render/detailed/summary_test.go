@@ -9,7 +9,6 @@ import (
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/detailed"
@@ -173,7 +172,7 @@ func TestMakeNodeSummary(t *testing.T) {
 					Tag:        "",
 				},
 				Metadata: []report.MetadataRow{
-					{ID: host.HostName, Label: "Hostname", Value: fixture.ClientHostName, Priority: 11},
+					{ID: report.HostName, Label: "Hostname", Value: fixture.ClientHostName, Priority: 11},
 				},
 				Adjacency: report.MakeIDList(fixture.ServerHostNodeID),
 			},
@@ -337,7 +336,7 @@ func TestNodeMetrics(t *testing.T) {
 			node: fixture.Report.Host.Nodes[fixture.ClientHostNodeID],
 			want: []report.MetricRow{
 				{
-					ID:       host.CPUUsage,
+					ID:       report.CPUUsage,
 					Label:    "CPU",
 					Format:   "percent",
 					Group:    "",
@@ -346,7 +345,7 @@ func TestNodeMetrics(t *testing.T) {
 					Metric:   &fixture.ClientHostCPUMetric,
 				},
 				{
-					ID:       host.MemoryUsage,
+					ID:       report.MemoryUsage,
 					Label:    "Memory",
 					Format:   "filesize",
 					Group:    "",
@@ -355,7 +354,7 @@ func TestNodeMetrics(t *testing.T) {
 					Metric:   &fixture.ClientHostMemoryMetric,
 				},
 				{
-					ID:       host.Load1,
+					ID:       report.Load1,
 					Label:    "Load (1m)",
 					Group:    "load",
 					Value:    0.09,
