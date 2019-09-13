@@ -3,6 +3,7 @@ package render
 import (
 	"context"
 	"regexp"
+	"strings"
 
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
@@ -137,12 +138,10 @@ func (r containerWithImageNameRenderer) Render(ctx context.Context, rpt report.R
 		if !ok {
 			continue
 		}
-		imageName, ok := image.Latest.Lookup(docker.ImageName)
-		if !ok {
+		imageNodeID := containerImageNodeID(image)
+		if imageNodeID == "" {
 			continue
 		}
-		imageNameWithoutTag := docker.ImageNameWithoutTag(imageName)
-		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutTag)
 
 		c.Latest = c.Latest.Propagate(image.Latest, docker.ImageName, docker.ImageTag,
 			docker.ImageSize, docker.ImageVirtualSize, docker.ImageLabelPrefix+"works.weave.role")
@@ -311,6 +310,20 @@ func MapContainer2ContainerImage(n report.Node) report.Node {
 	return result
 }
 
+func containerImageNodeID(n report.Node) string {
+	imageName, ok := n.Latest.Lookup(report.DockerImageName)
+	if !ok {
+		return ""
+	}
+
+	parts := strings.SplitN(imageName, "/", 3)
+	if len(parts) == 3 {
+		imageName = strings.Join(parts[1:3], "/")
+	}
+	imageNameWithoutTag := strings.SplitN(imageName, ":", 2)[0]
+	return report.MakeContainerImageNodeID(imageNameWithoutTag)
+}
+
 // MapContainerImage2Name ignores image versions
 func MapContainerImage2Name(n report.Node) report.Node {
 	// Propagate all pseudo nodes
@@ -318,13 +331,10 @@ func MapContainerImage2Name(n report.Node) report.Node {
 		return n
 	}
 
-	imageName, ok := n.Latest.Lookup(docker.ImageName)
-	if !ok {
+	n.ID = containerImageNodeID(n)
+	if n.ID == "" {
 		return report.Node{}
 	}
-
-	imageNameWithoutTag := docker.ImageNameWithoutTag(imageName)
-	n.ID = report.MakeContainerImageNodeID(imageNameWithoutTag)
 
 	return n
 }
