@@ -31,10 +31,10 @@ const (
 	reportField = "report"
 	natsTimeout = 10 * time.Second
 
-	reportQuantisationInterval = 3000000000 // 3 seconds in nanoseconds
+	reportQuantisationInterval = 3 * time.Second
 	// Grace period allows for some gap between the timestamp on reports
 	// (assigned when they arrive at collector) and them appearing in DynamoDB query
-	gracePeriod = 500000000 // 1/2 second in nanoseconds
+	gracePeriod = 500 * time.Millisecond
 )
 
 var (
@@ -381,8 +381,8 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 	var reports []report.Report
 	// Fetch a merged report for each time quantum covering the window
 	startTS, endTS := start.UnixNano(), end.UnixNano()
-	ts := startTS - (startTS % reportQuantisationInterval)
-	for ; ts+reportQuantisationInterval+gracePeriod < endTS; ts += reportQuantisationInterval {
+	ts := startTS - (startTS % reportQuantisationInterval.Nanoseconds())
+	for ; ts+(reportQuantisationInterval+gracePeriod).Nanoseconds() < endTS; ts += reportQuantisationInterval.Nanoseconds() {
 		quantumReport, err := c.reportForQuantum(ctx, userid, reportKeys, ts)
 		if err != nil {
 			return report.MakeReport(), err
@@ -406,7 +406,7 @@ func (c *awsCollector) reportForQuantum(ctx context.Context, userid string, repo
 	if len(cached) == 1 {
 		return cached[key], nil
 	}
-	reports, err := c.reportsForKeysInRange(ctx, reportKeys, start, start+reportQuantisationInterval)
+	reports, err := c.reportsForKeysInRange(ctx, reportKeys, start, start+reportQuantisationInterval.Nanoseconds())
 	if err != nil {
 		return report.MakeReport(), err
 	}
