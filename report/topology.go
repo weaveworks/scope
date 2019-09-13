@@ -208,6 +208,27 @@ func (t *Topology) UnsafeMerge(other Topology) {
 	t.TableTemplates = t.TableTemplates.Merge(other.TableTemplates)
 }
 
+// UnsafeUnMerge removes any information from t that would be added by merging other,
+// modifying the original.
+func (t *Topology) UnsafeUnMerge(other Topology) {
+	if t.Shape == other.Shape {
+		t.Shape = ""
+	}
+	if t.Label == other.Label && t.LabelPlural == other.LabelPlural {
+		t.Label, t.LabelPlural = "", ""
+	}
+	if t.Tag == other.Tag {
+		t.Tag = ""
+	}
+	t.Nodes.UnsafeUnMerge(other.Nodes)
+	// TODO Controls
+	// NOTE: taking a shortcut and assuming templates are static, which they have always been in Scope
+	// If you break that assumption please change this.
+	t.MetadataTemplates = nil
+	t.MetricTemplates = nil
+	t.TableTemplates = nil
+}
+
 // Nodes is a collection of nodes in a topology. Keys are node IDs.
 // TODO(pb): type Topology map[string]Node
 type Nodes map[string]Node
@@ -245,6 +266,21 @@ func (n *Nodes) UnsafeMerge(other Nodes) {
 			(*n)[k] = v.Merge(existing)
 		} else {
 			(*n)[k] = v
+		}
+	}
+}
+
+// UnsafeUnMerge removes nodes from n that would be added by merging other,
+// modifying the original.
+func (n *Nodes) UnsafeUnMerge(other Nodes) {
+	for k, node := range *n {
+		if otherNode, ok := (other)[k]; ok {
+			remove := node.UnsafeUnMerge(otherNode)
+			if remove {
+				delete(*n, k)
+			} else {
+				(*n)[k] = node
+			}
 		}
 	}
 }

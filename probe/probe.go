@@ -27,6 +27,7 @@ type Probe struct {
 	spyInterval, publishInterval time.Duration
 	publisher                    ReportPublisher
 	rateLimiter                  *rate.Limiter
+	ticksPerFullReport           int
 	noControls                   bool
 
 	tickers   []Ticker
@@ -77,17 +78,19 @@ type Ticker interface {
 func New(
 	spyInterval, publishInterval time.Duration,
 	publisher ReportPublisher,
+	ticksPerFullReport int,
 	noControls bool,
 ) *Probe {
 	result := &Probe{
-		spyInterval:     spyInterval,
-		publishInterval: publishInterval,
-		publisher:       publisher,
-		rateLimiter:     rate.NewLimiter(rate.Every(publishInterval/100), 1),
-		noControls:      noControls,
-		quit:            make(chan struct{}),
-		spiedReports:    make(chan report.Report, spiedReportBufferSize),
-		shortcutReports: make(chan report.Report, shortcutReportBufferSize),
+		spyInterval:        spyInterval,
+		publishInterval:    publishInterval,
+		publisher:          publisher,
+		rateLimiter:        rate.NewLimiter(rate.Every(publishInterval/100), 1),
+		ticksPerFullReport: ticksPerFullReport,
+		noControls:         noControls,
+		quit:               make(chan struct{}),
+		spiedReports:       make(chan report.Report, spiedReportBufferSize),
+		shortcutReports:    make(chan report.Report, shortcutReportBufferSize),
 	}
 	return result
 }
@@ -231,13 +234,28 @@ ForLoop:
 func (p *Probe) publishLoop() {
 	defer p.done.Done()
 	pubTick := time.Tick(p.publishInterval)
+	publishCount := 0
+	var lastFullReport report.Report
 
 	for {
 		var err error
 		select {
 		case <-pubTick:
 			rpt := p.drainAndSanitise(report.MakeReport(), p.spiedReports)
+			fullReport := (publishCount % p.ticksPerFullReport) == 0
+			if !fullReport {
+				rpt.UnsafeUnMerge(lastFullReport)
+			}
 			err = p.publisher.Publish(rpt)
+			if err == nil {
+				if fullReport {
+					lastFullReport = rpt
+				}
+				publishCount++
+			} else {
+				// If we failed to send then drop back to full report next time
+				publishCount = 0
+			}
 
 		case rpt := <-p.shortcutReports:
 			rpt = p.drainAndSanitise(rpt, p.shortcutReports)
