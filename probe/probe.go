@@ -208,7 +208,7 @@ func (p *Probe) tag(r report.Report) report.Report {
 	return r
 }
 
-func (p *Probe) drainAndPublish(rpt report.Report, rs chan report.Report) {
+func (p *Probe) drainAndSanitise(rpt report.Report, rs chan report.Report) report.Report {
 	p.rateLimiter.Wait(context.Background())
 ForLoop:
 	for {
@@ -225,9 +225,7 @@ ForLoop:
 			t.Controls = report.Controls{}
 		})
 	}
-	if err := p.publisher.Publish(rpt); err != nil {
-		log.Infof("Publish: %v", err)
-	}
+	return rpt
 }
 
 func (p *Probe) publishLoop() {
@@ -235,15 +233,21 @@ func (p *Probe) publishLoop() {
 	pubTick := time.Tick(p.publishInterval)
 
 	for {
+		var err error
 		select {
 		case <-pubTick:
-			p.drainAndPublish(report.MakeReport(), p.spiedReports)
+			rpt := p.drainAndSanitise(report.MakeReport(), p.spiedReports)
+			err = p.publisher.Publish(rpt)
 
 		case rpt := <-p.shortcutReports:
-			p.drainAndPublish(rpt, p.shortcutReports)
+			rpt = p.drainAndSanitise(rpt, p.shortcutReports)
+			err = p.publisher.Publish(rpt)
 
 		case <-p.quit:
 			return
+		}
+		if err != nil {
+			log.Infof("Publish: %v", err)
 		}
 	}
 }
