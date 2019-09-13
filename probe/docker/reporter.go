@@ -19,11 +19,11 @@ const (
 	ImageSize        = report.DockerImageSize
 	ImageVirtualSize = report.DockerImageVirtualSize
 	IsInHostNetwork  = report.DockerIsInHostNetwork
-	ImageLabelPrefix = "docker_image_label_"
+	ImageLabelPrefix = report.DockerImageLabelPrefix
 	ImageTableID     = "image_table"
 	ServiceName      = report.DockerServiceName
 	StackNamespace   = report.DockerStackNamespace
-	DefaultNamespace = "No stack"
+	DefaultNamespace = report.DockerDefaultNamespace
 )
 
 // Exposed for testing

@@ -1,7 +1,6 @@
 package render
 
 import (
-	"github.com/weaveworks/scope/probe/overlay"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -22,7 +21,7 @@ func MapWeaveIdentity(m report.Node) report.Node {
 
 	var (
 		node        = m
-		nickname, _ = m.Latest.Lookup(overlay.WeavePeerNickName)
+		nickname, _ = m.Latest.Lookup(report.WeavePeerNickName)
 	)
 
 	// Nodes without a host id indicate they are not monitored by Scope

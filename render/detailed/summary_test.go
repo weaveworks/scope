@@ -250,7 +250,7 @@ func TestNodeMetadata(t *testing.T) {
 			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
 				docker.ContainerID:            fixture.ClientContainerID,
 				docker.LabelPrefix + "label1": "label1value",
-				docker.ContainerStateHuman:    docker.StateRunning,
+				docker.ContainerStateHuman:    report.StateRunning,
 			}).WithTopology(report.Container).WithSets(report.MakeSets().
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),
@@ -336,7 +336,7 @@ func TestNodeMetrics(t *testing.T) {
 			node: fixture.Report.Host.Nodes[fixture.ClientHostNodeID],
 			want: []report.MetricRow{
 				{
-					ID:       report.CPUUsage,
+					ID:       report.HostCPUUsage,
 					Label:    "CPU",
 					Format:   "percent",
 					Group:    "",
@@ -345,7 +345,7 @@ func TestNodeMetrics(t *testing.T) {
 					Metric:   &fixture.ClientHostCPUMetric,
 				},
 				{
-					ID:       report.MemoryUsage,
+					ID:       report.HostMemoryUsage,
 					Label:    "Memory",
 					Format:   "filesize",
 					Group:    "",
@@ -424,7 +424,7 @@ func TestNodeTables(t *testing.T) {
 			node: report.MakeNodeWith(fixture.ClientContainerNodeID, map[string]string{
 				docker.ContainerID:            fixture.ClientContainerID,
 				docker.LabelPrefix + "label1": "label1value",
-				docker.ContainerState:         docker.StateRunning,
+				docker.ContainerState:         report.StateRunning,
 			}).WithTopology(report.Container).WithSets(report.MakeSets().
 				Add(docker.ContainerIPs, report.MakeStringSet("10.10.10.0/24", "10.10.10.1/24")),
 			),

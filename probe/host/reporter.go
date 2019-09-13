@@ -21,8 +21,8 @@ const (
 	KernelVersion = report.KernelVersion
 	Uptime        = report.Uptime
 	Load1         = report.Load1
-	CPUUsage      = report.CPUUsage
-	MemoryUsage   = report.MemoryUsage
+	CPUUsage      = report.HostCPUUsage
+	MemoryUsage   = report.HostMemoryUsage
 	ScopeVersion  = report.ScopeVersion
 )
 

@@ -22,6 +22,7 @@ const (
 	DockerIsInHostNetwork        = "docker_is_in_host_network"
 	DockerServiceName            = "service_name"
 	DockerStackNamespace         = "stack_namespace"
+	DockerDefaultNamespace       = "No stack"
 	DockerStopContainer          = "docker_stop_container"
 	DockerStartContainer         = "docker_start_container"
 	DockerRestartContainer       = "docker_restart_container"
@@ -105,9 +106,12 @@ const (
 	KernelVersion     = "kernel_version"
 	Uptime            = "uptime"
 	Load1             = "load1"
-	CPUUsage          = "host_cpu_usage_percent"
-	MemoryUsage       = "host_mem_usage_bytes"
+	HostCPUUsage      = "host_cpu_usage_percent"
+	HostMemoryUsage   = "host_mem_usage_bytes"
 	ScopeVersion      = "host_scope_version"
+	// probe/overlay/weave
+	WeavePeerName     = "weave_peer_name"
+	WeavePeerNickName = "weave_peer_nick_name"
 )
 
 /* Lookup table to allow msgpack/json decoder to avoid heap allocation
@@ -227,9 +231,12 @@ var commonKeys = map[string]string{
 	KernelVersion:     KernelVersion,
 	Uptime:            Uptime,
 	Load1:             Load1,
-	CPUUsage:          CPUUsage,
-	MemoryUsage:       MemoryUsage,
+	HostCPUUsage:      HostCPUUsage,
+	HostMemoryUsage:   HostMemoryUsage,
 	ScopeVersion:      ScopeVersion,
+
+	WeavePeerName:     WeavePeerName,
+	WeavePeerNickName: WeavePeerNickName,
 }
 
 func lookupCommonKey(b []byte) string {

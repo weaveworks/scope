@@ -15,8 +15,8 @@ import (
 
 // Keys for use in Node
 const (
-	WeavePeerName                          = "weave_peer_name"
-	WeavePeerNickName                      = "weave_peer_nick_name"
+	WeavePeerName                          = report.WeavePeerName
+	WeavePeerNickName                      = report.WeavePeerNickName
 	WeaveDNSHostname                       = "weave_dns_hostname"
 	WeaveMACAddress                        = "weave_mac_address"
 	WeaveVersion                           = "weave_version"

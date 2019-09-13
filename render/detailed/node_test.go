@@ -73,7 +73,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 			},
 			Metrics: []report.MetricRow{
 				{
-					ID:       report.CPUUsage,
+					ID:       report.HostCPUUsage,
 					Label:    "CPU",
 					Format:   "percent",
 					Value:    0.07,
@@ -81,7 +81,7 @@ func TestMakeDetailedHostNode(t *testing.T) {
 					Metric:   &fixture.ClientHostCPUMetric,
 				},
 				{
-					ID:       report.MemoryUsage,
+					ID:       report.HostMemoryUsage,
 					Label:    "Memory",
 					Format:   "filesize",
 					Value:    0.08,

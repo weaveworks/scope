@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/weaveworks/common/test"
-	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
+	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/fixture"
 	"github.com/weaveworks/scope/test/reflect"
 	"github.com/weaveworks/scope/test/utils"
@@ -31,7 +31,7 @@ func TestPodFilterRenderer(t *testing.T) {
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
 	input.Pod.Nodes[fixture.ClientPodNodeID] = input.Pod.Nodes[fixture.ClientPodNodeID].WithLatests(map[string]string{
-		kubernetes.Namespace: "kube-system",
+		report.KubernetesNamespace: "kube-system",
 	})
 
 	have := utils.Prune(render.Render(context.Background(), input, render.PodRenderer, filterNonKubeSystem).Nodes)
@@ -55,7 +55,7 @@ func TestPodServiceFilterRenderer(t *testing.T) {
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
 	input.Service.Nodes[fixture.ServiceNodeID] = input.Service.Nodes[fixture.ServiceNodeID].WithLatests(map[string]string{
-		kubernetes.Namespace: "kube-system",
+		report.KubernetesNamespace: "kube-system",
 	})
 
 	have := utils.Prune(render.Render(context.Background(), input, render.PodServiceRenderer, filterNonKubeSystem).Nodes)

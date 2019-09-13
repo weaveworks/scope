@@ -224,8 +224,8 @@ var (
 						docker.LabelPrefix + "io.kubernetes.pod.uid": ClientPodUID,
 						docker.LabelPrefix + TestLabelKey1:           ApplicationLabelValue1,
 						kubernetes.Namespace:                         KubernetesNamespace,
-						docker.ContainerState:                        docker.StateRunning,
-						docker.ContainerStateHuman:                   docker.StateRunning,
+						docker.ContainerState:                        report.StateRunning,
+						docker.ContainerStateHuman:                   report.StateRunning,
 					}).
 					WithTopology(report.Container).WithParents(report.MakeSets().
 					Add("host", report.MakeStringSet(ClientHostNodeID)).
@@ -241,8 +241,8 @@ var (
 						docker.ContainerID:                                        ServerContainerID,
 						docker.ContainerName:                                      ServerContainerName,
 						docker.ContainerHostname:                                  ServerContainerHostname,
-						docker.ContainerState:                                     docker.StateRunning,
-						docker.ContainerStateHuman:                                docker.StateRunning,
+						docker.ContainerState:                                     report.StateRunning,
+						docker.ContainerStateHuman:                                report.StateRunning,
 						docker.ImageID:                                            ServerContainerImageID,
 						report.HostNodeID:                                         ServerHostNodeID,
 						docker.LabelPrefix + detailed.AmazonECSContainerNameLabel: "server",
@@ -299,9 +299,9 @@ var (
 					WithTopology(report.Host).WithSets(report.MakeSets().
 					Add(report.HostLocalNetworks, report.MakeStringSet("10.10.10.0/24")),
 				).WithMetrics(report.Metrics{
-					report.CPUUsage:    ClientHostCPUMetric,
-					report.MemoryUsage: ClientHostMemoryMetric,
-					report.Load1:       ClientHostLoad1Metric,
+					report.HostCPUUsage:    ClientHostCPUMetric,
+					report.HostMemoryUsage: ClientHostMemoryMetric,
+					report.Load1:           ClientHostLoad1Metric,
 				}),
 				ServerHostNodeID: report.MakeNodeWith(
 
@@ -313,9 +313,9 @@ var (
 					WithTopology(report.Host).WithSets(report.MakeSets().
 					Add(report.HostLocalNetworks, report.MakeStringSet("10.10.10.0/24")),
 				).WithMetrics(report.Metrics{
-					report.CPUUsage:    ServerHostCPUMetric,
-					report.MemoryUsage: ServerHostMemoryMetric,
-					report.Load1:       ServerHostLoad1Metric,
+					report.HostCPUUsage:    ServerHostCPUMetric,
+					report.HostMemoryUsage: ServerHostMemoryMetric,
+					report.Load1:           ServerHostLoad1Metric,
 				}),
 			},
 			MetadataTemplates: host.MetadataTemplates,
