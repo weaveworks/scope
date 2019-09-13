@@ -32,25 +32,8 @@ const (
 	ContainerRestartCount  = report.DockerContainerRestartCount
 	ContainerNetworkMode   = report.DockerContainerNetworkMode
 
-	NetworkRxDropped = "network_rx_dropped"
-	NetworkRxBytes   = "network_rx_bytes"
-	NetworkRxErrors  = "network_rx_errors"
-	NetworkTxPackets = "network_tx_packets"
-	NetworkTxDropped = "network_tx_dropped"
-	NetworkRxPackets = "network_rx_packets"
-	NetworkTxErrors  = "network_tx_errors"
-	NetworkTxBytes   = "network_tx_bytes"
-
-	MemoryMaxUsage = "docker_memory_max_usage"
-	MemoryUsage    = "docker_memory_usage"
-	MemoryFailcnt  = "docker_memory_failcnt"
-	MemoryLimit    = "docker_memory_limit"
-
-	CPUPercpuUsage       = "docker_cpu_per_cpu_usage"
-	CPUUsageInUsermode   = "docker_cpu_usage_in_usermode"
-	CPUTotalUsage        = "docker_cpu_total_usage"
-	CPUUsageInKernelmode = "docker_cpu_usage_in_kernelmode"
-	CPUSystemCPUUsage    = "docker_cpu_system_cpu_usage"
+	MemoryUsage   = "docker_memory_usage"
+	CPUTotalUsage = "docker_cpu_total_usage"
 
 	LabelPrefix = "docker_label_"
 	EnvPrefix   = report.DockerEnvPrefix
