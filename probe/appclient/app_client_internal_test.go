@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/common/xfer"
 	"github.com/weaveworks/scope/report"
+	"github.com/weaveworks/scope/test/reflect"
 )
 
 func dummyServer(t *testing.T, expectedToken, expectedID string, expectedVersion string, expectedReport report.Report, done chan struct{}) *httptest.Server {
@@ -69,14 +69,6 @@ func TestAppClientPublish(t *testing.T) {
 		rpt     = report.MakeReport()
 		done    = make(chan struct{}, 10)
 	)
-
-	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
-	// tags, transforming empty slices into nils. So, we make DeepEqual
-	// happy by setting empty `json:"omitempty"` entries to nil
-	rpt.WalkTopologies(func(to *report.Topology) {
-		*to = report.MakeTopology()
-		to.Controls = nil
-	})
 
 	s := dummyServer(t, token, id, version, rpt, done)
 	defer s.Close()
