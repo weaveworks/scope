@@ -1,12 +1,5 @@
 package report
 
-import (
-	"time"
-
-	"github.com/ugorji/go/codec"
-	"github.com/weaveworks/common/mtime"
-)
-
 // Controls describe the control tags within the Nodes
 type Controls map[string]Control
 
@@ -56,75 +49,6 @@ func (cs Controls) AddControls(controls []Control) {
 	for _, c := range controls {
 		cs[c.ID] = c
 	}
-}
-
-// NodeControls represent the individual controls that are valid for a given
-// node at a given point in time.  It's immutable. A zero-value for Timestamp
-// indicated this NodeControls is 'not set'.
-type NodeControls struct {
-	Timestamp time.Time
-	Controls  StringSet
-}
-
-var emptyNodeControls = NodeControls{Controls: MakeStringSet()}
-
-// MakeNodeControls makes a new NodeControls
-func MakeNodeControls() NodeControls {
-	return emptyNodeControls
-}
-
-// Merge returns the newest of the two NodeControls; it does not take the union
-// of the valid Controls.
-func (nc NodeControls) Merge(other NodeControls) NodeControls {
-	if nc.Timestamp.Before(other.Timestamp) {
-		return other
-	}
-	return nc
-}
-
-// Add the new control IDs to this NodeControls, producing a fresh NodeControls.
-func (nc NodeControls) Add(ids ...string) NodeControls {
-	return NodeControls{
-		Timestamp: mtime.Now(),
-		Controls:  nc.Controls.Add(ids...),
-	}
-}
-
-// WireNodeControls is the intermediate type for encoding/decoding.
-// Only needed for backwards compatibility with probes
-// (time.Time is encoded in binary in MsgPack)
-type wireNodeControls struct {
-	Timestamp string    `json:"timestamp,omitempty"`
-	Controls  StringSet `json:"controls,omitempty"`
-	dummySelfer
-}
-
-// CodecEncodeSelf implements codec.Selfer
-func (nc *NodeControls) CodecEncodeSelf(encoder *codec.Encoder) {
-	encoder.Encode(wireNodeControls{
-		Timestamp: renderTime(nc.Timestamp),
-		Controls:  nc.Controls,
-	})
-}
-
-// CodecDecodeSelf implements codec.Selfer
-func (nc *NodeControls) CodecDecodeSelf(decoder *codec.Decoder) {
-	in := wireNodeControls{}
-	in.CodecDecodeSelf(decoder)
-	*nc = NodeControls{
-		Timestamp: parseTime(in.Timestamp),
-		Controls:  in.Controls,
-	}
-}
-
-// MarshalJSON shouldn't be used, use CodecEncodeSelf instead
-func (NodeControls) MarshalJSON() ([]byte, error) {
-	panic("MarshalJSON shouldn't be used, use CodecEncodeSelf instead")
-}
-
-// UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead
-func (*NodeControls) UnmarshalJSON(b []byte) error {
-	panic("UnmarshalJSON shouldn't be used, use CodecDecodeSelf instead")
 }
 
 // NodeControlData contains specific information about the control. It

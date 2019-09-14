@@ -69,7 +69,6 @@ type wiredMetricRow struct {
 // CodecEncodeSelf marshals this MetricRow. It takes the basic Metric
 // rendering, then adds some row-specific fields.
 func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
-	in := m.Metric.ToIntermediate()
 	encoder.Encode(wiredMetricRow{
 		ID:         m.ID,
 		Label:      m.Label,
@@ -79,9 +78,9 @@ func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
 		ValueEmpty: m.ValueEmpty,
 		Priority:   m.Priority,
 		URL:        m.URL,
-		Samples:    in.Samples,
-		Min:        in.Min,
-		Max:        in.Max,
+		Samples:    m.Metric.Samples,
+		Min:        m.Metric.Min,
+		Max:        m.Metric.Max,
 	})
 }
 
@@ -89,12 +88,11 @@ func (m *MetricRow) CodecEncodeSelf(encoder *codec.Encoder) {
 func (m *MetricRow) CodecDecodeSelf(decoder *codec.Decoder) {
 	var in wiredMetricRow
 	decoder.Decode(&in)
-	w := WireMetrics{
+	metric := Metric{
 		Samples: in.Samples,
 		Min:     in.Min,
 		Max:     in.Max,
 	}
-	metric := w.FromIntermediate()
 	*m = MetricRow{
 		ID:         in.ID,
 		Label:      in.Label,
