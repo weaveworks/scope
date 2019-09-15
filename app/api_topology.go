@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/gorilla/mux"
+	ot "github.com/opentracing/opentracing-go"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
@@ -133,6 +134,8 @@ func handleWebsocket(
 	defer rep.UnWait(ctx, wait)
 
 	for {
+		span := ot.StartSpan("ws.Render", ot.Tag{"topology", topologyID})
+		ctx := ot.ContextWithSpan(ctx, span)
 		// We measure how much time has passed since the channel was opened
 		// and add it to the initial report timestamp to get the timestamp
 		// of the snapshot we want to report right now.
@@ -144,11 +147,13 @@ func handleWebsocket(
 		re, err := rep.Report(ctx, reportTimestamp)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
+			span.Finish()
 			return
 		}
 		renderer, filter, err := topologyRegistry.RendererForTopology(topologyID, r.Form, re)
 		if err != nil {
 			log.Errorf("Error generating report: %v", err)
+			span.Finish()
 			return
 		}
 
@@ -167,8 +172,10 @@ func handleWebsocket(
 			if !xfer.IsExpectedWSCloseError(err) {
 				log.Errorf("cannot serialize topology diff: %s", err)
 			}
+			span.Finish()
 			return
 		}
+		span.Finish()
 
 		select {
 		case <-wait:
