@@ -183,7 +183,7 @@ func (p *Probe) report() report.Report {
 
 	result := report.MakeReport()
 	for i := 0; i < cap(reports); i++ {
-		result = result.Merge(<-reports)
+		result.UnsafeMerge(<-reports)
 	}
 	return result
 }
@@ -210,11 +210,12 @@ func (p *Probe) tag(r report.Report) report.Report {
 
 func (p *Probe) drainAndPublish(rpt report.Report, rs chan report.Report) {
 	p.rateLimiter.Wait(context.Background())
+	rpt = rpt.Copy()
 ForLoop:
 	for {
 		select {
 		case r := <-rs:
-			rpt = rpt.Merge(r)
+			rpt.UnsafeMerge(r)
 		default:
 			break ForLoop
 		}
