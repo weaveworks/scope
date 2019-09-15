@@ -238,6 +238,33 @@ func (qdisc *GenericQdisc) Type() string {
 	return qdisc.QdiscType
 }
 
+type Hfsc struct {
+	QdiscAttrs
+	Defcls uint16
+}
+
+func NewHfsc(attrs QdiscAttrs) *Hfsc {
+	return &Hfsc{
+		QdiscAttrs: attrs,
+		Defcls:     1,
+	}
+}
+
+func (hfsc *Hfsc) Attrs() *QdiscAttrs {
+	return &hfsc.QdiscAttrs
+}
+
+func (hfsc *Hfsc) Type() string {
+	return "hfsc"
+}
+
+func (hfsc *Hfsc) String() string {
+	return fmt.Sprintf(
+		"{%v -- default: %d}",
+		hfsc.Attrs(), hfsc.Defcls,
+	)
+}
+
 // Fq is a classless packet scheduler meant to be mostly used for locally generated traffic.
 type Fq struct {
 	QdiscAttrs
@@ -258,7 +285,7 @@ type Fq struct {
 
 func (fq *Fq) String() string {
 	return fmt.Sprintf(
-		"{PacketLimit: %v, FlowPacketLimit: %v, Quantum: %v, InitalQuantum: %v, Pacing: %v, FlowDefaultRate: %v, FlowMaxRate: %v, Buckets: %v, FlowRefillDelay: %v,  LowRateTreshold: %v}",
+		"{PacketLimit: %v, FlowPacketLimit: %v, Quantum: %v, InitialQuantum: %v, Pacing: %v, FlowDefaultRate: %v, FlowMaxRate: %v, Buckets: %v, FlowRefillDelay: %v,  LowRateThreshold: %v}",
 		fq.PacketLimit, fq.FlowPacketLimit, fq.Quantum, fq.InitialQuantum, fq.Pacing, fq.FlowDefaultRate, fq.FlowMaxRate, fq.Buckets, fq.FlowRefillDelay, fq.LowRateThreshold,
 	)
 }
@@ -292,8 +319,8 @@ type FqCodel struct {
 
 func (fqcodel *FqCodel) String() string {
 	return fmt.Sprintf(
-		"{Target: %v, Limit: %v, Interval: %v, ECM: %v, Flows: %v, Quantum: %v}",
-		fqcodel.Target, fqcodel.Limit, fqcodel.Interval, fqcodel.ECN, fqcodel.Flows, fqcodel.Quantum,
+		"{%v -- Target: %v, Limit: %v, Interval: %v, ECM: %v, Flows: %v, Quantum: %v}",
+		fqcodel.Attrs(), fqcodel.Target, fqcodel.Limit, fqcodel.Interval, fqcodel.ECN, fqcodel.Flows, fqcodel.Quantum,
 	)
 }
 

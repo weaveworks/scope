@@ -28,7 +28,7 @@ type tcStats struct {
 	Backlog    uint32
 }
 
-// NOTE: function is in here because it uses other linux functions
+// NewHtbClass NOTE: function is in here because it uses other linux functions
 func NewHtbClass(attrs ClassAttrs, cattrs HtbClassAttrs) *HtbClass {
 	mtu := 1600
 	rate := cattrs.Rate / 8
@@ -146,7 +146,9 @@ func classPayload(req *nl.NetlinkRequest, class Class) error {
 	req.AddData(nl.NewRtAttr(nl.TCA_KIND, nl.ZeroTerminated(class.Type())))
 
 	options := nl.NewRtAttr(nl.TCA_OPTIONS, nil)
-	if htb, ok := class.(*HtbClass); ok {
+	switch class.Type() {
+	case "htb":
+		htb := class.(*HtbClass)
 		opt := nl.TcHtbCopt{}
 		opt.Buffer = htb.Buffer
 		opt.Cbuffer = htb.Cbuffer
@@ -171,9 +173,18 @@ func classPayload(req *nl.NetlinkRequest, class Class) error {
 			return errors.New("HTB: failed to calculate ceil rate table")
 		}
 		opt.Ceil = tcceil
-		nl.NewRtAttrChild(options, nl.TCA_HTB_PARMS, opt.Serialize())
-		nl.NewRtAttrChild(options, nl.TCA_HTB_RTAB, SerializeRtab(rtab))
-		nl.NewRtAttrChild(options, nl.TCA_HTB_CTAB, SerializeRtab(ctab))
+		options.AddRtAttr(nl.TCA_HTB_PARMS, opt.Serialize())
+		options.AddRtAttr(nl.TCA_HTB_RTAB, SerializeRtab(rtab))
+		options.AddRtAttr(nl.TCA_HTB_CTAB, SerializeRtab(ctab))
+	case "hfsc":
+		hfsc := class.(*HfscClass)
+		opt := nl.HfscCopt{}
+		opt.Rsc.Set(hfsc.Rsc.Attrs())
+		opt.Fsc.Set(hfsc.Fsc.Attrs())
+		opt.Usc.Set(hfsc.Usc.Attrs())
+		options.AddRtAttr(nl.TCA_HFSC_RSC, nl.SerializeHfscCurve(&opt.Rsc))
+		options.AddRtAttr(nl.TCA_HFSC_FSC, nl.SerializeHfscCurve(&opt.Fsc))
+		options.AddRtAttr(nl.TCA_HFSC_USC, nl.SerializeHfscCurve(&opt.Usc))
 	}
 	req.AddData(options)
 	return nil
@@ -232,6 +243,8 @@ func (h *Handle) ClassList(link Link, parent uint32) ([]Class, error) {
 				switch classType {
 				case "htb":
 					class = &HtbClass{}
+				case "hfsc":
+					class = &HfscClass{}
 				default:
 					class = &GenericClass{ClassType: classType}
 				}
@@ -243,6 +256,15 @@ func (h *Handle) ClassList(link Link, parent uint32) ([]Class, error) {
 						return nil, err
 					}
 					_, err = parseHtbClassData(class, data)
+					if err != nil {
+						return nil, err
+					}
+				case "hfsc":
+					data, err := nl.ParseRouteAttr(attr.Value)
+					if err != nil {
+						return nil, err
+					}
+					_, err = parseHfscClassData(class, data)
 					if err != nil {
 						return nil, err
 					}
@@ -281,6 +303,23 @@ func parseHtbClassData(class Class, data []syscall.NetlinkRouteAttr) (bool, erro
 			htb.Quantum = opt.Quantum
 			htb.Level = opt.Level
 			htb.Prio = opt.Prio
+		}
+	}
+	return detailed, nil
+}
+
+func parseHfscClassData(class Class, data []syscall.NetlinkRouteAttr) (bool, error) {
+	hfsc := class.(*HfscClass)
+	detailed := false
+	for _, datum := range data {
+		m1, d, m2 := nl.DeserializeHfscCurve(datum.Value).Attrs()
+		switch datum.Attr.Type {
+		case nl.TCA_HFSC_RSC:
+			hfsc.Rsc = ServiceCurve{m1: m1, d: d, m2: m2}
+		case nl.TCA_HFSC_FSC:
+			hfsc.Fsc = ServiceCurve{m1: m1, d: d, m2: m2}
+		case nl.TCA_HFSC_USC:
+			hfsc.Usc = ServiceCurve{m1: m1, d: d, m2: m2}
 		}
 	}
 	return detailed, nil
