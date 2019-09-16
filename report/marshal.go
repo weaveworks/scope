@@ -102,7 +102,7 @@ func (rep *Report) ReadBinary(ctx context.Context, r io.Reader, gzipped bool, ms
 	if err != nil {
 		return err
 	}
-	if err := rep.ReadBytes(buf.Bytes(), codecHandle(msgpack)); err != nil {
+	if err := codec.NewDecoderBytes(buf.Bytes(), codecHandle(msgpack)).Decode(&rep); err != nil {
 		return err
 	}
 	log.Debugf(
@@ -122,11 +122,6 @@ func MakeFromBinary(ctx context.Context, r io.Reader) (*Report, error) {
 		return nil, err
 	}
 	return &rep, nil
-}
-
-// ReadBytes reads bytes into a Report, using a codecHandle.
-func (rep *Report) ReadBytes(buf []byte, codecHandle codec.Handle) error {
-	return codec.NewDecoderBytes(buf, codecHandle).Decode(&rep)
 }
 
 // MakeFromFile construct a Report from a file, with the encoding
