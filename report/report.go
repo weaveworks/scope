@@ -559,6 +559,26 @@ func (r Report) upgradeDNSRecords() Report {
 	return r
 }
 
+func (r Report) Summary() string {
+	ret := ""
+	if len(r.Host.Nodes) == 1 {
+		for k, _ := range r.Host.Nodes {
+			ret = k + ":"
+		}
+	}
+	count := 0
+	r.WalkNamedTopologies(func(n string, t *Topology) {
+		if len(t.Nodes) > 0 {
+			count++
+			if count > 1 {
+				ret = ret + ", "
+			}
+			ret = ret + fmt.Sprintf("%s:%d", n, len(t.Nodes))
+		}
+	})
+	return ret
+}
+
 // Sampling describes how the packet data sources for this report were
 // sampled. It can be used to calculate effective sample rates. We can't
 // just put the rate here, because that can't be accurately merged. Counts

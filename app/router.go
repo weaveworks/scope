@@ -159,6 +159,18 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	}))
 }
 
+// RegisterAdminRoutes registers routes for admin calls with a http mux.
+func RegisterAdminRoutes(router *mux.Router, reporter Reporter) {
+	get := router.Methods("GET").Subrouter()
+	get.Handle("/admin/summary", requestContextDecorator(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+		summary, err := reporter.AdminSummary(ctx, time.Now())
+		if err != nil {
+			respondWith(w, http.StatusBadRequest, err)
+		}
+		fmt.Fprintln(w, summary)
+	}))
+}
+
 var newVersion = struct {
 	sync.Mutex
 	*xfer.NewVersionInfo
