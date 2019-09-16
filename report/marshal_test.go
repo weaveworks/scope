@@ -1,6 +1,7 @@
 package report_test
 
 import (
+	"bytes"
 	"context"
 	"reflect"
 	"testing"
@@ -14,7 +15,7 @@ import (
 func TestRoundtrip(t *testing.T) {
 	r1 := report.MakeReport()
 	buf, _ := r1.WriteBinary()
-	bytes := append([]byte{}, buf.Bytes()...) // copy the contents for later
+	original := append([]byte{}, buf.Bytes()...) // copy the contents for later
 	r2, err := report.MakeFromBinary(context.Background(), buf)
 	if err != nil {
 		t.Error(err)
@@ -22,12 +23,13 @@ func TestRoundtrip(t *testing.T) {
 	if !reflect.DeepEqual(r1, *r2) {
 		t.Errorf("%v != %v", r1, *r2)
 	}
-	r3, err := report.MakeFromBytes(bytes)
+	r3 := report.MakeReport()
+	err = r3.ReadBinary(context.Background(), bytes.NewBuffer(original), true, true)
 	if err != nil {
 		t.Error(err)
 	}
-	if !reflect.DeepEqual(r1, *r3) {
-		t.Errorf("%v != %v", r1, *r3)
+	if !reflect.DeepEqual(r1, r3) {
+		t.Errorf("%v != %v", r1, r3)
 	}
 }
 

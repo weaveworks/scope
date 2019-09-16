@@ -129,33 +129,6 @@ func (rep *Report) ReadBytes(buf []byte, codecHandle codec.Handle) error {
 	return codec.NewDecoderBytes(buf, codecHandle).Decode(&rep)
 }
 
-// MakeFromBytes constructs a Report from a gzipped msgpack.
-func MakeFromBytes(buf []byte) (*Report, error) {
-	compressedSize := len(buf)
-	r, err := gzip.NewReader(bytes.NewBuffer(buf))
-	if err != nil {
-		return nil, err
-	}
-	buffer := bufferPool.Get().(*bytes.Buffer)
-	buffer.Reset()
-	defer bufferPool.Put(buffer)
-	uncompressedSize, err := buffer.ReadFrom(r)
-	if err != nil {
-		return nil, err
-	}
-	log.Debugf(
-		"Received report sizes: compressed %d bytes, uncompressed %d bytes (%.2f%%)",
-		compressedSize,
-		uncompressedSize,
-		float32(compressedSize)/float32(uncompressedSize)*100,
-	)
-	rep := MakeReport()
-	if err := rep.ReadBytes(buffer.Bytes(), &codec.MsgpackHandle{}); err != nil {
-		return nil, err
-	}
-	return &rep, nil
-}
-
 // MakeFromFile construct a Report from a file, with the encoding
 // determined by the extension (".msgpack" or ".json", with an
 // optional ".gz").
