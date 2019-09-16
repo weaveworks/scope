@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	ot "github.com/opentracing/opentracing-go"
+	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -165,7 +166,7 @@ type websocketState struct {
 }
 
 func (wc *websocketState) update(ctx context.Context) error {
-	span := ot.StartSpan("ws.Render", ot.Tag{"topology", wc.topologyID})
+	span := ot.StartSpan("websocket.Render", ot.Tag{"topology", wc.topologyID})
 	defer span.Finish()
 	ctx = ot.ContextWithSpan(ctx, span)
 	// We measure how much time has passed since the channel was opened
@@ -176,6 +177,8 @@ func (wc *websocketState) update(ctx context.Context) error {
 	// might be interested in implementing in the future.
 	timestampDelta := time.Since(wc.channelOpenedAt)
 	reportTimestamp := wc.startReportingAt.Add(timestampDelta)
+	span.LogFields(otlog.String("opened-at", wc.channelOpenedAt.String()),
+		otlog.String("timestamp", reportTimestamp.String()))
 	re, err := wc.rep.Report(ctx, reportTimestamp)
 	if err != nil {
 		return errors.Wrapf(err, "Error generating report: %v")
