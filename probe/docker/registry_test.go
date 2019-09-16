@@ -57,7 +57,7 @@ func (c *mockContainer) State() string {
 }
 
 func (c *mockContainer) StateString() string {
-	return docker.StateRunning
+	return report.StateRunning
 }
 
 func (c *mockContainer) StartGatheringStats(docker.StatsGatherer) error {

@@ -22,6 +22,7 @@ const (
 	DockerIsInHostNetwork        = "docker_is_in_host_network"
 	DockerServiceName            = "service_name"
 	DockerStackNamespace         = "stack_namespace"
+	DockerDefaultNamespace       = "No stack"
 	DockerStopContainer          = "docker_stop_container"
 	DockerStartContainer         = "docker_start_container"
 	DockerRestartContainer       = "docker_restart_container"
@@ -97,6 +98,20 @@ const (
 	ECSServiceRunningCount = "ecs_service_running_count"
 	ECSScaleUp             = "ecs_scale_up"
 	ECSScaleDown           = "ecs_scale_down"
+	// probe/host
+	Timestamp         = "ts"
+	HostName          = "host_name"
+	HostLocalNetworks = "local_networks"
+	OS                = "os"
+	KernelVersion     = "kernel_version"
+	Uptime            = "uptime"
+	Load1             = "load1"
+	HostCPUUsage      = "host_cpu_usage_percent"
+	HostMemoryUsage   = "host_mem_usage_bytes"
+	ScopeVersion      = "host_scope_version"
+	// probe/overlay/weave
+	WeavePeerName     = "weave_peer_name"
+	WeavePeerNickName = "weave_peer_nick_name"
 )
 
 /* Lookup table to allow msgpack/json decoder to avoid heap allocation
@@ -208,6 +223,20 @@ var commonKeys = map[string]string{
 	ECSServiceRunningCount: ECSServiceRunningCount,
 	ECSScaleUp:             ECSScaleUp,
 	ECSScaleDown:           ECSScaleDown,
+
+	Timestamp:         Timestamp,
+	HostName:          HostName,
+	HostLocalNetworks: HostLocalNetworks,
+	OS:                OS,
+	KernelVersion:     KernelVersion,
+	Uptime:            Uptime,
+	Load1:             Load1,
+	HostCPUUsage:      HostCPUUsage,
+	HostMemoryUsage:   HostMemoryUsage,
+	ScopeVersion:      ScopeVersion,
+
+	WeavePeerName:     WeavePeerName,
+	WeavePeerNickName: WeavePeerNickName,
 }
 
 func lookupCommonKey(b []byte) string {

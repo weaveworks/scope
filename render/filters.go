@@ -5,8 +5,6 @@ import (
 	"strings"
 
 	"github.com/weaveworks/common/mtime"
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -229,8 +227,8 @@ func Noop(_ report.Node) bool { return true }
 
 // IsRunning checks if the node is a running docker container
 func IsRunning(n report.Node) bool {
-	state, ok := n.Latest.Lookup(docker.ContainerState)
-	return !ok || (state == docker.StateRunning || state == docker.StateRestarting || state == docker.StatePaused)
+	state, ok := n.Latest.Lookup(report.DockerContainerState)
+	return !ok || (state == report.StateRunning || state == report.StateRestarting || state == report.StatePaused)
 }
 
 // IsStopped checks if the node is *not* a running docker container
@@ -238,28 +236,28 @@ var IsStopped = Complement(IsRunning)
 
 // IsApplication checks if the node is an "application" node
 func IsApplication(n report.Node) bool {
-	containerName, _ := n.Latest.Lookup(docker.ContainerName)
+	containerName, _ := n.Latest.Lookup(report.DockerContainerName)
 	if _, ok := systemContainerNames[containerName]; ok {
 		return false
 	}
-	imageName, _ := n.Latest.Lookup(docker.ImageName)
+	imageName, _ := n.Latest.Lookup(report.DockerImageName)
 	imagePrefix := strings.SplitN(imageName, ":", 2)[0] // :(
-	if _, ok := systemImagePrefixes[imagePrefix]; ok || kubernetes.IsPauseImageName(imagePrefix) {
+	if _, ok := systemImagePrefixes[imagePrefix]; ok || report.IsPauseImageName(imagePrefix) {
 		return false
 	}
-	roleLabel, _ := n.Latest.Lookup(docker.LabelPrefix + "works.weave.role")
+	roleLabel, _ := n.Latest.Lookup(report.DockerLabelPrefix + "works.weave.role")
 	if roleLabel == "system" {
 		return false
 	}
-	roleLabel, _ = n.Latest.Lookup(docker.ImageLabelPrefix + "works.weave.role")
+	roleLabel, _ = n.Latest.Lookup(report.DockerImageLabelPrefix + "works.weave.role")
 	if roleLabel == "system" {
 		return false
 	}
-	namespace, _ := n.Latest.Lookup(docker.LabelPrefix + k8sNamespaceLabel)
+	namespace, _ := n.Latest.Lookup(report.DockerLabelPrefix + k8sNamespaceLabel)
 	if namespace == "kube-system" {
 		return false
 	}
-	podName, _ := n.Latest.Lookup(docker.LabelPrefix + "io.kubernetes.pod.name")
+	podName, _ := n.Latest.Lookup(report.DockerLabelPrefix + "io.kubernetes.pod.name")
 	if strings.HasPrefix(podName, "kube-system/") {
 		return false
 	}
@@ -272,7 +270,7 @@ var IsSystem = Complement(IsApplication)
 // HasLabel checks if the node has the desired docker label
 func HasLabel(labelKey string, labelValue string) FilterFunc {
 	return func(n report.Node) bool {
-		value, _ := n.Latest.Lookup(docker.LabelPrefix + labelKey)
+		value, _ := n.Latest.Lookup(report.DockerLabelPrefix + labelKey)
 		if value == labelValue {
 			return true
 		}
@@ -294,7 +292,7 @@ func IsNotPseudo(n report.Node) bool {
 // IsNamespace checks if the node is a pod/service in the specified namespace
 func IsNamespace(namespace string) FilterFunc {
 	return func(n report.Node) bool {
-		tryKeys := []string{kubernetes.Namespace, docker.LabelPrefix + k8sNamespaceLabel, docker.StackNamespace, docker.LabelPrefix + swarmNamespaceLabel}
+		tryKeys := []string{report.KubernetesNamespace, report.DockerLabelPrefix + k8sNamespaceLabel, report.DockerDefaultNamespace, report.DockerLabelPrefix + swarmNamespaceLabel}
 		gotNamespace := ""
 		for _, key := range tryKeys {
 			if value, ok := n.Latest.Lookup(key); ok {
@@ -303,7 +301,7 @@ func IsNamespace(namespace string) FilterFunc {
 			}
 		}
 		// Special case for docker
-		if namespace == docker.DefaultNamespace && gotNamespace == "" {
+		if namespace == report.DockerDefaultNamespace && gotNamespace == "" {
 			return true
 		}
 		return namespace == gotNamespace

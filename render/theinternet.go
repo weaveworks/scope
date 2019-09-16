@@ -7,7 +7,6 @@ import (
 
 	"github.com/camlistore/camlistore/pkg/lru"
 
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -77,7 +76,7 @@ func LocalNetworks(r report.Report) report.Networks {
 
 	for _, topology := range []report.Topology{r.Host, r.Overlay} {
 		for _, md := range topology.Nodes {
-			nets, _ := md.Sets.Lookup(host.LocalNetworks)
+			nets, _ := md.Sets.Lookup(report.HostLocalNetworks)
 			for _, s := range nets {
 				networks.AddCIDR(s)
 			}

@@ -3,8 +3,8 @@ package render
 import (
 	"context"
 	"regexp"
+	"strings"
 
-	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -28,8 +28,8 @@ var UncontainedIDPrefix = MakePseudoNodeID(UncontainedID, "")
 var ContainerRenderer = Memoise(MakeFilter(
 	func(n report.Node) bool {
 		// Drop deleted containers
-		state, ok := n.Latest.Lookup(docker.ContainerState)
-		return !ok || state != docker.StateDeleted
+		state, ok := n.Latest.Lookup(report.DockerContainerState)
+		return !ok || state != report.StateDeleted
 	},
 	MakeReduce(
 		MakeMap(
@@ -129,7 +129,7 @@ func (r containerWithImageNameRenderer) Render(ctx context.Context, rpt report.R
 	outputs := make(report.Nodes, len(containers.Nodes))
 	for id, c := range containers.Nodes {
 		outputs[id] = c
-		imageID, ok := c.Latest.Lookup(docker.ImageID)
+		imageID, ok := c.Latest.Lookup(report.DockerImageID)
 		if !ok {
 			continue
 		}
@@ -137,15 +137,13 @@ func (r containerWithImageNameRenderer) Render(ctx context.Context, rpt report.R
 		if !ok {
 			continue
 		}
-		imageName, ok := image.Latest.Lookup(docker.ImageName)
-		if !ok {
+		imageNodeID := containerImageNodeID(image)
+		if imageNodeID == "" {
 			continue
 		}
-		imageNameWithoutTag := docker.ImageNameWithoutTag(imageName)
-		imageNodeID := report.MakeContainerImageNodeID(imageNameWithoutTag)
 
-		c.Latest = c.Latest.Propagate(image.Latest, docker.ImageName, docker.ImageTag,
-			docker.ImageSize, docker.ImageVirtualSize, docker.ImageLabelPrefix+"works.weave.role")
+		c.Latest = c.Latest.Propagate(image.Latest, report.DockerImageName, report.DockerImageTag,
+			report.DockerImageSize, report.DockerImageVirtualSize, report.DockerImageLabelPrefix+"works.weave.role")
 
 		c.Parents = c.Parents.
 			Delete(report.ContainerImage).
@@ -207,13 +205,13 @@ func MapContainer2IP(m report.Node) []string {
 	// if this container belongs to the host's networking namespace
 	// we cannot use its IP to attribute connections
 	// (they could come from any other process on the host or DNAT-ed IPs)
-	_, isInHostNetwork := m.Latest.Lookup(docker.IsInHostNetwork)
+	_, isInHostNetwork := m.Latest.Lookup(report.DockerIsInHostNetwork)
 	if doesntMakeConnections || isInHostNetwork {
 		return nil
 	}
 
 	result := []string{}
-	if addrs, ok := m.Sets.Lookup(docker.ContainerIPsWithScopes); ok {
+	if addrs, ok := m.Sets.Lookup(report.DockerContainerIPsWithScopes); ok {
 		for _, addr := range addrs {
 			scope, addr, ok := report.ParseAddressNodeID(addr)
 			if !ok {
@@ -231,7 +229,7 @@ func MapContainer2IP(m report.Node) []string {
 
 	// Also output all the host:port port mappings (see above comment).
 	// In this case we assume this doesn't need a scope, as they are for host IPs.
-	ports, _ := m.Sets.Lookup(docker.ContainerPorts)
+	ports, _ := m.Sets.Lookup(report.DockerContainerPorts)
 	for _, portMapping := range ports {
 		if mapping := portMappingMatch.FindStringSubmatch(portMapping); mapping != nil {
 			ip, port := mapping[1], mapping[2]
@@ -267,7 +265,7 @@ func MapProcess2Container(n report.Node) report.Node {
 		id   string
 		node report.Node
 	)
-	if containerID, ok := n.Latest.Lookup(docker.ContainerID); ok {
+	if containerID, ok := n.Latest.Lookup(report.DockerContainerID); ok {
 		id = report.MakeContainerNodeID(containerID)
 		node = NewDerivedNode(id, n).WithTopology(report.Container)
 	} else {
@@ -298,7 +296,7 @@ func MapContainer2ContainerImage(n report.Node) report.Node {
 
 	// Otherwise, if some some reason the container doesn't have a image_id
 	// (maybe slightly out of sync reports), just drop it
-	imageID, ok := n.Latest.Lookup(docker.ImageID)
+	imageID, ok := n.Latest.Lookup(report.DockerImageID)
 	if !ok {
 		return report.Node{}
 	}
@@ -311,6 +309,20 @@ func MapContainer2ContainerImage(n report.Node) report.Node {
 	return result
 }
 
+func containerImageNodeID(n report.Node) string {
+	imageName, ok := n.Latest.Lookup(report.DockerImageName)
+	if !ok {
+		return ""
+	}
+
+	parts := strings.SplitN(imageName, "/", 3)
+	if len(parts) == 3 {
+		imageName = strings.Join(parts[1:3], "/")
+	}
+	imageNameWithoutTag := strings.SplitN(imageName, ":", 2)[0]
+	return report.MakeContainerImageNodeID(imageNameWithoutTag)
+}
+
 // MapContainerImage2Name ignores image versions
 func MapContainerImage2Name(n report.Node) report.Node {
 	// Propagate all pseudo nodes
@@ -318,18 +330,15 @@ func MapContainerImage2Name(n report.Node) report.Node {
 		return n
 	}
 
-	imageName, ok := n.Latest.Lookup(docker.ImageName)
-	if !ok {
+	n.ID = containerImageNodeID(n)
+	if n.ID == "" {
 		return report.Node{}
 	}
-
-	imageNameWithoutTag := docker.ImageNameWithoutTag(imageName)
-	n.ID = report.MakeContainerImageNodeID(imageNameWithoutTag)
 
 	return n
 }
 
-var containerHostnameTopology = MakeGroupNodeTopology(report.Container, docker.ContainerHostname)
+var containerHostnameTopology = MakeGroupNodeTopology(report.Container, report.DockerContainerHostname)
 
 // MapContainer2Hostname maps container Nodes to 'hostname' renderabled nodes..
 func MapContainer2Hostname(n report.Node) report.Node {
@@ -340,7 +349,7 @@ func MapContainer2Hostname(n report.Node) report.Node {
 
 	// Otherwise, if some some reason the container doesn't have a hostname
 	// (maybe slightly out of sync reports), just drop it
-	id, ok := n.Latest.Lookup(docker.ContainerHostname)
+	id, ok := n.Latest.Lookup(report.DockerContainerHostname)
 	if !ok {
 		return report.Node{}
 	}

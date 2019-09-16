@@ -10,14 +10,13 @@ import (
 	"github.com/weaveworks/common/backoff"
 	"github.com/weaveworks/scope/common/weave"
 	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
 // Keys for use in Node
 const (
-	WeavePeerName                          = "weave_peer_name"
-	WeavePeerNickName                      = "weave_peer_nick_name"
+	WeavePeerName                          = report.WeavePeerName
+	WeavePeerNickName                      = report.WeavePeerNickName
 	WeaveDNSHostname                       = "weave_dns_hostname"
 	WeaveMACAddress                        = "weave_mac_address"
 	WeaveVersion                           = "weave_version"
@@ -249,7 +248,7 @@ func (w *Weave) Report() (report.Report, error) {
 	if w.statusCache.IPAM != nil {
 		r.Overlay.AddNode(
 			report.MakeNode(report.MakeOverlayNodeID(report.WeaveOverlayPeerPrefix, w.statusCache.Router.Name)).
-				WithSet(host.LocalNetworks, report.MakeStringSet(w.statusCache.IPAM.DefaultSubnet)),
+				WithSet(report.HostLocalNetworks, report.MakeStringSet(w.statusCache.IPAM.DefaultSubnet)),
 		)
 	}
 	return r, nil

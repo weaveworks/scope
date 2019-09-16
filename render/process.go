@@ -3,8 +3,6 @@ package render
 import (
 	"context"
 
-	"github.com/weaveworks/scope/probe/endpoint"
-	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -52,7 +50,7 @@ func (e endpoints2Processes) Render(ctx context.Context, rpt report.Report) Node
 	endpoints := SelectEndpoint.Render(ctx, rpt).Nodes
 	return MapEndpoints(
 		func(n report.Node) string {
-			pid, ok := n.Latest.Lookup(process.PID)
+			pid, ok := n.Latest.Lookup(report.PID)
 			if !ok {
 				return ""
 			}
@@ -81,7 +79,7 @@ func hasMoreThanOneConnection(n report.Node, endpoints report.Nodes) bool {
 	firstRealEndpointID := ""
 	for _, endpointID := range n.Adjacency {
 		if ep, ok := endpoints[endpointID]; ok {
-			if copyID, _, ok := ep.Latest.LookupEntry(endpoint.CopyOf); ok {
+			if copyID, _, ok := ep.Latest.LookupEntry(report.CopyOf); ok {
 				endpointID = copyID
 			}
 		}
@@ -94,7 +92,7 @@ func hasMoreThanOneConnection(n report.Node, endpoints report.Nodes) bool {
 	return false
 }
 
-var processNameTopology = MakeGroupNodeTopology(report.Process, process.Name)
+var processNameTopology = MakeGroupNodeTopology(report.Process, report.Name)
 
 // processes2Names maps process Nodes to Nodes for each process name.
 func processes2Names(processes Nodes) Nodes {
@@ -103,7 +101,7 @@ func processes2Names(processes Nodes) Nodes {
 	for _, n := range processes.Nodes {
 		if n.Topology == Pseudo {
 			ret.passThrough(n)
-		} else if name, ok := n.Latest.Lookup(process.Name); ok {
+		} else if name, ok := n.Latest.Lookup(report.Name); ok {
 			ret.addChildAndChildren(n, name, processNameTopology)
 		}
 	}

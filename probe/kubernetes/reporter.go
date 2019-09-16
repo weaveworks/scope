@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"fmt"
-	"strings"
 
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -241,19 +240,11 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 		rpt.Pod.AddNode(
 			report.MakeNodeWith(
 				report.MakePodNodeID(pod.UID()),
-				map[string]string{State: StateDeleted},
+				map[string]string{State: report.StateDeleted},
 			),
 		)
 		r.probe.Publish(rpt)
 	}
-}
-
-// IsPauseImageName indicates whether an image name corresponds to a
-// kubernetes pause container image.
-func IsPauseImageName(imageName string) bool {
-	return strings.Contains(imageName, "google_containers/pause") ||
-		strings.Contains(imageName, "k8s.gcr.io/pause") ||
-		strings.Contains(imageName, "eks/pause")
 }
 
 func isPauseContainer(n report.Node, rpt report.Report) bool {
@@ -270,7 +261,7 @@ func isPauseContainer(n report.Node, rpt report.Report) bool {
 		if !ok {
 			continue
 		}
-		return IsPauseImageName(imageName)
+		return report.IsPauseImageName(imageName)
 	}
 	return false
 }

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/weaveworks/common/test"
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
@@ -16,7 +15,7 @@ func TestReportLocalNetworks(t *testing.T) {
 			Nodes: report.Nodes{
 				"nonets": report.MakeNode("nonets"),
 				"foo": report.MakeNode("foo").WithSets(report.MakeSets().
-					Add(host.LocalNetworks, report.MakeStringSet(
+					Add(report.HostLocalNetworks, report.MakeStringSet(
 						"10.0.0.1/8", "192.168.1.1/24", "10.0.0.1/8", "badnet/33")),
 				),
 			},
@@ -24,7 +23,7 @@ func TestReportLocalNetworks(t *testing.T) {
 		Overlay: report.Topology{
 			Nodes: report.Nodes{
 				"router": report.MakeNode("router").WithSets(report.MakeSets().
-					Add(host.LocalNetworks, report.MakeStringSet("10.32.0.1/12")),
+					Add(report.HostLocalNetworks, report.MakeStringSet("10.32.0.1/12")),
 				),
 			},
 		},

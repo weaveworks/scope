@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/weaveworks/common/test"
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/render/expected"
 	"github.com/weaveworks/scope/report"
@@ -30,8 +28,8 @@ var (
 func TestMapProcess2Container(t *testing.T) {
 	for _, input := range []testcase{
 		{"empty", report.MakeNode("empty"), true},
-		{"basic process", report.MakeNodeWith("basic", map[string]string{process.PID: "201", docker.ContainerID: "a1b2c3"}), true},
-		{"uncontained", report.MakeNodeWith("uncontained", map[string]string{process.PID: "201", report.HostNodeID: report.MakeHostNodeID("foo")}), true},
+		{"basic process", report.MakeNodeWith("basic", map[string]string{report.PID: "201", report.DockerContainerID: "a1b2c3"}), true},
+		{"uncontained", report.MakeNodeWith("uncontained", map[string]string{report.PID: "201", report.HostNodeID: report.MakeHostNodeID("foo")}), true},
 	} {
 		testMap(t, render.MapProcess2Container, input)
 	}
@@ -66,7 +64,7 @@ func TestContainerFilterRenderer(t *testing.T) {
 	// it is filtered out correctly.
 	input := fixture.Report.Copy()
 	input.Container.Nodes[fixture.ClientContainerNodeID] = input.Container.Nodes[fixture.ClientContainerNodeID].WithLatests(map[string]string{
-		docker.LabelPrefix + "works.weave.role": "system",
+		report.DockerLabelPrefix + "works.weave.role": "system",
 	})
 	have := utils.Prune(render.Render(context.Background(), input, render.ContainerWithImageNameRenderer, filterApplication).Nodes)
 	want := utils.Prune(expected.RenderedContainers.Copy())

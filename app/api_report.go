@@ -6,7 +6,6 @@ import (
 
 	"context"
 
-	"github.com/weaveworks/scope/probe/host"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -52,8 +51,8 @@ func makeProbeHandler(rep Reporter) CtxHandlerFunc {
 		result := []probeDesc{}
 		for _, n := range rpt.Host.Nodes {
 			id, _ := n.Latest.Lookup(report.ControlProbeID)
-			hostname, _ := n.Latest.Lookup(host.HostName)
-			version, dt, _ := n.Latest.LookupEntry(host.ScopeVersion)
+			hostname, _ := n.Latest.Lookup(report.HostName)
+			version, dt, _ := n.Latest.LookupEntry(report.ScopeVersion)
 			result = append(result, probeDesc{
 				ID:       id,
 				Hostname: hostname,

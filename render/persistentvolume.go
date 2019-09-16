@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -29,9 +28,9 @@ type volumesRenderer struct{}
 func (v volumesRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for id, n := range rpt.PersistentVolumeClaim.Nodes {
-		volume, _ := n.Latest.Lookup(kubernetes.VolumeName)
+		volume, _ := n.Latest.Lookup(report.KubernetesVolumeName)
 		for _, p := range rpt.PersistentVolume.Nodes {
-			volumeName, _ := p.Latest.Lookup(kubernetes.Name)
+			volumeName, _ := p.Latest.Lookup(report.KubernetesName)
 			if volume == volumeName {
 				n.Adjacency = n.Adjacency.Add(p.ID)
 				n.Children = n.Children.Add(p)
@@ -54,16 +53,16 @@ type podToVolumesRenderer struct{}
 func (v podToVolumesRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for podID, podNode := range rpt.Pod.Nodes {
-		claimNames, found := podNode.Latest.Lookup(kubernetes.VolumeClaim)
+		claimNames, found := podNode.Latest.Lookup(report.KubernetesVolumeClaim)
 		if !found {
 			continue
 		}
-		podNamespace, _ := podNode.Latest.Lookup(kubernetes.Namespace)
+		podNamespace, _ := podNode.Latest.Lookup(report.KubernetesNamespace)
 		claimNameList := strings.Split(claimNames, report.ScopeDelim)
 		for _, ClaimName := range claimNameList {
 			for _, pvcNode := range rpt.PersistentVolumeClaim.Nodes {
-				pvcName, _ := pvcNode.Latest.Lookup(kubernetes.Name)
-				pvcNamespace, _ := pvcNode.Latest.Lookup(kubernetes.Namespace)
+				pvcName, _ := pvcNode.Latest.Lookup(report.KubernetesName)
+				pvcNamespace, _ := pvcNode.Latest.Lookup(report.KubernetesNamespace)
 				if (pvcName == ClaimName) && (podNamespace == pvcNamespace) {
 					podNode.Adjacency = podNode.Adjacency.Add(pvcNode.ID)
 					podNode.Children = podNode.Children.Add(pvcNode)
@@ -87,9 +86,9 @@ type pvcToStorageClassRenderer struct{}
 func (v pvcToStorageClassRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for scID, scNode := range rpt.StorageClass.Nodes {
-		storageClass, _ := scNode.Latest.Lookup(kubernetes.Name)
+		storageClass, _ := scNode.Latest.Lookup(report.KubernetesName)
 		for _, pvcNode := range rpt.PersistentVolumeClaim.Nodes {
-			storageClassName, _ := pvcNode.Latest.Lookup(kubernetes.StorageClassName)
+			storageClassName, _ := pvcNode.Latest.Lookup(report.KubernetesStorageClassName)
 			if storageClassName == storageClass {
 				scNode.Adjacency = scNode.Adjacency.Add(pvcNode.ID)
 				scNode.Children = scNode.Children.Add(pvcNode)
@@ -110,9 +109,9 @@ type pvToSnapshotRenderer struct{}
 func (v pvToSnapshotRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for pvNodeID, p := range rpt.PersistentVolume.Nodes {
-		volumeName, _ := p.Latest.Lookup(kubernetes.Name)
+		volumeName, _ := p.Latest.Lookup(report.KubernetesName)
 		for _, volumeSnapshotNode := range rpt.VolumeSnapshot.Nodes {
-			snapshotPVName, _ := volumeSnapshotNode.Latest.Lookup(kubernetes.VolumeName)
+			snapshotPVName, _ := volumeSnapshotNode.Latest.Lookup(report.KubernetesVolumeName)
 			if volumeName == snapshotPVName {
 				p.Adjacency = p.Adjacency.Add(volumeSnapshotNode.ID)
 				p.Children = p.Children.Add(volumeSnapshotNode)
@@ -134,9 +133,9 @@ type volumeSnapshotRenderer struct{}
 func (v volumeSnapshotRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := make(report.Nodes)
 	for volumeSnapshotID, volumeSnapshotNode := range rpt.VolumeSnapshot.Nodes {
-		snapshotData, _ := volumeSnapshotNode.Latest.Lookup(kubernetes.SnapshotData)
+		snapshotData, _ := volumeSnapshotNode.Latest.Lookup(report.KubernetesSnapshotData)
 		for volumeSnapshotDataID, volumeSnapshotDataNode := range rpt.VolumeSnapshotData.Nodes {
-			snapshotDataName, _ := volumeSnapshotDataNode.Latest.Lookup(kubernetes.Name)
+			snapshotDataName, _ := volumeSnapshotDataNode.Latest.Lookup(report.KubernetesName)
 			if snapshotDataName == snapshotData {
 				volumeSnapshotNode.Adjacency = volumeSnapshotNode.Adjacency.Add(volumeSnapshotDataNode.ID)
 				volumeSnapshotNode.Children = volumeSnapshotNode.Children.Add(volumeSnapshotDataNode)

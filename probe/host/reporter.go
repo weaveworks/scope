@@ -14,16 +14,16 @@ import (
 
 // Keys for use in Node.Latest.
 const (
-	Timestamp     = "ts"
-	HostName      = "host_name"
-	LocalNetworks = "local_networks"
-	OS            = "os"
-	KernelVersion = "kernel_version"
-	Uptime        = "uptime"
-	Load1         = "load1"
-	CPUUsage      = "host_cpu_usage_percent"
-	MemoryUsage   = "host_mem_usage_bytes"
-	ScopeVersion  = "host_scope_version"
+	Timestamp     = report.Timestamp
+	HostName      = report.HostName
+	LocalNetworks = report.HostLocalNetworks
+	OS            = report.OS
+	KernelVersion = report.KernelVersion
+	Uptime        = report.Uptime
+	Load1         = report.Load1
+	CPUUsage      = report.HostCPUUsage
+	MemoryUsage   = report.HostMemoryUsage
+	ScopeVersion  = report.ScopeVersion
 )
 
 // Exposed for testing.

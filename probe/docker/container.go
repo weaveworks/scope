@@ -35,20 +35,8 @@ const (
 	MemoryUsage   = "docker_memory_usage"
 	CPUTotalUsage = "docker_cpu_total_usage"
 
-	LabelPrefix = "docker_label_"
+	LabelPrefix = report.DockerLabelPrefix
 	EnvPrefix   = report.DockerEnvPrefix
-)
-
-// These 'constants' are used for node states.
-// We need to take pointers to them, so they are vars...
-var (
-	StateCreated    = "created"
-	StateDead       = "dead"
-	StateExited     = "exited"
-	StatePaused     = "paused"
-	StateRestarting = "restarting"
-	StateRunning    = "running"
-	StateDeleted    = "deleted"
 )
 
 // StatsGatherer gathers container stats
@@ -462,7 +450,7 @@ func ExtractContainerIPsWithScopes(nmd report.Node) []string {
 // ContainerIsStopped checks if the docker container is in one of our "stopped" states
 func ContainerIsStopped(c Container) bool {
 	state := c.StateString()
-	return (state != StateRunning && state != StateRestarting && state != StatePaused)
+	return (state != report.StateRunning && state != report.StateRestarting && state != report.StatePaused)
 }
 
 // splitImageName returns parts of the full image name (image name, image tag).

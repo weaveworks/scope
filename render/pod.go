@@ -4,8 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/weaveworks/scope/probe/docker"
-	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -41,8 +39,8 @@ func renderKubernetesTopologies(rpt report.Report) bool {
 }
 
 func isPauseContainer(n report.Node) bool {
-	image, ok := n.Latest.Lookup(docker.ImageName)
-	return ok && kubernetes.IsPauseImageName(image)
+	image, ok := n.Latest.Lookup(report.DockerImageName)
+	return ok && report.IsPauseImageName(image)
 }
 
 // PodRenderer is a Renderer which produces a renderable kubernetes
@@ -50,8 +48,8 @@ func isPauseContainer(n report.Node) bool {
 var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 	MakeFilter(
 		func(n report.Node) bool {
-			state, ok := n.Latest.Lookup(kubernetes.State)
-			return !ok || !(state == kubernetes.StateDeleted || state == kubernetes.StateFailed)
+			state, ok := n.Latest.Lookup(report.KubernetesState)
+			return !ok || !(state == report.StateDeleted || state == report.StateFailed)
 		},
 		MakeReduce(
 			PropagateSingleMetrics(report.Container,
@@ -141,11 +139,11 @@ func MapPod2IP(m report.Node) []string {
 	// if this pod belongs to the host's networking namespace
 	// we cannot use its IP to attribute connections
 	// (they could come from any other process on the host or DNAT-ed IPs)
-	if _, ok := m.Latest.Lookup(kubernetes.IsInHostNetwork); ok {
+	if _, ok := m.Latest.Lookup(report.KubernetesIsInHostNetwork); ok {
 		return nil
 	}
 
-	ip, ok := m.Latest.Lookup(kubernetes.IP)
+	ip, ok := m.Latest.Lookup(report.KubernetesIP)
 	if !ok || ip == "" {
 		return nil
 	}

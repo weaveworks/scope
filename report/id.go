@@ -302,3 +302,11 @@ func IsLoopback(address string) bool {
 	ip := net.ParseIP(address)
 	return ip != nil && ip.IsLoopback()
 }
+
+// IsPauseImageName indicates whether an image name corresponds to a
+// kubernetes pause container image.
+func IsPauseImageName(imageName string) bool {
+	return strings.Contains(imageName, "google_containers/pause") ||
+		strings.Contains(imageName, "k8s.gcr.io/pause") ||
+		strings.Contains(imageName, "eks/pause")
+}

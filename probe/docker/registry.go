@@ -382,7 +382,7 @@ func (r *registry) deleteContainer(containerID string) {
 func (r *registry) sendDeletedUpdate(containerID string) {
 	node := report.MakeNodeWith(report.MakeContainerNodeID(containerID), map[string]string{
 		ContainerID:    containerID,
-		ContainerState: StateDeleted,
+		ContainerState: report.StateDeleted,
 	})
 	// Trigger anyone watching for updates
 	for _, f := range r.watchers {
