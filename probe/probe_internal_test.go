@@ -68,13 +68,6 @@ func TestProbe(t *testing.T) {
 	want := report.MakeReport()
 	node := report.MakeNodeWith("a", map[string]string{"b": "c"})
 
-	// marshalling->unmarshaling is not idempotent due to `json:"omitempty"`
-	// tags, transforming empty slices into nils. So, we make DeepEqual
-	// happy by setting empty `json:"omitempty"` entries to nil
-	node.Metrics = nil
-	want.WalkTopologies(func(t *report.Topology) {
-		t.Controls = nil
-	})
 	want.Endpoint.AddNode(node)
 
 	pub := mockPublisher{make(chan report.Report, 10)}
