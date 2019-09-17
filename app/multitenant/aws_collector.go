@@ -370,6 +370,7 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 	if err != nil {
 		return report.MakeReport(), err
 	}
+	span.SetTag("userid", userid)
 	end := timestamp
 	start := end.Add(-c.cfg.Window)
 	reportKeys, err := c.getReportKeys(ctx, userid, start, end)
