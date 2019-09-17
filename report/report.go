@@ -188,7 +188,7 @@ type Report struct {
 	// Job represent all Kubernetes Job on hosts running probes.
 	Job Topology
 
-	DNS DNSRecords
+	DNS DNSRecords `json:"nodes,omitempty" deepequal:"nil==empty"`
 
 	// Sampling data for this report.
 	Sampling Sampling
