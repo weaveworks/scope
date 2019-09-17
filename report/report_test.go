@@ -98,3 +98,41 @@ func TestReportUpgrade(t *testing.T) {
 		t.Error(test.Diff(expected, got))
 	}
 }
+
+func TestReportUnMerge(t *testing.T) {
+	n1 := report.MakeNodeWith("foo", map[string]string{"foo": "bar"})
+	r1 := makeTestReport()
+	r2 := r1.Copy()
+	r2.Container.AddNode(n1)
+	// r2 should be the same as r1 with just the foo-bar node added
+	r2.UnsafeUnMerge(r1)
+	// Now r2 should have everything removed except that one node, and its ID
+	expected := report.Report{
+		ID: r2.ID,
+		Container: report.Topology{
+			Nodes: report.Nodes{
+				"foo": n1,
+			},
+		},
+	}
+
+	// Now test report with two nodes unmerged on report with one
+	r1.Container.AddNode(n1)
+	r2 = r1.Copy()
+	n2 := report.MakeNodeWith("foo2", map[string]string{"ping": "pong"})
+	r2.Container.AddNode(n2)
+	// r2 should be the same as r1 with one extra node
+	r2.UnsafeUnMerge(r1)
+	expected = report.Report{
+		ID: r2.ID,
+		Container: report.Topology{
+			Nodes: report.Nodes{
+				"foo2": n2,
+			},
+		},
+	}
+
+	if !s_reflect.DeepEqual(expected, r2) {
+		t.Error(test.Diff(expected, r2))
+	}
+}
