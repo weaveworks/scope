@@ -564,7 +564,7 @@ func (r Report) Summary() string {
 	ret := ""
 	if len(r.Host.Nodes) == 1 {
 		for k := range r.Host.Nodes {
-			ret = k + ":"
+			ret = k + ": "
 		}
 	}
 	count := 0
