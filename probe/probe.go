@@ -27,6 +27,7 @@ type Probe struct {
 	spyInterval, publishInterval time.Duration
 	publisher                    ReportPublisher
 	rateLimiter                  *rate.Limiter
+	ticksPerFullReport           int
 	noControls                   bool
 
 	tickers   []Ticker
@@ -77,17 +78,19 @@ type Ticker interface {
 func New(
 	spyInterval, publishInterval time.Duration,
 	publisher ReportPublisher,
+	ticksPerFullReport int,
 	noControls bool,
 ) *Probe {
 	result := &Probe{
-		spyInterval:     spyInterval,
-		publishInterval: publishInterval,
-		publisher:       publisher,
-		rateLimiter:     rate.NewLimiter(rate.Every(publishInterval/100), 1),
-		noControls:      noControls,
-		quit:            make(chan struct{}),
-		spiedReports:    make(chan report.Report, spiedReportBufferSize),
-		shortcutReports: make(chan report.Report, shortcutReportBufferSize),
+		spyInterval:        spyInterval,
+		publishInterval:    publishInterval,
+		publisher:          publisher,
+		rateLimiter:        rate.NewLimiter(rate.Every(publishInterval/100), 1),
+		ticksPerFullReport: ticksPerFullReport,
+		noControls:         noControls,
+		quit:               make(chan struct{}),
+		spiedReports:       make(chan report.Report, spiedReportBufferSize),
+		shortcutReports:    make(chan report.Report, shortcutReportBufferSize),
 	}
 	return result
 }
@@ -208,7 +211,7 @@ func (p *Probe) tag(r report.Report) report.Report {
 	return r
 }
 
-func (p *Probe) drainAndPublish(rpt report.Report, rs chan report.Report) {
+func (p *Probe) drainAndSanitise(rpt report.Report, rs chan report.Report) report.Report {
 	p.rateLimiter.Wait(context.Background())
 ForLoop:
 	for {
@@ -225,25 +228,44 @@ ForLoop:
 			t.Controls = report.Controls{}
 		})
 	}
-	if err := p.publisher.Publish(rpt); err != nil {
-		log.Infof("Publish: %v", err)
-	}
+	return rpt
 }
 
 func (p *Probe) publishLoop() {
 	defer p.done.Done()
 	pubTick := time.Tick(p.publishInterval)
+	publishCount := 0
+	var lastFullReport report.Report
 
 	for {
+		var err error
 		select {
 		case <-pubTick:
-			p.drainAndPublish(report.MakeReport(), p.spiedReports)
+			rpt := p.drainAndSanitise(report.MakeReport(), p.spiedReports)
+			fullReport := (publishCount % p.ticksPerFullReport) == 0
+			if !fullReport {
+				rpt.UnsafeUnMerge(lastFullReport)
+			}
+			err = p.publisher.Publish(rpt)
+			if err == nil {
+				if fullReport {
+					lastFullReport = rpt
+				}
+				publishCount++
+			} else {
+				// If we failed to send then drop back to full report next time
+				publishCount = 0
+			}
 
 		case rpt := <-p.shortcutReports:
-			p.drainAndPublish(rpt, p.shortcutReports)
+			rpt = p.drainAndSanitise(rpt, p.shortcutReports)
+			err = p.publisher.Publish(rpt)
 
 		case <-p.quit:
 			return
+		}
+		if err != nil {
+			log.Infof("Publish: %v", err)
 		}
 	}
 }

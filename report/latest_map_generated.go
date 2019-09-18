@@ -198,6 +198,19 @@ func (m StringLatestMap) DeepEqual(n StringLatestMap) bool {
 	return true
 }
 
+// EqualIgnoringTimestamps returns true if all keys and values are the same.
+func (m StringLatestMap) EqualIgnoringTimestamps(n StringLatestMap) bool {
+	if m.Size() != n.Size() {
+		return false
+	}
+	for i := range m {
+		if m[i].key != n[i].key || m[i].Value != n[i].Value {
+			return false
+		}
+	}
+	return true
+}
+
 // CodecEncodeSelf implements codec.Selfer.
 // Duplicates the output for a built-in map without generating an
 // intermediate copy of the data structure, to save time.  Note this
@@ -444,6 +457,19 @@ func (m NodeControlDataLatestMap) DeepEqual(n NodeControlDataLatestMap) bool {
 	}
 	for i := range m {
 		if m[i].key != n[i].key || !m[i].Equal(&n[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+// EqualIgnoringTimestamps returns true if all keys and values are the same.
+func (m NodeControlDataLatestMap) EqualIgnoringTimestamps(n NodeControlDataLatestMap) bool {
+	if m.Size() != n.Size() {
+		return false
+	}
+	for i := range m {
+		if m[i].key != n[i].key || m[i].Value != n[i].Value {
 			return false
 		}
 	}

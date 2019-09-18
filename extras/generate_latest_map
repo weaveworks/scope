@@ -230,6 +230,19 @@ function generate_latest_map() {
         return true
     }
 
+    // EqualIgnoringTimestamps returns true if all keys and values are the same.
+    func (m ${latest_map_type}) EqualIgnoringTimestamps(n ${latest_map_type}) bool {
+        if m.Size() != n.Size() {
+            return false
+        }
+        for i := range m {
+            if m[i].key != n[i].key || m[i].Value != n[i].Value {
+                return false
+            }
+        }
+        return true
+    }
+
     // CodecEncodeSelf implements codec.Selfer.
     // Duplicates the output for a built-in map without generating an
     // intermediate copy of the data structure, to save time.  Note this

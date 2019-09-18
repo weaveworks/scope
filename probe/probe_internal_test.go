@@ -16,7 +16,7 @@ func TestApply(t *testing.T) {
 		endpointNode   = report.MakeNodeWith(endpointNodeID, map[string]string{"5": "6"})
 	)
 
-	p := New(0, 0, nil, false)
+	p := New(0, 0, nil, 1, false)
 	p.AddTagger(NewTopologyTagger())
 
 	r := report.MakeReport()
@@ -72,7 +72,7 @@ func TestProbe(t *testing.T) {
 
 	pub := mockPublisher{make(chan report.Report, 10)}
 
-	p := New(10*time.Millisecond, 100*time.Millisecond, pub, false)
+	p := New(10*time.Millisecond, 100*time.Millisecond, pub, 1, false)
 	p.AddReporter(mockReporter{want})
 	p.Start()
 	defer p.Stop()

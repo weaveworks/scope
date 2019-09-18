@@ -240,7 +240,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		clients = multiClients
 	}
 
-	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.noControls)
+	p := probe.New(flags.spyInterval, flags.publishInterval, clients, flags.ticksPerFullReport, flags.noControls)
 	p.AddTagger(probe.NewTopologyTagger())
 	var processCache *process.CachingWalker
 

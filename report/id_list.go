@@ -27,6 +27,11 @@ func (a IDList) Merge(b IDList) IDList {
 	return IDList(merged)
 }
 
+// Equal returns true if a and b have the same contents
+func (a IDList) Equal(b IDList) bool {
+	return StringSet(a).Equal(StringSet(b))
+}
+
 // Contains returns true if id is in the list.
 func (a IDList) Contains(id string) bool {
 	return StringSet(a).Contains(id)

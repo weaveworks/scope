@@ -188,7 +188,7 @@ type Report struct {
 	// Job represent all Kubernetes Job on hosts running probes.
 	Job Topology
 
-	DNS DNSRecords
+	DNS DNSRecords `json:"nodes,omitempty" deepequal:"nil==empty"`
 
 	// Sampling data for this report.
 	Sampling Sampling
@@ -348,6 +348,16 @@ func (r *Report) UnsafeMerge(other Report) {
 	r.Plugins = r.Plugins.Merge(other.Plugins)
 	r.WalkPairedTopologies(&other, func(ourTopology, theirTopology *Topology) {
 		ourTopology.UnsafeMerge(*theirTopology)
+	})
+}
+
+// UnsafeUnMerge removes any information from r that would be added by merging other.
+// The original is modified.
+func (r *Report) UnsafeUnMerge(other Report) {
+	// TODO: DNS, Sampling, Plugins
+	r.Window = r.Window - other.Window
+	r.WalkPairedTopologies(&other, func(ourTopology, theirTopology *Topology) {
+		ourTopology.UnsafeUnMerge(*theirTopology)
 	})
 }
 
