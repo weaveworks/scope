@@ -559,10 +559,11 @@ func (r Report) upgradeDNSRecords() Report {
 	return r
 }
 
+// Summary returns a human-readable string summarising the contents, for diagnostic purposes
 func (r Report) Summary() string {
 	ret := ""
 	if len(r.Host.Nodes) == 1 {
-		for k, _ := range r.Host.Nodes {
+		for k := range r.Host.Nodes {
 			ret = k + ":"
 		}
 	}

@@ -255,6 +255,7 @@ func (c StaticCollector) HasHistoricReports() bool {
 	return false
 }
 
+// AdminSummary implements Reporter
 func (c StaticCollector) AdminSummary(ctx context.Context, timestamp time.Time) (string, error) {
 	return "not implemented", nil
 }
