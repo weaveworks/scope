@@ -31,6 +31,7 @@ type Reporter interface {
 	Report(context.Context, time.Time) (report.Report, error)
 	HasReports(context.Context, time.Time) (bool, error)
 	HasHistoricReports() bool
+	AdminSummary(context.Context, time.Time) (string, error)
 	WaitOn(context.Context, chan struct{})
 	UnWait(context.Context, chan struct{})
 }
@@ -172,6 +173,20 @@ func (c *collector) HasHistoricReports() bool {
 	return false
 }
 
+// AdminSummary returns a string with some internal information about
+// the report, which may be useful to troubleshoot.
+func (c *collector) AdminSummary(ctx context.Context, timestamp time.Time) (string, error) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+	var b strings.Builder
+	for i := range c.reports {
+		fmt.Fprintf(&b, "%v: ", c.timestamps[i].Format(time.StampMilli))
+		b.WriteString(c.reports[i].Summary())
+		b.WriteByte('\n')
+	}
+	return b.String(), nil
+}
+
 // remove reports older than the app.window
 func (c *collector) clean() {
 	var (
@@ -238,6 +253,11 @@ func (c StaticCollector) HasReports(context.Context, time.Time) (bool, error) {
 // older than now-app.window.
 func (c StaticCollector) HasHistoricReports() bool {
 	return false
+}
+
+// AdminSummary implements Reporter
+func (c StaticCollector) AdminSummary(ctx context.Context, timestamp time.Time) (string, error) {
+	return "not implemented", nil
 }
 
 // Add adds a report to the collector's internal state. It implements Adder.

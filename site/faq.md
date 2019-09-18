@@ -65,6 +65,12 @@ Scope doesn't support LDAP right now.
 
 OSS Scope reports aren't persistent and the probe keeps the last 15 seconds of metrics in memory.
 
+## Admin Endpoints
+
+Scope exposes the following http endpoints that can be used for troubleshooting:
+
+- `/admin/summary` - lists the reports being used by the app, with counts of each node type (containers, processes, etc.).
+
 ## API Endpoints
 
 Scope exposes the following endpoints that can be used by external monitoring services.

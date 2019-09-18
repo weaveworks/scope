@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -443,6 +444,34 @@ func (c *awsCollector) HasReports(ctx context.Context, timestamp time.Time) (boo
 
 func (c *awsCollector) HasHistoricReports() bool {
 	return true
+}
+
+// AdminSummary returns a string with some internal information about
+// the report, which may be useful to troubleshoot.
+func (c *awsCollector) AdminSummary(ctx context.Context, timestamp time.Time) (string, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "awsCollector.Report")
+	defer span.Finish()
+	userid, err := c.cfg.UserIDer(ctx)
+	if err != nil {
+		return "", err
+	}
+	end := timestamp
+	start := end.Add(-c.cfg.Window)
+	reportKeys, err := c.getReportKeys(ctx, userid, start, end)
+	if err != nil {
+		return "", err
+	}
+	reports, err := c.reportsForKeysInRange(ctx, reportKeys, start.UnixNano(), end.UnixNano())
+	if err != nil {
+		return "", err
+	}
+	var b strings.Builder
+	for i := range reports {
+		// TODO: print the key - note reports may be in a different order from reportKeys
+		b.WriteString(reports[i].Summary())
+		b.WriteByte('\n')
+	}
+	return b.String(), nil
 }
 
 // calculateDynamoKeys generates the row & column keys for Dynamo.
