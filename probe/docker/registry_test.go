@@ -12,12 +12,10 @@ import (
 	client "github.com/fsouza/go-dockerclient"
 
 	"github.com/weaveworks/common/mtime"
-	commonTest "github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test"
-	"github.com/weaveworks/scope/test/reflect"
 )
 
 func testRegistry() docker.Registry {
@@ -496,20 +494,23 @@ func TestRegistryDelete(t *testing.T) {
 			delete(mdc.containers, "ping")
 			mdc.Unlock()
 			mdc.send(&client.APIEvents{Status: docker.DestroyEvent, ID: "ping"})
-			runtime.Gosched()
 
 			check([]docker.Container{})
 
-			mtx.Lock()
 			want := []report.Node{
 				report.MakeNodeWith(report.MakeContainerNodeID("ping"), map[string]string{
 					docker.ContainerID:    "ping",
 					docker.ContainerState: "deleted",
 				}),
 			}
-			if !reflect.DeepEqual(want, nodes) {
-				t.Errorf("Didn't get right container updates: %v", commonTest.Diff(want, nodes))
-			}
+			test.Poll(t, 100*time.Millisecond, want, func() interface{} {
+				mtx.Lock()
+				nodesCopy := make([]report.Node, len(nodes))
+				copy(nodesCopy, nodes)
+				mtx.Unlock()
+				return nodesCopy
+			})
+			mtx.Lock()
 			nodes = []report.Node{}
 			mtx.Unlock()
 		}
