@@ -1,3 +1,42 @@
+## Release 1.11.6
+
+This is largely a performance improvement release: the biggest change
+is that the probe now publishes full reports one in three times; the
+rest are deltas which are much smaller hence use less CPU and memory
+in the app. [#3677](https://github.com/weaveworks/scope/pull/3677)
+
+Also a new debugging summary function in the app, exposed via http
+[#3686](https://github.com/weaveworks/scope/pull/3686)
+
+Some other small performance improvements:
+
+- perf(probe): reduce copying of nodes
+	[#3679](https://github.com/weaveworks/scope/pull/3679)
+- perf(probe): add 'omitempty' tag to Topology.Nodes
+	[#3678](https://github.com/weaveworks/scope/pull/3678)
+- perf(probe): update netlink library to bring in performance improvements
+	[#3681](https://github.com/weaveworks/scope/pull/3681)
+- perf(multitenant): quantise report cache in query side of aws-collector
+	[#3671](https://github.com/weaveworks/scope/pull/3671)
+
+Other changes:
+
+- Add tracing spans for rendering to the UI via websocket
+	[#3682](https://github.com/weaveworks/scope/pull/3682)
+- update some javascript dependencies
+	[#3664](https://github.com/weaveworks/scope/pull/3664)
+- Upgrades ui-components to version w/ styled-components 4
+	[#3670](https://github.com/weaveworks/scope/pull/3670)
+	[#3673](https://github.com/weaveworks/scope/pull/3673)
+- fix(test-flake): poll for result in TestRegistryDelete() to avoid race
+	[#3688](https://github.com/weaveworks/scope/pull/3688)
+- refactor: remove old unnecessary controls code
+	[#3680](https://github.com/weaveworks/scope/pull/3680)
+- Stop render package depending on probe
+	[#3675](https://github.com/weaveworks/scope/pull/3675)
+- Remove some unused string constants
+	[#3674](https://github.com/weaveworks/scope/pull/3674)
+
 ## Release 1.11.5
 
 A few small improvements:
