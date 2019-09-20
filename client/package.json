@@ -7,7 +7,7 @@
   "private": true,
   "main": "index.js",
   "dependencies": {
-    "@babel/polyfill": "^7.4.4",
+    "@babel/polyfill": "^7.6.0",
     "babel-plugin-lodash": "3.3.4",
     "classnames": "2.2.6",
     "d3-array": "2.3.1",
@@ -48,24 +48,24 @@
     "xterm": "3.14.5"
   },
   "devDependencies": {
-    "@babel/cli": "^7.5.5",
-    "@babel/core": "^7.5.5",
+    "@babel/cli": "^7.6.0",
+    "@babel/core": "^7.6.0",
     "@babel/plugin-proposal-class-properties": "^7.5.5",
     "@babel/plugin-proposal-object-rest-spread": "^7.5.5",
-    "@babel/preset-env": "^7.5.5",
+    "@babel/preset-env": "^7.6.0",
     "@babel/preset-react": "^7.0.0",
     "@fortawesome/fontawesome-free": "^5.10.1",
     "autoprefixer": "9.6.1",
-    "babel-eslint": "10.0.2",
-    "babel-jest": "24.9.0",
+    "babel-eslint": "10.0.3",
+    "babel-jest": "25.0.0",
     "babel-loader": "^8.0.6",
     "babel-plugin-transform-class-properties": "6.24.1",
     "babel-plugin-transform-object-rest-spread": "6.26.0",
     "clean-webpack-plugin": "0.1.17",
     "css-loader": "2.1.1",
-    "eslint": "6.2.1",
+    "eslint": "6.4.0",
     "eslint-config-airbnb": "17.1.1",
-    "eslint-loader": "2.2.1",
+    "eslint-loader": "3.0.0",
     "eslint-plugin-import": "2.18.2",
     "eslint-plugin-jsx-a11y": "6.2.3",
     "eslint-plugin-react": "7.14.3",
@@ -74,8 +74,8 @@
     "html-webpack-plugin": "3.2.0",
     "http-proxy": "1.16.2",
     "http-proxy-rules": "1.1.1",
-    "jest": "24.9.0",
-    "jest-cli": "24.9.0",
+    "jest": "25.0.0",
+    "jest-cli": "25.0.0",
     "json-loader": "0.5.7",
     "mockdate": "2.0.2",
     "node-sass": "^4.12.0",
@@ -85,8 +85,8 @@
     "sass-lint-webpack": "1.0.0",
     "sass-loader": "7.0.1",
     "style-loader": "0.21.0",
-    "stylelint": "10.1.0",
-    "stylelint-config-recommended": "2.2.0",
+    "stylelint": "11.0.0",
+    "stylelint-config-recommended": "3.0.0",
     "stylelint-config-styled-components": "0.1.1",
     "stylelint-custom-processor-loader": "0.6.0",
     "stylelint-declaration-use-variable": "1.7.0",
@@ -130,6 +130,6 @@
     ]
   },
   "engines": {
-    "node": "^8.10.0"
+    "node": "^8.12.0"
   }
 }
