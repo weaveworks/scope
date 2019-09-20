@@ -8,9 +8,7 @@ defaults: &defaults
 client-defaults: &client-defaults
   working_directory: /home/weave/scope
   docker:
-    # TODO(fbarl): Change this back to the newest master tag once
-    # https://github.com/weaveworks/scope/pull/3685 has been merged.
-    - image: weaveworks/scope-ui-build:js-updates-650e177f
+    - image: weaveworks/scope-ui-build:master-d1bb0217
 
 workflows:
   version: 2
