@@ -43,18 +43,19 @@ func newConnectionTracker(conf ReporterConfig) connectionTracker {
 }
 
 func flowToTuple(f conntrack.Conn) (ft fourTuple) {
-	ft = fourTuple{
-		f.Orig.Src.String(),
-		f.Orig.Dst.String(),
-		uint16(f.Orig.SrcPort),
-		uint16(f.Orig.DstPort),
-	}
-	// Handle DNAT-ed connections in the initial state
-	if !f.Orig.Dst.Equal(f.Reply.Src) {
+	if (f.Status & conntrack.IPS_DST_NAT) == 0 {
 		ft = fourTuple{
-			f.Reply.Dst.String(),
+			f.Orig.Src.String(),
+			f.Orig.Dst.String(),
+			uint16(f.Orig.SrcPort),
+			uint16(f.Orig.DstPort),
+		}
+	} else {
+		// Handle DNAT-ed connections in the initial state
+		ft = fourTuple{
+			f.Orig.Src.String(),
 			f.Reply.Src.String(),
-			uint16(f.Reply.DstPort),
+			uint16(f.Orig.SrcPort),
 			uint16(f.Reply.SrcPort),
 		}
 	}

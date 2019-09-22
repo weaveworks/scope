@@ -41,3 +41,8 @@ func (a IDList) Contains(id string) bool {
 func (a IDList) Intersection(b IDList) IDList {
 	return IDList(StringSet(a).Intersection(StringSet(b)))
 }
+
+// Minus returns the set with id removed
+func (a IDList) Minus(id string) IDList {
+	return IDList(StringSet(a).Minus(id))
+}

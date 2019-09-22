@@ -47,10 +47,11 @@ func TestNat(t *testing.T) {
 	{
 		f := conntrack.Conn{
 			MsgType: conntrack.NfctMsgUpdate,
+			Status:  conntrack.IPS_DST_NAT,
 			Orig: conntrack.Tuple{
 				Src:     host2,
 				Dst:     host1,
-				SrcPort: 22222,
+				SrcPort: 22223,
 				DstPort: 80,
 				Proto:   syscall.IPPROTO_TCP,
 			},
@@ -58,7 +59,7 @@ func TestNat(t *testing.T) {
 				Src:     c1,
 				Dst:     host2,
 				SrcPort: 80,
-				DstPort: 22222,
+				DstPort: 22223,
 				Proto:   syscall.IPPROTO_TCP,
 			},
 			CtId: 1,
@@ -73,8 +74,11 @@ func TestNat(t *testing.T) {
 		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
 			"foo": "bar",
 		}))
+		fromID := report.MakeEndpointNodeID("host1", "", "2.3.4.5", "22223")
+		have.Endpoint.AddNode(report.MakeNodeWith(fromID, nil).WithAdjacent(originalID))
 
 		want := have.Copy()
+		// add nat original destination as a copy of nat reply source
 		wantID := report.MakeEndpointNodeID("host1", "", "1.2.3.4", "80")
 		want.Endpoint.AddNode(report.MakeNodeWith(wantID, map[string]string{
 			CopyOf: originalID,
@@ -87,10 +91,11 @@ func TestNat(t *testing.T) {
 		}
 	}
 
-	// form the PoV of host2
+	// from the PoV of host2
 	{
 		f := conntrack.Conn{
 			MsgType: conntrack.NfctMsgUpdate,
+			Status:  conntrack.IPS_SRC_NAT,
 			Orig: conntrack.Tuple{
 				Src:     c2,
 				Dst:     host1,
@@ -113,17 +118,20 @@ func TestNat(t *testing.T) {
 
 		have := report.MakeReport()
 		originalID := report.MakeEndpointNodeID("host2", "", "10.0.47.2", "22222")
+		toID := report.MakeEndpointNodeID("host2", "", "1.2.3.4", "80")
+		have.Endpoint.AddNode(report.MakeNodeWith(toID, nil))
 		have.Endpoint.AddNode(report.MakeNodeWith(originalID, map[string]string{
 			"foo": "baz",
-		}))
+		}).WithAdjacent(toID))
 
+		// add NAT reply destination as a copy of NAT original source
 		want := have.Copy()
 		want.Endpoint.AddNode(report.MakeNodeWith(report.MakeEndpointNodeID("host2", "", "2.3.4.5", "22223"), map[string]string{
 			CopyOf: originalID,
 			"foo":  "baz",
-		}))
+		}).WithAdjacent(toID))
 
-		makeNATMapper(ct).applyNAT(have, "host1")
+		makeNATMapper(ct).applyNAT(have, "host2")
 		if !reflect.DeepEqual(want, have) {
 			t.Fatal(test.Diff(want, have))
 		}

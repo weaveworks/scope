@@ -50,6 +50,15 @@ func (s StringSet) Intersection(b StringSet) StringSet {
 	return result
 }
 
+// Minus returns the set with str removed
+func (s StringSet) Minus(str string) StringSet {
+	i := sort.Search(len(s), func(i int) bool { return s[i] >= str })
+	if i < len(s) && s[i] == str {
+		return append(s[:i], s[i+1:]...)
+	}
+	return s
+}
+
 // Equal returns true if a and b have the same contents
 func (s StringSet) Equal(b StringSet) bool {
 	if len(s) != len(b) {
