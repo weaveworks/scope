@@ -100,7 +100,7 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 	t.flowWalker.walkFlows(func(f conntrack.Conn, alive bool) {
 		tuple := flowToTuple(f)
 		seenTuples[tuple.key()] = tuple
-		t.addConnection(rpt, false, tuple, 0, nil, nil)
+		t.addConnection(rpt, "", 0, false, tuple, 0)
 	})
 
 	if t.conf.WalkProc && t.conf.Scanner != nil {
@@ -135,14 +135,7 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 	}
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
-		var toNodeInfo, fromNodeInfo map[string]string
-		if conn.Proc.PID > 0 {
-			fromNodeInfo = map[string]string{
-				process.PID:       strconv.FormatUint(uint64(conn.Proc.PID), 10),
-				report.HostNodeID: hostNodeID,
-			}
-		}
-		t.addConnection(rpt, incoming, tuple, namespaceID, fromNodeInfo, toNodeInfo)
+		t.addConnection(rpt, hostNodeID, conn.Proc.PID, incoming, tuple, namespaceID)
 	}
 	return nil
 }
@@ -180,19 +173,19 @@ func feedEBPFInitialState(conf ReporterConfig, ebpfTracker *EbpfTracker) {
 
 func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID string) error {
 	t.ebpfTracker.walkConnections(func(e ebpfConnection) {
-		var toNodeInfo, fromNodeInfo map[string]string
-		if e.pid > 0 {
-			fromNodeInfo = map[string]string{
-				process.PID:       strconv.Itoa(e.pid),
-				report.HostNodeID: hostNodeID,
-			}
-		}
-		t.addConnection(rpt, e.incoming, e.tuple, e.networkNamespace, fromNodeInfo, toNodeInfo)
+		t.addConnection(rpt, hostNodeID, uint(e.pid), e.incoming, e.tuple, e.networkNamespace)
 	})
 	return nil
 }
 
-func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft fourTuple, namespaceID uint32, extraFromNode, extraToNode map[string]string) {
+func (t *connectionTracker) addConnection(rpt *report.Report, hostNodeID string, pid uint, incoming bool, ft fourTuple, namespaceID uint32) {
+	var extraToNode, extraFromNode map[string]string
+	if pid > 0 {
+		extraFromNode = map[string]string{
+			process.PID:       strconv.FormatUint(uint64(pid), 10),
+			report.HostNodeID: hostNodeID,
+		}
+	}
 	if incoming {
 		ft = reverse(ft)
 		extraFromNode, extraToNode = extraToNode, extraFromNode
