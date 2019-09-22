@@ -100,7 +100,7 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 	t.flowWalker.walkFlows(func(f conntrack.Conn, alive bool) {
 		tuple := flowToTuple(f)
 		seenTuples[tuple.key()] = tuple
-		t.addConnection(rpt, "", 0, false, tuple, 0)
+		t.addConnection(rpt, "", tuple, 0, 0, 0, 1)
 	})
 
 	if t.conf.WalkProc && t.conf.Scanner != nil {
@@ -135,7 +135,11 @@ func (t *connectionTracker) performWalkProc(rpt *report.Report, hostNodeID strin
 	}
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
-		t.addConnection(rpt, hostNodeID, conn.Proc.PID, incoming, tuple, namespaceID)
+		if incoming {
+			t.addConnection(rpt, hostNodeID, reverse(tuple), 0, conn.Proc.PID, namespaceID, 1)
+		} else {
+			t.addConnection(rpt, hostNodeID, tuple, conn.Proc.PID, 0, namespaceID, 1)
+		}
 	}
 	return nil
 }
@@ -171,24 +175,154 @@ func feedEBPFInitialState(conf ReporterConfig, ebpfTracker *EbpfTracker) {
 	ebpfTracker.feedInitialConnections(conns, seenTuples, processesWaitingInAccept, report.MakeHostNodeID(conf.HostID))
 }
 
+type pidPair struct {
+	fromPid uint32 // zero if unknown
+	toPid   uint32
+}
+type mapPortToPids map[uint16]pidPair
+
 func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID string) error {
+	/* Collect the connections by from/to address pairs (scoped by namespace) plus destination port
+	   There are three main cases:
+		    * connections from address+port off-box to a local process
+		      - in this case we know the pid of the local process
+		    * connections from local processes to an off-box address+port
+		      - we will know the pids of the local processes but not the remote
+		    * connections from local processes to a local process
+	          - these connections will each be reported twice by ebpf, as incoming and as outgoing.
+	*/
+	type triple struct {
+		fromAddr, toAddr [net.IPv4len]byte
+		networkNamespace uint32
+		toPort           uint16
+	}
+	connectionsByTriple := make(map[triple]mapPortToPids, 1000)
 	t.ebpfTracker.walkConnections(func(key ebpfKey, e ebpfDetail) {
-		t.addConnection(rpt, hostNodeID, uint(e.pid), e.incoming, key.fourTuple, key.networkNamespace)
+		var t triple
+		var fromPort uint16
+		if e.incoming {
+			t = triple{
+				fromAddr:         key.toAddr,
+				toAddr:           key.fromAddr,
+				toPort:           key.fromPort,
+				networkNamespace: key.networkNamespace,
+			}
+			fromPort = key.toPort
+		} else {
+			t = triple{
+				fromAddr:         key.fromAddr,
+				toAddr:           key.toAddr,
+				toPort:           key.toPort,
+				networkNamespace: key.networkNamespace,
+			}
+			fromPort = key.fromPort
+		}
+		portToPids := connectionsByTriple[t]
+		if portToPids == nil {
+			portToPids = make(mapPortToPids)
+		}
+		pids := portToPids[fromPort]
+		if e.incoming {
+			pids.toPid = e.pid
+		} else {
+			pids.fromPid = e.pid
+		}
+		portToPids[fromPort] = pids
+		connectionsByTriple[t] = portToPids
 	})
+
+	for triple, portToPids := range connectionsByTriple {
+		filter, count := makeFilter(portToPids)
+		i, sent, skipped := 0, 0, 0
+		// Now do the actual sends
+		for fromPort, pids := range portToPids {
+			if filter(fromPort) {
+				tuple := fourTuple{
+					fromAddr: triple.fromAddr,
+					fromPort: fromPort,
+					toAddr:   triple.toAddr,
+					toPort:   triple.toPort,
+				}
+				sent++
+				if sent == count {
+					skipped += (len(portToPids) - i - 1)
+				}
+				t.addConnection(rpt, hostNodeID, tuple, uint(pids.fromPid), uint(pids.toPid), triple.networkNamespace, skipped+1)
+				skipped = 0
+			} else {
+				skipped++
+			}
+			i++
+		}
+	}
+
 	return nil
 }
 
-func (t *connectionTracker) addConnection(rpt *report.Report, hostNodeID string, pid uint, incoming bool, ft fourTuple, namespaceID uint32) {
-	var extraToNode, extraFromNode map[string]string
-	if pid > 0 {
+// Pick a subset of the connections to send, such that if two probes
+// on different machines go through the same process there is a good
+// chance of overlap.
+// return value is a function to filter from ports, and a count of how many will match
+func makeFilter(ports mapPortToPids) (filter func(uint16) bool, count int) {
+	var modulus uint16 = 1
+	count = len(ports)
+	// Check they all come from/to the same pid (or zero): if differing we need another strategy to thin them down
+	var firstToPid, firstFromPid uint32
+	for _, pids := range ports {
+		firstFromPid = pids.fromPid
+		firstToPid = pids.toPid
+		break
+	}
+	for _, pids := range ports {
+		if pids.fromPid != firstFromPid || pids.toPid != firstToPid {
+			return func(uint16) bool { return true }, count
+		}
+	}
+	const (
+		power      = 3 // Don't use powers of two to reduce aliasing with ephemeral port number selection.
+		lowerBound = 3
+		upperBound = 5
+	)
+	// Find modulus such that we choose at least the lower bound, and
+	// ideally no more than the upper bound
+	for count > upperBound {
+		modulus *= power
+		prevCount := count
+		// Count how many are sent for this modulus
+		count = 0
+		for fromPort := range ports {
+			if (fromPort % modulus) == 0 {
+				count++
+			}
+		}
+		if count < lowerBound { // too few: step back and stop there
+			modulus /= power
+			count = prevCount
+			break
+		}
+	}
+	return func(port uint16) bool { return (port % modulus) == 0 }, count
+}
+
+// tuple is canonicalised - always opened from-to
+func (t *connectionTracker) addConnection(rpt *report.Report, hostNodeID string, ft fourTuple, fromPid, toPid uint, namespaceID uint32, connectionCount int) {
+	extraToNode := map[string]string{}
+	extraFromNode := map[string]string{}
+	if fromPid > 0 {
 		extraFromNode = map[string]string{
-			process.PID:       strconv.FormatUint(uint64(pid), 10),
+			process.PID:       strconv.FormatUint(uint64(fromPid), 10),
 			report.HostNodeID: hostNodeID,
 		}
 	}
-	if incoming {
-		ft = reverse(ft)
-		extraFromNode, extraToNode = extraToNode, extraFromNode
+	if toPid > 0 {
+		extraToNode = map[string]string{
+			process.PID:       strconv.FormatUint(uint64(toPid), 10),
+			report.HostNodeID: hostNodeID,
+		}
+	}
+	if connectionCount > 1 {
+		// Tell the app we have elided several connections to a common IP and port onto this one
+		extraFromNode[report.ConnectionCount] = strconv.Itoa(connectionCount)
 	}
 	var (
 		fromAddr = net.IP(ft.fromAddr[:])
@@ -204,7 +338,7 @@ func (t *connectionTracker) addConnection(rpt *report.Report, hostNodeID string,
 
 func (t *connectionTracker) makeEndpointNode(namespaceID uint32, addr net.IP, port uint16, extra map[string]string) report.Node {
 	node := report.MakeNodeWith(report.MakeEndpointNodeIDB(t.conf.HostID, namespaceID, addr, port), nil)
-	if extra != nil {
+	if len(extra) > 0 {
 		node = node.WithLatests(extra)
 	}
 	return node
