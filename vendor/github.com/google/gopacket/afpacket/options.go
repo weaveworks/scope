@@ -12,11 +12,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
-)
 
-// #include <linux/if_packet.h>
-// #include <sys/socket.h>
-import "C"
+	"golang.org/x/sys/unix"
+)
 
 // OptTPacketVersion is the version of TPacket to use.
 // It can be passed into NewTPacket.
@@ -55,17 +53,17 @@ const (
 	// TPacketVersionHighestAvailable tells NewHandle to use the highest available version of tpacket the kernel has available.
 	// This is the default, should a version number not be given in NewHandle's options.
 	TPacketVersionHighestAvailable = OptTPacketVersion(-1)
-	TPacketVersion1                = OptTPacketVersion(C.TPACKET_V1)
-	TPacketVersion2                = OptTPacketVersion(C.TPACKET_V2)
-	TPacketVersion3                = OptTPacketVersion(C.TPACKET_V3)
+	TPacketVersion1                = OptTPacketVersion(unix.TPACKET_V1)
+	TPacketVersion2                = OptTPacketVersion(unix.TPACKET_V2)
+	TPacketVersion3                = OptTPacketVersion(unix.TPACKET_V3)
 	tpacketVersionMax              = TPacketVersion3
 	tpacketVersionMin              = -1
 	// SocketRaw is the default socket type.  It returns packet data
 	// including the link layer (ethernet headers, etc).
-	SocketRaw = OptSocketType(C.SOCK_RAW)
+	SocketRaw = OptSocketType(unix.SOCK_RAW)
 	// SocketDgram strips off the link layer when reading packets, and adds
 	// the link layer back automatically on packet writes (coming soon...)
-	SocketDgram = OptSocketType(C.SOCK_DGRAM)
+	SocketDgram = OptSocketType(unix.SOCK_DGRAM)
 )
 
 // OptInterface is the specific interface to bind to.
@@ -92,6 +90,22 @@ type OptBlockTimeout time.Duration
 // descriptor to become ready. Specifying a negative value in  time‐out means an infinite timeout.
 type OptPollTimeout time.Duration
 
+// OptAddVLANHeader modifies the packet data that comes back from the
+// kernel by adding in the VLAN header that the NIC stripped.  AF_PACKET by
+// default uses VLAN offloading, in which the NIC strips the VLAN header off of
+// the packet before handing it to the kernel.  This means that, even if a
+// packet has an 802.1q header on the wire, it'll show up without one by the
+// time it goes through AF_PACKET.  If this option is true, the VLAN header is
+// added back in before the packet is returned.  Note that this potentially has
+// a large performance hit, especially in otherwise zero-copy operation.
+//
+// Note that if you do not need to have a "real" VLAN layer, it may be
+// preferable to use the VLAN ID provided by the AncillaryVLAN struct
+// in CaptureInfo.AncillaryData, which is populated out-of-band and has
+// negligible performance impact. Such ancillary data will automatically
+// be provided if available.
+type OptAddVLANHeader bool
+
 // Default constants used by options.
 const (
 	DefaultFrameSize    = 4096                   // Default value for OptFrameSize.
@@ -106,6 +120,7 @@ type options struct {
 	framesPerBlock int
 	blockSize      int
 	numBlocks      int
+	addVLANHeader  bool
 	blockTimeout   time.Duration
 	pollTimeout    time.Duration
 	version        OptTPacketVersion
@@ -143,6 +158,8 @@ func parseOptions(opts ...interface{}) (ret options, err error) {
 			ret.iface = string(v)
 		case OptSocketType:
 			ret.socktype = v
+		case OptAddVLANHeader:
+			ret.addVLANHeader = bool(v)
 		default:
 			err = errors.New("unknown type in options")
 			return

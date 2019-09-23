@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"math"
 	"sync"
 	"time"
 
@@ -60,9 +59,10 @@ func newPcapHandle() (*pcap.Handle, error) {
 		return nil, err
 	}
 	defer inactive.CleanUp()
-	// pcap timeout blackmagic copied from Weave Net to reduce CPU consumption
+	// Set a long timeout because "pcap.BlockForever" actually spins on a 10ms timeout
 	// see https://github.com/weaveworks/weave/commit/025315363d5ea8b8265f1b3ea800f24df2be51a4
-	if err = inactive.SetTimeout(time.Duration(math.MaxInt64)); err != nil {
+	// (note the value in microseconds has to fit in a 32-bit signed int)
+	if err = inactive.SetTimeout(time.Minute * 30); err != nil {
 		return nil, err
 	}
 	if err = inactive.SetImmediateMode(true); err != nil {

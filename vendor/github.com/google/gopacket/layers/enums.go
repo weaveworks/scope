@@ -10,6 +10,7 @@ package layers
 import (
 	"errors"
 	"fmt"
+	"runtime"
 
 	"github.com/google/gopacket"
 )
@@ -49,6 +50,7 @@ const (
 	EthernetTypeNortelDiscovery             EthernetType = 0x01a2
 	EthernetTypeTransparentEthernetBridging EthernetType = 0x6558
 	EthernetTypeDot1Q                       EthernetType = 0x8100
+	EthernetTypePPP                         EthernetType = 0x880b
 	EthernetTypePPPoEDiscovery              EthernetType = 0x8863
 	EthernetTypePPPoESession                EthernetType = 0x8864
 	EthernetTypeMPLSUnicast                 EthernetType = 0x8847
@@ -219,12 +221,17 @@ func (d Dot11Type) MainType() Dot11Type {
 	return d & dot11TypeMask
 }
 
+func (d Dot11Type) QOS() bool {
+	return d&dot11QOSMask == Dot11TypeDataQOSData
+}
+
 const (
 	Dot11TypeMgmt     Dot11Type = 0x00
 	Dot11TypeCtrl     Dot11Type = 0x01
 	Dot11TypeData     Dot11Type = 0x02
 	Dot11TypeReserved Dot11Type = 0x03
 	dot11TypeMask               = 0x03
+	dot11QOSMask                = 0x23
 
 	// The following are type/subtype conglomerations.
 
@@ -305,6 +312,7 @@ func initActualTypeData() {
 	EthernetTypeMetadata[EthernetTypeIPv6] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeIPv6), Name: "IPv6", LayerType: LayerTypeIPv6}
 	EthernetTypeMetadata[EthernetTypeARP] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeARP), Name: "ARP", LayerType: LayerTypeARP}
 	EthernetTypeMetadata[EthernetTypeDot1Q] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeDot1Q), Name: "Dot1Q", LayerType: LayerTypeDot1Q}
+	EthernetTypeMetadata[EthernetTypePPP] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodePPP), Name: "PPP", LayerType: LayerTypePPP}
 	EthernetTypeMetadata[EthernetTypePPPoEDiscovery] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodePPPoE), Name: "PPPoEDiscovery", LayerType: LayerTypePPPoE}
 	EthernetTypeMetadata[EthernetTypePPPoESession] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodePPPoE), Name: "PPPoESession", LayerType: LayerTypePPPoE}
 	EthernetTypeMetadata[EthernetTypeEthernetCTP] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeEthernetCTP), Name: "EthernetCTP", LayerType: LayerTypeEthernetCTP}
@@ -370,6 +378,13 @@ func initActualTypeData() {
 	LinkTypeMetadata[LinkTypeLoop] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeLoopback), Name: "Loop"}
 	LinkTypeMetadata[LinkTypeIEEE802_11] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeDot11), Name: "802.11"}
 	LinkTypeMetadata[LinkTypeRaw] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeIPv4or6), Name: "Raw"}
+	// See https://github.com/the-tcpdump-group/libpcap/blob/170f717e6e818cdc4bcbbfd906b63088eaa88fa0/pcap/dlt.h#L85
+	// Or https://github.com/wireshark/wireshark/blob/854cfe53efe44080609c78053ecfb2342ad84a08/wiretap/pcap-common.c#L508
+	if runtime.GOOS == "openbsd" {
+		LinkTypeMetadata[14] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeIPv4or6), Name: "Raw"}
+	} else {
+		LinkTypeMetadata[12] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeIPv4or6), Name: "Raw"}
+	}
 	LinkTypeMetadata[LinkTypePFLog] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodePFLog), Name: "PFLog"}
 	LinkTypeMetadata[LinkTypeIEEE80211Radio] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeRadioTap), Name: "RadioTap"}
 	LinkTypeMetadata[LinkTypeLinuxUSB] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeUSB), Name: "USB"}
@@ -379,6 +394,7 @@ func initActualTypeData() {
 	FDDIFrameControlMetadata[FDDIFrameControlLLC] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeLLC), Name: "LLC"}
 
 	EAPOLTypeMetadata[EAPOLTypeEAP] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeEAP), Name: "EAP", LayerType: LayerTypeEAP}
+	EAPOLTypeMetadata[EAPOLTypeKey] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeEAPOLKey), Name: "EAPOLKey", LayerType: LayerTypeEAPOLKey}
 
 	ProtocolFamilyMetadata[ProtocolFamilyIPv4] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeIPv4), Name: "IPv4", LayerType: LayerTypeIPv4}
 	ProtocolFamilyMetadata[ProtocolFamilyIPv6BSD] = EnumMetadata{DecodeWith: gopacket.DecodeFunc(decodeIPv6), Name: "IPv6", LayerType: LayerTypeIPv6}

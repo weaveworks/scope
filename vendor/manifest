@@ -965,7 +965,7 @@
 			"importpath": "github.com/google/gopacket",
 			"repository": "https://github.com/google/gopacket",
 			"vcs": "git",
-			"revision": "b4efbcb7f32ff9331ca217f0b4799b39118e28d6",
+			"revision": "6d3e2615da4ed2ed2a349918fe74e7e6d03482fa",
 			"branch": "master"
 		},
 		{
