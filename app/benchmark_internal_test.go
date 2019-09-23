@@ -34,7 +34,7 @@ func readReportFiles(b *testing.B, path string) []report.Report {
 			if err != nil {
 				return err
 			}
-			reports = append(reports, rpt)
+			reports = append(reports, *rpt)
 			return nil
 		}); err != nil {
 		b.Fatal(err)

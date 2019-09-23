@@ -116,7 +116,6 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	post := router.Methods("POST").Subrouter()
 	post.HandleFunc("/api/report", requestContextDecorator(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		var (
-			rpt    report.Report
 			buf    = &bytes.Buffer{}
 			reader = io.TeeReader(r.Body, buf)
 		)
@@ -138,7 +137,8 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 			return
 		}
 
-		if err := rpt.ReadBinary(ctx, reader, gzipped, isMsgpack); err != nil {
+		rpt, err := report.MakeFromBinary(ctx, reader, gzipped, isMsgpack)
+		if err != nil {
 			respondWith(w, http.StatusBadRequest, err)
 			return
 		}
@@ -148,7 +148,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 			buf, _ = rpt.WriteBinary()
 		}
 
-		if err := a.Add(ctx, rpt, buf.Bytes()); err != nil {
+		if err := a.Add(ctx, *rpt, buf.Bytes()); err != nil {
 			log.Errorf("Error Adding report: %v", err)
 			respondWith(w, http.StatusInternalServerError, err)
 			return

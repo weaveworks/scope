@@ -72,11 +72,11 @@ var gzipWriterPool = &sync.Pool{
 	New: func() interface{} { w, _ := gzip.NewWriterLevel(nil, gzip.DefaultCompression); return w },
 }
 
-// ReadBinary reads bytes into a Report.
+// MakeFromBinary constructs a Report from binary data.
 //
 // Will decompress the binary if gzipped is true, and decode as
 // msgpack if true, otherwise JSON
-func (rep *Report) ReadBinary(ctx context.Context, r io.Reader, gzipped bool, msgpack bool) error {
+func MakeFromBinary(ctx context.Context, r io.Reader, gzipped bool, msgpack bool) (*Report, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "report.ReadBinary")
 	defer span.Finish()
 	var err error
@@ -91,7 +91,7 @@ func (rep *Report) ReadBinary(ctx context.Context, r io.Reader, gzipped bool, ms
 	if gzipped {
 		r, err = gzip.NewReader(r)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	// Read everything into memory before decoding: it's faster
@@ -100,10 +100,11 @@ func (rep *Report) ReadBinary(ctx context.Context, r io.Reader, gzipped bool, ms
 	defer bufferPool.Put(buf)
 	uncompressedSize, err := buf.ReadFrom(r)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	rep := MakeReport()
 	if err := codec.NewDecoderBytes(buf.Bytes(), codecHandle(msgpack)).Decode(&rep); err != nil {
-		return err
+		return nil, err
 	}
 	log.Debugf(
 		"Received report sizes: compressed %d bytes, uncompressed %d bytes (%.2f%%)",
@@ -112,22 +113,13 @@ func (rep *Report) ReadBinary(ctx context.Context, r io.Reader, gzipped bool, ms
 		float32(compressedSize)/float32(uncompressedSize)*100,
 	)
 	span.LogFields(otlog.Uint64("compressedSize", compressedSize), otlog.Int64("uncompressedSize", uncompressedSize))
-	return nil
-}
-
-// MakeFromBinary constructs a Report from a gzipped msgpack.
-func MakeFromBinary(ctx context.Context, r io.Reader) (*Report, error) {
-	rep := MakeReport()
-	if err := rep.ReadBinary(ctx, r, true, true); err != nil {
-		return nil, err
-	}
 	return &rep, nil
 }
 
 // MakeFromFile construct a Report from a file, with the encoding
 // determined by the extension (".msgpack" or ".json", with an
 // optional ".gz").
-func MakeFromFile(ctx context.Context, path string) (rpt Report, _ error) {
+func MakeFromFile(ctx context.Context, path string) (rpt *Report, _ error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return rpt, err
@@ -139,8 +131,7 @@ func MakeFromFile(ctx context.Context, path string) (rpt Report, _ error) {
 		return rpt, err
 	}
 
-	err = rpt.ReadBinary(ctx, f, gzipped, msgpack)
-	return rpt, err
+	return MakeFromBinary(ctx, f, gzipped, msgpack)
 }
 
 // WriteToFile writes a Report to a file. The encoding is determined

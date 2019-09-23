@@ -87,7 +87,7 @@ func (store *S3Store) fetchReport(ctx context.Context, key string) (*report.Repo
 		return nil, err
 	}
 	defer resp.Body.Close()
-	return report.MakeFromBinary(ctx, resp.Body)
+	return report.MakeFromBinary(ctx, resp.Body, true, true)
 }
 
 // StoreReportBytes stores a report.
