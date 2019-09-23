@@ -3,7 +3,7 @@ package kubernetes
 import (
 	"fmt"
 
-	apiv1beta1 "k8s.io/api/extensions/v1beta1"
+	apiv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -23,12 +23,12 @@ type DaemonSet interface {
 }
 
 type daemonSet struct {
-	*apiv1beta1.DaemonSet
+	*apiv1.DaemonSet
 	Meta
 }
 
 // NewDaemonSet creates a new daemonset
-func NewDaemonSet(d *apiv1beta1.DaemonSet) DaemonSet {
+func NewDaemonSet(d *apiv1.DaemonSet) DaemonSet {
 	return &daemonSet{
 		DaemonSet: d,
 		Meta:      meta{d.ObjectMeta},

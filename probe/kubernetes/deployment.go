@@ -5,8 +5,8 @@ import (
 
 	"github.com/weaveworks/scope/report"
 
+	apiappsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
-	apiv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 )
@@ -27,13 +27,13 @@ type Deployment interface {
 }
 
 type deployment struct {
-	*apiv1beta1.Deployment
+	*apiappsv1.Deployment
 	Meta
 	Node *apiv1.Node
 }
 
 // NewDeployment creates a new Deployment
-func NewDeployment(d *apiv1beta1.Deployment) Deployment {
+func NewDeployment(d *apiappsv1.Deployment) Deployment {
 	return &deployment{Deployment: d, Meta: meta{d.ObjectMeta}}
 }
 

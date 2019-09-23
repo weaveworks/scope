@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
-	apiv1beta1 "k8s.io/api/extensions/v1beta1"
 	k8smeta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -323,10 +323,10 @@ func BenchmarkReporter(b *testing.B) {
 		pod := apiPod1
 		pod.ObjectMeta.UID = types.UID(fmt.Sprintf("pod%d", i))
 		mockK8s.pods = append(mockK8s.pods, kubernetes.NewPod(&pod))
-		deployment := apiv1beta1.Deployment{
+		deployment := appsv1.Deployment{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Deployment",
-				APIVersion: "v1beta1",
+				APIVersion: "v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              fmt.Sprintf("deployment%d", i),

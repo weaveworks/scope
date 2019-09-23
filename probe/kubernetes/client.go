@@ -17,12 +17,10 @@ import (
 	"github.com/pborman/uuid"
 	log "github.com/sirupsen/logrus"
 	apiappsv1 "k8s.io/api/apps/v1"
-	apiappsv1beta1 "k8s.io/api/apps/v1beta1"
+	autoscalingv1 "k8s.io/api/autoscaling/v1"
 	apibatchv1 "k8s.io/api/batch/v1"
 	apibatchv1beta1 "k8s.io/api/batch/v1beta1"
-	apibatchv2alpha1 "k8s.io/api/batch/v2alpha1"
 	apiv1 "k8s.io/api/core/v1"
-	apiextensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
@@ -242,28 +240,19 @@ func (c *client) clientAndType(resource string) (rest.Interface, interface{}, er
 	case "storageclasses":
 		return c.client.StorageV1().RESTClient(), &storagev1.StorageClass{}, nil
 	case "deployments":
-		return c.client.ExtensionsV1beta1().RESTClient(), &apiextensionsv1beta1.Deployment{}, nil
+		return c.client.AppsV1().RESTClient(), &apiappsv1.Deployment{}, nil
 	case "daemonsets":
-		return c.client.ExtensionsV1beta1().RESTClient(), &apiextensionsv1beta1.DaemonSet{}, nil
+		return c.client.AppsV1().RESTClient(), &apiappsv1.DaemonSet{}, nil
 	case "jobs":
 		return c.client.BatchV1().RESTClient(), &apibatchv1.Job{}, nil
 	case "statefulsets":
-		return c.client.AppsV1beta1().RESTClient(), &apiappsv1beta1.StatefulSet{}, nil
+		return c.client.AppsV1().RESTClient(), &apiappsv1.StatefulSet{}, nil
 	case "volumesnapshots":
 		return c.snapshotClient.VolumesnapshotV1().RESTClient(), &snapshotv1.VolumeSnapshot{}, nil
 	case "volumesnapshotdatas":
 		return c.snapshotClient.VolumesnapshotV1().RESTClient(), &snapshotv1.VolumeSnapshotData{}, nil
 	case "cronjobs":
-		ok, err := c.isResourceSupported(c.client.BatchV1beta1().RESTClient().APIVersion(), resource)
-		if err != nil {
-			return nil, nil, err
-		}
-		if ok {
-			// kubernetes >= 1.8
-			return c.client.BatchV1beta1().RESTClient(), &apibatchv1beta1.CronJob{}, nil
-		}
-		// kubernetes < 1.8
-		return c.client.BatchV2alpha1().RESTClient(), &apibatchv2alpha1.CronJob{}, nil
+		return c.client.BatchV1beta1().RESTClient(), &apibatchv1beta1.CronJob{}, nil
 	}
 	return nil, nil, fmt.Errorf("Invalid resource: %v", resource)
 }
@@ -372,7 +361,7 @@ func (c *client) WalkDeployments(f func(Deployment) error) error {
 		return nil
 	}
 	for _, m := range c.deploymentStore.List() {
-		d := m.(*apiextensionsv1beta1.Deployment)
+		d := m.(*apiappsv1.Deployment)
 		if err := f(NewDeployment(d)); err != nil {
 			return err
 		}
@@ -386,7 +375,7 @@ func (c *client) WalkDaemonSets(f func(DaemonSet) error) error {
 		return nil
 	}
 	for _, m := range c.daemonSetStore.List() {
-		ds := m.(*apiextensionsv1beta1.DaemonSet)
+		ds := m.(*apiappsv1.DaemonSet)
 		if err := f(NewDaemonSet(ds)); err != nil {
 			return err
 		}
@@ -400,7 +389,7 @@ func (c *client) WalkStatefulSets(f func(StatefulSet) error) error {
 		return nil
 	}
 	for _, m := range c.statefulSetStore.List() {
-		s := m.(*apiappsv1beta1.StatefulSet)
+		s := m.(*apiappsv1.StatefulSet)
 		if err := f(NewStatefulSet(s)); err != nil {
 			return err
 		}
@@ -420,7 +409,8 @@ func (c *client) WalkCronJobs(f func(CronJob) error) error {
 		jobs[j.UID] = j
 	}
 	for _, m := range c.cronJobStore.List() {
-		if err := f(NewCronJob(m, jobs)); err != nil {
+		cj := m.(*apibatchv1beta1.CronJob)
+		if err := f(NewCronJob(cj, jobs)); err != nil {
 			return err
 		}
 	}
@@ -609,19 +599,19 @@ func (c *client) DeleteVolumeSnapshot(namespaceID, volumeSnapshotID string) erro
 }
 
 func (c *client) ScaleUp(namespaceID, id string) error {
-	return c.modifyScale(namespaceID, id, func(scale *apiextensionsv1beta1.Scale) {
+	return c.modifyScale(namespaceID, id, func(scale *autoscalingv1.Scale) {
 		scale.Spec.Replicas++
 	})
 }
 
 func (c *client) ScaleDown(namespaceID, id string) error {
-	return c.modifyScale(namespaceID, id, func(scale *apiextensionsv1beta1.Scale) {
+	return c.modifyScale(namespaceID, id, func(scale *autoscalingv1.Scale) {
 		scale.Spec.Replicas--
 	})
 }
 
-func (c *client) modifyScale(namespaceID, id string, f func(*apiextensionsv1beta1.Scale)) error {
-	scaler := c.client.ExtensionsV1beta1().Deployments(namespaceID)
+func (c *client) modifyScale(namespaceID, id string, f func(*autoscalingv1.Scale)) error {
+	scaler := c.client.AppsV1().Deployments(namespaceID)
 	scale, err := scaler.GetScale(id, metav1.GetOptions{})
 	if err != nil {
 		return err
