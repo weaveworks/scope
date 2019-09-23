@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/camlistore/camlistore/pkg/lru"
+	"camlistore.org/pkg/lru"
 
 	"github.com/weaveworks/scope/report"
 )
