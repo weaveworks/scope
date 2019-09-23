@@ -9,6 +9,15 @@
 			"branch": "default"
 		},
 		{
+			"importpath": "camlistore.org/pkg/lru",
+			"repository": "https://github.com/camlistore/old-cam-snapshot",
+			"vcs": "git",
+			"revision": "a5a65f0d8b2281c4cc8c259ba882dd0ec851427f",
+			"branch": "master",
+			"path": "/pkg/lru",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/Azure/go-ansiterm",
 			"repository": "https://github.com/Azure/go-ansiterm",
 			"vcs": "git",
@@ -236,15 +245,6 @@
 			"revision": "5e3c483eb9321a69283f0bb517894e46c108b88b",
 			"branch": "master",
 			"path": "/statsd",
-			"notests": true
-		},
-		{
-			"importpath": "github.com/camlistore/camlistore/pkg/lru",
-			"repository": "https://github.com/camlistore/camlistore",
-			"vcs": "git",
-			"revision": "f9dcdfb07a66d3cc07176b50e1a6cbee879e1b90",
-			"branch": "master",
-			"path": "/pkg/lru",
 			"notests": true
 		},
 		{
