@@ -101,8 +101,15 @@ func (c *connectionCounters) add(dns report.DNSRecords, outgoing bool, localNode
 		return
 	}
 
+	count := 1
+	if countStr, _, ok := srcEndpoint.Latest.LookupEntry(report.ConnectionCount); ok {
+		if i, err := strconv.Atoi(countStr); err == nil {
+			count = i
+		}
+	}
+
 	c.counted[connectionID] = struct{}{}
-	c.counts[conn]++
+	c.counts[conn] += count
 }
 
 func internetAddr(dns report.DNSRecords, node report.Node, ep report.Node) (string, bool) {
