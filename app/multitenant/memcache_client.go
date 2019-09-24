@@ -1,6 +1,7 @@
 package multitenant
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"sort"
@@ -183,7 +184,7 @@ func (c *MemcacheClient) FetchReports(ctx context.Context, keys []string) (map[s
 			continue
 		}
 		go func(key string) {
-			rep, err := report.MakeFromBytes(item.Value)
+			rep, err := report.MakeFromBinary(ctx, bytes.NewBuffer(item.Value), true, true)
 			if err != nil {
 				log.Warningf("Corrupt report in memcache %v: %v", key, err)
 				ch <- result{key: key}

@@ -302,7 +302,7 @@ func NewFileCollector(path string, window time.Duration) (Collector, error) {
 			if err != nil {
 				return err
 			}
-			reports = append(reports, rpt)
+			reports = append(reports, *rpt)
 			return nil
 		}); err != nil {
 		return nil, err

@@ -15,7 +15,6 @@ import (
 	"github.com/NYTimes/gziphandler"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/common/hostname"
 	"github.com/weaveworks/scope/common/xfer"
@@ -117,7 +116,6 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 	post := router.Methods("POST").Subrouter()
 	post.HandleFunc("/api/report", requestContextDecorator(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		var (
-			rpt    report.Report
 			buf    = &bytes.Buffer{}
 			reader = io.TeeReader(r.Body, buf)
 		)
@@ -128,19 +126,19 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 		}
 
 		contentType := r.Header.Get("Content-Type")
-		isMsgpack := strings.HasPrefix(contentType, "application/msgpack")
-		var handle codec.Handle
+		var isMsgpack bool
 		switch {
+		case strings.HasPrefix(contentType, "application/msgpack"):
+			isMsgpack = true
 		case strings.HasPrefix(contentType, "application/json"):
-			handle = &codec.JsonHandle{}
-		case isMsgpack:
-			handle = &codec.MsgpackHandle{}
+			isMsgpack = false
 		default:
 			respondWith(w, http.StatusBadRequest, fmt.Errorf("Unsupported Content-Type: %v", contentType))
 			return
 		}
 
-		if err := rpt.ReadBinary(ctx, reader, gzipped, handle); err != nil {
+		rpt, err := report.MakeFromBinary(ctx, reader, gzipped, isMsgpack)
+		if err != nil {
 			respondWith(w, http.StatusBadRequest, err)
 			return
 		}
@@ -150,7 +148,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 			buf, _ = rpt.WriteBinary()
 		}
 
-		if err := a.Add(ctx, rpt, buf.Bytes()); err != nil {
+		if err := a.Add(ctx, *rpt, buf.Bytes()); err != nil {
 			log.Errorf("Error Adding report: %v", err)
 			respondWith(w, http.StatusInternalServerError, err)
 			return
