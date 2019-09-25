@@ -226,17 +226,12 @@ func (c *container) NetworkMode() (string, bool) {
 	return "", false
 }
 
-func addScopeToIPs(hostID string, ips []string) []string {
+func addScopeToIPs(hostID string, ips []net.IP) []string {
 	ipsWithScopes := []string{}
 	for _, ip := range ips {
-		ipsWithScopes = append(ipsWithScopes, report.MakeAddressNodeID(hostID, ip))
+		ipsWithScopes = append(ipsWithScopes, report.MakeAddressNodeIDB(hostID, ip))
 	}
 	return ipsWithScopes
-}
-
-func isIPv4(addr string) bool {
-	ip := net.ParseIP(addr)
-	return ip != nil && ip.To4() != nil
 }
 
 func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
@@ -278,13 +273,16 @@ func (c *container) NetworkInfo(localAddrs []net.IP) report.Sets {
 
 	// Filter out IPv6 addresses; nothing works with IPv6 yet
 	ipv4s := []string{}
+	ipv4ips := []net.IP{}
 	for _, ip := range ips {
-		if isIPv4(ip) {
+		ipaddr := net.ParseIP(ip)
+		if ipaddr != nil && ipaddr.To4() != nil {
 			ipv4s = append(ipv4s, ip)
+			ipv4ips = append(ipv4ips, ipaddr)
 		}
 	}
 	// Treat all Docker IPs as local scoped.
-	ipsWithScopes := addScopeToIPs(c.hostID, ipv4s)
+	ipsWithScopes := addScopeToIPs(c.hostID, ipv4ips)
 
 	s := report.MakeSets()
 	if len(networks) > 0 {

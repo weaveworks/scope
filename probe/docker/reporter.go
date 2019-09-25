@@ -192,16 +192,19 @@ func (r *Reporter) Report() (report.Report, error) {
 	return result, nil
 }
 
-func getLocalIPs() ([]string, error) {
+// Get local addresses both as strings and IP addresses, in matched slices
+func getLocalIPs() ([]string, []net.IP, error) {
 	ipnets, err := report.GetLocalNetworks()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	ips := []string{}
+	addrs := []net.IP{}
 	for _, ipnet := range ipnets {
 		ips = append(ips, ipnet.IP.String())
+		addrs = append(addrs, ipnet.IP)
 	}
-	return ips, nil
+	return ips, addrs, nil
 }
 
 func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
@@ -222,10 +225,10 @@ func (r *Reporter) containerTopology(localAddrs []net.IP) report.Topology {
 	// is recursive to deal with people who decide to be clever.
 	{
 		hostNetworkInfo := report.MakeSets()
-		if hostIPs, err := getLocalIPs(); err == nil {
+		if hostStrs, hostIPs, err := getLocalIPs(); err == nil {
 			hostIPsWithScopes := addScopeToIPs(r.hostID, hostIPs)
 			hostNetworkInfo = hostNetworkInfo.
-				Add(ContainerIPs, report.MakeStringSet(hostIPs...)).
+				Add(ContainerIPs, report.MakeStringSet(hostStrs...)).
 				Add(ContainerIPsWithScopes, report.MakeStringSet(hostIPsWithScopes...))
 		}
 
