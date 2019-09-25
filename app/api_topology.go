@@ -181,11 +181,11 @@ func (wc *websocketState) update(ctx context.Context) error {
 		otlog.String("timestamp", reportTimestamp.String()))
 	re, err := wc.rep.Report(ctx, reportTimestamp)
 	if err != nil {
-		return errors.Wrapf(err, "Error generating report: %v")
+		return errors.Wrap(err, "Error generating report")
 	}
 	renderer, filter, err := topologyRegistry.RendererForTopology(wc.topologyID, wc.values, re)
 	if err != nil {
-		return errors.Wrapf(err, "Error generating report: %v")
+		return errors.Wrap(err, "Error generating report")
 	}
 
 	newTopo := detailed.CensorNodeSummaries(
@@ -201,7 +201,7 @@ func (wc *websocketState) update(ctx context.Context) error {
 
 	if err := wc.conn.WriteJSON(diff); err != nil {
 		if !xfer.IsExpectedWSCloseError(err) {
-			return errors.Wrapf(err, "cannot serialize topology diff: %s")
+			return errors.Wrap(err, "cannot serialize topology diff")
 		}
 	}
 	return nil
