@@ -25,7 +25,7 @@ import (
 // An ebpfConnection represents a TCP connection
 type ebpfConnection struct {
 	tuple            fourTuple
-	networkNamespace string
+	networkNamespace uint64
 	incoming         bool
 	pid              int
 }
@@ -172,8 +172,8 @@ func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 	if e.Type == tracer.EventFdInstall {
 		t.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
 	} else {
-		tuple := fourTuple{e.SAddr.String(), e.DAddr.String(), e.SPort, e.DPort}
-		t.handleConnection(e.Type, tuple, int(e.Pid), strconv.Itoa(int(e.NetNS)))
+		tuple := makeFourTuple(e.SAddr, e.DAddr, e.SPort, e.DPort)
+		t.handleConnection(e.Type, tuple, int(e.Pid), uint64(e.NetNS))
 	}
 }
 
@@ -198,7 +198,7 @@ func (t *EbpfTracker) LostV6(count uint64) {
 	// TODO: IPv6 not supported in Scope
 }
 
-func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns string, ok bool) {
+func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns uint64, ok bool) {
 	// read /proc/$pid/ns/net
 	//
 	// probe/endpoint/procspy/proc_linux.go supports Linux < 3.8 but we
@@ -206,21 +206,20 @@ func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns string, ok bool) {
 	netnsIno, err := procspy.ReadNetnsFromPID(pid)
 	if err != nil {
 		log.Debugf("netns proc file for pid %d disappeared before we could read it: %v", pid, err)
-		return fourTuple{}, "", false
+		return fourTuple{}, 0, false
 	}
-	netns = fmt.Sprintf("%d", netnsIno)
 
 	// find /proc/$pid/fd/$fd's ino
 	fdFilename := fmt.Sprintf("/proc/%d/fd/%d", pid, fd)
 	var statFdFile syscall.Stat_t
 	if err := fs.Stat(fdFilename, &statFdFile); err != nil {
 		log.Debugf("proc file %q disappeared before we could read it", fdFilename)
-		return fourTuple{}, "", false
+		return fourTuple{}, 0, false
 	}
 
 	if statFdFile.Mode&syscall.S_IFMT != syscall.S_IFSOCK {
 		log.Errorf("file %q is not a socket", fdFilename)
-		return fourTuple{}, "", false
+		return fourTuple{}, 0, false
 	}
 	ino := statFdFile.Ino
 
@@ -228,7 +227,7 @@ func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns string, ok bool) {
 	buf := bytes.NewBuffer(make([]byte, 0, 5000))
 	if _, err := procspy.ReadTCPFiles(pid, buf); err != nil {
 		log.Debugf("TCP proc file for pid %d disappeared before we could read it: %v", pid, err)
-		return fourTuple{}, "", false
+		return fourTuple{}, 0, false
 	}
 
 	// find /proc/$pid/fd/$fd's ino in /proc/pid/net/tcp
@@ -240,11 +239,12 @@ func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns string, ok bool) {
 			break
 		}
 		if n.Inode == ino {
-			return fourTuple{n.LocalAddress.String(), n.RemoteAddress.String(), n.LocalPort, n.RemotePort}, netns, true
+			tuple := makeFourTuple(n.LocalAddress, n.RemoteAddress, n.LocalPort, n.RemotePort)
+			return tuple, netnsIno, true
 		}
 	}
 
-	return fourTuple{}, "", false
+	return fourTuple{}, 0, false
 }
 
 func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
@@ -252,7 +252,7 @@ func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
 		t.tracer.RemoveFdInstallWatcher(uint32(pid))
 	}
 	tuple, netns, ok := tupleFromPidFd(pid, fd)
-	log.Debugf("EbpfTracker: got fd-install event: pid=%d fd=%d -> tuple=%s netns=%s ok=%v", pid, fd, tuple, netns, ok)
+	log.Debugf("EbpfTracker: got fd-install event: pid=%d fd=%d -> tuple=%s netns=%v ok=%v", pid, fd, tuple, netns, ok)
 	if !ok {
 		return
 	}
@@ -268,7 +268,7 @@ func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
 	}
 }
 
-func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid int, networkNamespace string) {
+func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid int, networkNamespace uint64) {
 	t.Lock()
 	defer t.Unlock()
 
@@ -298,7 +298,7 @@ func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid
 			delete(t.openConnections, tuple)
 			t.closedConnections = append(t.closedConnections, deadConn)
 		} else {
-			log.Debugf("EbpfTracker: unmatched close event: %s pid=%d netns=%s", tuple, pid, networkNamespace)
+			log.Debugf("EbpfTracker: unmatched close event: %s pid=%d netns=%v", tuple, pid, networkNamespace)
 		}
 	default:
 		log.Debugf("EbpfTracker: unknown event: %s (%d)", ev, ev)

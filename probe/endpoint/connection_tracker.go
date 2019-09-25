@@ -3,6 +3,7 @@
 package endpoint
 
 import (
+	"net"
 	"strconv"
 	"time"
 
@@ -43,22 +44,11 @@ func newConnectionTracker(conf ReporterConfig) connectionTracker {
 }
 
 func flowToTuple(f conntrack.Conn) (ft fourTuple) {
-	ft = fourTuple{
-		f.Orig.Src.String(),
-		f.Orig.Dst.String(),
-		uint16(f.Orig.SrcPort),
-		uint16(f.Orig.DstPort),
+	if f.Orig.Dst.Equal(f.Reply.Src) {
+		return makeFourTuple(f.Orig.Src, f.Orig.Dst, uint16(f.Orig.SrcPort), uint16(f.Orig.DstPort))
 	}
 	// Handle DNAT-ed connections in the initial state
-	if !f.Orig.Dst.Equal(f.Reply.Src) {
-		ft = fourTuple{
-			f.Reply.Dst.String(),
-			f.Reply.Src.String(),
-			uint16(f.Reply.DstPort),
-			uint16(f.Reply.SrcPort),
-		}
-	}
-	return ft
+	return makeFourTuple(f.Orig.Dst, f.Orig.Src, uint16(f.Orig.DstPort), uint16(f.Orig.SrcPort))
 }
 
 func (t *connectionTracker) useProcfs() {
@@ -110,7 +100,7 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 	t.flowWalker.walkFlows(func(f conntrack.Conn, alive bool) {
 		tuple := flowToTuple(f)
 		seenTuples[tuple.key()] = tuple
-		t.addConnection(rpt, false, tuple, "", nil, nil)
+		t.addConnection(rpt, false, tuple, 0, nil, nil)
 	})
 
 	if t.conf.WalkProc && t.conf.Scanner != nil {
@@ -200,24 +190,25 @@ func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID stri
 	return nil
 }
 
-func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft fourTuple, namespaceID string, extraFromNode, extraToNode map[string]string) {
+func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft fourTuple, namespaceID uint64, extraFromNode, extraToNode map[string]string) {
 	if incoming {
 		ft = reverse(ft)
 		extraFromNode, extraToNode = extraToNode, extraFromNode
 	}
 	var (
-		fromNode = t.makeEndpointNode(namespaceID, ft.fromAddr, ft.fromPort, extraFromNode)
-		toNode   = t.makeEndpointNode(namespaceID, ft.toAddr, ft.toPort, extraToNode)
+		fromAddr = net.IP(ft.fromAddr[:])
+		fromNode = t.makeEndpointNode(namespaceID, fromAddr, ft.fromPort, extraFromNode)
+		toAddr   = net.IP(ft.toAddr[:])
+		toNode   = t.makeEndpointNode(namespaceID, toAddr, ft.toPort, extraToNode)
 	)
 	rpt.Endpoint.AddNode(fromNode.WithAdjacent(toNode.ID))
 	rpt.Endpoint.AddNode(toNode)
-	t.addDNS(rpt, ft.fromAddr)
-	t.addDNS(rpt, ft.toAddr)
+	t.addDNS(rpt, fromAddr.String())
+	t.addDNS(rpt, toAddr.String())
 }
 
-func (t *connectionTracker) makeEndpointNode(namespaceID string, addr string, port uint16, extra map[string]string) report.Node {
-	portStr := strconv.Itoa(int(port))
-	node := report.MakeNodeWith(report.MakeEndpointNodeID(t.conf.HostID, namespaceID, addr, portStr), nil)
+func (t *connectionTracker) makeEndpointNode(namespaceID uint64, addr net.IP, port uint16, extra map[string]string) report.Node {
+	node := report.MakeNodeWith(report.MakeEndpointNodeIDB(t.conf.HostID, namespaceID, addr, port), nil)
 	if extra != nil {
 		node = node.WithLatests(extra)
 	}
@@ -249,22 +240,14 @@ func (t *connectionTracker) Stop() error {
 	return nil
 }
 
-func connectionTuple(conn *procspy.Connection, seenTuples map[string]fourTuple) (fourTuple, string, bool) {
-	namespaceID := ""
-	tuple := fourTuple{
-		conn.LocalAddress.String(),
-		conn.RemoteAddress.String(),
-		conn.LocalPort,
-		conn.RemotePort,
-	}
-	if conn.Proc.NetNamespaceID > 0 {
-		namespaceID = strconv.FormatUint(conn.Proc.NetNamespaceID, 10)
-	}
+func connectionTuple(conn *procspy.Connection, seenTuples map[string]fourTuple) (fourTuple, uint64, bool) {
+	tuple := makeFourTuple(conn.LocalAddress, conn.RemoteAddress, conn.LocalPort, conn.RemotePort)
 
 	// If we've already seen this connection, we should know the direction
 	// (or have already figured it out), so we normalize and use the
 	// canonical direction. Otherwise, we can use a port-heuristic to guess
 	// the direction.
 	canonical, ok := seenTuples[tuple.key()]
-	return tuple, namespaceID, (ok && canonical != tuple) || (!ok && tuple.fromPort < tuple.toPort)
+	incoming := (ok && canonical != tuple) || (!ok && tuple.fromPort < tuple.toPort)
+	return tuple, conn.Proc.NetNamespaceID, incoming
 }

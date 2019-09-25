@@ -2,6 +2,7 @@ package report
 
 import (
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -29,25 +30,37 @@ const (
 
 // MakeEndpointNodeID produces an endpoint node ID from its composite parts.
 func MakeEndpointNodeID(hostID, namespaceID, address, port string) string {
-	return makeAddressID(hostID, namespaceID, address) + ScopeDelim + port
+	addressIP := net.ParseIP(address)
+	return makeAddressID(hostID, namespaceID, address, addressIP) + ScopeDelim + port
+}
+
+// MakeEndpointNodeIDB produces an endpoint node ID from its composite parts in binary, not strings.
+func MakeEndpointNodeIDB(hostID string, namespaceID uint64, addressIP net.IP, port uint16) string {
+	namespace := strconv.FormatUint(namespaceID, 10)
+	return makeAddressID(hostID, namespace, addressIP.String(), addressIP) + ScopeDelim + strconv.Itoa(int(port))
 }
 
 // MakeAddressNodeID produces an address node ID from its composite parts.
 func MakeAddressNodeID(hostID, address string) string {
-	return makeAddressID(hostID, "", address)
+	addressIP := net.ParseIP(address)
+	return makeAddressID(hostID, "", address, addressIP)
 }
 
-func makeAddressID(hostID, namespaceID, address string) string {
+// MakeAddressNodeIDB produces an address node ID from its composite parts, in binary not string.
+func MakeAddressNodeIDB(hostID string, addressIP net.IP) string {
+	return makeAddressID(hostID, "", addressIP.String(), addressIP)
+}
+
+func makeAddressID(hostID, namespaceID, address string, addressIP net.IP) string {
 	var scope string
 
 	// Loopback addresses and addresses explicitly marked as local get
 	// scoped by hostID
 	// Loopback addresses are also scoped by the networking
 	// namespace if available, since they can clash.
-	addressIP := net.ParseIP(address)
 	if addressIP != nil && LocalNetworks.Contains(addressIP) {
 		scope = hostID
-	} else if IsLoopback(address) {
+	} else if addressIP != nil && addressIP.IsLoopback() {
 		scope = hostID
 		if namespaceID != "" {
 			scope += "-" + namespaceID
