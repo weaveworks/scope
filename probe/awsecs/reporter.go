@@ -78,7 +78,7 @@ func GetLabelInfo(rpt report.Report) map[string]map[string]*TaskLabelInfo {
 
 		task.ContainerIDs = append(task.ContainerIDs, nodeID)
 	}
-	log.Debug("Got ECS container info: %v", results)
+	log.Debugf("Got ECS container info: %v", results)
 	return results
 }
 
