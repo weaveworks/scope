@@ -1,0 +1,35 @@
+version: 2
+jobs:
+  build:
+    # Use 'machine' type so we can run the lint step with directory mounted
+    machine:
+      docker_layer_caching: true
+    working_directory: /home/circleci/src/github.com/weaveworks/build-tools
+    environment:
+      GOPATH: /home/circleci/
+    steps:
+    - checkout
+    - run: cd build; make
+    - run: docker run --rm -v "$PWD:$PWD" -w "$PWD" --entrypoint sh weaveworks/build-golang -c ./lint .
+    - run: docker run --rm -v "$PWD:$PWD" -w "$PWD" --entrypoint sh weaveworks/build-golang -c ./shell-lint .
+    - run: docker run --rm -v "$PWD/cover:/go/src/cover" -w "/go/src/cover" --entrypoint sh weaveworks/build-golang -c make
+    - run: docker run --rm -v "$PWD/socks:/go/src/socks" -w "/go/src/socks" --entrypoint sh weaveworks/build-golang -c "make proxy"
+    - run: docker run --rm -v "$PWD/runner:/go/src/runner" -w "/go/src/runner" --entrypoint sh weaveworks/build-golang -c make
+
+    - deploy:
+        command: |
+          if [ "${CIRCLE_BRANCH}" == "master" ]; then
+            cd build
+            docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD
+            for image in $(make images); do
+              # Push all tags - latest and git-tag
+              docker push "${image}"
+
+              # Tag the built images with something derived from the base images in
+              # their respective Dockerfiles. So "FROM golang:1.8.0-stretch" as a
+              # base image would lead to a tag of "1.8.0-stretch"
+              IMG_TAG=$(make "imagetag-${image#weaveworks/build-}")
+              docker tag "${image}:latest" "${image}:${IMG_TAG}"
+              docker push "${image}:${IMG_TAG}"
+            done
+          fi
