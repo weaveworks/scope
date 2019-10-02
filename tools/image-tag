@@ -6,4 +6,7 @@ set -o pipefail
 
 WORKING_SUFFIX=$(if git status --porcelain | grep -qE '^(?:[^?][^ ]|[^ ][^?])\s'; then echo "-WIP"; else echo ""; fi)
 BRANCH_PREFIX=$(git rev-parse --abbrev-ref HEAD)
-echo "${BRANCH_PREFIX//\//-}-$(git rev-parse --short HEAD)$WORKING_SUFFIX"
+
+# Fix the object name prefix length to 8 characters to have it consistent across the system.
+# See https://git-scm.com/docs/git-rev-parse#Documentation/git-rev-parse.txt---shortlength
+echo "${BRANCH_PREFIX//\//-}-$(git rev-parse --short=8 HEAD)$WORKING_SUFFIX"

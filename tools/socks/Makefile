@@ -21,7 +21,7 @@ $(IMAGE_TAR): Dockerfile $(PROXY_EXE)
 
 $(PROXY_EXE): *.go
 	go get -tags netgo ./$(@D)
-	go build -ldflags "-extldflags \"-static\" -linkmode=external" -tags netgo -o $@ ./$(@D)
+	go build -ldflags "-extldflags \"-static\"" -tags netgo -o $@ ./$(@D)
 	$(NETGO_CHECK)
 
 clean:
