@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import { debounce, isEqual } from 'lodash';
 
 import { ThemeProvider } from 'styled-components';
-import theme from 'weaveworks-ui-components/lib/theme';
+import commonTheme from 'weaveworks-ui-components/lib/theme';
 
 import GlobalStyle from './global-style';
 import Logo from './logo';
@@ -55,6 +55,8 @@ import {
   isTableViewModeSelector,
   isGraphViewModeSelector,
 } from '../selectors/topology';
+import defaultTheme from '../themes/default';
+import contrastTheme from '../themes/contrast';
 import { VIEWPORT_RESIZE_DEBOUNCE_INTERVAL } from '../constants/timer';
 import {
   ESC_KEY_CODE,
@@ -206,7 +208,7 @@ class App extends React.Component {
     const isIframe = window !== window.top;
 
     return (
-      <ThemeProvider theme={{...theme, scope: { background: contrastMode ? '#f00' : '#00f' }}}>
+      <ThemeProvider theme={{...commonTheme, scope: contrastMode ? contrastTheme : defaultTheme }}>
         <>
           <GlobalStyle />
 
