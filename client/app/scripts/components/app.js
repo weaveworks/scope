@@ -8,6 +8,7 @@ import { debounce, isEqual } from 'lodash';
 import { ThemeProvider } from 'styled-components';
 import theme from 'weaveworks-ui-components/lib/theme';
 
+import GlobalStyle from './global-style';
 import Logo from './logo';
 import Footer from './footer';
 import Sidebar from './sidebar';
@@ -205,52 +206,56 @@ class App extends React.Component {
     const isIframe = window !== window.top;
 
     return (
-      <ThemeProvider theme={theme}>
-        <div className={className} ref={this.saveAppRef}>
-          {showingDebugToolbar() && <DebugToolbar />}
+      <ThemeProvider theme={{...theme, scope: { background: contrastMode ? '#f00' : '#00f' }}}>
+        <>
+          <GlobalStyle />
 
-          {showingHelp && <HelpPanel />}
+          <div className={className} ref={this.saveAppRef}>
+            {showingDebugToolbar() && <DebugToolbar />}
 
-          {showingTroubleshootingMenu && <TroubleshootingMenu />}
+            {showingHelp && <HelpPanel />}
 
-          {showingDetails && (
-          <Details
-            renderNodeDetailsExtras={this.props.renderNodeDetailsExtras}
-          />
-          )}
+            {showingTroubleshootingMenu && <TroubleshootingMenu />}
 
-          <div className="header">
-            {timeTravelSupported && this.props.renderTimeTravel()}
+            {showingDetails && (
+            <Details
+              renderNodeDetailsExtras={this.props.renderNodeDetailsExtras}
+            />
+            )}
 
-            <div className="selectors">
-              <div className="logo">
-                {!isIframe
-                  && (
-                  <svg width="100%" height="100%" viewBox="0 0 1089 217">
-                    <Logo />
-                  </svg>
-                  )
-                }
+            <div className="header">
+              {timeTravelSupported && this.props.renderTimeTravel()}
+
+              <div className="selectors">
+                <div className="logo">
+                  {!isIframe
+                    && (
+                    <svg width="100%" height="100%" viewBox="0 0 1089 217">
+                      <Logo />
+                    </svg>
+                    )
+                  }
+                </div>
+                <Search />
+                <Topologies />
+                <ViewModeSelector />
+                <TimeControl />
               </div>
-              <Search />
-              <Topologies />
-              <ViewModeSelector />
-              <TimeControl />
             </div>
+
+            <Nodes />
+
+            <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
+              {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
+              {!isResourceViewMode && <Status />}
+              {!isResourceViewMode && <TopologyOptions />}
+            </Sidebar>
+
+            <Footer />
+
+            <Overlay faded={timeTravelTransitioning} />
           </div>
-
-          <Nodes />
-
-          <Sidebar classNames={isTableViewMode ? 'sidebar-gridmode' : ''}>
-            {showingNetworkSelector && isGraphViewMode && <NetworkSelector />}
-            {!isResourceViewMode && <Status />}
-            {!isResourceViewMode && <TopologyOptions />}
-          </Sidebar>
-
-          <Footer />
-
-          <Overlay faded={timeTravelTransitioning} />
-        </div>
+        </>
       </ThemeProvider>
     );
   }
