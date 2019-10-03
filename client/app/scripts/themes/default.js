@@ -2,8 +2,6 @@ import { color } from 'weaveworks-ui-components/lib/theme/selectors';
 import { transparentize } from 'polished';
 
 const defaultTheme = {
-  background: '#fcc',
-
   backgroundColor: color('gray50'), // $background-color: $color-gray-50;
   backgroundDarkColor: color('purple900'), // $background-dark-color: $color-purple-900;
   backgroundDarkerColor: color('purple100'), // $background-darker-color: $color-purple-100;

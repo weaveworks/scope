@@ -6,8 +6,6 @@ const contrastTheme = {
   ...defaultTheme,
 
   /* contrast overrides */
-  background: '#ccf',
-
   backgroundColor: color('white'),
   backgroundDarkerColor: color('purple200'),
   backgroundDarkerSecondaryColor: color('purple200'),
