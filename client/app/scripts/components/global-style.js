@@ -1,8 +1,111 @@
 import { createGlobalStyle } from 'styled-components';
+import { transparentize } from 'polished';
 import { color } from 'weaveworks-ui-components/lib/theme/selectors';
 
+const hideable = props => `
+  transition: opacity .5s ${props.theme.scope.baseEase};
+`;
+
+const palable = props => `
+  transition: all .2s ${props.theme.scope.baseEase};
+`;
+
+const blinkable = props => `
+  animation: blinking 1.5s infinite ${props.theme.scope.baseEase};
+`;
+
+const colorable = props => `
+  transition: background-color .3s ${props.theme.scope.baseEase};
+`;
+
+/* add this class to truncate text with ellipsis, container needs width */
+const truncate = () => `
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const shadow2 = props => `
+  box-shadow: 0 3px 10px ${transparentize(0.84, props.theme.colors.black)}, 0 3px 10px ${transparentize(0.77, props.theme.colors.black)};
+`;
+
+const btnOpacity = props => `
+  ${palable(props)};
+  opacity: ${props.theme.scope.btnOpacityDefault};
+  &-selected {
+    opacity: ${props.theme.scope.btnOpacitySelected};
+  }
+  &[disabled] {
+    cursor: default;
+    opacity: ${props.theme.scope.btnOpacityDisabled};
+  }
+  &:not([disabled]):hover {
+    opacity: ${props.theme.scope.btnOpacityHover};
+  }
+`;
+
+/* From https://stackoverflow.com/a/18294634 */
+const fullyPannable = () => `
+  width: 100%;
+  height: 100%;
+  /* stylelint-disable value-no-vendor-prefix */
+  /* Grabbable */
+  cursor: move; /* fallback if grab cursor is unsupported */
+  cursor: grab;
+  cursor: -moz-grab;
+  cursor: -webkit-grab;
+
+  &.panning {
+    /* Grabbing */
+    cursor: grabbing;
+    cursor: -moz-grabbing;
+    cursor: -webkit-grabbing;
+  }
+  /* stylelint-enable value-no-vendor-prefix */
+`;
+
+const overlayWrapper = props => `
+  align-items: center;
+  background-color: ${transparentize(0.1, props.theme.colors.purple25)};
+  border-radius: ${props.theme.borderRadius.soft};
+  color: ${props.theme.scope.textTertiaryColor};
+  display: flex;
+  font-size: ${props.theme.fontSizes.tiny};
+  justify-content: center;
+  padding: 5px;
+  position: fixed;
+  bottom: 11px;
+
+  button {
+    ${btnOpacity(props)};
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: ${props.theme.borderRadius.soft};
+    color: ${props.theme.scope.textSecondaryColor};
+    cursor: pointer;
+    line-height: 20px;
+    padding: 1px 3px;
+    outline: 0;
+
+    i {
+      font-size: ${props.theme.fontSizes.small};
+      position: relative;
+      top: 2px;
+    }
+
+    &:hover, &.selected {
+      border: 1px solid ${props.theme.scope.textTertiaryColor};
+    }
+
+    &.active {
+      & > * { ${blinkable(props)}; }
+      border: 1px solid $text-tertiary-color;
+    }
+  }
+`;
+
 const GlobalStyle = createGlobalStyle`
-  /* sass-lint:disable variable-for-property */
+  /* stylelint-disable sh-waqar/declaration-use-variable */
   @font-face {
     font-family: 'proxima-nova';
     src: url('../fonts/proximanova-regular.woff');
@@ -12,7 +115,7 @@ const GlobalStyle = createGlobalStyle`
     font-family: 'Roboto Mono';
     src: url('../fonts/robotomono-regular.ttf');
   }
-  /* sass-lint:enable variable-for-property */
+  /* stylelint-enable sh-waqar/declaration-use-variable */
 
   a {
     text-decoration: none;
@@ -25,61 +128,12 @@ const GlobalStyle = createGlobalStyle`
     padding: 0.2em 0;
   }
 
-  /* add this class to truncate text with ellipsis, container needs width */
-  .truncate {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .colorable {
-    transition: background-color .3s $base-ease;
-  }
-
-  .palable {
-    transition: all .2s $base-ease;
-  }
-
-  .hideable {
-    transition: opacity .5s $base-ease;
-  }
-
-  .blinkable {
-    animation: blinking 1.5s infinite $base-ease;
-  }
-
   .hang-around {
     transition-delay: .5s;
   }
 
-  /* From https://stackoverflow.com/a/18294634 */
-  .fully-pannable {
-    width: 100%;
-    height: 100%;
-    /* Grabbable */
-    cursor: move; /* fallback if grab cursor is unsupported */
-    cursor: grab;
-    cursor: -moz-grab;
-    cursor: -webkit-grab;
-
-    &.panning {
-      /* Grabbing */
-      cursor: grabbing;
-      cursor: -moz-grabbing;
-      cursor: -webkit-grabbing;
-    }
-  }
-
-  .shadow-2 {
-    box-shadow: 0 3px 10px transparentize($color-black, 0.84), 0 3px 10px transparentize($color-black, 0.77);
-  }
-
-  .shadow-3 {
-    box-shadow: 0 10px 30px transparentize($color-black, 0.81), 0 6px 10px transparentize($color-black, 0.77);
-  }
-
   .overlay {
-    @extend .hideable;
+    ${hideable};
 
     background-color: $color-white;
     position: absolute;
@@ -96,61 +150,6 @@ const GlobalStyle = createGlobalStyle`
       pointer-events: all;
       cursor: wait;
       opacity: 0.5;
-    }
-  }
-
-  .overlay-wrapper {
-    align-items: center;
-    background-color: transparentize($color-purple-25, 0.1);
-    border-radius: $border-radius-soft;
-    color: $text-tertiary-color;
-    display: flex;
-    font-size: $font-size-tiny;
-    justify-content: center;
-    padding: 5px;
-    position: fixed;
-    bottom: 11px;
-
-    button {
-      @extend .btn-opacity;
-      background-color: transparent;
-      border: 1px solid transparent;
-      border-radius: $border-radius-soft;
-      color: $text-secondary-color;
-      cursor: pointer;
-      line-height: 20px;
-      padding: 1px 3px;
-      outline: 0;
-
-      i {
-        font-size: $font-size-small;
-        position: relative;
-        top: 2px;
-      }
-
-      &:hover, &.selected {
-        border: 1px solid $text-tertiary-color;
-      }
-
-      &.active {
-        & > * { @extend .blinkable; }
-        border: 1px solid $text-tertiary-color;
-      }
-    }
-  }
-
-  .btn-opacity {
-    @extend .palable;
-    opacity: $btn-opacity-default;
-    &-selected {
-      opacity: $btn-opacity-selected;
-    }
-    &[disabled] {
-      cursor: default;
-      opacity: $btn-opacity-disabled;
-    }
-    &:not([disabled]):hover {
-      opacity: $btn-opacity-hover;
     }
   }
 
@@ -241,7 +240,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .footer {
-    @extend .overlay-wrapper;
+    ${overlayWrapper};
     right: 43px;
 
     &-status {
@@ -308,7 +307,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .zoomable-canvas svg {
-    @extend .fully-pannable;
+    ${fullyPannable};
   }
 
   .topologies-selector {
@@ -336,7 +335,7 @@ const GlobalStyle = createGlobalStyle`
     .topologies-sub-item {
       pointer-events: all;
       color: $text-secondary-color;
-      @extend .btn-opacity;
+      ${btnOpacity};
       cursor: pointer;
       padding: 4px 8px;
       border-radius: $border-radius-soft;
@@ -378,7 +377,7 @@ const GlobalStyle = createGlobalStyle`
   .nodes-chart, .nodes-resources {
 
     &-error, &-loading {
-      @extend .hideable;
+      ${hideable};
       pointer-events: none;
       position: absolute;
       left: 50%;
@@ -408,7 +407,7 @@ const GlobalStyle = createGlobalStyle`
 
     /* Make watermarks blink only if actually shown (otherwise the FF performance decreses weirdly). */
     &-loading:not(.hide) &-error-icon-container {
-      @extend .blinkable;
+      ${blinkable};
     }
 
     &-loading {
@@ -416,7 +415,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     svg {
-      @extend .hideable;
+      ${hideable};
       position: absolute;
       top: 0px;
     }
@@ -514,14 +513,13 @@ const GlobalStyle = createGlobalStyle`
   .node-details {
     height: 100%;
     width: $details-window-width;
-    background-color: transparentize($color-white, 0.14);
     display: flex;
     flex-flow: column;
     margin-bottom: 12px;
     padding-bottom: 2px;
     border-radius: $border-radius-soft;
     background-color: $color-white;
-    @extend .shadow-2;
+    ${shadow2};
     /* keep node-details above the terminal. */
     z-index: $layer-front;
     overflow: hidden;
@@ -546,7 +544,7 @@ const GlobalStyle = createGlobalStyle`
       }
 
       > i {
-        @extend .btn-opacity;
+        ${btnOpacity};
         padding: 4px 5px;
         margin-left: 2px;
         font-size: $font-size-normal;
@@ -579,7 +577,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     &-header {
-      @extend .colorable;
+      ${colorable};
 
       &-wrapper {
         padding: 36px 36px 8px 36px;
@@ -610,8 +608,8 @@ const GlobalStyle = createGlobalStyle`
       color: $color-white;
 
       &-link {
-        @extend .truncate;
-        @extend .btn-opacity;
+        ${truncate};
+        ${btnOpacity};
         display: inline-block;
         margin-right: 0.5em;
         cursor: pointer;
@@ -621,7 +619,7 @@ const GlobalStyle = createGlobalStyle`
       }
 
       &-more {
-        @extend .btn-opacity;
+        ${btnOpacity};
         padding: 0 2px;
         cursor: pointer;
         font-size: $font-size-tiny;
@@ -646,13 +644,13 @@ const GlobalStyle = createGlobalStyle`
       }
 
       &-spinner {
-        @extend .hideable;
+        ${hideable};
         color: $color-white;
         margin-left: 8px;
       }
 
       &-error {
-        @extend .truncate;
+        ${truncate};
         float: right;
         width: 55%;
         padding-top: 6px;
@@ -660,7 +658,7 @@ const GlobalStyle = createGlobalStyle`
         color: $color-white;
 
         &-icon {
-          @extend .blinkable;
+          ${blinkable};
           margin-right: 0.5em;
         }
       }
@@ -700,7 +698,7 @@ const GlobalStyle = createGlobalStyle`
       }
 
       &-overflow {
-        @extend .btn-opacity;
+        ${btnOpacity};
         flex-basis: 33%;
         display: flex;
         flex-direction: row;
@@ -752,7 +750,7 @@ const GlobalStyle = createGlobalStyle`
       }
 
       &-link-item {
-        @extend .btn-opacity;
+        ${btnOpacity};
         cursor: pointer;
         opacity: $link-opacity-default;
         width: 33%;
@@ -896,7 +894,7 @@ const GlobalStyle = createGlobalStyle`
         }
 
         &-link {
-          @extend .btn-opacity;
+          ${btnOpacity};
           text-decoration: underline;
           cursor: pointer;
           opacity: $link-opacity-default;
@@ -910,7 +908,7 @@ const GlobalStyle = createGlobalStyle`
         }
 
         &-metric-link {
-          @extend .btn-opacity;
+          ${btnOpacity};
           text-decoration: underline;
           cursor: pointer;
           opacity: $link-opacity-default;
@@ -936,7 +934,7 @@ const GlobalStyle = createGlobalStyle`
 
   .node-resources {
     &-metric-box {
-      @extend .palable;
+      ${palable};
       cursor: pointer;
       fill: transparentize($color-gray-600, 0.6);
 
@@ -982,7 +980,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .node-control-button {
-    @extend .btn-opacity;
+    ${btnOpacity};
     padding: 6px;
     margin-left: 2px;
     font-size: $font-size-small;
@@ -1023,7 +1021,7 @@ const GlobalStyle = createGlobalStyle`
       bottom: 10px;
       right: 0;
       transition: transform 0.5s cubic-bezier(0.230, 1.000, 0.320, 1.000);
-      @extend .shadow-2;
+      ${shadow2};
     }
 
     &-wrapper {
@@ -1034,7 +1032,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     &-header {
-      @extend .truncate;
+      ${truncate};
       color: $color-white;
       height: $terminal-header-height;
       padding: 8px 24px;
@@ -1054,7 +1052,7 @@ const GlobalStyle = createGlobalStyle`
         top: 6px;
 
         &-item, &-item-icon {
-          @extend .palable;
+          ${palable};
           padding: 4px 5px;
           color: $color-white;
           cursor: pointer;
@@ -1139,7 +1137,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .show-more {
-    @extend .btn-opacity;
+    ${btnOpacity};
     border-top: 1px dotted $border-light-color;
     padding: 0px 0;
     margin-top: 4px;
@@ -1234,7 +1232,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     &-action {
-      @extend .btn-opacity;
+      ${btnOpacity};
       padding: 3px 12px;
       cursor: pointer;
       display: inline-block;
@@ -1313,7 +1311,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     &-info {
-      @extend .blinkable;
+      ${blinkable};
       display: block;
       margin-top: 5px;
       text-align: right;
@@ -1384,7 +1382,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     &-icon {
-      @extend .btn-opacity;
+      ${btnOpacity};
     }
 
     &-expanded {
@@ -1442,7 +1440,7 @@ const GlobalStyle = createGlobalStyle`
   .help-panel {
     z-index: $layer-modal;
     background-color: $color-white;
-    @extend .shadow-2;
+    ${shadow2};
     display: flex;
     position: relative;
 
@@ -1473,7 +1471,7 @@ const GlobalStyle = createGlobalStyle`
       right: 8px;
 
       i {
-        @extend .btn-opacity;
+        ${btnOpacity};
         padding: 4px 5px;
         margin-left: 2px;
         font-size: $font-size-normal;
@@ -1602,7 +1600,7 @@ const GlobalStyle = createGlobalStyle`
    */
 
   .zoom-control {
-    @extend .overlay-wrapper;
+    ${overlayWrapper};
     flex-direction: column;
     padding: 5px 7px 0;
     bottom: 50px;
@@ -1621,7 +1619,7 @@ const GlobalStyle = createGlobalStyle`
    */
 
   .debug-panel {
-    @extend .shadow-2;
+    ${shadow2};
     background-color: $color-white;
     top: 80px;
     position: absolute;
@@ -1763,7 +1761,7 @@ const GlobalStyle = createGlobalStyle`
       position: relative;
       background-color: $color-white;
       padding: 20px;
-      @extend .shadow-2;
+      ${shadow2};
       z-index: $layer-modal;
     }
 
