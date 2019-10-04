@@ -2,8 +2,6 @@ const webpack = require('webpack');
 const autoprefixer = require('autoprefixer');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const SassLintPlugin = require('sass-lint-webpack');
-const { themeVarsAsScss } = require('weaveworks-ui-components/lib/theme');
 
 /**
  * This is the Webpack configuration file for local development.
@@ -70,10 +68,6 @@ module.exports = {
       filename: 'index.html',
       template: 'app/html/index.html',
     }),
-    new SassLintPlugin({
-      context: 'app/styles',
-      ignorePlugins: ['html-webpack-plugin'],
-    }),
   ],
 
   // Transform source code using Babel and React Hot Loader
@@ -123,23 +117,6 @@ module.exports = {
                 autoprefixer({
                   browsers: ['last 2 versions']
                 })
-              ]
-            }
-          },
-        ],
-      },
-      {
-        test: /\.scss$/,
-        use: [
-          { loader: 'style-loader' },
-          { loader: 'css-loader' },
-          {
-            loader: 'sass-loader',
-            options: {
-              data: themeVarsAsScss(),
-              includePaths: [
-                path.resolve(__dirname, './node_modules/xterm'),
-                path.resolve(__dirname, './node_modules/rc-slider'),
               ]
             }
           },
