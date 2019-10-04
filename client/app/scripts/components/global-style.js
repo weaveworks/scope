@@ -1100,8 +1100,7 @@ const GlobalStyle = createGlobalStyle`
         }
       }
 
-      &-embedded &-inner { top: ${scopeTheme('terminalHeaderHeight')}; }
-      &-app &-inner { top: 0; }
+      &-embedded { .terminal-inner { top: ${scopeTheme('terminalHeaderHeight')}; } }
       &-inner {
         cursor: text;
         font-family: ${props => props.theme.fontFamilies.monospace};
@@ -1109,6 +1108,7 @@ const GlobalStyle = createGlobalStyle`
         bottom: 0;
         left: 0;
         right: 0;
+        top: 0;
         background-color: ${color('black')};
         padding: 8px;
         box-sizing: content-box;
