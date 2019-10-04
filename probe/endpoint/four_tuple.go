@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"fmt"
+	"net"
 	"sort"
 	"strings"
 )
@@ -10,12 +11,19 @@ import (
 // active tells whether the connection belongs to an activeFlow (see
 // conntrack.go)
 type fourTuple struct {
-	fromAddr, toAddr string
+	fromAddr, toAddr [net.IPv4len]byte
 	fromPort, toPort uint16
 }
 
+func makeFourTuple(fromAddr, toAddr net.IP, fromPort, toPort uint16) fourTuple {
+	tuple := fourTuple{fromPort: fromPort, toPort: toPort}
+	copy(tuple.fromAddr[:], fromAddr.To4())
+	copy(tuple.toAddr[:], toAddr.To4())
+	return tuple
+}
+
 func (t fourTuple) String() string {
-	return fmt.Sprintf("%s:%d-%s:%d", t.fromAddr, t.fromPort, t.toAddr, t.toPort)
+	return fmt.Sprintf("%s:%d-%s:%d", net.IP(t.fromAddr[:]), t.fromPort, net.IP(t.toAddr[:]), t.toPort)
 }
 
 // key is a sortable direction-independent key for tuples, used to look up a

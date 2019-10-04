@@ -4,7 +4,6 @@ package endpoint
 
 import (
 	"net"
-	"strconv"
 
 	"github.com/typetypetype/conntrack"
 
@@ -57,10 +56,8 @@ func (n natMapper) applyNAT(rpt report.Report, scope string) {
 	n.flowWalker.walkFlows(func(f conntrack.Conn, _ bool) {
 		mapping := toMapping(f)
 
-		realEndpointPort := strconv.Itoa(int(mapping.originalPort))
-		copyEndpointPort := strconv.Itoa(int(mapping.rewrittenPort))
-		realEndpointID := report.MakeEndpointNodeID(scope, "", mapping.originalIP.String(), realEndpointPort)
-		copyEndpointID := report.MakeEndpointNodeID(scope, "", mapping.rewrittenIP.String(), copyEndpointPort)
+		realEndpointID := report.MakeEndpointNodeIDB(scope, 0, mapping.originalIP, mapping.originalPort)
+		copyEndpointID := report.MakeEndpointNodeIDB(scope, 0, mapping.rewrittenIP, mapping.rewrittenPort)
 
 		node, ok := rpt.Endpoint.Nodes[realEndpointID]
 		if !ok {
