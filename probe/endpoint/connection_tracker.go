@@ -190,7 +190,7 @@ func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID stri
 	return nil
 }
 
-func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft fourTuple, namespaceID uint64, extraFromNode, extraToNode map[string]string) {
+func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft fourTuple, namespaceID uint32, extraFromNode, extraToNode map[string]string) {
 	if incoming {
 		ft = reverse(ft)
 		extraFromNode, extraToNode = extraToNode, extraFromNode
@@ -207,7 +207,7 @@ func (t *connectionTracker) addConnection(rpt *report.Report, incoming bool, ft 
 	t.addDNS(rpt, toAddr.String())
 }
 
-func (t *connectionTracker) makeEndpointNode(namespaceID uint64, addr net.IP, port uint16, extra map[string]string) report.Node {
+func (t *connectionTracker) makeEndpointNode(namespaceID uint32, addr net.IP, port uint16, extra map[string]string) report.Node {
 	node := report.MakeNodeWith(report.MakeEndpointNodeIDB(t.conf.HostID, namespaceID, addr, port), nil)
 	if extra != nil {
 		node = node.WithLatests(extra)
@@ -240,7 +240,7 @@ func (t *connectionTracker) Stop() error {
 	return nil
 }
 
-func connectionTuple(conn *procspy.Connection, seenTuples map[string]fourTuple) (fourTuple, uint64, bool) {
+func connectionTuple(conn *procspy.Connection, seenTuples map[string]fourTuple) (fourTuple, uint32, bool) {
 	tuple := makeFourTuple(conn.LocalAddress, conn.RemoteAddress, conn.LocalPort, conn.RemotePort)
 
 	// If we've already seen this connection, we should know the direction

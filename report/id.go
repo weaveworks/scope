@@ -35,10 +35,10 @@ func MakeEndpointNodeID(hostID, namespaceID, address, port string) string {
 }
 
 // MakeEndpointNodeIDB produces an endpoint node ID from its composite parts in binary, not strings.
-func MakeEndpointNodeIDB(hostID string, namespaceID uint64, addressIP net.IP, port uint16) string {
+func MakeEndpointNodeIDB(hostID string, namespaceID uint32, addressIP net.IP, port uint16) string {
 	namespace := ""
 	if namespaceID > 0 {
-		namespace = strconv.FormatUint(namespaceID, 10)
+		namespace = strconv.FormatUint(uint64(namespaceID), 10)
 	}
 	return makeAddressID(hostID, namespace, addressIP.String(), addressIP) + ScopeDelim + strconv.Itoa(int(port))
 }

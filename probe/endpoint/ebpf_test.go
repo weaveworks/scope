@@ -53,7 +53,7 @@ func TestHandleConnection(t *testing.T) {
 				fromPort: ClientPort,
 				toPort:   ServerPort,
 			},
-			networkNamespace: uint64(NetNS),
+			networkNamespace: NetNS,
 			incoming:         false,
 			pid:              int(ClientPid),
 		}
@@ -89,7 +89,7 @@ func TestHandleConnection(t *testing.T) {
 				fromPort: ServerPort,
 				toPort:   ClientPort,
 			},
-			networkNamespace: uint64(NetNS),
+			networkNamespace: NetNS,
 			incoming:         true,
 			pid:              int(ServerPid),
 		}
@@ -110,14 +110,14 @@ func TestHandleConnection(t *testing.T) {
 	mockEbpfTracker := newMockEbpfTracker()
 
 	tuple := fourTuple{ClientAddr, ServerAddr, uint16(IPv4ConnectEvent.SPort), uint16(IPv4ConnectEvent.DPort)}
-	mockEbpfTracker.handleConnection(IPv4ConnectEvent.Type, tuple, int(IPv4ConnectEvent.Pid), uint64(NetNS))
+	mockEbpfTracker.handleConnection(IPv4ConnectEvent.Type, tuple, int(IPv4ConnectEvent.Pid), NetNS)
 	if !reflect.DeepEqual(mockEbpfTracker.openConnections[tuple], IPv4ConnectEbpfConnection) {
 		t.Errorf("Connection mismatch connect event\nTarget connection:%v\nParsed connection:%v",
 			IPv4ConnectEbpfConnection, mockEbpfTracker.openConnections[tuple])
 	}
 
 	tuple = fourTuple{ClientAddr, ServerAddr, uint16(IPv4ConnectCloseEvent.SPort), uint16(IPv4ConnectCloseEvent.DPort)}
-	mockEbpfTracker.handleConnection(IPv4ConnectCloseEvent.Type, tuple, int(IPv4ConnectCloseEvent.Pid), uint64(NetNS))
+	mockEbpfTracker.handleConnection(IPv4ConnectCloseEvent.Type, tuple, int(IPv4ConnectCloseEvent.Pid), NetNS)
 	if len(mockEbpfTracker.openConnections) != 0 {
 		t.Errorf("Connection mismatch close event\nConnection to close:%v",
 			mockEbpfTracker.openConnections[tuple])
@@ -126,14 +126,14 @@ func TestHandleConnection(t *testing.T) {
 	mockEbpfTracker = newMockEbpfTracker()
 
 	tuple = fourTuple{ServerAddr, ClientAddr, uint16(IPv4AcceptEvent.SPort), uint16(IPv4AcceptEvent.DPort)}
-	mockEbpfTracker.handleConnection(IPv4AcceptEvent.Type, tuple, int(IPv4AcceptEvent.Pid), uint64(NetNS))
+	mockEbpfTracker.handleConnection(IPv4AcceptEvent.Type, tuple, int(IPv4AcceptEvent.Pid), NetNS)
 	if !reflect.DeepEqual(mockEbpfTracker.openConnections[tuple], IPv4AcceptEbpfConnection) {
 		t.Errorf("Connection mismatch connect event\nTarget connection:%v\nParsed connection:%v",
 			IPv4AcceptEbpfConnection, mockEbpfTracker.openConnections[tuple])
 	}
 
 	tuple = fourTuple{ServerAddr, ClientAddr, uint16(IPv4AcceptCloseEvent.SPort), uint16(IPv4AcceptCloseEvent.DPort)}
-	mockEbpfTracker.handleConnection(IPv4AcceptCloseEvent.Type, tuple, int(IPv4AcceptCloseEvent.Pid), uint64(NetNS))
+	mockEbpfTracker.handleConnection(IPv4AcceptCloseEvent.Type, tuple, int(IPv4AcceptCloseEvent.Pid), NetNS)
 
 	if len(mockEbpfTracker.openConnections) != 0 {
 		t.Errorf("Connection mismatch close event\nConnection to close:%v",

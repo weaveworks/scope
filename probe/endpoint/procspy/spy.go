@@ -30,7 +30,7 @@ type Connection struct {
 type Proc struct {
 	PID            uint
 	Name           string
-	NetNamespaceID uint64
+	NetNamespaceID uint32
 }
 
 // ConnIter is returned by Connections().

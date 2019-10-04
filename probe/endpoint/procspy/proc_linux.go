@@ -146,7 +146,7 @@ func readProcessConnections(buf *bytes.Buffer, namespaceProcs []*process.Process
 }
 
 // walkNamespace does the work of walk for a single namespace
-func (w pidWalker) walkNamespace(namespaceID uint64, buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process) error {
+func (w pidWalker) walkNamespace(namespaceID uint32, buf *bytes.Buffer, sockets map[uint64]*Proc, namespaceProcs []*process.Process) error {
 
 	if found, err := readProcessConnections(buf, namespaceProcs); err != nil || !found {
 		return err
@@ -216,7 +216,7 @@ func (w pidWalker) walkNamespace(namespaceID uint64, buf *bytes.Buffer, sockets 
 }
 
 // ReadNetnsFromPID gets the netns inode of the specified pid
-func ReadNetnsFromPID(pid int) (uint64, error) {
+func ReadNetnsFromPID(pid int) (uint32, error) {
 	var statT syscall.Stat_t
 
 	dirName := strconv.Itoa(pid)
@@ -225,7 +225,9 @@ func ReadNetnsFromPID(pid int) (uint64, error) {
 		return 0, err
 	}
 
-	return statT.Ino, nil
+	// Although Inode is a 64-bit field, namespaces have 32-bit IDs
+	// see https://github.com/torvalds/linux/blob/6f0d349d922b/include/linux/ns_common.h#L10
+	return uint32(statT.Ino), nil
 }
 
 // walk walks over all numerical (PID) /proc entries. It reads
@@ -235,7 +237,7 @@ func ReadNetnsFromPID(pid int) (uint64, error) {
 func (w pidWalker) walk(buf *bytes.Buffer) (map[uint64]*Proc, error) {
 	var (
 		sockets    = map[uint64]*Proc{}              // map socket inode -> process
-		namespaces = map[uint64][]*process.Process{} // map network namespace id -> processes
+		namespaces = map[uint32][]*process.Process{} // map network namespace id -> processes
 	)
 
 	// We do two process traversals: One to group processes by namespace and

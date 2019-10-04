@@ -25,7 +25,7 @@ import (
 // An ebpfConnection represents a TCP connection
 type ebpfConnection struct {
 	tuple            fourTuple
-	networkNamespace uint64
+	networkNamespace uint32
 	incoming         bool
 	pid              int
 }
@@ -173,7 +173,7 @@ func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 		t.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
 	} else {
 		tuple := makeFourTuple(e.SAddr, e.DAddr, e.SPort, e.DPort)
-		t.handleConnection(e.Type, tuple, int(e.Pid), uint64(e.NetNS))
+		t.handleConnection(e.Type, tuple, int(e.Pid), e.NetNS)
 	}
 }
 
@@ -198,7 +198,7 @@ func (t *EbpfTracker) LostV6(count uint64) {
 	// TODO: IPv6 not supported in Scope
 }
 
-func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns uint64, ok bool) {
+func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns uint32, ok bool) {
 	// read /proc/$pid/ns/net
 	//
 	// probe/endpoint/procspy/proc_linux.go supports Linux < 3.8 but we
@@ -268,7 +268,7 @@ func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
 	}
 }
 
-func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid int, networkNamespace uint64) {
+func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid int, networkNamespace uint32) {
 	t.Lock()
 	defer t.Unlock()
 
