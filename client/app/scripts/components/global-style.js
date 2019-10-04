@@ -2,6 +2,10 @@ import { createGlobalStyle } from 'styled-components';
 import { transparentize } from 'polished';
 import { borderRadius, color, fontSize } from 'weaveworks-ui-components/lib/theme/selectors';
 
+import '@fortawesome/fontawesome-free/css/all.css';
+import '@fortawesome/fontawesome-free/css/v4-shims.css';
+import 'rc-slider/dist/rc-slider.css';
+
 import ProximaNova from '../../fonts/proximanova-regular.woff';
 import RobotoMono from '../../fonts/robotomono-regular.ttf';
 
