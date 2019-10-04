@@ -1,28 +1,27 @@
-import { color } from 'weaveworks-ui-components/lib/theme/selectors';
-
+import theme from 'weaveworks-ui-components/lib/theme';
 import defaultTheme from './default';
 
 const contrastTheme = {
   ...defaultTheme,
 
   /* contrast overrides */
-  backgroundColor: color('white'),
-  backgroundDarkerColor: color('purple200'),
-  backgroundDarkerSecondaryColor: color('purple200'),
-  bodyBackgroundColor: color('white'),
-  borderLightColor: color('gray600'),
+  backgroundColor: theme.colors.white,
+  backgroundDarkerColor: theme.colors.purple200,
+  backgroundDarkerSecondaryColor: theme.colors.purple200,
+  bodyBackgroundColor: theme.colors.white,
+  borderLightColor: theme.colors.gray600,
   btnOpacityDefault: 1,
   btnOpacityDisabled: 0.4,
   btnOpacitySelected: 1,
-  edgeColor: color('black'),
+  edgeColor: theme.colors.black,
   edgeHighlightOpacity: 0.3,
-  labelBackgroundColor: color('white'),
+  labelBackgroundColor: theme.colors.white,
   linkOpacityDefault: 1,
   nodeElementsInBackgroundOpacity: 0.4,
-  textColor: color('black'),
-  textDarkerColor: color('black'),
-  textSecondaryColor: color('black'),
-  textTertiaryColor: color('black'),
+  textColor: theme.colors.black,
+  textDarkerColor: theme.colors.black,
+  textSecondaryColor: theme.colors.black,
+  textTertiaryColor: theme.colors.black,
 };
 
 export default contrastTheme;
