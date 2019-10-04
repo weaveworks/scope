@@ -2,6 +2,9 @@ import { createGlobalStyle } from 'styled-components';
 import { transparentize } from 'polished';
 import { borderRadius, color, fontSize } from 'weaveworks-ui-components/lib/theme/selectors';
 
+import ProximaNova from '../../fonts/proximanova-regular.woff';
+import RobotoMono from '../../fonts/robotomono-regular.ttf';
+
 const scopeTheme = key => props => props.theme.scope[key];
 
 const hideable = props => `
@@ -110,14 +113,25 @@ const GlobalStyle = createGlobalStyle`
   /* stylelint-disable sh-waqar/declaration-use-variable */
   @font-face {
     font-family: 'proxima-nova';
-    src: url('../fonts/proximanova-regular.woff');
+    src: url(${ProximaNova});
   }
 
   @font-face {
     font-family: 'Roboto Mono';
-    src: url('../fonts/robotomono-regular.ttf');
+    src: url(${RobotoMono});
   }
   /* stylelint-enable sh-waqar/declaration-use-variable */
+
+  /* Extendable classes */
+  .hideable { ${hideable}; }
+  .palable { ${palable}; }
+  .blinkable { ${blinkable}; }
+  .colorable { ${colorable}; }
+  .truncate { ${truncate}; }
+  .shadow-2 { ${shadow2}; }
+  .btn-opacity { ${btnOpacity}; }
+  .fully-pannable { ${fullyPannable}; }
+  .overlay-wrapper { ${overlayWrapper}; }
 
   a {
     text-decoration: none;
@@ -195,7 +209,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     h2 {
-      font-size: ${fontSize('large')};
+      font-size: ${fontSize('extraLarge')};
       line-height: 40px;
       padding-top: 8px;
       margin-bottom: 12px;
@@ -514,7 +528,7 @@ const GlobalStyle = createGlobalStyle`
 
   .node-details {
     height: 100%;
-    width: ${scopeTheme('detailsWindowPaddingLeft')};
+    width: ${scopeTheme('detailsWindowWidth')};
     display: flex;
     flex-flow: column;
     margin-bottom: 12px;
@@ -568,13 +582,13 @@ const GlobalStyle = createGlobalStyle`
         }
 
         &:hover {
-          border-color: transparentize(${color('white')}, 0.4);
+          border-color: ${props => transparentize(0.4, props.theme.colors.white)};
         }
       }
     }
 
     .match {
-      background-color: transparentize(${color('blue400')}, 0.7);
+      background-color: ${props => transparentize(0.7, props.theme.colors.blue400)};
       border: 1px solid ${color('blue400')};
     }
 
@@ -938,10 +952,10 @@ const GlobalStyle = createGlobalStyle`
     &-metric-box {
       ${palable};
       cursor: pointer;
-      fill: transparentize(${color('gray600')}, 0.6);
+      fill: ${props => transparentize(0.6, props.theme.colors.gray600)};
 
       &-info {
-        background-color: transparentize(${color('white')}, 0.4);
+        background-color: ${props => transparentize(0.4, props.theme.colors.white)};
         border-radius: ${borderRadius('soft')};
         cursor: inherit;
         padding: 5px;
@@ -956,7 +970,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     &-layer-topology {
-      background-color: transparentize(${color('gray50')}, 0.05);
+      background-color: ${props => transparentize(0.05, props.theme.colors.gray50)};
       border-radius: ${borderRadius('soft')};
       border: 1px solid ${color('gray200')};
       color: ${scopeTheme('textTertiaryColor')};
@@ -991,7 +1005,7 @@ const GlobalStyle = createGlobalStyle`
     border: 1px solid transparent;
     border-radius: ${borderRadius('soft')};
     &:hover {
-      border-color: transparentize(${color('white')}, 0.4);
+      border-color: ${props => transparentize(0.4, props.theme.colors.white)};
     }
     &-pending, &-pending:hover {
       opacity: 0.2;
@@ -1067,7 +1081,7 @@ const GlobalStyle = createGlobalStyle`
 
           &:hover {
             opacity: 1;
-            border-color: transparentize(${color('white')}, 0.4);
+            border-color: ${props => transparentize(0.4, props.theme.colors.white)};
           }
         }
 
@@ -1483,7 +1497,7 @@ const GlobalStyle = createGlobalStyle`
         border-radius: ${borderRadius('soft')};
 
         &:hover {
-          border-color: transparentize(${color('purple400')}, 0.4);
+          border-color: ${props => transparentize(0.4, props.theme.colors.purple400)};
         }
       }
 
@@ -1500,7 +1514,7 @@ const GlobalStyle = createGlobalStyle`
         font-size: ${fontSize('large')};
         color: ${color('purple400')};
         padding: 4px 0;
-        border-bottom: 1px solid transparentize(${color('purple400')}, 0.9);
+        border-bottom: 1px solid ${props => transparentize(0.9, props.theme.colors.purple400)};
       }
 
       h3 {
@@ -1709,7 +1723,7 @@ const GlobalStyle = createGlobalStyle`
       because we want consistent behaviour between the
       visual and row locking logic that happens on hover. */
       tbody tr.selected, tbody tr.focused {
-        background-color: transparentize(${color('blue400')}, 0.85);
+        background-color: ${props => transparentize(0.85, props.theme.colors.blue400)};
         border: 1px solid ${color('blue400')};
       }
     }
@@ -1735,7 +1749,7 @@ const GlobalStyle = createGlobalStyle`
       }
 
       thead {
-        box-shadow: 0 4px 2px -2px transparentize(${color('black')}, 0.84);
+        box-shadow: 0 4px 2px -2px ${props => transparentize(0.84, props.theme.colors.black)};
         border-bottom: 1px solid ${color('gray600')};
       }
 
