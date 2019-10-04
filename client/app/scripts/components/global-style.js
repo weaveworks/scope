@@ -1,6 +1,6 @@
 import { createGlobalStyle } from 'styled-components';
 import { transparentize } from 'polished';
-import { color } from 'weaveworks-ui-components/lib/theme/selectors';
+import { borderRadius, color, fontSize } from 'weaveworks-ui-components/lib/theme/selectors';
 
 const scopeTheme = key => props => props.theme.scope[key];
 
@@ -125,8 +125,8 @@ const GlobalStyle = createGlobalStyle`
 
   .browsehappy {
     margin: 0.2em 0;
-    background: $color-gray-200;
-    color: $color-black;
+    background: ${color('gray200')};
+    color: ${color('black')};
     padding: 0.2em 0;
   }
 
@@ -137,7 +137,7 @@ const GlobalStyle = createGlobalStyle`
   .overlay {
     ${hideable};
 
-    background-color: $color-white;
+    background-color: ${color('white')};
     position: absolute;
     width: 100%;
     height: 100%;
@@ -145,7 +145,7 @@ const GlobalStyle = createGlobalStyle`
     left: 0;
     opacity: 0;
     pointer-events: none;
-    z-index: $layer-modal;
+    z-index: ${props => props.theme.layers.modal};
 
     &.faded {
       /* NOTE: Not sure if we should block the pointer events here.. */
@@ -164,8 +164,8 @@ const GlobalStyle = createGlobalStyle`
     background: ${scopeTheme('bodyBackgroundColor')};
     bottom: 0;
     color: ${scopeTheme('textColor')};
-    font-family: $font-family-regular;
-    font-size: $font-size-small;
+    font-family: ${props => props.theme.fontFamilies.regular};
+    font-size: ${fontSize('small')};
     height: auto;
     left: 0;
     line-height: 150%;
@@ -195,7 +195,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     h2 {
-      font-size: $font-size-extra-large;
+      font-size: ${fontSize('large')};
       line-height: 40px;
       padding-top: 8px;
       margin-bottom: 12px;
@@ -210,8 +210,8 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .header {
-    background-color: transparentize($color-purple-25, 0.2);
-    z-index: $layer-front;
+    background-color: transparentize(${color('purple25')}, 0.2);
+    z-index: ${props => props.theme.layers.front};
     padding: 15px 10px 0;
     position: relative;
     width: 100%;
@@ -270,13 +270,13 @@ const GlobalStyle = createGlobalStyle`
 
       .tooltip {
         display: none;
-        background-color: $color-black;
+        background-color: ${color('black')};
         position: absolute;
-        color: $color-white;
+        color: ${color('white')};
         text-align: center;
         line-height: 22px;
-        border-radius: $border-radius-soft;
-        font-size: $font-size-tiny;
+        border-radius: ${borderRadius('soft')};
+        font-size: ${fontSize('tiny')};
         margin-bottom: 25px;
         margin-left: -4px;
         opacity: 0.75;
@@ -285,7 +285,7 @@ const GlobalStyle = createGlobalStyle`
         left: 10px;
         transform: translateX(-50%);
         white-space: nowrap;
-        z-index: $layer-tooltip;
+        z-index: ${props => props.theme.layers.tooltip};
 
         /* Adjusted from http://www.cssarrowplease.com/ */
         &:after {
@@ -297,7 +297,7 @@ const GlobalStyle = createGlobalStyle`
           width: 0;
           position: absolute;
           border-color: transparent;
-          border-top-color: $color-black;
+          border-top-color: ${color('black')};
           margin-left: -6px;
         }
       }
@@ -320,7 +320,7 @@ const GlobalStyle = createGlobalStyle`
       margin: 0px 8px;
 
       &-label {
-        font-size: $font-size-normal;
+        font-size: ${fontSize('normal')};
       }
 
     }
@@ -328,7 +328,7 @@ const GlobalStyle = createGlobalStyle`
     .topologies-sub {
       &-item {
         &-label {
-          font-size: $font-size-small;
+          font-size: ${fontSize('small')};
         }
       }
     }
@@ -340,7 +340,7 @@ const GlobalStyle = createGlobalStyle`
       ${btnOpacity};
       cursor: pointer;
       padding: 4px 8px;
-      border-radius: $border-radius-soft;
+      border-radius: ${borderRadius('soft')};
       opacity: 0.9;
       margin-bottom: 3px;
       border: 1px solid transparent;
@@ -356,7 +356,7 @@ const GlobalStyle = createGlobalStyle`
       }
 
       &-matched {
-        border-color: $color-blue-400;
+        border-color: ${color('blue400')};
       }
 
     }
@@ -395,13 +395,13 @@ const GlobalStyle = createGlobalStyle`
       justify-content: center;
 
       .heading {
-        font-size: $font-size-normal;
+        font-size: ${fontSize('normal')};
       }
 
       &-icon {
         text-align: center;
         opacity: 0.25;
-        font-size: $overlay-icon-size;
+        font-size: ${props => props.theme.overlayIconSize};
       }
 
       li { padding-top: 5px; }
@@ -433,7 +433,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     text {
-      font-family: $font-family-regular;
+      font-family: ${props => props.theme.fontFamilies.regular};
       fill: ${scopeTheme('textSecondaryColor')};
     }
 
@@ -458,7 +458,7 @@ const GlobalStyle = createGlobalStyle`
       }
       .shadow {
         fill: none;
-        stroke: $color-blue-400;
+        stroke: ${color('blue400')};
         stroke-opacity: 0;
       }
       &.highlighted {
@@ -478,13 +478,13 @@ const GlobalStyle = createGlobalStyle`
     text-align: center;
 
     &-match {
-      font-size: $font-size-small;
+      font-size: ${fontSize('small')};
 
       &-wrapper {
         display: inline-block;
         margin: 1px;
         padding: 2px 4px;
-        background-color: transparentize($color-blue-400, 0.9);
+        background-color: transparentize(${color('blue400')}, 0.9);
       }
 
       &-label {
@@ -494,8 +494,8 @@ const GlobalStyle = createGlobalStyle`
     }
 
     &-more {
-      font-size: $font-size-tiny;
-      color: $color-blue-700;
+      font-size: ${fontSize('tiny')};
+      color: ${color('blue700')};
       margin-top: -2px;
     }
   }
@@ -504,7 +504,7 @@ const GlobalStyle = createGlobalStyle`
     &-wrapper {
       position: fixed;
       display: flex;
-      z-index: $layer-toolbar;
+      z-index: ${props => props.theme.layers.toolbar};
       right: ${scopeTheme('detailsWindowPaddingLeft')};
       top: 100px;
       bottom: 48px;
@@ -519,11 +519,11 @@ const GlobalStyle = createGlobalStyle`
     flex-flow: column;
     margin-bottom: 12px;
     padding-bottom: 2px;
-    border-radius: $border-radius-soft;
-    background-color: $color-white;
+    border-radius: ${borderRadius('soft')};
+    background-color: ${color('white')};
     ${shadow2};
     /* keep node-details above the terminal. */
-    z-index: $layer-front;
+    z-index: ${props => props.theme.layers.front};
     overflow: hidden;
 
     &:last-child {
@@ -542,40 +542,40 @@ const GlobalStyle = createGlobalStyle`
 
       .close-details {
         position: relative;
-        z-index: $layer-front;
+        z-index: ${props => props.theme.layers.front};
       }
 
       > i {
         ${btnOpacity};
         padding: 4px 5px;
         margin-left: 2px;
-        font-size: $font-size-normal;
-        color: $color-white;
+        font-size: ${fontSize('normal')};
+        color: ${color('white')};
         cursor: pointer;
         border: 1px solid transparent;
-        border-radius: $border-radius-soft;
+        border-radius: ${borderRadius('soft')};
 
         span {
-          font-family: $font-family-regular;
-          font-size: $font-size-small;
+          font-family: ${props => props.theme.fontFamilies.regular};
+          font-size: ${fontSize('small')};
           margin-left: 4px;
 
           span {
             text-transform: capitalize;
-            font-size: $font-size-normal;
+            font-size: ${fontSize('normal')};
             margin-left: 0;
           }
         }
 
         &:hover {
-          border-color: transparentize($color-white, 0.4);
+          border-color: transparentize(${color('white')}, 0.4);
         }
       }
     }
 
     .match {
-      background-color: transparentize($color-blue-400, 0.7);
-      border: 1px solid $color-blue-400;
+      background-color: transparentize(${color('blue400')}, 0.7);
+      border: 1px solid ${color('blue400')};
     }
 
     &-header {
@@ -586,7 +586,7 @@ const GlobalStyle = createGlobalStyle`
       }
 
       &-label {
-        color: $color-white;
+        color: ${color('white')};
         margin: 0;
         width: 348px;
         padding-top: 0;
@@ -606,8 +606,8 @@ const GlobalStyle = createGlobalStyle`
 
     &-relatives {
       margin-top: 4px;
-      font-size: $font-size-normal;
-      color: $color-white;
+      font-size: ${fontSize('normal')};
+      color: ${color('white')};
 
       &-link {
         ${truncate};
@@ -624,7 +624,7 @@ const GlobalStyle = createGlobalStyle`
         ${btnOpacity};
         padding: 0 2px;
         cursor: pointer;
-        font-size: $font-size-tiny;
+        font-size: ${fontSize('tiny')};
         font-weight: bold;
         display: inline-block;
         position: relative;
@@ -635,19 +635,19 @@ const GlobalStyle = createGlobalStyle`
     &-controls {
       white-space: nowrap;
       padding: 8px 0;
-      font-size: $font-size-small;
+      font-size: ${fontSize('small')};
 
       &-wrapper {
         padding: 0 36px 0 32px;
       }
 
       .node-control-button {
-        color: $color-white;
+        color: ${color('white')};
       }
 
       &-spinner {
         ${hideable};
-        color: $color-white;
+        color: ${color('white')};
         margin-left: 8px;
       }
 
@@ -657,7 +657,7 @@ const GlobalStyle = createGlobalStyle`
         width: 55%;
         padding-top: 6px;
         text-align: left;
-        color: $color-white;
+        color: ${color('white')};
 
         &-icon {
           ${blinkable};
@@ -674,7 +674,7 @@ const GlobalStyle = createGlobalStyle`
       &-loading {
         margin-top: 48px;
         text-align: center;
-        font-size: $font-size-huge;
+        font-size: ${fontSize('huge')};
         color: ${scopeTheme('textTertiaryColor')};
       }
 
@@ -682,7 +682,7 @@ const GlobalStyle = createGlobalStyle`
         margin: 16px 0;
 
         &-header {
-          font-size: $font-size-normal;
+          font-size: ${fontSize('normal')};
           color: ${scopeTheme('textTertiaryColor')};
           margin-bottom: 10px;
         }
@@ -718,12 +718,12 @@ const GlobalStyle = createGlobalStyle`
 
           &-value {
             color: ${scopeTheme('textSecondaryColor')};
-            font-size: $font-size-normal;
+            font-size: ${fontSize('normal')};
           }
 
           &-label {
             color: ${scopeTheme('textSecondaryColor')};
-            font-size: $font-size-tiny;
+            font-size: ${fontSize('tiny')};
           }
         }
       }
@@ -737,7 +737,7 @@ const GlobalStyle = createGlobalStyle`
 
         &-label {
           color: ${scopeTheme('textSecondaryColor')};
-          font-size: $font-size-small;
+          font-size: ${fontSize('small')};
         }
 
         &-sparkline {
@@ -745,7 +745,7 @@ const GlobalStyle = createGlobalStyle`
         }
 
         &-placeholder {
-          font-size: $font-size-extra-large;
+          font-size: ${fontSize('large')};
           opacity: 0.2;
           margin-bottom: 0.2em;
         }
@@ -777,7 +777,7 @@ const GlobalStyle = createGlobalStyle`
           color: ${scopeTheme('textSecondaryColor')};
           padding: 0 0.5em 0 0;
           white-space: nowrap;
-          font-size: $font-size-small;
+          font-size: ${fontSize('small')};
 
           &::after {
             content: ':';
@@ -785,7 +785,7 @@ const GlobalStyle = createGlobalStyle`
         }
 
         &-value {
-          font-size: $font-size-small;
+          font-size: ${fontSize('small')};
           flex: 1;
           /* Now required (from chrome 48) to get overflow + flexbox behaving: */
           min-width: 0;
@@ -809,7 +809,7 @@ const GlobalStyle = createGlobalStyle`
           color: ${scopeTheme('textSecondaryColor')};
           padding: 0 0.5em 0 0;
           white-space: nowrap;
-          font-size: $font-size-small;
+          font-size: ${fontSize('small')};
 
           &::after {
             content: ':';
@@ -817,7 +817,7 @@ const GlobalStyle = createGlobalStyle`
         }
 
         &-value {
-          font-size: $font-size-small;
+          font-size: ${fontSize('small')};
           flex: 1;
           /* Now required (from chrome 48) to get overflow + flexbox behaving: */
           min-width: 0;
@@ -849,7 +849,7 @@ const GlobalStyle = createGlobalStyle`
 
       &-header {
         color: ${scopeTheme('textTertiaryColor')};
-        font-size: $font-size-small;
+        font-size: ${fontSize('small')};
         text-align: right;
         padding: 0;
 
@@ -884,11 +884,11 @@ const GlobalStyle = createGlobalStyle`
       }
 
       &-node {
-        font-size: $font-size-small;
+        font-size: ${fontSize('small')};
         line-height: 1.5;
 
         &:hover, &.selected {
-          background-color: $color-white;
+          background-color: ${color('white')};
         }
 
         > * {
@@ -925,7 +925,7 @@ const GlobalStyle = createGlobalStyle`
 
         &-value-minor,
         &-value-unit {
-          font-size: $font-size-small;
+          font-size: ${fontSize('small')};
           color: ${scopeTheme('textSecondaryColor')};
         }
       }
@@ -938,29 +938,29 @@ const GlobalStyle = createGlobalStyle`
     &-metric-box {
       ${palable};
       cursor: pointer;
-      fill: transparentize($color-gray-600, 0.6);
+      fill: transparentize(${color('gray600')}, 0.6);
 
       &-info {
-        background-color: transparentize($color-white, 0.4);
-        border-radius: $border-radius-soft;
+        background-color: transparentize(${color('white')}, 0.4);
+        border-radius: ${borderRadius('soft')};
         cursor: inherit;
         padding: 5px;
 
         .wrapper {
           display: block;
 
-          &.label { font-size: $font-size-small; }
-          &.consumption { font-size: $font-size-tiny; }
+          &.label { font-size: ${fontSize('small')}; }
+          &.consumption { font-size: ${fontSize('tiny')}; }
         }
       }
     }
 
     &-layer-topology {
-      background-color: transparentize($color-gray-50, 0.05);
-      border-radius: $border-radius-soft;
-      border: 1px solid $color-gray-200;
+      background-color: transparentize(${color('gray50')}, 0.05);
+      border-radius: ${borderRadius('soft')};
+      border: 1px solid ${color('gray200')};
       color: ${scopeTheme('textTertiaryColor')};
-      font-size: $font-size-normal;
+      font-size: ${fontSize('normal')};
       font-weight: bold;
       padding-right: 20px;
       text-align: right;
@@ -976,7 +976,7 @@ const GlobalStyle = createGlobalStyle`
   .details-wrapper .node-details-table {
     &-node {
       &:hover, &.selected {
-        background-color: $color-white;
+        background-color: ${color('white')};
       }
     }
   }
@@ -985,13 +985,13 @@ const GlobalStyle = createGlobalStyle`
     ${btnOpacity};
     padding: 6px;
     margin-left: 2px;
-    font-size: $font-size-small;
+    font-size: ${fontSize('small')};
     color: ${scopeTheme('textSecondaryColor')};
     cursor: pointer;
     border: 1px solid transparent;
-    border-radius: $border-radius-soft;
+    border-radius: ${borderRadius('soft')};
     &:hover {
-      border-color: transparentize($color-white, 0.4);
+      border-color: transparentize(${color('white')}, 0.4);
     }
     &-pending, &-pending:hover {
       opacity: 0.2;
@@ -1029,20 +1029,20 @@ const GlobalStyle = createGlobalStyle`
     &-wrapper {
       width: 100%;
       height: 100%;
-      border: 0px solid $color-black;
-      color: $color-gray-50;
+      border: 0px solid ${color('black')};
+      color: ${color('gray50')};
     }
 
     &-header {
       ${truncate};
-      color: $color-white;
+      color: ${color('white')};
       height: ${scopeTheme('terminalHeaderHeight')};
       padding: 8px 24px;
       background-color: ${scopeTheme('textColor')};
       position: relative;
-      font-size: $font-size-small;
+      font-size: ${fontSize('small')};
       line-height: 28px;
-      border-top-left-radius: $border-radius-soft;
+      border-top-left-radius: ${borderRadius('soft')};
 
       &-title {
         cursor: default;
@@ -1056,23 +1056,23 @@ const GlobalStyle = createGlobalStyle`
         &-item, &-item-icon {
           ${palable};
           padding: 4px 5px;
-          color: $color-white;
+          color: ${color('white')};
           cursor: pointer;
           opacity: 0.7;
           border: 1px solid transparent;
-          border-radius: $border-radius-soft;
+          border-radius: ${borderRadius('soft')};
 
-          font-size: $font-size-tiny;
+          font-size: ${fontSize('tiny')};
           font-weight: bold;
 
           &:hover {
             opacity: 1;
-            border-color: transparentize($color-white, 0.4);
+            border-color: transparentize(${color('white')}, 0.4);
           }
         }
 
         &-item-icon {
-          font-size: $font-size-normal;
+          font-size: ${fontSize('normal')};
         }
       }
     }
@@ -1081,15 +1081,15 @@ const GlobalStyle = createGlobalStyle`
     &-app &-inner { top: 0; }
     &-inner {
       cursor: text;
-      font-family: $font-family-monospace;
+      font-family: ${props => props.theme.fontFamilies.monospace};
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
-      background-color: $color-black;
+      background-color: ${color('black')};
       padding: 8px;
       box-sizing: content-box;
-      border-bottom-left-radius: $border-radius-soft;
+      border-bottom-left-radius: ${borderRadius('soft')};
 
       .terminal {
         background-color: transparent !important;
@@ -1097,14 +1097,14 @@ const GlobalStyle = createGlobalStyle`
     }
 
     &-status-bar {
-      font-family: $font-family-regular;
+      font-family: ${props => props.theme.fontFamilies.regular};
       position: absolute;
       bottom: 16px;
       right: 16px;
       width: 50%;
       padding: 16px 16px;
       opacity: 0.8;
-      border-radius: $border-radius-soft;
+      border-radius: ${borderRadius('soft')};
 
       h3 {
         margin: 4px 0;
@@ -1112,7 +1112,7 @@ const GlobalStyle = createGlobalStyle`
 
       &-message {
         margin: 4px 0;
-        color: $color-white;
+        color: ${color('white')};
       }
 
       .link {
@@ -1123,8 +1123,8 @@ const GlobalStyle = createGlobalStyle`
     }
 
     &-cursor {
-      color: $color-black;
-      background: $color-gray-50;
+      color: ${color('black')};
+      background: ${color('gray50')};
     }
   }
 
@@ -1146,11 +1146,11 @@ const GlobalStyle = createGlobalStyle`
     text-align: right;
     cursor: pointer;
     color: ${scopeTheme('textSecondaryColor')};
-    font-size: $font-size-small;
+    font-size: ${fontSize('small')};
 
     &-icon {
       color: ${scopeTheme('textTertiaryColor')};
-      font-size: $font-size-normal;
+      font-size: ${fontSize('normal')};
       position: relative;
       top: 1px;
     }
@@ -1174,7 +1174,7 @@ const GlobalStyle = createGlobalStyle`
     &-plugin-icon {
       top: 1px;
       position: relative;
-      font-size: $font-size-large;
+      font-size: ${fontSize('large')};
       margin-right: 2px;
     }
 
@@ -1191,13 +1191,13 @@ const GlobalStyle = createGlobalStyle`
   .status {
     padding: 2px 12px;
     background-color: ${scopeTheme('bodyBackgroundColor')};
-    border-radius: $border-radius-soft;
+    border-radius: ${borderRadius('soft')};
     color: ${scopeTheme('textSecondaryColor')};
     display: inline-block;
     opacity: 0.9;
 
     &-icon {
-      font-size: $font-size-normal;
+      font-size: ${fontSize('normal')};
       position: relative;
       top: 0.125rem;
       margin-right: 0.25rem;
@@ -1211,7 +1211,7 @@ const GlobalStyle = createGlobalStyle`
   }
 
   .topology-option, .metric-selector, .network-selector, .view-mode-selector, .time-control {
-    font-size: $font-size-normal;
+    font-size: ${fontSize('normal')};
     color: ${scopeTheme('textSecondaryColor')};
     margin-bottom: 6px;
 
@@ -1220,14 +1220,14 @@ const GlobalStyle = createGlobalStyle`
     }
 
     i {
-      font-size: $font-size-tiny;
+      font-size: ${fontSize('tiny')};
       margin-left: 4px;
-      color: $color-orange-500;
+      color: ${color('orange500')};
     }
 
     &-wrapper {
       pointer-events: all;
-      border-radius: $border-radius-soft;
+      border-radius: ${borderRadius('soft')};
       border: 1px solid ${scopeTheme('backgroundDarkerColor')};
       display: inline-block;
       white-space: nowrap;
@@ -1247,19 +1247,19 @@ const GlobalStyle = createGlobalStyle`
 
       &:first-child {
         border-left: none;
-        border-top-left-radius: $border-radius-soft;
-        border-bottom-left-radius: $border-radius-soft;
+        border-top-left-radius: ${borderRadius('soft')};
+        border-bottom-left-radius: ${borderRadius('soft')};
       }
 
       &:last-child {
-        border-top-right-radius: $border-radius-soft;
-        border-bottom-right-radius: $border-radius-soft;
+        border-top-right-radius: ${borderRadius('soft')};
+        border-bottom-right-radius: ${borderRadius('soft')};
       }
     }
   }
 
   .metric-selector {
-    font-size: $font-size-small;
+    font-size: ${fontSize('small')};
     margin-top: 6px;
   }
 
@@ -1275,7 +1275,7 @@ const GlobalStyle = createGlobalStyle`
     &:first-child,
     &:last-child {
       .view-mode-selector-action {
-        border-radius: $border-radius-none;
+        border-radius: ${borderRadius('none')};
       }
     }
 
@@ -1308,7 +1308,7 @@ const GlobalStyle = createGlobalStyle`
 
       i {
         color: ${scopeTheme('textSecondaryColor')};
-        font-size: $font-size-normal;
+        font-size: ${fontSize('normal')};
       }
     }
 
@@ -1318,7 +1318,7 @@ const GlobalStyle = createGlobalStyle`
       margin-top: 5px;
       text-align: right;
       pointer-events: all;
-      font-size: $font-size-small;
+      font-size: ${fontSize('small')};
     }
   }
 
@@ -1343,7 +1343,7 @@ const GlobalStyle = createGlobalStyle`
       transition: max-height 0.5s 0s ${scopeTheme('baseEase')};
     } 
 
-    font-size: $font-size-small;
+    font-size: ${fontSize('small')};
 
     &-action {
       &-selected {
@@ -1370,7 +1370,7 @@ const GlobalStyle = createGlobalStyle`
     cursor: pointer;
     border: 1px dashed transparent;
     text-transform: none;
-    border-radius: $border-radius-soft;
+    border-radius: ${borderRadius('soft')};
     margin-left: 4px;
 
     &-wrapper {
@@ -1406,15 +1406,15 @@ const GlobalStyle = createGlobalStyle`
     bottom: 11px;
     left: 11px;
     padding: 5px;
-    font-size: $font-size-small;
-    border-radius: $border-radius-soft;
+    font-size: ${fontSize('small')};
+    border-radius: ${borderRadius('soft')};
     border: 1px solid transparent;
     pointer-events: none;
     max-width: 50%;
   }
 
   .sidebar-gridmode {
-    background-color: $color-purple-50;
+    background-color: ${color('purple50')};
     border-color: ${scopeTheme('backgroundDarkerColor')};
     opacity: 0.9;
   }
@@ -1440,8 +1440,8 @@ const GlobalStyle = createGlobalStyle`
    */
 
   .help-panel {
-    z-index: $layer-modal;
-    background-color: $color-white;
+    z-index: ${props => props.theme.layers.modal};
+    background-color: ${color('white')};
     ${shadow2};
     display: flex;
     position: relative;
@@ -1457,13 +1457,13 @@ const GlobalStyle = createGlobalStyle`
     }
 
     &-header {
-      background-color: $color-blue-400;
+      background-color: ${color('blue400')};
       padding: 12px 24px;
-      color: $color-white;
+      color: ${color('white')};
 
       h2 {
         margin: 0;
-        font-size: $font-size-large;
+        font-size: ${fontSize('large')};
       }
     }
 
@@ -1476,14 +1476,14 @@ const GlobalStyle = createGlobalStyle`
         ${btnOpacity};
         padding: 4px 5px;
         margin-left: 2px;
-        font-size: $font-size-normal;
-        color: $color-purple-400;
+        font-size: ${fontSize('normal')};
+        color: ${color('purple400')};
         cursor: pointer;
         border: 1px solid transparent;
-        border-radius: $border-radius-soft;
+        border-radius: ${borderRadius('soft')};
 
         &:hover {
-          border-color: transparentize($color-purple-400, 0.4);
+          border-color: transparentize(${color('purple400')}, 0.4);
         }
       }
 
@@ -1497,15 +1497,15 @@ const GlobalStyle = createGlobalStyle`
 
       h2 {
         line-height: 150%;
-        font-size: $font-size-large;
-        color: $color-purple-400;
+        font-size: ${fontSize('large')};
+        color: ${color('purple400')};
         padding: 4px 0;
-        border-bottom: 1px solid transparentize($color-purple-400, 0.9);
+        border-bottom: 1px solid transparentize(${color('purple400')}, 0.9);
       }
 
       h3 {
-        font-size: $font-size-normal;
-        color: $color-purple-400;
+        font-size: ${fontSize('normal')};
+        color: ${color('purple400')};
         padding: 4px 0;
       }
 
@@ -1521,15 +1521,15 @@ const GlobalStyle = createGlobalStyle`
         kbd {
           display: inline-block;
           padding: 3px 5px;
-          font-size: $font-size-tiny;
+          font-size: ${fontSize('tiny')};
           line-height: 10px;
-          color: $color-gray-600;
+          color: ${color('gray600')};
           vertical-align: middle;
-          background-color: $color-white;
-          border: solid 1px $color-gray-200;
-          border-bottom-color: $color-gray-600;
-          border-radius: $border-radius-soft;
-          box-shadow: inset 0 -1px 0 $color-gray-600;
+          background-color: ${color('white')};
+          border: solid 1px ${color('gray200')};
+          border-bottom-color: ${color('gray600')};
+          border-radius: ${borderRadius('soft')};
+          box-shadow: inset 0 -1px 0 ${color('gray600')};
         }
         div.key {
           width: 60px;
@@ -1570,7 +1570,7 @@ const GlobalStyle = createGlobalStyle`
       flex-direction: column;
 
       &-current-topology {
-        color: $color-purple-400;
+        color: ${color('purple400')};
       }
 
       &-fields {
@@ -1622,12 +1622,12 @@ const GlobalStyle = createGlobalStyle`
 
   .debug-panel {
     ${shadow2};
-    background-color: $color-white;
+    background-color: ${color('white')};
     top: 80px;
     position: absolute;
     padding: 10px;
     left: 10px;
-    z-index: $layer-modal;
+    z-index: ${props => props.theme.layers.modal};
 
     opacity: 0.3;
 
@@ -1653,7 +1653,7 @@ const GlobalStyle = createGlobalStyle`
 
   .nodes-grid {
     tr {
-      border-radius: $border-radius-soft;
+      border-radius: ${borderRadius('soft')};
     }
 
     &-label-minor {
@@ -1696,12 +1696,12 @@ const GlobalStyle = createGlobalStyle`
       }
 
       tr:nth-child(even) {
-        background: $color-gray-100;
+        background: ${color('gray100')};
       }
 
       tbody tr {
         border: 1px solid transparent;
-        border-radius: $border-radius-soft;
+        border-radius: ${borderRadius('soft')};
         cursor: pointer;
       }
 
@@ -1709,15 +1709,15 @@ const GlobalStyle = createGlobalStyle`
       because we want consistent behaviour between the
       visual and row locking logic that happens on hover. */
       tbody tr.selected, tbody tr.focused {
-        background-color: transparentize($color-blue-400, 0.85);
-        border: 1px solid $color-blue-400;
+        background-color: transparentize(${color('blue400')}, 0.85);
+        border: 1px solid ${color('blue400')};
       }
     }
 
     .scroll-body {
 
       table {
-        border-bottom: 1px solid $color-gray-200;
+        border-bottom: 1px solid ${color('gray200')};
       }
 
       thead, tbody tr {
@@ -1735,8 +1735,8 @@ const GlobalStyle = createGlobalStyle`
       }
 
       thead {
-        box-shadow: 0 4px 2px -2px transparentize($color-black, 0.84);
-        border-bottom: 1px solid $color-gray-600;
+        box-shadow: 0 4px 2px -2px transparentize(${color('black')}, 0.84);
+        border-bottom: 1px solid ${color('gray600')};
       }
 
       tbody {
@@ -1761,10 +1761,10 @@ const GlobalStyle = createGlobalStyle`
 
     &-content {
       position: relative;
-      background-color: $color-white;
+      background-color: ${color('white')};
       padding: 20px;
       ${shadow2};
-      z-index: $layer-modal;
+      z-index: ${props => props.theme.layers.modal};
     }
 
     &-item {
@@ -1781,7 +1781,7 @@ const GlobalStyle = createGlobalStyle`
     }
 
     button, a {
-      color: $color-purple-900;
+      color: ${color('purple900')};
 
       &:hover {
         color: ${scopeTheme('textColor')};
@@ -1842,7 +1842,7 @@ const GlobalStyle = createGlobalStyle`
   */
 
   .xterm {
-      font-family: $font-family-monospace;
+      font-family: ${props => props.theme.fontFamilies.monospace};
       font-feature-settings: "liga" 0;
       position: relative;
       user-select: none;
