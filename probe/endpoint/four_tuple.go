@@ -23,7 +23,7 @@ func makeFourTuple(fromAddr, toAddr net.IP, fromPort, toPort uint16) fourTuple {
 }
 
 func (t fourTuple) String() string {
-	return fmt.Sprintf("%s:%d-%s:%d", t.fromAddr, t.fromPort, t.toAddr, t.toPort)
+	return fmt.Sprintf("%s:%d-%s:%d", net.IP(t.fromAddr[:]), t.fromPort, net.IP(t.toAddr[:]), t.toPort)
 }
 
 // key is a sortable direction-independent key for tuples, used to look up a
