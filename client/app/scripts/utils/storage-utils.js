@@ -1,4 +1,5 @@
 import debug from 'debug';
+import stableStringify from 'json-stable-stringify';
 
 const log = debug('scope:storage-utils');
 
@@ -62,7 +63,7 @@ export function storageGetObject(
 
 export function storageSetObject(key, obj, storage = localSessionStorage) {
   try {
-    return storageSet(key, JSON.stringify(obj), storage);
+    return storageSet(key, stableStringify(obj), storage);
   } catch (e) {
     log('Error encoding object for key', key);
   }

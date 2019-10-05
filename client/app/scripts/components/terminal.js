@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import { debounce } from 'lodash';
 import { Terminal as Term } from 'xterm';
 import * as fit from 'xterm/lib/addons/fit/fit';
+import stableStringify from 'json-stable-stringify';
 
 import { closeTerminal } from '../actions/app-actions';
 import { getPipeStatus } from '../actions/request-actions';
@@ -230,7 +231,7 @@ class Terminal extends React.Component {
 
   handlePopoutTerminal(ev) {
     ev.preventDefault();
-    const paramString = JSON.stringify(this.props);
+    const paramString = stableStringify(this.props);
     this.props.dispatch(closeTerminal(this.getPipeId()));
     this.setState({detached: true});
 

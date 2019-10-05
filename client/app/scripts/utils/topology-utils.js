@@ -1,5 +1,6 @@
 import { endsWith } from 'lodash';
 import { Set as makeSet, List as makeList, Map as makeMap } from 'immutable';
+import stableStringify from 'json-stable-stringify';
 
 import { isPausedSelector } from '../selectors/time-travel';
 import { isResourceViewModeSelector } from '../selectors/topology';
@@ -44,7 +45,7 @@ export function buildTopologyCacheId(topologyId, topologyOptions) {
   if (topologyId) {
     id = topologyId;
     if (topologyOptions) {
-      id += JSON.stringify(topologyOptions);
+      id += stableStringify(topologyOptions);
     }
   }
   return id;
