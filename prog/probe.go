@@ -351,21 +351,23 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		}
 	}
 
-	pluginRegistry, err := plugins.NewRegistry(
-		flags.pluginsRoot,
-		pluginAPIVersion,
-		map[string]string{
-			"probe_id":    probeID,
-			"api_version": pluginAPIVersion,
-		},
-		handlerRegistry,
-		p,
-	)
-	if err != nil {
-		log.Errorf("plugins: problem loading: %v", err)
-	} else {
-		defer pluginRegistry.Close()
-		p.AddReporter(pluginRegistry)
+	if flags.pluginsRoot != "" {
+		pluginRegistry, err := plugins.NewRegistry(
+			flags.pluginsRoot,
+			pluginAPIVersion,
+			map[string]string{
+				"probe_id":    probeID,
+				"api_version": pluginAPIVersion,
+			},
+			handlerRegistry,
+			p,
+		)
+		if err != nil {
+			log.Errorf("plugins: problem loading: %v", err)
+		} else {
+			defer pluginRegistry.Close()
+			p.AddReporter(pluginRegistry)
+		}
 	}
 
 	maybeExportProfileData(flags)
