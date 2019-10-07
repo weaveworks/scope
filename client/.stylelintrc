@@ -11,6 +11,7 @@
     "color-no-hex": true,
     "function-blacklist": ["/^rgb/", "/^hsl/"],
     "no-empty-source": null,
+    "no-descending-specificity": null,
     "no-duplicate-selectors": null,
     "property-no-vendor-prefix": [true, {
       "ignoreProperties": ["tab-size", "hyphens"],

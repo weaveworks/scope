@@ -1,7 +1,12 @@
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { ThemeProvider } from 'styled-components';
+import commonTheme from 'weaveworks-ui-components/lib/theme';
+
 import Terminal from './terminal';
+import GlobalStyle from './global-style';
+import defaultTheme from '../themes/default';
 import { receiveControlPipeFromParams, hitEsc } from '../actions/app-actions';
 
 const ESC_KEY_CODE = 27;
@@ -50,16 +55,21 @@ class TerminalApp extends React.Component {
     const style = {borderTop: `4px solid ${this.state.titleBarColor}`};
 
     return (
-      <div className="terminal-app" style={style}>
-        {this.props.controlPipe && (
-        <Terminal
-          pipe={this.props.controlPipe}
-          titleBarColor={this.state.titleBarColor}
-          statusBarColor={this.state.statusBarColor}
-          title={this.state.title}
-          embedded={false} />
-        )}
-      </div>
+      <ThemeProvider theme={{...commonTheme, scope: defaultTheme }}>
+        <>
+          <GlobalStyle />
+          <div className="terminal-app" style={style}>
+            {this.props.controlPipe && (
+              <Terminal
+                pipe={this.props.controlPipe}
+                titleBarColor={this.state.titleBarColor}
+                statusBarColor={this.state.statusBarColor}
+                title={this.state.title}
+                embedded={false} />
+            )}
+          </div>
+        </>
+      </ThemeProvider>
     );
   }
 }

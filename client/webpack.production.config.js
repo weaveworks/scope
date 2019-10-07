@@ -4,7 +4,6 @@ const path = require('path');
 
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { themeVarsAsScss } = require('weaveworks-ui-components/lib/theme');
 
 const GLOBALS = {
   'process.env': {NODE_ENV: '"production"'}
@@ -118,23 +117,6 @@ module.exports = {
                 autoprefixer({
                   browsers: ['last 2 versions']
                 })
-              ]
-            }
-          },
-        ],
-      },
-      {
-        test: /\.scss$/,
-        use: [
-          { loader: 'style-loader' },
-          { loader: 'css-loader' },
-          {
-            loader: 'sass-loader',
-            options: {
-              data: themeVarsAsScss(),
-              includePaths: [
-                path.resolve(__dirname, './node_modules/xterm'),
-                path.resolve(__dirname, './node_modules/rc-slider'),
               ]
             }
           },
