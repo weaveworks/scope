@@ -1,5 +1,6 @@
 import { createSelector } from 'reselect';
 import { Map as makeMap } from 'immutable';
+import stableStringify from 'json-stable-stringify';
 
 import { isGraphViewModeSelector, activeTopologyOptionsSelector } from './topology';
 
@@ -10,7 +11,7 @@ export const activeTopologyZoomCacheKeyPathSelector = createSelector(
     state => state.get('topologyViewMode'),
     state => state.get('currentTopologyId'),
     state => state.get('pinnedMetricType'),
-    state => JSON.stringify(activeTopologyOptionsSelector(state)),
+    state => stableStringify(activeTopologyOptionsSelector(state)),
   ],
   (isGraphViewMode, viewMode, topologyId, pinnedMetricType, topologyOptions) => (
     isGraphViewMode

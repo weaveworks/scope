@@ -2,6 +2,7 @@ import debug from 'debug';
 import reqwest from 'reqwest';
 import { defaults } from 'lodash';
 import { Map as makeMap, List } from 'immutable';
+import stableStringify from 'json-stable-stringify';
 
 import {
   receiveError,
@@ -226,7 +227,7 @@ export function doResizeTty(pipeId, control, cols, rows) {
     + `${encodeURIComponent(control.nodeId)}/${control.id}`;
 
   return doRequest({
-    data: JSON.stringify({ height: rows.toString(), pipeID: pipeId, width: cols.toString() }),
+    data: stableStringify({ height: rows.toString(), pipeID: pipeId, width: cols.toString() }),
     method: 'POST',
     url,
   })

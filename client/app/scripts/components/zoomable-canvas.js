@@ -3,6 +3,7 @@ import classNames from 'classnames';
 import { connect } from 'react-redux';
 import { clamp, debounce, pick } from 'lodash';
 import { fromJS } from 'immutable';
+import stableStringify from 'json-stable-stringify';
 
 import { drag } from 'd3-drag';
 import { event as d3Event, select } from 'd3-selection';
@@ -275,7 +276,7 @@ function mapStateToProps(state, props) {
     canvasMargins: canvasMarginsSelector(state),
     forceRelayout: state.get('forceRelayout'),
     height: canvasHeightSelector(state),
-    layoutId: JSON.stringify(activeTopologyZoomCacheKeyPathSelector(state)),
+    layoutId: stableStringify(activeTopologyZoomCacheKeyPathSelector(state)),
     layoutLimits: props.limitsSelector(state),
     layoutZoomState: props.zoomStateSelector(state),
     width: canvasWidthSelector(state),

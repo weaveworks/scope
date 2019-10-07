@@ -1,13 +1,14 @@
 import {
   isPlainObject, mapValues, isEmpty, omitBy
 } from 'lodash';
+import stableStringify from 'json-stable-stringify';
 
 
 export function hashDifferenceDeep(A, B) {
   // If the elements have exactly the same content, the difference is an empty object.
   // This could fail if the objects are both hashes with different permutation of keys,
   // but this case we handle below by digging in recursively.
-  if (JSON.stringify(A) === JSON.stringify(B)) return {};
+  if (stableStringify(A) === stableStringify(B)) return {};
 
   // Otherwise, if either element is not a hash, always return the first element
   // unchanged as this function only takes difference of hash objects.

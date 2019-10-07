@@ -1,6 +1,7 @@
 import React from 'react';
 import moment from 'moment';
 import { connect } from 'react-redux';
+import stableStringify from 'json-stable-stringify';
 
 import NodeDetailsHealthItem from './node-details-health-item';
 import CloudLink from '../cloud-link';
@@ -30,7 +31,7 @@ export function appendTime(url, time) {
       return url;
     }
 
-    return `${url.substr(0, pos + cloudLinkPathEnd.length)}${encodeURIComponent(JSON.stringify(payload) || '')}`;
+    return `${url.substr(0, pos + cloudLinkPathEnd.length)}${encodeURIComponent(stableStringify(payload) || '')}`;
   }
 
   if (url.indexOf('?') !== -1) {
