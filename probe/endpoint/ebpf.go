@@ -323,6 +323,9 @@ func (t *EbpfTracker) walkConnections(f func(ebpfConnection)) {
 func (t *EbpfTracker) feedInitialConnections(conns procspy.ConnIter, seenTuples map[string]fourTuple, processesWaitingInAccept []int, hostNodeID string) {
 	t.Lock()
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
+		if conn.Proc.PID == 0 {
+			continue // no point in tracking a connection which we can't associate to a process
+		}
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
 		if _, ok := t.closedDuringInit[tuple]; !ok {
 			if _, ok := t.openConnections[tuple]; !ok {
