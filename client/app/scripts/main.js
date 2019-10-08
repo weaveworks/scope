@@ -5,6 +5,7 @@ import { Provider } from 'react-redux';
 
 import '../images/favicon.ico';
 import configureStore from './stores/configureStore';
+import Fonts from './fonts';
 
 const store = configureStore();
 
@@ -13,6 +14,7 @@ function renderApp() {
   ReactDOM.render(
     (
       <Provider store={store}>
+        <Fonts />
         <App />
       </Provider>
     ), document.getElementById('app')

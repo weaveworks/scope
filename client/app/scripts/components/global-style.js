@@ -6,9 +6,6 @@ import '@fortawesome/fontawesome-free/css/all.css';
 import '@fortawesome/fontawesome-free/css/v4-shims.css';
 import 'rc-slider/dist/rc-slider.css';
 
-import ProximaNova from '../../fonts/proximanova-regular.woff';
-import RobotoMono from '../../fonts/robotomono-regular.ttf';
-
 const scopeTheme = key => props => props.theme.scope[key];
 
 const hideable = props => `
@@ -114,18 +111,6 @@ const overlayWrapper = props => `
 `;
 
 const GlobalStyle = createGlobalStyle`
-  /* stylelint-disable sh-waqar/declaration-use-variable */
-  @font-face {
-    font-family: 'proxima-nova';
-    src: url(${ProximaNova});
-  }
-
-  @font-face {
-    font-family: 'Roboto Mono';
-    src: url(${RobotoMono});
-  }
-  /* stylelint-enable sh-waqar/declaration-use-variable */
-
   /*
   * Contain all the styles in the root div instead of having them truly
   * global, so that they don't interfere with the app they're injected into.
