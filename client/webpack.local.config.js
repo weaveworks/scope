@@ -95,8 +95,17 @@ module.exports = {
         }
       },
       {
-        test: /\.(ttf|eot|svg|ico)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+        test: /\.(ttf|eot|svg)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
         loader: 'file-loader'
+      },
+      {
+        test: /\.(ico)(\?v=[0-9]\.[0-9]\.[0-9])?$/,
+        loader: 'file-loader',
+        options: {
+          // Handle favicon.ico separately as it needs to preserve its name to be applied correctly.
+          // See https://github.com/coryhouse/react-slingshot/issues/128#issuecomment-216363426.
+          name: '[name].[ext]',
+        },
       },
       {
         test: /\.jsx?$/,
