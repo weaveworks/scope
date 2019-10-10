@@ -129,7 +129,6 @@ tests: $(CODECGEN_TARGETS) prog/staticui/staticui.go prog/externalui/externalui.
 
 lint:
 	./tools/lint
-	./tools/shell-lint tools
 
 prog/staticui/staticui.go:
 	mkdir -p prog/staticui

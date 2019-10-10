@@ -60,7 +60,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
-GO_TEST_ARGS=(-tags "${TAGS[@]}" -cpu 4 -timeout $TIMEOUT $VERBOSE)
+GO_TEST_ARGS=(-tags "${TAGS[@]}" -cpu 4 -timeout "$TIMEOUT" $VERBOSE)
 
 if [ -n "$SLOW" ] || [ -n "$CIRCLECI" ]; then
     SLOW=true
@@ -100,9 +100,6 @@ fi
 
 PACKAGE_BASE=$(go list -e ./)
 
-# Speed up the tests by compiling and installing their dependencies first.
-go test -i "${GO_TEST_ARGS[@]}" "${TESTDIRS[@]}"
-
 run_test() {
     local dir=$1
     if [ -z "$NO_GO_GET" ]; then
@@ -118,7 +115,7 @@ run_test() {
         ) | paste -s -d, -)
         local output
         output=$(mktemp "$coverdir/unit.XXXXXXXXXX")
-        local GO_TEST_ARGS_RUN=("${GO_TEST_ARGS[@]}" -coverprofile=$output -coverpkg=$COVERPKGS)
+        local GO_TEST_ARGS_RUN=("${GO_TEST_ARGS[@]}" "-coverprofile=$output" "-coverpkg=$COVERPKGS")
     fi
 
     local START
