@@ -247,6 +247,9 @@ func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns uint32, ok bool) {
 	return fourTuple{}, 0, false
 }
 
+// this callback exists to close a hole whereby we don't get a kprobe
+// for tcp_accept if accept was called before the probe started.
+// It's fairly safe to assume all such connections are incoming, but not 100%
 func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
 	if !process.IsProcInAccept("/proc", strconv.Itoa(pid)) {
 		t.tracer.RemoveFdInstallWatcher(uint32(pid))
