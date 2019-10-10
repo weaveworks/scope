@@ -329,6 +329,8 @@ func (t *EbpfTracker) feedInitialConnections(conns procspy.ConnIter, seenTuples 
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
 		if _, ok := t.closedDuringInit[tuple]; !ok {
 			if _, ok := t.openConnections[tuple]; !ok {
+				log.Debugf("initialConnection([%v], in=%v, pid=%v, netNS=%v)",
+					tuple, incoming, conn.Proc.PID, namespaceID)
 				t.openConnections[tuple] = ebpfConnection{
 					incoming:         incoming,
 					tuple:            tuple,
