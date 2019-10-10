@@ -18,7 +18,7 @@ func newMockEbpfTracker() *EbpfTracker {
 		ready: true,
 		dead:  false,
 
-		openConnections: map[fourTuple]ebpfConnection{},
+		openConnections: map[ebpfKey]ebpfDetail{},
 	}
 }
 
@@ -46,16 +46,9 @@ func TestHandleConnection(t *testing.T) {
 			NetNS: NetNS,
 		}
 
-		IPv4ConnectEbpfConnection = ebpfConnection{
-			tuple: fourTuple{
-				fromAddr: ClientAddr,
-				toAddr:   ServerAddr,
-				fromPort: ClientPort,
-				toPort:   ServerPort,
-			},
-			networkNamespace: NetNS,
-			incoming:         false,
-			pid:              int(ClientPid),
+		IPv4ConnectEbpfConnection = ebpfDetail{
+			incoming: false,
+			pid:      ClientPid,
 		}
 
 		IPv4ConnectCloseEvent = tracer.TcpV4{
@@ -82,16 +75,9 @@ func TestHandleConnection(t *testing.T) {
 			NetNS: NetNS,
 		}
 
-		IPv4AcceptEbpfConnection = ebpfConnection{
-			tuple: fourTuple{
-				fromAddr: ServerAddr,
-				toAddr:   ClientAddr,
-				fromPort: ServerPort,
-				toPort:   ClientPort,
-			},
-			networkNamespace: NetNS,
-			incoming:         true,
-			pid:              int(ServerPid),
+		IPv4AcceptEbpfConnection = ebpfDetail{
+			incoming: true,
+			pid:      ServerPid,
 		}
 
 		IPv4AcceptCloseEvent = tracer.TcpV4{
@@ -109,27 +95,30 @@ func TestHandleConnection(t *testing.T) {
 
 	mockEbpfTracker := newMockEbpfTracker()
 
-	tuple := fourTuple{ClientAddr, ServerAddr, uint16(IPv4ConnectEvent.SPort), uint16(IPv4ConnectEvent.DPort)}
+	tuple := fourTuple{ClientAddr, ServerAddr, IPv4ConnectEvent.SPort, IPv4ConnectEvent.DPort}
 	mockEbpfTracker.handleConnection(IPv4ConnectEvent.Type, tuple, int(IPv4ConnectEvent.Pid), NetNS)
-	if !reflect.DeepEqual(mockEbpfTracker.openConnections[tuple], IPv4ConnectEbpfConnection) {
+	key := makeKey(tuple, NetNS)
+	if !reflect.DeepEqual(mockEbpfTracker.openConnections[key], IPv4ConnectEbpfConnection) {
 		t.Errorf("Connection mismatch connect event\nTarget connection:%v\nParsed connection:%v",
-			IPv4ConnectEbpfConnection, mockEbpfTracker.openConnections[tuple])
+			IPv4ConnectEbpfConnection, mockEbpfTracker.openConnections[key])
 	}
 
 	tuple = fourTuple{ClientAddr, ServerAddr, uint16(IPv4ConnectCloseEvent.SPort), uint16(IPv4ConnectCloseEvent.DPort)}
 	mockEbpfTracker.handleConnection(IPv4ConnectCloseEvent.Type, tuple, int(IPv4ConnectCloseEvent.Pid), NetNS)
+	key = makeKey(tuple, NetNS)
 	if len(mockEbpfTracker.openConnections) != 0 {
 		t.Errorf("Connection mismatch close event\nConnection to close:%v",
-			mockEbpfTracker.openConnections[tuple])
+			mockEbpfTracker.openConnections[key])
 	}
 
 	mockEbpfTracker = newMockEbpfTracker()
 
 	tuple = fourTuple{ServerAddr, ClientAddr, uint16(IPv4AcceptEvent.SPort), uint16(IPv4AcceptEvent.DPort)}
 	mockEbpfTracker.handleConnection(IPv4AcceptEvent.Type, tuple, int(IPv4AcceptEvent.Pid), NetNS)
-	if !reflect.DeepEqual(mockEbpfTracker.openConnections[tuple], IPv4AcceptEbpfConnection) {
+	key = makeKey(tuple, NetNS)
+	if !reflect.DeepEqual(mockEbpfTracker.openConnections[key], IPv4AcceptEbpfConnection) {
 		t.Errorf("Connection mismatch connect event\nTarget connection:%v\nParsed connection:%v",
-			IPv4AcceptEbpfConnection, mockEbpfTracker.openConnections[tuple])
+			IPv4AcceptEbpfConnection, mockEbpfTracker.openConnections[key])
 	}
 
 	tuple = fourTuple{ServerAddr, ClientAddr, uint16(IPv4AcceptCloseEvent.SPort), uint16(IPv4AcceptCloseEvent.DPort)}
@@ -143,25 +132,22 @@ func TestHandleConnection(t *testing.T) {
 
 func TestWalkConnections(t *testing.T) {
 	var (
-		cnt           int
-		activeTuple   = fourTuple{}
-		inactiveTuple = fourTuple{}
+		cnt         int
+		activeKey   = ebpfKey{networkNamespace: 12345}
+		inactiveKey = ebpfKey{networkNamespace: 12345}
 	)
 	mockEbpfTracker := newMockEbpfTracker()
-	mockEbpfTracker.openConnections[activeTuple] = ebpfConnection{
-		tuple:            activeTuple,
-		networkNamespace: 12345,
-		incoming:         true,
-		pid:              0,
+	mockEbpfTracker.openConnections[activeKey] = ebpfDetail{
+		pid: 0,
 	}
 	mockEbpfTracker.closedConnections = append(mockEbpfTracker.closedConnections,
-		ebpfConnection{
-			tuple:            inactiveTuple,
-			networkNamespace: 12345,
-			incoming:         false,
-			pid:              0,
+		ebpfClosedConnection{
+			key: inactiveKey,
+			ebpfDetail: ebpfDetail{
+				pid: 0,
+			},
 		})
-	mockEbpfTracker.walkConnections(func(e ebpfConnection) {
+	mockEbpfTracker.walkConnections(func(k ebpfKey, e ebpfDetail) {
 		cnt++
 	})
 	if cnt != 2 {
@@ -197,7 +183,7 @@ func TestInvalidTimeStampDead(t *testing.T) {
 	event2.SPort = 1
 	event2.Timestamp = 2
 	mockEbpfTracker.TCPEventV4(event2)
-	mockEbpfTracker.walkConnections(func(e ebpfConnection) {
+	mockEbpfTracker.walkConnections(func(ebpfKey, ebpfDetail) {
 		cnt++
 	})
 	if cnt != 2 {
@@ -209,7 +195,7 @@ func TestInvalidTimeStampDead(t *testing.T) {
 	cnt = 0
 	event.Timestamp = 1
 	mockEbpfTracker.TCPEventV4(event)
-	mockEbpfTracker.walkConnections(func(e ebpfConnection) {
+	mockEbpfTracker.walkConnections(func(ebpfKey, ebpfDetail) {
 		cnt++
 	})
 	if cnt != 2 {

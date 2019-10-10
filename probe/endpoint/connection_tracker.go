@@ -172,8 +172,8 @@ func feedEBPFInitialState(conf ReporterConfig, ebpfTracker *EbpfTracker) {
 }
 
 func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID string) error {
-	t.ebpfTracker.walkConnections(func(e ebpfConnection) {
-		t.addConnection(rpt, hostNodeID, uint(e.pid), e.incoming, e.tuple, e.networkNamespace)
+	t.ebpfTracker.walkConnections(func(key ebpfKey, e ebpfDetail) {
+		t.addConnection(rpt, hostNodeID, uint(e.pid), e.incoming, key.fourTuple, key.networkNamespace)
 	})
 	return nil
 }
