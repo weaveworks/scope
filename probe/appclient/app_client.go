@@ -192,6 +192,9 @@ func (c *appClient) Details() (xfer.Details, error) {
 	if err != nil {
 		return result, err
 	}
+	if resp.StatusCode != http.StatusOK {
+		return result, fmt.Errorf("Error response from %s: %s", c.url("/api"), resp.Status)
+	}
 	defer resp.Body.Close()
 	if err := codec.NewDecoder(resp.Body, &codec.JsonHandle{}).Decode(&result); err != nil {
 		return result, err
