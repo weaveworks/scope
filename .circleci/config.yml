@@ -189,7 +189,7 @@ jobs:
           docker load -i cloud-agent.tar
       - run: |
           test -z "${DOCKER_USER}" && exit 0
-          docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+          docker login -u $DOCKER_USER -p $DOCKER_PASS
           for IMAGE in $IMAGES; do
               test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" = "weaveworks" || docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest
               docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
