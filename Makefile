@@ -153,6 +153,7 @@ $(SCOPE_UI_TOOLCHAIN_UPTODATE): client/yarn.lock $(SCOPE_UI_BUILD_UPTODATE)
 			-v $(shell pwd)/client:/home/weave/scope/client \
 			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 			-w /home/weave/scope/client \
+			-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 			$(SCOPE_UI_BUILD_IMAGE) yarn install; \
 	fi
 	touch $(SCOPE_UI_TOOLCHAIN_UPTODATE)
@@ -165,6 +166,7 @@ client/build/index.html: $(shell find client/app -type f) $(SCOPE_UI_TOOLCHAIN_U
 			-v $(shell pwd)/client:/home/weave/scope/client \
 			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 			-w /home/weave/scope/client \
+			-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 			$(SCOPE_UI_BUILD_IMAGE) yarn run build; \
 	fi
 
@@ -176,6 +178,7 @@ client/build-external/index.html: $(shell find client/app -type f) $(SCOPE_UI_TO
 			-v $(shell pwd)/client:/home/weave/scope/client \
 			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 			-w /home/weave/scope/client \
+			-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 			$(SCOPE_UI_BUILD_IMAGE) yarn run build-external; \
 	fi
 
@@ -185,6 +188,7 @@ client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_TOOLCHAIN_UPTOD
 		-v $(shell pwd)/client:/home/weave/scope/client \
 		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 		-w /home/weave/scope/client \
+		-u $(id -u ${USER}):$(id -g ${USER}) \
 		$(SCOPE_UI_BUILD_IMAGE) yarn test
 
 client-lint: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
@@ -193,6 +197,7 @@ client-lint: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 		-v $(shell pwd)/client:/home/weave/scope/client \
 		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 		-w /home/weave/scope/client \
+		-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 		$(SCOPE_UI_BUILD_IMAGE) yarn run lint
 
 client-start: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
@@ -202,6 +207,7 @@ client-start: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 		-e WEBPACK_SERVER_HOST \
 		-w /home/weave/scope/client \
+		-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 		$(SCOPE_UI_BUILD_IMAGE) yarn start
 
 client/bundle/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
@@ -211,6 +217,7 @@ client/bundle/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_TOOLC
 		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
 		-v $(shell pwd)/tmp:/home/weave/tmp \
 		-w /home/weave/scope/client \
+		-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 		$(SCOPE_UI_BUILD_IMAGE) yarn run bundle
 
 else
