@@ -49,7 +49,6 @@ func makeTestReport() report.Report {
 	r.Pod.WithShape("heptagon").WithLabel("pod", "pods").
 		AddNode(report.MakeNode("fceef9592ec3cf1a8e1d178fdd0de41a;<pod>").
 			WithTopology("pod").
-			WithLatestControls(map[string]report.NodeControlData{"kubernetes_get_logs": {Dead: true}}).
 			WithLatest("host_node_id", t1, "ip-172-20-1-168;<host>"))
 	r.Overlay.WithMetadataTemplates(report.MetadataTemplates{
 		"weave_encryption": report.MetadataTemplate{ID: "weave_encryption", Label: "Encryption", Priority: 4, From: "latest"},

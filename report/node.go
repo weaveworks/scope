@@ -1,6 +1,7 @@
 package report
 
 import (
+	"strings"
 	"time"
 
 	"github.com/weaveworks/common/mtime"
@@ -10,29 +11,27 @@ import (
 // about a given node in a given topology, along with the edges (aka
 // adjacency) emanating from the node.
 type Node struct {
-	ID             string                   `json:"id,omitempty"`
-	Topology       string                   `json:"topology,omitempty"`
-	Counters       Counters                 `json:"counters,omitempty"`
-	Sets           Sets                     `json:"sets,omitempty"`
-	Adjacency      IDList                   `json:"adjacency,omitempty"`
-	LatestControls NodeControlDataLatestMap `json:"latestControls,omitempty"`
-	Latest         StringLatestMap          `json:"latest,omitempty"`
-	Metrics        Metrics                  `json:"metrics,omitempty" deepequal:"nil==empty"`
-	Parents        Sets                     `json:"parents,omitempty"`
-	Children       NodeSet                  `json:"children,omitempty"`
+	ID        string          `json:"id,omitempty"`
+	Topology  string          `json:"topology,omitempty"`
+	Counters  Counters        `json:"counters,omitempty"`
+	Sets      Sets            `json:"sets,omitempty"`
+	Adjacency IDList          `json:"adjacency,omitempty"`
+	Latest    StringLatestMap `json:"latest,omitempty"`
+	Metrics   Metrics         `json:"metrics,omitempty" deepequal:"nil==empty"`
+	Parents   Sets            `json:"parents,omitempty"`
+	Children  NodeSet         `json:"children,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
 func MakeNode(id string) Node {
 	return Node{
-		ID:             id,
-		Counters:       MakeCounters(),
-		Sets:           MakeSets(),
-		Adjacency:      MakeIDList(),
-		LatestControls: MakeNodeControlDataLatestMap(),
-		Latest:         MakeStringLatestMap(),
-		Metrics:        Metrics{},
-		Parents:        MakeSets(),
+		ID:        id,
+		Counters:  MakeCounters(),
+		Sets:      MakeSets(),
+		Adjacency: MakeIDList(),
+		Latest:    MakeStringLatestMap(),
+		Metrics:   Metrics{},
+		Parents:   MakeSets(),
 	}
 }
 
@@ -118,28 +117,16 @@ func (n Node) WithAdjacent(a ...string) Node {
 	return n
 }
 
-// WithLatestActiveControls returns a fresh copy of n, with active controls cs added to LatestControls.
+// WithLatestActiveControls says which controls are active on this node.
+// Implemented as a delimiter-separated string in Latest
 func (n Node) WithLatestActiveControls(cs ...string) Node {
-	lcs := map[string]NodeControlData{}
-	for _, control := range cs {
-		lcs[control] = NodeControlData{}
-	}
-	return n.WithLatestControls(lcs)
+	return n.WithLatest(NodeActiveControls, mtime.Now(), strings.Join(cs, ScopeDelim))
 }
 
-// WithLatestControls returns a fresh copy of n, with lcs added to LatestControls.
-func (n Node) WithLatestControls(lcs map[string]NodeControlData) Node {
-	ts := mtime.Now()
-	for k, v := range lcs {
-		n.LatestControls = n.LatestControls.Set(k, ts, v)
-	}
-	return n
-}
-
-// WithLatestControl produces a new Node with control added to it
-func (n Node) WithLatestControl(control string, ts time.Time, data NodeControlData) Node {
-	n.LatestControls = n.LatestControls.Set(control, ts, data)
-	return n
+// ActiveControls returns a string slice with the names of active controls.
+func (n Node) ActiveControls(cs ...string) []string {
+	activeControls, _ := n.Latest.Lookup(NodeActiveControls)
+	return strings.Split(activeControls, ScopeDelim)
 }
 
 // WithParent returns a fresh copy of n, with one parent added
@@ -186,16 +173,15 @@ func (n Node) Merge(other Node) Node {
 		panic("Cannot merge nodes with different topology types: " + topology + " != " + other.Topology)
 	}
 	return Node{
-		ID:             id,
-		Topology:       topology,
-		Counters:       n.Counters.Merge(other.Counters),
-		Sets:           n.Sets.Merge(other.Sets),
-		Adjacency:      n.Adjacency.Merge(other.Adjacency),
-		LatestControls: n.LatestControls.Merge(other.LatestControls),
-		Latest:         n.Latest.Merge(other.Latest),
-		Metrics:        n.Metrics.Merge(other.Metrics),
-		Parents:        n.Parents.Merge(other.Parents),
-		Children:       n.Children.Merge(other.Children),
+		ID:        id,
+		Topology:  topology,
+		Counters:  n.Counters.Merge(other.Counters),
+		Sets:      n.Sets.Merge(other.Sets),
+		Adjacency: n.Adjacency.Merge(other.Adjacency),
+		Latest:    n.Latest.Merge(other.Latest),
+		Metrics:   n.Metrics.Merge(other.Metrics),
+		Parents:   n.Parents.Merge(other.Parents),
+		Children:  n.Children.Merge(other.Children),
 	}
 }
 
@@ -213,11 +199,6 @@ func (n *Node) UnsafeUnMerge(other Node) bool {
 	// We either keep a whole section or drop it if anything changed
 	//  - a trade-off of some extra data size in favour of faster simpler code.
 	// (in practice, very few values reported by Scope probes do change over time)
-	if n.LatestControls.EqualIgnoringTimestamps(other.LatestControls) {
-		n.LatestControls = nil
-	} else {
-		remove = false
-	}
 	if n.Latest.EqualIgnoringTimestamps(other.Latest) {
 		n.Latest = nil
 	} else {
