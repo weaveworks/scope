@@ -86,7 +86,7 @@ func (t *connectionTracker) ReportConnections(rpt *report.Report) {
 			log.Warnf("ebpf tracker died, restarting it")
 			err := t.ebpfTracker.restart()
 			if err == nil {
-				go t.getInitialState()
+				t.getInitialState()
 				t.performEbpfTrack(rpt, hostNodeID)
 				return
 			}
