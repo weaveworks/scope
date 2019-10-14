@@ -2,6 +2,57 @@ package report
 
 // Backwards-compatibility: code to read older reports and convert
 
+import (
+	"strings"
+	"time"
+
+	"github.com/ugorji/go/codec"
+)
+
+// For backwards-compatibility with probes that sent a map of latestControls data
+type bcNode struct {
+	Node
+	LatestControls map[string]nodeControlDataLatestEntry `json:"latestControls,omitempty"`
+}
+
+type nodeControlDataLatestEntry struct {
+	Timestamp time.Time       `json:"timestamp"`
+	Value     nodeControlData `json:"value"`
+}
+
+type nodeControlData struct {
+	Dead bool `json:"dead"`
+}
+
+// CodecDecodeSelf implements codec.Selfer
+func (n *Node) CodecDecodeSelf(decoder *codec.Decoder) {
+	var in bcNode
+	decoder.Decode(&in)
+	*n = in.Node
+	if len(in.LatestControls) > 0 {
+		// Convert the map into a delimited string
+		cs := make([]string, 0, len(in.LatestControls))
+		var ts time.Time
+		for name, v := range in.LatestControls {
+			if !v.Value.Dead {
+				cs = append(cs, name)
+				// Pull out the newest timestamp to use for the whole set
+				if ts.Before(v.Timestamp) {
+					ts = v.Timestamp
+				}
+			}
+		}
+		n.Latest = n.Latest.Set(NodeActiveControls, ts, strings.Join(cs, ScopeDelim))
+	}
+}
+
+type _Node Node // just so we don't recurse inside CodecEncodeSelf
+
+// CodecEncodeSelf implements codec.Selfer
+func (n *Node) CodecEncodeSelf(encoder *codec.Encoder) {
+	encoder.Encode((*_Node)(n))
+}
+
 // Upgrade returns a new report based on a report received from the old probe.
 //
 func (r Report) Upgrade() Report {

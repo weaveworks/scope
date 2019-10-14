@@ -1,12 +1,14 @@
 package report_test
 
 import (
+	"bytes"
 	"context"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/weaveworks/common/mtime"
+	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/report"
 	s_reflect "github.com/weaveworks/scope/test/reflect"
 )
@@ -69,5 +71,53 @@ func TestBiggerRoundtrip(t *testing.T) {
 	}
 	if !s_reflect.DeepEqual(r1, *r2) {
 		t.Errorf("%v != %v", r1, *r2)
+	}
+}
+
+func TestControlsCompat(t *testing.T) {
+	testData := `{
+  "Container": {
+    "nodes": {
+      "031d;<container>": {
+        "id": "031d;<container>",
+        "latest": {
+          "control_probe_id": {
+            "timestamp": "2019-10-14T14:36:01Z",
+            "value": "29b4f381044a89a3"
+          }
+        },
+        "latestControls": {
+          "docker_attach_container": {
+            "timestamp": "2019-10-14T14:36:01Z",
+            "value": {"dead": true}
+          },
+          "docker_remove_container": {
+            "timestamp": "2019-10-14T14:36:01Z",
+            "value": {"dead": false}
+          }
+        },
+        "topology": "container"
+      }
+    },
+    "shape": "hexagon"
+  }
+}`
+
+	nowTime := time.Date(2019, 10, 14, 14, 36, 1, 0, time.UTC)
+	mtime.NowForce(nowTime)
+	expected := report.MakeReport()
+	expected.Container.AddNode(report.MakeNode(report.MakeContainerNodeID("031d")).
+		WithTopology("container").
+		WithLatestActiveControls("docker_remove_container").
+		WithLatests(map[string]string{"control_probe_id": "29b4f381044a89a3"}),
+	)
+
+	buf := bytes.NewBufferString(testData)
+	rpt, err := report.MakeFromBinary(context.Background(), buf, false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !s_reflect.DeepEqual(&expected, rpt) {
+		t.Error(test.Diff(&expected, rpt))
 	}
 }
