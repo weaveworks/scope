@@ -188,7 +188,9 @@ type Report struct {
 	// Job represent all Kubernetes Job on hosts running probes.
 	Job Topology
 
-	DNS DNSRecords `json:"nodes,omitempty" deepequal:"nil==empty"`
+	DNS DNSRecords `json:"DNS,omitempty" deepequal:"nil==empty"`
+	// For release 1.11.6, probes accidentally sent DNS records labeled "nodes".
+	BugDNS DNSRecords `json:"nodes,omitempty"`
 
 	// Sampling data for this report.
 	Sampling Sampling
@@ -544,6 +546,11 @@ func (r Report) upgradeNamespaces() Report {
 }
 
 func (r Report) upgradeDNSRecords() Report {
+	// For release 1.11.6, probes accidentally sent DNS records labeled "nodes".
+	if len(r.BugDNS) > 0 {
+		r.DNS = r.BugDNS
+		r.BugDNS = nil
+	}
 	if len(r.DNS) > 0 {
 		return r
 	}
