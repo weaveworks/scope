@@ -150,17 +150,18 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 		// Create all the services first
 		for serviceName, service := range ecsInfo.Services {
 			serviceID := report.MakeECSServiceNodeID(cluster, serviceName)
+			activeControls := []string{ScaleUp}
+			// Disable ScaleDown when only 1 task is desired, since
+			// scaling down to 0 would cause the service to disappear (#2085)
+			if service.DesiredCount < 1 {
+				activeControls = append(activeControls, ScaleDown)
+			}
 			rpt.ECSService.AddNode(report.MakeNodeWith(serviceID, map[string]string{
 				Cluster:               cluster,
 				ServiceDesiredCount:   fmt.Sprintf("%d", service.DesiredCount),
 				ServiceRunningCount:   fmt.Sprintf("%d", service.RunningCount),
 				report.ControlProbeID: r.probeID,
-			}).WithLatestControls(map[string]report.NodeControlData{
-				ScaleUp: {Dead: false},
-				// We've decided for now to disable ScaleDown when only 1 task is desired,
-				// since scaling down to 0 would cause the service to disappear (#2085)
-				ScaleDown: {Dead: service.DesiredCount <= 1},
-			}))
+			}).WithLatestActiveControls(activeControls...))
 		}
 		log.Debugf("Created %v ECS service nodes", len(ecsInfo.Services))
 

@@ -389,20 +389,18 @@ func (c *container) getBaseNode() report.Node {
 	return result
 }
 
-func (c *container) controlsMap() map[string]report.NodeControlData {
+// Return a slice including all controls that should be shown on this container
+func (c *container) controls() []string {
 	paused := c.container.State.Paused
-	running := !paused && c.container.State.Running
-	stopped := !paused && !running
-	return map[string]report.NodeControlData{
-		UnpauseContainer: {Dead: !paused},
-		RestartContainer: {Dead: !running},
-		StopContainer:    {Dead: !running},
-		PauseContainer:   {Dead: !running},
-		AttachContainer:  {Dead: !running},
-		ExecContainer:    {Dead: !running},
-		StartContainer:   {Dead: !stopped},
-		RemoveContainer:  {Dead: !stopped},
+	switch {
+	case paused:
+		return []string{UnpauseContainer}
+	case c.container.State.Running:
+		return []string{RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer}
+	case !c.container.State.Running:
+		return []string{StartContainer, RemoveContainer}
 	}
+	return nil
 }
 
 func (c *container) GetNode() report.Node {
@@ -413,7 +411,6 @@ func (c *container) GetNode() report.Node {
 		ContainerState:      c.StateString(),
 		ContainerStateHuman: c.State(),
 	}
-	controls := c.controlsMap()
 
 	if !c.container.State.Paused && c.container.State.Running {
 		uptimeSeconds := int(mtime.Now().Sub(c.container.State.StartedAt) / time.Second)
@@ -427,7 +424,7 @@ func (c *container) GetNode() report.Node {
 	}
 
 	result := c.baseNode.WithLatests(latest)
-	result = result.WithLatestControls(controls)
+	result = result.WithLatestActiveControls(c.controls()...)
 	result = result.WithMetrics(c.metrics())
 	return result
 }

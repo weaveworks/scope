@@ -50,9 +50,3 @@ func (cs Controls) AddControls(controls []Control) {
 		cs[c.ID] = c
 	}
 }
-
-// NodeControlData contains specific information about the control. It
-// is used as a Value field of LatestEntry in NodeControlDataLatestMap.
-type NodeControlData struct {
-	Dead bool `json:"dead"`
-}
