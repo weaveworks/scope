@@ -17,6 +17,7 @@ import (
 
 	"github.com/paypal/ionet"
 	"github.com/ugorji/go/codec"
+	"github.com/weaveworks/common/mtime"
 
 	fs_hook "github.com/weaveworks/common/fs"
 	"github.com/weaveworks/common/test"
@@ -695,6 +696,7 @@ func pluginSpec(ID string, interfaces ...string) xfer.PluginSpec {
 
 func testReport(topology report.Topology, spec xfer.PluginSpec) report.Report {
 	rpt := report.MakeReport()
+	rpt.TS = mtime.Now()
 	set := false
 	f := func(t *report.Topology) {
 		if t.Label != topology.Label {

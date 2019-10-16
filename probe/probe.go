@@ -7,6 +7,7 @@ import (
 
 	"github.com/armon/go-metrics"
 	log "github.com/sirupsen/logrus"
+	"github.com/weaveworks/common/mtime"
 	"golang.org/x/time/rate"
 
 	"github.com/weaveworks/scope/report"
@@ -185,6 +186,7 @@ func (p *Probe) report() report.Report {
 	}
 
 	result := report.MakeReport()
+	result.TS = mtime.Now()
 	for i := 0; i < cap(reports); i++ {
 		result.UnsafeMerge(<-reports)
 	}

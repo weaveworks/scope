@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/ugorji/go/codec"
 	"github.com/weaveworks/ps"
@@ -147,31 +146,15 @@ func (m StringLatestMap) Len() int           { return len(m) }
 func (m StringLatestMap) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 func (m StringLatestMap) Less(i, j int) bool { return m[i].key < m[j].key }
 
-// sort entries and shuffle down any duplicates. NOTE: may modify contents of m.
-func (m StringLatestMap) sortedAndDeduplicated() StringLatestMap {
-	sort.Sort(m)
-	for i := 1; i < len(m); {
-		if m[i-1].key == m[i].key {
-			if m[i-1].Timestamp.Before(m[i].Timestamp) {
-				m = append(m[:i-1], m[i:]...)
-			} else {
-				m = append(m[:i], m[i+1:]...)
-			}
-		} else {
-			i++
-		}
-	}
-	return m
-}
-
-// add several entries at the same timestamp
-func (m StringLatestMap) addMapEntries(ts time.Time, n map[string]string) StringLatestMap {
+// add several entries: any values in n overwrite values with the same key in m
+func (m StringLatestMap) addMapEntries(n map[string]string) StringLatestMap {
 	out := make(StringLatestMap, len(m), len(m)+len(n))
 	copy(out, m)
 	for k, v := range n {
-		out = append(out, stringLatestEntry{key: k, Value: v, Timestamp: ts})
+		i := out.locate(k)
+		out[i] = stringLatestEntry{key: k, value: v}
 	}
-	return out.sortedAndDeduplicated()
+	return out
 }
 
 // Propagate a set of latest values from one set to another.
@@ -179,9 +162,10 @@ func (m StringLatestMap) Propagate(from StringLatestMap, keys ...string) StringL
 	out := make(StringLatestMap, len(m), len(m)+len(keys))
 	copy(out, m)
 	for _, k := range keys {
-		if v, ts, ok := from.LookupEntry(k); ok {
-			out = append(out, stringLatestEntry{key: k, Value: v, Timestamp: ts})
+		if v, ok := from.Lookup(k); ok {
+			i := out.locate(k)
+			out[i] = stringLatestEntry{key: k, value: v}
 		}
 	}
-	return out.sortedAndDeduplicated()
+	return out
 }

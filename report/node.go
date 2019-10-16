@@ -16,7 +16,7 @@ type Node struct {
 	Counters  Counters        `json:"counters,omitempty"`
 	Sets      Sets            `json:"sets,omitempty"`
 	Adjacency IDList          `json:"adjacency,omitempty"`
-	Latest    StringLatestMap `json:"latest,omitempty"`
+	Latest    StringLatestMap `json:"strs,omitempty"`
 	Metrics   Metrics         `json:"metrics,omitempty" deepequal:"nil==empty"`
 	Parents   Sets            `json:"parents,omitempty"`
 	Children  NodeSet         `json:"children,omitempty"`
@@ -68,15 +68,16 @@ func (n Node) After(other Node) bool {
 }
 
 // WithLatests returns a fresh copy of n, with Metadata m merged in.
+// Any values in m overwrite values with the same key in n
 func (n Node) WithLatests(m map[string]string) Node {
-	ts := mtime.Now()
-	n.Latest = n.Latest.addMapEntries(ts, m)
+	n.Latest = n.Latest.addMapEntries(m)
 	return n
 }
 
 // WithLatest produces a new Node with k mapped to v in the Latest metadata.
-func (n Node) WithLatest(k string, ts time.Time, v string) Node {
-	n.Latest = n.Latest.Set(k, ts, v)
+// TODO: remove backwards-compatibility time argument
+func (n Node) WithLatest(k string, _ time.Time, v string) Node {
+	n.Latest = n.Latest.Set(k, v)
 	return n
 }
 
@@ -161,6 +162,7 @@ func (n Node) WithChild(child Node) Node {
 
 // Merge mergses the individual components of a node and returns a
 // fresh node.
+// TODO: we must know at this point that n is at least as new as other
 func (n Node) Merge(other Node) Node {
 	id := n.ID
 	if id == "" {
@@ -199,7 +201,7 @@ func (n *Node) UnsafeUnMerge(other Node) bool {
 	// We either keep a whole section or drop it if anything changed
 	//  - a trade-off of some extra data size in favour of faster simpler code.
 	// (in practice, very few values reported by Scope probes do change over time)
-	if n.Latest.EqualIgnoringTimestamps(other.Latest) {
+	if n.Latest.DeepEqual(other.Latest) {
 		n.Latest = nil
 	} else {
 		remove = false

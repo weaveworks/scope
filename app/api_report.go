@@ -52,12 +52,13 @@ func makeProbeHandler(rep Reporter) CtxHandlerFunc {
 		for _, n := range rpt.Host.Nodes {
 			id, _ := n.Latest.Lookup(report.ControlProbeID)
 			hostname, _ := n.Latest.Lookup(report.HostName)
-			version, dt, _ := n.Latest.LookupEntry(report.ScopeVersion)
+			version, _ := n.Latest.Lookup(report.ScopeVersion)
 			result = append(result, probeDesc{
 				ID:       id,
 				Hostname: hostname,
 				Version:  version,
-				LastSeen: dt,
+				/* TODO: Figure out how to get a per-probe timestamp
+				LastSeen: dt, */
 			})
 		}
 		respondWith(w, http.StatusOK, result)

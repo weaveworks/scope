@@ -46,7 +46,7 @@ func CensorRawReport(rawReport Report, cfg CensorConfig) Report {
 	censoredReport.WalkTopologies(func(t *Topology) {
 		for nodeID, node := range t.Nodes {
 			if node.Latest != nil {
-				latest := make(StringLatestMap, 0, cap(node.Latest))
+				latest := make([]stringLatestEntry, 0, len(node.Latest))
 				for _, entry := range node.Latest {
 					// If environment variables are to be hidden, omit passing them to the final report.
 					if cfg.HideEnvironmentVariables && IsEnvironmentVarsEntry(entry.key) {
@@ -54,7 +54,7 @@ func CensorRawReport(rawReport Report, cfg CensorConfig) Report {
 					}
 					// If command line arguments are to be hidden, strip them away.
 					if cfg.HideCommandLineArguments && IsCommandEntry(entry.key) {
-						entry.Value = StripCommandArgs(entry.Value)
+						entry.value = StripCommandArgs(entry.value)
 					}
 					// Pass the latest entry to the final report.
 					latest = append(latest, entry)

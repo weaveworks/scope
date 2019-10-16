@@ -81,7 +81,7 @@ func (c *connectionCounters) add(dns report.DNSRecords, outgoing bool, localNode
 		srcEndpoint, dstEndpoint = localEndpoint, remoteEndpoint
 	}
 	connectionID := srcEndpoint.ID
-	if copySrcEndpointID, _, ok := srcEndpoint.Latest.LookupEntry(endpoint.CopyOf); ok {
+	if copySrcEndpointID, ok := srcEndpoint.Latest.Lookup(endpoint.CopyOf); ok {
 		connectionID = copySrcEndpointID
 	}
 	if _, ok := c.counted[connectionID]; ok {
@@ -237,7 +237,7 @@ func endpointChildIDsAndCopyMapOf(n report.Node) (report.IDList, map[string]stri
 	n.Children.ForEach(func(child report.Node) {
 		if child.Topology == report.Endpoint {
 			ids = ids.Add(child.ID)
-			if copyID, _, ok := child.Latest.LookupEntry(endpoint.CopyOf); ok {
+			if copyID, ok := child.Latest.Lookup(endpoint.CopyOf); ok {
 				copies[child.ID] = copyID
 			}
 		}

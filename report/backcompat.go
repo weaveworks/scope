@@ -3,6 +3,7 @@ package report
 // Backwards-compatibility: code to read older reports and convert
 
 import (
+	"sort"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 type bcNode struct {
 	Node
 	LatestControls map[string]nodeControlDataLatestEntry `json:"latestControls,omitempty"`
+	OldStringMap   map[string]oldStringEntry             `json:"latest,omitempty"`
 }
 
 type nodeControlDataLatestEntry struct {
@@ -24,25 +26,32 @@ type nodeControlData struct {
 	Dead bool `json:"dead"`
 }
 
+type oldStringEntry struct {
+	// Timestamp time.Time `json:"timestamp"`  // we don't look at the individual timestamps
+	Value string `json:"value"`
+}
+
 // CodecDecodeSelf implements codec.Selfer
 func (n *Node) CodecDecodeSelf(decoder *codec.Decoder) {
 	var in bcNode
 	decoder.Decode(&in)
 	*n = in.Node
+	if len(in.OldStringMap) > 0 {
+		n.Latest = make(StringLatestMap, 0, len(in.OldStringMap))
+		for key, data := range in.OldStringMap {
+			n.Latest = append(n.Latest, stringLatestEntry{key: key, value: data.Value})
+		}
+		sort.Sort(n.Latest)
+	}
 	if len(in.LatestControls) > 0 {
 		// Convert the map into a delimited string
 		cs := make([]string, 0, len(in.LatestControls))
-		var ts time.Time
 		for name, v := range in.LatestControls {
 			if !v.Value.Dead {
 				cs = append(cs, name)
-				// Pull out the newest timestamp to use for the whole set
-				if ts.Before(v.Timestamp) {
-					ts = v.Timestamp
-				}
 			}
 		}
-		n.Latest = n.Latest.Set(NodeActiveControls, ts, strings.Join(cs, ScopeDelim))
+		n.Latest = n.Latest.Set(NodeActiveControls, strings.Join(cs, ScopeDelim))
 	}
 }
 

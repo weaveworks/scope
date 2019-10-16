@@ -85,6 +85,9 @@ var topologyNames = []string{
 // stored by apps. It's composed of multiple topologies, each representing
 // a different (related, but not equivalent) view of the network.
 type Report struct {
+	// TS is the time this report was generated
+	TS time.Time
+
 	// Endpoint nodes are individual (address, port) tuples on each host.
 	// They come from inspecting active connections and can (theoretically)
 	// be traced back to a process. Edges are present.
@@ -319,6 +322,7 @@ func MakeReport() Report {
 // Copy returns a value copy of the report.
 func (r Report) Copy() Report {
 	newReport := Report{
+		TS:       r.TS,
 		DNS:      r.DNS.Copy(),
 		Sampling: r.Sampling,
 		Window:   r.Window,
@@ -335,12 +339,20 @@ func (r Report) Copy() Report {
 // Merge merges another Report into the receiver and returns the result. The
 // original is not modified.
 func (r Report) Merge(other Report) Report {
-	newReport := r.Copy()
-	newReport.UnsafeMerge(other)
+	var newReport Report
+	// Find the newer one and merge in the older one
+	if r.TS.Before(other.TS) {
+		newReport = other.Copy()
+		newReport.UnsafeMerge(r)
+	} else {
+		newReport = r.Copy()
+		newReport.UnsafeMerge(other)
+	}
 	return newReport
 }
 
 // UnsafeMerge merges another Report into the receiver. The original is modified.
+// TODO: r must be at least as new as other
 func (r *Report) UnsafeMerge(other Report) {
 	r.DNS = r.DNS.Merge(other.DNS)
 	r.Sampling = r.Sampling.Merge(other.Sampling)

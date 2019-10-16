@@ -91,9 +91,9 @@ func TestContainer(t *testing.T) {
 		test.Poll(t, 100*time.Millisecond, want, func() interface{} {
 			node := c.GetNode()
 			latest := report.MakeStringLatestMap()
-			node.Latest.ForEach(func(k string, t time.Time, v string) {
+			node.Latest.ForEach(func(k string, v string) {
 				if v != "0" && v != "" {
-					latest = latest.Set(k, t, v)
+					latest = latest.Set(k, v)
 				}
 			})
 			node.Latest = latest
@@ -132,7 +132,7 @@ func TestContainerHidingArgs(t *testing.T) {
 	const hostID = "scope"
 	c := docker.NewContainer(container1, hostID, true, false)
 	node := c.GetNode()
-	node.Latest.ForEach(func(k string, _ time.Time, v string) {
+	node.Latest.ForEach(func(k string, v string) {
 		if strings.Contains(v, "foo.bar.local") {
 			t.Errorf("Found command line argument in node")
 		}
@@ -143,7 +143,7 @@ func TestContainerHidingEnv(t *testing.T) {
 	const hostID = "scope"
 	c := docker.NewContainer(container1, hostID, false, true)
 	node := c.GetNode()
-	node.Latest.ForEach(func(k string, _ time.Time, v string) {
+	node.Latest.ForEach(func(k string, v string) {
 		if strings.Contains(v, "secret-bar") {
 			t.Errorf("Found environment variable in node")
 		}
@@ -154,7 +154,7 @@ func TestContainerHidingBoth(t *testing.T) {
 	const hostID = "scope"
 	c := docker.NewContainer(container1, hostID, true, true)
 	node := c.GetNode()
-	node.Latest.ForEach(func(k string, _ time.Time, v string) {
+	node.Latest.ForEach(func(k string, v string) {
 		if strings.Contains(v, "foo.bar.local") {
 			t.Errorf("Found command line argument in node")
 		}

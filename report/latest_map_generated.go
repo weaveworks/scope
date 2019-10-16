@@ -7,26 +7,13 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/ugorji/go/codec"
 )
 
 type stringLatestEntry struct {
-	key       string
-	Timestamp time.Time `json:"timestamp"`
-	Value     string    `json:"value"`
-	dummySelfer
-}
-
-// String returns the StringLatestEntry's string representation.
-func (e *stringLatestEntry) String() string {
-	return fmt.Sprintf("%v (%s)", e.Value, e.Timestamp.Format(time.RFC3339))
-}
-
-// Equal returns true if the supplied StringLatestEntry is equal to this one.
-func (e *stringLatestEntry) Equal(e2 *stringLatestEntry) bool {
-	return e.Timestamp.Equal(e2.Timestamp) && e.Value == e2.Value
+	key   string
+	value string
 }
 
 // StringLatestMap holds latest string instances, as a slice sorted by key.
@@ -43,6 +30,7 @@ func (m StringLatestMap) Size() int {
 }
 
 // Merge produces a StringLatestMap containing the keys from both inputs.
+// m must be at least as new as n
 // When both inputs contain the same key, the newer value is used.
 // Tries to return one of its inputs, if that already holds the correct result.
 func (m StringLatestMap) Merge(n StringLatestMap) StringLatestMap {
@@ -52,13 +40,6 @@ func (m StringLatestMap) Merge(n StringLatestMap) StringLatestMap {
 	case len(n) == 0:
 		return m
 	}
-	if len(n) > len(m) {
-		m, n = n, m //swap so m is always at least as long as n
-	} else if len(n) == len(m) && m[0].Timestamp.Before(n[0].Timestamp) {
-		// Optimise common case where we merge two nodes with the same contents
-		// sampled at different times.
-		m, n = n, m // swap equal-length arrays so first element of m is newer
-	}
 
 	i, j := 0, 0
 loop:
@@ -67,9 +48,6 @@ loop:
 		case j >= len(n):
 			return m
 		case m[i].key == n[j].key:
-			if m[i].Timestamp.Before(n[j].Timestamp) {
-				break loop
-			}
 			i++
 			j++
 		case m[i].key < n[j].key:
@@ -91,11 +69,7 @@ loop:
 			out = append(out, m[i:]...)
 			return out
 		case m[i].key == n[j].key:
-			if m[i].Timestamp.Before(n[j].Timestamp) {
-				out = append(out, n[j])
-			} else {
-				out = append(out, m[i])
-			}
+			out = append(out, m[i])
 			i++
 			j++
 		case m[i].key < n[j].key:
@@ -112,24 +86,19 @@ loop:
 
 // Lookup the value for the given key.
 func (m StringLatestMap) Lookup(key string) (string, bool) {
-	v, _, ok := m.LookupEntry(key)
-	if !ok {
-		var zero string
-		return zero, false
-	}
-	return v, true
+	return m.LookupEntry(key)
 }
 
 // LookupEntry returns the raw entry for the given key.
-func (m StringLatestMap) LookupEntry(key string) (string, time.Time, bool) {
+// name exists for backwards-compatibility
+func (m StringLatestMap) LookupEntry(key string) (string, bool) {
 	i := sort.Search(len(m), func(i int) bool {
 		return m[i].key >= key
 	})
 	if i < len(m) && m[i].key == key {
-		return m[i].Value, m[i].Timestamp, true
+		return m[i].value, true
 	}
-	var zero string
-	return zero, time.Time{}, false
+	return "", false
 }
 
 // locate the position where key should go, and make room for it if not there already
@@ -147,7 +116,7 @@ func (m *StringLatestMap) locate(key string) int {
 }
 
 // Set the value for the given key.
-func (m StringLatestMap) Set(key string, timestamp time.Time, value string) StringLatestMap {
+func (m StringLatestMap) Set(key string, value string) StringLatestMap {
 	i := sort.Search(len(m), func(i int) bool {
 		return m[i].key >= key
 	})
@@ -164,14 +133,14 @@ func (m StringLatestMap) Set(key string, timestamp time.Time, value string) Stri
 		copy(m, oldEntries[:i])
 		copy(m[i+1:], oldEntries[i:])
 	}
-	m[i] = stringLatestEntry{key: key, Timestamp: timestamp, Value: value}
+	m[i] = stringLatestEntry{key: key, value: value}
 	return m
 }
 
 // ForEach executes fn on each key value pair in the map.
-func (m StringLatestMap) ForEach(fn func(k string, timestamp time.Time, v string)) {
+func (m StringLatestMap) ForEach(fn func(k string, v string)) {
 	for _, value := range m {
-		fn(value.key, value.Timestamp, value.Value)
+		fn(value.key, value.value)
 	}
 }
 
@@ -179,7 +148,7 @@ func (m StringLatestMap) ForEach(fn func(k string, timestamp time.Time, v string
 func (m StringLatestMap) String() string {
 	buf := bytes.NewBufferString("{")
 	for _, val := range m {
-		fmt.Fprintf(buf, "%s: %s,\n", val.key, val.String())
+		fmt.Fprintf(buf, "%s: %s,\n", val.key, val.value)
 	}
 	fmt.Fprintf(buf, "}")
 	return buf.String()
@@ -191,20 +160,7 @@ func (m StringLatestMap) DeepEqual(n StringLatestMap) bool {
 		return false
 	}
 	for i := range m {
-		if m[i].key != n[i].key || !m[i].Equal(&n[i]) {
-			return false
-		}
-	}
-	return true
-}
-
-// EqualIgnoringTimestamps returns true if all keys and values are the same.
-func (m StringLatestMap) EqualIgnoringTimestamps(n StringLatestMap) bool {
-	if m.Size() != n.Size() {
-		return false
-	}
-	for i := range m {
-		if m[i].key != n[i].key || m[i].Value != n[i].Value {
+		if m[i] != n[i] {
 			return false
 		}
 	}
@@ -228,7 +184,7 @@ func (m StringLatestMap) CodecEncodeSelf(encoder *codec.Encoder) {
 		z.EncSendContainerState(containerMapKey)
 		r.EncodeString(cUTF8, val.key)
 		z.EncSendContainerState(containerMapValue)
-		val.CodecEncodeSelf(encoder)
+		r.EncodeString(cUTF8, val.value)
 	}
 	z.EncSendContainerState(containerMapEnd)
 }
@@ -253,16 +209,11 @@ func (m *StringLatestMap) CodecDecodeSelf(decoder *codec.Decoder) {
 			break
 		}
 		z.DecSendContainerState(containerMapKey)
-		var key string
-		if !r.TryDecodeAsNil() {
-			key = lookupCommonKey(r.DecodeStringAsBytes())
-		}
+		key := lookupCommonKey(r.DecodeStringAsBytes())
 		i := m.locate(key)
 		(*m)[i].key = key
 		z.DecSendContainerState(containerMapValue)
-		if !r.TryDecodeAsNil() {
-			(*m)[i].CodecDecodeSelf(decoder)
-		}
+		(*m)[i].value = r.DecodeString()
 	}
 	z.DecSendContainerState(containerMapEnd)
 }

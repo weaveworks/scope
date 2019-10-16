@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/weaveworks/common/mtime"
@@ -61,7 +60,7 @@ func (node Node) ExtractMulticolumnTable(template TableTemplate) (rows []Row) {
 	// with the given prefix. If it is possible to traverse the keys in the Latest map
 	// in a sorted order, then having LowerBoundEntry(key) and UpperBoundEntry(key)
 	// methods should be enough to implement ForEachWithPrefix(prefix) straightforwardly.
-	node.Latest.ForEach(func(key string, _ time.Time, value string) {
+	node.Latest.ForEach(func(key string, value string) {
 		if keyWithoutPrefix, ok := WithoutPrefix(key, template.Prefix); ok {
 			ids := strings.Split(keyWithoutPrefix, tableEntryKeySeparator)
 			rowID, columnID := ids[0], ids[1]
@@ -94,7 +93,7 @@ func (node Node) ExtractPropertyList(template TableTemplate) (rows []Row) {
 
 	// Itearate through the whole of our map to extract all the values with the key
 	// with the given prefix as well as the keys corresponding to the fixed table rows.
-	node.Latest.ForEach(func(key string, _ time.Time, value string) {
+	node.Latest.ForEach(func(key string, value string) {
 		if label, ok := template.FixedRows[key]; ok {
 			valuesMapByLabel[label] = value
 		} else if label, ok := WithoutPrefix(key, template.Prefix); ok {

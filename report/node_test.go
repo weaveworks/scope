@@ -23,6 +23,7 @@ func TestWithLatest(t *testing.T) {
 
 	latests1 := map[string]string{Name: "x"}
 	latests2 := map[string]string{PID: "123"}
+	latests3 := map[string]string{PID: "456"}
 	node1 := report.MakeNode("node1").WithLatests(latests1)
 	assert.Equal(t, 1, node1.Latest.Len())
 	node2 := node1.WithLatests(latests1)
@@ -31,6 +32,11 @@ func TestWithLatest(t *testing.T) {
 	assert.Equal(t, 2, node3.Latest.Len())
 	node4 := node1.WithLatests(latests2)
 	assert.Equal(t, node3, node4)
+	node5 := node3.WithLatests(latests3)
+	checkPid, ok := node5.Latest.Lookup(PID)
+	assert.Equal(t, true, ok)
+	assert.Equal(t, "456", checkPid)
+	assert.Equal(t, 2, node5.Latest.Len())
 }
 
 func TestMergeNodes(t *testing.T) {
@@ -102,41 +108,19 @@ func TestMergeNodes(t *testing.T) {
 				}),
 			},
 		},
-		"Merge conflict with rank difference": {
+		"Merge conflict": {
 			a: report.Nodes{
 				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
-			},
-			b: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{ // <-- same ID
 					Name:   "curl",
 					Domain: "node-a.local",
 				}).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
 			},
-			want: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
-			},
-		},
-		"Merge conflict with no rank difference": {
-			a: report.Nodes{
-				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
-					PID:    "23128",
-					Name:   "curl",
-					Domain: "node-a.local",
-				}),
-			},
 			b: report.Nodes{
 				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{ // <-- same ID
+					PID:    "23128",
 					Name:   "curl",
 					Domain: "node-a.local",
-				}).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
+				}),
 			},
 			want: report.Nodes{
 				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{

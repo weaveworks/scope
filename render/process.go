@@ -79,7 +79,7 @@ func hasMoreThanOneConnection(n report.Node, endpoints report.Nodes) bool {
 	firstRealEndpointID := ""
 	for _, endpointID := range n.Adjacency {
 		if ep, ok := endpoints[endpointID]; ok {
-			if copyID, _, ok := ep.Latest.LookupEntry(report.CopyOf); ok {
+			if copyID, ok := ep.Latest.Lookup(report.CopyOf); ok {
 				endpointID = copyID
 			}
 		}
