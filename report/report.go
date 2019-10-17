@@ -189,7 +189,7 @@ type Report struct {
 	Job Topology
 
 	DNS DNSRecords `json:"DNS,omitempty" deepequal:"nil==empty"`
-	// For release 1.11.6, probes accidentally sent DNS records labeled "nodes".
+	// Backwards-compatibility for an accident in commit 951629a / release 1.11.6.
 	BugDNS DNSRecords `json:"nodes,omitempty"`
 
 	// Sampling data for this report.
@@ -547,6 +547,7 @@ func (r Report) upgradeNamespaces() Report {
 
 func (r Report) upgradeDNSRecords() Report {
 	// For release 1.11.6, probes accidentally sent DNS records labeled "nodes".
+	// Translate the incorrect version here. Accident was in commit 951629a.
 	if len(r.BugDNS) > 0 {
 		r.DNS = r.BugDNS
 		r.BugDNS = nil
