@@ -191,6 +191,7 @@ func (t Topology) Merge(other Topology) Topology {
 }
 
 // UnsafeMerge merges the other object into this one, modifying the original.
+// 't' is taken to be older, and Node string values in 'other' will override
 func (t *Topology) UnsafeMerge(other Topology) {
 	if t.Shape == "" {
 		t.Shape = other.Shape
@@ -246,6 +247,7 @@ func (n Nodes) Copy() Nodes {
 }
 
 // Merge merges the other object into this one, and returns the result object.
+// 'n' is taken to be older, and Node string values in 'other' will override
 // The original is not modified.
 func (n Nodes) Merge(other Nodes) Nodes {
 	if len(other) > len(n) {
@@ -260,10 +262,11 @@ func (n Nodes) Merge(other Nodes) Nodes {
 }
 
 // UnsafeMerge merges the other object into this one, modifying the original.
+// 'n' is taken to be older, and Node string values in 'other' will override
 func (n *Nodes) UnsafeMerge(other Nodes) {
 	for k, v := range other {
 		if existing, ok := (*n)[k]; ok { // don't overwrite
-			(*n)[k] = v.Merge(existing)
+			(*n)[k] = existing.Merge(v)
 		} else {
 			(*n)[k] = v
 		}

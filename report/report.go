@@ -352,7 +352,7 @@ func (r Report) Merge(other Report) Report {
 }
 
 // UnsafeMerge merges another Report into the receiver. The original is modified.
-// TODO: r must be at least as new as other
+// 'r' is taken to be older, and Node string values in 'other' will override
 func (r *Report) UnsafeMerge(other Report) {
 	r.DNS = r.DNS.Merge(other.DNS)
 	r.Sampling = r.Sampling.Merge(other.Sampling)

@@ -30,8 +30,7 @@ func (m StringLatestMap) Size() int {
 }
 
 // Merge produces a StringLatestMap containing the keys from both inputs.
-// m must be at least as new as n
-// When both inputs contain the same key, the newer value is used.
+// When both inputs contain the same key, the value in 'n' is used.
 // Tries to return one of its inputs, if that already holds the correct result.
 func (m StringLatestMap) Merge(n StringLatestMap) StringLatestMap {
 	switch {
@@ -42,12 +41,12 @@ func (m StringLatestMap) Merge(n StringLatestMap) StringLatestMap {
 	}
 
 	i, j := 0, 0
-loop:
+loop: // go as far as we can get using elements from m
 	for i < len(m) {
 		switch {
 		case j >= len(n):
 			return m
-		case m[i].key == n[j].key:
+		case m[i] == n[j]:
 			i++
 			j++
 		case m[i].key < n[j].key:
@@ -69,7 +68,7 @@ loop:
 			out = append(out, m[i:]...)
 			return out
 		case m[i].key == n[j].key:
-			out = append(out, m[i])
+			out = append(out, n[j])
 			i++
 			j++
 		case m[i].key < n[j].key:

@@ -158,7 +158,7 @@ func (n Node) WithChild(child Node) Node {
 
 // Merge mergses the individual components of a node and returns a
 // fresh node.
-// TODO: we must know at this point that n is at least as new as other
+// 'n' is taken to be older, and string values in 'other' will override
 func (n Node) Merge(other Node) Node {
 	id := n.ID
 	if id == "" {

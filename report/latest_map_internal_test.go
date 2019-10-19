@@ -81,6 +81,14 @@ func TestLatestMapMerge(t *testing.T) {
 			want: MakeStringLatestMap().
 				Set("foo", "bar"),
 		},
+		"Identical a & b": {
+			a: MakeStringLatestMap().
+				Set("foo", "bar"),
+			b: MakeStringLatestMap().
+				Set("foo", "bar"),
+			want: MakeStringLatestMap().
+				Set("foo", "bar"),
+		},
 		"Disjoint a & b": {
 			a: MakeStringLatestMap().
 				Set("foo", "bar"),
@@ -90,20 +98,20 @@ func TestLatestMapMerge(t *testing.T) {
 				Set("foo", "bar").
 				Set("baz", "bop"),
 		},
-		"Common a & b": {
+		"Common a & b": { // b overrides a where there are keys in common
 			a: MakeStringLatestMap().
-				Set("foo", "bar"),
-			b: MakeStringLatestMap().
 				Set("foo", "baz"),
+			b: MakeStringLatestMap().
+				Set("foo", "bar"),
 			want: MakeStringLatestMap().
 				Set("foo", "bar"),
 		},
-		"Longer": {
+		"Longer": { // b overrides a where there are keys in common
 			a: MakeStringLatestMap().
-				Set("PID", "23128").
+				Set("PID", "0").
 				Set("Name", "curl"),
 			b: MakeStringLatestMap().
-				Set("PID", "0").
+				Set("PID", "23128").
 				Set("Name", "curl").
 				Set("Domain", "node-a.local"),
 			want: MakeStringLatestMap().
@@ -172,7 +180,7 @@ func TestLatestMapDecoding(t *testing.T) {
 {
   "bar": "baz",
   "foo": "bar",
-  "emptyval": 
+  "emptyval": ""
 }`
 	h := &codec.JsonHandle{}
 	decoder := codec.NewDecoder(bytes.NewBufferString(data), h)
