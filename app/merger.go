@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/spaolacci/murmur3"
 
@@ -20,7 +21,14 @@ func NewFastMerger() Merger {
 	return fastMerger{}
 }
 
+type reportsByTS []report.Report
+
+func (r reportsByTS) Len() int           { return len(r) }
+func (r reportsByTS) Swap(i, j int)      { r[i], r[j] = r[j], r[i] }
+func (r reportsByTS) Less(i, j int) bool { return r[i].TS.Before(r[j].TS) }
+
 func (fastMerger) Merge(reports []report.Report) report.Report {
+	sort.Sort(reportsByTS(reports))
 	rpt := report.MakeReport()
 	id := murmur3.New64()
 	for _, r := range reports {
