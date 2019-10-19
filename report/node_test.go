@@ -113,7 +113,7 @@ func TestMergeNodes(t *testing.T) {
 				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{
 					Name:   "curl",
 					Domain: "node-a.local",
-				}).WithLatest(PID, time.Now().Add(-1*time.Minute), "0"),
+				}).WithLatest(PID, "0"),
 			},
 			b: report.Nodes{
 				":192.168.1.1:12345": report.MakeNodeWith(":192.168.1.1:12345", map[string]string{ // <-- same ID

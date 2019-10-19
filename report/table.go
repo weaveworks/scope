@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/weaveworks/common/mtime"
 )
 
 // Table types
@@ -22,12 +21,11 @@ const (
 
 // AddPrefixMulticolumnTable appends arbitrary rows to the Node, returning a new node.
 func (node Node) AddPrefixMulticolumnTable(prefix string, rows []Row) Node {
-	now := mtime.Now()
 	for _, row := range rows {
 		// Add all the row values as separate entries
 		for columnID, value := range row.Entries {
 			key := strings.Join([]string{row.ID, columnID}, tableEntryKeySeparator)
-			node = node.WithLatest(prefix+key, now, value)
+			node = node.WithLatest(prefix+key, value)
 		}
 	}
 	return node
@@ -35,9 +33,8 @@ func (node Node) AddPrefixMulticolumnTable(prefix string, rows []Row) Node {
 
 // AddPrefixPropertyList appends arbitrary key-value pairs to the Node, returning a new node.
 func (node Node) AddPrefixPropertyList(prefix string, propertyList map[string]string) Node {
-	now := mtime.Now()
 	for label, value := range propertyList {
-		node = node.WithLatest(prefix+label, now, value)
+		node = node.WithLatest(prefix+label, value)
 	}
 	return node
 }

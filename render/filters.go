@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -189,7 +188,7 @@ func ColorConnected(r Renderer) Renderer {
 		RenderFunc: func(input Nodes) Nodes {
 			output := input.Copy()
 			for id := range connected(input.Nodes) {
-				output[id] = output[id].WithLatest(IsConnectedMark, mtime.Now(), "true")
+				output[id] = output[id].WithLatest(IsConnectedMark, "true")
 			}
 			return Nodes{Nodes: output, Filtered: input.Filtered}
 		},

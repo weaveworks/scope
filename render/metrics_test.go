@@ -3,7 +3,6 @@ package render_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/weaveworks/common/test"
 	"github.com/weaveworks/scope/render"
@@ -12,7 +11,6 @@ import (
 )
 
 func TestPropagateSingleMetrics(t *testing.T) {
-	now := time.Now()
 	for _, c := range []struct {
 		name     string
 		input    report.Node
@@ -131,7 +129,7 @@ func TestPropagateSingleMetrics(t *testing.T) {
 							"metric1": report.MakeMetric(nil),
 						}),
 					report.MakeNode("child2").
-						WithLatest(report.DoesNotMakeConnections, now, "").
+						WithLatest(report.DoesNotMakeConnections, "").
 						WithTopology(report.Container).
 						WithMetrics(report.Metrics{
 							"metric2": report.MakeMetric(nil),
@@ -150,7 +148,7 @@ func TestPropagateSingleMetrics(t *testing.T) {
 								"metric1": report.MakeMetric(nil),
 							}),
 						report.MakeNode("child2").
-							WithLatest(report.DoesNotMakeConnections, now, "").
+							WithLatest(report.DoesNotMakeConnections, "").
 							WithTopology(report.Container).
 							WithMetrics(report.Metrics{
 								"metric2": report.MakeMetric(nil),

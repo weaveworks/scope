@@ -6,7 +6,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
 	"github.com/weaveworks/scope/probe/docker"
@@ -283,7 +282,7 @@ func (r *Tagger) Tag(rpt report.Report) (report.Report, error) {
 
 		// Tag the pause containers with "does-not-make-connections"
 		if isPauseContainer(n, rpt) {
-			n = n.WithLatest(report.DoesNotMakeConnections, mtime.Now(), "")
+			n = n.WithLatest(report.DoesNotMakeConnections, "")
 		}
 
 		rpt.Container.Nodes[id] = n.WithParent(report.Pod, report.MakePodNodeID(uid))

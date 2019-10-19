@@ -2,9 +2,6 @@ package report
 
 import (
 	"strings"
-	"time"
-
-	"github.com/weaveworks/common/mtime"
 )
 
 // Node describes a superset of the metadata that probes can collect
@@ -75,8 +72,7 @@ func (n Node) WithLatests(m map[string]string) Node {
 }
 
 // WithLatest produces a new Node with k mapped to v in the Latest metadata.
-// TODO: remove backwards-compatibility time argument
-func (n Node) WithLatest(k string, _ time.Time, v string) Node {
+func (n Node) WithLatest(k string, v string) Node {
 	n.Latest = n.Latest.Set(k, v)
 	return n
 }
@@ -121,7 +117,7 @@ func (n Node) WithAdjacent(a ...string) Node {
 // WithLatestActiveControls says which controls are active on this node.
 // Implemented as a delimiter-separated string in Latest
 func (n Node) WithLatestActiveControls(cs ...string) Node {
-	return n.WithLatest(NodeActiveControls, mtime.Now(), strings.Join(cs, ScopeDelim))
+	return n.WithLatest(NodeActiveControls, strings.Join(cs, ScopeDelim))
 }
 
 // ActiveControls returns a string slice with the names of active controls.

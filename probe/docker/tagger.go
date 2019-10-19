@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe/process"
 	"github.com/weaveworks/scope/report"
 )
@@ -115,7 +114,7 @@ func (t *Tagger) tag(tree process.Tree, topology *report.Topology) {
 			continue
 		}
 
-		node = node.WithLatest(ContainerID, mtime.Now(), c.ID())
+		node = node.WithLatest(ContainerID, c.ID())
 		node = node.WithParent(report.Container, report.MakeContainerNodeID(c.ID()))
 
 		// If we can work out the image name, add a parent tag for it

@@ -40,18 +40,18 @@ func makeTestReport() report.Report {
 		WithTopology("endpoint").
 		WithSet("snooped_dns_names", report.MakeStringSet("ip-172-20-1-168.ec2.internal")).
 		WithLatestActiveControls("docker_pause_container").
-		WithLatest("addr", t1, "127.0.0.1"),
+		WithLatest("addr", "127.0.0.1"),
 	)
 	r.Process.WithShape("square").WithLabel("process", "processes").
 		AddNode(report.MakeNode("ip-172-20-1-168;10446").
 			WithTopology("process").
 			WithParents(report.MakeSets().Add("host", report.MakeStringSet("ip-172-20-1-168;<host>"))).
-			WithLatest("pid", t1, "10446").
+			WithLatest("pid", "10446").
 			WithMetrics(report.Metrics{"process_cpu_usage_percent": report.MakeMetric([]report.Sample{{Timestamp: t1, Value: 0.1}, {Timestamp: t2, Value: 0.2}})}))
 	r.Pod.WithShape("heptagon").WithLabel("pod", "pods").
 		AddNode(report.MakeNode("fceef9592ec3cf1a8e1d178fdd0de41a;<pod>").
 			WithTopology("pod").
-			WithLatest("host_node_id", t1, "ip-172-20-1-168;<host>"))
+			WithLatest("host_node_id", "ip-172-20-1-168;<host>"))
 	r.Overlay.WithMetadataTemplates(report.MetadataTemplates{
 		"weave_encryption": report.MetadataTemplate{ID: "weave_encryption", Label: "Encryption", Priority: 4, From: "latest"},
 	}).

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/weaveworks/common/mtime"
-
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 	"github.com/weaveworks/scope/test/utils"
@@ -91,7 +89,7 @@ var (
 					WithSets(report.MakeSets().
 						Add(report.DockerContainerIPs, report.MakeStringSet(pauseContainerIP)).
 						Add(report.DockerContainerIPsWithScopes, report.MakeStringSet(report.MakeAddressNodeID("", pauseContainerIP))),
-					).WithTopology(report.Container).WithLatest(report.DoesNotMakeConnections, mtime.Now(), ""),
+					).WithTopology(report.Container).WithLatest(report.DoesNotMakeConnections, ""),
 			},
 		},
 		Host: report.Topology{

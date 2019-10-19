@@ -84,22 +84,22 @@ func (r *Reporter) processTopology() (report.Topology, error) {
 		pidstr := strconv.Itoa(p.PID)
 		nodeID := report.MakeProcessNodeID(r.scope, pidstr)
 		node := report.MakeNode(nodeID)
-		node = node.WithLatest(PID, now, pidstr)
-		node = node.WithLatest(Threads, now, strconv.Itoa(p.Threads))
+		node = node.WithLatest(PID, pidstr)
+		node = node.WithLatest(Threads, strconv.Itoa(p.Threads))
 		if p.Name != "" {
-			node = node.WithLatest(Name, now, p.Name)
+			node = node.WithLatest(Name, p.Name)
 		}
 
 		if p.Cmdline != "" {
 			if r.noCommandLineArguments {
-				node = node.WithLatest(Cmdline, now, report.StripCommandArgs(p.Cmdline))
+				node = node.WithLatest(Cmdline, report.StripCommandArgs(p.Cmdline))
 			} else {
-				node = node.WithLatest(Cmdline, now, p.Cmdline)
+				node = node.WithLatest(Cmdline, p.Cmdline)
 			}
 		}
 
 		if p.PPID > 0 {
-			node = node.WithLatest(PPID, now, strconv.Itoa(p.PPID))
+			node = node.WithLatest(PPID, strconv.Itoa(p.PPID))
 		}
 
 		var metrics = report.Metrics{
