@@ -317,8 +317,11 @@ func (c *awsCollector) getReportKeys(ctx context.Context, userid string, start, 
 	return reportKeys, nil
 }
 
-func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]report.Report, error) {
-	missing := reportKeys
+func (c *awsCollector) getReports(ctx context.Context, reportKeys []keyInfo) ([]report.Report, error) {
+	var missing []string
+	for _, k := range reportKeys {
+		missing = append(missing, k.key)
+	}
 
 	stores := []ReportStore{c.inProcess}
 	if c.cfg.MemcacheClient != nil {
@@ -336,13 +339,19 @@ func (c *awsCollector) getReports(ctx context.Context, reportKeys []string) ([]r
 		if err != nil {
 			log.Warningf("Error fetching from cache: %v", err)
 		}
-		for key, report := range found {
-			if c.cfg.MaxTopNodes > 0 {
-				report = report.DropTopologiesOver(c.cfg.MaxTopNodes)
+		for _, k := range reportKeys {
+			if report, ok := found[k.key]; ok {
+				// Backwards-compatibility: if the report timestamp is blank, add the one from the index
+				if report.TS.IsZero() {
+					report.TS = time.Unix(k.ts/1000, (k.ts%1000)*1000000)
+				}
+				if c.cfg.MaxTopNodes > 0 {
+					report = report.DropTopologiesOver(c.cfg.MaxTopNodes)
+				}
+				report = report.Upgrade()
+				c.inProcess.StoreReport(k.key, report)
+				reports = append(reports, report)
 			}
-			report = report.Upgrade()
-			c.inProcess.StoreReport(key, report)
-			reports = append(reports, report)
 		}
 		if len(missing) == 0 {
 			return reports, nil
@@ -419,10 +428,10 @@ func (c *awsCollector) reportForQuantum(ctx context.Context, userid string, repo
 
 // Find the keys relating to this time period then fetch from memcached and/or S3
 func (c *awsCollector) reportsForKeysInRange(ctx context.Context, reportKeys []keyInfo, start, end int64) ([]report.Report, error) {
-	var keys []string
+	var keys []keyInfo
 	for _, k := range reportKeys {
 		if k.ts >= start && k.ts < end {
-			keys = append(keys, k.key)
+			keys = append(keys, k)
 		}
 	}
 	if span := opentracing.SpanFromContext(ctx); span != nil {
