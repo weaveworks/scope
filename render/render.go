@@ -195,7 +195,7 @@ func (ret *joinResults) addUnmappedChild(m report.Node, id string, topology stri
 	}
 	result.Children.UnsafeAdd(m)
 	if m.Topology != report.Endpoint { // optimisation: we never look at endpoint counts
-		result.Counters = result.Counters.Add(m.Topology, 1)
+		result = result.WithCounter(m.Topology, 1)
 	}
 	ret.nodes[id] = result
 }

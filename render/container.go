@@ -304,8 +304,8 @@ func MapContainer2ContainerImage(n report.Node) report.Node {
 	// Add container id key to the counters, which will later be
 	// counted to produce the minor label
 	id := report.MakeContainerImageNodeID(imageID)
-	result := NewDerivedNode(id, n).WithTopology(report.ContainerImage)
-	result.Counters = result.Counters.Add(n.Topology, 1)
+	result := NewDerivedNode(id, n).WithTopology(report.ContainerImage).
+		WithCounter(n.Topology, 1)
 	return result
 }
 
@@ -354,8 +354,8 @@ func MapContainer2Hostname(n report.Node) report.Node {
 		return report.Node{}
 	}
 
-	node := NewDerivedNode(id, n).WithTopology(containerHostnameTopology)
-	node.Counters = node.Counters.Add(n.Topology, 1)
+	node := NewDerivedNode(id, n).WithTopology(containerHostnameTopology).
+		WithCounter(n.Topology, 1)
 	return node
 }
 

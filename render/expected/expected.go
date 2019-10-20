@@ -123,7 +123,7 @@ var (
 	RenderedProcessNames = report.Nodes{
 		fixture.Client1Name: processNameNode(fixture.Client1Name, fixture.ServerName).
 			WithLatests(map[string]string{process.Name: fixture.Client1Name}).
-			WithCounters(map[string]int{report.Process: 2}).
+			WithCounter(report.Process, 2).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],
@@ -133,7 +133,7 @@ var (
 
 		fixture.ServerName: processNameNode(fixture.ServerName).
 			WithLatests(map[string]string{process.Name: fixture.ServerName}).
-			WithCounters(map[string]int{report.Process: 1}).
+			WithCounter(report.Process, 1).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
@@ -190,9 +190,7 @@ var (
 			WithLatests(map[string]string{
 				docker.ContainerHostname: fixture.ClientContainerHostname,
 			}).
-			WithCounters(map[string]int{
-				report.Container: 1,
-			}).
+			WithCounter(report.Container, 1).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],
@@ -226,9 +224,7 @@ var (
 				docker.ImageID:    fixture.ClientContainerImageID,
 				docker.ImageName:  fixture.ClientContainerImageName,
 			}).
-			WithCounters(map[string]int{
-				report.Container: 1,
-			}).
+			WithCounter(report.Container, 1).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.Client54001NodeID],
 				RenderedEndpoints[fixture.Client54002NodeID],

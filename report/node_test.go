@@ -130,33 +130,31 @@ func TestMergeNodes(t *testing.T) {
 				}),
 			},
 		},
-		"Counters": {
-			a: report.Nodes{
-				"1": report.MakeNode("1").WithCounters(map[string]int{
-					"a": 13,
-					"b": 57,
-					"c": 89,
-				}),
-			},
-			b: report.Nodes{
-				"1": report.MakeNode("1").WithCounters(map[string]int{
-					"a": 78,
-					"b": 3,
-					"d": 47,
-				}),
-			},
-			want: report.Nodes{
-				"1": report.MakeNode("1").WithCounters(map[string]int{
-					"a": 91,
-					"b": 60,
-					"c": 89,
-					"d": 47,
-				}),
-			},
-		},
 	} {
 		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s: %s", name, test.Diff(c.want, have))
 		}
+	}
+}
+
+func TestCounters(t *testing.T) {
+	a := report.MakeNode("1").
+		WithCounter("a", 13).
+		WithCounter("b", 57).
+		WithCounter("c", 89)
+
+	b := a.
+		WithCounter("a", 78).
+		WithCounter("b", 3).
+		WithCounter("d", 47)
+
+	want := report.MakeNode("1").
+		WithCounter("a", 91).
+		WithCounter("b", 60).
+		WithCounter("c", 89).
+		WithCounter("d", 47)
+
+	if have := b; !reflect.DeepEqual(want, have) {
+		t.Errorf("Counters: %s", test.Diff(want, have))
 	}
 }
