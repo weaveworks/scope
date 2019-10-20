@@ -71,7 +71,7 @@ func fromSets(n Node, key string) (string, bool) {
 }
 
 func fromCounters(n Node, key string) (string, bool) {
-	val, ok := n.Counters.Lookup(key)
+	val, ok := n.LookupCounter(key)
 	return strconv.Itoa(val), ok
 }
 

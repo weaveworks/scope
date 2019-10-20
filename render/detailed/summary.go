@@ -164,7 +164,7 @@ func MakeNodeSummary(rc RenderContext, n report.Node) (NodeSummary, bool) {
 		Adjacency:        n.Adjacency,
 	}
 	// Only include metadata, metrics, tables when it's not a group node
-	if _, ok := n.Counters.Lookup(n.Topology); !ok {
+	if _, ok := n.LookupCounter(n.Topology); !ok {
 		if topology, ok := rc.Topology(n.Topology); ok {
 			summary.Metadata = topology.MetadataTemplates.MetadataRows(n)
 			summary.Metrics = topology.MetricTemplates.MetricRows(n)
@@ -292,7 +292,7 @@ func containerImageNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSu
 		// heuristic regexp match we cannot tell the difference.
 		base.Label, _ = report.ParseContainerImageNodeID(n.ID)
 	}
-	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
+	base.LabelMinor = pluralize(n, report.Container, "container", "containers")
 	base.Rank = base.Label
 	base.Stack = true
 	return base
@@ -314,7 +314,7 @@ func addKubernetesLabelAndRank(base BasicNodeSummary, n report.Node) BasicNodeSu
 
 func podNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary {
 	base = addKubernetesLabelAndRank(base, n)
-	base.LabelMinor = pluralize(n.Counters, report.Container, "container", "containers")
+	base.LabelMinor = pluralize(n, report.Container, "container", "containers")
 	return base
 }
 
@@ -331,7 +331,7 @@ func podGroupNodeSummary(base BasicNodeSummary, n report.Node) BasicNodeSummary 
 	base.Stack = true
 	// NB: pods are the highest aggregation level for which we display
 	// counts.
-	count := pluralize(n.Counters, report.Pod, "pod", "pods")
+	count := pluralize(n, report.Pod, "pod", "pods")
 	if typeName, ok := podGroupNodeTypeName[n.Topology]; ok {
 		base.LabelMinor = fmt.Sprintf("%s of %s", typeName, count)
 	} else {
@@ -423,7 +423,7 @@ func groupNodeSummary(base BasicNodeSummary, r report.Report, n report.Node) Bas
 			base.Shape = t.GetShape()
 			base.Tag = t.Tag
 			if t.Label != "" {
-				base.LabelMinor = pluralize(n.Counters, topology, t.Label, t.LabelPlural)
+				base.LabelMinor = pluralize(n, topology, t.Label, t.LabelPlural)
 			}
 		}
 	}
@@ -431,8 +431,8 @@ func groupNodeSummary(base BasicNodeSummary, r report.Report, n report.Node) Bas
 	return base
 }
 
-func pluralize(counters report.Counters, key, singular, plural string) string {
-	c, ok := counters.Lookup(key)
+func pluralize(n report.Node, key, singular, plural string) string {
+	c, ok := n.LookupCounter(key)
 	if !ok {
 		c = 0
 	}

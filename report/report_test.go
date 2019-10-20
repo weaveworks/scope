@@ -57,10 +57,8 @@ func TestNode(t *testing.T) {
 		}
 	}
 	{
-		node := report.MakeNode("foo").WithCounters(
-			map[string]int{"foo": 1},
-		)
-		if value, _ := node.Counters.Lookup("foo"); value != 1 {
+		node := report.MakeNode("foo").AddCounter("foo", 1)
+		if value, _ := node.LookupCounter("foo"); value != 1 {
 			t.Errorf("want foo, have %d", value)
 		}
 	}

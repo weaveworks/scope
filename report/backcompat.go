@@ -13,6 +13,7 @@ import (
 type bcNode struct {
 	Node
 	LatestControls map[string]nodeControlDataLatestEntry `json:"latestControls,omitempty"`
+	Counters       map[string]int                        `json:"counters,omitempty"`
 }
 
 type nodeControlDataLatestEntry struct {
@@ -43,6 +44,10 @@ func (n *Node) CodecDecodeSelf(decoder *codec.Decoder) {
 			}
 		}
 		n.Latest = n.Latest.Set(NodeActiveControls, ts, strings.Join(cs, ScopeDelim))
+	}
+	// Counters were not generated in the Scope probe, but decode them here in case a plugin used them.
+	for k, v := range in.Counters {
+		*n = n.AddCounter(k, v)
 	}
 }
 

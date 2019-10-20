@@ -326,7 +326,7 @@ func MapContainer2Hostname(n report.Node) report.Node {
 		return report.Node{}
 	}
 
-	node := NewDerivedNode(id, n).WithTopology(containerHostnameTopology)
-	node.Counters = node.Counters.Add(n.Topology, 1)
+	node := NewDerivedNode(id, n).WithTopology(containerHostnameTopology).
+		AddCounter(n.Topology, 1)
 	return node
 }

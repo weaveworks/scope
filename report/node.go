@@ -1,6 +1,7 @@
 package report
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,7 +14,6 @@ import (
 type Node struct {
 	ID        string          `json:"id,omitempty"`
 	Topology  string          `json:"topology,omitempty"`
-	Counters  Counters        `json:"counters,omitempty"`
 	Sets      Sets            `json:"sets,omitempty"`
 	Adjacency IDList          `json:"adjacency,omitempty"`
 	Latest    StringLatestMap `json:"latest,omitempty"`
@@ -26,7 +26,6 @@ type Node struct {
 func MakeNode(id string) Node {
 	return Node{
 		ID:        id,
-		Counters:  MakeCounters(),
 		Sets:      MakeSets(),
 		Adjacency: MakeIDList(),
 		Latest:    MakeStringLatestMap(),
@@ -80,10 +79,25 @@ func (n Node) WithLatest(k string, ts time.Time, v string) Node {
 	return n
 }
 
-// WithCounters returns a fresh copy of n, with Counters c merged in.
-func (n Node) WithCounters(c map[string]int) Node {
-	n.Counters = n.Counters.Merge(Counters{}.fromIntermediate(c))
-	return n
+// LookupCounter returns the value of a counter
+// (counters are stored as strings, to keep the data structure simple)
+func (n Node) LookupCounter(k string) (value int, found bool) {
+	name := CounterPrefix + k
+	var str string
+	if str, found = n.Latest.Lookup(name); found {
+		value, _ = strconv.Atoi(str)
+	}
+	return value, found
+}
+
+// AddCounter returns a fresh copy of n, with Counter c added in.
+// (counters are stored as strings, to keep the data structure simple)
+func (n Node) AddCounter(k string, value int) Node {
+	name := CounterPrefix + k
+	if prevValue, found := n.LookupCounter(k); found {
+		value += prevValue
+	}
+	return n.WithLatest(name, mtime.Now(), strconv.Itoa(value))
 }
 
 // WithSet returns a fresh copy of n, with set merged in at key.
@@ -175,7 +189,6 @@ func (n Node) Merge(other Node) Node {
 	return Node{
 		ID:        id,
 		Topology:  topology,
-		Counters:  n.Counters.Merge(other.Counters),
 		Sets:      n.Sets.Merge(other.Sets),
 		Adjacency: n.Adjacency.Merge(other.Adjacency),
 		Latest:    n.Latest.Merge(other.Latest),

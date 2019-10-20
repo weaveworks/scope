@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"strings"
+	"time"
+
 	"github.com/weaveworks/scope/report"
 )
 
@@ -27,6 +30,11 @@ func PruneNode(node report.Node) report.Node {
 		WithTopology(node.Topology).
 		WithAdjacent(node.Adjacency...).
 		WithChildren(prunedChildren)
-	prunedNode.Counters = node.Counters
+	// Copy counters across, but with zero timestamp so they compare equal
+	node.Latest.ForEach(func(k string, _ time.Time, v string) {
+		if strings.HasPrefix(k, report.CounterPrefix) {
+			prunedNode.Latest = prunedNode.Latest.Set(k, time.Time{}, v)
+		}
+	})
 	return prunedNode
 }
