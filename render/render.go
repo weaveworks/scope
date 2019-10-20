@@ -180,7 +180,7 @@ func (ret *joinResults) mapChild(from, to string) {
 // Note it is not safe to mix calls to add() with addChild(), addChildAndChildren() or addUnmappedChild()
 func (ret *joinResults) add(from string, m report.Node) {
 	if existing, ok := ret.nodes[m.ID]; ok {
-		m = m.Merge(existing)
+		m = existing.Merge(m)
 	}
 	ret.nodes[m.ID] = m
 	ret.mapChild(from, m.ID)
