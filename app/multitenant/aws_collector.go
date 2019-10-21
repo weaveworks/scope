@@ -544,13 +544,17 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return err
 	}
 
-	reportSize, err := c.cfg.S3Store.StoreReportBytes(ctx, reportKey, buf)
-	if err != nil {
-		return err
+	// Shortcut reports are published to nats but not persisted -
+	// we'll get a full report from the same probe in a few seconds
+	if !rep.Shortcut {
+		reportSize, err := c.cfg.S3Store.StoreReportBytes(ctx, reportKey, buf)
+		if err != nil {
+			return err
+		}
+		reportSizeHistogram.Observe(float64(reportSize))
+		reportSizePerUser.WithLabelValues(userid).Add(float64(reportSize))
+		reportsPerUser.WithLabelValues(userid).Inc()
 	}
-	reportSizeHistogram.Observe(float64(reportSize))
-	reportSizePerUser.WithLabelValues(userid).Add(float64(reportSize))
-	reportsPerUser.WithLabelValues(userid).Inc()
 
 	// third, put it in memcache
 	if c.cfg.MemcacheClient != nil {
@@ -563,23 +567,25 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		}
 	}
 
-	// fourth, put the key in dynamodb
-	dynamoValueSize.WithLabelValues("PutItem").
-		Add(float64(len(reportKey)))
+	if !rep.Shortcut {
+		// fourth, put the key in dynamodb
+		dynamoValueSize.WithLabelValues("PutItem").
+			Add(float64(len(reportKey)))
 
-	var resp *dynamodb.PutItemOutput
-	err = instrument.TimeRequestHistogram(ctx, "DynamoDB.PutItem", dynamoRequestDuration, func(_ context.Context) error {
-		var err error
-		resp, err = c.putItemInDynamo(rowKey, colKey, reportKey)
-		return err
-	})
+		var resp *dynamodb.PutItemOutput
+		err = instrument.TimeRequestHistogram(ctx, "DynamoDB.PutItem", dynamoRequestDuration, func(_ context.Context) error {
+			var err error
+			resp, err = c.putItemInDynamo(rowKey, colKey, reportKey)
+			return err
+		})
 
-	if resp.ConsumedCapacity != nil {
-		dynamoConsumedCapacity.WithLabelValues("PutItem").
-			Add(float64(*resp.ConsumedCapacity.CapacityUnits))
-	}
-	if err != nil {
-		return err
+		if resp.ConsumedCapacity != nil {
+			dynamoConsumedCapacity.WithLabelValues("PutItem").
+				Add(float64(*resp.ConsumedCapacity.CapacityUnits))
+		}
+		if err != nil {
+			return err
+		}
 	}
 
 	if rep.Shortcut && c.nats != nil {
