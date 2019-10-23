@@ -3,6 +3,7 @@ package appclient
 import (
 	"compress/gzip"
 	"fmt"
+	"github.com/weaveworks/scope/app"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -32,6 +33,9 @@ func dummyServer(t *testing.T, expectedToken, expectedID string, expectedVersion
 			t.Errorf("want %q, have %q", expectedID, have)
 		}
 
+		if have := r.Header.Get("user-agent"); "Scope/1.11.6" != have {
+			t.Errorf("want %q, have %q", app.Version, have)
+		}
 		var have report.Report
 
 		reader := r.Body
