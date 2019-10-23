@@ -47,7 +47,7 @@ func nodes2Hosts(nodes Nodes) Nodes {
 			}
 		}
 	}
-	return ret.result(nodes)
+	return ret.result(nodes.Nodes)
 }
 
 func endpoint2Host(endpoint report.Node) string {

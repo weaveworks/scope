@@ -197,5 +197,5 @@ func (m Map2Parent) Render(ctx context.Context, rpt report.Report) Nodes {
 			ret.addChildAndChildren(n, id, Pseudo)
 		}
 	}
-	return ret.result(input)
+	return ret.result(input.Nodes)
 }

@@ -105,5 +105,5 @@ func processes2Names(processes Nodes) Nodes {
 			ret.addChildAndChildren(n, name, processNameTopology)
 		}
 	}
-	return ret.result(processes)
+	return ret.result(processes.Nodes)
 }

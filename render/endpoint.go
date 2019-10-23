@@ -31,10 +31,9 @@ func MapEndpoints(endpointToID endpointToIDFunc, topology string) Renderer {
 
 func (e mapEndpoints) Render(ctx context.Context, rpt report.Report) Nodes {
 	local := LocalNetworks(rpt)
-	endpoints := SelectEndpoint.Render(ctx, rpt)
 	ret := newJoinResults(TopologySelector(e.topology).Render(ctx, rpt).Nodes)
 
-	for _, n := range endpoints.Nodes {
+	for _, n := range rpt.Endpoint.Nodes {
 		// Nodes without a hostid are mapped to pseudo nodes, if
 		// possible.
 		if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
@@ -47,5 +46,5 @@ func (e mapEndpoints) Render(ctx context.Context, rpt report.Report) Nodes {
 			ret.addChild(n, id, e.topology)
 		}
 	}
-	return ret.result(endpoints)
+	return ret.result(rpt.Endpoint.Nodes)
 }

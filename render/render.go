@@ -127,7 +127,7 @@ func (m Map) Render(ctx context.Context, rpt report.Report) Nodes {
 	span.LogFields(otlog.Int("input.nodes", len(input.Nodes)),
 		otlog.Int("ouput.nodes", len(output.nodes)))
 
-	return output.result(input)
+	return output.result(input.Nodes)
 }
 
 // Condition is a predecate over the entire report that can evaluate to true or false.
@@ -227,8 +227,8 @@ func (ret *joinResults) passThrough(n report.Node) {
 
 // Rewrite Adjacency of nodes in ret mapped from original nodes in
 // input, and return the result.
-func (ret *joinResults) result(input Nodes) Nodes {
-	for _, n := range input.Nodes {
+func (ret *joinResults) result(input report.Nodes) Nodes {
+	for _, n := range input {
 		outID, ok := ret.mapped[n.ID]
 		if !ok {
 			continue
