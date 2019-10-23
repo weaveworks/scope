@@ -70,8 +70,8 @@ func (c connectionJoin) Render(ctx context.Context, rpt report.Report) Nodes {
 		}
 	}
 	return MapEndpoints(
-		func(m report.Node) string {
-			scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
+		func(endpoint report.Node) string {
+			scope, addr, port, ok := report.ParseEndpointNodeID(endpoint.ID)
 			if !ok {
 				return ""
 			}

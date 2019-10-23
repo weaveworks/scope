@@ -15,18 +15,18 @@ const Pseudo = "pseudo"
 // EndpointRenderer is a Renderer which produces a renderable endpoint graph.
 var EndpointRenderer = SelectEndpoint
 
-type endpointMapFunc func(report.Node) string
+type endpointToIDFunc func(report.Node) string
 
 type mapEndpoints struct {
-	f        endpointMapFunc
-	topology string
+	endpointToID endpointToIDFunc
+	topology     string
 }
 
 // MapEndpoints creates a renderer for the endpoint topology. Each
 // endpoint is either turned into a pseudo node, or mapped to a node
 // in the specified topology by the supplied function.
-func MapEndpoints(f endpointMapFunc, topology string) Renderer {
-	return mapEndpoints{f: f, topology: topology}
+func MapEndpoints(endpointToID endpointToIDFunc, topology string) Renderer {
+	return mapEndpoints{endpointToID: endpointToID, topology: topology}
 }
 
 func (e mapEndpoints) Render(ctx context.Context, rpt report.Report) Nodes {
@@ -43,7 +43,7 @@ func (e mapEndpoints) Render(ctx context.Context, rpt report.Report) Nodes {
 				continue
 			}
 		}
-		if id := e.f(n); id != "" {
+		if id := e.endpointToID(n); id != "" {
 			ret.addChild(n, id, e.topology)
 		}
 	}

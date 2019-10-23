@@ -50,8 +50,8 @@ func nodes2Hosts(nodes Nodes) Nodes {
 	return ret.result(nodes)
 }
 
-func endpoint2Host(n report.Node) string {
-	if hostNodeID, ok := n.Latest.Lookup(report.HostNodeID); ok {
+func endpoint2Host(endpoint report.Node) string {
+	if hostNodeID, ok := endpoint.Latest.Lookup(report.HostNodeID); ok {
 		return hostNodeID
 	}
 	return ""

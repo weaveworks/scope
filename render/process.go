@@ -49,15 +49,15 @@ func (e endpoints2Processes) Render(ctx context.Context, rpt report.Report) Node
 	}
 	endpoints := SelectEndpoint.Render(ctx, rpt).Nodes
 	return MapEndpoints(
-		func(n report.Node) string {
-			pid, ok := n.Latest.Lookup(report.PID)
+		func(endpoint report.Node) string {
+			pid, ok := endpoint.Latest.Lookup(report.PID)
 			if !ok {
 				return ""
 			}
-			if hasMoreThanOneConnection(n, endpoints) {
+			if hasMoreThanOneConnection(endpoint, endpoints) {
 				return ""
 			}
-			hostID := report.ExtractHostID(n)
+			hostID := report.ExtractHostID(endpoint)
 			if hostID == "" {
 				return ""
 			}
