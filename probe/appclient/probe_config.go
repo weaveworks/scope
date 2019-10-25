@@ -46,7 +46,9 @@ func (pc ProbeConfig) authorizeHeaders(headers http.Header) {
 	}
 	headers.Set(xfer.ScopeProbeIDHeader, pc.ProbeID)
 	headers.Set(xfer.ScopeProbeVersionHeader, pc.ProbeVersion)
-	headers.Set("user-agent","Scope/1.11.6" )
+	headers.Set("user-agent","Probe_Scope/"+pc.ProbeVersion )
+
+
 }
 
 func (pc ProbeConfig) authorizedRequest(method string, urlStr string, body io.Reader) (*http.Request, error) {
