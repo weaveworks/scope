@@ -32,13 +32,12 @@ var ContainerRenderer = Memoise(MakeFilter(
 		return !ok || state != report.StateDeleted
 	},
 	MakeReduce(
-		MakeMap(
-			MapProcess2Container,
-			ProcessRenderer,
-		),
+		process2ContainerRenderer{},
 		ConnectionJoin(MapContainer2IP, report.Container),
 	),
 ))
+
+var Process2ContainerRenderer = process2ContainerRenderer{} // just for testing
 
 const originalNodeID = "original_node_id"
 
@@ -241,39 +240,32 @@ func MapContainer2IP(m report.Node) []string {
 	return result
 }
 
-// MapProcess2Container maps process Nodes to container
-// Nodes.
-//
-// Pseudo nodes are passed straight through.
-//
-// If this function is given a node without a docker_container_id, it
-// will produce an "Uncontained" pseudo node.
-//
-// Otherwise, this function will produce a node with the correct ID
-// format for a container, but without any Major or Minor labels.
-// It does not have enough info to do that, and the resulting graph
-// must be merged with a container graph to get that info.
-func MapProcess2Container(n report.Node) report.Node {
-	// Propagate pseudo nodes
-	if n.Topology == Pseudo {
-		return n
-	}
+type process2ContainerRenderer struct{}
 
-	// Otherwise, if the process is not in a container, group it into
-	// a per-host "Uncontained" node.
-	var (
-		id   string
-		node report.Node
-	)
-	if containerID, ok := n.Latest.Lookup(report.DockerContainerID); ok {
-		id = report.MakeContainerNodeID(containerID)
-		node = NewDerivedNode(id, n).WithTopology(report.Container)
-	} else {
-		hostID, _, _ := report.ParseProcessNodeID(n.ID)
-		id = MakePseudoNodeID(UncontainedID, hostID)
-		node = NewDerivedPseudoNode(id, n)
+func (m process2ContainerRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
+	processes := ProcessRenderer.Render(ctx, rpt)
+	ret := newJoinResults(nil)
+
+	for _, n := range processes.Nodes {
+		if n.Topology == Pseudo {
+			ret.passThrough(n)
+			continue
+		}
+		if containerID, ok := n.Latest.Lookup(report.DockerContainerID); !ok {
+			// If the process is not in a container, group it into a per-host "Uncontained" node.
+			hostID, _, _ := report.ParseProcessNodeID(n.ID)
+			id := MakePseudoNodeID(UncontainedID, hostID)
+			ret.addChildAndChildren(n, id, Pseudo)
+		} else {
+			// Otherwise, this function will produce a node with the correct ID
+			// format for a container, but without any Major or Minor labels.
+			// It does not have enough info to do that, and the resulting graph
+			// must be merged with a container graph to get that info.
+			id := report.MakeContainerNodeID(containerID)
+			ret.addChildAndChildren(n, id, report.Container)
+		}
 	}
-	return node
+	return ret.result(processes.Nodes)
 }
 
 // MapContainer2ContainerImage maps container Nodes to container

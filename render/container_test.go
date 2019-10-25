@@ -26,28 +26,25 @@ var (
 )
 
 func TestMapProcess2Container(t *testing.T) {
-	for _, input := range []testcase{
+	for _, input := range []struct {
+		name string
+		n    report.Node
+		ok   bool
+	}{
 		{"empty", report.MakeNode("empty"), true},
 		{"basic process", report.MakeNodeWith("basic", map[string]string{report.PID: "201", report.DockerContainerID: "a1b2c3"}), true},
 		{"uncontained", report.MakeNodeWith("uncontained", map[string]string{report.PID: "201", report.HostNodeID: report.MakeHostNodeID("foo")}), true},
 	} {
-		testMap(t, render.MapProcess2Container, input)
-	}
-}
-
-type testcase struct {
-	name string
-	n    report.Node
-	ok   bool
-}
-
-func testMap(t *testing.T, f render.MapFunc, input testcase) {
-	if have := f(input.n); input.ok != (have.ID != "") {
-		name := input.name
-		if name == "" {
-			name = fmt.Sprintf("%v", input.n)
+		rpt := report.MakeReport()
+		rpt.Process.AddNode(input.n)
+		p := render.Process2ContainerRenderer
+		if have := p.Render(context.Background(), rpt); input.ok != (len(have.Nodes) != 0) {
+			name := input.name
+			if name == "" {
+				name = fmt.Sprintf("%v", input.n)
+			}
+			t.Errorf("%s: want %v, have %v", name, input.ok, have)
 		}
-		t.Errorf("%s: want %v, have %v", name, input.ok, have)
 	}
 }
 
