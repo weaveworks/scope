@@ -170,7 +170,7 @@ var ContainerImageRenderer = Memoise(FilterEmpty(report.Container,
 ))
 
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
-// by hostname graph..
+// by hostname graph..  (in the UI this is named "by DNS name")
 //
 // not memoised
 var ContainerHostnameRenderer = FilterEmpty(report.Container,
