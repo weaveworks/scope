@@ -116,14 +116,12 @@ func HasChildren(topology string) FilterFunc {
 	}
 }
 
-type containerWithImageNameRenderer struct {
-	Renderer
-}
+type containerWithImageNameRenderer struct{}
 
 // Render produces a container graph where the the latest metadata contains the
 // container image name, if found.
 func (r containerWithImageNameRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
-	containers := r.Renderer.Render(ctx, rpt)
+	containers := ContainerRenderer.Render(ctx, rpt)
 	images := SelectContainerImage.Render(ctx, rpt)
 
 	outputs := make(report.Nodes, len(containers.Nodes))
@@ -155,7 +153,7 @@ func (r containerWithImageNameRenderer) Render(ctx context.Context, rpt report.R
 
 // ContainerWithImageNameRenderer is a Renderer which produces a container
 // graph where the ranks are the image names, not their IDs
-var ContainerWithImageNameRenderer = Memoise(containerWithImageNameRenderer{ContainerRenderer})
+var ContainerWithImageNameRenderer = Memoise(containerWithImageNameRenderer{})
 
 // ContainerImageRenderer produces a graph where each node is a container image
 // with the original containers as children
