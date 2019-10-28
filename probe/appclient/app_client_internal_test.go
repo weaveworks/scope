@@ -32,6 +32,10 @@ func dummyServer(t *testing.T, expectedToken, expectedID string, expectedVersion
 			t.Errorf("want %q, have %q", expectedVersion, have)
 		}
 
+		if have := r.Header.Get("user-agent"); "Scope_Probe/"+expectedVersion!=have {
+			t.Errorf("want %q, have %q","Scope_Probe/"+expectedVersion,have)
+		}
+
 		var have report.Report
 
 		reader := r.Body
