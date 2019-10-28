@@ -154,18 +154,12 @@ func (r containerWithImageNameRenderer) Render(ctx context.Context, rpt report.R
 // graph where the ranks are the image names, not their IDs
 var ContainerWithImageNameRenderer = Memoise(containerWithImageNameRenderer{})
 
-// ContainerImageRenderer is a Renderer which produces a renderable container
-// image graph by merging the container graph and the container image topology.
+// ContainerImageRenderer produces a graph where each node is a container image
+// with the original containers as children
 var ContainerImageRenderer = Memoise(FilterEmpty(report.Container,
 	MakeMap(
 		MapContainerImage2Name,
-		MakeReduce(
-			MakeMap(
-				MapContainer2ContainerImage,
-				ContainerWithImageNameRenderer,
-			),
-			SelectContainerImage,
-		),
+		containerImageRenderer{},
 	),
 ))
 
@@ -266,37 +260,28 @@ func (m process2ContainerRenderer) Render(ctx context.Context, rpt report.Report
 	return ret.result(processes.Nodes)
 }
 
-// MapContainer2ContainerImage maps container Nodes to container
-// image Nodes.
-//
-// Pseudo nodes are passed straight through.
-//
-// If this function is given a node without a docker_image_id
-// it will drop that node.
-//
-// Otherwise, this function will produce a node with the correct ID
-// format for a container image, but without any Major or Minor
-// labels.  It does not have enough info to do that, and the resulting
-// graph must be merged with a container image graph to get that info.
-func MapContainer2ContainerImage(n report.Node) report.Node {
-	// Propagate all pseudo nodes
-	if n.Topology == Pseudo {
-		return n
-	}
+// containerImageRenderer produces a graph where each node is a container image
+// with the original containers as children
+type containerImageRenderer struct{}
 
-	// Otherwise, if some some reason the container doesn't have a image_id
-	// (maybe slightly out of sync reports), just drop it
-	imageID, ok := n.Latest.Lookup(report.DockerImageID)
-	if !ok {
-		return report.Node{}
-	}
+func (m containerImageRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
+	containers := ContainerWithImageNameRenderer.Render(ctx, rpt)
+	ret := newJoinResults(rpt.ContainerImage.Nodes)
 
-	// Add container id key to the counters, which will later be
-	// counted to produce the minor label
-	id := report.MakeContainerImageNodeID(imageID)
-	result := NewDerivedNode(id, n).WithTopology(report.ContainerImage).
-		WithCounter(n.Topology, 1)
-	return result
+	for _, n := range containers.Nodes {
+		if n.Topology == Pseudo {
+			ret.passThrough(n)
+			continue
+		}
+		// If some some reason the container doesn't have a image_id, just drop it
+		imageID, ok := n.Latest.Lookup(report.DockerImageID)
+		if !ok {
+			continue
+		}
+		id := report.MakeContainerImageNodeID(imageID)
+		ret.addChildAndChildren(n, id, report.ContainerImage)
+	}
+	return ret.result(containers.Nodes)
 }
 
 func containerImageNodeID(n report.Node) string {
