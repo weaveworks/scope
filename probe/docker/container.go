@@ -108,6 +108,11 @@ func (c *container) PID() int {
 
 func (c *container) Hostname() string {
 	if c.container.Config.Domainname == "" {
+		// If hostname isn't set on a container it defaults to a random hex
+		// number which we don't want to show in the UI.
+		if strings.HasPrefix(c.container.ID, c.container.Config.Hostname) {
+			return ""
+		}
 		return c.container.Config.Hostname
 	}
 
@@ -376,12 +381,14 @@ func (c *container) getSanitizedCommand() string {
 
 func (c *container) getBaseNode() report.Node {
 	result := report.MakeNodeWith(report.MakeContainerNodeID(c.ID()), map[string]string{
-		ContainerID:       c.ID(),
-		ContainerCreated:  c.container.Created.Format(time.RFC3339Nano),
-		ContainerCommand:  c.getSanitizedCommand(),
-		ImageID:           c.Image(),
-		ContainerHostname: c.Hostname(),
+		ContainerID:      c.ID(),
+		ContainerCreated: c.container.Created.Format(time.RFC3339Nano),
+		ContainerCommand: c.getSanitizedCommand(),
+		ImageID:          c.Image(),
 	}).WithParent(report.ContainerImage, report.MakeContainerImageNodeID(c.Image()))
+	if hostname := c.Hostname(); hostname != "" {
+		result = result.WithLatest(ContainerHostname, hostname)
+	}
 	result = result.AddPrefixPropertyList(LabelPrefix, c.container.Config.Labels)
 	if !c.noEnvironmentVariables {
 		result = result.AddPrefixPropertyList(EnvPrefix, c.env())
