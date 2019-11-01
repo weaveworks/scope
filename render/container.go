@@ -171,20 +171,9 @@ var ContainerImageRenderer = Memoise(FilterEmpty(report.Container,
 //
 // not memoised
 var ContainerHostnameRenderer = FilterEmpty(report.Container,
-	MakeReduce(
-		MakeMap(
-			MapContainer2Hostname,
-			ContainerWithImageNameRenderer,
-		),
-		// Grab *all* the hostnames, so we can count the number which were empty
-		// for accurate stats.
-		MakeMap(
-			MapToEmpty,
-			MakeMap(
-				MapContainer2Hostname,
-				ContainerRenderer,
-			),
-		),
+	MakeMap(
+		MapContainer2Hostname,
+		ContainerWithImageNameRenderer,
 	),
 )
 
