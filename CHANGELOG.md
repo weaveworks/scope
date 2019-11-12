@@ -1,3 +1,70 @@
+## Release 1.12.0
+
+### Highlights
+
+Supports Kubernetes 'v1' object types that are needed for Kubernetes
+1.16 and drops support for obsolete 'v1beta' types.
+	[#3691](https://github.com/weaveworks/scope/pull/3691)
+
+The serialisation format changes: DNS data was accidentally renamed
+'nodes' in release 1.11.6, and this release changes it back to 'DNS'.
+	[#3713](https://github.com/weaveworks/scope/pull/3713)
+
+Thanks to everyone who contributed to this release: @bensooraj,
+@chandankumar4, @imazik, @oleggator and @qiell.
+
+### Minor improvements
+
+- Allow user to disable plugins via command-line flag.
+	[#3703](https://github.com/weaveworks/scope/pull/3703)
+- In the UI, replace JSON.stringify with json-stable-stringify
+	[#3701](https://github.com/weaveworks/scope/pull/3701)
+
+### Bugs and security fixes
+
+- fix: report http error if /api call fails
+	[#3702](https://github.com/weaveworks/scope/pull/3702)
+- Fix a rare crash in the ebpf connection tracker by feeding initial connections synchronously on restart.
+	[#3712](https://github.com/weaveworks/scope/pull/3712)
+- Fix typos in debugging format strings
+	[#3695](https://github.com/weaveworks/scope/pull/3695)
+
+### Performance improvements
+
+- handle IP addresses in binary rather than strings
+	[#3696](https://github.com/weaveworks/scope/pull/3696)
+- In the multitenant app, save IO by keeping rapid-update data outside of the persistent store.
+	[#3716](https://github.com/weaveworks/scope/pull/3716)
+
+### Dependencies updates
+
+- Update Go version to 1.13.0
+	[#3692](https://github.com/weaveworks/scope/pull/3692)
+	[#3698](https://github.com/weaveworks/scope/pull/3698)
+- Update google/gopacket library
+	[#3606](https://github.com/weaveworks/scope/pull/3606)
+- Update NodeJS to 8.12.0 and various javascript libraries
+	[#3685](https://github.com/weaveworks/scope/pull/3685)
+	[#3690](https://github.com/weaveworks/scope/pull/3690)
+	[#3719](https://github.com/weaveworks/scope/pull/3719)
+	[#3726](https://github.com/weaveworks/scope/pull/3726)
+
+Build and CI improvements:
+
+- Run UI build container as current user to avoid files being owned by root.
+	[#3635](https://github.com/weaveworks/scope/pull/3635)
+- Replace SASS files with CSS and JavaScript
+	[#3700](https://github.com/weaveworks/scope/pull/3700)
+- Remove obsolete -e flag from docker login in CI
+	[#3708](https://github.com/weaveworks/scope/pull/3708)
+- Fix favicon.ico in UI dev mode
+	[#3705](https://github.com/weaveworks/scope/pull/3705)
+- Refactor report reading to make the code simpler
+	[#3687](https://github.com/weaveworks/scope/pull/3687)
+- Don't import fonts when Scope UI is embedded.
+	[#3704](https://github.com/weaveworks/scope/pull/3704)
+
+
 ## Release 1.11.6
 
 This is largely a performance improvement release: the biggest change
