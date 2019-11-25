@@ -56,6 +56,10 @@ func (p *pod) AddParent(topology, id string) {
 }
 
 func (p *pod) State() string {
+	if p.ObjectMeta.DeletionTimestamp != nil {
+		return "Terminating"
+	}
+
 	return string(p.Status.Phase)
 }
 
@@ -83,8 +87,8 @@ func (p *pod) VolumeClaimNames() []string {
 
 func (p *pod) GetNode(probeID string) report.Node {
 	latests := map[string]string{
-		State: p.State(),
-		IP:    p.Status.PodIP,
+		State:                 p.State(),
+		IP:                    p.Status.PodIP,
 		report.ControlProbeID: probeID,
 		RestartCount:          strconv.FormatUint(uint64(p.RestartCount()), 10),
 	}
