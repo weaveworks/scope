@@ -29,7 +29,11 @@ func dummyServer(t *testing.T, expectedToken, expectedID string, expectedVersion
 		}
 
 		if have := r.Header.Get(xfer.ScopeProbeVersionHeader); expectedVersion != have {
-			t.Errorf("want %q, have %q", expectedID, have)
+			t.Errorf("want %q, have %q", expectedVersion, have)
+		}
+
+		if have := r.Header.Get("user-agent"); "Scope_Probe/"+expectedVersion!=have {
+			t.Errorf("want %q, have %q","Scope_Probe/"+expectedVersion,have)
 		}
 
 		var have report.Report
