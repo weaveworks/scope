@@ -33,6 +33,7 @@ rules:
   resources:
   - deployments
   - statefulsets
+  - daemonsets
   verbs:
   - get
   - list
@@ -62,6 +63,13 @@ rules:
   resources:
   - deployments/scale
   verbs:
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments/scale
+  verbs:
+  - get
   - update
 - apiGroups:
   - storage.k8s.io
