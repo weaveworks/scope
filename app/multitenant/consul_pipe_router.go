@@ -11,8 +11,10 @@ import (
 	"context"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	opentracing "github.com/opentracing/opentracing-go"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/weaveworks/common/middleware"
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/common/xfer"
@@ -259,8 +261,9 @@ func (pr *consulPipeRouter) privateAPI() {
 			}
 		})
 
+	handler := middleware.Tracer{RouteMatcher: router}.Wrap(router)
 	log.Infof("Serving private API on endpoint %s.", pr.advertise)
-	log.Infof("Private API terminated: %v", http.ListenAndServe(pr.advertise, router))
+	log.Infof("Private API terminated: %v", http.ListenAndServe(pr.advertise, handler))
 }
 
 func (pr *consulPipeRouter) Exists(ctx context.Context, id string) (bool, error) {
@@ -270,7 +273,7 @@ func (pr *consulPipeRouter) Exists(ctx context.Context, id string) (bool, error)
 	}
 	key := fmt.Sprintf("%s%s-%s", pr.prefix, userID, id)
 	consulPipe := consulPipe{}
-	err = pr.client.Get(key, &consulPipe)
+	err = pr.client.Get(ctx, key, &consulPipe)
 	if err == ErrNotFound {
 		return false, nil
 	} else if err != nil {
@@ -286,10 +289,12 @@ func (pr *consulPipeRouter) Get(ctx context.Context, id string, e app.End) (xfer
 	}
 	key := fmt.Sprintf("%s%s-%s", pr.prefix, userID, id)
 	log.Infof("Get %s:%s", key, e)
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PipeRouter Get", opentracing.Tag{"key", key})
+	defer span.Finish()
 
 	// Try to ensure the given end of the given pipe
 	// is 'owned' by this pipe service replica in consul.
-	err = pr.client.CAS(key, &consulPipe{}, func(in interface{}) (interface{}, bool, error) {
+	err = pr.client.CAS(ctx, key, &consulPipe{}, func(in interface{}) (interface{}, bool, error) {
 		var pipe *consulPipe
 		if in == nil {
 			pipe = &consulPipe{
@@ -328,9 +333,11 @@ func (pr *consulPipeRouter) Release(ctx context.Context, id string, e app.End) e
 	}
 	key := fmt.Sprintf("%s%s-%s", pr.prefix, userID, id)
 	log.Infof("Release %s:%s", key, e)
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PipeRouter Release", opentracing.Tag{"key", key})
+	defer span.Finish()
 
 	// atomically clear my end of the pipe in consul
-	return pr.client.CAS(key, &consulPipe{}, func(in interface{}) (interface{}, bool, error) {
+	return pr.client.CAS(ctx, key, &consulPipe{}, func(in interface{}) (interface{}, bool, error) {
 		if in == nil {
 			return nil, false, fmt.Errorf("pipe %s not found", id)
 		}
@@ -353,8 +360,10 @@ func (pr *consulPipeRouter) Delete(ctx context.Context, id string) error {
 	}
 	key := fmt.Sprintf("%s%s-%s", pr.prefix, userID, id)
 	log.Infof("Delete %s", key)
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PipeRouter Delete", opentracing.Tag{"key", key})
+	defer span.Finish()
 
-	return pr.client.CAS(key, &consulPipe{}, func(in interface{}) (interface{}, bool, error) {
+	return pr.client.CAS(ctx, key, &consulPipe{}, func(in interface{}) (interface{}, bool, error) {
 		if in == nil {
 			return nil, false, fmt.Errorf("Pipe %s not found", id)
 		}

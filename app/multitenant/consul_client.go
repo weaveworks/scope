@@ -2,11 +2,13 @@ package multitenant
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
 	consul "github.com/hashicorp/consul/api"
+	opentracing "github.com/opentracing/opentracing-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,8 +19,8 @@ const (
 // ConsulClient is a high-level client for Consul, that exposes operations
 // such as CAS and Watch which take callbacks.  It also deals with serialisation.
 type ConsulClient interface {
-	Get(key string, out interface{}) error
-	CAS(key string, out interface{}, f CASCallback) error
+	Get(ctx context.Context, key string, out interface{}) error
+	CAS(ctx context.Context, key string, out interface{}, f CASCallback) error
 	WatchPrefix(prefix string, out interface{}, done chan struct{}, f func(string, interface{}) bool)
 }
 
@@ -58,7 +60,9 @@ type consulClient struct {
 }
 
 // Get and deserialise a JSON value from consul.
-func (c *consulClient) Get(key string, out interface{}) error {
+func (c *consulClient) Get(ctx context.Context, key string, out interface{}) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Consul Get", opentracing.Tag{"key", key})
+	defer span.Finish()
 	kvp, _, err := c.kv.Get(key, queryOptions)
 	if err != nil {
 		return err
@@ -71,7 +75,9 @@ func (c *consulClient) Get(key string, out interface{}) error {
 
 // CAS atomically modify a value in a callback.
 // If value doesn't exist you'll get nil as a argument to your callback.
-func (c *consulClient) CAS(key string, out interface{}, f CASCallback) error {
+func (c *consulClient) CAS(ctx context.Context, key string, out interface{}, f CASCallback) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Consul CAS", opentracing.Tag{"key", key})
+	defer span.Finish()
 	var (
 		index        = uint64(0)
 		retries      = 10

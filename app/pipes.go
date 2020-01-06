@@ -5,6 +5,7 @@ import (
 
 	"context"
 	"github.com/gorilla/mux"
+	opentracing "github.com/opentracing/opentracing-go"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/common/xfer"
@@ -66,8 +67,13 @@ func handlePipeWs(pr PipeRouter, end End) CtxHandlerFunc {
 		}
 		defer conn.Close()
 
-		if err := pipe.CopyToWebsocket(endIO, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
-			log.Errorf("Error copying to pipe %s (%d) websocket: %v", id, end, err)
+		if err := pipe.CopyToWebsocket(endIO, conn); err != nil {
+			if span := opentracing.SpanFromContext(ctx); span != nil {
+				span.LogKV("error", err.Error())
+			}
+			if !xfer.IsExpectedWSCloseError(err) {
+				log.Errorf("Error copying to pipe %s (%d) websocket: %v", id, end, err)
+			}
 		}
 	}
 }
