@@ -41,6 +41,7 @@ github.com/certifi/gocertifi v0.0.0-20150906030631-84c0a38a18fc h1:zSPFItDTOJZPd
 github.com/certifi/gocertifi v0.0.0-20150906030631-84c0a38a18fc/go.mod h1:GJKEexRPVJrBSOjoqN5VNOIKJ5Q3RViH6eu3puDRwx4=
 github.com/circonus-labs/circonus-gometrics v2.3.1+incompatible/go.mod h1:nmEj6Dob7S7YxXgwXpfOuvO54S+tGdZdw9fuRZt25Ag=
 github.com/circonus-labs/circonusllhist v0.1.3/go.mod h1:kMXHVDlOchFAehlya5ePtbp5jckzBHf4XRpQvBOLI+I=
+github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd h1:qMd81Ts1T2OTKmB4acZcyKaMtRnY5Y44NuXGX2GFJ1w=
 github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd/go.mod h1:sE/e/2PUdi/liOCUjSTXgM1o87ZssimdTWN964YiIeI=
 github.com/containerd/continuity v0.0.0-20180814194400-c7c5070e6f6e h1:KEBqsIJcjops96ysfjRTg3x6STnVHBxe7CZLwwnlkWA=
 github.com/containerd/continuity v0.0.0-20180814194400-c7c5070e6f6e/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
@@ -60,6 +61,8 @@ github.com/dimchansky/utfbom v0.0.0-20170328061312-6c6132ff69f0/go.mod h1:SxdoEB
 github.com/docker/docker v0.7.3-0.20180827131323-0c5f8d2b9b23/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/docker v1.4.2-0.20180721085148-1ef1cc838816 h1:98MoT0aMewDeiXnIzvhONOSpJAEdUYRis3JWOow4fy4=
 github.com/docker/docker v1.4.2-0.20180721085148-1ef1cc838816/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
+github.com/docker/docker v1.4.2-0.20180827131323-0c5f8d2b9b23 h1:FFwhUsHTL/3jH4JOqwRlqE0ZEyHMdoB4tG+OS7eHA4Y=
+github.com/docker/docker v1.4.2-0.20180827131323-0c5f8d2b9b23/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/engine-api v0.3.2-0.20160615162419-f50fbe5f9c4c/go.mod h1:xtQCpzf4YysNZCVFfIGIm7qfLvYbxtLkEVVfKhTVOvw=
 github.com/docker/go-connections v0.2.1/go.mod h1:Gbd7IOopHjR8Iph03tsViu4nIes5XhDvyHbTtUxmeec=
 github.com/docker/go-connections v0.4.0 h1:El9xVISelRB7BuFusrZozjnkIM5YnzCViNKohAFqRJQ=
@@ -101,6 +104,7 @@ github.com/go-stack/stack v1.7.0 h1:S04+lLfST9FvL8dl4R31wVUC/paZp/WQZbLmUgWboGw=
 github.com/go-stack/stack v1.7.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
 github.com/gogo/protobuf v1.1.1 h1:72R+M5VuhED/KujmZVcIquuo8mBgX4oVda//DQb3PXo=
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
+github.com/goji/httpauth v0.0.0-20160601135302-2da839ab0f4d h1:lBXNCxVENCipq4D1Is42JVOP4eQjlB8TQ6H69Yx5J9Q=
 github.com/goji/httpauth v0.0.0-20160601135302-2da839ab0f4d/go.mod h1:nnjvkQ9ptGaCkuDUx6wNykzzlUixGxvkme+H/lnzb+A=
 github.com/golang/glog v0.0.0-20150731225221-fca8c8854093/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/groupcache v0.0.0-20171101203131-84a468cf14b4/go.mod h1:cIg4eruTrX1D+g88fzRXU5OdNfaM+9IcxsU14FzY7Hc=
@@ -273,11 +277,14 @@ github.com/syndtr/goleveldb v0.0.0-20171214120811-34011bf325bc/go.mod h1:Z4AUp2K
 github.com/tinylib/msgp v0.0.0-20160803062324-ad0ff2e232ad h1:q8SI1YuCAORd3nFpyiXwjd6EgXHjI20/wuIJVQbMmvo=
 github.com/tinylib/msgp v0.0.0-20160803062324-ad0ff2e232ad/go.mod h1:+d+yLhGm8mzTaHzB+wgMYrodPfmZrzkirds8fDWklFE=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
+github.com/tylerb/graceful v1.2.13 h1:yKdTh6eHcWdD8Jm3wxgJ6pNf8Lb3wwbV4Ip8fHbeMLE=
 github.com/tylerb/graceful v1.2.13/go.mod h1:LPYTbOYmUTdabwRt0TGhLllQ0MUNbs0Y5q1WXJOI9II=
 github.com/typetypetype/conntrack v1.0.1-0.20181112022515-9d9dd841d4eb h1:y9jtER9da5XF66hKhPFVLy5qDVVKh4CvkuCzGdlQDJY=
 github.com/typetypetype/conntrack v1.0.1-0.20181112022515-9d9dd841d4eb/go.mod h1:phl/pSgdyplXYfXIPJ5y8tKLdzCygh2ql3Fo5ZzfPBc=
 github.com/uber-go/tally v3.3.8-0.20180718230131-d0a004a77fc9+incompatible/go.mod h1:YDTIBxdXyOU/sCWilKB4bgyufu1cEi0jdVnRdxvjnmU=
+github.com/uber/jaeger-client-go v2.14.1-0.20180713190620-252d853b2a4f+incompatible h1:zloLFMVQx+QfguFyzcYTd7dUmKmZ9w5SS9i43B1JjuU=
 github.com/uber/jaeger-client-go v2.14.1-0.20180713190620-252d853b2a4f+incompatible/go.mod h1:WVhlPFC8FDjOFMMWRy2pZqQJSXxYSwNYOkTr/Z6d3Kk=
+github.com/uber/jaeger-lib v1.5.1-0.20180615202729-a51202d6f4a7 h1:79lot14HgNdQYwdR0+UMnyrGw8dgpDwLTnJXqIaq8bo=
 github.com/uber/jaeger-lib v1.5.1-0.20180615202729-a51202d6f4a7/go.mod h1:ComeNDZlWwrWnDv8aPp0Ba6+uUTzImX/AauajbLI56U=
 github.com/ugorji/go v0.0.0-20170918222552-54210f4e076c h1:qU3vHuDIMp9u7C2igfsnhImvuhfr3hr7pPJku2rJQZg=
 github.com/ugorji/go v0.0.0-20170918222552-54210f4e076c/go.mod h1:hnLbHMwcvSihnDhEfx2/BzKp2xb0Y+ErdfYcrs9tkJQ=
@@ -292,6 +299,7 @@ github.com/weaveworks/billing-client v0.0.0-20180419131543-b2b68b13b5af h1:8h5tt
 github.com/weaveworks/billing-client v0.0.0-20180419131543-b2b68b13b5af/go.mod h1:7gGdEUJaCrSlWi/mjd68CZv0sfqektYPDcro9cE+M9k=
 github.com/weaveworks/common v0.0.0-20180824161429-d442d08d89b5 h1:1zcP79yWraN/qH8OH02wXhSKMoNCYv3GacZmqxyr8E0=
 github.com/weaveworks/common v0.0.0-20180824161429-d442d08d89b5/go.mod h1:pSm+0KR57BG3pvGoJWFXJSAC7+sEPewcvdt5StevL3A=
+github.com/weaveworks/go-checkpoint v0.0.0-20160428112813-62324982ab51 h1:NFqbQIsl7wh5Y5oIaS7wXGY+tIbvkJk9Tzd3eJM3Sy0=
 github.com/weaveworks/go-checkpoint v0.0.0-20160428112813-62324982ab51/go.mod h1:qkbvw5GPibQ/Nf7IZJL0UoLwmJ6858b4S/hUWRd+cH4=
 github.com/weaveworks/go-odp v0.0.0-20151030115644-f8c8c40c1889/go.mod h1:6/WClQKiVm/SQf6WJXv49l+9K9ONE2U8DYpeXEk3X7k=
 github.com/weaveworks/promrus v1.2.0 h1:jOLf6pe6/vss4qGHjXmGz4oDJQA+AOCqEL3FvvZGz7M=
@@ -300,6 +308,7 @@ github.com/weaveworks/ps v0.0.0-20160725183535-70d17b2d6f76 h1:lX3A5prmpe4MT9iaT
 github.com/weaveworks/ps v0.0.0-20160725183535-70d17b2d6f76/go.mod h1:6YfgZlj+cWgxFlwYrm3aPt1rS1xDTD1SEqL0Ms3Zxks=
 github.com/weaveworks/tcptracer-bpf v0.0.0-20190731111909-cd53e7c84bac h1:bE6+keem2eUQT2HcRwocyA9HtQs9o2ZU6mwEvA5AVeo=
 github.com/weaveworks/tcptracer-bpf v0.0.0-20190731111909-cd53e7c84bac/go.mod h1:vIed/thLU28ufcvDlpI1X5u+pPoI30rpjIbvvDWKjMk=
+github.com/weaveworks/weave v2.3.1-0.20180427133448-4da998ab4507+incompatible h1:TEQBiNDB429+6mICzJfnNXxdFl3SE6tmJf7Y3a0Yhso=
 github.com/weaveworks/weave v2.3.1-0.20180427133448-4da998ab4507+incompatible/go.mod h1:5ht5Uktjg++tIOqmWI2VvRzbNM7i+RhtqDQPumydP1U=
 github.com/willdonnelly/passwd v0.0.0-20141013001024-7935dab3074c h1:4+NVyrLUuEmvE3r3Xst7gPuKhAP6X04ACpMmPvtK0M0=
 github.com/willdonnelly/passwd v0.0.0-20141013001024-7935dab3074c/go.mod h1:xcvfY9pOw6s4wyrhilFSbMthL6KzgrfCIETHHUOQ/fQ=

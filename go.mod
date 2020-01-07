@@ -36,7 +36,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.1.0+incompatible
 	github.com/dimchansky/utfbom v0.0.0-20170328061312-6c6132ff69f0
-	github.com/docker/docker v1.4.2-0.20180721085148-1ef1cc838816
+	github.com/docker/docker v1.4.2-0.20180827131323-0c5f8d2b9b23
 	github.com/docker/engine-api v0.3.2-0.20160615162419-f50fbe5f9c4c
 	github.com/docker/go-connections v0.4.0
 	github.com/docker/go-units v0.3.3
