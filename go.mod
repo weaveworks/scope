@@ -7,7 +7,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 	github.com/Azure/go-autorest v9.8.1+incompatible
 	github.com/DataDog/datadog-go v2.2.0+incompatible
-	github.com/Microsoft/go-winio v0.4.9
+	github.com/Microsoft/go-winio v0.4.11
 	github.com/NYTimes/gziphandler v1.0.2-0.20180227021810-5032c8878b9d
 	github.com/PuerkitoBio/purell v1.1.1-0.20171117214151-1c4bec281e4b
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578
@@ -33,13 +33,13 @@ require (
 	github.com/coocood/freecache v0.0.0-20150903053832-a27035d5537f
 	github.com/cpuguy83/go-md2man v1.0.4
 	github.com/crossdock/crossdock-go v0.0.0-20160816171116-049aabb0122b
-	github.com/davecgh/go-spew v1.1.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.1.0+incompatible
 	github.com/dimchansky/utfbom v0.0.0-20170328061312-6c6132ff69f0
 	github.com/docker/docker v1.4.2-0.20180721085148-1ef1cc838816
 	github.com/docker/engine-api v0.3.2-0.20160615162419-f50fbe5f9c4c
-	github.com/docker/go-connections v0.2.1
-	github.com/docker/go-units v0.3.0
+	github.com/docker/go-connections v0.4.0
+	github.com/docker/go-units v0.3.3
 	github.com/docker/libcontainer v2.2.2-0.20150701164209-83a102cc68a0+incompatible
 	github.com/docker/spdystream v0.0.0-20170912183627-bc6354cbbc29
 	github.com/dustin/go-humanize v0.0.0-20160923163517-bd88f87ad3a4
@@ -48,7 +48,7 @@ require (
 	github.com/evanphx/json-patch v0.0.0-20170719203123-944e07253867
 	github.com/fatih/camelcase v1.0.0
 	github.com/fluent/fluent-logger-golang v1.2.1
-	github.com/fsouza/go-dockerclient v1.2.0
+	github.com/fsouza/go-dockerclient v1.3.0
 	github.com/garyburd/redigo v0.0.0-20151018180855-3d0709611e0e
 	github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680
 	github.com/go-ini/ini v1.8.6-0.20151216053507-467243bad6cb
@@ -73,9 +73,9 @@ require (
 	github.com/googleapis/gax-go v0.0.0-20161107002406-da06d194a00e
 	github.com/googleapis/gnostic v0.1.1-0.20180110061420-49e5b5b1abae
 	github.com/gophercloud/gophercloud v0.0.0-20180123185012-4a3f5ae58624
-	github.com/gorilla/context v0.0.0-20150820051245-1c83b3eabd45
+	github.com/gorilla/context v1.1.1
 	github.com/gorilla/handlers v0.0.0-20151024084542-9a8d6fa6e647
-	github.com/gorilla/mux v0.0.0-20160307194349-786d36e5ab04
+	github.com/gorilla/mux v1.6.2
 	github.com/gorilla/schema v0.0.0-20171228183507-afe77393c53b
 	github.com/gorilla/securecookie v0.0.0-20150820082958-e95799a481bb
 	github.com/gorilla/websocket v0.0.0-20160221213430-5c91b59efa23
@@ -92,7 +92,7 @@ require (
 	github.com/imdario/mergo v0.3.5
 	github.com/inconshreveable/mousetrap v1.0.0
 	github.com/influxdata/influxdb v1.5.1-0.20180718194353-468497c11f25
-	github.com/iovisor/gobpf v0.0.0-20191219090757-e72091e3c5e6 // indirect
+	github.com/iovisor/gobpf v0.0.0-20180826141936-4ece6c56f936 // indirect
 	github.com/jessevdk/go-flags v1.3.1-0.20170926144705-f88afde2fa19
 	github.com/jmespath/go-jmespath v0.0.0-20151208071831-c01cf91b0118
 	github.com/json-iterator/go v1.1.5
@@ -122,8 +122,8 @@ require (
 	github.com/nats-io/nuid v0.0.0-20160402145409-a5152d67cf63
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 	github.com/olekukonko/tablewriter v0.0.0-20160923125401-bdcc175572fd
-	github.com/onsi/ginkgo v1.4.1-0.20180119174237-747514b53ddd
-	github.com/onsi/gomega v1.3.0
+	github.com/onsi/ginkgo v1.6.0
+	github.com/onsi/gomega v1.4.1
 	github.com/opencontainers/runc v1.0.0-rc5
 	github.com/openebs/k8s-snapshot-client v0.0.0-20180831100134-a6506305fb16
 	github.com/opentracing-contrib/go-stdlib v0.0.0-20180702182724-07a764486eb1
@@ -160,7 +160,7 @@ require (
 	github.com/ugorji/go v0.0.0-20170918222552-54210f4e076c
 	github.com/urfave/negroni v0.2.1-0.20160830030302-5d815f907a18
 	github.com/vishvananda/netlink v1.0.1-0.20190913165827-36d367fd76f9
-	github.com/vishvananda/netns v0.0.0-20171111001504-be1fbeda1936
+	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc
 	github.com/weaveworks/billing-client v0.0.0-20180419131543-b2b68b13b5af
 	github.com/weaveworks/common v0.0.0-20180824161429-d442d08d89b5
 	github.com/weaveworks/go-checkpoint v0.0.0-20160428112813-62324982ab51
