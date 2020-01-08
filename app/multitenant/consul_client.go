@@ -20,6 +20,7 @@ type ConsulClient interface {
 	Get(key string, out interface{}) error
 	CAS(key string, out interface{}, f CASCallback) error
 	WatchPrefix(prefix string, out interface{}, done chan struct{}, f func(string, interface{}) bool)
+	DeleteSelected(prefix string, out interface{}, f func(string, interface{}) bool) error
 }
 
 // CASCallback is the type of the callback to CAS.  If err is nil, out must be non-nil.
@@ -51,6 +52,7 @@ type kv interface {
 	CAS(p *consul.KVPair, q *consul.WriteOptions) (bool, *consul.WriteMeta, error)
 	Get(key string, q *consul.QueryOptions) (*consul.KVPair, *consul.QueryMeta, error)
 	List(prefix string, q *consul.QueryOptions) (consul.KVPairs, *consul.QueryMeta, error)
+	Delete(key string, w *consul.WriteOptions) (*consul.WriteMeta, error)
 }
 
 type consulClient struct {
@@ -178,4 +180,23 @@ func (c *consulClient) WatchPrefix(prefix string, out interface{}, done chan str
 			}
 		}
 	}
+}
+
+func (c *consulClient) DeleteSelected(prefix string, out interface{}, f func(string, interface{}) bool) error {
+	kvps, _, err := c.kv.List(prefix, nil)
+	if err != nil {
+		return err
+	}
+	for _, kvp := range kvps {
+		if err := json.NewDecoder(bytes.NewReader(kvp.Value)).Decode(out); err != nil {
+			return fmt.Errorf("Error deserialising %s: %v", kvp.Key, err)
+		}
+		if f(kvp.Key, out) {
+			_, err := c.kv.Delete(kvp.Key, nil)
+			if err != nil {
+				return fmt.Errorf("Error deleting %s: %v", kvp.Key, err)
+			}
+		}
+	}
+	return nil
 }

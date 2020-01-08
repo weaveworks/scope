@@ -65,6 +65,13 @@ func (m *mockKV) CAS(p *consul.KVPair, q *consul.WriteOptions) (bool, *consul.Wr
 	return true, nil, nil
 }
 
+func (m *mockKV) Delete(key string, q *consul.WriteOptions) (*consul.WriteMeta, error) {
+	m.mtx.Lock()
+	delete(m.kvps, key)
+	m.mtx.Unlock()
+	return nil, nil
+}
+
 func (m *mockKV) Get(key string, q *consul.QueryOptions) (*consul.KVPair, *consul.QueryMeta, error) {
 	m.mtx.Lock()
 	defer m.mtx.Unlock()

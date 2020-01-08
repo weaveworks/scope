@@ -103,11 +103,14 @@ func NewConsulPipeRouter(client ConsulClient, prefix, advertise string, userIDer
 
 		quit: make(chan struct{}),
 	}
-	pipeRouter.wait.Add(2)
-	go pipeRouter.watchAll()
-	go pipeRouter.actor()
-	go pipeRouter.privateAPI()
 	return pipeRouter
+}
+
+func (pr *consulPipeRouter) Start() {
+	pr.wait.Add(2)
+	go pr.watchAll()
+	go pr.actor()
+	go pr.privateAPI()
 }
 
 func (pr *consulPipeRouter) Stop() {
@@ -361,6 +364,15 @@ func (pr *consulPipeRouter) Delete(ctx context.Context, id string) error {
 		p := in.(*consulPipe)
 		p.DeletedAt = mtime.Now()
 		return p, false, nil
+	})
+}
+
+// Remove any pipe entries in Consul that were deleted a while ago.
+func (pr *consulPipeRouter) CleanUp() error {
+	threshold := time.Now().Add(-gcTimeout)
+	return pr.client.DeleteSelected(pr.prefix, &consulPipe{}, func(key string, value interface{}) bool {
+		cp := *value.(*consulPipe)
+		return !cp.DeletedAt.IsZero() && cp.DeletedAt.Before(threshold)
 	})
 }
 

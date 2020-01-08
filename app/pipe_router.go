@@ -41,6 +41,8 @@ type PipeRouter interface {
 	Get(context.Context, string, End) (xfer.Pipe, io.ReadWriter, error)
 	Release(context.Context, string, End) error
 	Delete(context.Context, string) error
+	CleanUp() error
+	Start()
 	Stop()
 }
 
@@ -81,9 +83,12 @@ func NewLocalPipeRouter() PipeRouter {
 		quit:  make(chan struct{}),
 		pipes: map[string]*pipe{},
 	}
-	pipeRouter.wait.Add(1)
-	go pipeRouter.gcLoop()
 	return pipeRouter
+}
+
+func (pr *localPipeRouter) Start() {
+	pr.wait.Add(1)
+	go pr.gcLoop()
 }
 
 func (pr *localPipeRouter) Exists(_ context.Context, id string) (bool, error) {
@@ -148,6 +153,10 @@ func (pr *localPipeRouter) Delete(_ context.Context, id string) error {
 	}
 	p.Close()
 	p.tombstoneTime = mtime.Now()
+	return nil
+}
+
+func (pr *localPipeRouter) CleanUp() error {
 	return nil
 }
 

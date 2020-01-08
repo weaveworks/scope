@@ -267,6 +267,12 @@ func appMain(flags appFlags) {
 		log.Fatalf("Error creating pipe router: %v", err)
 		return
 	}
+	if flags.cleanupPipesOnly {
+		pipeRouter.CleanUp()
+		return
+	}
+
+	pipeRouter.Start()
 
 	// Start background version checking
 	checkpoint.CheckInterval(&checkpoint.CheckParams{

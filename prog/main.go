@@ -168,6 +168,7 @@ type appFlags struct {
 	controlRouterURL          string
 	controlRPCTimeout         time.Duration
 	pipeRouterURL             string
+	cleanupPipesOnly          bool
 	natsHostname              string
 	memcachedHostname         string
 	memcachedTimeout          time.Duration
@@ -381,6 +382,7 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.app.controlRouterURL, "app.control.router", "local", "Control router to use (local or sqs)")
 	flag.DurationVar(&flags.app.controlRPCTimeout, "app.control.rpctimeout", time.Minute, "Timeout for control RPC")
 	flag.StringVar(&flags.app.pipeRouterURL, "app.pipe.router", "local", "Pipe router to use (local)")
+	flag.BoolVar(&flags.app.cleanupPipesOnly, "app.pipe.cleanup-only", false, "Clean up deleted pipes and exit")
 	flag.StringVar(&flags.app.natsHostname, "app.nats", "", "Hostname for NATS service to use for shortcut reports.  If empty, shortcut reporting will be disabled.")
 	flag.StringVar(&flags.app.memcachedHostname, "app.memcached.hostname", "", "Hostname for memcached service to use when caching reports.  If empty, no memcached will be used.")
 	flag.DurationVar(&flags.app.memcachedTimeout, "app.memcached.timeout", 100*time.Millisecond, "Maximum time to wait before giving up on memcached requests.")

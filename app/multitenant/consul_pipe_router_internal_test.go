@@ -175,6 +175,7 @@ func TestPipeRouter(t *testing.T) {
 
 	for i := 0; i < replicas; i++ {
 		pr := NewConsulPipeRouter(consul, "", fmt.Sprintf("127.0.0.1:44%02d", i), NoopUserIDer)
+		pr.Start()
 		defer pr.Stop()
 		pt.prs = append(pt.prs, pr)
 	}

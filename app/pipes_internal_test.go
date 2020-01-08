@@ -26,7 +26,6 @@ func TestPipeTimeout(t *testing.T) {
 	router := mux.NewRouter()
 	pr := NewLocalPipeRouter().(*localPipeRouter)
 	RegisterPipeRoutes(router, pr)
-	pr.Stop() // we don't want the loop running in the background
 
 	mtime.NowForce(time.Now())
 	defer mtime.NowReset()
@@ -71,6 +70,7 @@ func TestPipeClose(t *testing.T) {
 	router := mux.NewRouter()
 	pr := NewLocalPipeRouter()
 	RegisterPipeRoutes(router, pr)
+	pr.Start()
 	defer pr.Stop()
 
 	server := httptest.NewServer(router)
