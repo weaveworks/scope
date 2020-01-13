@@ -153,7 +153,7 @@ func (r Reporter) Tag(rpt report.Report) (report.Report, error) {
 			activeControls := []string{ScaleUp}
 			// Disable ScaleDown when only 1 task is desired, since
 			// scaling down to 0 would cause the service to disappear (#2085)
-			if service.DesiredCount < 1 {
+			if service.DesiredCount > 1 {
 				activeControls = append(activeControls, ScaleDown)
 			}
 			rpt.ECSService.AddNode(report.MakeNodeWith(serviceID, map[string]string{

@@ -391,13 +391,12 @@ func (c *container) getBaseNode() report.Node {
 
 // Return a slice including all controls that should be shown on this container
 func (c *container) controls() []string {
-	paused := c.container.State.Paused
 	switch {
-	case paused:
+	case c.container.State.Paused:
 		return []string{UnpauseContainer}
 	case c.container.State.Running:
 		return []string{RestartContainer, StopContainer, PauseContainer, AttachContainer, ExecContainer}
-	case !c.container.State.Running:
+	default:
 		return []string{StartContainer, RemoveContainer}
 	}
 	return nil

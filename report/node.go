@@ -124,7 +124,7 @@ func (n Node) WithLatestActiveControls(cs ...string) Node {
 }
 
 // ActiveControls returns a string slice with the names of active controls.
-func (n Node) ActiveControls(cs ...string) []string {
+func (n Node) ActiveControls() []string {
 	activeControls, _ := n.Latest.Lookup(NodeActiveControls)
 	return strings.Split(activeControls, ScopeDelim)
 }
