@@ -24,7 +24,7 @@ RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
 GO_ENV=GOGC=off
 GO_BUILD_TAGS='netgo unsafe'
-GO_BUILD_FLAGS=-ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION) -s -w" -tags $(GO_BUILD_TAGS)
+GO_BUILD_FLAGS=-mod vendor -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION) -s -w" -tags $(GO_BUILD_TAGS)
 GOOS=$(shell go tool dist env | grep GOOS | sed -e 's/GOOS="\(.*\)"/\1/')
 
 ifeq ($(GOOS),linux)
