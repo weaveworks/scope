@@ -318,6 +318,8 @@ github.com/weaveworks/ps v0.0.0-20160725183535-70d17b2d6f76 h1:lX3A5prmpe4MT9iaT
 github.com/weaveworks/ps v0.0.0-20160725183535-70d17b2d6f76/go.mod h1:6YfgZlj+cWgxFlwYrm3aPt1rS1xDTD1SEqL0Ms3Zxks=
 github.com/weaveworks/tcptracer-bpf v0.0.0-20190731111909-cd53e7c84bac h1:bE6+keem2eUQT2HcRwocyA9HtQs9o2ZU6mwEvA5AVeo=
 github.com/weaveworks/tcptracer-bpf v0.0.0-20190731111909-cd53e7c84bac/go.mod h1:vIed/thLU28ufcvDlpI1X5u+pPoI30rpjIbvvDWKjMk=
+github.com/weaveworks/tcptracer-bpf v0.0.0-20200114145059-84a08fc667c0 h1:qWN6ahq9adX+BOGk6+8vKmZsZuzRgtyEWcHC+7Z5axo=
+github.com/weaveworks/tcptracer-bpf v0.0.0-20200114145059-84a08fc667c0/go.mod h1:vIed/thLU28ufcvDlpI1X5u+pPoI30rpjIbvvDWKjMk=
 github.com/weaveworks/weave v2.3.1-0.20180427133448-4da998ab4507+incompatible h1:TEQBiNDB429+6mICzJfnNXxdFl3SE6tmJf7Y3a0Yhso=
 github.com/weaveworks/weave v2.3.1-0.20180427133448-4da998ab4507+incompatible/go.mod h1:5ht5Uktjg++tIOqmWI2VvRzbNM7i+RhtqDQPumydP1U=
 github.com/willdonnelly/passwd v0.0.0-20141013001024-7935dab3074c h1:4+NVyrLUuEmvE3r3Xst7gPuKhAP6X04ACpMmPvtK0M0=

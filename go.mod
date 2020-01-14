@@ -153,7 +153,7 @@ require (
 	github.com/weaveworks/go-odp v0.0.0-20151030115644-f8c8c40c1889 // indirect
 	github.com/weaveworks/promrus v1.2.0 // indirect
 	github.com/weaveworks/ps v0.0.0-20160725183535-70d17b2d6f76
-	github.com/weaveworks/tcptracer-bpf v0.0.0-20190731111909-cd53e7c84bac
+	github.com/weaveworks/tcptracer-bpf v0.0.0-20200114145059-84a08fc667c0
 	github.com/weaveworks/weave v2.3.1-0.20180427133448-4da998ab4507+incompatible
 	github.com/willdonnelly/passwd v0.0.0-20141013001024-7935dab3074c
 	go.uber.org/atomic v1.3.2 // indirect

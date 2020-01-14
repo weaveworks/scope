@@ -19,7 +19,7 @@ import (
 )
 
 /*
-#include "../../tcptracer-bpf.h"
+#include "tcptracer-bpf.h"
 */
 import "C"
 
