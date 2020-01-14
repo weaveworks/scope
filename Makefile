@@ -111,7 +111,7 @@ $(SCOPE_EXE):
 
 %.codecgen.go: $(CODECGEN_EXE)
 	rm -f $@; $(GO_HOST) build $(GO_BUILD_FLAGS) ./$(@D) # workaround for https://github.com/ugorji/go/issues/145
-	cd $(@D) && $(WITH_GO_HOST_ENV) $(shell pwd)/$(CODECGEN_EXE) -d $(CODECGEN_UID) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
+	cd $(@D) && $(WITH_GO_HOST_ENV) GO111MODULE=off $(shell pwd)/$(CODECGEN_EXE) -d $(CODECGEN_UID) -rt $(GO_BUILD_TAGS) -u -o $(@F) $(notdir $(call GET_CODECGEN_DEPS,$(@D)))
 
 $(CODECGEN_EXE): $(CODECGEN_DIR)/*.go
 	mkdir -p $(@D)
