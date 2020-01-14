@@ -227,6 +227,8 @@ github.com/paypal/ionet
 github.com/pborman/uuid
 # github.com/peterbourgon/diskv v2.0.2-0.20171120014656-2973218375c3+incompatible
 github.com/peterbourgon/diskv
+# github.com/peterbourgon/runsvinit v2.0.0+incompatible
+github.com/peterbourgon/runsvinit
 # github.com/philhofer/fwd v0.0.0-20160129035939-98c11a7a6ec8
 github.com/philhofer/fwd
 # github.com/pkg/errors v0.8.1

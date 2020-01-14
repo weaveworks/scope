@@ -13,7 +13,7 @@ SCOPE_BACKEND_BUILD_UPTODATE=.scope_backend_build.uptodate
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
 GIT_REVISION=$(shell git rev-parse HEAD)
 WEAVENET_VERSION=2.1.3
-RUNSVINIT=vendor/runsvinit/runsvinit
+RUNSVINIT=vendor/github.com/peterbourgon/runsvinit/runsvinit
 CODECGEN_DIR=vendor/github.com/ugorji/go/codec/codecgen
 CODECGEN_EXE=$(CODECGEN_DIR)/bin/codecgen_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)
 CODECGEN_UID=0
@@ -74,7 +74,7 @@ $(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent docker/$(SCOPE_EXE) docker/
 
 $(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
 
-$(RUNSVINIT): vendor/runsvinit/*.go
+$(RUNSVINIT): vendor/github.com/peterbourgon/runsvinit/*.go
 
 $(SCOPE_EXE): $(shell find ./ -path ./vendor -prune -o -type f -name '*.go') prog/staticui/staticui.go prog/externalui/externalui.go $(CODECGEN_TARGETS)
 

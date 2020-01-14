@@ -239,6 +239,8 @@ github.com/performancecopilot/speed v3.0.1-0.20180614024626-d49dd9b77adc+incompa
 github.com/petar/GoLLRB v0.0.0-20130427215148-53be0d36a84c/go.mod h1:HUpKUBZnpzkdx0kD/+Yfuft+uD3zHGtXF/XJB14TUr4=
 github.com/peterbourgon/diskv v2.0.2-0.20171120014656-2973218375c3+incompatible h1:vC4yEuGvpjMoHhoIU9DYQJBvtQ5e0efvMVxpEYCWHzw=
 github.com/peterbourgon/diskv v2.0.2-0.20171120014656-2973218375c3+incompatible/go.mod h1:uqqh8zWWbv1HBMNONnaR/tNboyR3/BZd58JJSHlUSCU=
+github.com/peterbourgon/runsvinit v2.0.0+incompatible h1:j6URJ2gUTfZbMBM1AnkJ7M82lQxawZm4LonASHXSu94=
+github.com/peterbourgon/runsvinit v2.0.0+incompatible/go.mod h1:cvlRM1j2aaGjcgVMMBX+uKbUFZkRL/2pA/RGE6Piv/M=
 github.com/philhofer/fwd v0.0.0-20160129035939-98c11a7a6ec8 h1:jkUFVqrKRttbdDqkTrvOmHxfqIsJK0Oe2WGi1ACAE+M=
 github.com/philhofer/fwd v0.0.0-20160129035939-98c11a7a6ec8/go.mod h1:gk3iGcWd9+svBvR0sR+KPcfE+RNWozjowpeBVG3ZVNU=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

@@ -121,6 +121,7 @@ require (
 	github.com/performancecopilot/speed v3.0.1-0.20180614024626-d49dd9b77adc+incompatible // indirect
 	github.com/petar/GoLLRB v0.0.0-20130427215148-53be0d36a84c // indirect
 	github.com/peterbourgon/diskv v2.0.2-0.20171120014656-2973218375c3+incompatible // indirect
+	github.com/peterbourgon/runsvinit v2.0.0+incompatible
 	github.com/philhofer/fwd v0.0.0-20160129035939-98c11a7a6ec8 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v0.9.2
