@@ -100,14 +100,6 @@ else
 
 $(SCOPE_EXE):
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
-	@strings $@ | grep cgo_stub\\\.go >/dev/null || { \
-	        rm $@; \
-	        echo "\nYour go standard library was built without the 'netgo' build tag."; \
-	        echo "To fix that, run"; \
-	        echo "    sudo go clean -i net"; \
-	        echo "    sudo go install -tags netgo std"; \
-	        false; \
-	    }
 
 %.codecgen.go: $(CODECGEN_EXE)
 	rm -f $@; $(GO_HOST) build $(GO_BUILD_FLAGS) ./$(@D) # workaround for https://github.com/ugorji/go/issues/145
