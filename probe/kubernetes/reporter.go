@@ -248,6 +248,10 @@ func (r *Reporter) podEvent(e Event, pod Pod) {
 }
 
 func isPauseContainer(n report.Node, rpt report.Report) bool {
+	k8sContainerType, _ := n.Latest.Lookup(report.DockerLabelPrefix + "io.kubernetes.docker.type")
+	if k8sContainerType == "podsandbox" { // this label is added by dockershim
+		return true
+	}
 	containerImageIDs, ok := n.Parents.Lookup(report.ContainerImage)
 	if !ok {
 		return false
