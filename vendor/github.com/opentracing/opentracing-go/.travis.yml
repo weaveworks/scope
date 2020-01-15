@@ -1,0 +1,15 @@
+language: go
+
+go:
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
+  - tip
+
+install:
+  - go get -u github.com/golang/lint/...
+  - go get -u github.com/stretchr/testify/...
+  - go get -u golang.org/x/net/context
+script:
+  - make test lint
+  - go build ./...
