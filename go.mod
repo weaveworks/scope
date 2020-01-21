@@ -123,6 +123,8 @@ require (
 	github.com/tylerb/graceful v1.2.13
 	github.com/typetypetype/conntrack v1.0.1-0.20181112022515-9d9dd841d4eb
 	github.com/uber-go/tally v3.3.8-0.20180718230131-d0a004a77fc9+incompatible // indirect
+	github.com/uber/jaeger-client-go v2.22.1+incompatible // indirect
+	github.com/uber/jaeger-lib v2.2.0+incompatible // indirect
 	github.com/ugorji/go v0.0.0-20170918222552-54210f4e076c
 	github.com/urfave/negroni v0.2.1-0.20160830030302-5d815f907a18 // indirect
 	github.com/vishvananda/netlink v1.0.1-0.20190913165827-36d367fd76f9

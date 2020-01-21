@@ -288,11 +288,12 @@ github.com/tinylib/msgp/msgp
 github.com/tylerb/graceful
 # github.com/typetypetype/conntrack v1.0.1-0.20181112022515-9d9dd841d4eb
 github.com/typetypetype/conntrack
-# github.com/uber/jaeger-client-go v2.15.0+incompatible
+# github.com/uber/jaeger-client-go v2.22.1+incompatible
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/config
 github.com/uber/jaeger-client-go/internal/baggage
 github.com/uber/jaeger-client-go/internal/baggage/remote
+github.com/uber/jaeger-client-go/internal/reporterstats
 github.com/uber/jaeger-client-go/internal/spanlog
 github.com/uber/jaeger-client-go/internal/throttler
 github.com/uber/jaeger-client-go/internal/throttler/remote
@@ -306,7 +307,7 @@ github.com/uber/jaeger-client-go/thrift-gen/sampling
 github.com/uber/jaeger-client-go/thrift-gen/zipkincore
 github.com/uber/jaeger-client-go/transport
 github.com/uber/jaeger-client-go/utils
-# github.com/uber/jaeger-lib v1.5.1-0.20181102163054-1fc5c315e03c
+# github.com/uber/jaeger-lib v2.2.0+incompatible
 github.com/uber/jaeger-lib/metrics
 github.com/uber/jaeger-lib/metrics/prometheus
 # github.com/ugorji/go v0.0.0-20170918222552-54210f4e076c
@@ -352,6 +353,8 @@ github.com/weaveworks/tcptracer-bpf/pkg/tracer
 github.com/weaveworks/weave/common
 # github.com/willdonnelly/passwd v0.0.0-20141013001024-7935dab3074c
 github.com/willdonnelly/passwd
+# go.uber.org/atomic v1.4.0
+go.uber.org/atomic
 # golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/scrypt
