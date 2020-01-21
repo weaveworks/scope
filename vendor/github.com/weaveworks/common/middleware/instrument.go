@@ -64,8 +64,17 @@ func (i Instrument) Wrap(next http.Handler) http.Handler {
 // We do all this as we do not wish to emit high cardinality labels to
 // prometheus.
 func (i Instrument) getRouteName(r *http.Request) string {
+	route := getRouteName(i.RouteMatcher, r)
+	if route == "" {
+		route = "other"
+	}
+
+	return route
+}
+
+func getRouteName(routeMatcher RouteMatcher, r *http.Request) string {
 	var routeMatch mux.RouteMatch
-	if i.RouteMatcher != nil && i.RouteMatcher.Match(r, &routeMatch) {
+	if routeMatcher != nil && routeMatcher.Match(r, &routeMatch) {
 		if name := routeMatch.Route.GetName(); name != "" {
 			return name
 		}
@@ -73,7 +82,8 @@ func (i Instrument) getRouteName(r *http.Request) string {
 			return MakeLabelValue(tmpl)
 		}
 	}
-	return "other"
+
+	return ""
 }
 
 var invalidChars = regexp.MustCompile(`[^a-zA-Z0-9]+`)

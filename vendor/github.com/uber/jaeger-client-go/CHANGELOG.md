@@ -1,10 +1,15 @@
 Changes by Version
 ==================
 
-2.15.0 (unreleased)
+2.15.0 (2018-10-10)
 -------------------
 
-- nothing yet
+- Fix FollowsFrom spans ignoring baggage/debug header from dummy parent context (#313) <Zvi Cahana>
+- Make maximum annotation length configurable in tracer options (#318) <Eric Chang>
+- Support more environment variables in configuration (#323) <Daneyon Hansen>
+- Print error on Sampler Query failure (#328) <Goutham Veeramachaneni>
+- Add an HTTPOption to support custom http.RoundTripper (#333) <Michael Puncel>
+- Return an error when an HTTP error code is seen in zipkin HTTP transport <Michael Puncel>
 
 
 2.14.0 (2018-04-30)

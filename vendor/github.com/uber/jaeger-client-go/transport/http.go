@@ -68,6 +68,14 @@ func HTTPBasicAuth(username string, password string) HTTPOption {
 	}
 }
 
+// HTTPRoundTripper configures the underlying Transport on the *http.Client
+// that is used
+func HTTPRoundTripper(transport http.RoundTripper) HTTPOption {
+	return func(c *HTTPTransport) {
+		c.client.Transport = transport
+	}
+}
+
 // NewHTTPTransport returns a new HTTP-backend transport. url should be an http
 // url of the collector to handle POST request, typically something like:
 //     http://hostname:14268/api/traces?format=jaeger.thrift

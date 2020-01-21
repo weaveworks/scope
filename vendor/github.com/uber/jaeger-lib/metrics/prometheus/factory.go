@@ -126,7 +126,7 @@ func newFactory(parent *Factory, scope string, tags map[string]string) *Factory 
 
 // Counter implements Counter of metrics.Factory.
 func (f *Factory) Counter(name string, tags map[string]string) metrics.Counter {
-	name = f.subScope(name)
+	name = counterNamingConvention(f.subScope(name))
 	tags = f.mergeTags(tags)
 	labelNames := f.tagNames(tags)
 	opts := prometheus.CounterOpts{
@@ -243,4 +243,11 @@ func (f *Factory) tagsAsLabelValues(labels []string, tags map[string]string) []s
 		ret = append(ret, tags[l])
 	}
 	return ret
+}
+
+func counterNamingConvention(name string) string {
+	if !strings.HasSuffix(name, "_total") {
+		name += "_total"
+	}
+	return name
 }

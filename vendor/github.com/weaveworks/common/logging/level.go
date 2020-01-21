@@ -40,7 +40,21 @@ func (l *Level) String() string {
 	return l.s
 }
 
-// Set updates the value of the allowed level.
+// UnmarshalYAML implements yaml.Unmarshaler.
+func (l *Level) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var level string
+	if err := unmarshal(&level); err != nil {
+		return err
+	}
+	return l.Set(level)
+}
+
+// MarshalYAML implements yaml.Marshaler.
+func (l Level) MarshalYAML() (interface{}, error) {
+	return l.String(), nil
+}
+
+// Set updates the value of the allowed level.  Implments flag.Value.
 func (l *Level) Set(s string) error {
 	switch s {
 	case "debug":

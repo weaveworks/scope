@@ -21,19 +21,24 @@ import (
 )
 
 // Init initializes the passed in metrics and initializes its fields using the passed in factory.
-func Init(metrics interface{}, factory Factory, globalTags map[string]string) {
-	if err := initMetrics(metrics, factory, globalTags); err != nil {
-		panic(err.Error())
-	}
-}
-
-// initMetrics uses reflection to initialize a struct containing metrics fields
+//
+// It uses reflection to initialize a struct containing metrics fields
 // by assigning new Counter/Gauge/Timer values with the metric name retrieved
 // from the `metric` tag and stats tags retrieved from the `tags` tag.
 //
 // Note: all fields of the struct must be exported, have a `metric` tag, and be
 // of type Counter or Gauge or Timer.
-func initMetrics(m interface{}, factory Factory, globalTags map[string]string) error {
+//
+// Errors during Init lead to a panic.
+func Init(metrics interface{}, factory Factory, globalTags map[string]string) {
+	if err := InitOrError(metrics, factory, globalTags); err != nil {
+		panic(err.Error())
+	}
+}
+
+// InitOrError does the same as Init, but returns an error instead of
+// panicking.
+func InitOrError(m interface{}, factory Factory, globalTags map[string]string) error {
 	// Allow user to opt out of reporting metrics by passing in nil.
 	if factory == nil {
 		factory = NullFactory
