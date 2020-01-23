@@ -184,12 +184,12 @@ type mapPortToPids map[uint16]pidPair
 func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID string) error {
 	/* Collect the connections by from/to address pairs (scoped by namespace) plus destination port
 	   There are three main cases:
-		    * connections from address+port off-box to a local process
-		      - in this case we know the pid of the local process
-		    * connections from local processes to an off-box address+port
-		      - we will know the pids of the local processes but not the remote
-		    * connections from local processes to a local process
-	          - these connections will each be reported twice by ebpf, as incoming and as outgoing.
+		 * connections from address+port off-box to a local process
+		   - in this case we know the pid of the local process
+		 * connections from local processes to an off-box address+port
+		   - we will know the pids of the local processes but not the remote
+		 * connections from local processes to a local process
+		   - these connections will each be reported twice by ebpf, as incoming and as outgoing.
 	*/
 	type triple struct {
 		fromAddr, toAddr [net.IPv4len]byte
@@ -233,26 +233,28 @@ func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID stri
 
 	for triple, portToPids := range connectionsByTriple {
 		filter, count := makeFilter(portToPids)
-		i, sent, skipped := 0, 0, 0
-		// Now do the actual sends
+		seen, sent, skipped := 0, 0, 0
+		// Now go over everything we collected, reporting connections if they pass the filter.
+		// With each connection is a count of how many it stands for.
 		for fromPort, pids := range portToPids {
-			if filter(fromPort) {
-				tuple := fourTuple{
-					fromAddr: triple.fromAddr,
-					fromPort: fromPort,
-					toAddr:   triple.toAddr,
-					toPort:   triple.toPort,
-				}
-				sent++
-				if sent == count {
-					skipped += (len(portToPids) - i - 1)
-				}
-				t.addConnection(rpt, hostNodeID, tuple, uint(pids.fromPid), uint(pids.toPid), triple.networkNamespace, skipped+1)
-				skipped = 0
-			} else {
+			seen++
+			if !filter(fromPort) {
 				skipped++
+				continue
 			}
-			i++
+			tuple := fourTuple{
+				fromAddr: triple.fromAddr,
+				fromPort: fromPort,
+				toAddr:   triple.toAddr,
+				toPort:   triple.toPort,
+			}
+			sent++
+			if sent == count {
+				// Last one in a group: add in the connections that come after this one.
+				skipped += (len(portToPids) - seen)
+			}
+			t.addConnection(rpt, hostNodeID, tuple, uint(pids.fromPid), uint(pids.toPid), triple.networkNamespace, skipped+1)
+			skipped = 0
 		}
 	}
 
