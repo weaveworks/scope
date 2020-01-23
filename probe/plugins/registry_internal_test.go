@@ -627,14 +627,9 @@ func checkControls(t *testing.T, topology report.Topology, expectedControls, exp
 	if !found {
 		t.Fatalf("expected a node %s in a topology", nodeID)
 	}
-	actualNodeControls := []string{}
-	node.LatestControls.ForEach(func(controlID string, _ time.Time, _ report.NodeControlData) {
-		actualNodeControls = append(actualNodeControls, controlID)
-	})
-	nodeControlsSet := report.MakeStringSet(expectedNodeControls...)
-	actualNodeControlsSet := report.MakeStringSet(actualNodeControls...)
-	if !reflect.DeepEqual(nodeControlsSet, actualNodeControlsSet) {
-		t.Fatalf("node controls in node %s in topology %s are not equal:\n%s", nodeID, topology.Label, test.Diff(nodeControlsSet, actualNodeControlsSet))
+	actualNodeControls := node.ActiveControls()
+	if !reflect.DeepEqual(expectedNodeControls, actualNodeControls) {
+		t.Fatalf("node controls in node %s in topology %s are not equal:\n%s", nodeID, topology.Label, test.Diff(expectedNodeControls, actualNodeControls))
 	}
 }
 

@@ -2,7 +2,6 @@ package detailed
 
 import (
 	"sort"
-	"time"
 
 	"github.com/ugorji/go/codec"
 
@@ -112,10 +111,7 @@ func controlsFor(topology report.Topology, nodeID string) []ControlInstance {
 	if !ok {
 		return result
 	}
-	node.LatestControls.ForEach(func(controlID string, _ time.Time, data report.NodeControlData) {
-		if data.Dead {
-			return
-		}
+	for _, controlID := range node.ActiveControls() {
 		if control, ok := topology.Controls[controlID]; ok {
 			result = append(result, ControlInstance{
 				ProbeID: probeID,
@@ -123,7 +119,7 @@ func controlsFor(topology report.Topology, nodeID string) []ControlInstance {
 				Control: control,
 			})
 		}
-	})
+	}
 	return result
 }
 

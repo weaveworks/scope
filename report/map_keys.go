@@ -2,6 +2,8 @@ package report
 
 // node metadata keys
 const (
+	// Node
+	NodeActiveControls = "active_controls"
 	// probe/endpoint
 	ReverseDNSNames = "reverse_dns_names"
 	SnoopedDNSNames = "snooped_dns_names"
