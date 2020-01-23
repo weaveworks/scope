@@ -245,6 +245,10 @@ func IsApplication(n report.Node) bool {
 	if _, ok := systemImagePrefixes[imagePrefix]; ok || report.IsPauseImageName(imagePrefix) {
 		return false
 	}
+	k8sContainerType, _ := n.Latest.Lookup(report.DockerLabelPrefix + "io.kubernetes.docker.type")
+	if k8sContainerType == "podsandbox" { // another way to detect "pause container"
+		return false
+	}
 	roleLabel, _ := n.Latest.Lookup(report.DockerLabelPrefix + "works.weave.role")
 	if roleLabel == "system" {
 		return false

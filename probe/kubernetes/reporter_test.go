@@ -347,8 +347,23 @@ func BenchmarkReporter(b *testing.B) {
 
 func TestTagger(t *testing.T) {
 	rpt := report.MakeReport()
+	rpt.ContainerImage.AddNode(report.MakeNodeWith("image1", map[string]string{
+		docker.ImageName: "weaveworks/some_interesting_image",
+	}))
+	rpt.ContainerImage.AddNode(report.MakeNodeWith("pause_image", map[string]string{
+		docker.ImageName: "google_containers/pause",
+	}))
 	rpt.Container.AddNode(report.MakeNodeWith("container1", map[string]string{
 		docker.LabelPrefix + "io.kubernetes.pod.uid": "123456",
+	}).WithParent(report.ContainerImage, "image1"))
+	// This is the first way that Scope identified a pause container - via image name
+	rpt.Container.AddNode(report.MakeNodeWith("container2", map[string]string{
+		docker.LabelPrefix + "io.kubernetes.pod.uid": "123456",
+	}).WithParent(report.ContainerImage, "pause_image"))
+	// Second way that Scope identifies a pause container - via docker.type label
+	rpt.Container.AddNode(report.MakeNodeWith("container3", map[string]string{
+		docker.LabelPrefix + "io.kubernetes.pod.uid":     "123456",
+		docker.LabelPrefix + "io.kubernetes.docker.type": "podsandbox",
 	}))
 
 	rpt, err := (&kubernetes.Tagger{}).Tag(rpt)
@@ -356,10 +371,24 @@ func TestTagger(t *testing.T) {
 		t.Errorf("Unexpected error: %v", err)
 	}
 
-	have, ok := rpt.Container.Nodes["container1"].Parents.Lookup(report.Pod)
+	podParents, ok := rpt.Container.Nodes["container1"].Parents.Lookup(report.Pod)
 	want := report.MakeStringSet(report.MakePodNodeID("123456"))
-	if !ok || !reflect.DeepEqual(have, want) {
-		t.Errorf("Expected container to have pod parent %v %v", have, want)
+	if !ok || !reflect.DeepEqual(podParents, want) {
+		t.Errorf("Expected container1 to have pod parent %v %v", podParents, want)
+	}
+	_, ok = rpt.Container.Nodes["container1"].Latest.Lookup(report.DoesNotMakeConnections)
+	if ok {
+		t.Errorf("Expected container1 not to have DoesNotMakeConnections flag")
+	}
+
+	_, ok = rpt.Container.Nodes["container2"].Latest.Lookup(report.DoesNotMakeConnections)
+	if !ok {
+		t.Errorf("Expected pause container to have DoesNotMakeConnections flag")
+	}
+
+	_, ok = rpt.Container.Nodes["container3"].Latest.Lookup(report.DoesNotMakeConnections)
+	if !ok {
+		t.Errorf("Expected pause container to have DoesNotMakeConnections flag")
 	}
 }
 
