@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"regexp"
 	"strconv"
@@ -22,12 +23,31 @@ import (
 	"github.com/weaveworks/tcptracer-bpf/pkg/tracer"
 )
 
-// An ebpfConnection represents a TCP connection
-type ebpfConnection struct {
-	tuple            fourTuple
+// Open connections are held by four-tuple, and loopback addresses (e.g. 127.0.0.1)
+// are scoped by network namespace.  We only need one namespace: either
+// just one from or to address is loopback, or both are in the same namespace.
+type ebpfKey struct {
+	fourTuple
 	networkNamespace uint32
-	incoming         bool
-	pid              int
+}
+
+func makeKey(tuple fourTuple, namespace uint32) ebpfKey {
+	ret := ebpfKey{fourTuple: tuple}
+	if net.IP(tuple.fromAddr[:]).IsLoopback() || net.IP(tuple.toAddr[:]).IsLoopback() {
+		ret.networkNamespace = namespace
+	}
+	return ret
+}
+
+// For each connection we also record which direction it was opened in, and the pid of the 'from' end.
+type ebpfDetail struct {
+	incoming bool
+	pid      uint32 // zero if unknown
+}
+
+type ebpfClosedConnection struct {
+	key ebpfKey
+	ebpfDetail
 }
 
 // EbpfTracker contains the sets of open and closed TCP connections.
@@ -51,9 +71,9 @@ type EbpfTracker struct {
 	//   $ echo stop | sudo tee /proc/$(pidof scope-probe)/root/var/run/scope/debug-bpf
 	debugBPF bool
 
-	openConnections   map[fourTuple]ebpfConnection
-	closedConnections []ebpfConnection
-	closedDuringInit  map[fourTuple]struct{}
+	openConnections   map[ebpfKey]ebpfDetail
+	closedConnections []ebpfClosedConnection
+	closedDuringInit  map[ebpfKey]struct{}
 }
 
 // releaseRegex should match all possible variations of a common Linux
@@ -247,6 +267,9 @@ func tupleFromPidFd(pid int, fd int) (tuple fourTuple, netns uint32, ok bool) {
 	return fourTuple{}, 0, false
 }
 
+// this callback exists to close a hole whereby we don't get a kprobe
+// for tcp_accept if accept was called before the probe started.
+// It's fairly safe to assume all such connections are incoming, but not 100%
 func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
 	if !process.IsProcInAccept("/proc", strconv.Itoa(pid)) {
 		t.tracer.RemoveFdInstallWatcher(uint32(pid))
@@ -260,11 +283,9 @@ func (t *EbpfTracker) handleFdInstall(ev tracer.EventType, pid int, fd int) {
 	t.Lock()
 	defer t.Unlock()
 
-	t.openConnections[tuple] = ebpfConnection{
-		incoming:         true,
-		tuple:            tuple,
-		pid:              pid,
-		networkNamespace: netns,
+	t.openConnections[makeKey(tuple, netns)] = ebpfDetail{
+		incoming: true,
+		pid:      uint32(pid),
 	}
 }
 
@@ -275,28 +296,25 @@ func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid
 	log.Debugf("handleConnection(%v, [%v:%v --> %v:%v], pid=%v, netNS=%v)",
 		ev, tuple.fromAddr, tuple.fromPort, tuple.toAddr, tuple.toPort, pid, networkNamespace)
 
+	key := makeKey(tuple, networkNamespace)
 	switch ev {
 	case tracer.EventConnect:
-		t.openConnections[tuple] = ebpfConnection{
-			incoming:         false,
-			tuple:            tuple,
-			pid:              pid,
-			networkNamespace: networkNamespace,
+		t.openConnections[key] = ebpfDetail{
+			incoming: false,
+			pid:      uint32(pid),
 		}
 	case tracer.EventAccept:
-		t.openConnections[tuple] = ebpfConnection{
-			incoming:         true,
-			tuple:            tuple,
-			pid:              pid,
-			networkNamespace: networkNamespace,
+		t.openConnections[key] = ebpfDetail{
+			incoming: true,
+			pid:      uint32(pid),
 		}
 	case tracer.EventClose:
 		if !t.ready {
-			t.closedDuringInit[tuple] = struct{}{}
+			t.closedDuringInit[key] = struct{}{}
 		}
-		if deadConn, ok := t.openConnections[tuple]; ok {
-			delete(t.openConnections, tuple)
-			t.closedConnections = append(t.closedConnections, deadConn)
+		if deadConn, ok := t.openConnections[key]; ok {
+			delete(t.openConnections, key)
+			t.closedConnections = append(t.closedConnections, ebpfClosedConnection{key: key, ebpfDetail: deadConn})
 		} else {
 			log.Debugf("EbpfTracker: unmatched close event: %s pid=%d netns=%v", tuple, pid, networkNamespace)
 		}
@@ -307,15 +325,15 @@ func (t *EbpfTracker) handleConnection(ev tracer.EventType, tuple fourTuple, pid
 
 // walkConnections calls f with all open connections and connections that have come and gone
 // since the last call to walkConnections
-func (t *EbpfTracker) walkConnections(f func(ebpfConnection)) {
+func (t *EbpfTracker) walkConnections(f func(ebpfKey, ebpfDetail)) {
 	t.Lock()
 	defer t.Unlock()
 
-	for _, connection := range t.openConnections {
-		f(connection)
+	for tuple, detail := range t.openConnections {
+		f(tuple, detail)
 	}
 	for _, connection := range t.closedConnections {
-		f(connection)
+		f(connection.key, connection.ebpfDetail)
 	}
 	t.closedConnections = t.closedConnections[:0]
 }
@@ -323,14 +341,18 @@ func (t *EbpfTracker) walkConnections(f func(ebpfConnection)) {
 func (t *EbpfTracker) feedInitialConnections(conns procspy.ConnIter, seenTuples map[string]fourTuple, processesWaitingInAccept []int, hostNodeID string) {
 	t.Lock()
 	for conn := conns.Next(); conn != nil; conn = conns.Next() {
+		if conn.Proc.PID == 0 {
+			continue // no point in tracking a connection which we can't associate to a process
+		}
 		tuple, namespaceID, incoming := connectionTuple(conn, seenTuples)
-		if _, ok := t.closedDuringInit[tuple]; !ok {
-			if _, ok := t.openConnections[tuple]; !ok {
-				t.openConnections[tuple] = ebpfConnection{
-					incoming:         incoming,
-					tuple:            tuple,
-					pid:              int(conn.Proc.PID),
-					networkNamespace: namespaceID,
+		key := makeKey(tuple, namespaceID)
+		if _, ok := t.closedDuringInit[key]; !ok {
+			if _, ok := t.openConnections[key]; !ok {
+				log.Debugf("initialConnection([%v], in=%v, pid=%v, netNS=%v)",
+					tuple, incoming, conn.Proc.PID, namespaceID)
+				t.openConnections[key] = ebpfDetail{
+					incoming: incoming,
+					pid:      uint32(conn.Proc.PID),
 				}
 			}
 		}
@@ -381,9 +403,9 @@ func (t *EbpfTracker) restart() error {
 	t.dead = false
 	t.ready = false
 
-	t.openConnections = map[fourTuple]ebpfConnection{}
-	t.closedDuringInit = map[fourTuple]struct{}{}
-	t.closedConnections = []ebpfConnection{}
+	t.openConnections = map[ebpfKey]ebpfDetail{}
+	t.closedDuringInit = map[ebpfKey]struct{}{}
+	t.closedConnections = []ebpfClosedConnection{}
 
 	tracer, err := tracer.NewTracer(t)
 	if err != nil {

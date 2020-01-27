@@ -8,6 +8,8 @@ const (
 	ReverseDNSNames = "reverse_dns_names"
 	SnoopedDNSNames = "snooped_dns_names"
 	CopyOf          = "copy_of"
+	ConnectionCount = "conn_count"
+
 	// probe/process
 	PID     = "pid"
 	Name    = "name" // also used by probe/docker
