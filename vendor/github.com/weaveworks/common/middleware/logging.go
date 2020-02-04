@@ -17,6 +17,11 @@ type Log struct {
 
 // logWithRequest information from the request and context as fields.
 func (l Log) logWithRequest(r *http.Request) logging.Interface {
+	traceID, ok := ExtractTraceID(r.Context())
+	if ok {
+		l.Log = l.Log.WithField("traceID", traceID)
+	}
+
 	return user.LogWith(r.Context(), l.Log)
 }
 
@@ -58,8 +63,9 @@ func dumpRequest(req *http.Request) ([]byte, error) {
 
 	// Exclude some headers for security, or just that we don't need them when debugging
 	err := req.Header.WriteSubset(&b, map[string]bool{
-		"Cookie":       true,
-		"X-Csrf-Token": true,
+		"Cookie":        true,
+		"X-Csrf-Token":  true,
+		"Authorization": true,
 	})
 	if err != nil {
 		return nil, err

@@ -80,7 +80,9 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 			RouteMatcher: router,
 			Duration:     requestDuration,
 		},
-		middleware.Tracer{},
+		middleware.Tracer{
+			RouteMatcher: router,
+		},
 	)
 
 	return middlewares.Wrap(router)

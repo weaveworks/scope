@@ -4,23 +4,25 @@ import (
 	"fmt"
 	"os"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+
 	"github.com/weaveworks/promrus"
 )
 
-// Setup configures logging output to stderr, sets the log level and sets the formatter.
+// Setup configures a global logrus logger to output to stderr.
+// It populates the standard logrus logger as well as the global logging instance.
 func Setup(logLevel string) error {
-	log.SetOutput(os.Stderr)
-	level, err := log.ParseLevel(logLevel)
+	level, err := logrus.ParseLevel(logLevel)
 	if err != nil {
-		return fmt.Errorf("Error parsing log level: %v", err)
+		return fmt.Errorf("error parsing log level: %v", err)
 	}
-	log.SetLevel(level)
-	log.SetFormatter(&textFormatter{})
 	hook, err := promrus.NewPrometheusHook() // Expose number of log messages as Prometheus metrics.
 	if err != nil {
 		return err
 	}
-	log.AddHook(hook)
+	logrus.SetOutput(os.Stderr)
+	logrus.SetLevel(level)
+	logrus.AddHook(hook)
+	SetGlobal(Logrus(logrus.StandardLogger()))
 	return nil
 }

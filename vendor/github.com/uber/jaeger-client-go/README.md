@@ -3,7 +3,7 @@
 # Jaeger Bindings for Go OpenTracing API
 
 Instrumentation library that implements an
-[OpenTracing](http://opentracing.io) Tracer for Jaeger (https://jaegertracing.io).
+[OpenTracing Go](https://github.com/opentracing/opentracing-go) Tracer for Jaeger (https://jaegertracing.io).
 
 **IMPORTANT**: The library's import path is based on its original location under `github.com/uber`. Do not try to import it as `github.com/jaegertracing`, it will not compile. We might revisit this in the next major release.
   * :white_check_mark: `import "github.com/uber/jaeger-client-go"`
@@ -15,19 +15,20 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Installation
 
-We recommended using a dependency manager like [glide](https://github.com/Masterminds/glide)
+We recommended using a dependency manager like [dep](https://golang.github.io/dep/)
 and [semantic versioning](http://semver.org/) when including this library into an application.
 For example, Jaeger backend imports this library like this:
 
-```yaml
-- package: github.com/uber/jaeger-client-go
-  version: ^2.7.0
+```toml
+[[constraint]]
+  name = "github.com/uber/jaeger-client-go"
+  version = "2.17"
 ```
 
 If you instead want to use the latest version in `master`, you can pull it via `go get`.
 Note that during `go get` you may see build errors due to incompatible dependencies, which is why
 we recommend using semantic versions for dependencies.  The error  may be fixed by running
-`make install` (it will install `glide` if you don't have it):
+`make install` (it will install `dep` if you don't have it):
 
 ```shell
 go get -u github.com/uber/jaeger-client-go/
@@ -44,7 +45,7 @@ and [config/example_test.go](./config/example_test.go).
 ### Environment variables
 
 The tracer can be initialized with values coming from environment variables. None of the env vars are required
-and all of them can be overriden via direct setting of the property on the configuration object.
+and all of them can be overridden via direct setting of the property on the configuration object.
 
 Property| Description
 --- | ---
@@ -56,12 +57,12 @@ JAEGER_USER | Username to send as part of "Basic" authentication to the collecto
 JAEGER_PASSWORD | Password to send as part of "Basic" authentication to the collector endpoint
 JAEGER_REPORTER_LOG_SPANS | Whether the reporter should also log the spans
 JAEGER_REPORTER_MAX_QUEUE_SIZE | The reporter's maximum queue size
-JAEGER_REPORTER_FLUSH_INTERVAL | The reporter's flush interval (ms)
+JAEGER_REPORTER_FLUSH_INTERVAL | The reporter's flush interval, with units, e.g. "500ms" or "2s" ([valid units][timeunits])
 JAEGER_SAMPLER_TYPE | The sampler type
 JAEGER_SAMPLER_PARAM | The sampler parameter (number)
-JAEGER_SAMPLER_MANAGER_HOST_PORT | The host name and port when using the remote controlled sampler
+JAEGER_SAMPLER_MANAGER_HOST_PORT | The HTTP endpoint when using the remote sampler, i.e. http://jaeger-agent:5778/sampling
 JAEGER_SAMPLER_MAX_OPERATIONS | The maximum number of operations that the sampler will keep track of
-JAEGER_SAMPLER_REFRESH_INTERVAL | How often the remotely controlled sampler will poll jaeger-agent for the appropriate sampling strategy
+JAEGER_SAMPLER_REFRESH_INTERVAL | How often the remotely controlled sampler will poll jaeger-agent for the appropriate sampling strategy, with units, e.g. "1m" or "30s" ([valid units][timeunits])
 JAEGER_TAGS | A comma separated list of `name = value` tracer level tags, which get added to all reported spans. The value can also refer to an environment variable using the format `${envVarName:default}`, where the `:default` is optional, and identifies a value to be used if the environment variable cannot be found
 JAEGER_DISABLED | Whether the tracer is disabled or not. If true, the default `opentracing.NoopTracer` is used.
 JAEGER_RPC_METRICS | Whether to store RPC metrics
@@ -181,6 +182,29 @@ are available:
   1. `RateLimitingSampler` can be used to allow only a certain fixed
      number of traces to be sampled per second.
 
+#### Delayed sampling
+
+Version 2.20 introduced the ability to delay sampling decisions in the life cycle
+of the root span. It involves several features and architectural changes:
+  * **Shared sampling state**: the sampling state is shared across all local
+    (i.e. in-process) spans for a given trace.
+  * **New `SamplerV2` API** allows the sampler to be called at multiple points 
+    in the life cycle of a span:
+    * on span creation
+    * on overwriting span operation name
+    * on setting span tags
+    * on finishing the span
+  * **Final/non-final sampling state**: the new `SamplerV2` API allows the sampler
+    to indicate if the negative sampling decision is final or not (positive sampling
+    decisions are always final). If the decision is not final, the sampler will be
+    called again on further span life cycle events, like setting tags.
+
+These new features are used in the experimental `x.TagMatchingSampler`, which
+can sample a trace based on a certain tag added to the root
+span or one of its local (in-process) children. The sampler can be used with
+another experimental `x.PrioritySampler` that allows multiple samplers to try
+to make a sampling decision, in a certain priority order.
+
 ### Baggage Injection
 
 The OpenTracing spec allows for [baggage][baggage], which are key value pairs that are added
@@ -222,7 +246,7 @@ import (
 )
 
 span := opentracing.SpanFromContext(ctx)
-ext.SamplingPriority.Set(span, 1)    
+ext.SamplingPriority.Set(span, 1)
 ```
 
 #### Via HTTP Headers
@@ -253,6 +277,24 @@ by a lot of Zipkin tracers. This means that you can use Jaeger in conjunction wi
 
 However it is not the default propagation format, see [here](zipkin/README.md#NewZipkinB3HTTPHeaderPropagator) how to set it up.
 
+## SelfRef
+
+Jaeger Tracer supports an additional [reference](https://github.com/opentracing/specification/blob/1.1/specification.md#references-between-spans)
+type call `Self`. This allows a caller to provide an already established `SpanContext`.
+This allows loading and continuing spans/traces from offline (ie log-based) storage. The `Self` reference
+bypasses trace and span id generation.
+
+
+Usage requires passing in a `SpanContext` and the jaeger `Self` reference type:
+```
+span := tracer.StartSpan(
+    "continued_span",
+    SelfRef(yourSpanContext),
+)
+...
+defer span.finish()
+```
+
 ## License
 
 [Apache 2.0 License](LICENSE).
@@ -267,3 +309,4 @@ However it is not the default propagation format, see [here](zipkin/README.md#Ne
 [ot-img]: https://img.shields.io/badge/OpenTracing--1.0-enabled-blue.svg
 [ot-url]: http://opentracing.io
 [baggage]: https://github.com/opentracing/specification/blob/master/specification.md#set-a-baggage-item
+[timeunits]: https://golang.org/pkg/time/#ParseDuration

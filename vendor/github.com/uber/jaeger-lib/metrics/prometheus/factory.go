@@ -125,13 +125,17 @@ func newFactory(parent *Factory, scope string, tags map[string]string) *Factory 
 }
 
 // Counter implements Counter of metrics.Factory.
-func (f *Factory) Counter(name string, tags map[string]string) metrics.Counter {
-	name = f.subScope(name)
-	tags = f.mergeTags(tags)
+func (f *Factory) Counter(options metrics.Options) metrics.Counter {
+	help := strings.TrimSpace(options.Help)
+	if len(help) == 0 {
+		help = options.Name
+	}
+	name := counterNamingConvention(f.subScope(options.Name))
+	tags := f.mergeTags(options.Tags)
 	labelNames := f.tagNames(tags)
 	opts := prometheus.CounterOpts{
 		Name: name,
-		Help: name,
+		Help: help,
 	}
 	cv := f.cache.getOrMakeCounterVec(opts, labelNames)
 	return &counter{
@@ -140,13 +144,17 @@ func (f *Factory) Counter(name string, tags map[string]string) metrics.Counter {
 }
 
 // Gauge implements Gauge of metrics.Factory.
-func (f *Factory) Gauge(name string, tags map[string]string) metrics.Gauge {
-	name = f.subScope(name)
-	tags = f.mergeTags(tags)
+func (f *Factory) Gauge(options metrics.Options) metrics.Gauge {
+	help := strings.TrimSpace(options.Help)
+	if len(help) == 0 {
+		help = options.Name
+	}
+	name := f.subScope(options.Name)
+	tags := f.mergeTags(options.Tags)
 	labelNames := f.tagNames(tags)
 	opts := prometheus.GaugeOpts{
 		Name: name,
-		Help: name,
+		Help: help,
 	}
 	gv := f.cache.getOrMakeGaugeVec(opts, labelNames)
 	return &gauge{
@@ -155,14 +163,18 @@ func (f *Factory) Gauge(name string, tags map[string]string) metrics.Gauge {
 }
 
 // Timer implements Timer of metrics.Factory.
-func (f *Factory) Timer(name string, tags map[string]string) metrics.Timer {
-	name = f.subScope(name)
-	tags = f.mergeTags(tags)
+func (f *Factory) Timer(options metrics.TimerOptions) metrics.Timer {
+	help := strings.TrimSpace(options.Help)
+	if len(help) == 0 {
+		help = options.Name
+	}
+	name := f.subScope(options.Name)
+	tags := f.mergeTags(options.Tags)
 	labelNames := f.tagNames(tags)
 	opts := prometheus.HistogramOpts{
 		Name:    name,
-		Help:    name,
-		Buckets: f.buckets,
+		Help:    help,
+		Buckets: asFloatBuckets(options.Buckets),
 	}
 	hv := f.cache.getOrMakeHistogramVec(opts, labelNames)
 	return &timer{
@@ -170,9 +182,37 @@ func (f *Factory) Timer(name string, tags map[string]string) metrics.Timer {
 	}
 }
 
+func asFloatBuckets(buckets []time.Duration) []float64 {
+	data := make([]float64, len(buckets))
+	for i := range data {
+		data[i] = float64(buckets[i]) / float64(time.Second)
+	}
+	return data
+}
+
+// Histogram implements Histogram of metrics.Factory.
+func (f *Factory) Histogram(options metrics.HistogramOptions) metrics.Histogram {
+	help := strings.TrimSpace(options.Help)
+	if len(help) == 0 {
+		help = options.Name
+	}
+	name := f.subScope(options.Name)
+	tags := f.mergeTags(options.Tags)
+	labelNames := f.tagNames(tags)
+	opts := prometheus.HistogramOpts{
+		Name:    name,
+		Help:    help,
+		Buckets: options.Buckets,
+	}
+	hv := f.cache.getOrMakeHistogramVec(opts, labelNames)
+	return &histogram{
+		histogram: hv.WithLabelValues(f.tagsAsLabelValues(labelNames, tags)...),
+	}
+}
+
 // Namespace implements Namespace of metrics.Factory.
-func (f *Factory) Namespace(name string, tags map[string]string) metrics.Factory {
-	return newFactory(f, f.subScope(name), f.mergeTags(tags))
+func (f *Factory) Namespace(scope metrics.NSOptions) metrics.Factory {
+	return newFactory(f, f.subScope(scope.Name), f.mergeTags(scope.Tags))
 }
 
 type counter struct {
@@ -201,6 +241,14 @@ type timer struct {
 
 func (t *timer) Record(v time.Duration) {
 	t.histogram.Observe(float64(v.Nanoseconds()) / float64(time.Second/time.Nanosecond))
+}
+
+type histogram struct {
+	histogram observer
+}
+
+func (h *histogram) Record(v float64) {
+	h.histogram.Observe(v)
 }
 
 func (f *Factory) subScope(name string) string {
@@ -243,4 +291,11 @@ func (f *Factory) tagsAsLabelValues(labels []string, tags map[string]string) []s
 		ret = append(ret, tags[l])
 	}
 	return ret
+}
+
+func counterNamingConvention(name string) string {
+	if !strings.HasSuffix(name, "_total") {
+		name += "_total"
+	}
+	return name
 }
