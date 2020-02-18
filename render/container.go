@@ -330,9 +330,3 @@ func MapContainer2Hostname(n report.Node) report.Node {
 	node.Counters = node.Counters.Add(n.Topology, 1)
 	return node
 }
-
-// MapToEmpty removes all the attributes, children, etc, of a node. Useful when
-// we just want to count the presence of nodes.
-func MapToEmpty(n report.Node) report.Node {
-	return report.MakeNode(n.ID).WithTopology(n.Topology)
-}
