@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"flag"
 	"strings"
+	"sync"
 	"time"
 
 	"context"
@@ -33,6 +34,9 @@ type BillingEmitter struct {
 	app.Collector
 	BillingEmitterConfig
 	billing *billing.Client
+
+	sync.Mutex
+	intervalCache map[string]time.Duration
 }
 
 // NewBillingEmitter changes a new billing emitter which emits billing events
@@ -41,6 +45,7 @@ func NewBillingEmitter(upstream app.Collector, billingClient *billing.Client, cf
 		Collector:            upstream,
 		billing:              billingClient,
 		BillingEmitterConfig: cfg,
+		intervalCache:        make(map[string]time.Duration),
 	}, nil
 }
 
@@ -57,6 +62,20 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 	rowKey, colKey := calculateDynamoKeys(userID, now)
 
 	interval := e.reportInterval(rep)
+	// Cache the last-known value of interval for this user, and use
+	// it if we didn't find one in this report.
+	e.Lock()
+	if interval != 0 {
+		e.intervalCache[userID] = interval
+	} else {
+		if lastKnown, found := e.intervalCache[userID]; found {
+			interval = lastKnown
+		} else {
+			interval = e.DefaultInterval
+		}
+	}
+	e.Unlock()
+
 	hasher := sha256.New()
 	hasher.Write(buf)
 	hash := "sha256:" + base64.URLEncoding.EncodeToString(hasher.Sum(nil))
@@ -93,7 +112,7 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 }
 
 // reportInterval tries to find the custom report interval of this report. If
-// it is malformed, or not set, it returns a default value.
+// it is malformed, or not set, it returns zero.
 func (e *BillingEmitter) reportInterval(r report.Report) time.Duration {
 	if r.Window != 0 {
 		return r.Window
@@ -117,11 +136,11 @@ func (e *BillingEmitter) reportInterval(r report.Report) time.Duration {
 		}
 	}
 	if inter == "" {
-		return e.DefaultInterval
+		return 0
 	}
 	d, err := time.ParseDuration(inter)
 	if err != nil {
-		return e.DefaultInterval
+		return 0
 	}
 	return d
 }
