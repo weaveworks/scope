@@ -69,6 +69,7 @@ func TestProbe(t *testing.T) {
 	node := report.MakeNodeWith("a", map[string]string{"b": "c"})
 
 	want.Endpoint.AddNode(node)
+	want.TS = now
 
 	pub := mockPublisher{make(chan report.Report, 10)}
 
