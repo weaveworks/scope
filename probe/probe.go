@@ -236,6 +236,7 @@ ForLoop:
 
 func (p *Probe) publishLoop() {
 	defer p.done.Done()
+	startTime := mtime.Now()
 	pubTick := time.Tick(p.publishInterval)
 	publishCount := 0
 	var lastFullReport report.Report
@@ -249,6 +250,8 @@ func (p *Probe) publishLoop() {
 			if !fullReport {
 				rpt.UnsafeUnMerge(lastFullReport)
 			}
+			rpt.Window = mtime.Now().Sub(startTime)
+			startTime = mtime.Now()
 			err = p.publisher.Publish(rpt)
 			if err == nil {
 				if fullReport {
