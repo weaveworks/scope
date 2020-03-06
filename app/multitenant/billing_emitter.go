@@ -93,15 +93,18 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 }
 
 // reportInterval tries to find the custom report interval of this report. If
-// it is malformed, or not set, it returns false.
+// it is malformed, or not set, it returns a default value.
 func (e *BillingEmitter) reportInterval(r report.Report) time.Duration {
+	if r.Window != 0 {
+		return r.Window
+	}
 	var inter string
 	for _, c := range r.Process.Nodes {
 		cmd, ok := c.Latest.Lookup("cmdline")
 		if !ok {
 			continue
 		}
-		if strings.Contains(cmd, "scope-probe") &&
+		if strings.Contains(cmd, "scope") &&
 			strings.Contains(cmd, "probe.publish.interval") {
 			cmds := strings.SplitAfter(cmd, "probe.publish.interval")
 			aft := strings.Split(cmds[1], " ")
