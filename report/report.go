@@ -334,14 +334,6 @@ func (r Report) Copy() Report {
 	return newReport
 }
 
-// Merge merges another Report into the receiver and returns the result. The
-// original is not modified.
-func (r Report) Merge(other Report) Report {
-	newReport := r.Copy()
-	newReport.UnsafeMerge(other)
-	return newReport
-}
-
 // UnsafeMerge merges another Report into the receiver. The original is modified.
 func (r *Report) UnsafeMerge(other Report) {
 	r.DNS = r.DNS.Merge(other.DNS)

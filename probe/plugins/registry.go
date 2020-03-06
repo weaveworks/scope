@@ -222,7 +222,7 @@ func (r *Registry) Report() (report.Report, error) {
 		if plugin.Implements("controller") {
 			r.updateAndRegisterControlsInReport(&pluginReport)
 		}
-		rpt = rpt.Merge(pluginReport)
+		rpt.UnsafeMerge(pluginReport)
 	})
 	return rpt, nil
 }
