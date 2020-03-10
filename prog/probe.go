@@ -135,7 +135,6 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	case kubernetesRoleHost:
 		flags.kubernetesEnabled = true
 	case kubernetesRoleCluster:
-		flags.kubernetesKubeletPort = 0
 		flags.kubernetesEnabled = true
 		flags.spyProcs = false
 		flags.procEnabled = false
@@ -319,7 +318,7 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 	if flags.kubernetesEnabled && flags.kubernetesRole != kubernetesRoleHost {
 		if client, err := kubernetes.NewClient(flags.kubernetesClientConfig); err == nil {
 			defer client.Stop()
-			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry, flags.kubernetesNodeName, flags.kubernetesKubeletPort)
+			reporter := kubernetes.NewReporter(client, clients, probeID, hostID, p, handlerRegistry, flags.kubernetesNodeName)
 			defer reporter.Stop()
 			p.AddReporter(reporter)
 		} else {

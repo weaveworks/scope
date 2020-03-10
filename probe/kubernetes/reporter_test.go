@@ -219,21 +219,11 @@ func (c mockPipeClient) PipeClose(appID, id string) error {
 }
 
 func TestReporter(t *testing.T) {
-	oldGetNodeName := kubernetes.GetLocalPodUIDs
-	defer func() { kubernetes.GetLocalPodUIDs = oldGetNodeName }()
-	kubernetes.GetLocalPodUIDs = func(string) (map[string]struct{}, error) {
-		uids := map[string]struct{}{
-			pod1UID: {},
-			pod2UID: {},
-		}
-		return uids, nil
-	}
-
 	pod1ID := report.MakePodNodeID(pod1UID)
 	pod2ID := report.MakePodNodeID(pod2UID)
 	serviceID := report.MakeServiceNodeID(serviceUID)
 	hr := controls.NewDefaultHandlerRegistry()
-	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "probe-id", "foo", nil, hr, "", 0).Report()
+	rpt, _ := kubernetes.NewReporter(newMockClient(), nil, "probe-id", "foo", nil, hr, nodeName).Report()
 
 	// Reporter should have added the following pods
 	for _, pod := range []struct {
@@ -337,7 +327,7 @@ func BenchmarkReporter(b *testing.B) {
 		}
 		mockK8s.deployments = append(mockK8s.deployments, kubernetes.NewDeployment(&deployment))
 	}
-	reporter := kubernetes.NewReporter(mockK8s, nil, "probe-id", "foo", nil, hr, nodeName, 0)
+	reporter := kubernetes.NewReporter(mockK8s, nil, "probe-id", "foo", nil, hr, nodeName)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -400,16 +390,10 @@ type callbackReadCloser struct {
 func (c *callbackReadCloser) Close() error { return c.close() }
 
 func TestReporterGetLogs(t *testing.T) {
-	oldGetNodeName := kubernetes.GetLocalPodUIDs
-	defer func() { kubernetes.GetLocalPodUIDs = oldGetNodeName }()
-	kubernetes.GetLocalPodUIDs = func(string) (map[string]struct{}, error) {
-		return map[string]struct{}{}, nil
-	}
-
 	client := newMockClient()
 	pipes := mockPipeClient{}
 	hr := controls.NewDefaultHandlerRegistry()
-	reporter := kubernetes.NewReporter(client, pipes, "", "", nil, hr, "", 0)
+	reporter := kubernetes.NewReporter(client, pipes, "", "", nil, hr, nodeName)
 
 	// Should error on invalid IDs
 	{
