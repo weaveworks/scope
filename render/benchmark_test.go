@@ -3,10 +3,7 @@ package render_test
 import (
 	"context"
 	"flag"
-	"io/ioutil"
 	"testing"
-
-	"github.com/ugorji/go/codec"
 
 	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
@@ -52,23 +49,16 @@ func benchmarkRender(b *testing.B, r render.Renderer) {
 		b.StopTimer()
 		render.ResetCache()
 		b.StartTimer()
-		benchmarkRenderResult = r.Render(context.Background(), report)
+		benchmarkRenderResult = r.Render(context.Background(), *report)
 		if len(benchmarkRenderResult.Nodes) == 0 {
 			b.Errorf("Rendered topology contained no nodes")
 		}
 	}
 }
 
-func loadReport() (report.Report, error) {
+func loadReport() (*report.Report, error) {
 	if *benchReportFile == "" {
-		return fixture.Report, nil
+		return &fixture.Report, nil
 	}
-
-	b, err := ioutil.ReadFile(*benchReportFile)
-	if err != nil {
-		return rpt, err
-	}
-	rpt := report.MakeReport()
-	err = codec.NewDecoderBytes(b, &codec.JsonHandle{}).Decode(&rpt)
-	return rpt, err
+	return report.MakeFromFile(context.Background(), *benchReportFile)
 }
