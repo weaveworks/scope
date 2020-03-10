@@ -108,7 +108,8 @@ func (c *container) PID() int {
 
 func (c *container) Hostname() string {
 	if c.container.Config.Domainname == "" {
-		// If hostname isn't set on a container it defaults to a random hex
+		// If hostname isn't set on a container Docker sets it to the
+		// first 12 characters of the container ID, a random hex
 		// number which we don't want to show in the UI.
 		if strings.HasPrefix(c.container.ID, c.container.Config.Hostname) {
 			return ""
