@@ -71,12 +71,15 @@ var (
 	ServerProcessNodeID       = report.MakeProcessNodeID(ServerHostID, ServerPID)
 	NonContainerProcessNodeID = report.MakeProcessNodeID(ServerHostID, NonContainerPID)
 
-	ClientContainerID     = "a1b2c3d4e5"
-	ClientContainerName   = "client"
-	ServerContainerID     = "5e4d3c2b1a"
-	ServerContainerName   = "task-name-5-server-aceb93e2f2b797caba01"
-	ClientContainerNodeID = report.MakeContainerNodeID(ClientContainerID)
-	ServerContainerNodeID = report.MakeContainerNodeID(ServerContainerID)
+	ClientContainerID      = "a1b2c3d4e5"
+	ClientContainerName    = "client"
+	ServerContainerID      = "5e4d3c2b1a"
+	ServerContainerName    = "task-name-5-server-aceb93e2f2b797caba01"
+	ServerContainer2ID     = "1a1d30201f"
+	ServerContainer2Name   = "task-name-6-server-8213182737"
+	ClientContainerNodeID  = report.MakeContainerNodeID(ClientContainerID)
+	ServerContainerNodeID  = report.MakeContainerNodeID(ServerContainerID)
+	ServerContainer2NodeID = report.MakeContainerNodeID(ServerContainer2ID)
 
 	TestLabelKey1          = "myrole"
 	ApplicationLabelValue1 = "customapplication1"
@@ -260,6 +263,21 @@ var (
 					docker.CPUTotalUsage: ServerContainerCPUMetric,
 					docker.MemoryUsage:   ServerContainerMemoryMetric,
 				}),
+
+				// Two server containers with same hostname
+				ServerContainer2NodeID: report.MakeNodeWith(
+					ServerContainer2NodeID, map[string]string{
+						docker.ContainerID:         ServerContainer2ID,
+						docker.ContainerName:       ServerContainer2Name,
+						docker.ContainerHostname:   ServerContainerHostname,
+						docker.ContainerState:      report.StateRunning,
+						docker.ContainerStateHuman: report.StateRunning,
+						docker.ImageID:             ServerContainerImageID,
+						report.HostNodeID:          ServerHostNodeID,
+					}).
+					WithTopology(report.Container).WithParents(report.MakeSets().
+					Add("host", report.MakeStringSet(ServerHostNodeID)).
+					Add("container_image", report.MakeStringSet(ServerContainerImageNodeID))),
 			},
 			MetadataTemplates: docker.ContainerMetadataTemplates,
 			MetricTemplates:   docker.ContainerMetricTemplates,

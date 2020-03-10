@@ -181,6 +181,8 @@ var (
 				RenderedProcesses[fixture.ServerProcessNodeID],
 			)),
 
+		fixture.ServerContainer2NodeID: container(fixture.ServerContainer2NodeID),
+
 		uncontainedServerID:       uncontainedServerNode,
 		render.IncomingInternetID: theIncomingInternetNode(fixture.ServerContainerNodeID),
 		render.OutgoingInternetID: theOutgoingInternetNode,
@@ -204,11 +206,12 @@ var (
 			WithLatests(map[string]string{
 				docker.ContainerHostname: fixture.ServerContainerHostname,
 			}).
-			AddCounter(report.Container, 1).
+			AddCounter(report.Container, 2).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
 				RenderedContainers[fixture.ServerContainerNodeID],
+				RenderedContainers[fixture.ServerContainer2NodeID],
 			)),
 
 		uncontainedServerID:       uncontainedServerNode,
@@ -236,11 +239,12 @@ var (
 			)),
 
 		ServerContainerImageNodeID: containerImage(ServerContainerImageNodeID).
-			AddCounter(report.Container, 1).
+			AddCounter(report.Container, 2).
 			WithChildren(report.MakeNodeSet(
 				RenderedEndpoints[fixture.Server80NodeID],
 				RenderedProcesses[fixture.ServerProcessNodeID],
 				RenderedContainers[fixture.ServerContainerNodeID],
+				RenderedContainers[fixture.ServerContainer2NodeID],
 			)),
 
 		uncontainedServerID:       uncontainedServerNode,
@@ -253,7 +257,9 @@ var (
 		uncontainedServerNode,
 		RenderedEndpoints[fixture.NonContainerNodeID],
 		RenderedProcesses[fixture.NonContainerProcessNodeID],
+		RenderedContainers[fixture.ServerContainer2NodeID],
 	)).
+		AddCounter(report.Container, 1).
 		AddCounter(render.Pseudo, 1)
 
 	RenderedPods = report.Nodes{
@@ -364,7 +370,7 @@ var (
 			)),
 
 		fixture.ServerHostNodeID: hostNode(fixture.ServerHostNodeID, render.OutgoingInternetID).
-			AddCounter(report.Container, 1).
+			AddCounter(report.Container, 2).
 			AddCounter(report.ContainerImage, 1).
 			AddCounter(report.Pod, 1).
 			AddCounter(report.Process, 2).
@@ -374,6 +380,7 @@ var (
 				RenderedProcesses[fixture.ServerProcessNodeID],
 				RenderedProcesses[fixture.NonContainerProcessNodeID],
 				RenderedContainers[fixture.ServerContainerNodeID],
+				RenderedContainers[fixture.ServerContainer2NodeID],
 				RenderedContainerImages[ServerContainerImageNodeID],
 				RenderedPods[fixture.ServerPodNodeID],
 			)),
