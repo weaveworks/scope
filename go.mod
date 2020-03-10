@@ -39,7 +39,6 @@ require (
 	github.com/emicklei/go-restful-swagger12 v0.0.0-20170926063155-7524189396c6 // indirect
 	github.com/evanphx/json-patch v0.0.0-20170719203123-944e07253867 // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
-	github.com/fluent/fluent-logger-golang v1.2.1 // indirect
 	github.com/fsouza/go-dockerclient v1.3.0
 	github.com/garyburd/redigo v0.0.0-20151018180855-3d0709611e0e // indirect
 	github.com/ghodss/yaml v0.0.0-20150909031657-73d445a93680 // indirect
@@ -48,14 +47,13 @@ require (
 	github.com/go-openapi/jsonreference v0.0.0-20161105162150-36d33bfe519e // indirect
 	github.com/go-openapi/spec v0.0.0-20171219195406-fa03337d7da5 // indirect
 	github.com/go-openapi/swag v0.0.0-20180102232305-84f4bee7c0a6 // indirect
-	github.com/gogo/protobuf v1.2.1
+	github.com/gogo/protobuf v1.3.0
 	github.com/goji/httpauth v0.0.0-20160601135302-2da839ab0f4d
 	github.com/golang/groupcache v0.0.0-20171101203131-84a468cf14b4 // indirect
 	github.com/golang/protobuf v1.3.2
 	github.com/golang/snappy v0.0.0-20170215233205-553a64147049 // indirect
 	github.com/google/btree v0.0.0-20180124185431-e89373fe6b4a // indirect
 	github.com/google/cadvisor v0.19.2 // indirect
-	github.com/google/gofuzz v0.0.0-20150903234519-e4af62d086c3 // indirect
 	github.com/google/gopacket v1.1.17
 	github.com/googleapis/gax-go v0.0.0-20161107002406-da06d194a00e // indirect
 	github.com/googleapis/gnostic v0.1.1-0.20180110061420-49e5b5b1abae // indirect
@@ -78,9 +76,7 @@ require (
 	github.com/iovisor/gobpf v0.0.0-20180826141936-4ece6c56f936 // indirect
 	github.com/jessevdk/go-flags v1.3.1-0.20170926144705-f88afde2fa19 // indirect
 	github.com/k-sone/critbitgo v1.2.0
-	github.com/kr/pretty v0.0.0-20160823170715-cfb55aafdaf3 // indirect
-	github.com/kr/pty v0.0.0-20151007230424-f7ee69f31298
-	github.com/kr/text v0.0.0-20160504234017-7cafcd837844 // indirect
+	github.com/kr/pty v1.1.1
 	github.com/lsegal/gucumber v0.0.0-20150609075149-e8116c9c66e6 // indirect
 	github.com/m3db/prometheus_client_golang v0.9.0-pre1.0.20180416233856-82f5ff156b29 // indirect
 	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d // indirect
@@ -105,9 +101,8 @@ require (
 	github.com/petar/GoLLRB v0.0.0-20130427215148-53be0d36a84c // indirect
 	github.com/peterbourgon/diskv v2.0.2-0.20171120014656-2973218375c3+incompatible // indirect
 	github.com/peterbourgon/runsvinit v2.0.0+incompatible
-	github.com/philhofer/fwd v0.0.0-20160129035939-98c11a7a6ec8 // indirect
 	github.com/pkg/errors v0.8.1
-	github.com/prometheus/client_golang v0.9.2
+	github.com/prometheus/client_golang v1.5.0
 	github.com/richo/GOSHOUT v0.0.0-20190205170632-a1a6db7f26e9
 	github.com/russross/blackfriday v0.0.0-20151020174500-a18a46c9b943 // indirect
 	github.com/shiena/ansicolor v0.0.0-20151119151921-a422bbe96644 // indirect
@@ -119,7 +114,6 @@ require (
 	github.com/stretchr/objx v0.1.2-0.20180702103455-b8b73a35e983 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/syndtr/goleveldb v0.0.0-20171214120811-34011bf325bc // indirect
-	github.com/tinylib/msgp v0.0.0-20160803062324-ad0ff2e232ad // indirect
 	github.com/tylerb/graceful v1.2.13
 	github.com/typetypetype/conntrack v1.0.1-0.20181112022515-9d9dd841d4eb
 	github.com/uber-go/tally v3.3.8-0.20180718230131-d0a004a77fc9+incompatible // indirect
@@ -129,8 +123,8 @@ require (
 	github.com/urfave/negroni v0.2.1-0.20160830030302-5d815f907a18 // indirect
 	github.com/vishvananda/netlink v1.0.1-0.20190913165827-36d367fd76f9
 	github.com/vishvananda/netns v0.0.0-20180720170159-13995c7128cc
-	github.com/weaveworks/billing-client v0.0.0-20180419131543-b2b68b13b5af
-	github.com/weaveworks/common v0.0.0-20200121152915-f95aa0ece940
+	github.com/weaveworks/billing-client v0.5.0
+	github.com/weaveworks/common v0.0.0-20200310113808-2708ba4e60a4
 	github.com/weaveworks/go-checkpoint v0.0.0-20160428112813-62324982ab51
 	github.com/weaveworks/go-odp v0.0.0-20151030115644-f8c8c40c1889 // indirect
 	github.com/weaveworks/ps v0.0.0-20160725183535-70d17b2d6f76
@@ -140,13 +134,12 @@ require (
 	go.uber.org/multierr v1.1.1-0.20180122172545-ddea229ff1df // indirect
 	go4.org v0.0.0-20170117104548-7ce08ca145db // indirect
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
-	golang.org/x/sys v0.0.0-20190913121621-c3b328c6e5a7
+	golang.org/x/sys v0.0.0-20200122134326-e047566fdf82
 	golang.org/x/text v0.3.1-0.20171227012246-e19ae1496984 // indirect
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2
 	golang.org/x/tools v0.0.0-20190226205152-f727befe758c
 	google.golang.org/api v0.0.0-20170223235537-64485db7e8c8 // indirect
 	google.golang.org/grpc v1.19.0
-	gopkg.in/check.v1 v1.0.0-20160105164936-4f90aeace3a2 // indirect
 	gopkg.in/inf.v0 v0.9.0 // indirect
 	gopkg.in/tylerb/graceful.v1 v1.2.13 // indirect
 	gopkg.in/validator.v2 v2.0.0-20180514200540-135c24b11c19 // indirect

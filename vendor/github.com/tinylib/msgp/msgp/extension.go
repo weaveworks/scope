@@ -445,26 +445,27 @@ func AppendExtension(b []byte, e Extension) ([]byte, error) {
 		o[n] = mfixext16
 		o[n+1] = byte(e.ExtensionType())
 		n += 2
-	}
-	switch {
-	case l < math.MaxUint8:
-		o, n = ensure(b, l+3)
-		o[n] = mext8
-		o[n+1] = byte(uint8(l))
-		o[n+2] = byte(e.ExtensionType())
-		n += 3
-	case l < math.MaxUint16:
-		o, n = ensure(b, l+4)
-		o[n] = mext16
-		big.PutUint16(o[n+1:], uint16(l))
-		o[n+3] = byte(e.ExtensionType())
-		n += 4
 	default:
-		o, n = ensure(b, l+6)
-		o[n] = mext32
-		big.PutUint32(o[n+1:], uint32(l))
-		o[n+5] = byte(e.ExtensionType())
-		n += 6
+		switch {
+		case l < math.MaxUint8:
+			o, n = ensure(b, l+3)
+			o[n] = mext8
+			o[n+1] = byte(uint8(l))
+			o[n+2] = byte(e.ExtensionType())
+			n += 3
+		case l < math.MaxUint16:
+			o, n = ensure(b, l+4)
+			o[n] = mext16
+			big.PutUint16(o[n+1:], uint16(l))
+			o[n+3] = byte(e.ExtensionType())
+			n += 4
+		default:
+			o, n = ensure(b, l+6)
+			o[n] = mext32
+			big.PutUint32(o[n+1:], uint32(l))
+			o[n+5] = byte(e.ExtensionType())
+			n += 6
+		}
 	}
 	return o, e.MarshalBinaryTo(o[n:])
 }
@@ -473,8 +474,8 @@ func AppendExtension(b []byte, e Extension) ([]byte, error) {
 // and returns any remaining bytes.
 // Possible errors:
 // - ErrShortBytes ('b' not long enough)
-// - ExtensionTypeErorr{} (wire type not the same as e.Type())
-// - TypeErorr{} (next object not an extension)
+// - ExtensionTypeError{} (wire type not the same as e.Type())
+// - TypeError{} (next object not an extension)
 // - InvalidPrefixError
 // - An umarshal error returned from e.UnmarshalBinary
 func ReadExtensionBytes(b []byte, e Extension) ([]byte, error) {
