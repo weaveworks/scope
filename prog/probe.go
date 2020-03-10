@@ -14,7 +14,7 @@ import (
 
 	"github.com/armon/go-metrics"
 	metrics_prom "github.com/armon/go-metrics/prometheus"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/common/logging"
@@ -87,7 +87,7 @@ func checkNewScopeVersion(flags probeFlags) {
 func maybeExportProfileData(flags probeFlags) {
 	if flags.httpListen != "" {
 		go func() {
-			http.Handle("/metrics", prometheus.Handler())
+			http.Handle("/metrics", promhttp.Handler())
 			log.Infof("Profiling data being exported to %s", flags.httpListen)
 			log.Infof("go tool pprof http://%s/debug/pprof/{profile,heap,block}", flags.httpListen)
 			log.Infof("Profiling endpoint %s terminated: %v", flags.httpListen, http.ListenAndServe(flags.httpListen, nil))
@@ -106,8 +106,12 @@ func probeMain(flags probeFlags, targets []appclient.Target) {
 		log.Infof("Basic authentication disabled")
 	}
 
-	traceCloser := tracing.NewFromEnv("scope-probe")
-	defer traceCloser.Close()
+	traceCloser, err := tracing.NewFromEnv("scope-probe")
+	if err != nil {
+		log.Infof("Tracing not initialized: %s", err)
+	} else {
+		defer traceCloser.Close()
+	}
 
 	cfg := &metrics.Config{
 		ServiceName:      "scope-probe",
