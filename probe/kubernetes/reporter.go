@@ -1,7 +1,6 @@
 package kubernetes
 
 import (
-	"fmt"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/weaveworks/common/mtime"
@@ -654,13 +653,13 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 			))
 		}
 	}
-	// filter out non-local pods: we only want to report local ones for performance reasons.
-	if r.nodeName == "" {
-		return pods, fmt.Errorf("pod topology failure: no node name given for reporter")
-	}
+
 	err := r.client.WalkPods(func(p Pod) error {
-		if p.NodeName() != r.nodeName {
+		// filter out non-local pods: we only want to report local ones for performance reasons.
+		if r.nodeName != "" {
+			if p.NodeName() != r.nodeName {
 				return nil
+			}
 		}
 		for _, selector := range selectors {
 			selector(p)
