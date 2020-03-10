@@ -169,10 +169,7 @@ var ContainerImageRenderer = Memoise(FilterEmpty(report.Container,
 //
 // not memoised
 var ContainerHostnameRenderer = FilterEmpty(report.Container,
-	MakeMap(
-		MapContainer2Hostname,
-		ContainerWithImageNameRenderer,
-	),
+	containerHostnameRenderer{},
 )
 
 var portMappingMatch = regexp.MustCompile(`([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}):([0-9]+)->([0-9]+)/tcp`)
@@ -312,21 +309,24 @@ func MapContainerImage2Name(n report.Node) report.Node {
 
 var containerHostnameTopology = MakeGroupNodeTopology(report.Container, report.DockerContainerHostname)
 
-// MapContainer2Hostname maps container Nodes to 'hostname' renderabled nodes..
-func MapContainer2Hostname(n report.Node) report.Node {
-	// Propagate all pseudo nodes
-	if n.Topology == Pseudo {
-		return n
-	}
+// containerHostnameRenderer collects containers by docker hostname
+type containerHostnameRenderer struct{}
 
-	// Otherwise, if some some reason the container doesn't have a hostname
-	// (maybe slightly out of sync reports), just drop it
-	id, ok := n.Latest.Lookup(report.DockerContainerHostname)
-	if !ok {
-		return report.Node{}
-	}
+func (m containerHostnameRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
+	containers := ContainerWithImageNameRenderer.Render(ctx, rpt)
+	ret := newJoinResults(nil)
 
-	node := NewDerivedNode(id, n).WithTopology(containerHostnameTopology).
-		AddCounter(n.Topology, 1)
-	return node
+	for _, n := range containers.Nodes {
+		if n.Topology == Pseudo {
+			ret.passThrough(n)
+			continue
+		}
+		// If some some reason the container doesn't have a hostname, just drop it
+		id, ok := n.Latest.Lookup(report.DockerContainerHostname)
+		if !ok {
+			continue
+		}
+		ret.addChildAndChildren(n, id, containerHostnameTopology)
+	}
+	return ret.result(containers)
 }
