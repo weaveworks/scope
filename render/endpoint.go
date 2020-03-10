@@ -12,9 +12,6 @@ import (
 // and "unmanaged containers".
 const Pseudo = "pseudo"
 
-// EndpointRenderer is a Renderer which produces a renderable endpoint graph.
-var EndpointRenderer = SelectEndpoint
-
 type endpointMapFunc func(report.Node) string
 
 type mapEndpoints struct {

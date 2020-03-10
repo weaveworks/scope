@@ -13,7 +13,7 @@ import (
 )
 
 func TestEndpointRenderer(t *testing.T) {
-	have := utils.Prune(render.EndpointRenderer.Render(context.Background(), fixture.Report).Nodes)
+	have := utils.Prune(render.SelectEndpoint.Render(context.Background(), fixture.Report).Nodes)
 	want := utils.Prune(expected.RenderedEndpoints)
 	if !reflect.DeepEqual(want, have) {
 		t.Error(test.Diff(want, have))

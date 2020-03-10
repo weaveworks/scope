@@ -18,8 +18,7 @@ var (
 	benchmarkRenderResult render.Nodes
 )
 
-func BenchmarkEndpointRender(b *testing.B) { benchmarkRender(b, render.EndpointRenderer) }
-func BenchmarkProcessRender(b *testing.B)  { benchmarkRender(b, render.ProcessRenderer) }
+func BenchmarkProcessRender(b *testing.B) { benchmarkRender(b, render.ProcessRenderer) }
 func BenchmarkConnectedProcessRender(b *testing.B) {
 	benchmarkRender(b, render.ConnectedProcessRenderer)
 }
