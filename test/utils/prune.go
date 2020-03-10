@@ -22,9 +22,11 @@ func PruneNode(node report.Node) report.Node {
 	node.Children.ForEach(func(child report.Node) {
 		prunedChildren = prunedChildren.Add(PruneNode(child))
 	})
-	return report.MakeNode(
+	prunedNode := report.MakeNode(
 		node.ID).
 		WithTopology(node.Topology).
 		WithAdjacent(node.Adjacency...).
 		WithChildren(prunedChildren)
+	prunedNode.Counters = node.Counters
+	return prunedNode
 }
