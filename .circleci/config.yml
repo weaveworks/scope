@@ -8,7 +8,9 @@ defaults: &defaults
 client-defaults: &client-defaults
   working_directory: /home/weave/scope
   docker:
-    - image: weaveworks/scope-ui-build:master-d1bb0217
+    # TODO: Change back to last master tag once
+    # https://github.com/weaveworks/scope/pull/3755 is merged.
+    - image: weaveworks/scope-ui-build:update-security-8dfd0abb
 
 workflows:
   version: 2
