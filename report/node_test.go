@@ -146,33 +146,37 @@ func TestMergeNodes(t *testing.T) {
 				}),
 			},
 		},
-		"Counters": {
-			a: report.Nodes{
-				"1": report.MakeNode("1").WithCounters(map[string]int{
-					"a": 13,
-					"b": 57,
-					"c": 89,
-				}),
-			},
-			b: report.Nodes{
-				"1": report.MakeNode("1").WithCounters(map[string]int{
-					"a": 78,
-					"b": 3,
-					"d": 47,
-				}),
-			},
-			want: report.Nodes{
-				"1": report.MakeNode("1").WithCounters(map[string]int{
-					"a": 91,
-					"b": 60,
-					"c": 89,
-					"d": 47,
-				}),
-			},
-		},
+		// Note we previously tested that counters merged by adding,
+		// but that was a bug: merges must be idempotent.
+		// Counters merge like other 'latest' values now.
 	} {
 		if have := c.a.Merge(c.b); !reflect.DeepEqual(c.want, have) {
 			t.Errorf("%s: %s", name, test.Diff(c.want, have))
 		}
+	}
+}
+
+func TestCounters(t *testing.T) {
+	mtime.NowForce(time.Now())
+	defer mtime.NowReset()
+
+	a := report.MakeNode("1").
+		AddCounter("a", 13).
+		AddCounter("b", 57).
+		AddCounter("c", 89)
+
+	b := a.
+		AddCounter("a", 78).
+		AddCounter("b", 3).
+		AddCounter("d", 47)
+
+	want := report.MakeNode("1").
+		AddCounter("a", 91).
+		AddCounter("b", 60).
+		AddCounter("c", 89).
+		AddCounter("d", 47)
+
+	if have := b; !reflect.DeepEqual(want, have) {
+		t.Errorf("Counters: %s", test.Diff(want, have))
 	}
 }

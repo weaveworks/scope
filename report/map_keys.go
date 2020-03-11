@@ -4,6 +4,7 @@ package report
 const (
 	// Node
 	NodeActiveControls = "active_controls"
+	CounterPrefix      = "count_"
 	// probe/endpoint
 	ReverseDNSNames = "reverse_dns_names"
 	SnoopedDNSNames = "snooped_dns_names"
