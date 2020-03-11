@@ -10,7 +10,7 @@ import (
 )
 
 func TestReportLocalNetworks(t *testing.T) {
-	r := report.MakeReport().Merge(report.Report{
+	r := report.Report{
 		Host: report.Topology{
 			Nodes: report.Nodes{
 				"nonets": report.MakeNode("nonets"),
@@ -27,7 +27,7 @@ func TestReportLocalNetworks(t *testing.T) {
 				),
 			},
 		},
-	})
+	}.Copy()
 	want := report.MakeNetworks()
 	for _, cidr := range []string{"10.0.0.1/8", "192.168.1.1/24", "10.32.0.1/12"} {
 		if err := want.AddCIDR(cidr); err != nil {

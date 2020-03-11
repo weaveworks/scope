@@ -50,8 +50,8 @@ func TestCollector(t *testing.T) {
 
 	c.Add(ctx, r2, nil)
 	merged := report.MakeReport()
-	merged = merged.Merge(r1)
-	merged = merged.Merge(r2)
+	merged.UnsafeMerge(r1)
+	merged.UnsafeMerge(r2)
 	have, err = c.Report(ctx, mtime.Now())
 	if err != nil {
 		t.Error(err)

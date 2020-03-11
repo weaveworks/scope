@@ -7,6 +7,7 @@ import (
 
 	"github.com/armon/go-metrics"
 	log "github.com/sirupsen/logrus"
+	"github.com/weaveworks/common/mtime"
 	"golang.org/x/time/rate"
 
 	"github.com/weaveworks/scope/report"
@@ -185,6 +186,7 @@ func (p *Probe) report() report.Report {
 	}
 
 	result := report.MakeReport()
+	result.TS = mtime.Now()
 	for i := 0; i < cap(reports); i++ {
 		result.UnsafeMerge(<-reports)
 	}
@@ -234,6 +236,7 @@ ForLoop:
 
 func (p *Probe) publishLoop() {
 	defer p.done.Done()
+	startTime := mtime.Now()
 	pubTick := time.Tick(p.publishInterval)
 	publishCount := 0
 	var lastFullReport report.Report
@@ -247,6 +250,8 @@ func (p *Probe) publishLoop() {
 			if !fullReport {
 				rpt.UnsafeUnMerge(lastFullReport)
 			}
+			rpt.Window = mtime.Now().Sub(startTime)
+			startTime = mtime.Now()
 			err = p.publisher.Publish(rpt)
 			if err == nil {
 				if fullReport {
