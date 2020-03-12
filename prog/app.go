@@ -16,6 +16,7 @@ import (
 	"github.com/goji/httpauth"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"github.com/tylerb/graceful"
 
@@ -61,7 +62,7 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 
 	// We pull in the http.DefaultServeMux to get the pprof routes
 	router.PathPrefix("/debug/pprof").Handler(http.DefaultServeMux)
-	router.Path("/metrics").Handler(prometheus.Handler())
+	router.Path("/metrics").Handler(promhttp.Handler())
 
 	app.RegisterReportPostHandler(collector, router)
 	app.RegisterControlRoutes(router, controlRouter)
@@ -217,8 +218,12 @@ func appMain(flags appFlags) {
 
 	registerAppMetricsOnce.Do(registerAppMetrics)
 
-	traceCloser := tracing.NewFromEnv(fmt.Sprintf("scope-%s", flags.serviceName))
-	defer traceCloser.Close()
+	traceCloser, err := tracing.NewFromEnv(fmt.Sprintf("scope-%s", flags.serviceName))
+	if err != nil {
+		log.Infof("Tracing not initialized: %s", err)
+	} else {
+		defer traceCloser.Close()
+	}
 
 	defer log.Info("app exiting")
 	rand.Seed(time.Now().UnixNano())

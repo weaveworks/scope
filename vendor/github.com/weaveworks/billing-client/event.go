@@ -18,14 +18,16 @@ type Event struct {
 func (e Event) toRecords() []map[string]interface{} {
 	var records []map[string]interface{}
 	for t, v := range e.Amounts {
-		records = append(records, map[string]interface{}{
-			"unique_key":           e.UniqueKey + ":" + string(t),
-			"internal_instance_id": e.InternalInstanceID,
-			"amount_type":          string(t),
-			"amount_value":         v,
-			"occurred_at":          e.OccurredAt,
-			"metadata":             e.Metadata,
-		})
+		if v != 0 {
+			records = append(records, map[string]interface{}{
+				"unique_key":           e.UniqueKey + ":" + string(t),
+				"internal_instance_id": e.InternalInstanceID,
+				"amount_type":          string(t),
+				"amount_value":         v,
+				"occurred_at":          e.OccurredAt,
+				"metadata":             e.Metadata,
+			})
+		}
 	}
 	return records
 }
