@@ -5,7 +5,7 @@ import { isoFormat } from 'd3-time-format';
 import LCP from 'lcp';
 import moment from 'moment';
 
-const formatLargeValue = d3Format('s');
+const formatLargeValue = d3Format('~s');
 
 
 function renderHtml(text, unit) {
