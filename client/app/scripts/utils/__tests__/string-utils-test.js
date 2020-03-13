@@ -16,7 +16,6 @@ describe('StringUtils', () => {
       expect(f(21100)).toBe('21.1k');
       expect(f(2120001)).toBe('2.12M');
     });
-
   });
 
   describe('longestCommonPrefix', () => {
