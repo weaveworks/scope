@@ -10,6 +10,11 @@ describe('StringUtils', () => {
     it('it should render 0', () => {
       expect(f(0)).toBe('0.00');
     });
+    it('it should render get rid of trailing zeros', () => {
+      expect(f(2104)).toBe('2.104k');
+      expect(f(21100)).toBe('21.1k');
+      expect(f(2120001)).toBe('2.12M');
+    });
   });
 
   describe('longestCommonPrefix', () => {
