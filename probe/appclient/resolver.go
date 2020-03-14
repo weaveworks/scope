@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	dnsPollInterval = 10 * time.Second
+	dnsPollInterval = 5 * time.Minute
 )
 
 // fastStartTicker is a ticker that 'ramps up' from 1 sec to duration.
