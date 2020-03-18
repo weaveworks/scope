@@ -1,3 +1,65 @@
+## Release 1.13.0
+
+This release brings a few bug-fixes and number of performance
+improvements, particularly in reducing the data sent when there are
+many socket connections between two endpoints.
+
+The bump in version number reflects a change in wire protocol for this
+change in endpoints data, and also a change in the way active controls
+are encoded.
+
+Thanks to everyone who contributed to this release: @DarthSett,
+@sarataha, @slalwani97 and @qiell.
+
+### Bug fixes
+
+- Remove trailing zeros in large numbers in UI
+	[#3760](https://github.com/weaveworks/scope/pull/3760)
+- kubernetes: display pod status as "terminating" where appropriate
+	[#3729](https://github.com/weaveworks/scope/pull/3729)
+- kubernetes: detect more 'pause' containers
+	[#3743](https://github.com/weaveworks/scope/pull/3743)
+- Improve calculation of usage in multitenant code
+	[#3751](https://github.com/weaveworks/scope/pull/3751)
+	[#3753](https://github.com/weaveworks/scope/pull/3753)
+
+### Performance improvements
+
+- Elide many connections from/to the same endpoints
+	[#3709](https://github.com/weaveworks/scope/pull/3709)
+- Remove two specialised data structures; unify with other node data
+	[#3714](https://github.com/weaveworks/scope/pull/3714)
+	[#3748](https://github.com/weaveworks/scope/pull/3748)
+- Simplify some renderers to improve performance
+	[#3747](https://github.com/weaveworks/scope/pull/3747)
+- Slow down DNS poll interval to reduce network activity
+	[#3758](https://github.com/weaveworks/scope/pull/3758)
+
+### Minor improvements
+
+- Add "user-agent" header to http calls from Scope probe
+	[#3720](https://github.com/weaveworks/scope/pull/3720)
+- Set timestamp and window on each report
+	[#3752](https://github.com/weaveworks/scope/pull/3752)
+- Add tracing for pipe operations
+	[#3745](https://github.com/weaveworks/scope/pull/3745)
+
+### Dependencies updates
+
+- Convert to Go modules
+	[#3742](https://github.com/weaveworks/scope/pull/3742)
+- Update to Go 1.13.9
+	[#3766](https://github.com/weaveworks/scope/pull/3766)
+- Go: update weaveworks, prometheus, protobuf, jaeger and aws dependencies
+	[#3745](https://github.com/weaveworks/scope/pull/3745)
+	[#3756](https://github.com/weaveworks/scope/pull/3756)
+- JavaScript: update babel, jest, webpack and other dependencies; dedupe yarn.lock
+	[#3733](https://github.com/weaveworks/scope/pull/3733)
+	[#3755](https://github.com/weaveworks/scope/pull/3755)
+	[#3757](https://github.com/weaveworks/scope/pull/3757)
+	[#3763](https://github.com/weaveworks/scope/pull/3763)
+
+
 ## Release 1.12.0
 
 ### Highlights
