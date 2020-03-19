@@ -43,6 +43,7 @@
     "reqwest": "2.0.5",
     "reselect": "4.0.0",
     "reselect-map": "1.0.4",
+    "sshpk": "^1.13.2",
     "styled-components": "4.3.2",
     "weaveworks-ui-components": "^0.22.0",
     "whatwg-fetch": "3.0.0",
