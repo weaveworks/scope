@@ -1,4 +1,4 @@
-FROM alpine:3.7
+FROM alpine:3.8
 WORKDIR /home/weave
 RUN apk add --no-cache bash conntrack-tools iproute2 util-linux curl
 COPY ./scope /home/weave/
