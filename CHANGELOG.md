@@ -2015,7 +2015,7 @@ Bug fixes:
 - probe: Stats gathering can be started twice
 	[#1799](https://github.com/weaveworks/scope/issues/1799)
 - Visual bug where empty span shows up
-	[#1945](github.com/weaveworks/scope/issues/1945)
+	[#1945](https://github.com/weaveworks/scope/issues/1945)
 - inbound internet connection counts are too fine-grained
 	[#1867](https://github.com/weaveworks/scope/issues/1867)
 - IP address truncated in Internet node details panel connection list
