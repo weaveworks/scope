@@ -116,7 +116,7 @@ github.com/dustin/go-humanize
 github.com/evanphx/json-patch
 # github.com/fatih/camelcase v1.0.0
 github.com/fatih/camelcase
-# github.com/fluent/fluent-logger-golang v1.5.0
+# github.com/fluent/fluent-logger-golang v1.5.0 => github.com/fluent/fluent-logger-golang v1.2.1
 github.com/fluent/fluent-logger-golang/fluent
 # github.com/fsouza/go-dockerclient v1.3.0
 github.com/fsouza/go-dockerclient

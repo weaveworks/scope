@@ -153,3 +153,6 @@ require (
 	k8s.io/kubernetes v1.13.0
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
+
+// Do not upgrade until https://github.com/fluent/fluent-logger-golang/issues/80 is fixed
+replace github.com/fluent/fluent-logger-golang => github.com/fluent/fluent-logger-golang v1.2.1
