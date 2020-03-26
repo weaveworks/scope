@@ -213,14 +213,16 @@ func (p *Probe) tag(r report.Report) report.Report {
 	return r
 }
 
-func (p *Probe) drainAndSanitise(rpt report.Report, rs chan report.Report) report.Report {
+func (p *Probe) drainAndSanitise(rpt report.Report, rs chan report.Report) (report.Report, int) {
 	p.rateLimiter.Wait(context.Background())
 	rpt = rpt.Copy()
+	count := 0
 ForLoop:
 	for {
 		select {
 		case r := <-rs:
 			rpt.UnsafeMerge(r)
+			count++
 		default:
 			break ForLoop
 		}
@@ -231,7 +233,7 @@ ForLoop:
 			t.Controls = report.Controls{}
 		})
 	}
-	return rpt
+	return rpt, count
 }
 
 func (p *Probe) publishLoop() {
@@ -245,7 +247,11 @@ func (p *Probe) publishLoop() {
 		var err error
 		select {
 		case <-pubTick:
-			rpt := p.drainAndSanitise(report.MakeReport(), p.spiedReports)
+			rpt, count := p.drainAndSanitise(report.MakeReport(), p.spiedReports)
+			if count == 0 {
+				continue // No data has been collected - don't bother publishing.
+			}
+
 			fullReport := (publishCount % p.ticksPerFullReport) == 0
 			if !fullReport {
 				rpt.UnsafeUnMerge(lastFullReport)
@@ -264,7 +270,7 @@ func (p *Probe) publishLoop() {
 			}
 
 		case rpt := <-p.shortcutReports:
-			rpt = p.drainAndSanitise(rpt, p.shortcutReports)
+			rpt, _ = p.drainAndSanitise(rpt, p.shortcutReports)
 			err = p.publisher.Publish(rpt)
 
 		case <-p.quit:
