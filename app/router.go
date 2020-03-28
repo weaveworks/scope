@@ -148,10 +148,6 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 			buf, _ = rpt.WriteBinary()
 		}
 
-		// If it didn't come in with a timestamp, give it one now
-		if rpt.TS.IsZero() {
-			rpt.TS = time.Now().UTC()
-		}
 		if err := a.Add(ctx, *rpt, buf.Bytes()); err != nil {
 			log.Errorf("Error Adding report: %v", err)
 			respondWith(w, http.StatusInternalServerError, err)

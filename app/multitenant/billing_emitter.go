@@ -59,7 +59,7 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 		// proceeding.
 		return err
 	}
-	rowKey, colKey := calculateDynamoKeys(userID, rep.TS)
+	rowKey, colKey := calculateDynamoKeys(userID, now)
 
 	interval := e.reportInterval(rep)
 	// Cache the last-known value of interval for this user, and use
