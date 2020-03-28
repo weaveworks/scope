@@ -348,7 +348,6 @@ func replay(a Adder, timestamps []time.Time, reports []report.Report) {
 	due := time.Now()
 	for {
 		for i, r := range reports {
-			r.TS = due
 			a.Add(nil, r, nil)
 			due = due.Add(delays[i])
 			delay := due.Sub(time.Now())

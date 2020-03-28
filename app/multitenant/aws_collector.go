@@ -538,7 +538,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 	}
 
 	// first, put the report on s3
-	rowKey, colKey := calculateDynamoKeys(userid, rep.TS)
+	rowKey, colKey := calculateDynamoKeys(userid, time.Now())
 	reportKey, err := calculateReportKey(rowKey, colKey)
 	if err != nil {
 		return err
