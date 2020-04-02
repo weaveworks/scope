@@ -160,6 +160,9 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 	registerAWSCollectorMetricsOnce.Do(registerAWSCollectorMetrics)
 	var nc *nats.Conn
 	if config.NatsHost != "" {
+		if config.MemcacheClient == nil {
+			return nil, fmt.Errorf("Must supply memcache client when using nats")
+		}
 		var err error
 		nc, err = nats.Connect(config.NatsHost)
 		if err != nil {
@@ -481,13 +484,46 @@ func calculateDynamoKeys(userid string, now time.Time) (string, string) {
 	return rowKey, colKey
 }
 
-// calculateReportKey determines the key we should use for a report.
-func calculateReportKey(rowKey, colKey string) (string, error) {
+// calculateReportKeys returns DynamoDB row & col keys, and S3/memcached key that we will use for a report
+func calculateReportKeys(userid string, now time.Time) (string, string, string) {
+	rowKey, colKey := calculateDynamoKeys(userid, now)
 	rowKeyHash := md5.New()
-	if _, err := io.WriteString(rowKeyHash, rowKey); err != nil {
-		return "", err
+	_, _ = io.WriteString(rowKeyHash, rowKey) // hash write doesn't error
+	return rowKey, colKey, fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey)
+}
+
+func (c *awsCollector) persistReport(ctx context.Context, userid, rowKey, colKey, reportKey string, buf []byte) error {
+	// Put in S3 and cache before index, so it is fetchable before it is discoverable
+	reportSize, err := c.cfg.S3Store.StoreReportBytes(ctx, reportKey, buf)
+	if err != nil {
+		return err
 	}
-	return fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey), nil
+	if c.cfg.MemcacheClient != nil {
+		_, err = c.cfg.MemcacheClient.StoreReportBytes(ctx, reportKey, buf)
+		if err != nil {
+			log.Warningf("Could not store %v in memcache: %v", reportKey, err)
+		}
+	}
+
+	dynamoValueSize.WithLabelValues("PutItem").Add(float64(len(reportKey)))
+
+	err = instrument.TimeRequestHistogram(ctx, "DynamoDB.PutItem", dynamoRequestDuration, func(_ context.Context) error {
+		resp, err := c.putItemInDynamo(rowKey, colKey, reportKey)
+		if resp.ConsumedCapacity != nil {
+			dynamoConsumedCapacity.WithLabelValues("PutItem").
+				Add(float64(*resp.ConsumedCapacity.CapacityUnits))
+		}
+		return err
+	})
+	if err != nil {
+		return err
+	}
+
+	reportSizeHistogram.Observe(float64(reportSize))
+	reportSizePerUser.WithLabelValues(userid).Add(float64(reportSize))
+	reportsPerUser.WithLabelValues(userid).Inc()
+
+	return nil
 }
 
 func (c *awsCollector) putItemInDynamo(rowKey, colKey, reportKey string) (*dynamodb.PutItemOutput, error) {
@@ -537,63 +573,29 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return err
 	}
 
-	// first, put the report on s3
-	rowKey, colKey := calculateDynamoKeys(userid, time.Now())
-	reportKey, err := calculateReportKey(rowKey, colKey)
-	if err != nil {
-		return err
-	}
-
 	// Shortcut reports are published to nats but not persisted -
 	// we'll get a full report from the same probe in a few seconds
-	if !rep.Shortcut {
-		reportSize, err := c.cfg.S3Store.StoreReportBytes(ctx, reportKey, buf)
-		if err != nil {
-			return err
+	if rep.Shortcut {
+		if c.nats != nil {
+			_, _, reportKey := calculateReportKeys(userid, time.Now())
+			_, err = c.cfg.MemcacheClient.StoreReportBytes(ctx, reportKey, buf)
+			if err != nil {
+				log.Warningf("Could not store %v in memcache: %v", reportKey, err)
+				return nil
+			}
+			err := c.nats.Publish(userid, []byte(reportKey))
+			natsRequests.WithLabelValues("Publish", instrument.ErrorCode(err)).Add(1)
+			if err != nil {
+				log.Errorf("Error sending shortcut report: %v", err)
+			}
 		}
-		reportSizeHistogram.Observe(float64(reportSize))
-		reportSizePerUser.WithLabelValues(userid).Add(float64(reportSize))
-		reportsPerUser.WithLabelValues(userid).Inc()
+		return nil
 	}
 
-	// third, put it in memcache
-	if c.cfg.MemcacheClient != nil {
-		_, err = c.cfg.MemcacheClient.StoreReportBytes(ctx, reportKey, buf)
-		if err != nil {
-			// NOTE: We don't abort here because failing to store in memcache
-			// doesn't actually break anything else -- it's just an
-			// optimization.
-			log.Warningf("Could not store %v in memcache: %v", reportKey, err)
-		}
-	}
-
-	if !rep.Shortcut {
-		// fourth, put the key in dynamodb
-		dynamoValueSize.WithLabelValues("PutItem").
-			Add(float64(len(reportKey)))
-
-		var resp *dynamodb.PutItemOutput
-		err = instrument.TimeRequestHistogram(ctx, "DynamoDB.PutItem", dynamoRequestDuration, func(_ context.Context) error {
-			var err error
-			resp, err = c.putItemInDynamo(rowKey, colKey, reportKey)
-			return err
-		})
-
-		if resp.ConsumedCapacity != nil {
-			dynamoConsumedCapacity.WithLabelValues("PutItem").
-				Add(float64(*resp.ConsumedCapacity.CapacityUnits))
-		}
-		if err != nil {
-			return err
-		}
-	}
-
-	if rep.Shortcut && c.nats != nil {
-		err := c.nats.Publish(userid, []byte(reportKey))
-		natsRequests.WithLabelValues("Publish", instrument.ErrorCode(err)).Add(1)
-		if err != nil {
-			log.Errorf("Error sending shortcut report: %v", err)
-		}
+	rowKey, colKey, reportKey := calculateReportKeys(userid, time.Now())
+	err = c.persistReport(ctx, userid, rowKey, colKey, reportKey, buf)
+	if err != nil {
+		return err
 	}
 
 	return nil
