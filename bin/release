@@ -144,7 +144,7 @@ draft() {
     fi
 
     echo "== Creating GitHub release $RELEASE_ARGS $RELEASE_NAME $VERSION"
-    github-release release "$RELEASE_ARGS" \
+    github-release release $RELEASE_ARGS \
         --user "$GITHUB_USER" \
         --repo scope \
         --tag "$LATEST_TAG" \
