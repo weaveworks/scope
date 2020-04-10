@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"flag"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -37,6 +38,7 @@ type BillingEmitter struct {
 
 	sync.Mutex
 	intervalCache map[string]time.Duration
+	rounding      map[string]float64
 }
 
 // NewBillingEmitter changes a new billing emitter which emits billing events
@@ -46,6 +48,7 @@ func NewBillingEmitter(upstream app.Collector, billingClient *billing.Client, cf
 		billing:              billingClient,
 		BillingEmitterConfig: cfg,
 		intervalCache:        make(map[string]time.Duration),
+		rounding:             make(map[string]float64),
 	}, nil
 }
 
@@ -84,9 +87,14 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 		weaveNetCount = 1
 	}
 
+	// Billing takes an integer number of seconds, so keep track of the amount lost to rounding
+	nodeSeconds := interval.Seconds()*float64(len(rep.Host.Nodes)) + e.rounding[userID]
+	rounding := nodeSeconds - math.Floor(nodeSeconds)
+	e.rounding[userID] = rounding
+
 	amounts := billing.Amounts{
 		billing.ContainerSeconds: int64(interval/time.Second) * int64(len(rep.Container.Nodes)),
-		billing.NodeSeconds:      int64(interval/time.Second) * int64(len(rep.Host.Nodes)),
+		billing.NodeSeconds:      int64(nodeSeconds),
 		billing.WeaveNetSeconds:  int64(interval/time.Second) * int64(weaveNetCount),
 	}
 	metadata := map[string]string{
