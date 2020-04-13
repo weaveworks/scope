@@ -77,20 +77,20 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 			interval = e.DefaultInterval
 		}
 	}
+	// Billing takes an integer number of seconds, so keep track of the amount lost to rounding
+	nodeSeconds := interval.Seconds()*float64(len(rep.Host.Nodes)) + e.rounding[userID]
+	rounding := nodeSeconds - math.Floor(nodeSeconds)
+	e.rounding[userID] = rounding
 	e.Unlock()
 
 	hasher := sha256.New()
 	hasher.Write(buf)
 	hash := "sha256:" + base64.URLEncoding.EncodeToString(hasher.Sum(nil))
+
 	weaveNetCount := 0
 	if hasWeaveNet(rep) {
 		weaveNetCount = 1
 	}
-
-	// Billing takes an integer number of seconds, so keep track of the amount lost to rounding
-	nodeSeconds := interval.Seconds()*float64(len(rep.Host.Nodes)) + e.rounding[userID]
-	rounding := nodeSeconds - math.Floor(nodeSeconds)
-	e.rounding[userID] = rounding
 
 	amounts := billing.Amounts{
 		billing.ContainerSeconds: int64(interval/time.Second) * int64(len(rep.Container.Nodes)),
