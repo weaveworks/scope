@@ -259,9 +259,9 @@ func appMain(flags appFlags) {
 			log.Fatalf("Error creating emitter: %v", err)
 			return
 		}
-		defer billingEmitter.Close()
 		collector = billingEmitter
 	}
+	defer collector.Close()
 
 	controlRouter, err := controlRouterFactory(userIDer, flags.controlRouterURL, flags.controlRPCTimeout)
 	if err != nil {

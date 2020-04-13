@@ -58,6 +58,7 @@ type Adder interface {
 type Collector interface {
 	Reporter
 	Adder
+	Close()
 }
 
 // Collector receives published reports from multiple producers. It yields a
@@ -111,6 +112,9 @@ func NewCollector(window time.Duration) Collector {
 		merger: NewFastMerger(),
 	}
 }
+
+// Close is a no-op for the regular collector
+func (c *collector) Close() {}
 
 // Add adds a report to the collector's internal state. It implements Adder.
 func (c *collector) Add(_ context.Context, rpt report.Report, _ []byte) error {
@@ -242,6 +246,9 @@ type StaticCollector report.Report
 func (c StaticCollector) Report(context.Context, time.Time) (report.Report, error) {
 	return report.Report(c), nil
 }
+
+// Close is a no-op for the static collector
+func (c StaticCollector) Close() {}
 
 // HasReports indicates whether the collector contains reports between
 // timestamp-app.window and timestamp.

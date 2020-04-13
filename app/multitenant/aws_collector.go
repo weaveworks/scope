@@ -182,6 +182,10 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 	}, nil
 }
 
+// Close is a no-op for awsCollector
+func (c *awsCollector) Close() {
+}
+
 // CreateTables creates the required tables in dynamodb
 func (c *awsCollector) CreateTables() error {
 	// see if tableName exists
