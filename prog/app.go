@@ -89,7 +89,7 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	return middlewares.Wrap(router)
 }
 
-func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHostname string,
+func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL string, storeInterval time.Duration, natsHostname string,
 	memcacheConfig multitenant.MemcacheConfig, window time.Duration, maxTopNodes int, createTables bool) (app.Collector, error) {
 	if collectorURL == "local" {
 		return app.NewCollector(window), nil
@@ -129,6 +129,7 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL, natsHo
 				DynamoDBConfig: dynamoDBConfig,
 				DynamoTable:    tableName,
 				S3Store:        &s3Store,
+				StoreInterval:  storeInterval,
 				NatsHost:       natsHostname,
 				MemcacheClient: memcacheClient,
 				Window:         window,
@@ -238,7 +239,7 @@ func appMain(flags appFlags) {
 	}
 
 	collector, err := collectorFactory(
-		userIDer, flags.collectorURL, flags.s3URL, flags.natsHostname,
+		userIDer, flags.collectorURL, flags.s3URL, flags.storeInterval, flags.natsHostname,
 		multitenant.MemcacheConfig{
 			Host:             flags.memcachedHostname,
 			Timeout:          flags.memcachedTimeout,

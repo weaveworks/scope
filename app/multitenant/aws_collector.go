@@ -123,10 +123,18 @@ type AWSCollectorConfig struct {
 	DynamoDBConfig *aws.Config
 	DynamoTable    string
 	S3Store        *S3Store
+	StoreInterval  time.Duration
 	NatsHost       string
 	MemcacheClient *MemcacheClient
 	Window         time.Duration
 	MaxTopNodes    int
+}
+
+// if StoreInterval is set, reports are merged into here and held until flushed to store
+type pendingEntry struct {
+	sync.Mutex
+	report report.Report
+	count  int
 }
 
 type awsCollector struct {
@@ -134,6 +142,8 @@ type awsCollector struct {
 	db        *dynamodb.DynamoDB
 	merger    app.Merger
 	inProcess inProcessStore
+	pending   sync.Map
+	ticker    *time.Ticker
 
 	nats        *nats.Conn
 	waitersLock sync.Mutex
@@ -172,18 +182,60 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 
 	// (window * report rate) * number of hosts per user * number of users
 	reportCacheSize := (int(config.Window.Seconds()) / 3) * 10 * 5
-	return &awsCollector{
+	c := &awsCollector{
 		cfg:       config,
 		db:        dynamodb.New(session.New(config.DynamoDBConfig)),
 		merger:    app.NewFastMerger(),
 		inProcess: newInProcessStore(reportCacheSize, config.Window+reportQuantisationInterval),
 		nats:      nc,
 		waiters:   map[watchKey]*nats.Subscription{},
-	}, nil
+	}
+
+	if config.StoreInterval != 0 {
+		c.ticker = time.NewTicker(config.StoreInterval)
+		go c.flushLoop()
+	}
+	return c, nil
 }
 
-// Close is a no-op for awsCollector
+func (c *awsCollector) flushLoop() {
+	for _ = range c.ticker.C {
+		c.flushPending(context.Background())
+	}
+}
+
+// Range over all users (instances) that have pending reports and send to store
+func (c *awsCollector) flushPending(ctx context.Context) {
+	c.pending.Range(func(key, value interface{}) bool {
+		userid := key.(string)
+		entry := value.(*pendingEntry)
+
+		entry.Lock()
+		rpt, count := entry.report, entry.count
+		entry.report, entry.count = report.MakeReport(), 0
+		entry.Unlock()
+
+		if count > 0 {
+			buf, err := rpt.WriteBinary()
+			if err != nil {
+				log.Errorf("Could not serialise combined report: %v", err)
+				return true
+			}
+			rowKey, colKey, reportKey := calculateReportKeys(userid, time.Now())
+			err = c.persistReport(ctx, userid, rowKey, colKey, reportKey, buf.Bytes())
+			if err != nil {
+				log.Errorf("Could not persist combined report: %v", err)
+				return true
+			}
+		}
+		return true
+	})
+}
+
+// Close will flush pending data
 func (c *awsCollector) Close() {
+	c.ticker.Stop() // note this doesn't close the chan; goroutine keeps running
+	c.flushPending(context.Background())
 }
 
 // CreateTables creates the required tables in dynamodb
@@ -596,10 +648,21 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return nil
 	}
 
-	rowKey, colKey, reportKey := calculateReportKeys(userid, time.Now())
-	err = c.persistReport(ctx, userid, rowKey, colKey, reportKey, buf)
-	if err != nil {
-		return err
+	if c.cfg.StoreInterval == 0 {
+		rowKey, colKey, reportKey := calculateReportKeys(userid, time.Now())
+		err = c.persistReport(ctx, userid, rowKey, colKey, reportKey, buf)
+		if err != nil {
+			return err
+		}
+	} else {
+		entry := &pendingEntry{report: report.MakeReport()}
+		if e, found := c.pending.LoadOrStore(userid, entry); found {
+			entry = e.(*pendingEntry)
+		}
+		entry.Lock()
+		entry.report.UnsafeMerge(rep)
+		entry.count++
+		entry.Unlock()
 	}
 
 	return nil
