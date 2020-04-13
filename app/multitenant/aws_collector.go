@@ -90,6 +90,13 @@ var (
 		Name:      "nats_requests_total",
 		Help:      "Total count of NATS requests.",
 	}, []string{"method", "status_code"})
+
+	flushDuration = instrument.NewHistogramCollectorFromOpts(prometheus.HistogramOpts{
+		Namespace: "scope",
+		Name:      "flush_duration_seconds",
+		Help:      "Time in seconds spent flushing merged reports.",
+		Buckets:   prometheus.DefBuckets,
+	})
 )
 
 func registerAWSCollectorMetrics() {
@@ -102,6 +109,7 @@ func registerAWSCollectorMetrics() {
 	prometheus.MustRegister(reportsPerUser)
 	prometheus.MustRegister(reportSizePerUser)
 	prometheus.MustRegister(natsRequests)
+	flushDuration.Register()
 }
 
 var registerAWSCollectorMetricsOnce sync.Once
@@ -206,29 +214,32 @@ func (c *awsCollector) flushLoop() {
 
 // Range over all users (instances) that have pending reports and send to store
 func (c *awsCollector) flushPending(ctx context.Context) {
-	c.pending.Range(func(key, value interface{}) bool {
-		userid := key.(string)
-		entry := value.(*pendingEntry)
+	instrument.CollectedRequest(ctx, "FlushPending", flushDuration, nil, func(ctx context.Context) error {
+		c.pending.Range(func(key, value interface{}) bool {
+			userid := key.(string)
+			entry := value.(*pendingEntry)
 
-		entry.Lock()
-		rpt, count := entry.report, entry.count
-		entry.report, entry.count = report.MakeReport(), 0
-		entry.Unlock()
+			entry.Lock()
+			rpt, count := entry.report, entry.count
+			entry.report, entry.count = report.MakeReport(), 0
+			entry.Unlock()
 
-		if count > 0 {
-			buf, err := rpt.WriteBinary()
-			if err != nil {
-				log.Errorf("Could not serialise combined report: %v", err)
-				return true
+			if count > 0 {
+				buf, err := rpt.WriteBinary()
+				if err != nil {
+					log.Errorf("Could not serialise combined report: %v", err)
+					return true
+				}
+				rowKey, colKey, reportKey := calculateReportKeys(userid, time.Now())
+				err = c.persistReport(ctx, userid, rowKey, colKey, reportKey, buf.Bytes())
+				if err != nil {
+					log.Errorf("Could not persist combined report: %v", err)
+					return true
+				}
 			}
-			rowKey, colKey, reportKey := calculateReportKeys(userid, time.Now())
-			err = c.persistReport(ctx, userid, rowKey, colKey, reportKey, buf.Bytes())
-			if err != nil {
-				log.Errorf("Could not persist combined report: %v", err)
-				return true
-			}
-		}
-		return true
+			return true
+		})
+		return nil
 	})
 }
 
