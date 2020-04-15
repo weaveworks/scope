@@ -166,6 +166,7 @@ func hasWeaveNet(r report.Report) bool {
 }
 
 // Close shuts down the billing emitter and billing client flushing events.
-func (e *BillingEmitter) Close() error {
-	return e.billing.Close()
+func (e *BillingEmitter) Close() {
+	e.Collector.Close()
+	_ = e.billing.Close()
 }

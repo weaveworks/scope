@@ -165,6 +165,7 @@ type appFlags struct {
 
 	collectorURL              string
 	s3URL                     string
+	storeInterval             time.Duration
 	controlRouterURL          string
 	controlRPCTimeout         time.Duration
 	pipeRouterURL             string
@@ -378,6 +379,7 @@ func setupFlags(flags *flags) {
 
 	flag.StringVar(&flags.app.collectorURL, "app.collector", "local", "Collector to use (local, dynamodb, or file/directory)")
 	flag.StringVar(&flags.app.s3URL, "app.collector.s3", "local", "S3 URL to use (when collector is dynamodb)")
+	flag.DurationVar(&flags.app.storeInterval, "app.collector.store-interval", 0, "How often to store merged incoming reports. If 0, reports are stored unmerged as they arrive.")
 	flag.StringVar(&flags.app.controlRouterURL, "app.control.router", "local", "Control router to use (local or sqs)")
 	flag.DurationVar(&flags.app.controlRPCTimeout, "app.control.rpctimeout", time.Minute, "Timeout for control RPC")
 	flag.StringVar(&flags.app.pipeRouterURL, "app.pipe.router", "local", "Pipe router to use (local)")
