@@ -587,6 +587,9 @@ func (c *awsCollector) persistReport(ctx context.Context, userid, rowKey, colKey
 	if c.cfg.MemcacheClient != nil {
 		_, err = c.cfg.MemcacheClient.StoreReportBytes(ctx, reportKey, buf)
 		if err != nil {
+			// NOTE: We don't abort here because failing to store in memcache
+			// doesn't actually break anything else -- it's just an
+			// optimization.
 			log.Warningf("Could not store %v in memcache: %v", reportKey, err)
 		}
 	}
@@ -666,7 +669,8 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 			_, _, reportKey := calculateReportKeys(userid, time.Now())
 			_, err = c.cfg.MemcacheClient.StoreReportBytes(ctx, reportKey, buf)
 			if err != nil {
-				log.Warningf("Could not store %v in memcache: %v", reportKey, err)
+				log.Warningf("Could not store shortcut %v in memcache: %v", reportKey, err)
+				// No point publishing on nats if cache store failed
 				return nil
 			}
 			err := c.nats.Publish(userid, []byte(reportKey))
