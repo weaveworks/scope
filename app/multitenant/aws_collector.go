@@ -704,6 +704,7 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 			return err
 		}
 	} else {
+		rep = c.massageReport(userid, rep)
 		entry := &pendingEntry{report: report.MakeReport()}
 		if e, found := c.pending.LoadOrStore(userid, entry); found {
 			entry = e.(*pendingEntry)
