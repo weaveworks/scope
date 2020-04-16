@@ -469,13 +469,15 @@ func (r Report) Validate() error {
 // DropTopologiesOver - as a protection against overloading the app
 // server, drop topologies that have really large node counts. In
 // practice we only see this with runaway numbers of zombie processes.
-func (r Report) DropTopologiesOver(limit int) Report {
+func (r Report) DropTopologiesOver(limit int) (Report, []string) {
+	dropped := []string{}
 	r.WalkNamedTopologies(func(name string, topology *Topology) {
 		if topology != nil && len(topology.Nodes) > limit {
 			topology.Nodes = Nodes{}
+			dropped = append(dropped, name)
 		}
 	})
-	return r
+	return r, dropped
 }
 
 // Summary returns a human-readable string summarising the contents, for diagnostic purposes
