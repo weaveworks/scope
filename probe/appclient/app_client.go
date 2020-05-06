@@ -374,6 +374,9 @@ func (c *appClient) pipeConnection(id string, pipe xfer.Pipe) (bool, error) {
 
 	_, remote := pipe.Ends()
 	done, err := pipe.CopyToWebsocket(remote, conn)
+	if err == io.EOF {
+		return true, nil
+	}
 	return done, err
 }
 
