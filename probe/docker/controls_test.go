@@ -46,11 +46,11 @@ func TestControls(t *testing.T) {
 
 type mockPipe struct{}
 
-func (mockPipe) Ends() (io.ReadWriter, io.ReadWriter)                { return nil, nil }
-func (mockPipe) CopyToWebsocket(io.ReadWriter, xfer.Websocket) error { return nil }
-func (mockPipe) Close() error                                        { return nil }
-func (mockPipe) Closed() bool                                        { return false }
-func (mockPipe) OnClose(func())                                      {}
+func (mockPipe) Ends() (io.ReadWriter, io.ReadWriter)                        { return nil, nil }
+func (mockPipe) CopyToWebsocket(io.ReadWriter, xfer.Websocket) (bool, error) { return true, nil }
+func (mockPipe) Close() error                                                { return nil }
+func (mockPipe) Closed() bool                                                { return false }
+func (mockPipe) OnClose(func())                                              {}
 
 func TestPipes(t *testing.T) {
 	oldNewPipe := controls.NewPipe

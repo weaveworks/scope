@@ -256,7 +256,7 @@ func (pr *consulPipeRouter) privateAPI() {
 			defer conn.Close()
 
 			end, _ := pipe.Ends()
-			if err := pipe.CopyToWebsocket(end, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
+			if _, err := pipe.CopyToWebsocket(end, conn); err != nil {
 				log.Errorf("%s: Server bridge connection; Error copying pipe to websocket: %v", key, err)
 			}
 		})
@@ -446,7 +446,7 @@ func (bc *bridgeConnection) loop() {
 		bc.conn = conn
 		bc.mtx.Unlock()
 
-		if err := bc.pipe.CopyToWebsocket(end, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
+		if _, err := bc.pipe.CopyToWebsocket(end, conn); err != nil {
 			log.Errorf("%s: Client bridge connection; Error copying pipe to websocket: %v", bc.key, err)
 		}
 		conn.Close()

@@ -11,7 +11,7 @@ import (
 // to the UI.
 type Pipe interface {
 	Ends() (io.ReadWriter, io.ReadWriter)
-	CopyToWebsocket(io.ReadWriter, Websocket) error
+	CopyToWebsocket(io.ReadWriter, Websocket) (bool, error)
 
 	Close() error
 	Closed() bool
@@ -99,27 +99,26 @@ func (p *pipe) OnClose(f func()) {
 }
 
 // CopyToWebsocket copies pipe data to/from a websocket.  It blocks.
-func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) error {
+// Returns bool 'done' and an error, masked if websocket closed in an expected manner.
+func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) (bool, error) {
 	p.mtx.Lock()
 	if p.closed {
 		p.mtx.Unlock()
-		return nil
+		return true, nil
 	}
 	p.wg.Add(1)
 	p.mtx.Unlock()
 	defer p.wg.Done()
 
-	// The goroutines below both post their errors to the channel, but if you close()
-	// the pipe before any errors then the pipe may not get read from. Therefore it
-	// needs up to 2 slots free.
-	errors := make(chan error, 2)
+	endError := make(chan error, 1)
+	connError := make(chan error, 1)
 
 	// Read-from-UI loop
 	go func() {
 		for {
 			_, buf, err := conn.ReadMessage() // TODO type should be binary message
 			if err != nil {
-				errors <- err
+				connError <- err
 				return
 			}
 
@@ -128,7 +127,7 @@ func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) error {
 			}
 
 			if _, err := end.Write(buf); err != nil {
-				errors <- err
+				endError <- err
 				return
 			}
 		}
@@ -140,7 +139,7 @@ func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) error {
 		for {
 			n, err := end.Read(buf)
 			if err != nil {
-				errors <- err
+				endError <- err
 				return
 			}
 
@@ -149,7 +148,7 @@ func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) error {
 			}
 
 			if err := conn.WriteMessage(websocket.BinaryMessage, buf[:n]); err != nil {
-				errors <- err
+				connError <- err
 				return
 			}
 		}
@@ -158,9 +157,14 @@ func (p *pipe) CopyToWebsocket(end io.ReadWriter, conn Websocket) error {
 	// block until one of the goroutines exits
 	// this convoluted mechanism is to ensure we only close the websocket once.
 	select {
-	case err := <-errors:
-		return err
+	case err := <-endError:
+		return false, err
+	case err := <-connError:
+		if IsExpectedWSCloseError(err) {
+			return false, nil
+		}
+		return false, err
 	case <-p.quit:
-		return nil
+		return true, nil
 	}
 }
