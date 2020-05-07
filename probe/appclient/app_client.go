@@ -373,10 +373,11 @@ func (c *appClient) pipeConnection(id string, pipe xfer.Pipe) (bool, error) {
 	defer c.closeConn(id)
 
 	_, remote := pipe.Ends()
-	if err := pipe.CopyToWebsocket(remote, conn); err != nil && !xfer.IsExpectedWSCloseError(err) {
-		return false, err
+	done, err := pipe.CopyToWebsocket(remote, conn)
+	if err == io.EOF {
+		return true, nil
 	}
-	return false, nil
+	return done, err
 }
 
 func (c *appClient) PipeConnection(id string, pipe xfer.Pipe) {
