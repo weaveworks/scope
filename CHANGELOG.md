@@ -1,3 +1,43 @@
+## Release 1.13.1
+
+This release fixes a bug on 'kubernetes describe' operations, where
+the probe would spin re-opening a connection to the UI again and again
+after the operation had finished.
+
+Also removes some obsolete code which connected to the unsecured local
+kubelet port in Kubernetes; please update your configuration to a
+single probe to talk to Kubernetes for the whole cluster if you
+haven't already. Thanks to @CiMaol for this contribution.
+
+### Bug fixes
+
+- Stop 'kubernetes describe' operations spinning
+	[#3784](https://github.com/weaveworks/scope/pull/3784)
+- Probe: skip publishing empty reports when publish rate is higher than collection rate
+	[#3774](https://github.com/weaveworks/scope/pull/3774)
+
+### Improvements
+
+- Probe no longer talks to local kubelet
+	[#3754](https://github.com/weaveworks/scope/pull/3754)
+- Track rounding error in multitenant billing calculation
+	[#3779](https://github.com/weaveworks/scope/pull/3779)
+
+### Performance
+
+- Multitenant: merge incoming reports in collector, to save IO and query time
+	[#3780](https://github.com/weaveworks/scope/pull/3780)
+	[#3781](https://github.com/weaveworks/scope/pull/3781)
+	[#3782](https://github.com/weaveworks/scope/pull/3782)
+
+### Dependencies
+
+- update html-webpack-plugin to most recent stable
+	[#3776](https://github.com/weaveworks/scope/pull/3776)
+- downgrade fluent-logger-golang library used in multitenant mode
+	[#3772](https://github.com/weaveworks/scope/pull/3772)
+
+
 ## Release 1.13.0
 
 This release brings a few bug-fixes and number of performance
