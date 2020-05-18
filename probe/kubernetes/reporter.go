@@ -1,11 +1,8 @@
 package kubernetes
 
 import (
-	"fmt"
-
 	"k8s.io/apimachinery/pkg/labels"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/weaveworks/common/mtime"
 	"github.com/weaveworks/scope/probe"
 	"github.com/weaveworks/scope/probe/controls"
@@ -195,11 +192,10 @@ type Reporter struct {
 	hostID          string
 	handlerRegistry *controls.HandlerRegistry
 	nodeName        string
-	kubeletPort     uint
 }
 
 // NewReporter makes a new Reporter
-func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe, handlerRegistry *controls.HandlerRegistry, nodeName string, kubeletPort uint) *Reporter {
+func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostID string, probe *probe.Probe, handlerRegistry *controls.HandlerRegistry, nodeName string) *Reporter {
 	reporter := &Reporter{
 		client:          client,
 		pipes:           pipes,
@@ -208,7 +204,6 @@ func NewReporter(client Client, pipes controls.PipeClient, probeID string, hostI
 		hostID:          hostID,
 		handlerRegistry: handlerRegistry,
 		nodeName:        nodeName,
-		kubeletPort:     kubeletPort,
 	}
 	reporter.registerControls()
 	client.WatchPods(reporter.podEvent)
@@ -659,23 +654,10 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 		}
 	}
 
-	var localPodUIDs map[string]struct{}
-	if r.nodeName == "" && r.kubeletPort != 0 {
-		// We don't know the node name: fall back to obtaining the local pods from kubelet
-		var err error
-		localPodUIDs, err = GetLocalPodUIDs(fmt.Sprintf("127.0.0.1:%d", r.kubeletPort))
-		if err != nil {
-			log.Warnf("No node name and cannot obtain local pods, reporting all (which may impact performance): %v", err)
-		}
-	}
 	err := r.client.WalkPods(func(p Pod) error {
 		// filter out non-local pods: we only want to report local ones for performance reasons.
 		if r.nodeName != "" {
 			if p.NodeName() != r.nodeName {
-				return nil
-			}
-		} else if localPodUIDs != nil {
-			if _, ok := localPodUIDs[p.UID()]; !ok {
 				return nil
 			}
 		}

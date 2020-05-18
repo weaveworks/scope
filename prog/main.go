@@ -131,7 +131,6 @@ type probeFlags struct {
 	kubernetesRole         string
 	kubernetesNodeName     string
 	kubernetesClientConfig kubernetes.ClientConfig
-	kubernetesKubeletPort  uint
 
 	ecsEnabled       bool
 	ecsCacheSize     int
@@ -344,7 +343,6 @@ func setupFlags(flags *flags) {
 	flag.StringVar(&flags.probe.kubernetesClientConfig.User, "probe.kubernetes.user", "", "The name of the kubeconfig user to use")
 	flag.StringVar(&flags.probe.kubernetesClientConfig.Username, "probe.kubernetes.username", "", "Username for basic authentication to the API server")
 	flag.StringVar(&flags.probe.kubernetesNodeName, "probe.kubernetes.node-name", "", "Name of this node, for filtering pods")
-	flag.UintVar(&flags.probe.kubernetesKubeletPort, "probe.kubernetes.kubelet-port", 10255, "Node-local TCP port for contacting kubelet (zero to disable)")
 
 	// AWS ECS
 	flag.BoolVar(&flags.probe.ecsEnabled, "probe.ecs", false, "Collect ecs-related attributes for containers on this node")
