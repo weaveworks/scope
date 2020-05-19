@@ -1,6 +1,7 @@
 package multitenant
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"flag"
@@ -9,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"context"
 	log "github.com/sirupsen/logrus"
 	billing "github.com/weaveworks/billing-client"
 
