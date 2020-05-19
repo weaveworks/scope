@@ -139,10 +139,19 @@ func (e *BillingEmitter) reportInterval(r report.Report) time.Duration {
 		return r.Window
 	}
 	var inter string
-	for _, c := range r.Process.Nodes {
-		if cmd, ok := c.Latest.Lookup(report.Cmdline); ok {
+	for _, c := range r.Container.Nodes {
+		if cmd, ok := c.Latest.Lookup(report.DockerContainerCommand); ok {
 			if inter = intervalFromCommand(cmd); inter != "" {
 				break
+			}
+		}
+	}
+	if inter == "" { // not found in containers: look in processes
+		for _, c := range r.Process.Nodes {
+			if cmd, ok := c.Latest.Lookup(report.Cmdline); ok {
+				if inter = intervalFromCommand(cmd); inter != "" {
+					break
+				}
 			}
 		}
 	}
