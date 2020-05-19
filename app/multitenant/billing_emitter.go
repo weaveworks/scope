@@ -1,6 +1,7 @@
 package multitenant
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"flag"
@@ -9,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"context"
 	log "github.com/sirupsen/logrus"
 	billing "github.com/weaveworks/billing-client"
 
@@ -119,6 +119,19 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 	return e.Collector.Add(ctx, rep, buf)
 }
 
+func intervalFromCommand(cmd string) string {
+	if strings.Contains(cmd, "scope") &&
+		strings.Contains(cmd, "probe.publish.interval") {
+		cmds := strings.SplitAfter(cmd, "probe.publish.interval")
+		aft := strings.Split(cmds[1], " ")
+		if aft[0] == "" {
+			return aft[1]
+		}
+		return aft[0][1:]
+	}
+	return ""
+}
+
 // reportInterval tries to find the custom report interval of this report. If
 // it is malformed, or not set, it returns zero.
 func (e *BillingEmitter) reportInterval(r report.Report) time.Duration {
@@ -126,21 +139,20 @@ func (e *BillingEmitter) reportInterval(r report.Report) time.Duration {
 		return r.Window
 	}
 	var inter string
-	for _, c := range r.Process.Nodes {
-		cmd, ok := c.Latest.Lookup("cmdline")
-		if !ok {
-			continue
-		}
-		if strings.Contains(cmd, "scope") &&
-			strings.Contains(cmd, "probe.publish.interval") {
-			cmds := strings.SplitAfter(cmd, "probe.publish.interval")
-			aft := strings.Split(cmds[1], " ")
-			if aft[0] == "" {
-				inter = aft[1]
-			} else {
-				inter = aft[0][1:]
+	for _, c := range r.Container.Nodes {
+		if cmd, ok := c.Latest.Lookup(report.DockerContainerCommand); ok {
+			if inter = intervalFromCommand(cmd); inter != "" {
+				break
 			}
-
+		}
+	}
+	if inter == "" { // not found in containers: look in processes
+		for _, c := range r.Process.Nodes {
+			if cmd, ok := c.Latest.Lookup(report.Cmdline); ok {
+				if inter = intervalFromCommand(cmd); inter != "" {
+					break
+				}
+			}
 		}
 	}
 	if inter == "" {
