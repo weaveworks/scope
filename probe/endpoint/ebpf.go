@@ -56,7 +56,7 @@ type EbpfTracker struct {
 	sync.Mutex
 	tracer          *tracer.Tracer
 	ready           bool
-	stopping        bool
+	stopping        chan struct{}
 	dead            bool
 	lastTimestampV4 uint64
 
@@ -373,27 +373,38 @@ func (t *EbpfTracker) isDead() bool {
 	return t.dead
 }
 
+func (t *EbpfTracker) Stop() {
+	t.stop()
+	if t.stopping != nil {
+		<-t.stopping
+	}
+}
+
 func (t *EbpfTracker) stop() {
 	t.Lock()
-	alreadyDead := t.dead || t.stopping
-	t.stopping = true
+	alreadyDead := t.dead || (t.stopping != nil)
+	if t.stopping == nil {
+		t.stopping = make(chan struct{})
+	}
 	t.Unlock()
 
-	// Do not call tracer.Stop() in this thread, otherwise tracer.Stop() will
-	// deadlock waiting for this thread to pick up the next event.
-	go func() {
-		if !alreadyDead && t.tracer != nil {
-			t.tracer.Stop()
-			t.tracer = nil
-		}
+	if !alreadyDead {
+		// Do not call tracer.Stop() in this thread, otherwise tracer.Stop() will
+		// deadlock waiting for this thread to pick up the next event.
+		go func() {
+			if t.tracer != nil {
+				t.tracer.Stop()
+				t.tracer = nil
+			}
 
-		// Only advertise the tracer as dead after the tracer is fully stopped so that
-		// restart() is not called in parallel in another thread.
-		t.Lock()
-		t.stopping = false
-		t.dead = true
-		t.Unlock()
-	}()
+			// Only advertise the tracer as dead after the tracer is fully stopped so that
+			// restart() is not called in parallel in another thread.
+			t.Lock()
+			close(t.stopping)
+			t.dead = true
+			t.Unlock()
+		}()
+	}
 }
 
 func (t *EbpfTracker) restart() error {
@@ -401,6 +412,7 @@ func (t *EbpfTracker) restart() error {
 	defer t.Unlock()
 
 	t.dead = false
+	t.stopping = nil
 	t.ready = false
 
 	t.openConnections = map[ebpfKey]ebpfDetail{}

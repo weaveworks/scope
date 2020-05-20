@@ -362,7 +362,7 @@ func (t *connectionTracker) addDNS(rpt *report.Report, addr string) {
 
 func (t *connectionTracker) Stop() error {
 	if t.ebpfTracker != nil {
-		t.ebpfTracker.stop()
+		t.ebpfTracker.Stop()
 	}
 	if t.flowWalker != nil {
 		t.flowWalker.stop()
