@@ -113,6 +113,7 @@ func registerAWSCollectorMetrics() {
 	prometheus.MustRegister(reportSizeHistogram)
 	prometheus.MustRegister(reportsPerUser)
 	prometheus.MustRegister(reportSizePerUser)
+	prometheus.MustRegister(topologiesDropped)
 	prometheus.MustRegister(natsRequests)
 	flushDuration.Register()
 }
