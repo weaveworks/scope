@@ -450,8 +450,12 @@ func (c *awsCollector) getReports(ctx context.Context, userid string, reportKeys
 // process a report from a probe which may be at an older version or overloaded
 func (c *awsCollector) massageReport(userid string, report report.Report) report.Report {
 	if c.cfg.MaxTopNodes > 0 {
+		max := c.cfg.MaxTopNodes
+		if len(report.Host.Nodes) > 1 {
+			max = max * len(report.Host.Nodes) // higher limit for merged reports
+		}
 		var dropped []string
-		report, dropped = report.DropTopologiesOver(c.cfg.MaxTopNodes)
+		report, dropped = report.DropTopologiesOver(max)
 		for _, name := range dropped {
 			topologiesDropped.WithLabelValues(userid, name).Inc()
 		}
