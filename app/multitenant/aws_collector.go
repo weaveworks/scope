@@ -1,9 +1,7 @@
 package multitenant
 
 import (
-	"crypto/md5"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 	"sync"
@@ -578,9 +576,13 @@ func (c *awsCollector) AdminSummary(ctx context.Context, timestamp time.Time) (s
 	return b.String(), nil
 }
 
+func hourNumber(now time.Time) int64 {
+	return now.UnixNano() / time.Hour.Nanoseconds()
+}
+
 // calculateDynamoKeys generates the row & column keys for Dynamo.
 func calculateDynamoKeys(userid string, now time.Time) (string, string) {
-	rowKey := fmt.Sprintf("%s-%s", userid, strconv.FormatInt(now.UnixNano()/time.Hour.Nanoseconds(), 10))
+	rowKey := fmt.Sprintf("%s-%d", userid, hourNumber(now))
 	colKey := strconv.FormatInt(now.UnixNano(), 10)
 	return rowKey, colKey
 }
@@ -588,9 +590,7 @@ func calculateDynamoKeys(userid string, now time.Time) (string, string) {
 // calculateReportKeys returns DynamoDB row & col keys, and S3/memcached key that we will use for a report
 func calculateReportKeys(userid string, now time.Time) (string, string, string) {
 	rowKey, colKey := calculateDynamoKeys(userid, now)
-	rowKeyHash := md5.New()
-	_, _ = io.WriteString(rowKeyHash, rowKey) // hash write doesn't error
-	return rowKey, colKey, fmt.Sprintf("%x/%s", rowKeyHash.Sum(nil), colKey)
+	return rowKey, colKey, fmt.Sprintf("r/%s/%d/%d/%s", userid, now.Year(), hourNumber(now), colKey)
 }
 
 func (c *awsCollector) persistReport(ctx context.Context, userid, rowKey, colKey, reportKey string, buf []byte) error {
