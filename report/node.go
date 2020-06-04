@@ -173,29 +173,22 @@ func (n Node) WithChild(child Node) Node {
 	return n
 }
 
-// Merge mergses the individual components of a node and returns a
-// fresh node.
-func (n Node) Merge(other Node) Node {
-	id := n.ID
-	if id == "" {
-		id = other.ID
+// UnsafeMerge merges the individual components of a node, modifying the original
+func (n *Node) UnsafeMerge(other Node) {
+	if n.ID == "" {
+		n.ID = other.ID
 	}
-	topology := n.Topology
-	if topology == "" {
-		topology = other.Topology
-	} else if other.Topology != "" && topology != other.Topology {
-		panic("Cannot merge nodes with different topology types: " + topology + " != " + other.Topology)
+	if n.Topology == "" {
+		n.Topology = other.Topology
+	} else if other.Topology != "" && n.Topology != other.Topology {
+		panic("Cannot merge nodes with different topology types: " + n.Topology + " != " + other.Topology)
 	}
-	return Node{
-		ID:        id,
-		Topology:  topology,
-		Sets:      n.Sets.Merge(other.Sets),
-		Adjacency: n.Adjacency.Merge(other.Adjacency),
-		Latest:    n.Latest.Merge(other.Latest),
-		Metrics:   n.Metrics.Merge(other.Metrics),
-		Parents:   n.Parents.Merge(other.Parents),
-		Children:  n.Children.Merge(other.Children),
-	}
+	n.Sets = n.Sets.Merge(other.Sets)
+	n.Adjacency = n.Adjacency.Merge(other.Adjacency)
+	n.Latest = n.Latest.Merge(other.Latest)
+	n.Metrics = n.Metrics.Merge(other.Metrics)
+	n.Parents = n.Parents.Merge(other.Parents)
+	n.Children = n.Children.Merge(other.Children)
 }
 
 // UnsafeUnMerge removes data from n that would be added by merging other,

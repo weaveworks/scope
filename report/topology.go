@@ -127,9 +127,11 @@ func (t Topology) WithLabel(label, labelPlural string) Topology {
 // in that it mutates the Topology, to solve issues of GC pressure.
 func (t Topology) AddNode(node Node) {
 	if existing, ok := t.Nodes[node.ID]; ok {
-		node = node.Merge(existing)
+		existing.UnsafeMerge(node)
+		t.Nodes[node.ID] = existing
+	} else {
+		t.Nodes[node.ID] = node
 	}
-	t.Nodes[node.ID] = node
 }
 
 // ReplaceNode adds node to the topology under key nodeID; if a
@@ -262,8 +264,9 @@ func (n Nodes) Merge(other Nodes) Nodes {
 // UnsafeMerge merges the other object into this one, modifying the original.
 func (n *Nodes) UnsafeMerge(other Nodes) {
 	for k, v := range other {
-		if existing, ok := (*n)[k]; ok { // don't overwrite
-			(*n)[k] = v.Merge(existing)
+		if existing, ok := (*n)[k]; ok {
+			existing.UnsafeMerge(v)
+			(*n)[k] = existing
 		} else {
 			(*n)[k] = v
 		}
