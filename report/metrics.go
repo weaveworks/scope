@@ -24,14 +24,25 @@ func (m Metrics) Merge(other Metrics) Metrics {
 		return m
 	}
 	result := m.Copy()
+	result.UnsafeMerge(other)
+	return result
+}
+
+// UnsafeMerge merges another set of Metrics into m, modifying the original.
+func (m Metrics) UnsafeMerge(other Metrics) {
+	if len(m) == 0 {
+		if len(other) > 0 {
+			m = other.Copy()
+		}
+		return
+	}
 	for k, v := range other {
-		if rv, ok := result[k]; ok {
-			result[k] = rv.Merge(v)
+		if rv, ok := m[k]; ok {
+			m[k] = rv.Merge(v)
 		} else {
-			result[k] = v
+			m[k] = v
 		}
 	}
-	return result
 }
 
 // Copy returns a value copy of the sets map.

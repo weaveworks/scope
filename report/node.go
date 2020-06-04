@@ -186,7 +186,7 @@ func (n *Node) UnsafeMerge(other Node) {
 	n.Sets = n.Sets.Merge(other.Sets)
 	n.Adjacency = n.Adjacency.Merge(other.Adjacency)
 	n.Latest = n.Latest.Merge(other.Latest)
-	n.Metrics = n.Metrics.Merge(other.Metrics)
+	n.Metrics.UnsafeMerge(other.Metrics)
 	n.Parents = n.Parents.Merge(other.Parents)
 	n.Children = n.Children.Merge(other.Children)
 }
