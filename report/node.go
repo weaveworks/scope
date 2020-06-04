@@ -112,13 +112,6 @@ func (n Node) WithSets(sets Sets) Node {
 	return n
 }
 
-// WithMetric returns a fresh copy of n, with metric merged in at key.
-func (n Node) WithMetric(key string, metric Metric) Node {
-	n.Metrics = n.Metrics.Copy()
-	n.Metrics[key] = n.Metrics[key].Merge(metric)
-	return n
-}
-
 // WithMetrics returns a fresh copy of n, with metrics merged in.
 func (n Node) WithMetrics(metrics Metrics) Node {
 	n.Metrics = n.Metrics.Merge(metrics)
