@@ -100,6 +100,17 @@ func (n Node) AddCounter(k string, value int) Node {
 	return n.WithLatest(name, mtime.Now(), strconv.Itoa(value))
 }
 
+// CountChildrenOfTopology returns how many children have a particular topology
+func (n Node) CountChildrenOfTopology(topology string) int {
+	count := 0
+	for _, childID := range n.ChildIDs {
+		if ty, ok := NodeIDType(childID); ok && ty == topology {
+			count++
+		}
+	}
+	return count
+}
+
 // WithSet returns a fresh copy of n, with set merged in at key.
 func (n Node) WithSet(key string, set StringSet) Node {
 	n.Sets = n.Sets.Add(key, set)

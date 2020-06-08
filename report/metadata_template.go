@@ -71,8 +71,11 @@ func fromSets(n Node, key string) (string, bool) {
 }
 
 func fromCounters(n Node, key string) (string, bool) {
-	val, ok := n.LookupCounter(key)
-	return strconv.Itoa(val), ok
+	val := n.CountChildrenOfTopology(key)
+	if val == 0 {
+		return "", false
+	}
+	return strconv.Itoa(val), true
 }
 
 // MetadataRow is a row for the metadata table.

@@ -164,7 +164,7 @@ func MakeNodeSummary(rc RenderContext, n report.Node) (NodeSummary, bool) {
 		Adjacency:        n.Adjacency,
 	}
 	// Only include metadata, metrics, tables when it's not a group node
-	if _, ok := n.LookupCounter(n.Topology); !ok {
+	if n.CountChildrenOfTopology(n.Topology) == 0 {
 		if topology, ok := rc.Topology(n.Topology); ok {
 			summary.Metadata = topology.MetadataTemplates.MetadataRows(n)
 			summary.Metrics = topology.MetricTemplates.MetricRows(n)
@@ -432,9 +432,10 @@ func groupNodeSummary(base BasicNodeSummary, r report.Report, n report.Node) Bas
 }
 
 func pluralize(n report.Node, key, singular, plural string) string {
+	// either fetch a stored counter, or count the children directly
 	c, ok := n.LookupCounter(key)
 	if !ok {
-		c = 0
+		c = n.CountChildrenOfTopology(key)
 	}
 	if c == 1 {
 		return fmt.Sprintf("%d %s", c, singular)

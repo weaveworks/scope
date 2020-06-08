@@ -113,7 +113,6 @@ var (
 	RenderedProcessNames = report.Nodes{
 		fixture.Client1Name: processNameNode(fixture.Client1Name, fixture.ServerName).
 			WithLatests(map[string]string{process.Name: fixture.Client1Name}).
-			AddCounter(report.Process, 2).
 			WithChildren(report.MakeIDList(
 				fixture.Client54001NodeID,
 				fixture.Client54002NodeID,
@@ -123,14 +122,12 @@ var (
 
 		fixture.ServerName: processNameNode(fixture.ServerName).
 			WithLatests(map[string]string{process.Name: fixture.ServerName}).
-			AddCounter(report.Process, 1).
 			WithChildren(report.MakeIDList(
 				fixture.Server80NodeID,
 				fixture.ServerProcessNodeID,
 			)),
 
 		fixture.NonContainerName: processNameNode(fixture.NonContainerName, render.OutgoingInternetID).
-			AddCounter(report.Process, 1).
 			WithChildren(report.MakeIDList(
 				fixture.NonContainerNodeID,
 				fixture.NonContainerProcessNodeID,
@@ -183,7 +180,6 @@ var (
 			WithLatests(map[string]string{
 				docker.ContainerHostname: fixture.ClientContainerHostname,
 			}).
-			AddCounter(report.Container, 1).
 			WithChildren(report.MakeIDList(
 				fixture.Client54001NodeID,
 				fixture.Client54002NodeID,
@@ -196,7 +192,6 @@ var (
 			WithLatests(map[string]string{
 				docker.ContainerHostname: fixture.ServerContainerHostname,
 			}).
-			AddCounter(report.Container, 2).
 			WithChildren(report.MakeIDList(
 				fixture.Server80NodeID,
 				fixture.ServerProcessNodeID,
@@ -219,7 +214,6 @@ var (
 				docker.ImageID:    fixture.ClientContainerImageID,
 				docker.ImageName:  fixture.ClientContainerImageName,
 			}).
-			AddCounter(report.Container, 1).
 			WithChildren(report.MakeIDList(
 				fixture.Client54001NodeID,
 				fixture.Client54002NodeID,
@@ -229,7 +223,6 @@ var (
 			)),
 
 		ServerContainerImageNodeID: containerImage(ServerContainerImageNodeID).
-			AddCounter(report.Container, 2).
 			WithChildren(report.MakeIDList(
 				fixture.Server80NodeID,
 				fixture.ServerProcessNodeID,
@@ -248,13 +241,10 @@ var (
 		fixture.NonContainerNodeID,
 		fixture.NonContainerProcessNodeID,
 		fixture.ServerContainer2NodeID,
-	)).
-		AddCounter(report.Container, 1).
-		AddCounter(render.Pseudo, 1)
+	))
 
 	RenderedPods = report.Nodes{
 		fixture.ClientPodNodeID: pod(fixture.ClientPodNodeID, fixture.ServerPodNodeID).
-			AddCounter(report.Container, 1).
 			WithChildren(report.MakeIDList(
 				fixture.Client54001NodeID,
 				fixture.Client54002NodeID,
@@ -264,7 +254,6 @@ var (
 			)),
 
 		fixture.ServerPodNodeID: pod(fixture.ServerPodNodeID).
-			AddCounter(report.Container, 1).
 			WithChildren(report.MakeIDList(
 				fixture.Server80NodeID,
 				fixture.ServerProcessNodeID,
@@ -321,7 +310,6 @@ var (
 
 	RenderedPodServices = report.Nodes{
 		fixture.ServiceNodeID: service(fixture.ServiceNodeID, fixture.ServiceNodeID).
-			AddCounter(report.Pod, 2).
 			WithChildren(report.MakeIDList(
 				fixture.Client54001NodeID,
 				fixture.Client54002NodeID,
@@ -345,10 +333,6 @@ var (
 			WithLatests(map[string]string{
 				report.HostName: fixture.ClientHostName,
 			}).
-			AddCounter(report.Container, 1).
-			AddCounter(report.ContainerImage, 1).
-			AddCounter(report.Pod, 1).
-			AddCounter(report.Process, 2).
 			WithChildren(report.MakeIDList(
 				fixture.Client54001NodeID,
 				fixture.Client54002NodeID,
@@ -360,10 +344,6 @@ var (
 			)),
 
 		fixture.ServerHostNodeID: hostNode(fixture.ServerHostNodeID, render.OutgoingInternetID).
-			AddCounter(report.Container, 2).
-			AddCounter(report.ContainerImage, 1).
-			AddCounter(report.Pod, 1).
-			AddCounter(report.Process, 2).
 			WithChildren(report.MakeIDList(
 				fixture.Server80NodeID,
 				fixture.NonContainerNodeID,
