@@ -8260,9 +8260,10 @@ watchpack@^1.6.0:
     graceful-fs "^4.1.2"
     neo-async "^2.5.0"
 
-weaveworks-ui-components@^0.22.0:
-  version "0.22.0"
-  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.22.0.tgz#5f314e4b8e0ebba4d81e023d9b068845a38614bb"
+weaveworks-ui-components@^0.22.6:
+  version "0.22.6"
+  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.22.6.tgz#64d5108fe3a5c5798a4525866080828b27ea406c"
+  integrity sha512-Vrb7mjs8AEH1MLcx38X/bGjRmGCkwOpHq8g5Nze6EU5Nv9zDECTNdb9J6OHcJFjqgls4aeUncUTSzemK+EPNwg==
   dependencies:
     classnames "2.2.5"
     d3-drag "1.2.3"
