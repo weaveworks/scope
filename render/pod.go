@@ -53,8 +53,10 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 		},
 		MakeReduce(
 			PropagateSingleMetrics(report.Container,
-				MakeMap(propagatePodHost,
-					Map2Parent{topologies: []string{report.Pod}, noParentsPseudoID: UnmanagedID,
+				propagateContainerChildHost{
+					chainRenderer: Map2Parent{
+						topologies:        []string{report.Pod},
+						noParentsPseudoID: UnmanagedID,
 						chainRenderer: MakeFilter(
 							ComposeFilterFuncs(
 								IsRunning,
@@ -62,7 +64,7 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 							),
 							ContainerWithImageNameRenderer,
 						)},
-				),
+				},
 			),
 			ConnectionJoin(MapPod2IP, report.Pod),
 			KubernetesVolumesRenderer,
@@ -70,26 +72,32 @@ var PodRenderer = Memoise(ConditionalRenderer(renderKubernetesTopologies,
 	),
 ))
 
+type propagateContainerChildHost struct {
+	chainRenderer Renderer
+}
+
 // Pods are not tagged with a Host parent, but their container children are.
 // If n doesn't already have a host, copy it from one of the children
-func propagatePodHost(n report.Node) report.Node {
-	if n.Topology != report.Pod {
-		return n
-	} else if _, found := n.Parents.Lookup(report.Host); found {
-		return n
-	}
-	done := false
-	n.Children.ForEach(func(child report.Node) {
-		if !done {
-			if hosts, found := child.Parents.Lookup(report.Host); found {
-				for _, h := range hosts {
-					n = n.WithParent(report.Host, h)
+func (p propagateContainerChildHost) Render(ctx context.Context, rpt report.Report) Nodes {
+	input := p.chainRenderer.Render(ctx, rpt)
+	result := Nodes{Nodes: make(report.Nodes, len(input.Nodes))}
+	for _, n := range input.Nodes {
+		if _, found := n.Parents.Lookup(report.Host); !found {
+			for _, childID := range n.ChildIDs {
+				if ty, ok := report.NodeIDType(childID); ok && ty == report.Container {
+					child := rpt.Container.Nodes[childID]
+					if hosts, found := child.Parents.Lookup(report.Host); found {
+						for _, h := range hosts {
+							n = n.WithParent(report.Host, h)
+						}
+						break
+					}
 				}
-				done = true
 			}
 		}
-	})
-	return n
+		result.Nodes[n.ID] = n
+	}
+	return result
 }
 
 // PodServiceRenderer is a Renderer which produces a renderable kubernetes services
