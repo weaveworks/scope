@@ -51,28 +51,26 @@ var (
 
 	unknownPseudoNode1 = func(adjacent ...string) report.Node {
 		return pseudo(UnknownPseudoNode1ID, adjacent...).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.UnknownClient1NodeID],
-				RenderedEndpoints[fixture.UnknownClient2NodeID],
+			WithChildren(report.MakeIDList(
+				fixture.UnknownClient1NodeID,
+				fixture.UnknownClient2NodeID,
 			))
 	}
 	unknownPseudoNode2 = func(adjacent ...string) report.Node {
 		return pseudo(UnknownPseudoNode2ID, adjacent...).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.UnknownClient3NodeID],
+			WithChildren(report.MakeIDList(
+				fixture.UnknownClient3NodeID,
 			))
 	}
 
 	theIncomingInternetNode = func(adjacent ...string) report.Node {
 		return pseudo(render.IncomingInternetID, adjacent...).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.RandomClientNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.RandomClientNodeID,
 			))
 	}
 
-	theOutgoingInternetNode = pseudo(render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
-		RenderedEndpoints[fixture.GoogleEndpointNodeID],
-	))
+	theOutgoingInternetNode = pseudo(render.OutgoingInternetID).WithChildID(fixture.GoogleEndpointNodeID)
 
 	RenderedEndpoints = report.Nodes{
 		fixture.Client54001NodeID:    endpoint(fixture.Client54001NodeID, fixture.Server80NodeID),
@@ -93,24 +91,16 @@ var (
 				process.PID:       fixture.Client1PID,
 				process.Name:      fixture.Client1Name,
 			}).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Client54001NodeID],
-			)),
+			WithChildID(fixture.Client54001NodeID),
 
 		fixture.ClientProcess2NodeID: processNode(fixture.ClientProcess2NodeID, fixture.ServerProcessNodeID).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Client54002NodeID],
-			)),
+			WithChildID(fixture.Client54002NodeID),
 
 		fixture.ServerProcessNodeID: processNode(fixture.ServerProcessNodeID).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Server80NodeID],
-			)),
+			WithChildID(fixture.Server80NodeID),
 
 		fixture.NonContainerProcessNodeID: processNode(fixture.NonContainerProcessNodeID, render.OutgoingInternetID).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.NonContainerNodeID],
-			)),
+			WithChildID(fixture.NonContainerNodeID),
 
 		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
 		// all non-internet pseudo nodes for now.
@@ -124,26 +114,26 @@ var (
 		fixture.Client1Name: processNameNode(fixture.Client1Name, fixture.ServerName).
 			WithLatests(map[string]string{process.Name: fixture.Client1Name}).
 			AddCounter(report.Process, 2).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Client54001NodeID],
-				RenderedEndpoints[fixture.Client54002NodeID],
-				RenderedProcesses[fixture.ClientProcess1NodeID],
-				RenderedProcesses[fixture.ClientProcess2NodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Client54001NodeID,
+				fixture.Client54002NodeID,
+				fixture.ClientProcess1NodeID,
+				fixture.ClientProcess2NodeID,
 			)),
 
 		fixture.ServerName: processNameNode(fixture.ServerName).
 			WithLatests(map[string]string{process.Name: fixture.ServerName}).
 			AddCounter(report.Process, 1).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Server80NodeID],
-				RenderedProcesses[fixture.ServerProcessNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Server80NodeID,
+				fixture.ServerProcessNodeID,
 			)),
 
 		fixture.NonContainerName: processNameNode(fixture.NonContainerName, render.OutgoingInternetID).
 			AddCounter(report.Process, 1).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.NonContainerNodeID],
-				RenderedProcesses[fixture.NonContainerProcessNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.NonContainerNodeID,
+				fixture.NonContainerProcessNodeID,
 			)),
 
 		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping
@@ -155,9 +145,9 @@ var (
 	}
 
 	uncontainedServerID   = render.MakePseudoNodeID(render.UncontainedID, fixture.ServerHostID)
-	uncontainedServerNode = pseudo(uncontainedServerID, render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
-		RenderedEndpoints[fixture.NonContainerNodeID],
-		RenderedProcesses[fixture.NonContainerProcessNodeID],
+	uncontainedServerNode = pseudo(uncontainedServerID, render.OutgoingInternetID).WithChildren(report.MakeIDList(
+		fixture.NonContainerNodeID,
+		fixture.NonContainerProcessNodeID,
 	))
 
 	RenderedContainers = report.Nodes{
@@ -168,17 +158,17 @@ var (
 				docker.ContainerName: fixture.ClientContainerName,
 				docker.ImageName:     fixture.ClientContainerImageName,
 			}).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Client54001NodeID],
-				RenderedEndpoints[fixture.Client54002NodeID],
-				RenderedProcesses[fixture.ClientProcess1NodeID],
-				RenderedProcesses[fixture.ClientProcess2NodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Client54001NodeID,
+				fixture.Client54002NodeID,
+				fixture.ClientProcess1NodeID,
+				fixture.ClientProcess2NodeID,
 			)),
 
 		fixture.ServerContainerNodeID: container(fixture.ServerContainerNodeID).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Server80NodeID],
-				RenderedProcesses[fixture.ServerProcessNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Server80NodeID,
+				fixture.ServerProcessNodeID,
 			)),
 
 		fixture.ServerContainer2NodeID: container(fixture.ServerContainer2NodeID),
@@ -194,12 +184,12 @@ var (
 				docker.ContainerHostname: fixture.ClientContainerHostname,
 			}).
 			AddCounter(report.Container, 1).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Client54001NodeID],
-				RenderedEndpoints[fixture.Client54002NodeID],
-				RenderedProcesses[fixture.ClientProcess1NodeID],
-				RenderedProcesses[fixture.ClientProcess2NodeID],
-				RenderedContainers[fixture.ClientContainerNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Client54001NodeID,
+				fixture.Client54002NodeID,
+				fixture.ClientProcess1NodeID,
+				fixture.ClientProcess2NodeID,
+				fixture.ClientContainerNodeID,
 			)),
 
 		fixture.ServerContainerHostname: containerHostnameNode(fixture.ServerContainerHostname).
@@ -207,11 +197,11 @@ var (
 				docker.ContainerHostname: fixture.ServerContainerHostname,
 			}).
 			AddCounter(report.Container, 2).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Server80NodeID],
-				RenderedProcesses[fixture.ServerProcessNodeID],
-				RenderedContainers[fixture.ServerContainerNodeID],
-				RenderedContainers[fixture.ServerContainer2NodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Server80NodeID,
+				fixture.ServerProcessNodeID,
+				fixture.ServerContainerNodeID,
+				fixture.ServerContainer2NodeID,
 			)),
 
 		uncontainedServerID:       uncontainedServerNode,
@@ -230,21 +220,21 @@ var (
 				docker.ImageName:  fixture.ClientContainerImageName,
 			}).
 			AddCounter(report.Container, 1).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Client54001NodeID],
-				RenderedEndpoints[fixture.Client54002NodeID],
-				RenderedProcesses[fixture.ClientProcess1NodeID],
-				RenderedProcesses[fixture.ClientProcess2NodeID],
-				RenderedContainers[fixture.ClientContainerNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Client54001NodeID,
+				fixture.Client54002NodeID,
+				fixture.ClientProcess1NodeID,
+				fixture.ClientProcess2NodeID,
+				fixture.ClientContainerNodeID,
 			)),
 
 		ServerContainerImageNodeID: containerImage(ServerContainerImageNodeID).
 			AddCounter(report.Container, 2).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Server80NodeID],
-				RenderedProcesses[fixture.ServerProcessNodeID],
-				RenderedContainers[fixture.ServerContainerNodeID],
-				RenderedContainers[fixture.ServerContainer2NodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Server80NodeID,
+				fixture.ServerProcessNodeID,
+				fixture.ServerContainerNodeID,
+				fixture.ServerContainer2NodeID,
 			)),
 
 		uncontainedServerID:       uncontainedServerNode,
@@ -253,11 +243,11 @@ var (
 	}
 
 	UnmanagedServerID   = render.MakePseudoNodeID(render.UnmanagedID, fixture.ServerHostID)
-	unmanagedServerNode = pseudo(UnmanagedServerID, render.OutgoingInternetID).WithChildren(report.MakeNodeSet(
-		uncontainedServerNode,
-		RenderedEndpoints[fixture.NonContainerNodeID],
-		RenderedProcesses[fixture.NonContainerProcessNodeID],
-		RenderedContainers[fixture.ServerContainer2NodeID],
+	unmanagedServerNode = pseudo(UnmanagedServerID, render.OutgoingInternetID).WithChildren(report.MakeIDList(
+		uncontainedServerID,
+		fixture.NonContainerNodeID,
+		fixture.NonContainerProcessNodeID,
+		fixture.ServerContainer2NodeID,
 	)).
 		AddCounter(report.Container, 1).
 		AddCounter(render.Pseudo, 1)
@@ -265,20 +255,20 @@ var (
 	RenderedPods = report.Nodes{
 		fixture.ClientPodNodeID: pod(fixture.ClientPodNodeID, fixture.ServerPodNodeID).
 			AddCounter(report.Container, 1).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Client54001NodeID],
-				RenderedEndpoints[fixture.Client54002NodeID],
-				RenderedProcesses[fixture.ClientProcess1NodeID],
-				RenderedProcesses[fixture.ClientProcess2NodeID],
-				RenderedContainers[fixture.ClientContainerNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Client54001NodeID,
+				fixture.Client54002NodeID,
+				fixture.ClientProcess1NodeID,
+				fixture.ClientProcess2NodeID,
+				fixture.ClientContainerNodeID,
 			)),
 
 		fixture.ServerPodNodeID: pod(fixture.ServerPodNodeID).
 			AddCounter(report.Container, 1).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Server80NodeID],
-				RenderedProcesses[fixture.ServerProcessNodeID],
-				RenderedContainers[fixture.ServerContainerNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Server80NodeID,
+				fixture.ServerProcessNodeID,
+				fixture.ServerContainerNodeID,
 			)),
 
 		fixture.PersistentVolumeClaimNodeID: persistentVolumeClaim(fixture.PersistentVolumeClaimNodeID, fixture.PersistentVolumeNodeID).
@@ -289,7 +279,7 @@ var (
 				kubernetes.VolumeName:       "pongvolume",
 				kubernetes.AccessModes:      "ReadWriteOnce",
 				kubernetes.StorageClassName: "standard",
-			}).WithChild(report.MakeNode(fixture.PersistentVolumeNodeID).WithTopology(report.PersistentVolume)),
+			}).WithChildID(fixture.PersistentVolumeNodeID),
 
 		fixture.PersistentVolumeNodeID: persistentVolume(fixture.PersistentVolumeNodeID, fixture.VolumeSnapshotNodeID).
 			WithLatests(map[string]string{
@@ -300,13 +290,13 @@ var (
 				kubernetes.AccessModes:      "ReadWriteOnce",
 				kubernetes.StorageClassName: "standard",
 				kubernetes.StorageDriver:    "iSCSI",
-			}).WithChild(report.MakeNode(fixture.VolumeSnapshotNodeID).WithTopology(report.VolumeSnapshot)),
+			}).WithChildID(fixture.VolumeSnapshotNodeID),
 
 		fixture.StorageClassNodeID: StorageClass(fixture.StorageClassNodeID, fixture.PersistentVolumeClaimNodeID).
 			WithLatests(map[string]string{
 				kubernetes.Name:        "standard",
 				kubernetes.Provisioner: "pong",
-			}).WithChild(report.MakeNode(fixture.PersistentVolumeClaimNodeID).WithTopology(report.PersistentVolumeClaim)),
+			}).WithChildID(fixture.PersistentVolumeClaimNodeID),
 
 		fixture.VolumeSnapshotNodeID: volumeSnapshot(fixture.VolumeSnapshotNodeID, fixture.VolumeSnapshotDataNodeID).
 			WithLatests(map[string]string{
@@ -315,7 +305,7 @@ var (
 				kubernetes.VolumeClaim:  "pvc-6124",
 				kubernetes.SnapshotData: "vsd-1234",
 				kubernetes.VolumeName:   "pongvolume",
-			}).WithChild(report.MakeNode(fixture.VolumeSnapshotDataNodeID).WithTopology(report.VolumeSnapshotData)),
+			}).WithChildID(fixture.VolumeSnapshotDataNodeID),
 
 		fixture.VolumeSnapshotDataNodeID: volumeSnapshotData(fixture.VolumeSnapshotDataNodeID).
 			WithLatests(map[string]string{
@@ -332,17 +322,17 @@ var (
 	RenderedPodServices = report.Nodes{
 		fixture.ServiceNodeID: service(fixture.ServiceNodeID, fixture.ServiceNodeID).
 			AddCounter(report.Pod, 2).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Client54001NodeID],
-				RenderedEndpoints[fixture.Client54002NodeID],
-				RenderedEndpoints[fixture.Server80NodeID],
-				RenderedProcesses[fixture.ClientProcess1NodeID],
-				RenderedProcesses[fixture.ClientProcess2NodeID],
-				RenderedProcesses[fixture.ServerProcessNodeID],
-				RenderedContainers[fixture.ClientContainerNodeID],
-				RenderedContainers[fixture.ServerContainerNodeID],
-				RenderedPods[fixture.ClientPodNodeID],
-				RenderedPods[fixture.ServerPodNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Client54001NodeID,
+				fixture.Client54002NodeID,
+				fixture.Server80NodeID,
+				fixture.ClientProcess1NodeID,
+				fixture.ClientProcess2NodeID,
+				fixture.ServerProcessNodeID,
+				fixture.ClientContainerNodeID,
+				fixture.ServerContainerNodeID,
+				fixture.ClientPodNodeID,
+				fixture.ServerPodNodeID,
 			)),
 
 		UnmanagedServerID:         unmanagedServerNode,
@@ -359,14 +349,14 @@ var (
 			AddCounter(report.ContainerImage, 1).
 			AddCounter(report.Pod, 1).
 			AddCounter(report.Process, 2).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Client54001NodeID],
-				RenderedEndpoints[fixture.Client54002NodeID],
-				RenderedProcesses[fixture.ClientProcess1NodeID],
-				RenderedProcesses[fixture.ClientProcess2NodeID],
-				RenderedContainers[fixture.ClientContainerNodeID],
-				RenderedContainerImages[ClientContainerImageNodeID],
-				RenderedPods[fixture.ClientPodNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Client54001NodeID,
+				fixture.Client54002NodeID,
+				fixture.ClientProcess1NodeID,
+				fixture.ClientProcess2NodeID,
+				fixture.ClientContainerNodeID,
+				ClientContainerImageNodeID,
+				fixture.ClientPodNodeID,
 			)),
 
 		fixture.ServerHostNodeID: hostNode(fixture.ServerHostNodeID, render.OutgoingInternetID).
@@ -374,15 +364,15 @@ var (
 			AddCounter(report.ContainerImage, 1).
 			AddCounter(report.Pod, 1).
 			AddCounter(report.Process, 2).
-			WithChildren(report.MakeNodeSet(
-				RenderedEndpoints[fixture.Server80NodeID],
-				RenderedEndpoints[fixture.NonContainerNodeID],
-				RenderedProcesses[fixture.ServerProcessNodeID],
-				RenderedProcesses[fixture.NonContainerProcessNodeID],
-				RenderedContainers[fixture.ServerContainerNodeID],
-				RenderedContainers[fixture.ServerContainer2NodeID],
-				RenderedContainerImages[ServerContainerImageNodeID],
-				RenderedPods[fixture.ServerPodNodeID],
+			WithChildren(report.MakeIDList(
+				fixture.Server80NodeID,
+				fixture.NonContainerNodeID,
+				fixture.ServerProcessNodeID,
+				fixture.NonContainerProcessNodeID,
+				fixture.ServerContainerNodeID,
+				fixture.ServerContainer2NodeID,
+				ServerContainerImageNodeID,
+				fixture.ServerPodNodeID,
 			)),
 
 		// due to https://github.com/weaveworks/scope/issues/1323 we are dropping

@@ -223,16 +223,20 @@ var nodeSummaryGroupSpecs = []struct {
 
 func children(rc RenderContext, n report.Node) []NodeSummaryGroup {
 	summaries := map[string][]NodeSummary{}
-	n.Children.ForEach(func(child report.Node) {
-		if child.ID == n.ID {
-			return
+	for _, childID := range n.ChildIDs {
+		if childID == n.ID {
+			continue
 		}
-		summary, ok := MakeNodeSummary(rc, child)
-		if !ok {
-			return
+		if ty, ok := report.NodeIDType(childID); ok {
+			if topology, ok := rc.Report.Topology(ty); ok {
+				if child, ok := topology.Nodes[childID]; ok {
+					if summary, ok := MakeNodeSummary(rc, child); ok {
+						summaries[ty] = append(summaries[ty], summary.SummarizeMetrics())
+					}
+				}
+			}
 		}
-		summaries[child.Topology] = append(summaries[child.Topology], summary.SummarizeMetrics())
-	})
+	}
 
 	nodeSummaryGroups := []NodeSummaryGroup{}
 	// Apply specific group specs in the order they're listed

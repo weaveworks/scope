@@ -22,11 +22,13 @@ type propagateSingleMetrics struct {
 func (p propagateSingleMetrics) Render(ctx context.Context, rpt report.Report) Nodes {
 	nodes := p.r.Render(ctx, rpt)
 	outputs := make(report.Nodes, len(nodes.Nodes))
+	topology, _ := rpt.Topology(p.topology)
 	for id, n := range nodes.Nodes {
 		var first report.Node
 		found := 0
-		n.Children.ForEach(func(child report.Node) {
-			if child.Topology == p.topology {
+		for _, childID := range n.ChildIDs {
+			if ty, ok := report.NodeIDType(childID); ok && ty == p.topology {
+				child := topology.Nodes[childID]
 				if _, ok := child.Latest.Lookup(report.DoesNotMakeConnections); !ok {
 					if found == 0 {
 						first = child
@@ -34,7 +36,7 @@ func (p propagateSingleMetrics) Render(ctx context.Context, rpt report.Report) N
 					found++
 				}
 			}
-		})
+		}
 		if found == 1 {
 			n = n.WithMetrics(first.Metrics)
 		}

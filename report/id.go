@@ -262,6 +262,19 @@ func split2(s, sep string) (s1, s2 string, ok bool) {
 	return s[:pos], s[pos+1:], true
 }
 
+// NodeIDType returns the type of a node ID - e.g. process, pod, endpoint
+func NodeIDType(nodeID string) (string, bool) {
+	if _, tag, ok := ParseNodeID(nodeID); ok {
+		switch {
+		case len(tag) >= 2 && tag[0] == '<' && tag[len(tag)-1] == '>':
+			return tag[1 : len(tag)-1], true
+		case len(tag) >= 1 && tag[0] >= '0' && tag[0] <= '9':
+			return Endpoint, true
+		}
+	}
+	return "", false
+}
+
 // ParseNodeID produces the id and tag of a single-component node ID.
 func ParseNodeID(nodeID string) (id string, tag string, ok bool) {
 	return split2(nodeID, ScopeDelim)

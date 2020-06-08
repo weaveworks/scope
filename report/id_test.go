@@ -3,6 +3,7 @@ package report_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -77,4 +78,19 @@ func TestECSServiceNodeIDCompat(t *testing.T) {
 	if name != testName {
 		t.Errorf("Backwards-compatible id %q parsed name to %q, expected %q", testID, name, testName)
 	}
+}
+
+func TestNodeIDType(t *testing.T) {
+	ty, ok := report.NodeIDType("")
+	assert.False(t, ok)
+	ty, ok = report.NodeIDType(clientHostNodeID)
+	assert.True(t, ok)
+	assert.Equal(t, report.Host, ty)
+	ty, ok = report.NodeIDType(client54001EndpointNodeID)
+	assert.True(t, ok)
+	assert.Equal(t, report.Endpoint, ty)
+	rsetID := report.MakeReplicaSetNodeID("foo")
+	ty, ok = report.NodeIDType(rsetID)
+	assert.True(t, ok)
+	assert.Equal(t, report.ReplicaSet, ty)
 }

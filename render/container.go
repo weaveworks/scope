@@ -103,13 +103,7 @@ func FilterEmpty(topology string, r Renderer) Renderer {
 // topology.
 func HasChildren(topology string) FilterFunc {
 	return func(n report.Node) bool {
-		count := 0
-		n.Children.ForEach(func(child report.Node) {
-			if child.Topology == topology {
-				count++
-			}
-		})
-		return count > 0
+		return len(n.ChildIDs) > 0
 	}
 }
 

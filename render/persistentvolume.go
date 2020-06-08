@@ -33,7 +33,7 @@ func (v volumesRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 			volumeName, _ := p.Latest.Lookup(report.KubernetesName)
 			if volume == volumeName {
 				n.Adjacency = n.Adjacency.Add(p.ID)
-				n.Children = n.Children.Add(p)
+				n = n.WithChildID(p.ID)
 			}
 		}
 		nodes[id] = n
@@ -65,7 +65,7 @@ func (v podToVolumesRenderer) Render(ctx context.Context, rpt report.Report) Nod
 				pvcNamespace, _ := pvcNode.Latest.Lookup(report.KubernetesNamespace)
 				if (pvcName == ClaimName) && (podNamespace == pvcNamespace) {
 					podNode.Adjacency = podNode.Adjacency.Add(pvcNode.ID)
-					podNode.Children = podNode.Children.Add(pvcNode)
+					podNode = podNode.WithChildID(pvcNode.ID)
 					break
 				}
 			}
@@ -91,7 +91,7 @@ func (v pvcToStorageClassRenderer) Render(ctx context.Context, rpt report.Report
 			storageClassName, _ := pvcNode.Latest.Lookup(report.KubernetesStorageClassName)
 			if storageClassName == storageClass {
 				scNode.Adjacency = scNode.Adjacency.Add(pvcNode.ID)
-				scNode.Children = scNode.Children.Add(pvcNode)
+				scNode = scNode.WithChildID(pvcNode.ID)
 			}
 		}
 		nodes[scID] = scNode
@@ -114,7 +114,7 @@ func (v pvToSnapshotRenderer) Render(ctx context.Context, rpt report.Report) Nod
 			snapshotPVName, _ := volumeSnapshotNode.Latest.Lookup(report.KubernetesVolumeName)
 			if volumeName == snapshotPVName {
 				p.Adjacency = p.Adjacency.Add(volumeSnapshotNode.ID)
-				p.Children = p.Children.Add(volumeSnapshotNode)
+				p = p.WithChildID(volumeSnapshotNode.ID)
 			}
 		}
 		nodes[pvNodeID] = p
@@ -138,7 +138,7 @@ func (v volumeSnapshotRenderer) Render(ctx context.Context, rpt report.Report) N
 			snapshotDataName, _ := volumeSnapshotDataNode.Latest.Lookup(report.KubernetesName)
 			if snapshotDataName == snapshotData {
 				volumeSnapshotNode.Adjacency = volumeSnapshotNode.Adjacency.Add(volumeSnapshotDataNode.ID)
-				volumeSnapshotNode.Children = volumeSnapshotNode.Children.Add(volumeSnapshotDataNode)
+				volumeSnapshotNode = volumeSnapshotNode.WithChildID(volumeSnapshotDataNode.ID)
 			}
 			nodes[volumeSnapshotDataID] = volumeSnapshotDataNode
 		}

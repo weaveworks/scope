@@ -167,7 +167,7 @@ func (c *connectionCounters) rows(r report.Report, ns report.Nodes, includeLocal
 }
 
 func incomingConnectionsSummary(topologyID string, r report.Report, n report.Node, ns report.Nodes) ConnectionsSummary {
-	localEndpointIDs, localEndpointIDCopies := endpointChildIDsAndCopyMapOf(n)
+	localEndpointIDs, localEndpointIDCopies := endpointChildIDsAndCopyMapOf(r, n)
 	counts := newConnectionCounters()
 
 	// For each node which has an edge TO me
@@ -175,7 +175,7 @@ func incomingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		if !node.Adjacency.Contains(n.ID) {
 			continue
 		}
-		for _, remoteEndpoint := range endpointChildrenOf(node) {
+		for _, remoteEndpoint := range endpointChildrenOf(r, node) {
 			for _, localEndpointID := range remoteEndpoint.Adjacency.Intersection(localEndpointIDs) {
 				localEndpointID = canonicalEndpointID(localEndpointIDCopies, localEndpointID)
 				counts.add(r.DNS, false, n, node, r.Endpoint.Nodes[localEndpointID], remoteEndpoint)
@@ -197,7 +197,7 @@ func incomingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 }
 
 func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Node, ns report.Nodes) ConnectionsSummary {
-	localEndpoints := endpointChildrenOf(n)
+	localEndpoints := endpointChildrenOf(r, n)
 	counts := newConnectionCounters()
 
 	// For each node which has an edge FROM me
@@ -206,7 +206,7 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 		if !ok {
 			continue
 		}
-		remoteEndpointIDs, remoteEndpointIDCopies := endpointChildIDsAndCopyMapOf(node)
+		remoteEndpointIDs, remoteEndpointIDCopies := endpointChildIDsAndCopyMapOf(r, node)
 		for _, localEndpoint := range localEndpoints {
 			for _, remoteEndpointID := range localEndpoint.Adjacency.Intersection(remoteEndpointIDs) {
 				remoteEndpointID = canonicalEndpointID(remoteEndpointIDCopies, remoteEndpointID)
@@ -228,27 +228,31 @@ func outgoingConnectionsSummary(topologyID string, r report.Report, n report.Nod
 	}
 }
 
-func endpointChildrenOf(n report.Node) []report.Node {
+func endpointChildrenOf(r report.Report, n report.Node) []report.Node {
 	result := []report.Node{}
-	n.Children.ForEach(func(child report.Node) {
-		if child.Topology == report.Endpoint {
-			result = append(result, child)
+	for _, childID := range n.ChildIDs {
+		if ty, ok := report.NodeIDType(childID); ok && ty == report.Endpoint {
+			if child, found := r.Endpoint.Nodes[childID]; found {
+				result = append(result, child)
+			}
 		}
-	})
+	}
 	return result
 }
 
-func endpointChildIDsAndCopyMapOf(n report.Node) (report.IDList, map[string]string) {
+func endpointChildIDsAndCopyMapOf(r report.Report, n report.Node) (report.IDList, map[string]string) {
 	ids := report.MakeIDList()
 	copies := map[string]string{}
-	n.Children.ForEach(func(child report.Node) {
-		if child.Topology == report.Endpoint {
-			ids = ids.Add(child.ID)
-			if copyID, _, ok := child.Latest.LookupEntry(endpoint.CopyOf); ok {
-				copies[child.ID] = copyID
+	for _, childID := range n.ChildIDs {
+		if ty, ok := report.NodeIDType(childID); ok && ty == report.Endpoint {
+			ids = ids.Add(childID)
+			if child, found := r.Endpoint.Nodes[childID]; found {
+				if copyID, _, ok := child.Latest.LookupEntry(endpoint.CopyOf); ok {
+					copies[child.ID] = copyID
+				}
 			}
 		}
-	})
+	}
 	return ids, copies
 }
 

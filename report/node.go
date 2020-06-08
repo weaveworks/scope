@@ -19,7 +19,7 @@ type Node struct {
 	Latest    StringLatestMap `json:"latest,omitempty"`
 	Metrics   Metrics         `json:"metrics,omitempty" deepequal:"nil==empty"`
 	Parents   Sets            `json:"parents,omitempty"`
-	Children  NodeSet         `json:"children,omitempty"`
+	ChildIDs  IDList          `json:"cs,omitempty"`
 }
 
 // MakeNode creates a new Node with no initial metadata.
@@ -162,14 +162,16 @@ func (n Node) PruneParents() Node {
 }
 
 // WithChildren returns a fresh copy of n, with children merged in.
-func (n Node) WithChildren(children NodeSet) Node {
-	n.Children = n.Children.Merge(children)
+func (n Node) WithChildren(children IDList) Node {
+	for _, childID := range children {
+		n.ChildIDs = n.ChildIDs.Add(childID)
+	}
 	return n
 }
 
-// WithChild returns a fresh copy of n, with one child merged in.
-func (n Node) WithChild(child Node) Node {
-	n.Children = n.Children.Merge(MakeNodeSet(child))
+// WithChildID returns a fresh copy of n, with one child merged in.
+func (n Node) WithChildID(childID string) Node {
+	n.ChildIDs = n.ChildIDs.Add(childID)
 	return n
 }
 
@@ -194,7 +196,7 @@ func (n Node) Merge(other Node) Node {
 		Latest:    n.Latest.Merge(other.Latest),
 		Metrics:   n.Metrics.Merge(other.Metrics),
 		Parents:   n.Parents.Merge(other.Parents),
-		Children:  n.Children.Merge(other.Children),
+		ChildIDs:  n.ChildIDs.Merge(other.ChildIDs),
 	}
 }
 
