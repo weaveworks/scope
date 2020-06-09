@@ -120,13 +120,16 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 }
 
 func commandParameter(cmd, flag string) (string, bool) {
-	if strings.Contains(cmd, flag) {
-		cmds := strings.SplitAfter(cmd, flag)
-		aft := strings.Split(cmds[1], " ")
-		if aft[0] == "" {
-			return aft[1], true
+	i := strings.Index(cmd, flag)
+	if i != -1 {
+		// here we expect the command looks like `-foo=bar` or `-foo bar`
+		aft := strings.Fields(cmd[i+len(flag):])
+		if len(aft) > 0 && len(aft[0]) > 0 {
+			if aft[0][0] == '=' {
+				return aft[0][1:], true
+			}
+			return aft[0], true
 		}
-		return aft[0][1:], true
 	}
 	return "", false
 }

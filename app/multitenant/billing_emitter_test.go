@@ -15,6 +15,9 @@ func Test_intervalFromCommand(t *testing.T) {
 		{cmd: "/home/weave/scope --mode=probe --probe-only --probe.kubernetes.role=host --probe.publish.interval=4500ms --probe.spy.interval=10s --probe.docker.bridge=docker0 --probe.docker=true --probe.ebpf.connections=false --probe.conntrack=false https://redacted@cloud.weave.works.", want: "10s", name: "higher-spy-interval"},
 		{cmd: "/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --web.listen-address=:8080 --storage.tsdb.retention.time=2h --web.enable-lifecycle", want: "", name: "notscope"},
 		{cmd: "", want: "", name: "blank"},
+		{cmd: "/home/weave/scope --probe.publish.interval=3s", want: "3s", name: "at-end"},
+		{cmd: "/home/weave/scope --probe.publish.interval=", want: "", name: "equals-blank"},
+		{cmd: "/home/weave/scope --probe.publish.interval", want: "", name: "no-value"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
