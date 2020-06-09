@@ -17,7 +17,7 @@ setup_host() {
     echo Installing weave on "$HOST"
     # Download the latest released weave script locally,
     # for use by weave_on
-    curl -sL git.io/weave -o ./weave
+    curl -sL https://github.com/weaveworks/weave/releases/download/v2.6.2/weave -o ./weave
     chmod a+x ./weave
     run_on "$HOST" "sudo curl -sL git.io/weave -o /usr/local/bin/weave"
     run_on "$HOST" "sudo chmod a+x /usr/local/bin/weave"
