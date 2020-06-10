@@ -41,7 +41,7 @@ func handleControl(cr ControlRouter) CtxHandlerFunc {
 			err := codec.NewDecoder(r.Body, &codec.JsonHandle{}).Decode(&controlArgs)
 			defer r.Body.Close()
 			if err != nil {
-				respondWith(w, http.StatusBadRequest, err)
+				respondWith(ctx, w, http.StatusBadRequest, err)
 				return
 			}
 		}
@@ -52,14 +52,14 @@ func handleControl(cr ControlRouter) CtxHandlerFunc {
 			ControlArgs: controlArgs,
 		})
 		if err != nil {
-			respondWith(w, http.StatusBadRequest, err.Error())
+			respondWith(ctx, w, http.StatusBadRequest, err.Error())
 			return
 		}
 		if result.Error != "" {
-			respondWith(w, http.StatusBadRequest, result.Error)
+			respondWith(ctx, w, http.StatusBadRequest, result.Error)
 			return
 		}
-		respondWith(w, http.StatusOK, result)
+		respondWith(ctx, w, http.StatusOK, result)
 	}
 }
 
@@ -69,7 +69,7 @@ func handleProbeWS(cr ControlRouter) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		probeID := r.Header.Get(xfer.ScopeProbeIDHeader)
 		if probeID == "" {
-			respondWith(w, http.StatusBadRequest, xfer.ScopeProbeIDHeader)
+			respondWith(ctx, w, http.StatusBadRequest, xfer.ScopeProbeIDHeader)
 			return
 		}
 
@@ -92,7 +92,7 @@ func handleProbeWS(cr ControlRouter) CtxHandlerFunc {
 			return res
 		})
 		if err != nil {
-			respondWith(w, http.StatusBadRequest, err)
+			respondWith(ctx, w, http.StatusBadRequest, err)
 			return
 		}
 		defer cr.Deregister(ctx, probeID, id)

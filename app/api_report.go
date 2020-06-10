@@ -15,11 +15,11 @@ func makeRawReportHandler(rep Reporter) CtxHandlerFunc {
 		timestamp := deserializeTimestamp(r.URL.Query().Get("timestamp"))
 		rawReport, err := rep.Report(ctx, timestamp)
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err)
+			respondWith(ctx, w, http.StatusInternalServerError, err)
 			return
 		}
 		censorCfg := report.GetCensorConfigFromRequest(r)
-		respondWith(w, http.StatusOK, report.CensorRawReport(rawReport, censorCfg))
+		respondWith(ctx, w, http.StatusOK, report.CensorRawReport(rawReport, censorCfg))
 	}
 }
 
@@ -38,14 +38,14 @@ func makeProbeHandler(rep Reporter) CtxHandlerFunc {
 			// if we have reports, we must have connected probes
 			hasProbes, err := rep.HasReports(ctx, time.Now())
 			if err != nil {
-				respondWith(w, http.StatusInternalServerError, err)
+				respondWith(ctx, w, http.StatusInternalServerError, err)
 			}
-			respondWith(w, http.StatusOK, hasProbes)
+			respondWith(ctx, w, http.StatusOK, hasProbes)
 			return
 		}
 		rpt, err := rep.Report(ctx, time.Now())
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err)
+			respondWith(ctx, w, http.StatusInternalServerError, err)
 			return
 		}
 		result := []probeDesc{}
@@ -60,6 +60,6 @@ func makeProbeHandler(rep Reporter) CtxHandlerFunc {
 				LastSeen: dt,
 			})
 		}
-		respondWith(w, http.StatusOK, result)
+		respondWith(ctx, w, http.StatusOK, result)
 	}
 }

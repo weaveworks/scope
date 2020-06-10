@@ -48,7 +48,7 @@ type rendererHandler func(context.Context, render.Renderer, render.Transformer, 
 func handleTopology(ctx context.Context, renderer render.Renderer, transformer render.Transformer, rc detailed.RenderContext, w http.ResponseWriter, r *http.Request) {
 	censorCfg := report.GetCensorConfigFromRequest(r)
 	nodeSummaries := detailed.Summaries(ctx, rc, render.Render(ctx, rc.Report, renderer, transformer).Nodes)
-	respondWith(w, http.StatusOK, APITopology{
+	respondWith(ctx, w, http.StatusOK, APITopology{
 		Nodes: detailed.CensorNodeSummaries(nodeSummaries, censorCfg),
 	})
 }
@@ -80,7 +80,7 @@ func handleNode(ctx context.Context, renderer render.Renderer, transformer rende
 		nodes.Filtered--
 	}
 	rawNode := detailed.MakeNode(topologyID, rc, nodes.Nodes, node)
-	respondWith(w, http.StatusOK, APINode{Node: detailed.CensorNode(rawNode, censorCfg)})
+	respondWith(ctx, w, http.StatusOK, APINode{Node: detailed.CensorNode(rawNode, censorCfg)})
 }
 
 // Websocket for the full topology.
@@ -91,14 +91,14 @@ func handleWebsocket(
 	r *http.Request,
 ) {
 	if err := r.ParseForm(); err != nil {
-		respondWith(w, http.StatusInternalServerError, err)
+		respondWith(ctx, w, http.StatusInternalServerError, err)
 		return
 	}
 	loop := websocketLoop
 	if t := r.Form.Get("t"); t != "" {
 		var err error
 		if loop, err = time.ParseDuration(t); err != nil {
-			respondWith(w, http.StatusBadRequest, t)
+			respondWith(ctx, w, http.StatusBadRequest, t)
 			return
 		}
 	}

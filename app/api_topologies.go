@@ -476,10 +476,10 @@ func (r *Registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 		timestamp := deserializeTimestamp(req.URL.Query().Get("timestamp"))
 		report, err := rep.Report(ctx, timestamp)
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err)
+			respondWith(ctx, w, http.StatusInternalServerError, err)
 			return
 		}
-		respondWith(w, http.StatusOK, r.renderTopologies(ctx, report, req))
+		respondWith(ctx, w, http.StatusOK, r.renderTopologies(ctx, report, req))
 	}
 }
 
@@ -489,6 +489,9 @@ func (r *Registry) renderTopologies(ctx context.Context, rpt report.Report, req 
 	topologies := []APITopologyDesc{}
 	req.ParseForm()
 	r.walk(func(desc APITopologyDesc) {
+		if ctx.Err() != nil {
+			return
+		}
 		renderer, filter, _ := r.RendererForTopology(desc.id, req.Form, rpt)
 		desc.Stats = computeStats(ctx, rpt, renderer, filter)
 		for i, sub := range desc.SubTopologies {
@@ -573,13 +576,13 @@ func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFu
 		}
 		rpt, err := rep.Report(ctx, timestamp)
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err)
+			respondWith(ctx, w, http.StatusInternalServerError, err)
 			return
 		}
 		req.ParseForm()
 		renderer, filter, err := r.RendererForTopology(topologyID, req.Form, rpt)
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err)
+			respondWith(ctx, w, http.StatusInternalServerError, err)
 			return
 		}
 		f(ctx, renderer, filter, RenderContextForReporter(rep, rpt), w, req)
