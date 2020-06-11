@@ -7,7 +7,7 @@ start_suite "Test short lived connection between containers in same network name
 
 scope_on "$HOST1" launch
 docker_on "$HOST1" run -d --name nginx nginx
-docker_on "$HOST1" run -d --net=container:nginx --name client albanc/dialer /go/bin/dialer connectshortlived localhost:80
+docker_on "$HOST1" run -d --net=container:nginx --name client albanc/dialer /go/bin/dialer connectshortlived 127.0.0.1:80
 
 wait_for_containers "$HOST1" 60 nginx client
 
