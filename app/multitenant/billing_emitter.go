@@ -119,15 +119,34 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 	return e.Collector.Add(ctx, rep, buf)
 }
 
-func intervalFromCommand(cmd string) string {
-	if strings.Contains(cmd, "scope") &&
-		strings.Contains(cmd, "probe.publish.interval") {
-		cmds := strings.SplitAfter(cmd, "probe.publish.interval")
-		aft := strings.Split(cmds[1], " ")
-		if aft[0] == "" {
-			return aft[1]
+func commandParameter(cmd, flag string) (string, bool) {
+	i := strings.Index(cmd, flag)
+	if i != -1 {
+		// here we expect the command looks like `-foo=bar` or `-foo bar`
+		aft := strings.Fields(cmd[i+len(flag):])
+		if len(aft) > 0 && len(aft[0]) > 0 {
+			if aft[0][0] == '=' {
+				return aft[0][1:], true
+			}
+			return aft[0], true
 		}
-		return aft[0][1:]
+	}
+	return "", false
+}
+
+func intervalFromCommand(cmd string) string {
+	if strings.Contains(cmd, "scope") {
+		if publishInterval, ok := commandParameter(cmd, "probe.publish.interval"); ok {
+			// If spy interval is higher than publish interval, some reports will have no process data
+			if spyInterval, ok := commandParameter(cmd, "spy.interval"); ok {
+				pubDuration, err1 := time.ParseDuration(publishInterval)
+				spyDuration, err2 := time.ParseDuration(spyInterval)
+				if err1 == nil && err2 == nil && spyDuration > pubDuration {
+					return spyInterval
+				}
+			}
+			return publishInterval
+		}
 	}
 	return ""
 }
