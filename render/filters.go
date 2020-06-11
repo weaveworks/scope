@@ -23,6 +23,9 @@ type CustomRenderer struct {
 
 // Render implements Renderer
 func (c CustomRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
+	if ctx.Err() != nil {
+		return Nodes{}
+	}
 	return c.RenderFunc(c.Renderer.Render(ctx, rpt))
 }
 

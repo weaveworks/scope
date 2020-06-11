@@ -133,13 +133,13 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 		case strings.HasPrefix(contentType, "application/json"):
 			isMsgpack = false
 		default:
-			respondWith(w, http.StatusBadRequest, fmt.Errorf("Unsupported Content-Type: %v", contentType))
+			respondWith(ctx, w, http.StatusBadRequest, fmt.Errorf("Unsupported Content-Type: %v", contentType))
 			return
 		}
 
 		rpt, err := report.MakeFromBinary(ctx, reader, gzipped, isMsgpack)
 		if err != nil {
-			respondWith(w, http.StatusBadRequest, err)
+			respondWith(ctx, w, http.StatusBadRequest, err)
 			return
 		}
 
@@ -150,7 +150,7 @@ func RegisterReportPostHandler(a Adder, router *mux.Router) {
 
 		if err := a.Add(ctx, *rpt, buf.Bytes()); err != nil {
 			log.Errorf("Error Adding report: %v", err)
-			respondWith(w, http.StatusInternalServerError, err)
+			respondWith(ctx, w, http.StatusInternalServerError, err)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
@@ -163,7 +163,7 @@ func RegisterAdminRoutes(router *mux.Router, reporter Reporter) {
 	get.Handle("/admin/summary", requestContextDecorator(func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		summary, err := reporter.AdminSummary(ctx, time.Now())
 		if err != nil {
-			respondWith(w, http.StatusBadRequest, err)
+			respondWith(ctx, w, http.StatusBadRequest, err)
 		}
 		fmt.Fprintln(w, summary)
 	}))
@@ -188,12 +188,12 @@ func apiHandler(rep Reporter, capabilities map[string]bool) CtxHandlerFunc {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 		report, err := rep.Report(ctx, time.Now())
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err)
+			respondWith(ctx, w, http.StatusInternalServerError, err)
 			return
 		}
 		newVersion.Lock()
 		defer newVersion.Unlock()
-		respondWith(w, http.StatusOK, xfer.Details{
+		respondWith(ctx, w, http.StatusOK, xfer.Details{
 			ID:           UniqueID,
 			Version:      Version,
 			Hostname:     hostname.Get(),

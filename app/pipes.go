@@ -39,7 +39,7 @@ func checkPipe(pr PipeRouter) CtxHandlerFunc {
 		id := mux.Vars(r)["pipeID"]
 		exists, err := pr.Exists(ctx, id)
 		if err != nil {
-			respondWith(w, http.StatusInternalServerError, err)
+			respondWith(ctx, w, http.StatusInternalServerError, err)
 		} else if exists {
 			w.WriteHeader(http.StatusNoContent)
 		} else {
@@ -81,7 +81,7 @@ func deletePipe(pr PipeRouter) CtxHandlerFunc {
 		pipeID := mux.Vars(r)["pipeID"]
 		log.Debugf("Deleting pipe %s", pipeID)
 		if err := pr.Delete(ctx, pipeID); err != nil {
-			respondWith(w, http.StatusInternalServerError, err)
+			respondWith(ctx, w, http.StatusInternalServerError, err)
 		}
 	}
 }
