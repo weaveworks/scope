@@ -158,6 +158,7 @@ type joinResults struct {
 	multi  map[string][]string // input node ID -> output node IDs - exceptional case
 }
 
+// Create a joinResults with a starting set of nodes, that other info will be added into.
 func newJoinResults(inputNodes report.Nodes) joinResults {
 	nodes := make(report.Nodes, len(inputNodes))
 	for id, n := range inputNodes {
@@ -212,6 +213,19 @@ func (ret *joinResults) addChild(m report.Node, id string, topology string) {
 func (ret *joinResults) addChildAndChildren(m report.Node, id string, topology string) {
 	ret.addUnmappedChild(m, id, topology)
 	result := ret.nodes[id]
+	result.Children.UnsafeMerge(m.Children)
+	ret.nodes[id] = result
+	ret.mapChild(m.ID, id)
+}
+
+func (ret *joinResults) addWithCreate(m report.Node, id string, create func() report.Node) {
+	result, exists := ret.nodes[id]
+	if !exists {
+		result = create()
+		ret.nodes[id] = result
+	}
+	ret.addUnmappedChild(m, id, result.Topology)
+	result = ret.nodes[id]
 	result.Children.UnsafeMerge(m.Children)
 	ret.nodes[id] = result
 	ret.mapChild(m.ID, id)

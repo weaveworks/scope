@@ -158,10 +158,7 @@ var ContainerWithImageNameRenderer = Memoise(containerWithImageNameRenderer{})
 // ContainerImageRenderer produces a graph where each node is a container image
 // with the original containers as children
 var ContainerImageRenderer = Memoise(FilterEmpty(report.Container,
-	MakeMap(
-		MapContainerImage2Name,
-		containerImageRenderer{},
-	),
+	containerImageRenderer{},
 ))
 
 // ContainerHostnameRenderer is a Renderer which produces a renderable container
@@ -260,7 +257,8 @@ type containerImageRenderer struct{}
 
 func (m containerImageRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	containers := ContainerWithImageNameRenderer.Render(ctx, rpt)
-	ret := newJoinResults(rpt.ContainerImage.Nodes)
+	images := rpt.ContainerImage.Nodes
+	ret := newJoinResults(nil)
 
 	for _, n := range containers.Nodes {
 		if n.Topology == Pseudo {
@@ -272,8 +270,18 @@ func (m containerImageRenderer) Render(ctx context.Context, rpt report.Report) N
 		if !ok {
 			continue
 		}
-		id := report.MakeContainerImageNodeID(imageID)
-		ret.addChildAndChildren(n, id, report.ContainerImage)
+		id := containerImageNodeID(n)
+		if id == "" {
+			continue
+		}
+		ret.addWithCreate(n, id, func() report.Node {
+			imageID = report.MakeContainerImageNodeID(imageID)
+			imageNode, ok := images[imageID]
+			if !ok {
+				imageNode = report.MakeNode(imageID).WithTopology(report.ContainerImage)
+			}
+			return imageNode.WithID(id)
+		})
 	}
 	return ret.result(containers)
 }
@@ -290,21 +298,6 @@ func containerImageNodeID(n report.Node) string {
 	}
 	imageNameWithoutTag := strings.SplitN(imageName, ":", 2)[0]
 	return report.MakeContainerImageNodeID(imageNameWithoutTag)
-}
-
-// MapContainerImage2Name ignores image versions
-func MapContainerImage2Name(n report.Node) report.Node {
-	// Propagate all pseudo nodes
-	if n.Topology == Pseudo {
-		return n
-	}
-
-	n.ID = containerImageNodeID(n)
-	if n.ID == "" {
-		return report.Node{}
-	}
-
-	return n
 }
 
 var containerHostnameTopology = MakeGroupNodeTopology(report.Container, report.DockerContainerHostname)
