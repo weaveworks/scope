@@ -3,6 +3,7 @@ package detailed
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strings"
 
 	opentracing "github.com/opentracing/opentracing-go"
@@ -128,6 +129,10 @@ func MakeBasicNodeSummary(r report.Report, n report.Node) (BasicNodeSummary, boo
 		summary.Tag = t.Tag
 	}
 
+	fmt.Printf("MakeBasicNodeSummary %s: %s\n", n.ID, n.Topology)
+	if n.Topology == "host" {
+		debug.PrintStack()
+	}
 	// Do we have a renderer for the topology?
 	if renderer, ok := renderers[n.Topology]; ok {
 		if renderer == nil { // we don't want to render this
@@ -437,6 +442,7 @@ func pluralize(n report.Node, key, singular, plural string) string {
 	if !ok {
 		c = n.CountChildrenOfTopology(key)
 	}
+	fmt.Printf("pluralize: %d of %s in %s %v\n", c, key, n.ID, n.ChildIDs)
 	if c == 1 {
 		return fmt.Sprintf("%d %s", c, singular)
 	}

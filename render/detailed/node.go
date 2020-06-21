@@ -1,6 +1,8 @@
 package detailed
 
 import (
+	"context"
+	"fmt"
 	"sort"
 
 	"github.com/ugorji/go/codec"
@@ -9,6 +11,7 @@ import (
 	"github.com/weaveworks/scope/probe/docker"
 	"github.com/weaveworks/scope/probe/kubernetes"
 	"github.com/weaveworks/scope/probe/process"
+	"github.com/weaveworks/scope/render"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -99,6 +102,12 @@ func MakeNode(topologyID string, rc RenderContext, ns report.Nodes, n report.Nod
 			outgoingConnectionsSummary(topologyID, rc.Report, n, ns),
 		},
 	}
+}
+
+func MakeDetailedHostNode(ctx context.Context, rpt report.Report, id string) Node {
+	renderableNodes := render.HostRenderer.Render(ctx, rpt).Nodes
+	renderableNode := renderableNodes[id]
+	return MakeNode("hosts", RenderContext{Report: rpt}, renderableNodes, renderableNode)
 }
 
 func controlsFor(topology report.Topology, nodeID string) []ControlInstance {
@@ -223,6 +232,7 @@ var nodeSummaryGroupSpecs = []struct {
 
 func children(rc RenderContext, n report.Node) []NodeSummaryGroup {
 	summaries := map[string][]NodeSummary{}
+	fmt.Printf("children: %v\n", n.ChildIDs)
 	for _, childID := range n.ChildIDs {
 		if childID == n.ID {
 			continue

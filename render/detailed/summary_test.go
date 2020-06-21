@@ -195,15 +195,17 @@ func TestMakeNodeSummary(t *testing.T) {
 		},
 	}
 	for _, testcase := range testcases {
-		have, ok := detailed.MakeNodeSummary(detailed.RenderContext{Report: fixture.Report}, testcase.input)
-		if ok != testcase.ok {
-			t.Errorf("%s: MakeNodeSummary failed: expected ok value to be: %v", testcase.name, testcase.ok)
-			continue
-		}
+		t.Run(testcase.name, func(t *testing.T) {
+			have, ok := detailed.MakeNodeSummary(detailed.RenderContext{Report: fixture.Report}, testcase.input)
+			if ok != testcase.ok {
+				t.Errorf("%s: MakeNodeSummary failed: expected ok value to be: %v", testcase.name, testcase.ok)
+				return
+			}
 
-		if !reflect.DeepEqual(testcase.want, have) {
-			t.Errorf("%s: Node Summary did not match: %s", testcase.name, test.Diff(testcase.want, have))
-		}
+			if !reflect.DeepEqual(testcase.want, have) {
+				t.Errorf("%s: Node Summary did not match: %s", testcase.name, test.Diff(testcase.want, have))
+			}
+		})
 	}
 }
 

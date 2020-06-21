@@ -30,9 +30,10 @@ func connectionID(nodeID string, addr string) string {
 }
 
 func TestMakeDetailedHostNode(t *testing.T) {
-	renderableNodes := render.HostRenderer.Render(context.Background(), fixture.Report).Nodes
-	renderableNode := renderableNodes[fixture.ClientHostNodeID]
-	have := detailed.MakeNode("hosts", detailed.RenderContext{Report: fixture.Report}, renderableNodes, renderableNode)
+	//renderableNodes := render.HostRenderer.Render(context.Background(), fixture.Report).Nodes
+	//renderableNode := renderableNodes[fixture.ClientHostNodeID]
+	//have := detailed.MakeNode("hosts", detailed.RenderContext{Report: fixture.Report}, renderableNodes, renderableNode)
+	have := detailed.MakeDetailedHostNode(context.Background(), fixture.Report, fixture.ClientHostNodeID)
 
 	containerImageNodeSummary := child(t, render.ContainerImageRenderer, expected.ClientContainerImageNodeID)
 	containerNodeSummary := child(t, render.ContainerRenderer, fixture.ClientContainerNodeID)
