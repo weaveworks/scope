@@ -264,12 +264,14 @@ func split2(s, sep string) (s1, s2 string, ok bool) {
 
 // NodeIDType returns the type of a node ID - e.g. process, pod, endpoint
 func NodeIDType(nodeID string) (string, bool) {
-	if _, tag, ok := ParseNodeID(nodeID); ok {
+	if _, tag, ok := split2(nodeID, ScopeDelim); ok {
 		switch {
 		case len(tag) >= 2 && tag[0] == '<' && tag[len(tag)-1] == '>':
 			return tag[1 : len(tag)-1], true
-		case len(tag) >= 1 && tag[0] >= '0' && tag[0] <= '9':
+		case strings.Index(tag, ScopeDelim) != -1: // Endpoint is the only ID formed with two delimiters
 			return Endpoint, true
+		case len(tag) >= 1 && tag[0] >= '0' && tag[0] <= '9':
+			return Process, true
 		}
 	}
 	return "", false
