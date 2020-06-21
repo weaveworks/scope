@@ -69,11 +69,22 @@ func (c connectionJoin) Render(ctx context.Context, rpt report.Report) Nodes {
 			}
 		}
 	}
-	return MapEndpoints(
-		func(m report.Node) string {
-			scope, addr, port, ok := report.ParseEndpointNodeID(m.ID)
+	local := LocalNetworks(rpt)
+	ret := newJoinResults(TopologySelector(c.topology).Render(ctx, rpt).Nodes)
+
+	for _, n := range rpt.Endpoint.Nodes {
+		// Nodes without a hostid are mapped to pseudo nodes, if
+		// possible.
+		if _, ok := n.Latest.Lookup(report.HostNodeID); !ok {
+			if id, ok := pseudoNodeID(rpt, n, local); ok {
+				ret.addChild(n, id, Pseudo)
+				continue
+			}
+		}
+		{
+			scope, addr, port, ok := report.ParseEndpointNodeID(n.ID)
 			if !ok {
-				return ""
+				continue
 			}
 			id, found := ipNodes[report.MakeScopedEndpointNodeID(scope, addr, "")]
 			// We also allow for joining on ip:port pairs.  This is
@@ -84,16 +95,18 @@ func (c connectionJoin) Render(ctx context.Context, rpt report.Report) Nodes {
 				id, found = ipNodes[report.MakeScopedEndpointNodeID(scope, addr, port)]
 			}
 			if !found || id == "" {
-				return ""
+				continue
 			}
 			// Not an IP we blanked out earlier.
 			//
-			// MapEndpoints is guaranteed to find a node with this id
+			// addChild() is guaranteed to find a node with this id
 			// (and hence not have to create one), since we got the id
 			// from ipNodes, which is populated from c.topology, which
-			// is where MapEndpoints will look.
-			return id
-		}, c.topology).Render(ctx, rpt)
+			// is where addChild() will look.
+			ret.addChild(n, id, c.topology)
+		}
+	}
+	return ret.result(rpt.Endpoint.Nodes)
 }
 
 // FilterEmpty is a Renderer which filters out nodes which have no children
