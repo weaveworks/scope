@@ -127,7 +127,7 @@ type AWSCollector interface {
 
 // ReportStore is a thing that we can get reports from.
 type ReportStore interface {
-	FetchReports(context.Context, []string) (map[string]report.Report, []string, error)
+	FetchReports(context.Context, []keyInfo) (map[string]report.Report, []keyInfo, error)
 }
 
 // AWSCollectorConfig has everything we need to make an AWS collector.
@@ -411,7 +411,7 @@ func (c *awsCollector) getReportKeys(ctx context.Context, userid string, start, 
 	return reportKeys, nil
 }
 
-func (c *awsCollector) getReports(ctx context.Context, userid string, reportKeys []string) ([]report.Report, error) {
+func (c *awsCollector) getReports(ctx context.Context, userid string, reportKeys []keyInfo) ([]report.Report, error) {
 	missing := reportKeys
 
 	stores := []ReportStore{c.inProcess}
@@ -508,7 +508,7 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 // Fetch a merged report either from cache or from store which we put in cache
 func (c *awsCollector) reportForQuantum(ctx context.Context, userid string, reportKeys []keyInfo, start int64) (report.Report, error) {
 	key := fmt.Sprintf("%s:%d", userid, start)
-	cached, _, err := c.inProcess.FetchReports(ctx, []string{key})
+	cached, _, err := c.inProcess.FetchReports(ctx, []keyInfo{{key: key, ts: start}})
 	if len(cached) == 1 {
 		return cached[key], nil
 	}
@@ -523,10 +523,10 @@ func (c *awsCollector) reportForQuantum(ctx context.Context, userid string, repo
 
 // Find the keys relating to this time period then fetch from memcached and/or S3
 func (c *awsCollector) reportsForKeysInRange(ctx context.Context, userid string, reportKeys []keyInfo, start, end int64) ([]report.Report, error) {
-	var keys []string
+	var keys []keyInfo
 	for _, k := range reportKeys {
 		if k.ts >= start && k.ts < end {
-			keys = append(keys, k.key)
+			keys = append(keys, k)
 		}
 	}
 	if span := opentracing.SpanFromContext(ctx); span != nil {
@@ -793,13 +793,13 @@ func newInProcessStore(size int, expiration time.Duration) inProcessStore {
 }
 
 // FetchReports retrieves the given reports from the store.
-func (c inProcessStore) FetchReports(_ context.Context, keys []string) (map[string]report.Report, []string, error) {
+func (c inProcessStore) FetchReports(_ context.Context, keys []keyInfo) (map[string]report.Report, []keyInfo, error) {
 	found := map[string]report.Report{}
-	missing := []string{}
+	missing := []keyInfo{}
 	for _, key := range keys {
 		rpt, err := c.cache.Get(key)
 		if err == nil {
-			found[key] = rpt.(report.Report)
+			found[key.key] = rpt.(report.Report)
 		} else {
 			missing = append(missing, key)
 		}

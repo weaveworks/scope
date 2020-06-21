@@ -3,6 +3,7 @@ package multitenant
 import (
 	"bytes"
 	"sync"
+	"time"
 
 	"context"
 	"github.com/aws/aws-sdk-go/aws"
@@ -45,7 +46,7 @@ func NewS3Client(config *aws.Config, bucketName string) S3Store {
 }
 
 // FetchReports fetches multiple reports in parallel from S3.
-func (store *S3Store) FetchReports(ctx context.Context, keys []string) (map[string]report.Report, []string, error) {
+func (store *S3Store) FetchReports(ctx context.Context, keys []keyInfo) (map[string]report.Report, []keyInfo, error) {
 	type result struct {
 		key    string
 		report *report.Report
@@ -55,9 +56,13 @@ func (store *S3Store) FetchReports(ctx context.Context, keys []string) (map[stri
 	ch := make(chan result, len(keys))
 
 	for _, key := range keys {
-		go func(key string) {
-			r := result{key: key}
-			r.report, r.err = store.fetchReport(ctx, key)
+		go func(key keyInfo) {
+			r := result{key: key.key}
+			r.report, r.err = store.fetchReport(ctx, key.key)
+			// If the report doesn't have a timestamp, add the one from the index
+			if r.report.TS.IsZero() {
+				r.report.TS = time.Unix(key.ts/1000, (key.ts%1000)*1000000)
+			}
 			ch <- r
 		}(key)
 	}
@@ -66,11 +71,11 @@ func (store *S3Store) FetchReports(ctx context.Context, keys []string) (map[stri
 	for range keys {
 		r := <-ch
 		if r.err != nil {
-			return nil, []string{}, r.err
+			return nil, []keyInfo{}, r.err
 		}
 		reports[r.key] = *r.report
 	}
-	return reports, []string{}, nil
+	return reports, []keyInfo{}, nil
 }
 
 func (store *S3Store) fetchReport(ctx context.Context, key string) (*report.Report, error) {

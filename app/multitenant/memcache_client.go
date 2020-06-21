@@ -155,14 +155,18 @@ func memcacheStatusCode(err error) string {
 }
 
 // FetchReports gets reports from memcache.
-func (c *MemcacheClient) FetchReports(ctx context.Context, keys []string) (map[string]report.Report, []string, error) {
+func (c *MemcacheClient) FetchReports(ctx context.Context, keys []keyInfo) (map[string]report.Report, []keyInfo, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Memcache.FetchReports")
 	defer span.Finish()
 	defer memcacheRequests.Add(float64(len(keys)))
 	var found map[string]*memcache.Item
+	mkeys := make([]string, len(keys))
+	for i, k := range keys {
+		mkeys[i] = k.key
+	}
 	err := instrument.TimeRequestHistogramStatus(ctx, "Memcache.GetMulti", memcacheRequestDuration, memcacheStatusCode, func(_ context.Context) error {
 		var err error
-		found, err = c.client.GetMulti(keys)
+		found, err = c.client.GetMulti(mkeys)
 		return err
 	})
 	span.LogFields(otlog.Int("keys", len(keys)), otlog.Int("hits", len(found)))
@@ -172,18 +176,18 @@ func (c *MemcacheClient) FetchReports(ctx context.Context, keys []string) (map[s
 
 	// Decode all the reports in parallel.
 	type result struct {
-		key    string
+		key    keyInfo
 		report *report.Report
 	}
 	ch := make(chan result, len(keys))
-	var missing []string
+	var missing []keyInfo
 	for _, key := range keys {
-		item, ok := found[key]
+		item, ok := found[key.key]
 		if !ok {
 			missing = append(missing, key)
 			continue
 		}
-		go func(key string) {
+		go func(key keyInfo) {
 			rep, err := report.MakeFromBinary(ctx, bytes.NewBuffer(item.Value), true, true)
 			if err != nil {
 				log.Warningf("Corrupt report in memcache %v: %v", key, err)
@@ -201,12 +205,11 @@ func (c *MemcacheClient) FetchReports(ctx context.Context, keys []string) (map[s
 		if r.report == nil {
 			missing = append(missing, r.key)
 		} else {
-			reports[r.key] = *r.report
+			reports[r.key.key] = *r.report
 		}
 	}
 
 	if len(missing) > 0 {
-		sort.Strings(missing)
 		log.Warningf("Missing %d reports from memcache: %v", len(missing), missing)
 	}
 
