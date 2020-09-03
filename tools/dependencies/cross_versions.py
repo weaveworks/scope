@@ -80,8 +80,9 @@ def cross_versions(config):
 def main(argv):
     try:
         config = _validate_input(argv)
-        print(linesep.join('\t'.join(triple)
-                           for triple in cross_versions(config)))
+        print(
+            linesep.join('\t'.join(triple)
+                         for triple in cross_versions(config)))
     except Exception as e:
         print(str(e))
         exit(_ERROR_RUNTIME)
