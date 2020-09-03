@@ -219,12 +219,16 @@ matches_any() {
     return 1
 }
 
-filter_out() {
+read_patterns() {
     local patterns_file="$1"
     if [ -n "$patterns_file" ] && [ -r "$patterns_file" ]; then
-        local patterns
-        patterns=$(sed '/^#.*$/d ; /^\s*$/d' "$patterns_file") # Remove blank lines and comments before we start iterating.
-        [ -n "$DEBUG" ] && echo >&2 "> Filters:" && echo >&2 "$patterns"
+        sed '/^#.*$/d ; /^\s*$/d' "$patterns_file" # Remove blank lines and comments.
+    fi
+}
+
+filter_out() {
+    local patterns="$1"
+    if [ -n "$patterns" ]; then
         local filtered_out=()
         while read -r filename; do
             matches_any "$filename" "$patterns" && filtered_out+=("$filename") || echo "$filename"
@@ -238,11 +242,13 @@ filter_out() {
 lint_directory() {
     local dirname="$1"
     local lint_result=0
+    matches_any "$dirname" "$PATTERNS" && return 0
+    [ -n "$DEBUG" ] && echo >&2 "> Linting directory: $dirname"
     # This test is just checking if there are any Go files in the directory
     if compgen -G "$dirname/*.go" >/dev/null; then
         lint_go "${dirname}" || lint_result=1
     fi
-    find . -maxdepth 1 "$dirname" | filter_out "$LINT_IGNORE_FILE" | lint_files
+    find "$dirname" -maxdepth 1 | filter_out "$PATTERNS" | lint_files || lint_result=1
     return $lint_result
 }
 
@@ -255,10 +261,11 @@ lint_directories() {
 }
 
 list_directories() {
-    if [ $# -gt 0 ]; then
-        find "$@" \( -name vendor -o -name .git -o -name .cache -o -name .pkg \) -prune -o -type d
-    fi
+    find "$@" \( -name vendor -o -name .git -o -name .cache -o -name .pkg \) -prune -o -type d
 }
+
+PATTERNS=$(read_patterns "$LINT_IGNORE_FILE")
+[ -n "$DEBUG" ] && echo >&2 "> Filters:" && echo >&2 "$PATTERNS"
 
 if [ $# = 1 ] && [ -f "$1" ]; then
     lint "$1"
