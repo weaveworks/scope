@@ -13,7 +13,7 @@ var nonUnixSocketsTest = []struct {
 }{
 	{"http://xyz.com", "protocol \"http\" not supported"},
 	{"tcp://var/unix.sock", "endpoint was not unix socket tcp"},
-	{"http://[fe80::%31]/", "parse http://[fe80::%31]/: invalid URL escape \"%31\""},
+	{"http://[fe80::%31]/", "parse \"http://[fe80::%31]/\": invalid URL escape \"%31\""},
 }
 
 func TestParseNonUnixEndpointUrl(t *testing.T) {
