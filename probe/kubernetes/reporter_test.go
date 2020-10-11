@@ -205,6 +205,10 @@ func (c *mockClient) Describe(namespaceID, resourceID string, groupKind schema.G
 	return nil, nil
 }
 
+func (c *mockClient) CordonNode(name string) error {
+	return nil
+}
+
 type mockPipeClient map[string]xfer.Pipe
 
 func (c mockPipeClient) PipeConnection(appID, id string, pipe xfer.Pipe) error {

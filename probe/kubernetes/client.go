@@ -65,6 +65,7 @@ type Client interface {
 	DeleteVolumeSnapshot(namespaceID, volumeSnapshotID string) error
 	ScaleUp(namespaceID, id string) error
 	ScaleDown(namespaceID, id string) error
+	CordonNode(name string) error
 }
 
 // ResourceMap is the mapping of resource and their GroupKind
@@ -623,4 +624,25 @@ func (c *client) modifyScale(namespaceID, id string, f func(*autoscalingv1.Scale
 
 func (c *client) Stop() {
 	close(c.quit)
+}
+
+func (c *client) CordonNode(name string) error {
+	node, err := c.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
+	if err != nil {
+		return err
+	}
+
+	helper := newCordonHelper(node)
+	if updateRequired := helper.updateIfRequired(true); !updateRequired {
+		return nil
+	}
+
+	err, patchErr := helper.patchOrReplace(c.client, false)
+	if patchErr != nil {
+		return patchErr
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
