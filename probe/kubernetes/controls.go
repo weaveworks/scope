@@ -22,6 +22,7 @@ const (
 	ScaleUp              = report.KubernetesScaleUp
 	ScaleDown            = report.KubernetesScaleDown
 	CordonNode           = report.KubernetesCordonNode
+	UncordonNode         = report.KubernetesUncordonNode
 )
 
 // GroupName and version used by CRDs
@@ -475,10 +476,14 @@ func (r *Reporter) CaptureJob(f func(xfer.Request, string, string) xfer.Response
 	}
 }
 
-// CaptureCordonNode is exported for testing
-func (r *Reporter) CaptureCordonNode(f func(xfer.Request, string) xfer.Response) func(xfer.Request) xfer.Response {
+// CaptureNode is exported for testing
+func (r *Reporter) CaptureNode(f func(xfer.Request, string) xfer.Response) func(xfer.Request) xfer.Response {
 	return func(req xfer.Request) xfer.Response {
-		return f(req, r.nodeName)
+		nodeID, ok := report.ParseHostNodeID(req.NodeID)
+		if !ok {
+			return xfer.ResponseErrorf("Invalid ID: %s", req.NodeID)
+		}
+		return f(req, nodeID)
 	}
 }
 
@@ -507,7 +512,8 @@ func (r *Reporter) registerControls() {
 		DeleteVolumeSnapshot: r.CaptureVolumeSnapshot(r.deleteVolumeSnapshot),
 		ScaleUp:              r.CaptureDeployment(r.ScaleUp),
 		ScaleDown:            r.CaptureDeployment(r.ScaleDown),
-		CordonNode:           r.CaptureCordonNode(r.CordonNode),
+		CordonNode:           r.CaptureNode(r.CordonNode),
+		UncordonNode:         r.CaptureNode(r.CordonNode),
 	}
 	r.handlerRegistry.Batch(nil, controls)
 }

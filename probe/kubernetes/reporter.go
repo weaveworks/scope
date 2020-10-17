@@ -181,6 +181,21 @@ var (
 		Icon:  "fa fa-file-text",
 		Rank:  2,
 	}
+
+	CordonControl = []report.Control{
+		{
+			ID:    CordonNode,
+			Human: "Cordon",
+			Icon:  "fa fa-toggle-off",
+			Rank:  1,
+		},
+		{
+			ID:    UncordonNode,
+			Human: "Uncordon",
+			Icon:  "fa fa-toggle-on",
+			Rank:  0,
+		},
+	}
 )
 
 // Reporter generate Reports containing Container and ContainerImage topologies
@@ -286,6 +301,10 @@ func (r *Tagger) Tag(rpt report.Report) (report.Report, error) {
 		}
 
 		rpt.Container.Nodes[id] = n.WithParent(report.Pod, report.MakePodNodeID(uid))
+	}
+	for id, n := range rpt.Host.Nodes {
+		controls := append(n.ActiveControls(), CordonNode, UncordonNode)
+		rpt.Host.Nodes[id] = n.WithLatestActiveControls(controls...)
 	}
 	return rpt, nil
 }
