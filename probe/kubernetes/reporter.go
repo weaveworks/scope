@@ -306,6 +306,7 @@ func (r *Tagger) Tag(rpt report.Report) (report.Report, error) {
 		controls := append(n.ActiveControls(), CordonNode, UncordonNode)
 		rpt.Host.Nodes[id] = n.WithLatestActiveControls(controls...)
 	}
+	rpt.Host.Controls.AddControls(CordonControl)
 	return rpt, nil
 }
 

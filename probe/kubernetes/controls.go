@@ -529,6 +529,7 @@ func (r *Reporter) deregisterControls() {
 		ScaleUp,
 		ScaleDown,
 		CordonNode,
+		UncordonNode,
 	}
 	r.handlerRegistry.Batch(controls, nil)
 }
