@@ -91,6 +91,7 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/staticui/staticui.go prog/extern
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 		-v $(shell pwd):/go/src/github.com/weaveworks/scope:delegated,z \
 		-v $(shell pwd)/.pkg:/go/pkg:delegated,z \
+		-v $(shell pwd)/.cache:/go/cache:delegated,z \
 		-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 		--net=host \
 		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL \
