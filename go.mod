@@ -58,7 +58,7 @@ require (
 	github.com/peterbourgon/runsvinit v2.0.0+incompatible
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.5.0
-	github.com/richo/GOSHOUT v0.0.0-20190205170632-a1a6db7f26e9
+	github.com/richo/GOSHOUT v0.0.0-20160308183402-8e98c504bfae
 	github.com/russross/blackfriday v0.0.0-20151020174500-a18a46c9b943 // indirect
 	github.com/shurcooL/sanitized_anchor_name v0.0.0-20150822220530-244f5ac324cb // indirect
 	github.com/sirupsen/logrus v1.4.2
