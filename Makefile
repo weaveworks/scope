@@ -6,8 +6,7 @@ DOCKERHUB_USER=weaveworks
 SCOPE_EXE=prog/scope
 SCOPE_EXPORT=scope.tar
 CLOUD_AGENT_EXPORT=cloud-agent.tar
-SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
-SCOPE_UI_BUILD_UPTODATE=.scope_ui_build.uptodate
+SCOPE_UI_BUILD_IMAGE=node:10.19
 SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
 SCOPE_BACKEND_BUILD_UPTODATE=.scope_backend_build.uptodate
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
@@ -144,6 +143,9 @@ SCOPE_UI_BUILD_CMD=$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules:delegated,z \
 			-w /home/weave/scope/client \
 			-e HOME=/home/weave/scope/client \
+			-e NPM_CONFIG_LOGLEVEL=warn \
+			-e NPM_CONFIG_PROGRESS=false \
+			-e XDG_CACHE_HOME=/home/weave/scope/.cache \
 			-u $(shell id -u ${USER}):$(shell id -g ${USER})
 
 $(SCOPE_UI_TOOLCHAIN_UPTODATE): client/yarn.lock $(SCOPE_UI_BUILD_UPTODATE)
@@ -198,11 +200,6 @@ client/build-external/index.html: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 
 endif
 
-$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
-	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) client
-	$(SUDO) docker tag $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_UI_BUILD_IMAGE):$(IMAGE_TAG)
-	touch $@
-
 $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	$(SUDO) docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) backend
 	$(SUDO) docker tag $(SCOPE_BACKEND_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE):$(IMAGE_TAG)
@@ -225,7 +222,7 @@ ui-pkg-upload: client/bundle/weave-scope.tgz
 # rmi'ng images is desirable sometimes. Invoke `realclean` for that.
 clean:
 	$(GO) clean ./...
-	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_UI_TOOLCHAIN_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
+	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_TOOLCHAIN_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
 		$(SCOPE_EXE) $(RUNSVINIT) prog/staticui/staticui.go prog/externalui/externalui.go client/build/*.js client/build-external/*.js docker/weave .pkg \
 		$(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin
 
@@ -242,7 +239,7 @@ clean-codecgen:
 # Doing this is important for release builds.
 realclean: clean
 	rm -rf $(SCOPE_UI_TOOLCHAIN)
-	$(SUDO) docker rmi -f $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) \
+	$(SUDO) docker rmi -f $(SCOPE_BACKEND_BUILD_IMAGE) \
 		$(DOCKERHUB_USER)/scope $(DOCKERHUB_USER)/cloud-agent \
 		$(DOCKERHUB_USER)/scope:$(IMAGE_TAG) $(DOCKERHUB_USER)/cloud-agent:$(IMAGE_TAG) \
 		weaveworks/weaveexec:$(WEAVENET_VERSION) \

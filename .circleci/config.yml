@@ -8,7 +8,11 @@ defaults: &defaults
 client-defaults: &client-defaults
   working_directory: /home/weave/scope
   docker:
-    - image: weaveworks/scope-ui-build:master-bf6af9cf
+    - image: node:10.19
+  environment:
+      NPM_CONFIG_LOGLEVEL: warn
+      NPM_CONFIG_PROGRESS: false
+      XDG_CACHE_HOME: /home/weave/scope/.cache
 
 workflows:
   version: 2
