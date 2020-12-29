@@ -55,7 +55,7 @@ jobs:
     parallelism: 1
     steps:
       - checkout
-      - run: COVERDIR=./coverage make BUILD_IN_CONTAINER=false CODECGEN_UID=23 tests
+      - run: COVERDIR=./coverage NO_SCHEDULER=t make BUILD_IN_CONTAINER=false CODECGEN_UID=23 tests
       - persist_to_workspace:
           root: .
           paths:
