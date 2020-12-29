@@ -1,0 +1,20 @@
+language: go
+matrix:
+  include:
+    - go: 1.10.x
+    - go: 1.11.x
+
+install:
+  - go get golang.org/x/lint/golint
+  - go get ./...
+  - go install .
+
+script:
+  - go generate ./...
+  - esc -o static.go testdata
+  - go test -v ./...
+  - go vet ./...
+  - LINT=$(golint ./...) && echo $LINT
+  - test -z "$LINT"
+  - GOFMT=$(gofmt -s -d .) && echo $GOFMT
+  - test -z "$GOFMT"
