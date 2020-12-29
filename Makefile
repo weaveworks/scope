@@ -89,8 +89,8 @@ ifeq ($(BUILD_IN_CONTAINER),true)
 $(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/staticui/staticui.go prog/externalui/externalui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	@mkdir -p $(shell pwd)/.pkg
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
-		-v $(shell pwd):/go/src/github.com/weaveworks/scope \
-		-v $(shell pwd)/.pkg:/go/pkg \
+		-v $(shell pwd):/go/src/github.com/weaveworks/scope:delegated,z \
+		-v $(shell pwd)/.pkg:/go/pkg:delegated,z \
 		-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 		--net=host \
 		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL \
@@ -137,9 +137,9 @@ ifeq ($(BUILD_IN_CONTAINER),true)
 SCOPE_UI_TOOLCHAIN=.cache/build_node_modules
 SCOPE_UI_TOOLCHAIN_UPTODATE=$(SCOPE_UI_TOOLCHAIN)/.uptodate
 SCOPE_UI_BUILD_CMD=$(SUDO) docker run $(RM) $(RUN_FLAGS) \
-			-v $(shell pwd)/.cache:/home/weave/scope/.cache \
-			-v $(shell pwd)/client:/home/weave/scope/client \
-			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
+			-v $(shell pwd)/.cache:/home/weave/scope/.cache:delegated,z \
+			-v $(shell pwd)/client:/home/weave/scope/client:delegated,z \
+			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules:delegated,z \
 			-w /home/weave/scope/client \
 			-u $(shell id -u ${USER}):$(shell id -g ${USER})
 
