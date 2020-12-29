@@ -64,6 +64,7 @@ prog/staticui/staticui.go
 prog/externalui/externalui.go
 client/build-pkg
 client/bundle
+client/.yarnrc
 
 # Website
 site-build
