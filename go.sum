@@ -268,6 +268,8 @@ github.com/prometheus/procfs v0.0.3 h1:CTwfnzjQ+8dS6MhHHu4YswVAD99sL2wjPqP+VkURm
 github.com/prometheus/procfs v0.0.3/go.mod h1:4A/X28fw3Fc593LaREMrKMqOKvUAntwMDaekg4FpcdQ=
 github.com/prometheus/procfs v0.0.8 h1:+fpWZdT24pJBiqJdAwYBjPSk+5YmQzYNPYzQsdzLkt8=
 github.com/prometheus/procfs v0.0.8/go.mod h1:7Qr8sr6344vo1JqZ6HhLceV9o3AJ1Ff+GxbHq6oeK9A=
+github.com/richo/GOSHOUT v0.0.0-20160308183402-8e98c504bfae h1:/NoALPFmRKJ/attvODMptyCS0DUsPeiXYC5LfqV0ecM=
+github.com/richo/GOSHOUT v0.0.0-20160308183402-8e98c504bfae/go.mod h1:MSTsYcO3SGF1j/eewqZORAzbp3BUbisi2094EDP3+To=
 github.com/richo/GOSHOUT v0.0.0-20190205170632-a1a6db7f26e9 h1:2bCoptIvAKQ1O70dbwQHob8Pop8zIXJHlnVLRtf9pG8=
 github.com/richo/GOSHOUT v0.0.0-20190205170632-a1a6db7f26e9/go.mod h1:MSTsYcO3SGF1j/eewqZORAzbp3BUbisi2094EDP3+To=
 github.com/russross/blackfriday v0.0.0-20151020174500-a18a46c9b943 h1:Bn2ofKCNwK+UtM3PAsMzGGaxgViklwyVrl1cyzsHHGc=

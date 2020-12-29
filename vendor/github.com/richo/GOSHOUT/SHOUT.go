@@ -25,18 +25,12 @@ func UPCASE(THING_TO_YELL string) (string, error) {
 	}
 	READER := bytes.NewReader(ENCODED)
 
-	CLIENT := &http.Client{
-		Timeout:time.Second * 20,
-	}
-
 	// NO TLS, SO MUCH SADNESS.
-	RESP, ERR := CLIENT.Post("http://API.SHOUTCLOUD.IO/V1/SHOUT",
+	RESP, ERR := http.Post("http://API.SHOUTCLOUD.IO/V1/SHOUT",
 		"application/json", READER)
 	if ERR != nil {
 		return "", errors.New("REQUEST FAILED CAN'T UPCASE ERROR MESSAGE HALP")
 	}
-
-	defer RESP.Body.Close()
 
 	BODYBYTES, ERR := ioutil.ReadAll(RESP.Body)
 	if ERR != nil {
