@@ -94,6 +94,7 @@ $(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/staticui/staticui.go prog/extern
 		-v $(shell pwd)/.cache:/go/cache:delegated,z \
 		-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 		--net=host \
+		-e HOME=/go/src/github.com/weaveworks/scope \
 		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL \
 		-e CIRCLE_NODE_INDEX -e COVERDIR -e SLOW -e TESTDIRS \
 		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) CODECGEN_UID=$(CODECGEN_UID) $@
@@ -142,6 +143,7 @@ SCOPE_UI_BUILD_CMD=$(SUDO) docker run $(RM) $(RUN_FLAGS) \
 			-v $(shell pwd)/client:/home/weave/scope/client:delegated,z \
 			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules:delegated,z \
 			-w /home/weave/scope/client \
+			-e HOME=/home/weave/scope/client \
 			-u $(shell id -u ${USER}):$(shell id -g ${USER})
 
 $(SCOPE_UI_TOOLCHAIN_UPTODATE): client/yarn.lock $(SCOPE_UI_BUILD_UPTODATE)
