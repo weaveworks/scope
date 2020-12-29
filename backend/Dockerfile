@@ -22,7 +22,6 @@ RUN go clean -i net && \
 		golang.org/x/lint/golint \
 		github.com/kisielk/errcheck \
 		github.com/fatih/hclfmt \
-		github.com/mjibson/esc \
 		github.com/client9/misspell/cmd/misspell && \
 	chmod a+wr --recursive /usr/local/go && \
 	rm -rf /go/pkg/ /go/src/

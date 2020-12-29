@@ -125,11 +125,11 @@ lint:
 
 prog/staticui/staticui.go:
 	mkdir -p prog/staticui
-	esc -o $@ -pkg staticui -prefix client/build client/build
+	$(NO_CROSS_COMP); go run -mod vendor github.com/mjibson/esc -o $@ -pkg staticui -prefix client/build client/build
 
 prog/externalui/externalui.go:
 	mkdir -p prog/externalui
-	esc -o $@ -pkg externalui -prefix client/build-external -include '\.html$$' client/build-external
+	$(NO_CROSS_COMP); go run -mod vendor github.com/mjibson/esc -o $@ -pkg externalui -prefix client/build-external -include '\.html$$' client/build-external
 
 endif
 

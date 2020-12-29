@@ -46,6 +46,7 @@ require (
 	github.com/kr/pty v1.1.1
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
 	github.com/miekg/dns v0.0.0-20160129163459-3d66e3747d22
+	github.com/mjibson/esc v0.2.0
 	github.com/nats-io/gnatsd v0.8.1-0.20160607194326-f2c17eb159e1 // indirect
 	github.com/nats-io/nats v1.2.1-0.20160607194537-ce9cdc9addff
 	github.com/nats-io/nuid v0.0.0-20160402145409-a5152d67cf63 // indirect
