@@ -14,7 +14,6 @@ GIT_REVISION=$(shell git rev-parse HEAD)
 WEAVENET_VERSION=2.1.3
 RUNSVINIT=vendor/github.com/peterbourgon/runsvinit/runsvinit
 CODECGEN_DIR=vendor/github.com/ugorji/go/codec/codecgen
-CODECGEN_EXE=$(CODECGEN_DIR)/bin/codecgen_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)
 CODECGEN_UID=0
 GET_CODECGEN_DEPS=$(shell find $(1) -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name '*.codecgen.go' -not -name '*.generated.go')
 CODECGEN_TARGETS=report/report.codecgen.go render/detailed/detailed.codecgen.go
@@ -102,6 +101,8 @@ else
 
 $(SCOPE_EXE):
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
+
+CODECGEN_EXE=$(CODECGEN_DIR)/bin/codecgen_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)
 
 %.codecgen.go: $(CODECGEN_EXE)
 	rm -f $@; $(GO_HOST) build $(GO_BUILD_FLAGS) ./$(@D) # workaround for https://github.com/ugorji/go/issues/145
