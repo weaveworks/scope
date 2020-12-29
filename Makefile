@@ -249,9 +249,7 @@ realclean: clean
 # since they are build on the host
 deps:
 	$(GO) get -u -f \
-		github.com/FiloSottile/gvt \
 		github.com/mattn/goveralls \
-		github.com/weaveworks/github-release \
 		github.com/2opremio/trifles/wscat
 
 # This target is only intended for use in Netlify CI environment for generating preview pages on feature branches and pull requests.
