@@ -118,7 +118,7 @@ shell:
 tests: $(CODECGEN_TARGETS) prog/staticui/staticui.go prog/externalui/externalui.go
 	./tools/test -no-go-get -tags $(GO_BUILD_TAGS)
 
-lint:
+lint: prog/staticui/staticui.go prog/externalui/externalui.go 
 	./tools/lint
 
 prog/staticui/staticui.go:
