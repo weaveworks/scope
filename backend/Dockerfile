@@ -11,20 +11,9 @@ RUN set -eux; \
    \
    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN go clean -i net && \
-	go install -tags netgo std && \
-   export arch_val="$(dpkg --print-architecture)"; \
-   if [ "$arch_val" != "ppc64el" ]; then \
-	go install -race -tags netgo std; \
-   fi; \
-    go get -tags netgo \
-		github.com/fzipp/gocyclo \
-		golang.org/x/lint/golint \
-		github.com/kisielk/errcheck \
-		github.com/fatih/hclfmt \
-		github.com/client9/misspell/cmd/misspell && \
-	chmod a+wr --recursive /usr/local/go && \
-	rm -rf /go/pkg/ /go/src/
+
+
+RUN curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.32.2
 
    # Only install shfmt on amd64, as the version v1.3.0 isn't supported for ppc64le
    # and the later version of shfmt doesn't work with the application well
