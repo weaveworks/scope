@@ -49,8 +49,8 @@ func servicePortString(p apiv1.ServicePort) string {
 
 func (s *service) GetNode(probeID string) report.Node {
 	latest := map[string]string{
-		IP:   s.Spec.ClusterIP,
-		Type: string(s.Spec.Type),
+		IP:                    s.Spec.ClusterIP,
+		Type:                  string(s.Spec.Type),
 		report.ControlProbeID: probeID,
 	}
 	if s.Spec.LoadBalancerIP != "" {
