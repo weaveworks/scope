@@ -192,7 +192,7 @@ func stringEq(v1, v2 reflect.Value, _ map[visit]bool, _ int) bool { return v1.St
 
 func normalEq(v1, v2 reflect.Value, _ map[visit]bool, _ int) bool {
 	if v1.CanInterface() && v2.CanInterface() {
-		return v1.Interface() == v1.Interface()
+		return v1.Interface() == v2.Interface()
 	} else if v1.CanInterface() || v2.CanInterface() {
 		return false
 	}
