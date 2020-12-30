@@ -1,0 +1,4 @@
+# Generated files
+./cri/runtime/api.pb.go
+# Files from different repo
+./tools/*
