@@ -23,13 +23,9 @@ BUILD_IN_CONTAINER=true
 GO_ENV=GOGC=off
 GO_BUILD_TAGS='netgo unsafe'
 GO_BUILD_FLAGS=-mod vendor -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION) -s -w" -tags $(GO_BUILD_TAGS)
-GOOS=$(shell go tool dist env | grep GOOS | sed -e 's/GOOS="\(.*\)"/\1/')
-
-ifeq ($(GOOS),linux)
-GO_ENV+=CGO_ENABLED=1
-endif
 
 ifeq ($(GOARCH),arm)
+GO_ENV+=CGO_ENABLED=1
 ARM_CC=CC=/usr/bin/arm-linux-gnueabihf-gcc
 endif
 
