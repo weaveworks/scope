@@ -399,7 +399,6 @@ func (c *container) controls() []string {
 	default:
 		return []string{StartContainer, RemoveContainer}
 	}
-	return nil
 }
 
 func (c *container) GetNode() report.Node {

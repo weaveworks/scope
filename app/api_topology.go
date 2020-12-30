@@ -166,7 +166,7 @@ type websocketState struct {
 }
 
 func (wc *websocketState) update(ctx context.Context) error {
-	span := ot.StartSpan("websocket.Render", ot.Tag{"topology", wc.topologyID})
+	span := ot.StartSpan("websocket.Render", ot.Tag{Key: "topology", Value: wc.topologyID})
 	defer span.Finish()
 	ctx = ot.ContextWithSpan(ctx, span)
 	// We measure how much time has passed since the channel was opened

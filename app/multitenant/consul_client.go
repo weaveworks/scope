@@ -61,7 +61,7 @@ type consulClient struct {
 
 // Get and deserialise a JSON value from consul.
 func (c *consulClient) Get(ctx context.Context, key string, out interface{}) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "Consul Get", opentracing.Tag{"key", key})
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Consul Get", opentracing.Tag{Key: "key", Value: key})
 	defer span.Finish()
 	kvp, _, err := c.kv.Get(key, queryOptions)
 	if err != nil {
@@ -76,7 +76,7 @@ func (c *consulClient) Get(ctx context.Context, key string, out interface{}) err
 // CAS atomically modify a value in a callback.
 // If value doesn't exist you'll get nil as a argument to your callback.
 func (c *consulClient) CAS(ctx context.Context, key string, out interface{}, f CASCallback) error {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "Consul CAS", opentracing.Tag{"key", key})
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Consul CAS", opentracing.Tag{Key: "key", Value: key})
 	defer span.Finish()
 	var (
 		index        = uint64(0)

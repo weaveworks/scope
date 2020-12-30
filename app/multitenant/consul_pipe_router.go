@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"context"
+
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	opentracing "github.com/opentracing/opentracing-go"
@@ -289,7 +290,7 @@ func (pr *consulPipeRouter) Get(ctx context.Context, id string, e app.End) (xfer
 	}
 	key := fmt.Sprintf("%s%s-%s", pr.prefix, userID, id)
 	log.Infof("Get %s:%s", key, e)
-	span, ctx := opentracing.StartSpanFromContext(ctx, "PipeRouter Get", opentracing.Tag{"key", key})
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PipeRouter Get", opentracing.Tag{Key: "key", Value: key})
 	defer span.Finish()
 
 	// Try to ensure the given end of the given pipe
@@ -333,7 +334,7 @@ func (pr *consulPipeRouter) Release(ctx context.Context, id string, e app.End) e
 	}
 	key := fmt.Sprintf("%s%s-%s", pr.prefix, userID, id)
 	log.Infof("Release %s:%s", key, e)
-	span, ctx := opentracing.StartSpanFromContext(ctx, "PipeRouter Release", opentracing.Tag{"key", key})
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PipeRouter Release", opentracing.Tag{Key: "key", Value: key})
 	defer span.Finish()
 
 	// atomically clear my end of the pipe in consul
@@ -360,7 +361,7 @@ func (pr *consulPipeRouter) Delete(ctx context.Context, id string) error {
 	}
 	key := fmt.Sprintf("%s%s-%s", pr.prefix, userID, id)
 	log.Infof("Delete %s", key)
-	span, ctx := opentracing.StartSpanFromContext(ctx, "PipeRouter Delete", opentracing.Tag{"key", key})
+	span, ctx := opentracing.StartSpanFromContext(ctx, "PipeRouter Delete", opentracing.Tag{Key: "key", Value: key})
 	defer span.Finish()
 
 	return pr.client.CAS(ctx, key, &consulPipe{}, func(in interface{}) (interface{}, bool, error) {
