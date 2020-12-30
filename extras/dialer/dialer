@@ -23,7 +23,7 @@ while true; do
         rand=$(((RANDOM % max_dialer) + 1))
         container=${dialer[$rand]}
         docker rm -f "$container" >/dev/null &
-        unset dialer[$rand]
+        unset "dialer[$rand]"
         dialer=("${dialer[@]}")
     fi
 
