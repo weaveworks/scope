@@ -70,7 +70,7 @@ docker/%: %
 
 $(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent docker/$(SCOPE_EXE) docker/weave docker/weaveutil
 
-$(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
+$(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/run-app docker/run-probe docker/entrypoint.sh
 
 $(RUNSVINIT): vendor/github.com/peterbourgon/runsvinit/*.go
 
