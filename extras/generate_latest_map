@@ -211,7 +211,7 @@ function generate_latest_map() {
     func (m ${latest_map_type}) String() string {
         buf := bytes.NewBufferString("{")
         for _, val := range m {
-            fmt.Fprintf(buf, "%s: %s,\n", val.key, val.String())
+            fmt.Fprintf(buf, "%s: %s,\\n", val.key, val.String())
         }
         fmt.Fprintf(buf, "}")
         return buf.String()

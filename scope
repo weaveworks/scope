@@ -18,7 +18,7 @@ SCOPE_IMAGE="$SCOPE_IMAGE_NAME:$IMAGE_VERSION"
 # with care.
 SCOPE_CONTAINER_NAME="${SCOPE_CONTAINER_NAME:-weavescope}"
 SCOPE_APP_CONTAINER_NAME="${SCOPE_APP_CONTAINER_NAME:-weavescope-app}"
-IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
+IP_REGEXP="[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}"
 IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
     xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
 LISTENING_IP_ADDR_CMD="for I in \$( $IP_ADDR_CMD ); do if curl -m 1 -s \${I}:4040 > /dev/null ; then echo \${I}; fi; done"
@@ -112,11 +112,11 @@ check_docker_version() {
 }
 
 check_probe_only() {
-    echo "${ARGS}" | grep -q -E "\-\-no\-app|\-\-service\-token|\-\-probe\-only"
+    echo "${ARGS}" | grep -q -E -e "--no-app|--service-token|--probe-only"
 }
 
 check_listen_address_arg() {
-    echo "${ARGS}" | grep -q -E "\-\-app\.http\.address"
+    echo "${ARGS}" | grep -q -E -e "--app\\.http\\.address"
 }
 
 check_docker_for_mac() {

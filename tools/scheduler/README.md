@@ -23,41 +23,33 @@ $ pip install -r requirements.txt -t lib
 
 - Run:
   ```console
-  $ appcfg.py --version $(date '+%Y%m%dt%H%M%S') update .
-  XX:XX PM Application: positive-cocoa-90213; version: 1
-  XX:XX PM Host: appengine.google.com
-  XX:XX PM Starting update of app: positive-cocoa-90213, version: 1
-  XX:XX PM Getting current resource limits.
-  Your browser has been opened to visit:
+  $ gcloud app deploy --version $(date '+%Y%m%dt%H%M%S') --project positive-cocoa-90213
+  Services to deploy:
 
-      https://accounts.google.com/o/oauth2/auth?scope=...
+  descriptor:      [/Users/simon/weave/build-tools/scheduler/app.yaml]
+  source:          [/Users/simon/weave/build-tools/scheduler]
+  target project:  [positive-cocoa-90213]
+  target service:  [default]
+  target version:  [20200512t154238]
+  target url:      [https://positive-cocoa-90213.appspot.com]
 
-  If your browser is on a different machine then exit and re-run this
-  application with the command-line parameter
 
-    --noauth_local_webserver
+  Do you want to continue (Y/n)?
 
-  Authentication successful.
-  XX:XX PM Scanning files on local disk.
-  XX:XX PM Scanned 500 files.
-  XX:XX PM Scanned 1000 files.
-  XX:XX PM Cloning 1220 application files.
-  XX:XX PM Uploading 28 files and blobs.
-  XX:XX PM Uploaded 28 files and blobs.
-  XX:XX PM Compilation starting.
-  XX:XX PM Compilation completed.
-  XX:XX PM Starting deployment.
-  XX:XX PM Checking if deployment succeeded.
-  XX:XX PM Will check again in 1 seconds.
-  XX:XX PM Checking if deployment succeeded.
-  XX:XX PM Will check again in 2 seconds.
-  XX:XX PM Checking if deployment succeeded.
-  XX:XX PM Will check again in 4 seconds.
-  XX:XX PM Checking if deployment succeeded.
-  XX:XX PM Deployment successful.
-  XX:XX PM Checking if updated app version is serving.
-  XX:XX PM Completed update of app: positive-cocoa-90213, version: 1
-  XX:XX PM Uploading cron entries.
+  Beginning deployment of service [default]...
+  ╔════════════════════════════════════════════════════════════╗
+  ╠═ Uploading 433 files to Google Cloud Storage              ═╣
+  ╚════════════════════════════════════════════════════════════╝
+  File upload done.
+  Updating service [default]...done.
+  Setting traffic split for service [default]...done.
+  Deployed service [default] to [https://positive-cocoa-90213.appspot.com]
+
+  You can stream logs from the command line by running:
+    $ gcloud app logs tail -s default
+
+  To view your application in the web browser run:
+    $ gcloud app browse --project=positive-cocoa-90213
   ```
 
 - Go to [console.cloud.google.com](https://console.cloud.google.com) > Weave Integration Tests (`positive-cocoa-90213`) > AppEngine > Versions and ensure traffic is being directed to the newly deployed version.

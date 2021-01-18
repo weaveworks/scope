@@ -20,7 +20,7 @@ PROBEID=$(docker_on "$HOST1" logs weavescope 2>&1 | grep "probe starting" | sed 
 # container's PATH settings are respected, which isn't the case for
 # login shells.
 PIPEID=$(curl -s -f -X POST "http://$HOST1:4040/api/control/$PROBEID/$CID;<container>/docker_exec_container" | jq -r '.pipe')
-assert "(sleep 1 && echo 'echo \$PATH' && sleep 1) | wscat -b 'ws://$HOST1:4040/api/pipe/$PIPEID' | col -pb" "/ # 6necho \$PATH\n/home:/usr/bin\n/ # 6n"
+assert "(sleep 1 && echo 'echo \$PATH' && sleep 1) | wscat -b 'ws://$HOST1:4040/api/pipe/$PIPEID' | col -pb" "/ # 6necho \$PATH\\n/home:/usr/bin\\n/ # 6n"
 
 assert_raises "curl -f -X POST  'http://$HOST1:4040/api/control/$PROBEID/$CID;<container>/docker_stop_container'"
 

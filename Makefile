@@ -118,7 +118,7 @@ shell:
 tests: $(CODECGEN_TARGETS) prog/staticui/staticui.go prog/externalui/externalui.go
 	./tools/test -no-go-get -tags $(GO_BUILD_TAGS)
 
-lint:
+lint: prog/staticui/staticui.go prog/externalui/externalui.go 
 	./tools/lint
 
 prog/staticui/staticui.go:
@@ -278,7 +278,7 @@ realclean: clean
 		$(DOCKERHUB_USER)/scope $(DOCKERHUB_USER)/cloud-agent \
 		$(DOCKERHUB_USER)/scope:$(IMAGE_TAG) $(DOCKERHUB_USER)/cloud-agent:$(IMAGE_TAG) \
 		weaveworks/weaveexec:$(WEAVENET_VERSION) \
-		ubuntu:yakkety alpine:3.5 node:6.9.0 2>/dev/null || true
+		ubuntu:bionic alpine:3.11 node:6.9.0 2>/dev/null || true
 
 # Dependencies are intentionally build without enforcing any tags
 # since they are build on the host

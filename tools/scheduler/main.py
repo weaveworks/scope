@@ -82,14 +82,14 @@ def schedule(test_run, shard_count, shard):
     test_times_dict = dict(test_times)
     test_times.sort(key=operator.itemgetter(1))
 
-    shards = {i: [] for i in xrange(shard_count)}
+    shards = {i: [] for i in range(shard_count)}
     while test_times:
         test_name, time = test_times.pop()
 
         # find shortest shard and put it in that
         s, _ = min(
             ((i, sum(test_times_dict[t] for t in shards[i]))
-             for i in xrange(shard_count)),
+             for i in range(shard_count)),
             key=operator.itemgetter(1))
 
         shards[s].append(test_name)
@@ -123,9 +123,6 @@ def _matches_any_regex(name, regexes):
             return matches
 
 
-# See also: https://circleci.com/account/api
-CIRCLE_CI_API_TOKEN = 'cffb83afd920cfa109cbd3e9eecb7511a2d18bb9'
-
 # N.B.: When adding a project below, please ensure:
 # - its CircleCI project is either public, or is followed by the user attached
 #   to the above API token
@@ -137,8 +134,7 @@ PROJECTS = [
     ('weaveworks/weave', 'positive-cocoa-90213', 'us-central1-a', True, None),
     ('weaveworks/scope', 'scope-integration-tests', 'us-central1-a', False,
      None),
-    ('weaveworks/wks', 'wks-tests', 'us-central1-a', True,
-     CIRCLE_CI_API_TOKEN),
+    ('weaveworks/wksctl', 'wks-tests', 'us-central1-a', True, None),
 ]
 
 
