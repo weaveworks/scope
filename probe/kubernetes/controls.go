@@ -499,7 +499,12 @@ func (r *Reporter) ScaleDown(req xfer.Request, namespace, id string) xfer.Respon
 
 // CordonNode is the control to cordon a node.
 func (r *Reporter) CordonNode(req xfer.Request, name string) xfer.Response {
-	return xfer.ResponseError(r.client.CordonNode(name))
+	return xfer.ResponseError(r.client.CordonNode(name, true))
+}
+
+// UncordonNode is the control to un-cordon a node.
+func (r *Reporter) UncordonNode(req xfer.Request, name string) xfer.Response {
+	return xfer.ResponseError(r.client.CordonNode(name, false))
 }
 
 func (r *Reporter) registerControls() {
@@ -513,7 +518,7 @@ func (r *Reporter) registerControls() {
 		ScaleUp:              r.CaptureDeployment(r.ScaleUp),
 		ScaleDown:            r.CaptureDeployment(r.ScaleDown),
 		CordonNode:           r.CaptureNode(r.CordonNode),
-		UncordonNode:         r.CaptureNode(r.CordonNode),
+		UncordonNode:         r.CaptureNode(r.UncordonNode),
 	}
 	r.handlerRegistry.Batch(nil, controls)
 }

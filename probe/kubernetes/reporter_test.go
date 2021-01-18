@@ -205,7 +205,7 @@ func (c *mockClient) Describe(namespaceID, resourceID string, groupKind schema.G
 	return nil, nil
 }
 
-func (c *mockClient) CordonNode(name string) error {
+func (c *mockClient) CordonNode(name string, desired bool) error {
 	return nil
 }
 

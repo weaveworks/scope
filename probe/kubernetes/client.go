@@ -65,7 +65,8 @@ type Client interface {
 	DeleteVolumeSnapshot(namespaceID, volumeSnapshotID string) error
 	ScaleUp(namespaceID, id string) error
 	ScaleDown(namespaceID, id string) error
-	CordonNode(name string) error
+	// Cordon or Uncordon a node based on whether `desired` is true or false respectively.
+	CordonNode(name string, desired bool) error
 }
 
 // ResourceMap is the mapping of resource and their GroupKind
@@ -626,14 +627,14 @@ func (c *client) Stop() {
 	close(c.quit)
 }
 
-func (c *client) CordonNode(name string) error {
+func (c *client) CordonNode(name string, desired bool) error {
 	node, err := c.client.CoreV1().Nodes().Get(name, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 
 	helper := newCordonHelper(node)
-	if updateRequired := helper.updateIfRequired(true); !updateRequired {
+	if updateRequired := helper.updateIfRequired(desired); !updateRequired {
 		return nil
 	}
 

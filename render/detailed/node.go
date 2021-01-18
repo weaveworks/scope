@@ -113,6 +113,9 @@ func controlsFor(topology report.Topology, nodeID string) []ControlInstance {
 	}
 	for _, controlID := range node.ActiveControls() {
 		if control, ok := topology.Controls[controlID]; ok {
+			if control.ProbeID != "" { // does this Control have an override for the node probe?
+				probeID = control.ProbeID
+			}
 			result = append(result, ControlInstance{
 				ProbeID: probeID,
 				NodeID:  nodeID,

@@ -306,7 +306,6 @@ func (r *Tagger) Tag(rpt report.Report) (report.Report, error) {
 		controls := append(n.ActiveControls(), CordonNode, UncordonNode)
 		rpt.Host.Nodes[id] = n.WithLatestActiveControls(controls...)
 	}
-	rpt.Host.Controls.AddControls(CordonControl)
 	return rpt, nil
 }
 
@@ -379,6 +378,13 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.VolumeSnapshot = result.VolumeSnapshot.Merge(volumeSnapshotTopology)
 	result.VolumeSnapshotData = result.VolumeSnapshotData.Merge(volumeSnapshotDataTopology)
 	result.Job = result.Job.Merge(jobTopology)
+
+	// Add buttons for Host view, with the ID of the Kubernetes probe
+	for _, control := range CordonControl {
+		control.ProbeID = r.probeID
+		result.Host.Controls.AddControl(control)
+	}
+
 	return result, nil
 }
 
