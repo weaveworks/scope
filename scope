@@ -170,6 +170,7 @@ docker_args() {
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v /sys/kernel/debug:/sys/kernel/debug \
         -e CHECKPOINT_DISABLE
+    # shellcheck disable=SC2039
     [ -n "${PLUGINS_DIR_EXISTS:-}" ] && echo -v /var/run/scope/plugins:/var/run/scope/plugins
 }
 
