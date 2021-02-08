@@ -78,6 +78,8 @@ If you have any questions, feedback, or problems with Scope:
 
 Your feedback is always welcome!
 
+We follow the [CNCF Code of Conduct](CODE-OF-CONDUCT.md).
+
 ## License
 Scope is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text.  
 Find more details about the licenses of vendored code in [VENDORED_CODE.md](VENDORED_CODE.md).

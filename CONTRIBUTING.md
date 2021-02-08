@@ -25,6 +25,8 @@ When sending email, it's usually best to use the mailing list. The maintainers a
 
 We also meet regularly at the [Scope community meeting](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/). Don't feel discouraged to attend the meeting due to not being a developer. Everybody is welcome!
 
+We follow the [CNCF Code of Conduct](CODE-OF-CONDUCT.md).
+
 # Getting Started
 
 - Fork the repository on GitHub
