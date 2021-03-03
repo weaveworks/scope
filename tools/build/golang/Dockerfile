@@ -28,7 +28,6 @@ RUN go clean -i net && \
 RUN go get -tags netgo \
 		github.com/FiloSottile/gvt \
 		github.com/client9/misspell/cmd/misspell \
-		github.com/fatih/hclfmt \
 		github.com/fzipp/gocyclo \
 		github.com/gogo/protobuf/gogoproto \
 		github.com/gogo/protobuf/protoc-gen-gogoslick \
