@@ -15,7 +15,7 @@ the YAML manifests from `cloud.weave.works`.
 
 ## Disabling Scope Write Access
 
-Can be done by using the `probe.no-controls` option and set it to false for the scope agents. This can be done in the scope deployment manifest under the `weave-scope-agent`'s argument section with `—probe.no-controls=true`.
+Can be done by using the `probe.no-controls` option and set it to true for the scope agents. This can be done in the scope agents' manifests under the `weave-scope-cluster-agent` deployment and `weave-scope-agent` daemonset argument section with `--probe.no-controls=true`.
 
 ## RBAC and Weave Scope OSS
 
@@ -27,17 +27,17 @@ OSS Scope has no user concept, this is only available in Weave Cloud. To limit t
   arguments:
 
   ```cli
-  -app.basicAuth
+  --app.basicAuth
         Enable basic authentication for app
-  -app.basicAuth.password string
+  --app.basicAuth.password string
         Password for basic authentication (default "admin")
-  -app.basicAuth.username string
+  --app.basicAuth.username string
         Username for basic authentication (default "admin")
-  -probe.basicAuth
+  --probe.basicAuth
         Enable basic authentication for app
-  -probe.basicAuth.password string
+  --probe.basicAuth.password string
         Password for basic authentication (default "admin")
-  -probe.basicAuth.username string
+  --probe.basicAuth.username string
         Username for basic authentication (default "admin")
   ```
 
