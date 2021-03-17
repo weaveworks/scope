@@ -272,7 +272,7 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/richo/GOSHOUT v0.0.0-20160308183402-8e98c504bfae
+# github.com/richo/GOSHOUT v0.0.0-20210103052837-9a2e452d4c18
 github.com/richo/GOSHOUT
 # github.com/russross/blackfriday v0.0.0-20151020174500-a18a46c9b943
 github.com/russross/blackfriday

@@ -272,6 +272,8 @@ github.com/richo/GOSHOUT v0.0.0-20160308183402-8e98c504bfae h1:/NoALPFmRKJ/attvO
 github.com/richo/GOSHOUT v0.0.0-20160308183402-8e98c504bfae/go.mod h1:MSTsYcO3SGF1j/eewqZORAzbp3BUbisi2094EDP3+To=
 github.com/richo/GOSHOUT v0.0.0-20190205170632-a1a6db7f26e9 h1:2bCoptIvAKQ1O70dbwQHob8Pop8zIXJHlnVLRtf9pG8=
 github.com/richo/GOSHOUT v0.0.0-20190205170632-a1a6db7f26e9/go.mod h1:MSTsYcO3SGF1j/eewqZORAzbp3BUbisi2094EDP3+To=
+github.com/richo/GOSHOUT v0.0.0-20210103052837-9a2e452d4c18 h1:3h7KgFHe28S3Vq3A7i37bWUAD8lTryE/C6CXQTgVbo8=
+github.com/richo/GOSHOUT v0.0.0-20210103052837-9a2e452d4c18/go.mod h1:MSTsYcO3SGF1j/eewqZORAzbp3BUbisi2094EDP3+To=
 github.com/russross/blackfriday v0.0.0-20151020174500-a18a46c9b943 h1:Bn2ofKCNwK+UtM3PAsMzGGaxgViklwyVrl1cyzsHHGc=
 github.com/russross/blackfriday v0.0.0-20151020174500-a18a46c9b943/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
 github.com/sercand/kuberesolver v2.1.0+incompatible/go.mod h1:lWF3GL0xptCB/vCiJPl/ZshwPsX/n4Y7u0CW9E7aQIQ=
