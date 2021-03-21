@@ -63,7 +63,7 @@ class NodeDetails extends React.Component {
               className="fa fa-long-arrow-alt-left"
               onClick={this.handleShowTopologyForNode}>
               <span>
-Show in
+Show in&nbsp;
                 <span>{this.props.topologyId.replace(/-/g, ' ')}</span>
               </span>
             </i>
