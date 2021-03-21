@@ -82,8 +82,7 @@ func formatMetricQueries(filter string, ids []string) map[string]string {
 			queries[id] = fmt.Sprintf("sum(container_memory_usage_bytes{%s})", filter)
 		case docker.CPUTotalUsage:
 			queries[id] = fmt.Sprintf(
-				"sum(rate(container_cpu_usage_seconds_total{%s}[1m]))/count(container_cpu_usage_seconds_total{%s})*100",
-				filter,
+				"sum(rate(container_cpu_usage_seconds_total{%s}[1m]))*100",
 				filter,
 			)
 		case idReceiveBytes:
