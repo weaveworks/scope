@@ -47,7 +47,7 @@ var (
 
 	// Queries on pod names of the format `name-<id>-<hash>`
 	// See also:  https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pod-template-hash-label
-	podIDHashQueries = formatMetricQueries(`pod_name=~"^{{label}}-[^-]+-[^-]+$",namespace="{{namespace}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage})
+	podIDHashQueries = formatMetricQueries(`pod=~"^{{label}}-[^-]+-[^-]+$",namespace="{{namespace}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage})
 
 	// Prometheus queries for topologies
 	topologyQueries = map[string]map[string]string{
@@ -59,16 +59,16 @@ var (
 		// Kubernetes topologies
 
 		report.Pod: formatMetricQueries(
-			`pod_name="{{label}}",namespace="{{namespace}}"`,
+			`pod="{{label}}",namespace="{{namespace}}"`,
 			[]string{docker.MemoryUsage, docker.CPUTotalUsage},
 		),
-		report.DaemonSet:   formatMetricQueries(`pod_name=~"^{{label}}-[^-]+$",namespace="{{namespace}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
+		report.DaemonSet:   formatMetricQueries(`pod=~"^{{label}}-[^-]+$",namespace="{{namespace}}"`, []string{docker.MemoryUsage, docker.CPUTotalUsage}),
 		report.Deployment:  podIDHashQueries,
 		report.StatefulSet: podIDHashQueries,
 		report.CronJob:     podIDHashQueries,
 		report.Service: {
-			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
-			docker.MemoryUsage:   `sum(rate(container_memory_usage_bytes{image!="",namespace="{{namespace}}",_weave_pod_name="{{label}}",job="cadvisor",container_name!="POD"}[5m]))`,
+			docker.CPUTotalUsage: `sum(rate(container_cpu_usage_seconds_total{image!="",namespace="{{namespace}}",_weave_service="{{label}}"}[5m]))`,
+			docker.MemoryUsage:   `sum(rate(container_memory_usage_bytes{image!="",namespace="{{namespace}}",_weave_service="{{label}}"}[5m]))`,
 		},
 	}
 )
