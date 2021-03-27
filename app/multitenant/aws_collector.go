@@ -205,6 +205,7 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 		waiters:   map[watchKey]*nats.Subscription{},
 	}
 
+	// If given a StoreInterval we will be storing periodically; if not we only answer queries
 	if config.StoreInterval != 0 {
 		c.ticker = time.NewTicker(config.StoreInterval)
 		go c.flushLoop()
@@ -681,6 +682,9 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 	if err != nil {
 		return err
 	}
+	if c.cfg.StoreInterval == 0 {
+		return fmt.Errorf("--app.collector.store-interval must be non-zero")
+	}
 
 	// Shortcut reports are published to nats but not persisted -
 	// we'll get a full report from the same probe in a few seconds
@@ -702,23 +706,16 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return nil
 	}
 
-	if c.cfg.StoreInterval == 0 {
-		rowKey, colKey, reportKey := calculateReportKeys(userid, time.Now())
-		err = c.persistReport(ctx, userid, rowKey, colKey, reportKey, buf)
-		if err != nil {
-			return err
-		}
-	} else {
-		rep = c.massageReport(userid, rep)
-		entry := &pendingEntry{report: report.MakeReport()}
-		if e, found := c.pending.LoadOrStore(userid, entry); found {
-			entry = e.(*pendingEntry)
-		}
-		entry.Lock()
-		entry.report.UnsafeMerge(rep)
-		entry.count++
-		entry.Unlock()
+	// We are building up a report in memory; merge into that and it will be saved shortly
+	rep = c.massageReport(userid, rep)
+	entry := &pendingEntry{report: report.MakeReport()}
+	if e, found := c.pending.LoadOrStore(userid, entry); found {
+		entry = e.(*pendingEntry)
 	}
+	entry.Lock()
+	entry.report.UnsafeMerge(rep)
+	entry.count++
+	entry.Unlock()
 
 	return nil
 }
