@@ -145,13 +145,6 @@ type AWSCollectorConfig struct {
 	CollectorAddr  string
 }
 
-// if StoreInterval is set, reports are merged into here and held until flushed to store
-type pendingEntry struct {
-	sync.Mutex
-	report report.Report
-	count  int
-}
-
 type awsCollector struct {
 	cfg       AWSCollectorConfig
 	db        *dynamodb.DynamoDB
@@ -707,16 +700,8 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return nil
 	}
 
-	// We are building up a report in memory; merge into that and it will be saved shortly
 	rep = c.massageReport(userid, rep)
-	entry := &pendingEntry{report: report.MakeReport()}
-	if e, found := c.pending.LoadOrStore(userid, entry); found {
-		entry = e.(*pendingEntry)
-	}
-	entry.Lock()
-	entry.report.UnsafeMerge(rep)
-	entry.count++
-	entry.Unlock()
+	c.addToLive(ctx, userid, rep)
 
 	return nil
 }
