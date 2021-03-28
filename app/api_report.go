@@ -19,7 +19,7 @@ func makeRawReportHandler(rep Reporter) CtxHandlerFunc {
 			return
 		}
 		censorCfg := report.GetCensorConfigFromRequest(r)
-		respondWith(ctx, w, http.StatusOK, report.CensorRawReport(rawReport, censorCfg))
+		respondWithReport(ctx, w, r, report.CensorRawReport(rawReport, censorCfg))
 	}
 }
 

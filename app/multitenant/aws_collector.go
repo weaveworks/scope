@@ -242,11 +242,17 @@ func (c *awsCollector) flushPending(ctx context.Context) {
 			entry := value.(*pendingEntry)
 
 			entry.Lock()
-			rpt, count := entry.report, entry.count
-			entry.report, entry.count = report.MakeReport(), 0
+			rpt := entry.report
+			entry.report = nil
+			if entry.older == nil {
+				entry.older = make([]*report.Report, c.cfg.Window/c.cfg.StoreInterval)
+			} else {
+				copy(entry.older[1:], entry.older) // move everything down one
+			}
+			entry.older[0] = rpt
 			entry.Unlock()
 
-			if count > 0 {
+			if rpt != nil {
 				// serialise reports on one goroutine to limit CPU usage
 				buf, err := rpt.WriteBinary()
 				if err != nil {
@@ -459,6 +465,8 @@ func (c *awsCollector) massageReport(userid string, report report.Report) report
 	return report
 }
 
+// If we are running as a Query service, fetch data and merge into a report
+// If we are running as a Collector and the request is for live data, merge in-memory data and return
 func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.Report, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "awsCollector.Report")
 	defer span.Finish()
@@ -468,7 +476,11 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 	}
 	span.SetTag("userid", userid)
 	var reports []report.Report
-	reports, err = c.reportsFromStore(ctx, userid, timestamp)
+	if time.Since(timestamp) < c.cfg.Window {
+		reports, err = c.reportsFromLive(ctx, userid)
+	} else {
+		reports, err = c.reportsFromStore(ctx, userid, timestamp)
+	}
 	if err != nil {
 		return report.MakeReport(), err
 	}

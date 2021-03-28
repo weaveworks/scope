@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/ugorji/go/codec"
@@ -28,6 +29,29 @@ func respondWith(ctx context.Context, w http.ResponseWriter, code int, response 
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Add("Cache-Control", "no-cache")
 	w.WriteHeader(code)
+	encoder := codec.NewEncoder(w, &codec.JsonHandle{})
+	if err := encoder.Encode(response); err != nil {
+		log.Errorf("Error encoding response: %v", err)
+	}
+}
+
+// Similar to the above function, but respect the request's Accept header.
+// Possibly we should do a complete parse of Accept, but for now just rudimentary check
+func respondWithReport(ctx context.Context, w http.ResponseWriter, req *http.Request, response interface{}) {
+	accept := req.Header.Get("Accept")
+	if strings.HasPrefix(accept, "application/msgpack") {
+		w.Header().Set("Content-Type", "application/msgpack")
+		w.WriteHeader(http.StatusOK)
+		encoder := codec.NewEncoder(w, &codec.MsgpackHandle{})
+		if err := encoder.Encode(response); err != nil {
+			log.Errorf("Error encoding response: %v", err)
+		}
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Add("Cache-Control", "no-cache")
+	w.WriteHeader(http.StatusOK)
 	encoder := codec.NewEncoder(w, &codec.JsonHandle{})
 	if err := encoder.Encode(response); err != nil {
 		log.Errorf("Error encoding response: %v", err)
