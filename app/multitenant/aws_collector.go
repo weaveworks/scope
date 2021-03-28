@@ -142,6 +142,7 @@ type AWSCollectorConfig struct {
 	MemcacheClient *MemcacheClient
 	Window         time.Duration
 	MaxTopNodes    int
+	CollectorAddr  string
 }
 
 // if StoreInterval is set, reports are merged into here and held until flushed to store
