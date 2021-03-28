@@ -292,10 +292,10 @@ github.com/openebs/k8s-snapshot-client/snapshot/pkg/apis/volumesnapshot/v1
 github.com/openebs/k8s-snapshot-client/snapshot/pkg/client/clientset/versioned
 github.com/openebs/k8s-snapshot-client/snapshot/pkg/client/clientset/versioned/scheme
 github.com/openebs/k8s-snapshot-client/snapshot/pkg/client/clientset/versioned/typed/volumesnapshot/v1
-# github.com/opentracing-contrib/go-stdlib v0.0.0-20190519235532-cf7a6c988dc9
+# github.com/opentracing-contrib/go-stdlib v1.0.0
 github.com/opentracing-contrib/go-stdlib/nethttp
-# github.com/opentracing/opentracing-go v1.1.0
 ## explicit
+# github.com/opentracing/opentracing-go v1.2.0
 github.com/opentracing/opentracing-go
 github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
