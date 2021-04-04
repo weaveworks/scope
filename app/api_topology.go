@@ -1,11 +1,10 @@
 package app
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"time"
-
-	"context"
 
 	"github.com/gorilla/mux"
 	ot "github.com/opentracing/opentracing-go"
