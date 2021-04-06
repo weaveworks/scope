@@ -1,6 +1,6 @@
 module github.com/weaveworks/scope
 
-go 1.13
+go 1.16
 
 require (
 	camlistore.org v0.0.0-20171230002226-a5a65f0d8b22
