@@ -2,14 +2,14 @@ package multitenant
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"log"
 	"math/rand"
-	"sync"
 	"testing"
 
-	"context"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/weaveworks/scope/app"
 	"github.com/weaveworks/scope/common/xfer"
@@ -38,37 +38,34 @@ type pipeconn struct {
 
 func (p *pipeconn) test(t *testing.T) {
 	msg := []byte("hello " + p.id)
-	wait := sync.WaitGroup{}
-	wait.Add(2)
+	wait := errgroup.Group{}
 
-	go func() {
-		defer wait.Done()
-
+	wait.Go(func() error {
 		// write something to the probe end
 		_, err := p.probeIO.Write(msg)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}()
+		return err
+	})
 
-	go func() {
-		defer wait.Done()
-
+	wait.Go(func() error {
 		// read it back off the other end
 		buf := make([]byte, len(msg))
 		n, err := p.uiIO.Read(buf)
-		if n != len(buf) {
-			t.Fatalf("only read %d", n)
-		}
 		if err != nil {
-			t.Fatal(err)
+			return err
+		}
+		if n != len(buf) {
+			return fmt.Errorf("only read %d", n)
 		}
 		if !bytes.Equal(buf, msg) {
-			t.Fatalf("Got: %v, Expected: %v", buf, msg)
+			return fmt.Errorf("Got: %v, Expected: %v", buf, msg)
 		}
-	}()
+		return nil
+	})
 
-	wait.Wait()
+	err := wait.Wait()
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 type pipeTest struct {
