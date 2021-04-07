@@ -179,16 +179,16 @@ jobs:
           path: /tmp/artifacts
 
   deploy:
-    <<: *defaults
+    machine:
+      image: circleci/classic:201709-01
+    working_directory: /home/circleci/src/github.com/weaveworks/scope
     environment:
       IMAGES: scope cloud-agent
     steps:
       - checkout
-      - setup_remote_docker
       - attach_workspace:
           at: .
       - run: |
-          pip install awscli
           docker load -i scope.tar
           docker load -i cloud-agent.tar
       - run: |
