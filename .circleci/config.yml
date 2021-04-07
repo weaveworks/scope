@@ -184,6 +184,7 @@ jobs:
     working_directory: /home/circleci/src/github.com/weaveworks/scope
     environment:
       IMAGES: scope cloud-agent
+      SCOPE_SKIP_UI_ASSETS: true
     steps:
       - checkout
       - attach_workspace:
