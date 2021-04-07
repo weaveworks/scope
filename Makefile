@@ -202,15 +202,18 @@ $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	$(SUDO) docker tag $(SCOPE_BACKEND_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE):$(IMAGE_TAG)
 	touch $@
 
+# Run aws CLI from a container image so we don't have to install Python, etc.
+AWS_COMMAND=docker run $(RM) $(RUN_FLAGS) \
+	-e AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
+	-e AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
+	-v $(shell pwd):/scope \
+	amazon/aws-cli:2.1.35
+
 ui-upload: client/build-external/index.html
-	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
-	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
-	aws s3 cp client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
+	$(AWS_COMMAND) s3 cp /scope/client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
 
 ui-pkg-upload: client/bundle/weave-scope.tgz
-	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
-	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
-	aws s3 cp client/bundle/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/$(shell echo $(SCOPE_VERSION))/weave-scope.tgz
+	$(AWS_COMMAND) s3 cp /scope/client/bundle/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/$(shell echo $(SCOPE_VERSION))/weave-scope.tgz
 
 # We don't rmi images here; rm'ing the .uptodate files is enough to
 # get the build images rebuilt, and rm'ing the scope exe is enough to
