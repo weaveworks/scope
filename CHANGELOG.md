@@ -1,3 +1,56 @@
+## Release 1.13.2
+
+Mostly updates to dependencies, plus a couple of small improvements.
+
+Thanks to everyone who contributed to this release: @gaby, @Kielek, @knrt10
+
+### Enhancements
+- Set hostname to Kubernetes node name
+        [#3827](https://github.com/weaveworks/scope/pull/3827)
+- Stop rendering if Context is cancelled
+        [#3801](https://github.com/weaveworks/scope/pull/3801)
+
+### Bug fixes
+- Only mount plugins directory if it exists
+        [#3825](https://github.com/weaveworks/scope/pull/3825)
+- Multitenant billing: cope with spy-interval set longer than publish-interval
+        [#3796](https://github.com/weaveworks/scope/pull/3796)
+- Multitenant query: don't drop topologies so much
+        [#3791](https://github.com/weaveworks/scope/pull/3791)
+- Multitenant: scan container command-lines as well as process
+        [#3789](https://github.com/weaveworks/scope/pull/3789)
+
+### Dependencies updates
+
+- Update alpine base image to 3.13
+        [#3838](https://github.com/weaveworks/scope/pull/3838)
+- Update build tools including Go 1.16.2
+        [#3833](https://github.com/weaveworks/scope/pull/3833)
+        [#3797](https://github.com/weaveworks/scope/pull/3797)
+        [#3821](https://github.com/weaveworks/scope/pull/3821)
+- update lodash to 4.17.20 (CVE-2020-8203)
+        [#3831](https://github.com/weaveworks/scope/pull/3831)
+- update dot-prop, webpack and terser-webpack-plugin
+        [#3816](https://github.com/weaveworks/scope/pull/3816)
+- bump http-proxy from 1.16.2 to 1.18.1 in /client
+        [#3819](https://github.com/weaveworks/scope/pull/3819)
+- bump elliptic from 6.4.0 to 6.5.3 in /client
+        [#3814](https://github.com/weaveworks/scope/pull/3814)
+- bump lodash from 4.17.15 to 4.17.19 in /client
+        [#3812](https://github.com/weaveworks/scope/pull/3812)
+- Update to most recent weaveworks/ui-components
+        [#3795](https://github.com/weaveworks/scope/pull/3795)
+- update JS kind-of to 6.0.3
+        [#3785](https://github.com/weaveworks/scope/pull/3785)
+
+### Build & test
+
+- Run AWS CLI from a container image
+        [#3841](https://github.com/weaveworks/scope/pull/3841)
+- Remove obsolete dependency github.com/fatih/hclfmt
+        [#3834](https://github.com/weaveworks/scope/pull/3834)
+
+
 ## Release 1.13.1
 
 This release fixes a bug on 'kubernetes describe' operations, where

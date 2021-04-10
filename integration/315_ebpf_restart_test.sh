@@ -20,7 +20,7 @@ has_container "$HOST1" nginx
 has_container "$HOST1" client
 has_connection containers "$HOST1" client nginx
 
-docker_on "$HOST1" exec weavescope sh -c "echo stop > /var/run/scope/debug-bpf"
+docker_on "$HOST1" exec weavescope sh -c "mkdir /var/run/scope && echo stop > /var/run/scope/debug-bpf"
 sleep 5
 
 server_on "$HOST1" "nginx2"

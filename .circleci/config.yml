@@ -3,12 +3,16 @@ version: 2
 defaults: &defaults
   working_directory: /go/src/github.com/weaveworks/scope
   docker:
-    - image: weaveworks/scope-backend-build:master-22aa742b
+    - image: weaveworks/scope-backend-build:build-updates-1b1c9664
 
 client-defaults: &client-defaults
   working_directory: /home/weave/scope
   docker:
-    - image: weaveworks/scope-ui-build:master-bf6af9cf
+    - image: node:10.19
+  environment:
+      NPM_CONFIG_LOGLEVEL: warn
+      NPM_CONFIG_PROGRESS: false
+      XDG_CACHE_HOME: /home/weave/scope/.cache
 
 workflows:
   version: 2
@@ -51,7 +55,7 @@ jobs:
     parallelism: 1
     steps:
       - checkout
-      - run: COVERDIR=./coverage make BUILD_IN_CONTAINER=false CODECGEN_UID=23 tests
+      - run: COVERDIR=./coverage NO_SCHEDULER=t make BUILD_IN_CONTAINER=false CODECGEN_UID=23 tests
       - persist_to_workspace:
           root: .
           paths:
@@ -175,16 +179,17 @@ jobs:
           path: /tmp/artifacts
 
   deploy:
-    <<: *defaults
+    machine:
+      image: circleci/classic:201709-01
+    working_directory: /home/circleci/src/github.com/weaveworks/scope
     environment:
       IMAGES: scope cloud-agent
+      SCOPE_SKIP_UI_ASSETS: true
     steps:
       - checkout
-      - setup_remote_docker
       - attach_workspace:
           at: .
       - run: |
-          pip install awscli
           docker load -i scope.tar
           docker load -i cloud-agent.tar
       - run: |

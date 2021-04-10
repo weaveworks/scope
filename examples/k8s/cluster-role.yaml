@@ -16,6 +16,7 @@ rules:
   - replicationcontrollers
   - services
   - nodes
+  - namespaces
   - persistentvolumes
   - persistentvolumeclaims
   verbs:

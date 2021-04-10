@@ -373,6 +373,7 @@ func (t *EbpfTracker) isDead() bool {
 	return t.dead
 }
 
+// Stop the tracker and wait for it to signal it has stopped
 func (t *EbpfTracker) Stop() {
 	t.stop()
 	if t.stopping != nil {

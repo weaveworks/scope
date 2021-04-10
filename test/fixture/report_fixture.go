@@ -241,13 +241,13 @@ var (
 				ServerContainerNodeID: report.MakeNodeWith(
 
 					ServerContainerNodeID, map[string]string{
-						docker.ContainerID:                                        ServerContainerID,
-						docker.ContainerName:                                      ServerContainerName,
-						docker.ContainerHostname:                                  ServerContainerHostname,
-						docker.ContainerState:                                     report.StateRunning,
-						docker.ContainerStateHuman:                                report.StateRunning,
-						docker.ImageID:                                            ServerContainerImageID,
-						report.HostNodeID:                                         ServerHostNodeID,
+						docker.ContainerID:         ServerContainerID,
+						docker.ContainerName:       ServerContainerName,
+						docker.ContainerHostname:   ServerContainerHostname,
+						docker.ContainerState:      report.StateRunning,
+						docker.ContainerStateHuman: report.StateRunning,
+						docker.ImageID:             ServerContainerImageID,
+						report.HostNodeID:          ServerHostNodeID,
 						docker.LabelPrefix + detailed.AmazonECSContainerNameLabel: "server",
 						docker.LabelPrefix + "foo1":                               "bar1",
 						docker.LabelPrefix + "foo2":                               "bar2",

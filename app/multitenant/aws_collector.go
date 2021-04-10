@@ -213,7 +213,7 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 }
 
 func (c *awsCollector) flushLoop() {
-	for _ = range c.ticker.C {
+	for range c.ticker.C {
 		c.flushPending(context.Background())
 	}
 }

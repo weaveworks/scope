@@ -6,16 +6,14 @@ DOCKERHUB_USER=weaveworks
 SCOPE_EXE=prog/scope
 SCOPE_EXPORT=scope.tar
 CLOUD_AGENT_EXPORT=cloud-agent.tar
-SCOPE_UI_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-ui-build
-SCOPE_UI_BUILD_UPTODATE=.scope_ui_build.uptodate
+SCOPE_UI_BUILD_IMAGE=node:10.19
 SCOPE_BACKEND_BUILD_IMAGE=$(DOCKERHUB_USER)/scope-backend-build
 SCOPE_BACKEND_BUILD_UPTODATE=.scope_backend_build.uptodate
 SCOPE_VERSION=$(shell git rev-parse --short HEAD)
 GIT_REVISION=$(shell git rev-parse HEAD)
-WEAVENET_VERSION=2.1.3
+WEAVENET_VERSION=2.8.1
 RUNSVINIT=vendor/github.com/peterbourgon/runsvinit/runsvinit
 CODECGEN_DIR=vendor/github.com/ugorji/go/codec/codecgen
-CODECGEN_EXE=$(CODECGEN_DIR)/bin/codecgen_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)
 CODECGEN_UID=0
 GET_CODECGEN_DEPS=$(shell find $(1) -maxdepth 1 -type f -name '*.go' -not -name '*_test.go' -not -name '*.codecgen.go' -not -name '*.generated.go')
 CODECGEN_TARGETS=report/report.codecgen.go render/detailed/detailed.codecgen.go
@@ -23,15 +21,11 @@ RM=--rm
 RUN_FLAGS=-ti
 BUILD_IN_CONTAINER=true
 GO_ENV=GOGC=off
-GO_BUILD_TAGS='netgo unsafe'
+GO_BUILD_TAGS='netgo osusergo unsafe'
 GO_BUILD_FLAGS=-mod vendor -ldflags "-extldflags \"-static\" -X main.version=$(SCOPE_VERSION) -s -w" -tags $(GO_BUILD_TAGS)
-GOOS=$(shell go tool dist env | grep GOOS | sed -e 's/GOOS="\(.*\)"/\1/')
-
-ifeq ($(GOOS),linux)
-GO_ENV+=CGO_ENABLED=1
-endif
 
 ifeq ($(GOARCH),arm)
+GO_ENV+=CGO_ENABLED=1
 ARM_CC=CC=/usr/bin/arm-linux-gnueabihf-gcc
 endif
 
@@ -72,7 +66,7 @@ docker/%: %
 
 $(CLOUD_AGENT_EXPORT): docker/Dockerfile.cloud-agent docker/$(SCOPE_EXE) docker/weave docker/weaveutil
 
-$(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/demo.json docker/run-app docker/run-probe docker/entrypoint.sh
+$(SCOPE_EXPORT): docker/Dockerfile.scope $(CLOUD_AGENT_EXPORT) docker/$(RUNSVINIT) docker/run-app docker/run-probe docker/entrypoint.sh
 
 $(RUNSVINIT): vendor/github.com/peterbourgon/runsvinit/*.go
 
@@ -89,9 +83,12 @@ ifeq ($(BUILD_IN_CONTAINER),true)
 $(SCOPE_EXE) $(RUNSVINIT) lint tests shell prog/staticui/staticui.go prog/externalui/externalui.go: $(SCOPE_BACKEND_BUILD_UPTODATE)
 	@mkdir -p $(shell pwd)/.pkg
 	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
-		-v $(shell pwd):/go/src/github.com/weaveworks/scope \
-		-v $(shell pwd)/.pkg:/go/pkg \
+		-v $(shell pwd):/go/src/github.com/weaveworks/scope:delegated,z \
+		-v $(shell pwd)/.pkg:/go/pkg:delegated,z \
+		-v $(shell pwd)/.cache:/go/cache:delegated,z \
+		-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 		--net=host \
+		-e HOME=/go/src/github.com/weaveworks/scope \
 		-e GOARCH -e GOOS -e CIRCLECI -e CIRCLE_BUILD_NUM -e CIRCLE_NODE_TOTAL \
 		-e CIRCLE_NODE_INDEX -e COVERDIR -e SLOW -e TESTDIRS \
 		$(SCOPE_BACKEND_BUILD_IMAGE) SCOPE_VERSION=$(SCOPE_VERSION) CODECGEN_UID=$(CODECGEN_UID) $@
@@ -100,6 +97,8 @@ else
 
 $(SCOPE_EXE):
 	time $(GO) build $(GO_BUILD_FLAGS) -o $@ ./$(@D)
+
+CODECGEN_EXE=$(CODECGEN_DIR)/bin/codecgen_$(shell go env GOHOSTOS)_$(shell go env GOHOSTARCH)
 
 %.codecgen.go: $(CODECGEN_EXE)
 	rm -f $@; $(GO_HOST) build $(GO_BUILD_FLAGS) ./$(@D) # workaround for https://github.com/ugorji/go/issues/145
@@ -118,16 +117,16 @@ shell:
 tests: $(CODECGEN_TARGETS) prog/staticui/staticui.go prog/externalui/externalui.go
 	./tools/test -no-go-get -tags $(GO_BUILD_TAGS)
 
-lint:
+lint: prog/staticui/staticui.go prog/externalui/externalui.go 
 	./tools/lint
 
 prog/staticui/staticui.go:
 	mkdir -p prog/staticui
-	esc -o $@ -pkg staticui -prefix client/build client/build
+	$(NO_CROSS_COMP); go run -mod vendor github.com/mjibson/esc -o $@ -pkg staticui -prefix client/build client/build
 
 prog/externalui/externalui.go:
 	mkdir -p prog/externalui
-	esc -o $@ -pkg externalui -prefix client/build-external -include '\.html$$' client/build-external
+	$(NO_CROSS_COMP); go run -mod vendor github.com/mjibson/esc -o $@ -pkg externalui -prefix client/build-external -include '\.html$$' client/build-external
 
 endif
 
@@ -135,81 +134,49 @@ ifeq ($(BUILD_IN_CONTAINER),true)
 
 SCOPE_UI_TOOLCHAIN=.cache/build_node_modules
 SCOPE_UI_TOOLCHAIN_UPTODATE=$(SCOPE_UI_TOOLCHAIN)/.uptodate
+SCOPE_UI_BUILD_CMD=$(SUDO) docker run $(RM) $(RUN_FLAGS) \
+			-v $(shell pwd)/.cache:/home/weave/scope/.cache:delegated,z \
+			-v $(shell pwd)/client:/home/weave/scope/client:delegated,z \
+			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules:delegated,z \
+			-w /home/weave/scope/client \
+			-e HOME=/home/weave/scope/client \
+			-e NPM_CONFIG_LOGLEVEL=warn \
+			-e NPM_CONFIG_PROGRESS=false \
+			-e XDG_CACHE_HOME=/home/weave/scope/.cache \
+			-u $(shell id -u ${USER}):$(shell id -g ${USER})
 
 $(SCOPE_UI_TOOLCHAIN_UPTODATE): client/yarn.lock $(SCOPE_UI_BUILD_UPTODATE)
 	mkdir -p $(SCOPE_UI_TOOLCHAIN) client/node_modules
 	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
-		$(SUDO) docker run $(RM) $(RUN_FLAGS) \
-			-v $(shell pwd)/.cache:/home/weave/scope/.cache \
-			-v $(shell pwd)/client:/home/weave/scope/client \
-			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
-			-w /home/weave/scope/client \
-			-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
-			$(SCOPE_UI_BUILD_IMAGE) yarn install; \
+		$(SCOPE_UI_BUILD_CMD) $(SCOPE_UI_BUILD_IMAGE) yarn install; \
 	fi
 	touch $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 
 client/build/index.html: $(shell find client/app -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	mkdir -p client/build
 	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
-		$(SUDO) docker run $(RM) $(RUN_FLAGS) \
-			-v $(shell pwd)/.cache:/home/weave/scope/.cache \
-			-v $(shell pwd)/client:/home/weave/scope/client \
-			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
-			-w /home/weave/scope/client \
-			-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
-			$(SCOPE_UI_BUILD_IMAGE) yarn run build; \
+		$(SCOPE_UI_BUILD_CMD) $(SCOPE_UI_BUILD_IMAGE) yarn run build; \
 	fi
 
 client/build-external/index.html: $(shell find client/app -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 	mkdir -p client/build-external
 	if test "true" != "$(SCOPE_SKIP_UI_ASSETS)"; then \
-		$(SUDO) docker run $(RM) $(RUN_FLAGS) \
-			-v $(shell pwd)/.cache:/home/weave/scope/.cache \
-			-v $(shell pwd)/client:/home/weave/scope/client \
-			-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
-			-w /home/weave/scope/client \
-			-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
-			$(SCOPE_UI_BUILD_IMAGE) yarn run build-external; \
+		$(SCOPE_UI_BUILD_CMD) $(SCOPE_UI_BUILD_IMAGE) yarn run build-external; \
 	fi
 
 client-test: $(shell find client/app/scripts -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
-		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
-		-v $(shell pwd)/client:/home/weave/scope/client \
-		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
-		-w /home/weave/scope/client \
-		-u $(id -u ${USER}):$(id -g ${USER}) \
-		$(SCOPE_UI_BUILD_IMAGE) yarn test
+	$(SCOPE_UI_BUILD_CMD) $(SCOPE_UI_BUILD_IMAGE) yarn test
 
 client-lint: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) \
-		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
-		-v $(shell pwd)/client:/home/weave/scope/client \
-		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
-		-w /home/weave/scope/client \
-		-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
-		$(SCOPE_UI_BUILD_IMAGE) yarn run lint
+	$(SCOPE_UI_BUILD_CMD) $(SCOPE_UI_BUILD_IMAGE) yarn run lint
 
 client-start: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
-	$(SUDO) docker run $(RM) $(RUN_FLAGS) --net=host \
-		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
-		-v $(shell pwd)/client:/home/weave/scope/client \
-		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
+	$(SCOPE_UI_BUILD_CMD) --net=host \
 		-e WEBPACK_SERVER_HOST \
-		-w /home/weave/scope/client \
-		-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
 		$(SCOPE_UI_BUILD_IMAGE) yarn start
 
 client/bundle/weave-scope.tgz: $(shell find client/app -type f) $(SCOPE_UI_TOOLCHAIN_UPTODATE)
-	$(sudo) docker run $(RUN_FLAGS) \
-		-v $(shell pwd)/.cache:/home/weave/scope/.cache \
-		-v $(shell pwd)/client:/home/weave/scope/client \
-		-v $(shell pwd)/$(SCOPE_UI_TOOLCHAIN):/home/weave/scope/client/node_modules \
-		-v $(shell pwd)/tmp:/home/weave/tmp \
-		-w /home/weave/scope/client \
-		-u $(shell id -u ${USER}):$(shell id -g ${USER}) \
-		$(SCOPE_UI_BUILD_IMAGE) yarn run bundle
+	$(SCOPE_UI_BUILD_CMD) $(SCOPE_UI_BUILD_IMAGE) yarn run bundle
 
 else
 
@@ -230,25 +197,23 @@ client/build-external/index.html: $(SCOPE_UI_TOOLCHAIN_UPTODATE)
 
 endif
 
-$(SCOPE_UI_BUILD_UPTODATE): client/Dockerfile client/package.json client/webpack.local.config.js client/webpack.production.config.js client/server.js client/.eslintrc
-	$(SUDO) docker build -t $(SCOPE_UI_BUILD_IMAGE) client
-	$(SUDO) docker tag $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_UI_BUILD_IMAGE):$(IMAGE_TAG)
-	touch $@
-
 $(SCOPE_BACKEND_BUILD_UPTODATE): backend/*
 	$(SUDO) docker build -t $(SCOPE_BACKEND_BUILD_IMAGE) backend
 	$(SUDO) docker tag $(SCOPE_BACKEND_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE):$(IMAGE_TAG)
 	touch $@
 
+# Run aws CLI from a container image so we don't have to install Python, etc.
+AWS_COMMAND=docker run $(RM) $(RUN_FLAGS) \
+	-e AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
+	-e AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
+	-v $(shell pwd):/scope \
+	amazon/aws-cli:2.1.35
+
 ui-upload: client/build-external/index.html
-	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
-	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
-	aws s3 cp client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
+	$(AWS_COMMAND) s3 cp /scope/client/build-external/ s3://static.weave.works/scope-ui/ --recursive --exclude '*.html'
 
 ui-pkg-upload: client/bundle/weave-scope.tgz
-	AWS_ACCESS_KEY_ID=$$UI_BUCKET_KEY_ID \
-	AWS_SECRET_ACCESS_KEY=$$UI_BUCKET_KEY_SECRET \
-	aws s3 cp client/bundle/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/$(shell echo $(SCOPE_VERSION))/weave-scope.tgz
+	$(AWS_COMMAND) s3 cp /scope/client/bundle/weave-scope.tgz s3://weaveworks-js-modules/weave-scope/$(shell echo $(SCOPE_VERSION))/weave-scope.tgz
 
 # We don't rmi images here; rm'ing the .uptodate files is enough to
 # get the build images rebuilt, and rm'ing the scope exe is enough to
@@ -257,7 +222,7 @@ ui-pkg-upload: client/bundle/weave-scope.tgz
 # rmi'ng images is desirable sometimes. Invoke `realclean` for that.
 clean:
 	$(GO) clean ./...
-	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_BUILD_UPTODATE) $(SCOPE_UI_TOOLCHAIN_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
+	rm -rf $(SCOPE_EXPORT) $(SCOPE_UI_TOOLCHAIN_UPTODATE) $(SCOPE_BACKEND_BUILD_UPTODATE) \
 		$(SCOPE_EXE) $(RUNSVINIT) prog/staticui/staticui.go prog/externalui/externalui.go client/build/*.js client/build-external/*.js docker/weave .pkg \
 		$(CODECGEN_TARGETS) $(CODECGEN_DIR)/bin
 
@@ -274,19 +239,17 @@ clean-codecgen:
 # Doing this is important for release builds.
 realclean: clean
 	rm -rf $(SCOPE_UI_TOOLCHAIN)
-	$(SUDO) docker rmi -f $(SCOPE_UI_BUILD_IMAGE) $(SCOPE_BACKEND_BUILD_IMAGE) \
+	$(SUDO) docker rmi -f $(SCOPE_BACKEND_BUILD_IMAGE) \
 		$(DOCKERHUB_USER)/scope $(DOCKERHUB_USER)/cloud-agent \
 		$(DOCKERHUB_USER)/scope:$(IMAGE_TAG) $(DOCKERHUB_USER)/cloud-agent:$(IMAGE_TAG) \
 		weaveworks/weaveexec:$(WEAVENET_VERSION) \
-		ubuntu:yakkety alpine:3.5 node:6.9.0 2>/dev/null || true
+		ubuntu:bionic alpine:3.11 node:6.9.0 2>/dev/null || true
 
 # Dependencies are intentionally build without enforcing any tags
 # since they are build on the host
 deps:
 	$(GO) get -u -f \
-		github.com/FiloSottile/gvt \
 		github.com/mattn/goveralls \
-		github.com/weaveworks/github-release \
 		github.com/2opremio/trifles/wscat
 
 # This target is only intended for use in Netlify CI environment for generating preview pages on feature branches and pull requests.

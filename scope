@@ -18,7 +18,7 @@ SCOPE_IMAGE="$SCOPE_IMAGE_NAME:$IMAGE_VERSION"
 # with care.
 SCOPE_CONTAINER_NAME="${SCOPE_CONTAINER_NAME:-weavescope}"
 SCOPE_APP_CONTAINER_NAME="${SCOPE_APP_CONTAINER_NAME:-weavescope-app}"
-IP_REGEXP="[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
+IP_REGEXP="[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}"
 IP_ADDR_CMD="find /sys/class/net -type l | xargs -n1 basename | grep -vE 'docker|veth|lo' | \
     xargs -n1 ip addr show | grep inet | awk '{ print \$2 }' | grep -oE '$IP_REGEXP'"
 LISTENING_IP_ADDR_CMD="for I in \$( $IP_ADDR_CMD ); do if curl -m 1 -s \${I}:4040 > /dev/null ; then echo \${I}; fi; done"
@@ -112,11 +112,11 @@ check_docker_version() {
 }
 
 check_probe_only() {
-    echo "${ARGS}" | grep -q -E "\-\-no\-app|\-\-service\-token|\-\-probe\-only"
+    echo "${ARGS}" | grep -q -E -e "--no-app|--service-token|--probe-only"
 }
 
 check_listen_address_arg() {
-    echo "${ARGS}" | grep -q -E "\-\-app\.http\.address"
+    echo "${ARGS}" | grep -q -E -e "--app\\.http\\.address"
 }
 
 check_docker_for_mac() {
@@ -155,26 +155,23 @@ check_not_running() {
     esac
 }
 
-create_plugins_dir() {
-    # Docker for Mac (as of beta18) looks for this path on VM first, and when it doesn't
-    # find it there, it assumes the user referes to the path on Mac OS. Firstly, in most
-    # cases user won't have /var/run/scope/plugins on their Mac OS filesystem, and
-    # secondly Docker for Mac would have to be configured to share this path. The result
-    # of this "feature" is an error message: "The path /var/run/scope/plugins
-    # is not shared from OS X and does not belong to the system."
-    # In any case, creating /var/run/scope/plugins on Mac OS would not work, as domain
-    # sockets do not cross VM boundaries. We need this directory to exits on the VM.
-    docker run $USERNS_HOST --rm --entrypoint=/bin/sh \
+check_plugins_dir() {
+    # If plugins dir exists for Docker containers then we will mount it
+    # (the context for Docker might be different to that for this script, e.g. when using Docker for Mac)
+    if docker run $USERNS_HOST --rm --entrypoint=/bin/sh \
         -v /var/run:/var/run \
-        "$SCOPE_IMAGE" -c "mkdir -p /var/run/scope/plugins"
+        "$SCOPE_IMAGE" -c "test -d /var/run/scope/plugins"; then
+        PLUGINS_DIR_EXISTS=true
+    fi
 }
 
 docker_args() {
     echo --privileged $USERNS_HOST --net=host --pid=host \
         -v /var/run/docker.sock:/var/run/docker.sock \
-        -v /var/run/scope/plugins:/var/run/scope/plugins \
         -v /sys/kernel/debug:/sys/kernel/debug \
         -e CHECKPOINT_DISABLE
+    # shellcheck disable=SC2039
+    [ -n "${PLUGINS_DIR_EXISTS:-}" ] && echo -v /var/run/scope/plugins:/var/run/scope/plugins
 }
 
 launch_command() {
@@ -262,8 +259,9 @@ case "$COMMAND" in
         ;;
 
     launch)
+        dry_run "$@"
+        check_plugins_dir
         if check_docker_for_mac; then
-            create_plugins_dir
             if check_probe_only; then
                 launch "$@"
                 exit
@@ -273,7 +271,6 @@ case "$COMMAND" in
             # access to host ports of the VM.
             # - https://github.com/weaveworks/scope/issues/1411
             # - https://forums.docker.com/t/ports-in-host-network-namespace-are-not-accessible/10789
-            dry_run "$@"
             if check_listen_address_arg; then
                 echo "--app.http.address argument not supported on Docker for Mac" >&2
                 exit 1
@@ -286,11 +283,10 @@ case "$COMMAND" in
             app_ip=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' "${CONTAINER}")
             docker rm -f "$SCOPE_CONTAINER_NAME" >/dev/null 2>&1 || true
             # shellcheck disable=SC2091
-            CONTAINER=$($(launch_command --no-app "$@" "${app_ip}:4040"))
+            CONTAINER=$($(launch_command) --no-app "$@" "${app_ip}:4040")
             print_app_endpoints "localhost"
             exit
         fi
-        dry_run "$@"
         launch "$@"
         if ! check_probe_only; then
             if check_listen_address_arg; then

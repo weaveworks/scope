@@ -1,0 +1,8 @@
+# Generated files
+./cri/runtime/api.pb.go
+# Files from different repo
+./client/.config/yarn/*
+./docker/weave
+./tools/*
+# Extra programs that aren't really part of Scope
+./extras/*

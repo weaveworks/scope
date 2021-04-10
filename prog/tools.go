@@ -5,5 +5,6 @@
 package report
 
 import (
+	_ "github.com/mjibson/esc"
 	_ "github.com/peterbourgon/runsvinit"
 )

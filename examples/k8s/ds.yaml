@@ -31,7 +31,12 @@ spec:
             - '--probe.docker.bridge=docker0'
             - '--probe.docker=true'
             - 'weave-scope-app.weave.svc.cluster.local.:80'
-          image: weaveworks/scope:1.13.1
+          env:
+            - name: SCOPE_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: weaveworks/scope:1.13.2
           imagePullPolicy: IfNotPresent
           resources:
             requests:

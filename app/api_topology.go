@@ -1,11 +1,10 @@
 package app
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"time"
-
-	"context"
 
 	"github.com/gorilla/mux"
 	ot "github.com/opentracing/opentracing-go"
@@ -166,7 +165,7 @@ type websocketState struct {
 }
 
 func (wc *websocketState) update(ctx context.Context) error {
-	span := ot.StartSpan("websocket.Render", ot.Tag{"topology", wc.topologyID})
+	span := ot.StartSpan("websocket.Render", ot.Tag{Key: "topology", Value: wc.topologyID})
 	defer span.Finish()
 	ctx = ot.ContextWithSpan(ctx, span)
 	// We measure how much time has passed since the channel was opened
