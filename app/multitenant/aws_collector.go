@@ -200,7 +200,7 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 	}
 
 	// If given a StoreInterval we will be storing periodically; if not we only answer queries
-	if config.StoreInterval != 0 {
+	if c.isCollector() {
 		c.ticker = time.NewTicker(config.StoreInterval)
 		go c.flushLoop()
 	}

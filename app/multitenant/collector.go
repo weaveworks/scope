@@ -42,11 +42,14 @@ func (c *awsCollector) addToLive(ctx context.Context, userid string, rep report.
 	entry.Unlock()
 }
 
+func (c *awsCollector) isCollector() bool {
+	return c.cfg.StoreInterval != 0
+}
+
 func (c *awsCollector) reportsFromLive(ctx context.Context, userid string) ([]report.Report, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "reportsFromLive")
 	defer span.Finish()
-	if c.cfg.StoreInterval != 0 {
-		// We are a collector
+	if c.isCollector() {
 		e, found := c.pending.Load(userid)
 		if !found {
 			return nil, nil
