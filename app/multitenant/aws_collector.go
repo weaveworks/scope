@@ -564,6 +564,10 @@ func (c *awsCollector) HasReports(ctx context.Context, timestamp time.Time) (boo
 	if err != nil {
 		return false, err
 	}
+	if time.Since(timestamp) < c.cfg.Window {
+		has, err := c.hasReportsFromLive(ctx, userid)
+		return has, err
+	}
 	start := timestamp.Add(-c.cfg.Window)
 	reportKeys, err := c.getReportKeys(ctx, userid, start, timestamp)
 	return len(reportKeys) > 0, err

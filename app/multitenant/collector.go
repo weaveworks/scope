@@ -3,6 +3,7 @@ package multitenant
 // Collect reports from probes per-tenant, and supply them to queriers on demand
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
@@ -44,6 +45,48 @@ func (c *awsCollector) addToLive(ctx context.Context, userid string, rep report.
 
 func (c *awsCollector) isCollector() bool {
 	return c.cfg.StoreInterval != 0
+}
+
+func (c *awsCollector) hasReportsFromLive(ctx context.Context, userid string) (bool, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "hasReportsFromLive")
+	defer span.Finish()
+	if c.isCollector() {
+		e, found := c.pending.Load(userid)
+		if !found {
+			return false, nil
+		}
+		entry := e.(*pendingEntry)
+		entry.Lock()
+		defer entry.Unlock()
+		if entry.report != nil {
+			return true, nil
+		}
+		for _, v := range entry.older {
+			if v != nil {
+				return true, nil
+			}
+		}
+		return false, nil
+	}
+	// We are a querier: ask each collector if it has any
+	// (serially, since we will bail out on the first one that has reports)
+	addrs := resolve(c.cfg.CollectorAddr)
+	for _, addr := range addrs {
+		body, err := oneCall(ctx, addr, "/api/probes?sparse=true", userid)
+		if err != nil {
+			return false, err
+		}
+		var hasReports bool
+		decoder := json.NewDecoder(body)
+		if err := decoder.Decode(&hasReports); err != nil {
+			log.Errorf("Error encoding response: %v", err)
+		}
+		body.Close()
+		if hasReports {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func (c *awsCollector) reportsFromLive(ctx context.Context, userid string) ([]report.Report, error) {
