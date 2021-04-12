@@ -18,6 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/weaveworks/common/user"
 	"github.com/weaveworks/scope/report"
+	"golang.org/x/sync/errgroup"
 )
 
 // if StoreInterval is set, reports are merged into here and held until flushed to store
@@ -115,22 +116,36 @@ func (c *awsCollector) reportsFromLive(ctx context.Context, userid string) ([]re
 	// We are a querier: fetch the most up-to-date reports from collectors
 	// TODO: resolve c.collectorAddress periodically instead of every time we make a call
 	addrs := resolve(c.cfg.CollectorAddr)
-	ret := make([]report.Report, 0, len(addrs))
+	reports := make([]*report.Report, len(addrs))
 	// make a call to each collector and fetch its data for this userid
-	// TODO: do them in parallel
-	for _, addr := range addrs {
-		body, err := oneCall(ctx, addr, "/api/report", userid)
-		if err != nil {
-			log.Warnf("error calling '%s': %v", addr, err)
-			continue
+	g, ctx := errgroup.WithContext(ctx)
+	for i, addr := range addrs {
+		i, addr := i, addr // https://golang.org/doc/faq#closures_and_goroutines
+		g.Go(func() error {
+			body, err := oneCall(ctx, addr, "/api/report", userid)
+			if err != nil {
+				log.Warnf("error calling '%s': %v", addr, err)
+				return nil
+			}
+			reports[i], err = report.MakeFromBinary(ctx, body, false, true)
+			body.Close()
+			if err != nil {
+				log.Warnf("error decoding: %v", err)
+				return nil
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
+	}
+
+	// dereference pointers into the expected return format
+	ret := make([]report.Report, 0, len(addrs))
+	for _, rpt := range reports {
+		if rpt != nil {
+			ret = append(ret, *rpt)
 		}
-		rpt, err := report.MakeFromBinary(ctx, body, false, true)
-		body.Close()
-		if err != nil {
-			log.Warnf("error decoding: %v", err)
-			continue
-		}
-		ret = append(ret, *rpt)
 	}
 
 	return ret, nil
