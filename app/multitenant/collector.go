@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
 	"context"
 
@@ -114,12 +115,14 @@ func (c *awsCollector) reportsFromLive(ctx context.Context, userid string) ([]re
 	}
 
 	// We are a querier: fetch the most up-to-date reports from collectors
-	// TODO: resolve c.collectorAddress periodically instead of every time we make a call
-	addrs := resolve(c.cfg.CollectorAddr)
-	reports := make([]*report.Report, len(addrs))
+	if time.Since(c.lastResolved) > time.Second*5 {
+		c.collectors = resolve(c.cfg.CollectorAddr)
+		c.lastResolved = time.Now()
+	}
+	reports := make([]*report.Report, len(c.collectors))
 	// make a call to each collector and fetch its data for this userid
 	g, ctx := errgroup.WithContext(ctx)
-	for i, addr := range addrs {
+	for i, addr := range c.collectors {
 		i, addr := i, addr // https://golang.org/doc/faq#closures_and_goroutines
 		g.Go(func() error {
 			body, err := oneCall(ctx, addr, "/api/report", userid)
@@ -141,7 +144,7 @@ func (c *awsCollector) reportsFromLive(ctx context.Context, userid string) ([]re
 	}
 
 	// dereference pointers into the expected return format
-	ret := make([]report.Report, 0, len(addrs))
+	ret := make([]report.Report, 0, len(reports))
 	for _, rpt := range reports {
 		if rpt != nil {
 			ret = append(ret, *rpt)

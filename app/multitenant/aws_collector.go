@@ -156,6 +156,9 @@ type awsCollector struct {
 	nats        *nats.Conn
 	waitersLock sync.Mutex
 	waiters     map[watchKey]*nats.Subscription
+
+	collectors   []string
+	lastResolved time.Time
 }
 
 // Shortcut reports:
