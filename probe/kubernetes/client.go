@@ -67,6 +67,8 @@ type Client interface {
 	ScaleDown(namespaceID, id string) error
 	// Cordon or Uncordon a node based on whether `desired` is true or false respectively.
 	CordonNode(name string, desired bool) error
+	// Returns a list of kubernetes nodes.
+	GetNodes() ([]apiv1.Node, error)
 }
 
 // ResourceMap is the mapping of resource and their GroupKind
@@ -646,4 +648,13 @@ func (c *client) CordonNode(name string, desired bool) error {
 		return err
 	}
 	return nil
+}
+
+func (c *client) GetNodes() ([]apiv1.Node, error) {
+	l, err := c.client.CoreV1().Nodes().List(metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	return l.Items, nil
 }

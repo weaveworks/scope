@@ -173,7 +173,7 @@ func (n Node) WithChild(child Node) Node {
 	return n
 }
 
-// Merge mergses the individual components of a node and returns a
+// Merge merges the individual components of a node and returns a
 // fresh node.
 func (n Node) Merge(other Node) Node {
 	id := n.ID
@@ -186,7 +186,8 @@ func (n Node) Merge(other Node) Node {
 	} else if other.Topology != "" && topology != other.Topology {
 		panic("Cannot merge nodes with different topology types: " + topology + " != " + other.Topology)
 	}
-	return Node{
+
+	newNode := Node{
 		ID:        id,
 		Topology:  topology,
 		Sets:      n.Sets.Merge(other.Sets),
@@ -196,6 +197,39 @@ func (n Node) Merge(other Node) Node {
 		Parents:   n.Parents.Merge(other.Parents),
 		Children:  n.Children.Merge(other.Children),
 	}
+
+	// Special case to merge controls from two different probes.
+	if topology == "host" {
+		controlString, _ := newNode.Latest.Lookup(NodeActiveControls)
+		activeControls := strings.Split(controlString, ScopeDelim)
+		// Host topology should have only two active controls.
+		// Length equals to 2 means controls were merged properly.
+		if len(activeControls) != 2 {
+			// Check if host_exec control is missing.
+			if !StringSet(activeControls).Contains("host_exec") {
+				activeControls = append(activeControls, "host_exec")
+				return newNode.
+					WithLatestActiveControls(activeControls...)
+			}
+			// Else control kubernetes_cordon_node or kubernetes_uncordon_node is missing.
+			// Merge controls from current node.
+			c, _ := n.Latest.Lookup(NodeActiveControls)
+			x := strings.Split(c, ScopeDelim)
+			activeControls = append(activeControls, x...)
+
+			// Merge controls from incoming node.
+			c, _ = other.Latest.Lookup(NodeActiveControls)
+			x = strings.Split(c, ScopeDelim)
+			activeControls = append(activeControls, x...)
+
+			// Use a StringSet to avoid duplicate controls from current and incoming node.
+			var final StringSet
+			return newNode.
+				WithLatestActiveControls(final.Add(activeControls...)...)
+		}
+	}
+
+	return newNode
 }
 
 // UnsafeUnMerge removes data from n that would be added by merging other,

@@ -209,6 +209,10 @@ func (c *mockClient) CordonNode(name string, desired bool) error {
 	return nil
 }
 
+func (c *mockClient) GetNodes() ([]apiv1.Node, error) {
+	return nil, nil
+}
+
 type mockPipeClient map[string]xfer.Pipe
 
 func (c mockPipeClient) PipeConnection(appID, id string, pipe xfer.Pipe) error {

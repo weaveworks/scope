@@ -302,10 +302,6 @@ func (r *Tagger) Tag(rpt report.Report) (report.Report, error) {
 
 		rpt.Container.Nodes[id] = n.WithParent(report.Pod, report.MakePodNodeID(uid))
 	}
-	for id, n := range rpt.Host.Nodes {
-		controls := append(n.ActiveControls(), CordonNode, UncordonNode)
-		rpt.Host.Nodes[id] = n.WithLatestActiveControls(controls...)
-	}
 	return rpt, nil
 }
 
@@ -364,6 +360,10 @@ func (r *Reporter) Report() (report.Report, error) {
 	if err != nil {
 		return result, err
 	}
+	hostTopology, err := r.hostTopology()
+	if err != nil {
+		return result, err
+	}
 
 	result.Pod = result.Pod.Merge(podTopology)
 	result.Service = result.Service.Merge(serviceTopology)
@@ -378,12 +378,7 @@ func (r *Reporter) Report() (report.Report, error) {
 	result.VolumeSnapshot = result.VolumeSnapshot.Merge(volumeSnapshotTopology)
 	result.VolumeSnapshotData = result.VolumeSnapshotData.Merge(volumeSnapshotDataTopology)
 	result.Job = result.Job.Merge(jobTopology)
-
-	// Add buttons for Host view, with the ID of the Kubernetes probe
-	for _, control := range CordonControl {
-		control.ProbeID = r.probeID
-		result.Host.Controls.AddControl(control)
-	}
+	result.Host = result.Host.Merge(hostTopology)
 
 	return result, nil
 }
@@ -703,4 +698,33 @@ func (r *Reporter) namespaceTopology() (report.Topology, error) {
 		return nil
 	})
 	return result, err
+}
+
+func (r *Reporter) hostTopology() (report.Topology, error) {
+	result := report.MakeTopology()
+	// Add buttons for Host view, with the ID of the Kubernetes probe
+	for _, control := range CordonControl {
+		control.ProbeID = r.probeID
+		result.Controls.AddControl(control)
+	}
+
+	nodes, err := r.client.GetNodes()
+	if err != nil {
+		return result, err
+	}
+
+	for _, n := range nodes {
+		var activeControl string
+		if n.Spec.Unschedulable {
+			activeControl = UncordonNode
+		} else {
+			activeControl = CordonNode
+		}
+		result.AddNode(
+			report.MakeNode(report.MakeHostNodeID(n.Name)).
+				WithTopology("host").
+				WithLatestActiveControls(activeControl),
+		)
+	}
+	return result, nil
 }
