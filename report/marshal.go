@@ -102,10 +102,6 @@ func MakeFromBinary(ctx context.Context, r io.Reader, gzipped bool, msgpack bool
 	if err != nil {
 		return nil, err
 	}
-	rep := MakeReport()
-	if err := codec.NewDecoderBytes(buf.Bytes(), codecHandle(msgpack)).Decode(&rep); err != nil {
-		return nil, err
-	}
 	log.Debugf(
 		"Received report sizes: compressed %d bytes, uncompressed %d bytes (%.2f%%)",
 		compressedSize,
@@ -113,6 +109,10 @@ func MakeFromBinary(ctx context.Context, r io.Reader, gzipped bool, msgpack bool
 		float32(compressedSize)/float32(uncompressedSize)*100,
 	)
 	span.LogFields(otlog.Uint64("compressedSize", compressedSize), otlog.Int64("uncompressedSize", uncompressedSize))
+	rep := MakeReport()
+	if err := codec.NewDecoderBytes(buf.Bytes(), codecHandle(msgpack)).Decode(&rep); err != nil {
+		return nil, err
+	}
 	return &rep, nil
 }
 

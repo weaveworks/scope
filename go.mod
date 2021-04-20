@@ -52,6 +52,7 @@ require (
 	github.com/nats-io/nuid v0.0.0-20160402145409-a5152d67cf63 // indirect
 	github.com/opencontainers/runc v1.0.0-rc5 // indirect
 	github.com/openebs/k8s-snapshot-client v0.0.0-20180831100134-a6506305fb16
+	github.com/opentracing-contrib/go-stdlib v0.0.0-20190519235532-cf7a6c988dc9
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/paypal/ionet v0.0.0-20130919195445-ed0aaebc5417
 	github.com/pborman/uuid v0.0.0-20150824212802-cccd189d45f7

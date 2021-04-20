@@ -142,13 +142,7 @@ type AWSCollectorConfig struct {
 	MemcacheClient *MemcacheClient
 	Window         time.Duration
 	MaxTopNodes    int
-}
-
-// if StoreInterval is set, reports are merged into here and held until flushed to store
-type pendingEntry struct {
-	sync.Mutex
-	report report.Report
-	count  int
+	CollectorAddr  string
 }
 
 type awsCollector struct {
@@ -162,6 +156,9 @@ type awsCollector struct {
 	nats        *nats.Conn
 	waitersLock sync.Mutex
 	waiters     map[watchKey]*nats.Subscription
+
+	collectors   []string
+	lastResolved time.Time
 }
 
 // Shortcut reports:
@@ -205,7 +202,8 @@ func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
 		waiters:   map[watchKey]*nats.Subscription{},
 	}
 
-	if config.StoreInterval != 0 {
+	// If given a StoreInterval we will be storing periodically; if not we only answer queries
+	if c.isCollector() {
 		c.ticker = time.NewTicker(config.StoreInterval)
 		go c.flushLoop()
 	}
@@ -247,11 +245,17 @@ func (c *awsCollector) flushPending(ctx context.Context) {
 			entry := value.(*pendingEntry)
 
 			entry.Lock()
-			rpt, count := entry.report, entry.count
-			entry.report, entry.count = report.MakeReport(), 0
+			rpt := entry.report
+			entry.report = nil
+			if entry.older == nil {
+				entry.older = make([]*report.Report, c.cfg.Window/c.cfg.StoreInterval)
+			} else {
+				copy(entry.older[1:], entry.older) // move everything down one
+			}
+			entry.older[0] = rpt
 			entry.Unlock()
 
-			if count > 0 {
+			if rpt != nil {
 				// serialise reports on one goroutine to limit CPU usage
 				buf, err := rpt.WriteBinary()
 				if err != nil {
@@ -464,15 +468,8 @@ func (c *awsCollector) massageReport(userid string, report report.Report) report
 	return report
 }
 
-/*
-S3 stores original reports from one probe at the timestamp they arrived at collector.
-Collector also sends every report to memcached.
-The in-memory cache stores:
- - individual reports deserialised, under S3 key for report
- - sets of reports in interval [t,t+3) merged, under key "instance:t"
-   - so to check the cache for reports from 14:31:00 to 14:31:15 you would request 5 keys 3 seconds apart
-*/
-
+// If we are running as a Query service, fetch data and merge into a report
+// If we are running as a Collector and the request is for live data, merge in-memory data and return
 func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.Report, error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "awsCollector.Report")
 	defer span.Finish()
@@ -481,11 +478,36 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 		return report.MakeReport(), err
 	}
 	span.SetTag("userid", userid)
+	var reports []report.Report
+	if time.Since(timestamp) < c.cfg.Window {
+		reports, err = c.reportsFromLive(ctx, userid)
+	} else {
+		reports, err = c.reportsFromStore(ctx, userid, timestamp)
+	}
+	if err != nil {
+		return report.MakeReport(), err
+	}
+	span.LogFields(otlog.Int("merging", len(reports)))
+	return c.merger.Merge(reports), nil
+}
+
+/*
+Given a timestamp in the past, fetch reports within the window from store or cache
+
+S3 stores original reports from one probe at the timestamp they arrived at collector.
+Collector also sends every report to memcached.
+The in-memory cache stores:
+ - individual reports deserialised, under S3 key for report
+ - sets of reports in interval [t,t+3) merged, under key "instance:t"
+   - so to check the cache for reports from 14:31:00 to 14:31:15 you would request 5 keys 3 seconds apart
+*/
+func (c *awsCollector) reportsFromStore(ctx context.Context, userid string, timestamp time.Time) ([]report.Report, error) {
+	span := opentracing.SpanFromContext(ctx)
 	end := timestamp
 	start := end.Add(-c.cfg.Window)
 	reportKeys, err := c.getReportKeys(ctx, userid, start, end)
 	if err != nil {
-		return report.MakeReport(), err
+		return nil, err
 	}
 	span.LogFields(otlog.Int("keys", len(reportKeys)), otlog.String("timestamp", timestamp.String()))
 
@@ -496,18 +518,17 @@ func (c *awsCollector) Report(ctx context.Context, timestamp time.Time) (report.
 	for ; ts+(reportQuantisationInterval+gracePeriod).Nanoseconds() < endTS; ts += reportQuantisationInterval.Nanoseconds() {
 		quantumReport, err := c.reportForQuantum(ctx, userid, reportKeys, ts)
 		if err != nil {
-			return report.MakeReport(), err
+			return nil, err
 		}
 		reports = append(reports, quantumReport)
 	}
 	// Fetch individual reports for the period after the last quantum
 	last, err := c.reportsForKeysInRange(ctx, userid, reportKeys, ts, endTS)
 	if err != nil {
-		return report.MakeReport(), err
+		return nil, err
 	}
 	reports = append(reports, last...)
-	span.LogFields(otlog.Int("merging", len(reports)))
-	return c.merger.Merge(reports), nil
+	return reports, nil
 }
 
 // Fetch a merged report either from cache or from store which we put in cache
@@ -545,6 +566,10 @@ func (c *awsCollector) HasReports(ctx context.Context, timestamp time.Time) (boo
 	userid, err := c.cfg.UserIDer(ctx)
 	if err != nil {
 		return false, err
+	}
+	if time.Since(timestamp) < c.cfg.Window {
+		has, err := c.hasReportsFromLive(ctx, userid)
+		return has, err
 	}
 	start := timestamp.Add(-c.cfg.Window)
 	reportKeys, err := c.getReportKeys(ctx, userid, start, timestamp)
@@ -681,6 +706,9 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 	if err != nil {
 		return err
 	}
+	if c.cfg.StoreInterval == 0 {
+		return fmt.Errorf("--app.collector.store-interval must be non-zero")
+	}
 
 	// Shortcut reports are published to nats but not persisted -
 	// we'll get a full report from the same probe in a few seconds
@@ -702,23 +730,8 @@ func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) e
 		return nil
 	}
 
-	if c.cfg.StoreInterval == 0 {
-		rowKey, colKey, reportKey := calculateReportKeys(userid, time.Now())
-		err = c.persistReport(ctx, userid, rowKey, colKey, reportKey, buf)
-		if err != nil {
-			return err
-		}
-	} else {
-		rep = c.massageReport(userid, rep)
-		entry := &pendingEntry{report: report.MakeReport()}
-		if e, found := c.pending.LoadOrStore(userid, entry); found {
-			entry = e.(*pendingEntry)
-		}
-		entry.Lock()
-		entry.report.UnsafeMerge(rep)
-		entry.count++
-		entry.Unlock()
-	}
+	rep = c.massageReport(userid, rep)
+	c.addToLive(ctx, userid, rep)
 
 	return nil
 }
