@@ -1,0 +1,35 @@
+# stage 1
+FROM golang:latest as builder
+ARG VERSION
+RUN apt-get update
+RUN apt-get install -y time
+COPY / /scope
+WORKDIR /scope
+RUN curl -L https://github.com/weaveworks/weave/releases/download/v2.1.3/weave -o weave
+RUN chmod u+x weave
+RUN if [ `uname -m` = "aarch64" ] ; then \
+       mv ./weaveutil_arm64 docker/weaveutil; \
+    else \
+       cp ./weaveutil docker/weaveutil; \
+    fi
+RUN time env GOGC=off CGO_ENABLED=1 go build -mod vendor -ldflags "-extldflags \"-static\" -X main.version="${VERSION}" -s -w" -tags 'netgo unsafe' -o runsvinit ./vendor/github.com/peterbourgon/runsvinit
+
+# stage 2
+FROM weaveworks/cloud-agent
+RUN apk add --no-cache runit
+COPY --from=builder /scope/weave /usr/bin/
+COPY --from=builder /scope/docker/weaveutil /usr/bin/
+COPY --from=builder /scope/runsvinit /home/weave/
+COPY docker/entrypoint.sh /home/weave/
+COPY docker/run-app /etc/service/app/run
+COPY docker/run-probe /etc/service/probe/run
+
+EXPOSE 4040
+ENTRYPOINT ["/home/weave/entrypoint.sh"]
+
+ARG revision
+LABEL maintainer="Weaveworks <help@weave.works>" \
+      org.opencontainers.image.title="scope" \
+      org.opencontainers.image.source="https://github.com/weaveworks/scope" \
+      org.opencontainers.image.revision="${revision}" \
+      org.opencontainers.image.vendor="Weaveworks"
