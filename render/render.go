@@ -113,9 +113,6 @@ func MakeMap(f MapFunc, r Renderer) Renderer {
 // Render transforms a set of Nodes produces by another Renderer.
 // using a map function
 func (m Map) Render(ctx context.Context, rpt report.Report) Nodes {
-	if ctx.Err() != nil {
-		return Nodes{}
-	}
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Map.Render:"+functionName(m.MapFunc))
 	defer span.Finish()
 	var (
@@ -125,6 +122,9 @@ func (m Map) Render(ctx context.Context, rpt report.Report) Nodes {
 
 	// Rewrite all the nodes according to the map function
 	for _, inRenderable := range input.Nodes {
+		if ctx.Err() != nil { // check if cancelled
+			return Nodes{}
+		}
 		outRenderable := m.MapFunc(inRenderable)
 		if outRenderable.ID != "" {
 			output.add(inRenderable.ID, outRenderable)
