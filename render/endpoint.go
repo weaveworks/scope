@@ -3,6 +3,8 @@ package render
 import (
 	"context"
 
+	opentracing "github.com/opentracing/opentracing-go"
+	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/weaveworks/scope/report"
 )
 
@@ -30,6 +32,8 @@ func MapEndpoints(f endpointMapFunc, topology string) Renderer {
 }
 
 func (e mapEndpoints) Render(ctx context.Context, rpt report.Report) Nodes {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "mapEndpoints.Render")
+	defer span.Finish()
 	local := LocalNetworks(rpt)
 	endpoints := SelectEndpoint.Render(ctx, rpt)
 	ret := newJoinResults(TopologySelector(e.topology).Render(ctx, rpt).Nodes)
@@ -47,5 +51,7 @@ func (e mapEndpoints) Render(ctx context.Context, rpt report.Report) Nodes {
 			ret.addChild(n, id, e.topology)
 		}
 	}
+	span.LogFields(otlog.Int("input.nodes", len(endpoints.Nodes)),
+		otlog.Int("ouput.nodes", len(ret.nodes)))
 	return ret.result(ctx, endpoints)
 }
