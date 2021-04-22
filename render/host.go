@@ -1,6 +1,8 @@
 package render
 
 import (
+	"context"
+
 	"github.com/weaveworks/scope/report"
 )
 
@@ -25,7 +27,7 @@ var HostRenderer = MakeReduce(
 // format for a host, but without any Major or Minor labels.  It does
 // not have enough info to do that, and the resulting graph must be
 // merged with a host graph to get that info.
-func nodes2Hosts(nodes Nodes) Nodes {
+func nodes2Hosts(ctx context.Context, nodes Nodes) Nodes {
 	ret := newJoinResults(nil)
 
 	for _, n := range nodes.Nodes {
@@ -47,7 +49,7 @@ func nodes2Hosts(nodes Nodes) Nodes {
 			}
 		}
 	}
-	return ret.result(nodes)
+	return ret.result(ctx, nodes)
 }
 
 func endpoint2Host(n report.Node) string {

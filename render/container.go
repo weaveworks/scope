@@ -275,7 +275,7 @@ func (m containerImageRenderer) Render(ctx context.Context, rpt report.Report) N
 		id := report.MakeContainerImageNodeID(imageID)
 		ret.addChildAndChildren(n, id, report.ContainerImage)
 	}
-	return ret.result(containers)
+	return ret.result(ctx, containers)
 }
 
 func containerImageNodeID(n report.Node) string {
@@ -328,5 +328,5 @@ func (m containerHostnameRenderer) Render(ctx context.Context, rpt report.Report
 		}
 		ret.addChildAndChildren(n, id, containerHostnameTopology)
 	}
-	return ret.result(containers)
+	return ret.result(ctx, containers)
 }
