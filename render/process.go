@@ -95,7 +95,7 @@ func hasMoreThanOneConnection(n report.Node, endpoints report.Nodes) bool {
 var processNameTopology = MakeGroupNodeTopology(report.Process, report.Name)
 
 // processes2Names maps process Nodes to Nodes for each process name.
-func processes2Names(processes Nodes) Nodes {
+func processes2Names(ctx context.Context, processes Nodes) Nodes {
 	ret := newJoinResults(nil)
 
 	for _, n := range processes.Nodes {
@@ -105,5 +105,5 @@ func processes2Names(processes Nodes) Nodes {
 			ret.addChildAndChildren(n, name, processNameTopology)
 		}
 	}
-	return ret.result(processes)
+	return ret.result(ctx, processes)
 }

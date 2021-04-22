@@ -47,5 +47,5 @@ func (e mapEndpoints) Render(ctx context.Context, rpt report.Report) Nodes {
 			ret.addChild(n, id, e.topology)
 		}
 	}
-	return ret.result(endpoints)
+	return ret.result(ctx, endpoints)
 }

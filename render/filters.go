@@ -17,7 +17,7 @@ const (
 // in one call - useful for functions that need to consider the entire graph.
 // We should minimise the use of this renderer type, as it is very inflexible.
 type CustomRenderer struct {
-	RenderFunc func(Nodes) Nodes
+	RenderFunc func(context.Context, Nodes) Nodes
 	Renderer
 }
 
@@ -26,7 +26,7 @@ func (c CustomRenderer) Render(ctx context.Context, rpt report.Report) Nodes {
 	if ctx.Err() != nil {
 		return Nodes{}
 	}
-	return c.RenderFunc(c.Renderer.Render(ctx, rpt))
+	return c.RenderFunc(ctx, c.Renderer.Render(ctx, rpt))
 }
 
 // FilterFunc is the function type used by Filters
@@ -189,7 +189,7 @@ func filterInternetAdjacencies(nodes report.Nodes) {
 func ColorConnected(r Renderer) Renderer {
 	return CustomRenderer{
 		Renderer: r,
-		RenderFunc: func(input Nodes) Nodes {
+		RenderFunc: func(ctx context.Context, input Nodes) Nodes {
 			output := input.Copy()
 			for id := range connected(input.Nodes) {
 				output[id] = output[id].WithLatest(IsConnectedMark, mtime.Now(), "true")
