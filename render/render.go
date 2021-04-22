@@ -185,6 +185,9 @@ func (ret *joinResults) mapChild(from, to string) {
 // Add m into the results as a top-level node, mapped from original ID
 // Note it is not safe to mix calls to add() with addChild(), addChildAndChildren() or addUnmappedChild()
 func (ret *joinResults) add(from string, m report.Node) {
+	if from == "" || m.ID == "" {
+		return // this means something has gone wrong; don't let it pollute the results.
+	}
 	if existing, ok := ret.nodes[m.ID]; ok {
 		m = m.Merge(existing)
 	}
@@ -210,12 +213,18 @@ func (ret *joinResults) addUnmappedChild(m report.Node, id string, topology stri
 // the specified topology if not already there, and updating the
 // mapping from old ID to new ID.
 func (ret *joinResults) addChild(m report.Node, id string, topology string) {
+	if id == "" || m.ID == "" {
+		return // this means something has gone wrong; don't let it pollute the results.
+	}
 	ret.addUnmappedChild(m, id, topology)
 	ret.mapChild(m.ID, id)
 }
 
 // Like addChild, but also add m's children.
 func (ret *joinResults) addChildAndChildren(m report.Node, id string, topology string) {
+	if id == "" || m.ID == "" {
+		return // this means something has gone wrong; don't let it pollute the results.
+	}
 	ret.addUnmappedChild(m, id, topology)
 	result := ret.nodes[id]
 	result.Children.UnsafeMerge(m.Children)
@@ -225,6 +234,9 @@ func (ret *joinResults) addChildAndChildren(m report.Node, id string, topology s
 
 // Add a copy of n straight into the results
 func (ret *joinResults) passThrough(n report.Node) {
+	if n.ID == "" {
+		return // this means something has gone wrong; don't let it pollute the results.
+	}
 	n.Adjacency = nil // result() assumes all nodes start with no adjacencies
 	ret.nodes[n.ID] = n
 	n.Children = n.Children.Copy() // so we can do unsafe adds
