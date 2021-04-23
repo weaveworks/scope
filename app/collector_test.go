@@ -52,7 +52,7 @@ func TestCollector(t *testing.T) {
 	merged := report.MakeReport()
 	merged.UnsafeMerge(r1)
 	merged.UnsafeMerge(r2)
-	merged.UnsafeRemovePartMergedNodes()
+	merged.UnsafeRemovePartMergedNodes(context.Background())
 	have, err = c.Report(ctx, mtime.Now())
 	if err != nil {
 		t.Error(err)
