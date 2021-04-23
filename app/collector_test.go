@@ -23,10 +23,10 @@ func TestCollector(t *testing.T) {
 	defer mtime.NowReset()
 
 	r1 := report.MakeReport()
-	r1.Endpoint.AddNode(report.MakeNode("foo"))
+	r1.Endpoint.AddNode(report.MakeNode("foo").WithTopology("bar"))
 
 	r2 := report.MakeReport()
-	r2.Endpoint.AddNode(report.MakeNode("foo"))
+	r2.Endpoint.AddNode(report.MakeNode("foo").WithTopology("bar"))
 
 	have, err := c.Report(ctx, mtime.Now())
 	if err != nil {
@@ -52,6 +52,7 @@ func TestCollector(t *testing.T) {
 	merged := report.MakeReport()
 	merged.UnsafeMerge(r1)
 	merged.UnsafeMerge(r2)
+	merged.UnsafeRemovePartMergedNodes()
 	have, err = c.Report(ctx, mtime.Now())
 	if err != nil {
 		t.Error(err)

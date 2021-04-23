@@ -363,6 +363,20 @@ func (r *Report) UnsafeUnMerge(other Report) {
 	})
 }
 
+// UnsafeRemovePartMergedNodes removes nodes that have not fully re-merged.
+// E.g. if a node is removed from source between two full reports, then we
+// might only have a delta of its last state. Remove that from the set.
+// The original is modified.
+func (r *Report) UnsafeRemovePartMergedNodes() {
+	r.WalkTopologies(func(t *Topology) {
+		for k, v := range t.Nodes {
+			if v.isPartMerged() {
+				delete(t.Nodes, k)
+			}
+		}
+	})
+}
+
 // WalkTopologies iterates through the Topologies of the report,
 // potentially modifying them
 func (r *Report) WalkTopologies(f func(*Topology)) {

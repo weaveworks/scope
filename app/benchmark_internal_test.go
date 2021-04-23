@@ -87,6 +87,7 @@ func getReport(b *testing.B) report.Report {
 
 func benchmarkRender(b *testing.B, f func(report.Report)) {
 	r := getReport(b)
+	r.UnsafeRemovePartMergedNodes()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		b.StopTimer()
