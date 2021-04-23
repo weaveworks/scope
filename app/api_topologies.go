@@ -479,6 +479,7 @@ func (r *Registry) makeTopologyList(rep Reporter) CtxHandlerFunc {
 			respondWith(ctx, w, http.StatusInternalServerError, err)
 			return
 		}
+		report.UnsafeRemovePartMergedNodes(ctx)
 		respondWith(ctx, w, http.StatusOK, r.renderTopologies(ctx, report, req))
 	}
 }
@@ -579,6 +580,7 @@ func (r *Registry) captureRenderer(rep Reporter, f rendererHandler) CtxHandlerFu
 			respondWith(ctx, w, http.StatusInternalServerError, err)
 			return
 		}
+		rpt.UnsafeRemovePartMergedNodes(ctx)
 		req.ParseForm()
 		renderer, filter, err := r.RendererForTopology(topologyID, req.Form, rpt)
 		if err != nil {

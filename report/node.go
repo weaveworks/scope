@@ -236,3 +236,10 @@ func (n *Node) UnsafeUnMerge(other Node) bool {
 	// metrics don't overlap so just check if we have any
 	return remove && len(n.Metrics) == 0
 }
+
+// If a node is removed from source between two full reports, then we
+// might only have a delta of its last state. Detect that from a blank topology,
+// which cannot arise in a properly-formed Node.
+func (n *Node) isPartMerged() bool {
+	return n.Topology == ""
+}

@@ -182,6 +182,7 @@ func (wc *websocketState) update(ctx context.Context) error {
 	if err != nil {
 		return errors.Wrap(err, "Error generating report")
 	}
+	re.UnsafeRemovePartMergedNodes(ctx)
 	renderer, filter, err := topologyRegistry.RendererForTopology(wc.topologyID, wc.values, re)
 	if err != nil {
 		return errors.Wrap(err, "Error generating report")

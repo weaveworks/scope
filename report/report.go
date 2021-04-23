@@ -1,10 +1,13 @@
 package report
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"strings"
 	"time"
+
+	opentracing "github.com/opentracing/opentracing-go"
 
 	"github.com/weaveworks/scope/common/xfer"
 )
@@ -361,6 +364,29 @@ func (r *Report) UnsafeUnMerge(other Report) {
 	r.WalkPairedTopologies(&other, func(ourTopology, theirTopology *Topology) {
 		ourTopology.UnsafeUnMerge(*theirTopology)
 	})
+}
+
+// UnsafeRemovePartMergedNodes removes nodes that have not fully re-merged.
+// E.g. if a node is removed from source between two full reports, then we
+// might only have a delta of its last state. Remove that from the set.
+// The original is modified.
+func (r *Report) UnsafeRemovePartMergedNodes(ctx context.Context) {
+	dropped := map[string]int{}
+	r.WalkNamedTopologies(func(name string, t *Topology) {
+		for k, v := range t.Nodes {
+			if v.isPartMerged() {
+				delete(t.Nodes, k)
+				dropped[name]++
+			}
+		}
+	})
+	if span := opentracing.SpanFromContext(ctx); span != nil && len(dropped) > 0 {
+		msg := ""
+		for name, count := range dropped {
+			msg += fmt.Sprintf("%s: %d, ", name, count)
+		}
+		span.LogKV("dropped-part-merged", msg)
+	}
 }
 
 // WalkTopologies iterates through the Topologies of the report,
