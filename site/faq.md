@@ -23,7 +23,7 @@ OSS Scope has no user concept, this is only available in Weave Cloud. To limit t
 
 - setup a reverse proxy with auth and block access to non admin users,
 - capture the calls with something like Chrome network console to get the endpoints to know which requests to authenticate in the proxy server.
-- you can use Basic HTTP Auth since Scope 1.10.0 - just use these command line
+- you can use Basic HTTP Auth since Scope 1.10.0 (support for loading password from file since Scope 1.13.3) - just use these command line
   arguments:
 
   ```cli
@@ -33,10 +33,14 @@ OSS Scope has no user concept, this is only available in Weave Cloud. To limit t
         Password for basic authentication (default "admin")
   --app.basicAuth.username string
         Username for basic authentication (default "admin")
+  --app.basicAuth.password.filename string
+        Password filename for basic authentication. It overwrites app.basicAuth.password
   --probe.basicAuth
         Enable basic authentication for app
   --probe.basicAuth.password string
         Password for basic authentication (default "admin")
+  --probe.basicAuth.password.filename string
+        Password filename for basic authentication. It overwrites probe.basicAuth.password
   --probe.basicAuth.username string
         Username for basic authentication (default "admin")
   ```
@@ -47,6 +51,7 @@ OSS Scope has no user concept, this is only available in Weave Cloud. To limit t
   ENABLE_BASIC_AUTH: set to "true"
   BASIC_AUTH_USERNAME: set to the desired user (default "admin")
   BASIC_AUTH_PASSWORD: set to the desired password (default "admin")
+  BASIC_AUTH_PASSWORD_FILENAME: set to the desired file name with password, it overwrites BASIC_AUTH_PASSWORD
   ```
 
   Note that there is no standard programmatic way of expiring a session with Basic Auth, so the users would normally stayed logged in until the authentication params have changed. See [this article](https://en.wikipedia.org/wiki/Basic_access_authentication#Security) for more details.
