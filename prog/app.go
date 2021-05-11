@@ -89,10 +89,27 @@ func router(collector app.Collector, controlRouter app.ControlRouter, pipeRouter
 	return middlewares.Wrap(router)
 }
 
-func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL string, storeInterval time.Duration, natsHostname string,
+func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL string, tickInterval time.Duration, natsHostname string,
 	memcacheConfig multitenant.MemcacheConfig, window time.Duration, maxTopNodes int, createTables bool, collectorAddr string) (app.Collector, error) {
 	if collectorURL == "local" {
 		return app.NewCollector(window), nil
+	}
+
+	var memcacheClient *multitenant.MemcacheClient
+	if memcacheConfig.Host != "" {
+		memcacheClient = multitenant.NewMemcacheClient(memcacheConfig)
+	}
+	liveConfig := multitenant.LiveCollectorConfig{
+		UserIDer:       userIDer,
+		NatsHost:       natsHostname,
+		MemcacheClient: memcacheClient,
+		Window:         window,
+		TickInterval:   tickInterval,
+		MaxTopNodes:    maxTopNodes,
+		CollectorAddr:  collectorAddr,
+	}
+	if collectorURL == "multitenant-live" {
+		return multitenant.NewLiveCollector(liveConfig)
 	}
 
 	parsed, err := url.Parse(collectorURL)
@@ -119,22 +136,12 @@ func collectorFactory(userIDer multitenant.UserIDer, collectorURL, s3URL string,
 		bucketName := strings.TrimPrefix(s3.Path, "/")
 		tableName := strings.TrimPrefix(parsed.Path, "/")
 		s3Store := multitenant.NewS3Client(s3Config, bucketName)
-		var memcacheClient *multitenant.MemcacheClient
-		if memcacheConfig.Host != "" {
-			memcacheClient = multitenant.NewMemcacheClient(memcacheConfig)
-		}
 		awsCollector, err := multitenant.NewAWSCollector(
+			liveConfig,
 			multitenant.AWSCollectorConfig{
-				UserIDer:       userIDer,
 				DynamoDBConfig: dynamoDBConfig,
 				DynamoTable:    tableName,
 				S3Store:        &s3Store,
-				StoreInterval:  storeInterval,
-				NatsHost:       natsHostname,
-				MemcacheClient: memcacheClient,
-				Window:         window,
-				MaxTopNodes:    maxTopNodes,
-				CollectorAddr:  collectorAddr,
 			},
 		)
 		if err != nil {
@@ -239,8 +246,12 @@ func appMain(flags appFlags) {
 		userIDer = multitenant.UserIDHeader(flags.userIDHeader)
 	}
 
+	tickInterval := flags.tickInterval
+	if tickInterval == 0 {
+		tickInterval = flags.storeInterval
+	}
 	collector, err := collectorFactory(
-		userIDer, flags.collectorURL, flags.s3URL, flags.storeInterval, flags.natsHostname,
+		userIDer, flags.collectorURL, flags.s3URL, tickInterval, flags.natsHostname,
 		multitenant.MemcacheConfig{
 			Host:             flags.memcachedHostname,
 			Timeout:          flags.memcachedTimeout,
