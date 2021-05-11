@@ -71,7 +71,6 @@ type pendingEntry struct {
 }
 
 func NewLiveCollector(config LiveCollectorConfig) (app.Collector, error) {
-	registerLiveCollectorMetricsOnce.Do(registerLiveCollectorMetrics)
 	c := &liveCollector{
 		cfg: config,
 	}
@@ -79,6 +78,7 @@ func NewLiveCollector(config LiveCollectorConfig) (app.Collector, error) {
 }
 
 func (c *liveCollector) init() error {
+	registerLiveCollectorMetricsOnce.Do(registerLiveCollectorMetrics)
 	var nc *nats.Conn
 	if c.cfg.NatsHost != "" {
 		if c.cfg.MemcacheClient == nil {
