@@ -27,10 +27,21 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+var (
+	topologiesDropped = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "topologies_dropped_total",
+		Help:      "Total count of topologies dropped for being over limit.",
+	}, []string{"user", "topology"})
+
+	natsRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "nats_requests_total",
+		Help:      "Total count of NATS requests.",
+	}, []string{"method", "status_code"})
+)
+
 func registerLiveCollectorMetrics() {
-	prometheus.MustRegister(reportSizeHistogram)
-	prometheus.MustRegister(reportsPerUser)
-	prometheus.MustRegister(reportSizePerUser)
 	prometheus.MustRegister(topologiesDropped)
 	prometheus.MustRegister(natsRequests)
 }

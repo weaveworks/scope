@@ -83,17 +83,6 @@ var (
 		Name:      "reports_bytes_total",
 		Help:      "Total bytes stored in reports per user.",
 	}, []string{"user"})
-	topologiesDropped = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "scope",
-		Name:      "topologies_dropped_total",
-		Help:      "Total count of topologies dropped for being over limit.",
-	}, []string{"user", "topology"})
-
-	natsRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "scope",
-		Name:      "nats_requests_total",
-		Help:      "Total count of NATS requests.",
-	}, []string{"method", "status_code"})
 
 	flushDuration = instrument.NewHistogramCollectorFromOpts(prometheus.HistogramOpts{
 		Namespace: "scope",
@@ -109,6 +98,9 @@ func registerAWSCollectorMetrics() {
 	prometheus.MustRegister(dynamoValueSize)
 	prometheus.MustRegister(inProcessCacheRequests)
 	prometheus.MustRegister(inProcessCacheHits)
+	prometheus.MustRegister(reportSizeHistogram)
+	prometheus.MustRegister(reportsPerUser)
+	prometheus.MustRegister(reportSizePerUser)
 	flushDuration.Register()
 }
 
