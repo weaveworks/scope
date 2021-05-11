@@ -1,6 +1,7 @@
 package multitenant
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -9,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"context"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
