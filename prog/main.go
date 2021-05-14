@@ -166,6 +166,7 @@ type appFlags struct {
 	collectorAddr             string // how to find collectors if deployed as microservices
 	s3URL                     string
 	storeInterval             time.Duration
+	tickInterval              time.Duration
 	controlRouterURL          string
 	controlRPCTimeout         time.Duration
 	pipeRouterURL             string
@@ -376,10 +377,11 @@ func setupFlags(flags *flags) {
 	flag.Var(&flags.containerLabelFilterFlags, "app.container-label-filter", "Add container label-based view filter, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter='Database Containers:role=db'")
 	flag.Var(&flags.containerLabelFilterFlagsExclude, "app.container-label-filter-exclude", "Add container label-based view filter that excludes containers with the given label, specified as title:label. Multiple flags are accepted. Example: --app.container-label-filter-exclude='Database Containers:role=db'")
 
-	flag.StringVar(&flags.app.collectorURL, "app.collector", "local", "Collector to use (local, dynamodb, or file/directory)")
+	flag.StringVar(&flags.app.collectorURL, "app.collector", "local", "Collector to use (local, multitenant-live, dynamodb, or file/directory)")
 	flag.StringVar(&flags.app.collectorAddr, "app.collector-addr", "", "Address to look up collectors when deployed as microservices")
 	flag.StringVar(&flags.app.s3URL, "app.collector.s3", "local", "S3 URL to use (when collector is dynamodb)")
-	flag.DurationVar(&flags.app.storeInterval, "app.collector.store-interval", 0, "How often to store merged incoming reports. If 0, reports are stored unmerged as they arrive.")
+	flag.DurationVar(&flags.app.storeInterval, "app.collector.store-interval", 0, "How often to store merged incoming reports.")
+	flag.DurationVar(&flags.app.tickInterval, "app.collector.tick-interval", 0, "How often to start a new group of recent reports, for the multitenant collector")
 	flag.StringVar(&flags.app.controlRouterURL, "app.control.router", "local", "Control router to use (local or sqs)")
 	flag.DurationVar(&flags.app.controlRPCTimeout, "app.control.rpctimeout", time.Minute, "Timeout for control RPC")
 	flag.StringVar(&flags.app.pipeRouterURL, "app.pipe.router", "local", "Pipe router to use (local)")

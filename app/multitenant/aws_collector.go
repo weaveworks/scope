@@ -1,6 +1,7 @@
 package multitenant
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 	"io"
@@ -9,13 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"context"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/bluele/gcache"
-	"github.com/nats-io/nats"
 	opentracing "github.com/opentracing/opentracing-go"
 	otlog "github.com/opentracing/opentracing-go/log"
 	"github.com/prometheus/client_golang/prometheus"
@@ -84,17 +83,6 @@ var (
 		Name:      "reports_bytes_total",
 		Help:      "Total bytes stored in reports per user.",
 	}, []string{"user"})
-	topologiesDropped = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "scope",
-		Name:      "topologies_dropped_total",
-		Help:      "Total count of topologies dropped for being over limit.",
-	}, []string{"user", "topology"})
-
-	natsRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "scope",
-		Name:      "nats_requests_total",
-		Help:      "Total count of NATS requests.",
-	}, []string{"method", "status_code"})
 
 	flushDuration = instrument.NewHistogramCollectorFromOpts(prometheus.HistogramOpts{
 		Namespace: "scope",
@@ -113,8 +101,6 @@ func registerAWSCollectorMetrics() {
 	prometheus.MustRegister(reportSizeHistogram)
 	prometheus.MustRegister(reportsPerUser)
 	prometheus.MustRegister(reportSizePerUser)
-	prometheus.MustRegister(topologiesDropped)
-	prometheus.MustRegister(natsRequests)
 	flushDuration.Register()
 }
 
@@ -133,32 +119,16 @@ type ReportStore interface {
 
 // AWSCollectorConfig has everything we need to make an AWS collector.
 type AWSCollectorConfig struct {
-	UserIDer       UserIDer
 	DynamoDBConfig *aws.Config
 	DynamoTable    string
 	S3Store        *S3Store
-	StoreInterval  time.Duration
-	NatsHost       string
-	MemcacheClient *MemcacheClient
-	Window         time.Duration
-	MaxTopNodes    int
-	CollectorAddr  string
 }
 
 type awsCollector struct {
-	cfg       AWSCollectorConfig
+	liveCollector
+	awsCfg    AWSCollectorConfig
 	db        *dynamodb.DynamoDB
-	merger    app.Merger
 	inProcess inProcessStore
-	pending   sync.Map
-	ticker    *time.Ticker
-
-	nats        *nats.Conn
-	waitersLock sync.Mutex
-	waiters     map[watchKey]*nats.Subscription
-
-	collectors   []string
-	lastResolved time.Time
 }
 
 // Shortcut reports:
@@ -177,43 +147,23 @@ type watchKey struct {
 
 // NewAWSCollector the elastic reaper of souls
 // https://github.com/aws/aws-sdk-go/wiki/common-examples
-func NewAWSCollector(config AWSCollectorConfig) (AWSCollector, error) {
+func NewAWSCollector(liveConfig LiveCollectorConfig, config AWSCollectorConfig) (AWSCollector, error) {
 	registerAWSCollectorMetricsOnce.Do(registerAWSCollectorMetrics)
-	var nc *nats.Conn
-	if config.NatsHost != "" {
-		if config.MemcacheClient == nil {
-			return nil, fmt.Errorf("Must supply memcache client when using nats")
-		}
-		var err error
-		nc, err = nats.Connect(config.NatsHost)
-		if err != nil {
-			return nil, err
-		}
-	}
 
 	// (window * report rate) * number of hosts per user * number of users
-	reportCacheSize := (int(config.Window.Seconds()) / 3) * 10 * 5
+	reportCacheSize := (int(liveConfig.Window.Seconds()) / 3) * 10 * 5
 	c := &awsCollector{
-		cfg:       config,
-		db:        dynamodb.New(session.New(config.DynamoDBConfig)),
-		merger:    app.NewFastMerger(),
-		inProcess: newInProcessStore(reportCacheSize, config.Window+reportQuantisationInterval),
-		nats:      nc,
-		waiters:   map[watchKey]*nats.Subscription{},
+		liveCollector: liveCollector{cfg: liveConfig},
+		awsCfg:        config,
+		db:            dynamodb.New(session.New(config.DynamoDBConfig)),
+		inProcess:     newInProcessStore(reportCacheSize, liveConfig.Window+reportQuantisationInterval),
 	}
-
-	// If given a StoreInterval we will be storing periodically; if not we only answer queries
-	if c.isCollector() {
-		c.ticker = time.NewTicker(config.StoreInterval)
-		go c.flushLoop()
+	err := c.liveCollector.init()
+	if err != nil {
+		return nil, err
 	}
+	c.tickCallbacks = append(c.tickCallbacks, c.flushPending)
 	return c, nil
-}
-
-func (c *awsCollector) flushLoop() {
-	for range c.ticker.C {
-		c.flushPending(context.Background())
-	}
 }
 
 // Range over all users (instances) that have pending reports and send to store
@@ -245,14 +195,7 @@ func (c *awsCollector) flushPending(ctx context.Context) {
 			entry := value.(*pendingEntry)
 
 			entry.Lock()
-			rpt := entry.report
-			entry.report = nil
-			if entry.older == nil {
-				entry.older = make([]*report.Report, c.cfg.Window/c.cfg.StoreInterval)
-			} else {
-				copy(entry.older[1:], entry.older) // move everything down one
-			}
-			entry.older[0] = rpt
+			rpt := entry.older[0]
 			entry.Unlock()
 
 			if rpt != nil {
@@ -274,7 +217,7 @@ func (c *awsCollector) flushPending(ctx context.Context) {
 
 // Close will flush pending data
 func (c *awsCollector) Close() {
-	c.ticker.Stop() // note this doesn't close the chan; goroutine keeps running
+	c.liveCollector.Close()
 	c.flushPending(context.Background())
 }
 
@@ -288,13 +231,13 @@ func (c *awsCollector) CreateTables() error {
 		return err
 	}
 	for _, s := range resp.TableNames {
-		if *s == c.cfg.DynamoTable {
+		if *s == c.awsCfg.DynamoTable {
 			return nil
 		}
 	}
 
 	params := &dynamodb.CreateTableInput{
-		TableName: aws.String(c.cfg.DynamoTable),
+		TableName: aws.String(c.awsCfg.DynamoTable),
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
 				AttributeName: aws.String(hourField),
@@ -325,7 +268,7 @@ func (c *awsCollector) CreateTables() error {
 			WriteCapacityUnits: aws.Int64(5),
 		},
 	}
-	log.Infof("Creating table %s", c.cfg.DynamoTable)
+	log.Infof("Creating table %s", c.awsCfg.DynamoTable)
 	_, err = c.db.CreateTable(params)
 	return err
 }
@@ -342,7 +285,7 @@ func (c *awsCollector) reportKeysInRange(ctx context.Context, userid string, row
 	err := instrument.TimeRequestHistogram(ctx, "DynamoDB.Query", dynamoRequestDuration, func(_ context.Context) error {
 		var err error
 		resp, err = c.db.Query(&dynamodb.QueryInput{
-			TableName: aws.String(c.cfg.DynamoTable),
+			TableName: aws.String(c.awsCfg.DynamoTable),
 			KeyConditions: map[string]*dynamodb.Condition{
 				hourField: {
 					AttributeValueList: []*dynamodb.AttributeValue{
@@ -423,7 +366,7 @@ func (c *awsCollector) getReports(ctx context.Context, userid string, reportKeys
 	if c.cfg.MemcacheClient != nil {
 		stores = append(stores, c.cfg.MemcacheClient)
 	}
-	stores = append(stores, c.cfg.S3Store)
+	stores = append(stores, c.awsCfg.S3Store)
 
 	var reports []report.Report
 	for _, store := range stores {
@@ -449,23 +392,6 @@ func (c *awsCollector) getReports(ctx context.Context, userid string, reportKeys
 		return nil, fmt.Errorf("Error fetching from s3, still have missing reports: %v", missing)
 	}
 	return reports, nil
-}
-
-// process a report from a probe which may be at an older version or overloaded
-func (c *awsCollector) massageReport(userid string, report report.Report) report.Report {
-	if c.cfg.MaxTopNodes > 0 {
-		max := c.cfg.MaxTopNodes
-		if len(report.Host.Nodes) > 1 {
-			max = max * len(report.Host.Nodes) // higher limit for merged reports
-		}
-		var dropped []string
-		report, dropped = report.DropTopologiesOver(max)
-		for _, name := range dropped {
-			topologiesDropped.WithLabelValues(userid, name).Inc()
-		}
-	}
-	report = report.Upgrade()
-	return report
 }
 
 // If we are running as a Query service, fetch data and merge into a report
@@ -583,7 +509,7 @@ func (c *awsCollector) HasHistoricReports() bool {
 // AdminSummary returns a string with some internal information about
 // the report, which may be useful to troubleshoot.
 func (c *awsCollector) AdminSummary(ctx context.Context, timestamp time.Time) (string, error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "awsCollector.Report")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "awsCollector.AdminSummary")
 	defer span.Finish()
 	userid, err := c.cfg.UserIDer(ctx)
 	if err != nil {
@@ -625,7 +551,7 @@ func calculateReportKeys(userid string, now time.Time) (string, string, string) 
 
 func (c *awsCollector) persistReport(ctx context.Context, userid, rowKey, colKey, reportKey string, buf []byte) error {
 	// Put in S3 and cache before index, so it is fetchable before it is discoverable
-	reportSize, err := c.cfg.S3Store.StoreReportBytes(ctx, reportKey, buf)
+	reportSize, err := c.awsCfg.S3Store.StoreReportBytes(ctx, reportKey, buf)
 	if err != nil {
 		return err
 	}
@@ -674,7 +600,7 @@ func (c *awsCollector) putItemInDynamo(rowKey, colKey, reportKey string) (*dynam
 	)
 	for {
 		resp, err = c.db.PutItem(&dynamodb.PutItemInput{
-			TableName: aws.String(c.cfg.DynamoTable),
+			TableName: aws.String(c.awsCfg.DynamoTable),
 			Item: map[string]*dynamodb.AttributeValue{
 				hourField: {
 					S: aws.String(rowKey),
@@ -699,106 +625,6 @@ func (c *awsCollector) putItemInDynamo(rowKey, colKey, reportKey string) (*dynam
 		break
 	}
 	return resp, err
-}
-
-func (c *awsCollector) Add(ctx context.Context, rep report.Report, buf []byte) error {
-	userid, err := c.cfg.UserIDer(ctx)
-	if err != nil {
-		return err
-	}
-	if c.cfg.StoreInterval == 0 {
-		return fmt.Errorf("--app.collector.store-interval must be non-zero")
-	}
-
-	// Shortcut reports are published to nats but not persisted -
-	// we'll get a full report from the same probe in a few seconds
-	if rep.Shortcut {
-		if c.nats != nil {
-			_, _, reportKey := calculateReportKeys(userid, time.Now())
-			_, err = c.cfg.MemcacheClient.StoreReportBytes(ctx, reportKey, buf)
-			if err != nil {
-				log.Warningf("Could not store shortcut %v in memcache: %v", reportKey, err)
-				// No point publishing on nats if cache store failed
-				return nil
-			}
-			err := c.nats.Publish(userid, []byte(reportKey))
-			natsRequests.WithLabelValues("Publish", instrument.ErrorCode(err)).Add(1)
-			if err != nil {
-				log.Errorf("Error sending shortcut report: %v", err)
-			}
-		}
-		return nil
-	}
-
-	rep = c.massageReport(userid, rep)
-	c.addToLive(ctx, userid, rep)
-
-	return nil
-}
-
-func (c *awsCollector) WaitOn(ctx context.Context, waiter chan struct{}) {
-	userid, err := c.cfg.UserIDer(ctx)
-	if err != nil {
-		log.Errorf("Error getting user id in WaitOn: %v", err)
-		return
-	}
-
-	if c.nats == nil {
-		return
-	}
-
-	sub, err := c.nats.SubscribeSync(userid)
-	natsRequests.WithLabelValues("SubscribeSync", instrument.ErrorCode(err)).Add(1)
-	if err != nil {
-		log.Errorf("Error subscribing for shortcuts: %v", err)
-		return
-	}
-
-	c.waitersLock.Lock()
-	c.waiters[watchKey{userid, waiter}] = sub
-	c.waitersLock.Unlock()
-
-	go func() {
-		for {
-			_, err := sub.NextMsg(natsTimeout)
-			if err == nats.ErrTimeout {
-				continue
-			}
-			natsRequests.WithLabelValues("NextMsg", instrument.ErrorCode(err)).Add(1)
-			if err != nil {
-				log.Debugf("NextMsg error: %v", err)
-				return
-			}
-			select {
-			case waiter <- struct{}{}:
-			default:
-			}
-		}
-	}()
-}
-
-func (c *awsCollector) UnWait(ctx context.Context, waiter chan struct{}) {
-	userid, err := c.cfg.UserIDer(ctx)
-	if err != nil {
-		log.Errorf("Error getting user id in WaitOn: %v", err)
-		return
-	}
-
-	if c.nats == nil {
-		return
-	}
-
-	c.waitersLock.Lock()
-	key := watchKey{userid, waiter}
-	sub := c.waiters[key]
-	delete(c.waiters, key)
-	c.waitersLock.Unlock()
-
-	err = sub.Unsubscribe()
-	natsRequests.WithLabelValues("Unsubscribe", instrument.ErrorCode(err)).Add(1)
-	if err != nil {
-		log.Errorf("Error on unsubscribe: %v", err)
-	}
 }
 
 type inProcessStore struct {
