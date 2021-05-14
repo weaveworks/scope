@@ -39,11 +39,37 @@ var (
 		Name:      "nats_requests_total",
 		Help:      "Total count of NATS requests.",
 	}, []string{"method", "status_code"})
+
+	reportReceivedSizeHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Namespace: "scope",
+		Name:      "report_received_size_bytes",
+		Help:      "Distribution of received report sizes",
+		Buckets:   prometheus.ExponentialBuckets(4096, 2.0, 10),
+	})
+	reportsReceivedPerUser = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "reports_received_total",
+		Help:      "Total count of received reports per user.",
+	}, []string{"user"})
+	shortcutsReceivedPerUser = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "shortcut_reports_received_total",
+		Help:      "Total count of received shortcut reports per user.",
+	}, []string{"user"})
+	reportReceivedSizePerUser = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "scope",
+		Name:      "reports_received_bytes_total",
+		Help:      "Total bytes received in reports per user.",
+	}, []string{"user"})
 )
 
 func registerLiveCollectorMetrics() {
 	prometheus.MustRegister(topologiesDropped)
 	prometheus.MustRegister(natsRequests)
+	prometheus.MustRegister(reportReceivedSizeHistogram)
+	prometheus.MustRegister(reportsReceivedPerUser)
+	prometheus.MustRegister(shortcutsReceivedPerUser)
+	prometheus.MustRegister(reportReceivedSizePerUser)
 }
 
 var registerLiveCollectorMetricsOnce sync.Once
@@ -169,9 +195,14 @@ func (c *liveCollector) Add(ctx context.Context, rep report.Report, buf []byte) 
 		return err
 	}
 
+	reportReceivedSizeHistogram.Observe(float64(len(buf)))
+	reportReceivedSizePerUser.WithLabelValues(userid).Add(float64(len(buf)))
+	reportsReceivedPerUser.WithLabelValues(userid).Inc()
+
 	// Shortcut reports are published to nats but not persisted -
 	// we'll get a full report from the same probe in a few seconds
 	if rep.Shortcut {
+		shortcutsReceivedPerUser.WithLabelValues(userid).Inc()
 		if c.nats != nil {
 			_, _, reportKey := calculateReportKeys(userid, time.Now())
 			_, err = c.cfg.MemcacheClient.StoreReportBytes(ctx, reportKey, buf)
