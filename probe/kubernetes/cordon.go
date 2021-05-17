@@ -3,7 +3,7 @@ Copied from
 
 	https://github.com/kubernetes/kubectl/blob/master/pkg/drain/cordon.go
 
-at commit f9460c53339c4bb60b20031e3c6125e8bac679e2 to add node cordon feature.	
+at commit f9460c53339c4bb60b20031e3c6125e8bac679e2 to add node cordon feature.
 */
 /*
 Copyright 2019 The Kubernetes Authors.
