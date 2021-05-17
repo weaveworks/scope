@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"regexp"
@@ -97,6 +98,7 @@ type probeFlags struct {
 	basicAuth              bool
 	username               string
 	password               string
+	passwordFilename       string
 	token                  string
 	httpListen             string
 	publishInterval        time.Duration
@@ -152,9 +154,10 @@ type appFlags struct {
 	logHTTP        bool
 	logHTTPHeaders bool
 
-	basicAuth bool
-	username  string
-	password  string
+	basicAuth        bool
+	username         string
+	password         string
+	passwordFilename string
 
 	weaveEnabled   bool
 	weaveAddr      string
@@ -295,6 +298,7 @@ func setupFlags(flags *flags) {
 	flag.BoolVar(&flags.probe.basicAuth, "probe.basicAuth", false, "Use basic authentication to authenticate with app")
 	flag.StringVar(&flags.probe.username, "probe.basicAuth.username", "admin", "Username for basic authentication")
 	flag.StringVar(&flags.probe.password, "probe.basicAuth.password", "admin", "Password for basic authentication")
+	flag.StringVar(&flags.probe.passwordFilename, "probe.basicAuth.password.filename", "", "Password filename for basic authentication. It overwrites probe.basicAuth.password")
 	flag.StringVar(&flags.probe.token, serviceTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.token, probeTokenFlag, "", "Token to authenticate with cloud.weave.works")
 	flag.StringVar(&flags.probe.httpListen, "probe.http.listen", "", "listen address for HTTP profiling and instrumentation server")
@@ -369,6 +373,7 @@ func setupFlags(flags *flags) {
 	flag.BoolVar(&flags.app.basicAuth, "app.basicAuth", false, "Enable basic authentication for app")
 	flag.StringVar(&flags.app.username, "app.basicAuth.username", "admin", "Username for basic authentication")
 	flag.StringVar(&flags.app.password, "app.basicAuth.password", "admin", "Password for basic authentication")
+	flag.StringVar(&flags.app.passwordFilename, "app.basicAuth.password.filename", "", "Password filename for basic authentication. It overwrites app.basicAuth.password")
 
 	flag.StringVar(&flags.app.weaveAddr, "app.weave.addr", app.DefaultWeaveURL, "Address on which to contact WeaveDNS")
 	flag.StringVar(&flags.app.weaveHostname, "app.weave.hostname", "", "Hostname to advertise in WeaveDNS")
@@ -488,6 +493,15 @@ func main() {
 		flags.app.password = password
 	}
 
+	passwordFilename := os.Getenv("BASIC_AUTH_PASSWORD_FILENAME")
+	if passwordFilename != "" {
+		flags.probe.passwordFilename = passwordFilename
+		flags.app.passwordFilename = passwordFilename
+	}
+
+	flags.probe.password = getPassword(flags.probe.password, flags.probe.passwordFilename)
+	flags.app.password = getPassword(flags.app.password, flags.app.passwordFilename)
+
 	if flags.dryRun {
 		return
 	}
@@ -505,4 +519,16 @@ func main() {
 		fmt.Printf("command '%s' not recognized", flags.mode)
 		os.Exit(1)
 	}
+}
+
+func getPassword(password string, passwordFilename string) string {
+	if passwordFilename == "" {
+		return password
+	}
+
+	b, err := ioutil.ReadFile(passwordFilename)
+	if err != nil {
+		log.Fatalf("Cannot read password from: %v, error: %v", passwordFilename, err)
+	}
+	return string(b)
 }
