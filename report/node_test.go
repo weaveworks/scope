@@ -1,6 +1,7 @@
 package report_test
 
 import (
+	"sort"
 	"testing"
 	"time"
 
@@ -179,4 +180,29 @@ func TestCounters(t *testing.T) {
 	if have := b; !reflect.DeepEqual(want, have) {
 		t.Errorf("Counters: %s", test.Diff(want, have))
 	}
+}
+
+func TestActiveControls(t *testing.T) {
+	mtime.NowForce(time.Now())
+	defer mtime.NowReset()
+
+	controls1 := []string{"bar", "foo"}
+	node1 := report.MakeNode("node1").WithLatestActiveControls(controls1...)
+	assert.Equal(t, controls1, node1.ActiveControls())
+	assert.Equal(t, controls1, sorted(node1.MergeActiveControls(node1).ActiveControls()))
+
+	node2 := report.MakeNode("node2")
+	assert.Equal(t, controls1, node1.MergeActiveControls(node2).ActiveControls())
+	assert.Equal(t, controls1, node2.MergeActiveControls(node1).ActiveControls())
+
+	controls2 := []string{"bar", "bor"}
+	controls3 := []string{"bar", "bor", "foo"}
+	node3 := report.MakeNode("node1").WithLatestActiveControls(controls2...)
+	assert.Equal(t, controls3, sorted(node1.MergeActiveControls(node3).ActiveControls()))
+	assert.Equal(t, controls3, sorted(node3.MergeActiveControls(node1).ActiveControls()))
+}
+
+func sorted(s []string) []string {
+	sort.Strings(s)
+	return s
 }

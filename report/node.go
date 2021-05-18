@@ -143,6 +143,37 @@ func (n Node) ActiveControls() []string {
 	return strings.Split(activeControls, ScopeDelim)
 }
 
+// MergeActiveControls merges the control lists from n and b
+func (n Node) MergeActiveControls(b Node) Node {
+	activeControlsB, tsB, foundB := b.Latest.LookupEntry(NodeActiveControls)
+	if !foundB { // nothing to merge
+		return n
+	}
+	activeControlsA, tsA, foundA := n.Latest.LookupEntry(NodeActiveControls)
+	if !foundA {
+		return n.WithLatest(NodeActiveControls, tsB, activeControlsB)
+	}
+	if activeControlsA == activeControlsB {
+		return n
+	}
+	// If we get here we have active controls in both n and b that are different
+	merged := make(map[string]struct{})
+	for _, c := range strings.Split(activeControlsA, ScopeDelim) {
+		merged[c] = struct{}{}
+	}
+	for _, c := range strings.Split(activeControlsB, ScopeDelim) {
+		merged[c] = struct{}{}
+	}
+	cs := make([]string, 0, len(merged))
+	for c := range merged {
+		cs = append(cs, c)
+	}
+	if tsA.Before(tsB) {
+		tsA = tsB
+	}
+	return n.WithLatest(NodeActiveControls, tsA, strings.Join(cs, ScopeDelim))
+}
+
 // WithParent returns a fresh copy of n, with one parent added
 func (n Node) WithParent(key, parent string) Node {
 	n.Parents = n.Parents.AddString(key, parent)
@@ -200,33 +231,7 @@ func (n Node) Merge(other Node) Node {
 
 	// Special case to merge controls from two different probes.
 	if topology == "host" {
-		controlString, _ := newNode.Latest.Lookup(NodeActiveControls)
-		activeControls := strings.Split(controlString, ScopeDelim)
-		// Host topology should have only two active controls.
-		// Length equals to 2 means controls were merged properly.
-		if len(activeControls) != 2 {
-			// Check if host_exec control is missing.
-			if !StringSet(activeControls).Contains("host_exec") {
-				activeControls = append(activeControls, "host_exec")
-				return newNode.
-					WithLatestActiveControls(activeControls...)
-			}
-			// Else control kubernetes_cordon_node or kubernetes_uncordon_node is missing.
-			// Merge controls from current node.
-			c, _ := n.Latest.Lookup(NodeActiveControls)
-			x := strings.Split(c, ScopeDelim)
-			activeControls = append(activeControls, x...)
-
-			// Merge controls from incoming node.
-			c, _ = other.Latest.Lookup(NodeActiveControls)
-			x = strings.Split(c, ScopeDelim)
-			activeControls = append(activeControls, x...)
-
-			// Use a StringSet to avoid duplicate controls from current and incoming node.
-			var final StringSet
-			return newNode.
-				WithLatestActiveControls(final.Add(activeControls...)...)
-		}
+		newNode = newNode.MergeActiveControls(other)
 	}
 
 	return newNode
