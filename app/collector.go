@@ -28,7 +28,7 @@ const reportQuantisationInterval = 3 * time.Second
 // Reporter is something that can produce reports on demand. It's a convenient
 // interface for parts of the app, and several experimental components.
 type Reporter interface {
-	Report(context.Context, time.Time) (report.Report, error)
+	Report(context.Context, time.Time) (report.Report, error) // must return an object that is OK to modify
 	HasReports(context.Context, time.Time) (bool, error)
 	HasHistoricReports() bool
 	AdminSummary(context.Context, time.Time) (string, error)
@@ -133,6 +133,7 @@ func (c *collector) Add(_ context.Context, rpt report.Report, _ []byte) error {
 
 // Report returns a merged report over all added reports. It implements
 // Reporter.
+// Note we copy return a copy in case callers modify the data.
 func (c *collector) Report(_ context.Context, timestamp time.Time) (report.Report, error) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
@@ -142,7 +143,7 @@ func (c *collector) Report(_ context.Context, timestamp time.Time) (report.Repor
 	if c.cached != nil && len(c.reports) > 0 {
 		oldest := timestamp.Add(-c.window)
 		if c.timestamps[0].After(oldest) {
-			return *c.cached, nil
+			return c.cached.Copy(), nil
 		}
 	}
 
@@ -155,7 +156,7 @@ func (c *collector) Report(_ context.Context, timestamp time.Time) (report.Repor
 
 	rpt := c.merger.Merge(c.reports)
 	c.cached = &rpt
-	return rpt, nil
+	return rpt.Copy(), nil
 }
 
 // HasReports indicates whether the collector contains reports between
@@ -244,7 +245,7 @@ type StaticCollector report.Report
 // Report returns a merged report over all added reports. It implements
 // Reporter.
 func (c StaticCollector) Report(context.Context, time.Time) (report.Report, error) {
-	return report.Report(c), nil
+	return report.Report(c).Copy(), nil
 }
 
 // Close is a no-op for the static collector
