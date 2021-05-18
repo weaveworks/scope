@@ -230,7 +230,7 @@ func (n Node) Merge(other Node) Node {
 	}
 
 	// Special case to merge controls from two different probes.
-	if topology == "host" {
+	if topology == Host {
 		newNode = newNode.MergeActiveControls(other)
 	}
 

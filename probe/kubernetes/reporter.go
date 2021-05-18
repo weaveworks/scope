@@ -722,7 +722,7 @@ func (r *Reporter) hostTopology() (report.Topology, error) {
 		}
 		result.AddNode(
 			report.MakeNode(report.MakeHostNodeID(n.Name)).
-				WithTopology("host").
+				WithTopology(report.Host).
 				WithLatestActiveControls(activeControl),
 		)
 	}
