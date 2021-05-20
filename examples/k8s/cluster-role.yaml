@@ -15,7 +15,6 @@ rules:
   - pods/log
   - replicationcontrollers
   - services
-  - nodes
   - namespaces
   - persistentvolumes
   - persistentvolumeclaims
@@ -95,3 +94,13 @@ rules:
   verbs:
   - list
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+  - update
+  - patch

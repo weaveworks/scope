@@ -21,6 +21,8 @@ const (
 	DeleteVolumeSnapshot = report.KubernetesDeleteVolumeSnapshot
 	ScaleUp              = report.KubernetesScaleUp
 	ScaleDown            = report.KubernetesScaleDown
+	CordonNode           = report.KubernetesCordonNode
+	UncordonNode         = report.KubernetesUncordonNode
 )
 
 // GroupName and version used by CRDs
@@ -474,6 +476,17 @@ func (r *Reporter) CaptureJob(f func(xfer.Request, string, string) xfer.Response
 	}
 }
 
+// CaptureNode is exported for testing
+func (r *Reporter) CaptureNode(f func(xfer.Request, string) xfer.Response) func(xfer.Request) xfer.Response {
+	return func(req xfer.Request) xfer.Response {
+		nodeID, ok := report.ParseHostNodeID(req.NodeID)
+		if !ok {
+			return xfer.ResponseErrorf("Invalid ID: %s", req.NodeID)
+		}
+		return f(req, nodeID)
+	}
+}
+
 // ScaleUp is the control to scale up a deployment
 func (r *Reporter) ScaleUp(req xfer.Request, namespace, id string) xfer.Response {
 	return xfer.ResponseError(r.client.ScaleUp(namespace, id))
@@ -482,6 +495,16 @@ func (r *Reporter) ScaleUp(req xfer.Request, namespace, id string) xfer.Response
 // ScaleDown is the control to scale up a deployment
 func (r *Reporter) ScaleDown(req xfer.Request, namespace, id string) xfer.Response {
 	return xfer.ResponseError(r.client.ScaleDown(namespace, id))
+}
+
+// CordonNode is the control to cordon a node.
+func (r *Reporter) CordonNode(req xfer.Request, name string) xfer.Response {
+	return xfer.ResponseError(r.client.CordonNode(name, true))
+}
+
+// UncordonNode is the control to un-cordon a node.
+func (r *Reporter) UncordonNode(req xfer.Request, name string) xfer.Response {
+	return xfer.ResponseError(r.client.CordonNode(name, false))
 }
 
 func (r *Reporter) registerControls() {
@@ -494,6 +517,8 @@ func (r *Reporter) registerControls() {
 		DeleteVolumeSnapshot: r.CaptureVolumeSnapshot(r.deleteVolumeSnapshot),
 		ScaleUp:              r.CaptureDeployment(r.ScaleUp),
 		ScaleDown:            r.CaptureDeployment(r.ScaleDown),
+		CordonNode:           r.CaptureNode(r.CordonNode),
+		UncordonNode:         r.CaptureNode(r.UncordonNode),
 	}
 	r.handlerRegistry.Batch(nil, controls)
 }
@@ -508,6 +533,8 @@ func (r *Reporter) deregisterControls() {
 		DeleteVolumeSnapshot,
 		ScaleUp,
 		ScaleDown,
+		CordonNode,
+		UncordonNode,
 	}
 	r.handlerRegistry.Batch(controls, nil)
 }

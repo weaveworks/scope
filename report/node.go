@@ -143,6 +143,37 @@ func (n Node) ActiveControls() []string {
 	return strings.Split(activeControls, ScopeDelim)
 }
 
+// MergeActiveControls merges the control lists from n and b
+func (n Node) MergeActiveControls(b Node) Node {
+	activeControlsB, tsB, foundB := b.Latest.LookupEntry(NodeActiveControls)
+	if !foundB { // nothing to merge
+		return n
+	}
+	activeControlsA, tsA, foundA := n.Latest.LookupEntry(NodeActiveControls)
+	if !foundA {
+		return n.WithLatest(NodeActiveControls, tsB, activeControlsB)
+	}
+	if activeControlsA == activeControlsB {
+		return n
+	}
+	// If we get here we have active controls in both n and b that are different
+	merged := make(map[string]struct{})
+	for _, c := range strings.Split(activeControlsA, ScopeDelim) {
+		merged[c] = struct{}{}
+	}
+	for _, c := range strings.Split(activeControlsB, ScopeDelim) {
+		merged[c] = struct{}{}
+	}
+	cs := make([]string, 0, len(merged))
+	for c := range merged {
+		cs = append(cs, c)
+	}
+	if tsA.Before(tsB) {
+		tsA = tsB
+	}
+	return n.WithLatest(NodeActiveControls, tsA, strings.Join(cs, ScopeDelim))
+}
+
 // WithParent returns a fresh copy of n, with one parent added
 func (n Node) WithParent(key, parent string) Node {
 	n.Parents = n.Parents.AddString(key, parent)
@@ -173,7 +204,7 @@ func (n Node) WithChild(child Node) Node {
 	return n
 }
 
-// Merge mergses the individual components of a node and returns a
+// Merge merges the individual components of a node and returns a
 // fresh node.
 func (n Node) Merge(other Node) Node {
 	id := n.ID
@@ -186,7 +217,8 @@ func (n Node) Merge(other Node) Node {
 	} else if other.Topology != "" && topology != other.Topology {
 		panic("Cannot merge nodes with different topology types: " + topology + " != " + other.Topology)
 	}
-	return Node{
+
+	newNode := Node{
 		ID:        id,
 		Topology:  topology,
 		Sets:      n.Sets.Merge(other.Sets),
@@ -196,6 +228,13 @@ func (n Node) Merge(other Node) Node {
 		Parents:   n.Parents.Merge(other.Parents),
 		Children:  n.Children.Merge(other.Children),
 	}
+
+	// Special case to merge controls from two different probes.
+	if topology == Host {
+		newNode = newNode.MergeActiveControls(other)
+	}
+
+	return newNode
 }
 
 // UnsafeUnMerge removes data from n that would be added by merging other,

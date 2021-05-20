@@ -95,6 +95,8 @@ const (
 	KubernetesCloneVolumeSnapshot  = "kubernetes_clone_volume_snapshot"
 	KubernetesDeleteVolumeSnapshot = "kubernetes_delete_volume_snapshot"
 	KubernetesDescribe             = "kubernetes_describe"
+	KubernetesCordonNode           = "kubernetes_cordon_node"
+	KubernetesUncordonNode         = "kubernetes_uncordon_node"
 	// probe/awsecs
 	ECSCluster             = "ecs_cluster"
 	ECSCreatedAt           = "ecs_created_at"
