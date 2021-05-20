@@ -27,9 +27,12 @@ GO_BUILD_FLAGS=-mod vendor -ldflags "-extldflags \"-static\" -X main.version=$(S
 ifeq ($(GOARCH),arm)
 GO_ENV+=CGO_ENABLED=1
 ARM_CC=CC=/usr/bin/arm-linux-gnueabihf-gcc
+else ifeq ($(GOARCH),s390x)
+GO_ENV+=CGO_ENABLED=1
+S390X_CC=CC=/usr/bin/s390x-linux-gnu-gcc
 endif
 
-GO=env $(GO_ENV) $(ARM_CC) go
+GO=env $(GO_ENV) $(ARM_CC) $(S390X_CC) go
 
 NO_CROSS_COMP=unset GOOS GOARCH
 GO_HOST=$(NO_CROSS_COMP); env $(GO_ENV) go
