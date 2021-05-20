@@ -64,7 +64,7 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 	}
 	rowKey, colKey := calculateDynamoKeys(userID, now)
 
-	interval := e.reportInterval(rep)
+	interval, nodes := e.scanReport(rep)
 	// Cache the last-known value of interval for this user, and use
 	// it if we didn't find one in this report.
 	e.Lock()
@@ -78,7 +78,7 @@ func (e *BillingEmitter) Add(ctx context.Context, rep report.Report, buf []byte)
 		}
 	}
 	// Billing takes an integer number of seconds, so keep track of the amount lost to rounding
-	nodeSeconds := interval.Seconds()*float64(len(rep.Host.Nodes)) + e.rounding[userID]
+	nodeSeconds := interval.Seconds()*float64(nodes) + e.rounding[userID]
 	rounding := nodeSeconds - math.Floor(nodeSeconds)
 	e.rounding[userID] = rounding
 	e.Unlock()
@@ -151,11 +151,20 @@ func intervalFromCommand(cmd string) string {
 	return ""
 }
 
-// reportInterval tries to find the custom report interval of this report. If
-// it is malformed, or not set, it returns zero.
-func (e *BillingEmitter) reportInterval(r report.Report) time.Duration {
+// scanReport counts the nodes tries to find any custom report interval
+// of this report. If it is malformed, or not set, it returns zero.
+func (e *BillingEmitter) scanReport(r report.Report) (time.Duration, int) {
+	nHosts := 0
+	// We scan the host nodes looking for ones reported by a per-node probe;
+	// the Kubernetes cluster probe also makes host nodes but they only have a few fields set
+	for _, h := range r.Host.Nodes {
+		// Relying here on Uptime being something that changes in each report, hence will be in a delta report
+		if _, ok := h.Latest.Lookup(report.Uptime); ok {
+			nHosts++
+		}
+	}
 	if r.Window != 0 {
-		return r.Window
+		return r.Window, nHosts
 	}
 	var inter string
 	for _, c := range r.Container.Nodes {
@@ -175,13 +184,13 @@ func (e *BillingEmitter) reportInterval(r report.Report) time.Duration {
 		}
 	}
 	if inter == "" {
-		return 0
+		return 0, nHosts
 	}
 	d, err := time.ParseDuration(inter)
 	if err != nil {
-		return 0
+		return 0, nHosts
 	}
-	return d
+	return d, nHosts
 }
 
 // Tries to determine if this report came from a host running Weave Net
