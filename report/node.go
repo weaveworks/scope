@@ -218,6 +218,12 @@ func (n Node) Merge(other Node) Node {
 		panic("Cannot merge nodes with different topology types: " + topology + " != " + other.Topology)
 	}
 
+	// Special case to merge controls from two different probes.
+	// Do this first, then the value we want will be picked as newest by n.Latest.Merge().
+	if topology == Host {
+		n = n.MergeActiveControls(other)
+	}
+
 	newNode := Node{
 		ID:        id,
 		Topology:  topology,
@@ -227,11 +233,6 @@ func (n Node) Merge(other Node) Node {
 		Metrics:   n.Metrics.Merge(other.Metrics),
 		Parents:   n.Parents.Merge(other.Parents),
 		Children:  n.Children.Merge(other.Children),
-	}
-
-	// Special case to merge controls from two different probes.
-	if topology == Host {
-		newNode = newNode.MergeActiveControls(other)
 	}
 
 	return newNode
