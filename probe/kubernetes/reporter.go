@@ -661,18 +661,18 @@ func (r *Reporter) podTopology(services []Service, deployments []Deployment, dae
 				report.MakeCronJobNodeID(cronJob.UID()),
 			))
 		}
-		for _, job := range jobs {
-			selector, err := job.Selector()
-			if err != nil {
-				return pods, err
-			}
-			selectors = append(selectors, match(
-				job.Namespace(),
-				selector,
-				report.Job,
-				report.MakeJobNodeID(job.UID()),
-			))
+	}
+	for _, job := range jobs {
+		selector, err := job.Selector()
+		if err != nil {
+			return pods, err
 		}
+		selectors = append(selectors, match(
+			job.Namespace(),
+			selector,
+			report.Job,
+			report.MakeJobNodeID(job.UID()),
+		))
 	}
 
 	err := r.client.WalkPods(func(p Pod) error {
