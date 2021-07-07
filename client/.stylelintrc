@@ -9,7 +9,7 @@
     "block-no-empty": null,
     "color-named": "never",
     "color-no-hex": true,
-    "function-blacklist": ["/^rgb/", "/^hsl/"],
+    "function-disallowed-list": ["/^rgb/", "/^hsl/"],
     "no-empty-source": null,
     "no-descending-specificity": null,
     "no-duplicate-selectors": null,
