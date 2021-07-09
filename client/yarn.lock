@@ -3740,7 +3740,7 @@ fb-watchman@^2.0.0:
   dependencies:
     bser "^2.0.0"
 
-fbjs@^0.8.16, fbjs@^0.8.9:
+fbjs@^0.8.9:
   version "0.8.16"
   resolved "https://registry.yarnpkg.com/fbjs/-/fbjs-0.8.16.tgz#5e67432f550dc41b572bf55847b8aca64e5337db"
   dependencies:
@@ -4245,10 +4245,6 @@ hmac-drbg@^1.0.1:
     hash.js "^1.0.3"
     minimalistic-assert "^1.0.0"
     minimalistic-crypto-utils "^1.0.1"
-
-hoist-non-react-statics@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-1.2.0.tgz#aa448cf0986d55cc40773b17174b7dd066cb7cfb"
 
 hoist-non-react-statics@^3.3.0, hoist-non-react-statics@^3.3.2:
   version "3.3.2"
@@ -6786,15 +6782,7 @@ prompts@^2.0.1:
     kleur "^3.0.2"
     sisteransi "^1.0.0"
 
-prop-types@15.6.0:
-  version "15.6.0"
-  resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.6.0.tgz#ceaf083022fc46b4a35f69e13ef75aed0d639856"
-  dependencies:
-    fbjs "^0.8.16"
-    loose-envify "^1.3.1"
-    object-assign "^4.1.1"
-
-prop-types@15.7.2, prop-types@15.x, prop-types@^15.5.10, prop-types@^15.5.4, prop-types@^15.5.6, prop-types@^15.5.8, prop-types@^15.6.2, prop-types@^15.7.2:
+prop-types@15.7.2, prop-types@15.x, prop-types@^15.5.10, prop-types@^15.5.4, prop-types@^15.5.8, prop-types@^15.6.2, prop-types@^15.7.2:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
   dependencies:
@@ -7048,18 +7036,6 @@ react-required-if@^1.0.3:
 react-resize-aware@2.7.0:
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/react-resize-aware/-/react-resize-aware-2.7.0.tgz#1bb6d0b45a234d94d412b5c3f5e9d2ffbf973429"
-
-react-router@3.2.0:
-  version "3.2.0"
-  resolved "https://registry.yarnpkg.com/react-router/-/react-router-3.2.0.tgz#62b6279d589b70b34e265113e4c0a9261a02ed36"
-  dependencies:
-    create-react-class "^15.5.1"
-    history "^3.0.0"
-    hoist-non-react-statics "^1.2.0"
-    invariant "^2.2.1"
-    loose-envify "^1.2.0"
-    prop-types "^15.5.6"
-    warning "^3.0.0"
 
 react-router@^3.2.6:
   version "3.2.6"
@@ -8627,10 +8603,10 @@ watchpack@^1.7.4:
     chokidar "^3.4.1"
     watchpack-chokidar2 "^2.0.1"
 
-weaveworks-ui-components@^0.22.6:
-  version "0.22.6"
-  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.22.6.tgz#64d5108fe3a5c5798a4525866080828b27ea406c"
-  integrity sha512-Vrb7mjs8AEH1MLcx38X/bGjRmGCkwOpHq8g5Nze6EU5Nv9zDECTNdb9J6OHcJFjqgls4aeUncUTSzemK+EPNwg==
+weaveworks-ui-components@^0.22.8:
+  version "0.22.8"
+  resolved "https://registry.yarnpkg.com/weaveworks-ui-components/-/weaveworks-ui-components-0.22.8.tgz#94b61d46b9f8ae6db3c14bbdfc389993305526d7"
+  integrity sha512-p/z/94J7tKQBjtXIqhWM7GyZW1rhfphRBcLwc8SlSzbx5V166qOZ0kMMiUH082d2JHUo7ccFiclvhSbq9xV6XA==
   dependencies:
     classnames "2.2.5"
     d3-drag "1.2.3"
@@ -8640,12 +8616,12 @@ weaveworks-ui-components@^0.22.6:
     d3-shape "1.2.2"
     intersperse "1.0.0"
     polished "1.9.0"
-    prop-types "15.6.0"
+    prop-types "^15.7.2"
     react-input-autosize "2.2.1"
     react-motion "0.5.2"
     react-required-if "^1.0.3"
     react-resize-aware "2.7.0"
-    react-router "3.2.0"
+    react-router "^3.2.6"
 
 webidl-conversions@^5.0.0:
   version "5.0.0"
