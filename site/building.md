@@ -31,7 +31,7 @@ Scope unit tests for `probe` and `app` components can be run via:
 
     make tests
 
-Similarly the frontent client tests can be run via:
+Similarly the frontend client tests can be run via:
 
     make client-test
 
