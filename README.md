@@ -10,25 +10,25 @@
 Weave Scope automatically generates a map of your application, enabling you to
 intuitively understand, monitor, and control your containerized, microservices-based application.
 
-### Understand your Docker containers in real time
+## Understand your Docker containers in real time
 
 <img src="imgs/topology.png" width="200" alt="Map you architecture" align="right">
 
 Choose an overview of your container infrastructure, or focus on a specific microservice. Easily identify and correct issues to ensure the stability and performance of your containerized applications.
 
-### Contextual details and deep linking
+## Contextual details and deep linking
 
 <img src="imgs/selected.png" width="200" alt="Focus on a single container" align="right">
 
 View contextual metrics, tags, and metadata for your containers.  Effortlessly navigate between processes inside your container to hosts your containers run on, arranged in expandable, sortable tables.  Easily find the container using the most CPU or memory for a given host or service.
 
-### Interact with and manage containers
+## Interact with and manage containers
 
 <img src="imgs/terminals.png" width="200" alt="Launch a command line." align="right">
 
 Interact with your containers directly: pause, restart, and stop containers. Launch a command line. All without leaving the scope browser window.
 
-### Extend and customize via plugins
+## Extend and customize via plugins
 
 Add custom details or interactions for your hosts, containers, and/or processes by creating Scope plugins. Or, just choose from some that others have already written at the GitHub [Weaveworks Scope Plugins](https://github.com/weaveworks-plugins/) organization.
 
@@ -51,7 +51,7 @@ scope launch
 ```
 
 This script downloads and runs a recent Scope image from Docker Hub.
-Now, open your web browser to **http://localhost:4040**.
+Now, open your web browser to **<http://localhost:4040>**.
 
 For instructions on installing Scope on [Kubernetes](https://www.weave.works/docs/scope/latest/installing/#k8s), [DCOS](https://www.weave.works/docs/scope/latest/installing/#dcos), or [ECS](https://www.weave.works/docs/scope/latest/installing/#ecs), see [the docs](https://www.weave.works/docs/scope/latest/introducing/).
 
@@ -71,7 +71,7 @@ If you have any questions, feedback, or problems with Scope:
   - Send an email to [Scope community group](https://groups.google.com/forum/#!forum/scope-community)
 - Meetings and events
   - Join the [Weave User Group](https://www.meetup.com/pro/Weave/) and get invited to online talks, hands-on training and meetups in your area
-  - Join (and read up on) the regular [Scope community meetings](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/edit)
+  - Join (and read up on) the regular [Scope community meetings](https://docs.google.com/document/d/103_60TuEkfkhz_h2krrPJH8QOx-vRnPpbcCZqrddE1s/edit) - currently on hold.
 - Contributing
   - Find out how to [contribute to Scope](CONTRIBUTING.md)
   - [File an issue](https://github.com/weaveworks/scope/issues/new) or make a pull request for one of our [good first issues](https://github.com/weaveworks/scope/issues?q=is%3Aissue+is%3Aopen+label%3Agood-first-issue)
@@ -81,5 +81,6 @@ Your feedback is always welcome!
 We follow the [CNCF Code of Conduct](CODE-OF-CONDUCT.md).
 
 ## License
+
 Scope is licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full license text.  
 Find more details about the licenses of vendored code in [VENDORED_CODE.md](VENDORED_CODE.md).

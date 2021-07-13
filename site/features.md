@@ -4,7 +4,7 @@ menu_order: 15
 search_type: Documentation
 ---
 
-Browse the current feature set for Scope with links to relevant indepth topics:
+Browse the current feature set for Scope with links to relevant in-depth topics:
 
  * [Topology Mapping](#topology-mapping)
  * [Views in Scope](#views)
@@ -24,7 +24,7 @@ Scope builds logical topologies of your application and infrastructure.  A topol
 
 ## <a name="views"></a>Views in Scope
 
-Views in Scope can be thought of as high-level filters on your containerized microservices as they run in the cloud. They are categorized into: Processes, Containers, Orchestrators, and Hosts. The Orchestrator view is context-sensitive, and as a result, if an app is running in Kubernetes, then Scope displays Pods, Replica Sets, Deployments, and Services that allow you to drilldown on Kubernetes clusters. 
+Views in Scope can be thought of as high-level filters on your containerized microservices as they run in the cloud. They are categorized into: Processes, Containers, Orchestrators, and Hosts. The Orchestrator view is context-sensitive, and as a result, if an app is running in Kubernetes, then Scope displays Pods, Replica Sets, Deployments, and Services that allow you to drill down on Kubernetes clusters.
 
 !['Kubernetes Views in Scope'](images/kubernetes-view.png)
 
