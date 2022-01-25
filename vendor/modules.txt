@@ -439,7 +439,7 @@ github.com/weaveworks/ps
 # github.com/weaveworks/tcptracer-bpf v0.0.0-20200114145059-84a08fc667c0
 ## explicit
 github.com/weaveworks/tcptracer-bpf/pkg/tracer
-# github.com/weaveworks/weave v2.3.1-0.20180427133448-4da998ab4507+incompatible
+# github.com/weaveworks/weave v2.6.3+incompatible
 ## explicit
 github.com/weaveworks/weave/common
 # github.com/willdonnelly/passwd v0.0.0-20141013001024-7935dab3074c
@@ -704,8 +704,8 @@ k8s.io/client-go/util/retry
 ## explicit
 k8s.io/klog
 # k8s.io/kube-openapi v0.0.0-20180108222231-a07b7bbb58e7
-k8s.io/kube-openapi/pkg/util/proto
 ## explicit
+k8s.io/kube-openapi/pkg/util/proto
 # k8s.io/kubernetes v1.13.0
 ## explicit
 k8s.io/kubernetes/pkg/kubectl/describe
