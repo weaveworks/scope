@@ -56,11 +56,23 @@ func (r *Reporter) containerTopology() (report.Topology, error) {
 	return result, nil
 }
 
+func containerStateString(s client.ContainerState) string {
+	switch s {
+	case client.ContainerState_CONTAINER_CREATED:
+		return report.StateCreated
+	case client.ContainerState_CONTAINER_RUNNING:
+		return report.StateRunning
+	case client.ContainerState_CONTAINER_EXITED:
+		return report.StateExited
+	}
+	return "unknown"
+}
+
 func getNode(c *client.Container) report.Node {
 	result := report.MakeNodeWith(report.MakeContainerNodeID(c.Id), map[string]string{
 		docker.ContainerName:         c.Metadata.Name,
 		docker.ContainerID:           c.Id,
-		docker.ContainerState:        fmt.Sprintf("%v", c.State),
+		docker.ContainerState:        containerStateString(c.State),
 		docker.ContainerRestartCount: fmt.Sprintf("%v", c.Metadata.Attempt),
 		docker.ImageID:               c.ImageRef,
 		docker.ImageName:             c.Image.Image,
