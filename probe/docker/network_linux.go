@@ -1,4 +1,5 @@
 // withNetNS function requires a fix that first appeared in Go version 1.10
+//go:build go1.10
 // +build go1.10
 
 package docker

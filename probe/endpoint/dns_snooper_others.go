@@ -1,3 +1,4 @@
+//go:build darwin || arm || arm64 || s390x
 // +build darwin arm arm64 s390x
 
 // Cross-compiling the snooper requires having pcap binaries,
