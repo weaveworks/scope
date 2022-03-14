@@ -3,7 +3,7 @@ version: 2
 defaults: &defaults
   working_directory: /go/src/github.com/weaveworks/scope
   docker:
-    - image: weaveworks/scope-backend-build:build-updates-1b1c9664
+    - image: bboreham/scope-backend-build:go-1-17-8-87988e5a
 
 client-defaults: &client-defaults
   working_directory: /home/weave/scope
