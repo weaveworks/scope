@@ -1,4 +1,4 @@
-FROM golang:1.16.2
+FROM golang:1.17.8-buster
 ENV SCOPE_SKIP_UI_ASSETS true
 RUN set -eux; \
    export arch_val="$(dpkg --print-architecture)"; \
@@ -7,22 +7,14 @@ RUN set -eux; \
      apt-get install -y libpcap-dev time file shellcheck git gcc-arm-linux-gnueabihf curl build-essential gcc-s390x-linux-gnu; \
    else \
      apt-get install -y libpcap-dev time file shellcheck git curl build-essential; \
-   fi; \
-   \
+   fi && \
    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN go clean -i net && \
-	go install -tags netgo std && \
-   export arch_val="$(dpkg --print-architecture)"; \
-   if [ "$arch_val" != "ppc64el" ] && [ "$arch_val" != "s390x" ]; then \
-	go install -race -tags netgo std; \
-   fi; \
-    go get -tags netgo \
+RUN go get -tags netgo \
 		github.com/fzipp/gocyclo \
 		golang.org/x/lint/golint \
 		github.com/kisielk/errcheck \
 		github.com/client9/misspell/cmd/misspell && \
-	chmod a+wr --recursive /usr/local/go && \
 	rm -rf /go/pkg/ /go/src/
 
    # Only install shfmt on amd64, as the version v1.3.0 isn't supported for ppc64le

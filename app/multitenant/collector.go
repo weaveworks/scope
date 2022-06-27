@@ -107,6 +107,7 @@ type pendingEntry struct {
 	older  []*report.Report
 }
 
+// NewLiveCollector makes a new LiveCollector from the supplied config.
 func NewLiveCollector(config LiveCollectorConfig) (app.Collector, error) {
 	c := &liveCollector{
 		cfg: config,
