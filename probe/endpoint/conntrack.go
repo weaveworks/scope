@@ -4,6 +4,8 @@
 package endpoint
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -160,6 +162,10 @@ func (c *conntrackWalker) run() {
 				return
 			}
 			if c.relevant(f) {
+				s, _ := json.Marshal(f)
+				var out bytes.Buffer
+				json.Indent(&out, s, "", "\t")
+				log.Infof("conntrack get connection: %v", out.String())
 				c.handleFlow(f)
 			}
 		}

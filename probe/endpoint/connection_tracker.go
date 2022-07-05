@@ -38,7 +38,7 @@ func newConnectionTracker(conf ReporterConfig) connectionTracker {
 			go feedEBPFInitialState(conf, et)
 			return ct
 		}
-		log.Warnf("Error setting up the eBPF tracker, falling back to proc scanning: %v", err)
+		log.Warnf("Error setting up the eeeeeeeeeeeeeeeeBPF tracker, falling back to proc scanning: %v", err)
 	}
 	ct.useProcfs()
 	return ct

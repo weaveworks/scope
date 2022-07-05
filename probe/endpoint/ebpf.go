@@ -5,6 +5,7 @@ package endpoint
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -193,6 +194,10 @@ func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 	if e.Type == tracer.EventFdInstall {
 		t.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
 	} else {
+		s, _ := json.Marshal(e)
+		var out bytes.Buffer
+		json.Indent(&out, s, "", "\t")
+		log.Infof("eBPF get connection event: %v", out.String())
 		tuple := makeFourTuple(e.SAddr, e.DAddr, e.SPort, e.DPort)
 		t.handleConnection(e.Type, tuple, int(e.Pid), e.NetNS)
 	}

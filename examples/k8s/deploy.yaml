@@ -28,7 +28,7 @@ spec:
           args:
             - '--no-probe'
           env: []
-          image: weaveworks/scope:1.13.2
+          image: weaveworks/scope:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 4040

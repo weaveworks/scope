@@ -65,3 +65,5 @@ prog/externalui/externalui.go
 client/build-pkg
 client/bundle
 client/.yarnrc
+
+.idea/*

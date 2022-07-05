@@ -36,7 +36,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-          image: weaveworks/scope:1.13.2
+          image: weaveworks/scope:latest
           imagePullPolicy: IfNotPresent
           resources:
             requests:

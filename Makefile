@@ -254,3 +254,13 @@ deps:
 	$(GO) get -u -f \
 		github.com/mattn/goveralls \
 		github.com/2opremio/trifles/wscat
+
+modtest:
+	@./scope stop
+	@./scope launch
+	@docker logs -f weavescope
+
+moddebug:
+	@./scope stop
+	@./scope launch --debug
+	@docker logs -f weavescope
