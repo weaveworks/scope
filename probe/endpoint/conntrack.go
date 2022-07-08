@@ -162,10 +162,12 @@ func (c *conntrackWalker) run() {
 				return
 			}
 			if c.relevant(f) {
+				// ========= PRINT ==========
 				s, _ := json.Marshal(f)
 				var out bytes.Buffer
 				json.Indent(&out, s, "", "\t")
-				log.Infof("conntrack get connection: %v", out.String())
+				log.Debugf("conntrack get connection: %v", out.String())
+				// ========= PRINT ==========
 				c.handleFlow(f)
 			}
 		}
