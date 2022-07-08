@@ -5,7 +5,6 @@ package endpoint
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -163,6 +162,8 @@ func newEbpfTracker() (*EbpfTracker, error) {
 	return tracker, nil
 }
 
+var reverseIPv4Event = map[int]string{1: "Connect", 2: "Accept", 3: "Close", 4: "FdInstall"}
+
 // TCPEventV4 handles IPv4 TCP events from the eBPF tracer
 func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 	if t.debugBPF {
@@ -195,10 +196,11 @@ func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 		t.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
 	} else {
 		// ========= PRINT ==========
-		s, _ := json.Marshal(e)
-		var out bytes.Buffer
-		json.Indent(&out, s, "", "\t")
-		log.Debugf("eBPF get connection event: %v", out.String())
+		//s, _ := json.Marshal(e)
+		//var out bytes.Buffer
+		//json.Indent(&out, s, "", "\t")
+		//log.Debugf("eBPF get connection event: %v", out.String())
+		log.Debugf("[CONN] [eBPF] {%v %v %v %v %v %v %v %v %v %v %v %v}", e.Timestamp, e.CPU, reverseIPv4Event[int(e.Type)], e.Pid, e.SAddr, e.Comm, e.SAddr, e.DAddr, e.SPort, e.DPort, e.NetNS, e.Fd)
 		// ========= PRINT ==========
 		tuple := makeFourTuple(e.SAddr, e.DAddr, e.SPort, e.DPort)
 		t.handleConnection(e.Type, tuple, int(e.Pid), e.NetNS)

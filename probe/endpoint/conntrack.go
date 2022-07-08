@@ -4,8 +4,6 @@
 package endpoint
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -119,6 +117,8 @@ func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
 	return !(c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0)
 }
 
+var reverseType = map[int]string{1: "New", 1 << 1: "Update", 1 << 2: "Destroy"}
+
 func (c *conntrackWalker) run() {
 	existingFlows, err := conntrack.ConnectionsSize(c.bufferSize)
 	if err != nil {
@@ -163,10 +163,11 @@ func (c *conntrackWalker) run() {
 			}
 			if c.relevant(f) {
 				// ========= PRINT ==========
-				s, _ := json.Marshal(f)
-				var out bytes.Buffer
-				json.Indent(&out, s, "", "\t")
-				log.Debugf("conntrack get connection: %v", out.String())
+				//s, _ := json.Marshal(f)
+				//var out bytes.Buffer
+				//json.Indent(&out, s, "", "\t")
+				//log.Debugf("conntrack get connection: %v", out.String())
+				log.Infof("[CONN] [conntrack] {%v %v %v %v %v %v %v %v %v %v %v %v}", f.MsgType, reverseType[int(f.MsgType)], f.TCPState, f.Orig.Src, f.Orig.SrcPort, f.Orig.Dst, f.Orig.DstPort, f.Reply.Src, f.Reply.SrcPort, f.Reply.Dst, f.Reply.DstPort, f.CtId)
 				// ========= PRINT ==========
 				c.handleFlow(f)
 			}
