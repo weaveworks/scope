@@ -200,7 +200,7 @@ func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 		//var out bytes.Buffer
 		//json.Indent(&out, s, "", "\t")
 		//log.Debugf("eBPF get connection event: %v", out.String())
-		log.Debugf("[CONN] [eBPF] {%v %v %v %v %v %v %v %v %v %v %v %v}", e.Timestamp, e.CPU, reverseIPv4Event[int(e.Type)], e.Pid, e.SAddr, e.Comm, e.SAddr, e.DAddr, e.SPort, e.DPort, e.NetNS, e.Fd)
+		log.Infof("[CONN] [eBPF] {%v %v %v %v %v %v %v %v %v %v %v %v}", e.Timestamp, e.CPU, reverseIPv4Event[int(e.Type)], e.Pid, e.SAddr, e.Comm, e.SAddr, e.DAddr, e.SPort, e.DPort, e.NetNS, e.Fd)
 		// ========= PRINT ==========
 		tuple := makeFourTuple(e.SAddr, e.DAddr, e.SPort, e.DPort)
 		t.handleConnection(e.Type, tuple, int(e.Pid), e.NetNS)
