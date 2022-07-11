@@ -167,7 +167,7 @@ func (c *conntrackWalker) run() {
 				//var out bytes.Buffer
 				//json.Indent(&out, s, "", "\t")
 				//log.Debugf("conntrack get connection: %v", out.String())
-				log.Infof("[CONN] [conntrack] {%v %v %v %v %v %v %v %v %v %v %v %v}", f.MsgType, reverseType[int(f.MsgType)], f.TCPState, f.Orig.Src, f.Orig.SrcPort, f.Orig.Dst, f.Orig.DstPort, f.Reply.Src, f.Reply.SrcPort, f.Reply.Dst, f.Reply.DstPort, f.CtId)
+				log.Infof("[CONN] [conntrack] {%v %v %v %v %v %v %v %v %v %v %v}", reverseType[int(f.MsgType)], f.TCPState, f.Orig.Src, f.Orig.SrcPort, f.Orig.Dst, f.Orig.DstPort, f.Reply.Src, f.Reply.SrcPort, f.Reply.Dst, f.Reply.DstPort, f.CtId)
 				// ========= PRINT ==========
 				c.handleFlow(f)
 			}
