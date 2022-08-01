@@ -218,20 +218,29 @@ func (t *connectionTracker) performEbpfTrack(rpt *report.Report, hostNodeID stri
 			}
 			fromPort = key.fromPort
 		}
+		// connectionsByTriple is a mapping from triple to connection
+		// portToPids is a mapping from local port to PID pairs
 		portToPids := connectionsByTriple[t]
 		if portToPids == nil {
 			portToPids = make(mapPortToPids)
 		}
+		// fromPort is the local port, which can get its PID (the name fromPort is confusing, I think localPort is better)
 		pids := portToPids[fromPort]
+		// if incoming, then fromPort represents the destination, vice versa
 		if e.incoming {
 			pids.toPid = e.pid
 		} else {
 			pids.fromPid = e.pid
 		}
+		// update portToPids
 		portToPids[fromPort] = pids
+		// update connectionByTriple
 		connectionsByTriple[t] = portToPids
+		// After the process above, each PID pair will only contain one PID. Not graceful at all.
 	})
 
+	// triple: fromAddr toAddr toPort NS
+	// portToPids: mapping from local port to PID. The incoming/outgoing information is contained
 	for triple, portToPids := range connectionsByTriple {
 		filter, count := makeFilter(portToPids)
 		seen, sent, skipped := 0, 0, 0

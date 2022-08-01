@@ -75,6 +75,7 @@ type EbpfTracker struct {
 	openConnections   map[ebpfKey]ebpfDetail
 	closedConnections []ebpfClosedConnection
 	closedDuringInit  map[ebpfKey]struct{}
+	//accumulatedConn   []tracer.TcpV4
 }
 
 // releaseRegex should match all possible variations of a common Linux
@@ -163,6 +164,7 @@ func newEbpfTracker() (*EbpfTracker, error) {
 }
 
 var reverseIPv4Event = map[int]string{1: "Connect", 2: "Accept", 3: "Close", 4: "FdInstall"}
+var hostname, _ = os.Hostname()
 
 // TCPEventV4 handles IPv4 TCP events from the eBPF tracer
 func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
@@ -195,13 +197,15 @@ func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 	if e.Type == tracer.EventFdInstall {
 		t.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
 	} else {
+		//t.accumulatedConn = append(t.accumulatedConn, e)
 		// ========= PRINT ==========
-		//s, _ := json.Marshal(e)
-		//var out bytes.Buffer
-		//json.Indent(&out, s, "", "\t")
-		//log.Debugf("eBPF get connection event: %v", out.String())
-		log.Infof("[CONN] [eBPF] {%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v}", e.Timestamp, e.CPU, reverseIPv4Event[int(e.Type)], e.Pid, e.Comm, e.SAddr, e.DAddr, e.SPort, e.DPort, e.NetNS, e.Fd)
-		// ========= PRINT ==========
+		{
+			//s, _ := json.Marshal(e)
+			//var out bytes.Buffer
+			//json.Indent(&out, s, "", "\t")
+			//log.Debugf("eBPF get connection event: %v", out.String())
+			log.Infof("[CONN] [eBPF] {%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v}", hostname, e.Timestamp, e.CPU, reverseIPv4Event[int(e.Type)], e.Pid, e.Comm, e.SAddr, e.DAddr, e.SPort, e.DPort, e.NetNS, e.Fd)
+		}
 		tuple := makeFourTuple(e.SAddr, e.DAddr, e.SPort, e.DPort)
 		t.handleConnection(e.Type, tuple, int(e.Pid), e.NetNS)
 	}

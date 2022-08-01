@@ -165,6 +165,7 @@ func (p *Probe) tick() {
 
 func (p *Probe) report() report.Report {
 	reports := make(chan report.Report, len(p.reporters))
+	// Gather information from reporters that set in endpoints, processes, containers, etc.
 	for _, rep := range p.reporters {
 		go func(rep Reporter) {
 			t := time.Now()
@@ -246,6 +247,7 @@ func (p *Probe) publishLoop() {
 	for {
 		var err error
 		select {
+		// publish the report each pubTick
 		case <-pubTick:
 			rpt, count := p.drainAndSanitise(report.MakeReport(), p.spiedReports)
 			if count == 0 {
