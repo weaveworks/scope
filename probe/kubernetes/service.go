@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/weaveworks/scope/report"
 
@@ -36,7 +37,7 @@ func (s *service) Selector() labels.Selector {
 	if s.Spec.Selector == nil {
 		return labels.Nothing()
 	}
-	return labels.SelectorFromSet(labels.Set(s.Spec.Selector))
+	return labels.SelectorFromSet(s.Spec.Selector)
 }
 
 // human-readable version of a Kubernetes ServicePort
@@ -63,6 +64,7 @@ func (s *service) GetNode(probeID string) report.Node {
 		}
 		latest[Ports] = portStr[:len(portStr)-1]
 	}
+	log.Debugf("%v service selector: %v", s.UID(), s.Service)
 	return s.MetaNode(report.MakeServiceNodeID(s.UID())).
 		WithLatests(latest).
 		WithLatestActiveControls(Describe)
