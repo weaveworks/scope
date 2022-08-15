@@ -6,6 +6,7 @@ package endpoint
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -163,12 +164,12 @@ func (c *conntrackWalker) run() {
 			}
 			if c.relevant(f) {
 				// ========= PRINT ==========
-				//var hostname, err = os.Hostname()
-				//if err != nil {
-				//	log.Errorf("error retrieveing hostname, uses default: %v", err)
-				//	hostname = "invalid"
-				//}
-				//log.Infof("[CONN] [conntrack] {%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v}", hostname, reverseType[int(f.MsgType)], f.TCPState, f.Orig.Src, f.Orig.SrcPort, f.Orig.Dst, f.Orig.DstPort, f.Reply.Src, f.Reply.SrcPort, f.Reply.Dst, f.Reply.DstPort, f.CtId)
+				var hostname, err = os.Hostname()
+				if err != nil {
+					log.Errorf("error retrieveing hostname, uses default: %v", err)
+					hostname = "invalid"
+				}
+				log.Infof("[CONN] [conntrack] {%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v}", hostname, reverseType[int(f.MsgType)], f.TCPState, f.Orig.Src, f.Orig.SrcPort, f.Orig.Dst, f.Orig.DstPort, f.Reply.Src, f.Reply.SrcPort, f.Reply.Dst, f.Reply.DstPort, f.CtId)
 				// ========= PRINT ==========
 				c.handleFlow(f)
 			}

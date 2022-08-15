@@ -2,8 +2,6 @@ package kubernetes
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
-
 	"github.com/weaveworks/scope/report"
 
 	apiv1 "k8s.io/api/core/v1"
@@ -64,7 +62,7 @@ func (s *service) GetNode(probeID string) report.Node {
 		}
 		latest[Ports] = portStr[:len(portStr)-1]
 	}
-	log.Debugf("%v service selector: %v", s.UID(), s.Service)
+	latest["kubernetes_selector"] = s.Selector().String()
 	return s.MetaNode(report.MakeServiceNodeID(s.UID())).
 		WithLatests(latest).
 		WithLatestActiveControls(Describe)
