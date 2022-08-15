@@ -163,6 +163,7 @@ func newEbpfTracker() (*EbpfTracker, error) {
 	return tracker, nil
 }
 
+// ========= MODIFIED ==========
 var reverseIPv4Event = map[int]string{1: "Connect", 2: "Accept", 3: "Close", 4: "FdInstall"}
 var hostname, _ = os.Hostname()
 
@@ -197,15 +198,9 @@ func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 	if e.Type == tracer.EventFdInstall {
 		t.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
 	} else {
-		//t.accumulatedConn = append(t.accumulatedConn, e)
-		// ========= PRINT ==========
-		{
-			//s, _ := json.Marshal(e)
-			//var out bytes.Buffer
-			//json.Indent(&out, s, "", "\t")
-			//log.Debugf("eBPF get connection event: %v", out.String())
-			log.Infof("[CONN] [eBPF] {%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v}", hostname, e.Timestamp, e.CPU, reverseIPv4Event[int(e.Type)], e.Pid, e.Comm, e.SAddr, e.DAddr, e.SPort, e.DPort, e.NetNS, e.Fd)
-		}
+		// ========= MODIFIED ==========
+		log.Infof("[CONN] [eBPF] {%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v}", hostname, e.Timestamp, e.CPU, reverseIPv4Event[int(e.Type)], e.Pid, e.Comm, e.SAddr, e.DAddr, e.SPort, e.DPort, e.NetNS, e.Fd)
+
 		tuple := makeFourTuple(e.SAddr, e.DAddr, e.SPort, e.DPort)
 		t.handleConnection(e.Type, tuple, int(e.Pid), e.NetNS)
 	}

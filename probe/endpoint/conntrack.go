@@ -118,6 +118,7 @@ func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
 	return !(c.natOnly && (f.Status&conntrack.IPS_NAT_MASK) == 0)
 }
 
+// ========= MODIFIED ==========
 var reverseType = map[int]string{1: "New", 1 << 1: "Update", 1 << 2: "Destroy"}
 
 func (c *conntrackWalker) run() {
@@ -163,14 +164,15 @@ func (c *conntrackWalker) run() {
 				return
 			}
 			if c.relevant(f) {
-				// ========= PRINT ==========
+
+				// ========= MODIFIED ==========
 				var hostname, err = os.Hostname()
 				if err != nil {
 					log.Errorf("error retrieveing hostname, uses default: %v", err)
 					hostname = "invalid"
 				}
 				log.Infof("[CONN] [conntrack] {%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v}", hostname, reverseType[int(f.MsgType)], f.TCPState, f.Orig.Src, f.Orig.SrcPort, f.Orig.Dst, f.Orig.DstPort, f.Reply.Src, f.Reply.SrcPort, f.Reply.Dst, f.Reply.DstPort, f.CtId)
-				// ========= PRINT ==========
+
 				c.handleFlow(f)
 			}
 		}
