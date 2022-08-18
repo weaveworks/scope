@@ -119,7 +119,10 @@ func (c *conntrackWalker) relevant(f conntrack.Conn) bool {
 }
 
 // ========= MODIFIED ==========
+// the MsgType field in conntrack.Conn is a int and we need to convert it to readable string
 var reverseType = map[int]string{1: "New", 1 << 1: "Update", 1 << 2: "Destroy"}
+
+// =============================
 
 func (c *conntrackWalker) run() {
 	existingFlows, err := conntrack.ConnectionsSize(c.bufferSize)
@@ -166,13 +169,15 @@ func (c *conntrackWalker) run() {
 			if c.relevant(f) {
 
 				// ========= MODIFIED ==========
+				// Get the hostname of the node because we need to contain it in flow logs
 				var hostname, err = os.Hostname()
 				if err != nil {
 					log.Errorf("error retrieveing hostname, uses default: %v", err)
 					hostname = "invalid"
 				}
+				// print the flow in log
 				log.Infof("[CONN] [conntrack] {%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v}", hostname, reverseType[int(f.MsgType)], f.TCPState, f.Orig.Src, f.Orig.SrcPort, f.Orig.Dst, f.Orig.DstPort, f.Reply.Src, f.Reply.SrcPort, f.Reply.Dst, f.Reply.DstPort, f.CtId)
-
+				// =============================
 				c.handleFlow(f)
 			}
 		}

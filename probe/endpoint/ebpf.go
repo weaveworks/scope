@@ -164,8 +164,13 @@ func newEbpfTracker() (*EbpfTracker, error) {
 }
 
 // ========= MODIFIED ==========
+// The IPv4Event in the tracer.TcpV4 object is a number, so we need this map to convert it to readable format
 var reverseIPv4Event = map[int]string{1: "Connect", 2: "Accept", 3: "Close", 4: "FdInstall"}
+
+// Get the hostname of the node because we need to contain it in flow logs
 var hostname, _ = os.Hostname()
+
+// =============================
 
 // TCPEventV4 handles IPv4 TCP events from the eBPF tracer
 func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
@@ -199,7 +204,9 @@ func (t *EbpfTracker) TCPEventV4(e tracer.TcpV4) {
 		t.handleFdInstall(e.Type, int(e.Pid), int(e.Fd))
 	} else {
 		// ========= MODIFIED ==========
+		// print the flow in log
 		log.Infof("[CONN] [eBPF] {%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v|%v}", hostname, e.Timestamp, e.CPU, reverseIPv4Event[int(e.Type)], e.Pid, e.Comm, e.SAddr, e.DAddr, e.SPort, e.DPort, e.NetNS, e.Fd)
+		// =============================
 
 		tuple := makeFourTuple(e.SAddr, e.DAddr, e.SPort, e.DPort)
 		t.handleConnection(e.Type, tuple, int(e.Pid), e.NetNS)

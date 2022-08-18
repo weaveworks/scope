@@ -63,8 +63,9 @@ func (s *service) GetNode(probeID string) report.Node {
 		latest[Ports] = portStr[:len(portStr)-1]
 	}
 	// ========= MODIFIED ==========
+	// Add a new field of selectors to the `latest` field of services in `report.json` (the JSON requested from `api/report`)
 	latest["kubernetes_selector"] = s.Selector().String()
-
+	// =============================
 	return s.MetaNode(report.MakeServiceNodeID(s.UID())).
 		WithLatests(latest).
 		WithLatestActiveControls(Describe)
