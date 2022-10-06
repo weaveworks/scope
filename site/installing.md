@@ -152,7 +152,7 @@ Version 2 of this YAML file supports networks and volumes as defined by any plug
 
 To install Weave Scope on your Kubernetes cluster, run
 
-    kubectl apply -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+    kubectl apply -f https://github.com/weaveworks/scope/releases/download/v1.13.2/k8s-scope.yaml
 
 This downloads a recent Scope image from Dockerhub and launches a probe onto every node as well as a single Scope app. Once launched, Scope doesn’t require any other configuration.
 
@@ -221,7 +221,7 @@ Next, create a dedicated project for Weave Scope then apply policy changes neede
 The installation method for Scope on OpenShift is very similar to the one described [above](#k8s) for Kubernetes, but instead of `kubectl apply ...` you need to use
 `oc apply ...` and install it into the namespace of the `weave` project you have just created, and not the `weave` namespace, i.e.:
 
-    oc apply -f 'https://cloud.weave.works/k8s/scope.yaml'
+    oc apply -f 'https://github.com/weaveworks/scope/releases/download/v1.13.2/k8s-scope.yaml'
 
 To access the Scope app from the browser, please refer to Kubernetes instructions [above](#k8s).
 
