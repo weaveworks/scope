@@ -1,4 +1,3 @@
-# borrowed from https://cloud.weave.works/k8s/scope.yaml?k8s-version=1.9.3
 apiVersion: apps/v1
 kind: Deployment
 metadata:
