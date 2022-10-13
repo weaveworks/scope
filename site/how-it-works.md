@@ -6,7 +6,6 @@ search_type: Documentation
 
 The following topics are discussed:
 
-* [Weave Cloud](#service-mode)
 * [Standalone Mode](#stand-alone-mode)
 * [Disabling Automatic Updates](#disable)
 
@@ -45,35 +44,6 @@ When running Scope in a cluster, each probe sends its reports to a dedicated app
     |  |                 |  |      |  |                 |  |
     |  +-----------------+  |      |  +-----------------+  |
     +-----------------------+      +-----------------------+
-
-## <a name="service-mode"></a>Weave Cloud
-
-Scope can also be used to feed reports to Weave Cloud. With Weave Cloud, you can centrally manage and share access to your Scope UI. In this configuration, the probe is run locally and the apps are hosted for you.
-
-                           .-~~~-.
-                     .- ~'`       )_   ___
-                    /               `-'   )_
-                   |    cloud.weave.works   \
-                    \                      .'
-                      ~-______________..--'
-                               ^^
-                               ||
-                               ||
-    +--Docker host----------+  ||  +--Docker host----------+
-    |  +--Container------+  |  ||  |  +--Container------+  |
-    |  |                 |  |  ||  |  |                 |  |
-    |  | +-------------+ |  | /  \ |  | +-------------+ |  |
-    |  | | scope-probe |-----'    '-----| scope-probe | |  |
-    |  | +-------------+ |  |      |  | +-------------+ |  |
-    |  |                 |  |      |  |                 |  |
-    |  +-----------------+  |      |  +-----------------+  |
-    +-----------------------+      +-----------------------+
-
-To register with Weave Cloud, go to [https://cloud.weave.works](https://cloud.weave.works), enter your email address and wait for the confirmation email.
-
-The cloud token is accessible from the settings page after you've clicked 'Explore':
-
-![Weave Cloud Token](images/weave-cloud-token.png)
 
 ## <a name="disable"></a>Disabling Automatic Updates
 

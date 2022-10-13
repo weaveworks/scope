@@ -43,7 +43,6 @@ For more information about Weave AMIs and running them see:
  * [Peer Discovery with Weave Net](#peer-discovery-weave-net)
  * [How to Run Weave Scope](#how-to-run-weave-scope)
   * [Standalone mode](#running-weave-scope-in-standalone-mode)
-  * [In Weave Cloud](#running-weave-scope-in-weave-cloud)
  * [Upgrading Weave Scope and Weave Net](#upgrading-weave-scope-and-weave-net)
   * [Creating Your Own Customized Weave ECS AMI](#creating-your-own-customized-weave-ecs-ami)
 
@@ -123,10 +122,9 @@ When running `Weave Scope` in Standalone mode, probes discover apps with the sam
 
 ## <a name="how-to-run-weave-scope"></a>How to Run Weave Scope
 
-There are two methods for running `Weave Scope` within the Weave ECS AMIs:
+To run `Weave Scope` within the Weave ECS AMIs:
 
 * [Standalone mode](#running-weave-scope-in-standalone-mode)
-* [In Weave Cloud](#running-weave-scope-in-weave-cloud)
 
 You can prevent Weave Scope from automatically starting at boot time by removing  `/etc/init/scope.conf`.
 
@@ -156,8 +154,6 @@ However, running the app on all instances impacts performance, resulting in `N *
 N = N^2` connections in the Auto Scaling Group with N instances (i.e. all (N)
 probes talk to all (N) apps in every instances). 
 
-To avoid this problem, it is recommended that you run `Weave Scope` in [Weave Cloud](https://cloud.weave.works).
-
 The `Weave Scope` app runs a web-based application, which listens on TCP port
 4040 where you can connect with your browser.
 
@@ -165,31 +161,6 @@ The `Weave Scope` app runs a web-based application, which listens on TCP port
 port 4040. Ensure that your Amazon ECS container instances can talk to each
 other on that port before running `Weave Scope` in standalone mode (see
 [Required Open Ports](#required-open-ports) for more details).
-
-### <a name="running-weave-scope-in-weave-cloud"></a>Running `Weave Scope` in Weave Cloud
-
-In Weave Cloud, you can visualize Amazon ECS containers as well as monitor Tasks 
-and Services all from within in Weave Cloud at [https://cloud.weave.works](https://cloud.weave.works). 
-In this case, Amazon ECS container instances run a `Weave Scope` probe and reports
-data from the container instances to [Weave Cloud](http://cloud.weave.works).
-
-To configure your ECS container instances to communicate with Weave Cloud,
-store the `Weave Scope` cloud token in the`/etc/weave/scope.config`
-file.
-
->Note: The `Weave Scope` cloud token can be found in your Weave Cloud account at [http://cloud.weave.works](http://cloud.weave.works).
-
-For example, this command configures the instance to communicate with Weave
-Cloud using token `3hud3h6ys3jhg9bq66n8xxa4b147dt5z`.
-
-~~~bash
-echo SERVICE_TOKEN=3hud3h6ys3jhg9bq66n8xxa4b147dt5z >> /etc/weave/scope.config
-~~~
-
-You can do this at instance-initialization time using
-[User Data](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html#user-data-shell-scripts),
-which is similar to how
-[ECS Cluster Mapping is configured](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_container_instance.html#instance-launch-user-data-step).
 
 ## <a name="upgrading-weave-scope-and-weave-net"></a>Upgrading Weave Scope and Weave Net
 

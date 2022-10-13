@@ -19,7 +19,7 @@ Can be done by using the `probe.no-controls` option and set it to true for the s
 
 ## RBAC and Weave Scope OSS
 
-OSS Scope has no user concept, this is only available in Weave Cloud. To limit the access to the UI,
+OSS Scope has no user concept. To limit the access to the UI,
 
 - setup a reverse proxy with auth and block access to non admin users,
 - capture the calls with something like Chrome network console to get the endpoints to know which requests to authenticate in the proxy server.

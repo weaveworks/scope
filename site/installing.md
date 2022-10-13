@@ -4,9 +4,8 @@ menu_order: 20
 search_type: Documentation
 ---
 
-Weave Scope consists of three parts: the probe, the app and the user interface.  Scope can be deployed in either a standalone configuration, where you run everything yourself, or you can use Weave Cloud, in which case only the probes run in your environment, and the app and UI are hosted by Weave Cloud.
+Weave Scope consists of three parts: the probe, the app and the user interface.
 
- * [Installing on any Platform and Orchestrator, via Weave Cloud](#weave-cloud)
  * [Installing on Docker](#docker)
    * [Single-node](#docker-single-node)
    * [Cluster](#docker-cluster)
@@ -18,23 +17,6 @@ Weave Scope consists of three parts: the probe, the app and the user interface. 
    * [Amazon ECS](#ecs)
    * [minimesos](#minimesos)
    * [Mesosphere DC/OS](#dcos)
-
-## <a name="weave-cloud"></a>Installing on any Platform and Orchestrator, via Weave Cloud
-
-Weave Cloud is a SaaS that simplifies deployment, monitoring and
-management of your containers and microservices. Installing Weave
-Scope via Weave Cloud is the recommended option if:
-
- * You are new to Weave Scope.
- * You are deploying to larger clusters.
- * You require secure remote access.
- * You want to share access with your coworkers.
- * You want to minimize Weave Scope memory and CPU usage.
- * You want to benefit from Weave Cloud features beyond Weave Scope.
-
-Weave Cloud provides easy step-by-step instructions for installation
-on a variety of platforms and orchestrators. To get started with Weave
-Cloud, [sign up for a free trial](https://cloud.weave.works/).
 
 ## <a name="docker"></a>Installing on Docker
 
@@ -56,7 +38,7 @@ Where,
 
  * `<VM name>` is the name you gave to your virtual machine with docker-machine.
 
->**Note:** Scope allows anyone with access to the user interface, control over your containers. As such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Also traffic between the app and the probe is insecure and should not traverse the Internet. This means that you should either use the private / internal IP addresses of your nodes when setting it up, or route this traffic through Weave Net.  Put Scope behind a password, by using an application like [Caddy](https://github.com/mholt/caddy) to protect the endpoint and by making port 4040 available to localhost with Caddy proxying it. Or you can skip these steps, and just use Weave Cloud to manage the security for you.
+>**Note:** Scope allows anyone with access to the user interface, control over your containers. As such, the Scope app endpoint (port 4040) should not be made accessible on the Internet.  Also traffic between the app and the probe is insecure and should not traverse the Internet. This means that you should either use the private / internal IP addresses of your nodes when setting it up, or route this traffic through Weave Net.  Put Scope behind a password, by using an application like [Caddy](https://github.com/mholt/caddy) to protect the endpoint and by making port 4040 available to localhost with Caddy proxying it.
 
 ### <a name="docker-cluster"></a>Cluster
 
@@ -229,7 +211,6 @@ To access the Scope app from the browser, please refer to Kubernetes instruction
 
 There are currently three options for launching Weave Scope in ECS:
 
-* A [CloudFormation template](https://www.weave.works/deploy-weave-aws-cloudformation-template/) to launch and easily evaluate Scope directly from your browser.
 * An [Amazon Machine Image (AMI)](/site/ami.md) for each ECS region.
 * [A simple way to tailor the AMIs to your needs](https://github.com/weaveworks/integrations/tree/master/aws/ecs#creating-your-own-customized-weave-ecs-ami).
 
