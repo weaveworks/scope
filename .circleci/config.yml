@@ -118,6 +118,7 @@ jobs:
     steps:
       - checkout
       - run: GOARCH=arm  make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
+      - run: GOARCH=s390x make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
       - run: GOOS=darwin make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
 
   build:
