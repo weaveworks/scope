@@ -42,6 +42,10 @@ workflows:
           requires:
             - client-test
             - integration-tests
+      - publish:
+          filters:
+            branches:
+              only: master
 
 jobs:
   lint:
@@ -193,17 +197,31 @@ jobs:
           docker load -i scope.tar
           docker load -i cloud-agent.tar
       - run: |
-          test -z "${DOCKER_USER}" && exit 0
-          docker login -u $DOCKER_USER -p $DOCKER_PASS
-          for IMAGE in $IMAGES; do
-              test "${DOCKER_ORGANIZATION:-$DOCKER_USER}" = "weaveworks" || docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest
-              docker tag weaveworks/$IMAGE:latest ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
-              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:latest
-              docker push ${DOCKER_ORGANIZATION:-$DOCKER_USER}/$IMAGE:$(./tools/image-tag)
-          done
-      - run: |
           test -z "${QUAY_USER}" && exit 0
           docker login -e '.' -u "$QUAY_USER" -p "$QUAY_PASSWORD" quay.io
           docker tag weaveworks/scope:$(./tools/image-tag) "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
           docker push "quay.io/${QUAY_ORGANIZATION}/scope:$(./tools/image-tag)"
       - run: test -z "${UI_BUCKET_KEY_ID}" || (make BUILD_IN_CONTAINER=false ui-upload ui-pkg-upload)
+
+  publish:
+    machine:
+      image: ubuntu-1604:202007-01
+    working_directory: /home/circleci/scope
+    environment:
+      DEBUG: true
+    steps:
+      - checkout
+      - run: |
+            mkdir -vp ~/.docker/cli-plugins/
+            curl --silent -L --output ~/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.5.0/buildx-v0.5.0.linux-amd64
+            chmod a+x ~/.docker/cli-plugins/docker-buildx
+            docker run -it --rm --privileged tonistiigi/binfmt --install all
+            docker buildx create --use --name mybuilder
+      - run: docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+      - run: |
+            docker run --rm  --entrypoint=cat weaveworks/weaveexec@sha256:d19ca4e518ee3d52bfbd6c6b8fb90c258622462ff8386de39e15b0fa6edb02e5 /usr/bin/weaveutil > weaveutil_arm64
+            docker run --rm  --entrypoint=cat weaveworks/weaveexec@sha256:d19ca4e518ee3d52bfbd6c6b8fb90c258622462ff8386de39e15b0fa6edb02e5 /usr/bin/weaveutil > weaveutil
+      - run: |
+          docker buildx build --push --build-arg=revision=$(git rev-parse HEAD) --build-arg=SCOPE_SKIP_UI_ASSETS=true --platform linux/arm64,linux/amd64 -t ${DOCKER_ORGANIZATION:-$DOCKER_USER}/cloud-agent:$(./tools/image-tag) -t ${DOCKER_ORGANIZATION:-$DOCKER_USER}/cloud-agent:latest -f docker/Dockerfile.cloud-agent_multiarch .
+      - run: |
+          docker buildx build --push --build-arg=revision=$(git rev-parse HEAD) --build-arg=VERSION=$(git rev-parse --short HEAD) --platform linux/arm64,linux/amd64 -t ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:$(./tools/image-tag) -t ${DOCKER_ORGANIZATION:-$DOCKER_USER}/scope:latest -f docker/Dockerfile.scope_multiarch .

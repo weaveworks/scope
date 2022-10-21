@@ -1,0 +1,28 @@
+# stage 1
+FROM golangci/golangci-lint:latest as builder
+ARG SCOPE_SKIP_UI_ASSETS
+RUN apt-get update
+RUN apt-get install -y libpcap-dev time
+WORKDIR /root/go/src/github.com/weaveworks
+COPY / scope
+WORKDIR scope
+ENV GOROOT=/usr/local/go
+ENV GOPATH=/root/go
+ENV PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+RUN make BUILD_IN_CONTAINER=false GO_BUILD_INSTALL_DEPS= prog/scope
+
+# stage 2
+FROM alpine:3.11.3
+WORKDIR /home/weave
+RUN apk add --no-cache bash conntrack-tools iproute2 util-linux curl
+COPY --from=builder /root/go/src/github.com/weaveworks/scope/prog/scope /home/weave/
+
+ENTRYPOINT ["/home/weave/scope", "--mode=probe", "--no-app", "--probe.docker=true"]
+
+ARG revision
+LABEL works.weave.role="system" \
+      maintainer="Weaveworks <help@weave.works>" \
+      org.opencontainers.image.title="cloud-agent" \
+      org.opencontainers.image.source="https://github.com/weaveworks/scope" \
+      org.opencontainers.image.revision="${revision}" \
+      org.opencontainers.image.vendor="Weaveworks"
