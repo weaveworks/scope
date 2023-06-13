@@ -1,4 +1,4 @@
-# Weave Scope - Troubleshooting & Monitoring for Docker & Kubernetes
+# DEPRECATED: Weave Scope - Troubleshooting & Monitoring for Docker & Kubernetes
 
 [![Circle CI](https://circleci.com/gh/weaveworks/scope/tree/master.svg?style=shield)](https://circleci.com/gh/weaveworks/scope/tree/master)
 [![Coverage Status](https://coveralls.io/repos/weaveworks/scope/badge.svg)](https://coveralls.io/r/weaveworks/scope)
@@ -6,6 +6,8 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/weaveworks/scope.svg?maxAge=604800)](https://hub.docker.com/r/weaveworks/scope/)
 [![GoDoc](https://godoc.org/github.com/weaveworks/scope?status.svg)](https://godoc.org/github.com/weaveworks/scope)
 [![Good first issues](https://img.shields.io/github/issues/weaveworks/scope/good-first-issue.svg?color=blueviolet&label=good%20first%20issues)](https://github.com/weaveworks/scope/issues?q=is%3Aissue+is%3Aopen+label%3Agood-first-issue)
+
+## PLEASE NOTE, THIS PROJECT IS NO LONGER MAINTAINED. More details [available here](https://www.weave.works/blog/weave-cloud-end-of-service).
 
 Weave Scope automatically generates a map of your application, enabling you to
 intuitively understand, monitor, and control your containerized, microservices-based application.
