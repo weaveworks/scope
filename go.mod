@@ -80,7 +80,7 @@ require (
 	github.com/weaveworks/go-checkpoint v0.0.0-20160428112813-62324982ab51
 	github.com/weaveworks/ps v0.0.0-20160725183535-70d17b2d6f76
 	github.com/weaveworks/tcptracer-bpf v0.0.0-20200114145059-84a08fc667c0
-	github.com/weaveworks/weave v2.3.1-0.20180427133448-4da998ab4507+incompatible
+	github.com/weaveworks/weave v2.6.3+incompatible
 	github.com/willdonnelly/passwd v0.0.0-20141013001024-7935dab3074c
 	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
